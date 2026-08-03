@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 支持双锚点模式下的弱点专项靶向强化", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785749854.5596266, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(geometry): 修复双锚点模式下弱点靶向强化失效的 bug", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785750148.1169617, "duration_ms": 0}}
