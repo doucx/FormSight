@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { ArrowLeft, Clock, CheckCircle2, XCircle, ChevronRight } from 'lucide-preact';
+import { ArrowLeft, Clock, ChevronRight } from 'lucide-preact';
 import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
 import { StarCanvas } from '../components/StarCanvas';
 import { generateQuestion } from '../utils/geometry';
@@ -235,54 +235,32 @@ export function TrainingView({
         disabled={isFinished}
       />
 
-      {/* 底部操作与简略反馈 */}
-      <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-between min-h-[56px]">
-        <div>
-          {showAnswer && userAnswer && (
-            <div className="flex items-center gap-2">
-              <span
-                className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
-                  userAnswer.hitResult.isHit
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : 'bg-rose-50 text-rose-700 border border-rose-200'
-                }`}
-              >
-                {userAnswer.hitResult.isHit ? (
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                ) : (
-                  <XCircle className="w-3.5 h-3.5" />
-                )}
-                {userAnswer.hitResult.isHit ? '击中' : '偏差'}
-              </span>
-              <span className="text-xs font-mono font-bold text-slate-600">
-                {userAnswer.hitResult.errorDistance} px
-              </span>
-            </div>
+      {/* 底部操作面板（仅在未开启自动翻页时显示） */}
+      {!settings.autoNext && (
+        <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
+          {isFinished ? (
+            <button
+              onClick={handleFinishSession}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+            >
+              完成并退出
+            </button>
+          ) : (
+            <button
+              onClick={handleNextQuestion}
+              disabled={!showAnswer}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+                showAnswer
+                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              下一题
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
           )}
         </div>
-
-        {isFinished ? (
-          <button
-            onClick={handleFinishSession}
-            className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
-          >
-            完成并退出
-          </button>
-        ) : (
-          <button
-            onClick={handleNextQuestion}
-            disabled={!showAnswer}
-            className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
-              showAnswer
-                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            下一题
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
+      )}
     </div>
   );
 }
