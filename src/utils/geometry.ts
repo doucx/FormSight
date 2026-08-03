@@ -206,8 +206,43 @@ export function generateQuestion(
   const projChoices = [-90, -45, 0, 45, 90];
   const hgtChoices = [-90, -45, 45, 90];
 
-  const px = projChoices[Math.floor(Math.random() * projChoices.length)];
-  const py = hgtChoices[Math.floor(Math.random() * hgtChoices.length)];
+  // 1. 生成所有合法的 (px, py) 组合，并预计算其角度
+  const validPairs: { px: number; py: number; angle: number }[] = [];
+  projChoices.forEach((x) => {
+    hgtChoices.forEach((y) => {
+      const angle = Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+      validPairs.push({ px: x, py: y, angle });
+    });
+  });
+
+  let chosenPair = validPairs[Math.floor(Math.random() * validPairs.length)];
+
+  // 2. 靶向强化逻辑拦截
+  if (
+    options?.targetingMode &&
+    options.targetingMode !== 'off' &&
+    options.targetSectors &&
+    options.targetSectors.length > 0
+  ) {
+    if (Math.random() < 0.7) {
+      const chosenSector =
+        options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
+      const sectorCenterAngle = chosenSector * 45;
+
+      const targetedPairs = validPairs.filter((p) => {
+        const diff = Math.abs(p.angle - sectorCenterAngle);
+        const minDiff = Math.min(diff, 360 - diff);
+        return minDiff <= 22.5;
+      });
+
+      if (targetedPairs.length > 0) {
+        chosenPair = targetedPairs[Math.floor(Math.random() * targetedPairs.length)];
+      }
+    }
+  }
+
+  const px = chosenPair.px;
+  const py = chosenPair.py;
 
   const rotAngle = mode === 'double_h' 
     ? 0 
