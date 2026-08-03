@@ -154,34 +154,40 @@ export function StarCanvas({
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
       {/* 左侧参考 Canvas */}
-      <div className="flex flex-col items-center">
-        <span className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-          左图: 观察参考
-        </span>
+      <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+          <span className="text-xs font-bold text-gray-600 tracking-wider uppercase">
+            左图：观察参考
+          </span>
+        </div>
         <canvas
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="w-full max-w-[420px] aspect-square rounded-lg border border-gray-200 bg-white shadow-sm"
+          className="w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner"
         />
       </div>
 
       {/* 右侧交互 Canvas */}
-      <div className="flex flex-col items-center">
-        <span className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
-          右图: 点击答题区
-        </span>
+      <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow">
+        <div className="flex items-center gap-1.5 mb-3">
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span className="text-xs font-bold text-gray-600 tracking-wider uppercase">
+            右图：点击答题区
+          </span>
+        </div>
         <canvas
           ref={rightCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           onClick={handleRightCanvasClick}
-          className={`w-full max-w-[420px] aspect-square rounded-lg border border-gray-200 bg-white shadow-sm transition-all ${
+          className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : 'cursor-crosshair hover:border-gray-400'
+              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
         />
       </div>
