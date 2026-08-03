@@ -30,7 +30,7 @@ export function TrainingView({
     new AdaptiveEngine(
       initialGridStep,
       settings.stepGranularity === 'fine',
-      settings.adaptiveMode,
+      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
       settings.targetAccuracy,
       settings.blockSize
     )

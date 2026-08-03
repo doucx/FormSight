@@ -4,7 +4,7 @@ import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
 import { SettingsModal } from './components/SettingsModal';
 import { AnalyticsModal } from './components/AnalyticsModal';
-import { getAllUserProfiles, UserProfileData } from './utils/db';
+import { getAllUserProfiles, getTotalTrainingTimeMs, UserProfileData } from './utils/db';
 import { UserSettings, loadSettings } from './utils/settings';
 
 export function App() {
@@ -21,11 +21,14 @@ export function App() {
     double_h: null,
     double_r: null,
   });
+  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
 
-  // 刷新用户能力度数
+  // 刷新用户能力度数与总练习时长
   const refreshProfiles = async () => {
     const data = await getAllUserProfiles();
+    const timeMs = await getTotalTrainingTimeMs();
     setProfiles(data);
+    setTotalTimeMs(timeMs);
   };
 
   useEffect(() => {
@@ -58,6 +61,7 @@ export function App() {
       {currentView === 'dashboard' ? (
         <Dashboard
           profiles={profiles}
+          totalTimeMs={totalTimeMs}
           onStart={handleStartTraining}
           onRefreshProfiles={refreshProfiles}
           onOpenSettings={() => setIsSettingsOpen(true)}

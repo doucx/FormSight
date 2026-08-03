@@ -12,12 +12,14 @@ import {
   Award,
   Sliders,
   BarChart2,
+  Clock,
 } from 'lucide-preact';
 import { TrainingMode } from '../types';
-import { UserProfileData, exportAllData, importAllData } from '../utils/db';
+import { UserProfileData, exportAllData, importAllData, formatTotalTime } from '../utils/db';
 
 interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
+  totalTimeMs: number;
   onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
   onRefreshProfiles: () => void;
   onOpenSettings: () => void;
@@ -60,6 +62,7 @@ const MODES_CONFIG: Array<{
 
 export function Dashboard({
   profiles,
+  totalTimeMs,
   onStart,
   onRefreshProfiles,
   onOpenSettings,
@@ -97,9 +100,15 @@ export function Dashboard({
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
       {/* 极简 Header */}
       <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+            寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
+          </h1>
+          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
+            <Clock className="w-3.5 h-3.5 text-indigo-500" />
+            <span>{formatTotalTime(totalTimeMs)}</span>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <button

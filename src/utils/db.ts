@@ -203,3 +203,25 @@ export async function getAllTrialRecords(
   }
   return await db.getAll('records');
 }
+
+// === API 8: 获取累积练习总时长 (ms) 与格式化辅助 ===
+export function formatTotalTime(ms: number): string {
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  return `${days}天${hours}小时${minutes}分钟`;
+}
+
+export async function getTotalTrainingTimeMs(): Promise<number> {
+  const db = await getDB();
+  const sessions = await db.getAll('sessions');
+  let totalMs = 0;
+  for (const s of sessions) {
+    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
+      totalMs += s.endTimestamp - s.startTimestamp;
+    }
+  }
+  return totalMs;
+}
