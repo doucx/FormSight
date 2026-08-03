@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 强制基准测试使用 3U1D 阶梯自适应算子", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785762763.2805886, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(training): 添加总练习时长统计并强制基准测试使用 3U1D 阶梯", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785763579.7225168, "duration_ms": 0}}
