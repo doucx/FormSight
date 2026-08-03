@@ -156,13 +156,7 @@ export function StarCanvas({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
       {/* 左侧参考 Canvas */}
-      <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
-          <span className="text-xs font-bold text-gray-600 tracking-wider uppercase">
-            左图：观察参考
-          </span>
-        </div>
+      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
         <canvas
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
@@ -172,13 +166,7 @@ export function StarCanvas({
       </div>
 
       {/* 右侧交互 Canvas */}
-      <div className="flex flex-col items-center bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex items-center gap-1.5 mb-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span className="text-xs font-bold text-gray-600 tracking-wider uppercase">
-            右图：点击答题区
-          </span>
-        </div>
+      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
         <canvas
           ref={rightCanvasRef}
           width={CANVAS_SIZE}

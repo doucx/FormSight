@@ -2,12 +2,16 @@ import { useState, useEffect } from 'preact/hooks';
 import { TrainingMode } from './types';
 import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
+import { SettingsModal } from './components/SettingsModal';
 import { getAllUserProfiles, UserProfileData } from './utils/db';
+import { UserSettings, loadSettings } from './utils/settings';
 
 export function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
   const [activeMode, setActiveMode] = useState<TrainingMode>('single');
   const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
   const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
     single: null,
@@ -47,13 +51,23 @@ export function App() {
           profiles={profiles}
           onStart={handleStartTraining}
           onRefreshProfiles={refreshProfiles}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       ) : (
         <TrainingView
           mode={activeMode}
           sessionType={sessionType}
           initialGridStep={activeDegreeStep}
+          settings={settings}
           onExit={handleExitTraining}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          settings={settings}
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={(newSettings) => setSettings(newSettings)}
         />
       )}
     </div>
