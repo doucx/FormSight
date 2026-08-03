@@ -1,283 +1,77 @@
-好的，我已经分析了需求。我们将在 IndexedDB 中计算所有历史训练 session 的累积时长，并格式化为 `天-小时-分钟`（例如 `0天0小时15分钟`），然后将该指标展示在 Dashboard 主页顶栏标题“寻星练习 Star-Hopping”的右侧。
+经过对代码的审查，**目前基准测试（Benchmark）尚未强制使用 3U1D 阶梯算子**。此前在 `TrainingView.tsx` 中初始化 `AdaptiveEngine` 时，直接透传了用户设置的 `settings.adaptiveMode`（这可能为 `block` 轮次胜率评估模式或 `staircase` 模式）。
 
-## [WIP] feat: 在顶栏新增总练习时长统计展示 (天-小时-分钟)
+我现在将生成 Plan 强制基准测试（`sessionType === 'benchmark'`）使用 `staircase`（经典 3U1D 阶梯）算子。
+
+## [WIP] refactor: 强制基准测试使用 3U1D 阶梯自适应算子
 
 ### 用户需求
-在主界面 Header 中“寻星练习”标题右侧添加记录总练习时长的功能，以“天-小时-分钟”为单位进行计量。
+确定基准测试当前是否使用了 3U1D 阶梯算法；若否，则强制基准测试会话使用 3U1D 阶梯算子。
 
 ### 评论
-该功能能够给用户提供清晰的累计练习成就感与直观的数据反馈，增强产品的训练沉浸感和可视化效果。
+基准测试（20 题测试）旨在快速精细拟合出用户的临界认知阈值，经典 3-Up / 1-Down (3U1D) 心理物理学阶梯法（Staircase Procedure）是此类标准测试的最佳基准算法。将其强制生效能够保障基准测试评估标准的唯一性与严谨性。
 
 ### 目标
-1. 在 `src/utils/db.ts` 中增加计算 IndexedDB 中累积训练总时长 (`getTotalTrainingTimeMs`) 和时间格式化工具函数 (`formatTotalTime`)。
-2. 在 `src/app.tsx` 中扩展数据获取逻辑，在刷新 Dashboard 数据时同步加载总练习时长。
-3. 在 `src/views/Dashboard.tsx` 顶栏“寻星练习 Star-Hopping”右侧添加高亮 Badge 胶囊组件显示 `X天Y小时Z分钟`。
+修改 `src/views/TrainingView.tsx`，在初始化 `AdaptiveEngine` 时增加条件判断：当 `sessionType === 'benchmark'` 时，强制使用 `'staircase'` 算子模式，忽略配置中的 `'block'` 轮次评估模式。
 
 ### 基本原理
-我们在后台读取 IndexedDB 中的 `sessions` 列表，统计每个带有 `endTimestamp` 的有效会话时长（`endTimestamp - startTimestamp`）。通过将毫秒数转换为总分钟数，进而按 24小时/天、60分钟/小时 拆解为 `天`、`小时` 和 `分钟` 字符串展现。
+在 `TrainingView` 中，自适应引擎 `AdaptiveEngine` 在组件挂载时通过 `useRef` 初始化。通过将传给引擎的 `adaptiveMode` 参数设为 `sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode`，可以在不改动常规自适应训练配置的前提下，确保所有基准测试都统一运行在 3U1D 阶梯算法之下。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/total-training-time #task/action/implementation #task/state/begin
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/executor #scope/core #ai/instruct #task/domain/algorithm #task/object/benchmark-staircase #task/action/enforce #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `src/utils/db.ts` 中新增总练习时长统计与格式化工具函数
+#### Acts 1: 修改 `src/views/TrainingView.tsx` 强制基准测试使用 3U1D 阶梯
 
 ~~~~~act
 patch_file
-src/utils/db.ts
+src/views/TrainingView.tsx
 ~~~~~
 ~~~~~ts.old
-// === API 7: 获取历史做答日志（支持按模式筛选） ===
-export async function getAllTrialRecords(
-  mode?: TrainingMode
-): Promise<TrialRecord[]> {
-  const db = await getDB();
-  if (mode) {
-    return await db.getAllFromIndex('records', 'by-mode', mode);
-  }
-  return await db.getAll('records');
-}
+export function TrainingView({
+  mode,
+  sessionType,
+  initialGridStep,
+  settings,
+  onExit,
+}: TrainingViewProps) {
+  // === 会话状态 ===
+  const sessionIdRef = useRef<string>(`session_${Date.now()}`);
+  const startTimeRef = useRef<number>(Date.now());
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(
+      initialGridStep,
+      settings.stepGranularity === 'fine',
+      settings.adaptiveMode,
+      settings.targetAccuracy,
+      settings.blockSize
+    )
+  );
 ~~~~~
 ~~~~~ts.new
-// === API 7: 获取历史做答日志（支持按模式筛选） ===
-export async function getAllTrialRecords(
-  mode?: TrainingMode
-): Promise<TrialRecord[]> {
-  const db = await getDB();
-  if (mode) {
-    return await db.getAllFromIndex('records', 'by-mode', mode);
-  }
-  return await db.getAll('records');
-}
-
-// === API 8: 获取累积练习总时长 (ms) 与格式化辅助 ===
-export function formatTotalTime(ms: number): string {
-  const totalMinutes = Math.floor(ms / (1000 * 60));
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  return `${days}天${hours}小时${minutes}分钟`;
-}
-
-export async function getTotalTrainingTimeMs(): Promise<number> {
-  const db = await getDB();
-  const sessions = await db.getAll('sessions');
-  let totalMs = 0;
-  for (const s of sessions) {
-    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
-      totalMs += s.endTimestamp - s.startTimestamp;
-    }
-  }
-  return totalMs;
-}
-~~~~~
-
-#### Acts 2: 更新 `src/views/Dashboard.tsx` 视图显示总练习时长
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~ts.old
-import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
-  Award,
-  Sliders,
-  BarChart2,
-} from 'lucide-preact';
-import { TrainingMode } from '../types';
-import { UserProfileData, exportAllData, importAllData } from '../utils/db';
-
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-}
-~~~~~
-~~~~~ts.new
-import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
-  Award,
-  Sliders,
-  BarChart2,
-  Clock,
-} from 'lucide-preact';
-import { TrainingMode } from '../types';
-import { UserProfileData, exportAllData, importAllData, formatTotalTime } from '../utils/db';
-
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  totalTimeMs: number;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~ts.old
-export function Dashboard({
-  profiles,
-  onStart,
-  onRefreshProfiles,
-  onOpenSettings,
-  onOpenAnalytics,
-}: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-~~~~~
-~~~~~ts.new
-export function Dashboard({
-  profiles,
-  totalTimeMs,
-  onStart,
-  onRefreshProfiles,
-  onOpenSettings,
-  onOpenAnalytics,
-}: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~ts.old
-      {/* 极简 Header */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
-        </h1>
-
-        <div className="flex items-center gap-2">
-~~~~~
-~~~~~ts.new
-      {/* 极简 Header */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
-          </h1>
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
-            <Clock className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-~~~~~
-
-#### Acts 3: 在 `src/app.tsx` 中关联总时长状态并传递给 Dashboard
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~ts.old
-import { getAllUserProfiles, UserProfileData } from './utils/db';
-import { UserSettings, loadSettings } from './utils/settings';
-
-export function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
-  const [activeMode, setActiveMode] = useState<TrainingMode>('single');
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
-  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-
-  const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
-    single: null,
-    double_h: null,
-    double_r: null,
-  });
-
-  // 刷新用户能力度数
-  const refreshProfiles = async () => {
-    const data = await getAllUserProfiles();
-    setProfiles(data);
-  };
-~~~~~
-~~~~~ts.new
-import { getAllUserProfiles, getTotalTrainingTimeMs, UserProfileData } from './utils/db';
-import { UserSettings, loadSettings } from './utils/settings';
-
-export function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
-  const [activeMode, setActiveMode] = useState<TrainingMode>('single');
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
-  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-
-  const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
-    single: null,
-    double_h: null,
-    double_r: null,
-  });
-  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
-
-  // 刷新用户能力度数与总练习时长
-  const refreshProfiles = async () => {
-    const data = await getAllUserProfiles();
-    const timeMs = await getTotalTrainingTimeMs();
-    setProfiles(data);
-    setTotalTimeMs(timeMs);
-  };
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~ts.old
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          profiles={profiles}
-          onStart={handleStartTraining}
-          onRefreshProfiles={refreshProfiles}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenAnalytics={handleOpenAnalytics}
-        />
-      ) : (
-~~~~~
-~~~~~ts.new
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          profiles={profiles}
-          totalTimeMs={totalTimeMs}
-          onStart={handleStartTraining}
-          onRefreshProfiles={refreshProfiles}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenAnalytics={handleOpenAnalytics}
-        />
-      ) : (
+export function TrainingView({
+  mode,
+  sessionType,
+  initialGridStep,
+  settings,
+  onExit,
+}: TrainingViewProps) {
+  // === 会话状态 ===
+  const sessionIdRef = useRef<string>(`session_${Date.now()}`);
+  const startTimeRef = useRef<number>(Date.now());
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(
+      initialGridStep,
+      settings.stepGranularity === 'fine',
+      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
+      settings.targetAccuracy,
+      settings.blockSize
+    )
+  );
 ~~~~~
 
 ### 下一步建议
-1. 建议在开发环境中运行 `npm run dev` 验证 Dashboard 顶栏是否已成功渲染总时长 Badge。
-2. 可进一步在设置或弱点分析中增加按月/周/各模式拆分精细化统计时长的图表展示。
+1. 进入项目并开启 20 题基准测试，验证在连续答对 3 题或答错 1 题时，难度网格步长是否严格按照 3U1D 规则升降阶梯。
+2. 可在基准测试的顶栏或界面说明中加上“(3U1D 阶梯)”的文案提示，使用户明确当前所处的评估算法。
