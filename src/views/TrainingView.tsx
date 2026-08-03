@@ -94,7 +94,7 @@ export function TrainingView({
       anchorA: [question.anchorA.x, question.anchorA.y],
       anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
       targetB: [question.targetB.x, question.targetB.y],
-      userClick: [clickPoint.x, clickPoint.y],
+      userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
       angleDegree: question.angleDegree,
       distanceRatio: question.distanceRatio,
       isHit: hitResult.isHit,

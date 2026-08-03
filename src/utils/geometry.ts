@@ -70,6 +70,36 @@ export function generateGridPoints(
 }
 
 /**
+ * 寻找最近的网格点及感应范围判定
+ */
+export function findNearestGridPoint(
+  clickPoint: Point,
+  gridStart: Point,
+  gridStep: number,
+  dim: number = DEFAULT_GRID_DIM
+): { nearestPoint: Point; minDistance: number; isWithinRange: boolean } {
+  const gridPoints = generateGridPoints(gridStart, dim, gridStep);
+  let nearestPoint = gridPoints[0];
+  let minDistance = calcDistance(clickPoint, nearestPoint);
+
+  for (let i = 1; i < gridPoints.length; i++) {
+    const dist = calcDistance(clickPoint, gridPoints[i]);
+    if (dist < minDistance) {
+      minDistance = dist;
+      nearestPoint = gridPoints[i];
+    }
+  }
+
+  // 判定感应半径：网格步长的 55%
+  const maxRadius = gridStep * 0.55;
+  return {
+    nearestPoint,
+    minDistance,
+    isWithinRange: minDistance <= maxRadius,
+  };
+}
+
+/**
  * 点击作答 Hit Detection：判定用户的点击坐标是否击中了真理点 B 所在的网格
  */
 export function checkHit(
@@ -79,31 +109,22 @@ export function checkHit(
   gridStep: number,
   dim: number = DEFAULT_GRID_DIM
 ): HitResult {
-  const gridPoints = generateGridPoints(gridStart, dim, gridStep);
+  const { nearestPoint, isWithinRange } = findNearestGridPoint(
+    clickPoint,
+    gridStart,
+    gridStep,
+    dim
+  );
 
-  // 1. 寻找离用户点击位置最近的网格点
-  let nearestGridPoint = gridPoints[0];
-  let minDistance = calcDistance(clickPoint, nearestGridPoint);
-
-  for (let i = 1; i < gridPoints.length; i++) {
-    const dist = calcDistance(clickPoint, gridPoints[i]);
-    if (dist < minDistance) {
-      minDistance = dist;
-      nearestGridPoint = gridPoints[i];
-    }
-  }
-
-  // 2. 判断该最近网格点是否与真理点 B 重合（极小误差范围内）
-  const distToTarget = calcDistance(nearestGridPoint, targetB);
-  const isHit = distToTarget < 0.5;
-
-  // 3. 计算点击坐标与真理点 B 的直接像素偏差
-  const errorDistance = calcDistance(clickPoint, targetB);
+  // 1. 判断吸附后网格点与真理点 B 的直接偏差
+  const errorDistance = calcDistance(nearestPoint, targetB);
+  const isHit = errorDistance < 0.5;
 
   return {
     isHit,
-    nearestGridPoint,
+    nearestGridPoint: nearestPoint,
     errorDistance,
+    isWithinRange,
   };
 }
 
