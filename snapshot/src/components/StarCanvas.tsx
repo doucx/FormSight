@@ -1,7 +1,7 @@
 import { h } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { QuestionData, Point, HitResult } from '../types';
-import { checkHit, generateGridPoints, CANVAS_SIZE } from '../utils/geometry';
+import { checkHit, findNearestGridPoint, generateGridPoints, CANVAS_SIZE } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -20,6 +20,7 @@ export function StarCanvas({
 }: StarCanvasProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
   // === 绘图主逻辑 ===
   useEffect(() => {
@@ -64,6 +65,11 @@ export function StarCanvas({
           drawDot(ctx, p.x, p.y, '#888888', 3.5);
         });
 
+        // 图层 1.5: 鼠标悬停高亮网格点
+        if (!disabled && !showAnswer && hoverPoint) {
+          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', 6);
+        }
+
         // 图层 2: 锚点 (顶层)
         drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', 3.5);
         if (question.anchorC) {
@@ -90,7 +96,8 @@ export function StarCanvas({
 
           // 如果回答错或有用户点击坐标，绘制误差连线与点击位置
           if (userAnswer) {
-            const { clickPoint, hitResult } = userAnswer;
+            const { hitResult } = userAnswer;
+            const chosenPoint = hitResult.nearestGridPoint;
 
             if (!hitResult.isHit) {
               // 绘制红色虚线误差指示
@@ -98,19 +105,19 @@ export function StarCanvas({
               ctx.lineWidth = 1.5;
               ctx.setLineDash([4, 4]);
               ctx.beginPath();
-              ctx.moveTo(clickPoint.x, clickPoint.y);
+              ctx.moveTo(chosenPoint.x, chosenPoint.y);
               ctx.lineTo(bx, by);
               ctx.stroke();
               ctx.setLineDash([]); // 恢复实线
 
-              // 用户实点击位置标记 (红点)
-              drawDot(ctx, clickPoint.x, clickPoint.y, '#FF0000', 3.5);
+              // 用户点击位置标记 (红点 - 锚定在网格点中心)
+              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', 3.5);
             }
           }
         }
       }
     }
-  }, [question, showAnswer, userAnswer]);
+  }, [question, showAnswer, userAnswer, hoverPoint, disabled]);
 
   // 辅助函数：绘制圆点
   function drawDot(
@@ -125,6 +132,42 @@ export function StarCanvas({
     ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
   }
+
+  // === 交互事件：鼠标移动计算悬停高亮点 ===
+  const handleRightCanvasMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer) {
+      if (hoverPoint) setHoverPoint(null);
+      return;
+    }
+
+    const canvas = rightCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = CANVAS_SIZE / rect.width;
+    const scaleY = CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const currentPoint: Point = { x: clickX, y: clickY };
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(
+      currentPoint,
+      question.gridStart,
+      question.gridStep,
+      question.gridDim
+    );
+
+    if (isWithinRange) {
+      setHoverPoint(nearestPoint);
+    } else if (hoverPoint) {
+      setHoverPoint(null);
+    }
+  };
+
+  const handleRightCanvasMouseLeave = () => {
+    if (hoverPoint) setHoverPoint(null);
+  };
 
   // === 交互事件：点击右侧 Canvas 做答 ===
   const handleRightCanvasClick = (e: MouseEvent) => {
@@ -150,6 +193,10 @@ export function StarCanvas({
       question.gridDim
     );
 
+    // 忽略在有效感应范围之外的点击
+    if (!hitResult.isWithinRange) return;
+
+    setHoverPoint(null);
     onAnswer(clickPoint, hitResult);
   };
 
@@ -172,6 +219,8 @@ export function StarCanvas({
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           onClick={handleRightCanvasClick}
+          onMouseMove={handleRightCanvasMouseMove}
+          onMouseLeave={handleRightCanvasMouseLeave}
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'

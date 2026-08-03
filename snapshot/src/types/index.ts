@@ -25,6 +25,7 @@ export interface HitResult {
   isHit: boolean;            // 是否选中正确的网格点
   nearestGridPoint: Point;   // 用户点击位置对应的网格点
   errorDistance: number;     // 点击位置与真理点的像素误差
+  isWithinRange?: boolean;   // 是否落在有效点击感应范围内
 }
 
 export interface TrialRecord {
