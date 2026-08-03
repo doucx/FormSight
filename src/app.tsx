@@ -3,6 +3,7 @@ import { TrainingMode } from './types';
 import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
 import { SettingsModal } from './components/SettingsModal';
+import { AnalyticsModal } from './components/AnalyticsModal';
 import { getAllUserProfiles, UserProfileData } from './utils/db';
 import { UserSettings, loadSettings } from './utils/settings';
 
@@ -11,6 +12,8 @@ export function App() {
   const [activeMode, setActiveMode] = useState<TrainingMode>('single');
   const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
+  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
   const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
@@ -28,6 +31,12 @@ export function App() {
   useEffect(() => {
     refreshProfiles();
   }, []);
+
+  // 打开弱点分析
+  const handleOpenAnalytics = (mode?: TrainingMode) => {
+    setAnalyticsMode(mode || 'all');
+    setIsAnalyticsOpen(true);
+  };
 
   // 启动训练
   const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
@@ -52,6 +61,7 @@ export function App() {
           onStart={handleStartTraining}
           onRefreshProfiles={refreshProfiles}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenAnalytics={handleOpenAnalytics}
         />
       ) : (
         <TrainingView
@@ -68,6 +78,13 @@ export function App() {
           settings={settings}
           onClose={() => setIsSettingsOpen(false)}
           onSave={(newSettings) => setSettings(newSettings)}
+        />
+      )}
+
+      {isAnalyticsOpen && (
+        <AnalyticsModal
+          initialMode={analyticsMode}
+          onClose={() => setIsAnalyticsOpen(false)}
         />
       )}
     </div>
