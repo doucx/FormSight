@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 移除自动翻页时的底部按钮与答题反馈", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785745992.599192, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 引入轮次胜率评估自适应算法与目标正确率设置", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785747318.5890698, "duration_ms": 0}}
