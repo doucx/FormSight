@@ -105,14 +105,14 @@ export function TrainingView({
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
     } else {
-      // 300ms 后自动进入下一张图
+      // 500ms 后自动进入下一张图
       setTimeout(() => {
         const nextStep = adaptiveEngineRef.current.getCurrentStep();
         setShowAnswer(false);
         setUserAnswer(null);
         setQuestion(generateQuestion(mode, nextStep));
         setQuestionStartTime(Date.now());
-      }, 300);
+      }, 500);
     }
   };
 
