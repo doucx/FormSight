@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { X, Sliders, ToggleLeft, ToggleRight } from 'lucide-preact';
+import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame } from 'lucide-preact';
 import { UserSettings, saveSettings } from '../utils/settings';
 
 interface SettingsModalProps {
@@ -25,6 +25,18 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
     setCurrent((prev) => ({ ...prev, stepGranularity: granularity }));
   };
 
+  const handleModeChange = (mode: 'block' | 'staircase') => {
+    setCurrent((prev) => ({ ...prev, adaptiveMode: mode }));
+  };
+
+  const handleAccuracyChange = (acc: number) => {
+    setCurrent((prev) => ({ ...prev, targetAccuracy: acc }));
+  };
+
+  const handleBlockSizeChange = (size: number) => {
+    setCurrent((prev) => ({ ...prev, blockSize: size }));
+  };
+
   const handleConfirm = () => {
     saveSettings(current);
     onSave(current);
@@ -32,8 +44,8 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-indigo-600" />
@@ -84,6 +96,90 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 onInput={handleDelayChange}
                 className="w-full accent-indigo-600 cursor-pointer"
               />
+            </div>
+          )}
+
+          {/* 训练算子模式 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">自适应算子模式</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleModeChange('block')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  current.adaptiveMode === 'block'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Target className="w-3.5 h-3.5 text-indigo-600" />
+                轮次胜率评估 (推荐)
+              </button>
+              <button
+                onClick={() => handleModeChange('staircase')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  current.adaptiveMode === 'staircase'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Flame className="w-3.5 h-3.5 text-amber-500" />
+                经典 3U1D 阶梯
+              </button>
+            </div>
+          </div>
+
+          {/* 轮次评估配置项 */}
+          {current.adaptiveMode === 'block' && (
+            <div className="space-y-3 bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-100">
+              {/* 目标通关正确率 */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                  <span>目标通关正确率</span>
+                  <span className="font-bold text-indigo-600 font-mono">
+                    {Math.round(current.targetAccuracy * 100)}%
+                  </span>
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[0.7, 0.8, 0.85, 0.9].map((acc) => (
+                    <button
+                      key={acc}
+                      onClick={() => handleAccuracyChange(acc)}
+                      className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                        current.targetAccuracy === acc
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {Math.round(acc * 100)}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 每轮评估题量 */}
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+                  <span>每轮评估题量</span>
+                  <span className="font-bold text-indigo-600 font-mono">
+                    {current.blockSize} 题/轮
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[10, 15, 20].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => handleBlockSizeChange(size)}
+                      className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
+                        current.blockSize === size
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {size} 题
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 

@@ -27,7 +27,13 @@ export function TrainingView({
   const sessionIdRef = useRef<string>(`session_${Date.now()}`);
   const startTimeRef = useRef<number>(Date.now());
   const adaptiveEngineRef = useRef<AdaptiveEngine>(
-    new AdaptiveEngine(initialGridStep, settings.stepGranularity === 'fine')
+    new AdaptiveEngine(
+      initialGridStep,
+      settings.stepGranularity === 'fine',
+      settings.adaptiveMode,
+      settings.targetAccuracy,
+      settings.blockSize
+    )
   );
   const autoNextTimerRef = useRef<number | null>(null);
 
@@ -201,7 +207,7 @@ export function TrainingView({
 
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              本次正确率
+              总正确率
             </span>
             <span className="font-black text-gray-800">
               {currentAccuracy}%
