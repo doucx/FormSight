@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] style: 移除训练视图顶栏的“本层进度”高亮显示", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785747494.6634476, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(training): 引入轮次胜率评估自适应算法与目标正确率设置", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785747574.2863266, "duration_ms": 0}}
