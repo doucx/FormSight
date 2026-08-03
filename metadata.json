@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(ui): 修复 Tailwind 指令语法并全面优化 UI 界面", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785743291.5470364, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(ui): 修复 Tailwind 指令语法并升级主页与训练区 UI 样式", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785743371.4341595, "duration_ms": 0}}
