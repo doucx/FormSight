@@ -1,53 +1,137 @@
-好的，既然所有改动已经完成并经过确认，现在我们将这些改进作为一个完整的逻辑单元提交到 Git 仓库中。
+完全同意你的建议。在开启自动翻页模式下，画板本身已直观提供了击中/偏差的视觉指示，底部提示文字属于冗余信息；并且由于答题后会自动跳转，底部的“下一题”控制栏在自动翻页模式下也是不需要的。
 
-以下是针对本次提交的 Quipu 计划：
+我们将按以下原则优化 `TrainingView.tsx`：
+1. **彻底移除** 训练视图底部的文本/数值答题反馈组件（包括“击中/偏差”图标及像素偏差值）。
+2. **条件渲染底部控制栏**：仅当 `settings.autoNext === false`（手动翻页模式）时，才渲染包含“下一题”按钮的底部控制栏。
+3. **清理无用代码**：移除已不再使用的 `CheckCircle2` 和 `XCircle` 图标导入，避免触发 Strict 模式下的 `noUnusedLocals` 校验。
 
-## [COMMIT] feat(ui): 实现点阵悬停高亮、网格点吸附对齐及空白点击过滤
+## [WIP] refactor(ui): 移除自动翻页时的底部按钮与答题反馈
 
 ### 用户需求
-用户需要将先前完成的“点阵悬停高亮”、“网格点精确吸附”与“空白区域点击过滤”功能作为一个完整的提交记录归档。
+1. 在“自动翻页”设置开启时，训练界面隐去底部的“下一题”按钮控制栏。
+2. 彻底删除底部的“击中/偏差”及像素距离数值文本反馈，仅保留 Canvas 画板上的图形视觉反馈。
+3. 仅在“自动翻页”关闭（手动翻页模式）时，才保留显示“下一题”操作按钮。
 
 ### 评论
-该改动极大地提升了寻星练习 (Star-Hopping) 的交互品质和数据统计纯净度，将用户的认知负荷从鼠标微调中解放出来。现在可以将其正式提交。
+该重构能够进一步精简训练界面，减少不必要的 UI 视觉噪音，使用户能更加专注于几何感知的直觉训练，同时提升自动翻页模式下的流畅度。
 
 ### 目标
-1. 将修改后的代码文件添加到 Git 暂存区。
-2. 创建内容规范的 Git 提交。
+1. 修改 `src/views/TrainingView.tsx`，移除底部的文本答题反馈。
+2. 给底部操作面板添加 `!settings.autoNext` 条件渲染逻辑。
+3. 清理无用的图标导入，确保 TypeScript 编译通过。
 
 ### 基本原理
-按照 Quipu 协议规范，代码修改与 Git 提交操作必须严格隔离在独立的 Plan 中。当前计划仅包含 `git_add` 和 `git_commit` 动作，标志着前序功能开发的完美闭环。
+通过读取 `settings.autoNext` 配置，在自动翻页开启时直接不挂载底部栏 DOM 元素。由于 `StarCanvas` 内部在答题后已通过深绿色十字高亮和红色虚线精准标注了真理点与错误偏差，去除冗余的文字反馈不会影响训练体验。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/grid-hover-and-snap #task/action/implementation #task/state/end
+#intent/refine #flow/ready #priority/medium #concept/ui #scope/ux #ai/instruct
 
 ---
 
 ### Script
 
-#### Acts 1: 将文件添加至 Git 暂存区
+#### Acts 1: 移除底部答题反馈并按设置条件渲染“下一题”操作栏
 
 ~~~~~act
-git_add
-src/types/index.ts
-src/utils/geometry.ts
-src/components/StarCanvas.tsx
+patch_file
 src/views/TrainingView.tsx
 ~~~~~
-
-#### Acts 2: 提交代码变更
+~~~~~python.old
+import { h } from 'preact';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import { ArrowLeft, Clock, CheckCircle2, XCircle, ChevronRight } from 'lucide-preact';
+import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
+~~~~~
+~~~~~python.new
+import { h } from 'preact';
+import { useState, useEffect, useRef } from 'preact/hooks';
+import { ArrowLeft, Clock, ChevronRight } from 'lucide-preact';
+import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
+~~~~~
 
 ~~~~~act
-git_commit
+patch_file
+src/views/TrainingView.tsx
 ~~~~~
-~~~~~text
-feat(ui): implement grid hover highlight, snap-to-grid, and blank click filtering
+~~~~~python.old
+      {/* 底部操作与简略反馈 */}
+      <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-between min-h-[56px]">
+        <div>
+          {showAnswer && userAnswer && (
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
+                  userAnswer.hitResult.isHit
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-rose-50 text-rose-700 border border-rose-200'
+                }`}
+              >
+                {userAnswer.hitResult.isHit ? (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                ) : (
+                  <XCircle className="w-3.5 h-3.5" />
+                )}
+                {userAnswer.hitResult.isHit ? '击中' : '偏差'}
+              </span>
+              <span className="text-xs font-mono font-bold text-slate-600">
+                {userAnswer.hitResult.errorDistance} px
+              </span>
+            </div>
+          )}
+        </div>
 
-- Add `isWithinRange` to `HitResult` and implement `findNearestGridPoint` tolerance checking (radius <= 55% of gridStep).
-- Implement interactive hover highlight (indigo-600, radius 6) on the right canvas when mouse is near a valid grid point.
-- Filter out clicks outside the valid grid point capture range, preventing accidental misclicks in blank areas.
-- Anchor all visual feedback (red error dots and dashed error lines) and saved session records strictly to the snapped grid point center (`nearestGridPoint`) rather than raw mouse coordinates.
+        {isFinished ? (
+          <button
+            onClick={handleFinishSession}
+            className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+          >
+            完成并退出
+          </button>
+        ) : (
+          <button
+            onClick={handleNextQuestion}
+            disabled={!showAnswer}
+            className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+              showAnswer
+                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            下一题
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+~~~~~
+~~~~~python.new
+      {/* 底部操作面板（仅在未开启自动翻页时显示） */}
+      {!settings.autoNext && (
+        <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
+          {isFinished ? (
+            <button
+              onClick={handleFinishSession}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+            >
+              完成并退出
+            </button>
+          ) : (
+            <button
+              onClick={handleNextQuestion}
+              disabled={!showAnswer}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+                showAnswer
+                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              下一题
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 ~~~~~
 
 ### 下一步建议
-- **运行构建验证**: 执行 `npm run build` 确保 TypeScript 编译通过且无任何类型错误。
-- **开启新任务**: 如有其他优化需求（如音效反馈或移动端 Touch 支持），可启动新的宏观任务。
+1. 运行项目构建命令（如 `npm run build`）测试验证类型检查与包打逻辑。
+2. 进入浏览器验证在切换“训练偏好设置”中的自动翻页开关时，界面交互及底部控件的显隐效果。
