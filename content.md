@@ -1,35 +1,35 @@
-好的，我们将不破坏现有任何逻辑，以纯增量扩展的方式实现 **方案一（中心相对偏差热力图）** 和 **方案三（8 方向角度弱点罗盘）**。
+好的，我们将按照上述“透明智能 + 显式覆盖”的设计思路落地 **专项靶向强化训练模式**。
 
-下面是为您生成的实现计划与代码修改指令。
+下面是为您生成的代码实现与文件修改指令。
 
-## [WIP] feat: 实现中心偏差热力图与 8 方向弱点罗盘分析
+## [WIP] feat: 落地弱点角度专项靶向强化训练模式
 
 ### 用户需求
-用户需要可视化展示在视觉感知训练中，哪些角度和方向最容易看偏。现选择实现：
-1. **方案一（中心相对偏差热力图）**：以真理点 $B$ 为原点 $(0,0)$，展示用户点击的相对偏移分布（揭示上下左右偏置倾向，如“习惯性偏右下 3px”）。
-2. **方案三（8 方向角度扇形弱点罗盘）**：将 0°~360° 划分为 8 个方位区间，分析并在罗盘扇形图上呈现各角度的正确率与平均误差距离，帮助用户精准诊断弱点视角。
+支持针对用户的视觉盲区角度（如 45° 东北角）进行专项靶向强化训练。
+1. **概率重采样生成**：在靶向模式下，70% 概率针对弱点扇区倾斜发题，30% 保留全盘随机探索。
+2. **多层级控制**：支持“关闭（全随机）”、“智能自动（自动提取历史弱点）”和“手动指定（锁定特定角度）”三种模式。
+3. **一键联动**：在“弱点分析弹窗”中可一键将诊断出的弱点扇区设为靶向训练目标。
 
 ### 评论
-该功能极大地增强了系统的诊断与练习价值。不需要重构已有代码，仅需利用数据库中已存的 `records` 日志表，进行坐标平移与极角归类即可。
+该功能的落地完成了“评估 - 诊断 - 强化”的训练闭环。通过“70% 靶向 + 30% 保留探索”的加权抽样算法，既保证了训练对弱点的高效覆盖，又避免了连续同角度引起的视觉疲劳。
 
 ### 目标
-1. 在 `db.ts` 中增加获取历史答题记录 `getAllTrialRecords` 的查询接口。
-2. 创建全新的分析弹窗组件 `AnalyticsModal.tsx`，支持双图表切换：
-   - 相对偏差热力图 Canvas
-   - 8 方向弱点扇形罗盘 Canvas
-3. 在 `Dashboard.tsx` 顶部控制栏和卡片动作区增加“弱点分析”入口。
-4. 在 `App.tsx` 中完成分析弹窗的状态接入与交互响应。
+1. 扩展 `settings.ts`，增加 `targetingMode`（`off` | `auto` | `manual`）及 `manualTargetSectors` 配置。
+2. 升级 `geometry.ts` 中的 `generateQuestion`，支持传入加权靶向配置。
+3. 扩展 `SettingsModal.tsx`，添加“专项靶向训练设置”控制界面。
+4. 增强 `AnalyticsModal.tsx`，在弱点分析卡片中提供“一键开启该弱点靶向强化”功能。
+5. 升级 `TrainingView.tsx`，自动拉取弱点扇区并在顶栏实时显示靶向训练状态勋章。
 
 ### 基本原理
-- **相对坐标变换**：对每条记录计算 $\Delta x = x_{\text{click}} - x_{\text{targetB}}$，$\Delta y = y_{\text{click}} - y_{\text{targetB}}$。将 $(\Delta x, \Delta y)$ 绘制在以 Canvas 中心为原点的坐标轴上，并附带 5px / 10px / 20px 辅轴圆环与平均偏移向量。
-- **8 方向区间桶**：公式 `sectorIdx = Math.floor(((angleDegree + 22.5) % 360) / 45)` 将角度分入正东(0°)、东北(45°)、正北(90°)等 8 个 45° 扇区，聚合统计各扇区的做答题数、胜率及平均像素误差距离，并绘制扇形占比图与弱点提示。
+- **角度加权抽样**：在选择发题角度时，通过 `selectAngleWithTargeting` 函数判定：当处于靶向状态时，有 70% 的概率选择弱点扇区中心角度并在 $\pm 20^\circ$ 范围内添加平滑随机抖动；其余 30% 的概率进行全盘均匀随机，保证抽样分布的合理性。
+- **状态解耦**：设置与算法纯增量扩展，完全保留原有训练和测试模式的兼容性。
 
 ### 标签
 #intent/build #flow/ready #priority/high 
 #comp/interfaces #concept/ui #scope/ux #scope/dx 
 #ai/instruct
-#task/domain/analytics
-#task/object/error-heatmap
+#task/domain/adaptive-engine
+#task/object/targeted-training
 #task/action/implementation
 #task/state/begin #task/status/active
 
@@ -37,141 +37,345 @@
 
 ### Script
 
-#### Acts 1: 在 `db.ts` 中暴露历史答题记录查询 API
+#### Acts 1: 扩展偏好设置 `settings.ts` 结构
 
-在 `src/utils/db.ts` 中添加 `getAllTrialRecords` 函数，用于按模式或全量拉取做答日志。
+增加 `TargetingMode` 类型定义及默认配置参数。
 
 ~~~~~act
 patch_file
-src/utils/db.ts
+src/utils/settings.ts
 ~~~~~
 ~~~~~typescript.old
-    await tx.done;
-    return true;
-  } catch (err) {
-    console.error('导入寻星数据失败:', err);
-    return false;
-  }
+export type StepGranularity = 'standard' | 'fine';
+export type AdaptiveMode = 'block' | 'staircase';
+
+export interface UserSettings {
+  autoNext: boolean;            // 点击后是否自动翻页
+  autoNextDelay: number;       // 自动翻页延迟 (ms)
+  stepGranularity: StepGranularity; // 步长粒度 ('standard': 默认阶梯, 'fine': 1px逐级)
+  adaptiveMode: AdaptiveMode;   // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
+  targetAccuracy: number;      // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
+  blockSize: number;           // 每轮评估题数 (10, 15, 20)
 }
+
+const SETTINGS_KEY = 'star_hopping_user_settings';
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+};
 ~~~~~
 ~~~~~typescript.new
-    await tx.done;
-    return true;
-  } catch (err) {
-    console.error('导入寻星数据失败:', err);
-    return false;
-  }
+export type StepGranularity = 'standard' | 'fine';
+export type AdaptiveMode = 'block' | 'staircase';
+export type TargetingMode = 'off' | 'auto' | 'manual';
+
+export interface UserSettings {
+  autoNext: boolean;            // 点击后是否自动翻页
+  autoNextDelay: number;       // 自动翻页延迟 (ms)
+  stepGranularity: StepGranularity; // 步长粒度 ('standard': 默认阶梯, 'fine': 1px逐级)
+  adaptiveMode: AdaptiveMode;   // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
+  targetAccuracy: number;      // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
+  blockSize: number;           // 每轮评估题数 (10, 15, 20)
+  targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
+  manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
 }
 
-// === API 7: 获取历史做答日志（支持按模式筛选） ===
-export async function getAllTrialRecords(
-  mode?: TrainingMode
-): Promise<TrialRecord[]> {
-  const db = await getDB();
-  if (mode) {
-    return await db.getAllFromIndex('records', 'by-mode', mode);
-  }
-  return await db.getAll('records');
-}
+const SETTINGS_KEY = 'star_hopping_user_settings';
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+  targetingMode: 'off',
+  manualTargetSectors: [],
+};
 ~~~~~
 
-#### Acts 2: 创建 `AnalyticsModal.tsx` 分析弹窗组件
+#### Acts 2: 升级几何发题算法 `geometry.ts` 支持加权抽样
 
-新建 `src/components/AnalyticsModal.tsx`，包含“相对偏差热力图”和“8 方向弱点罗盘”两个视图卡片及数据计算逻辑。
+增加 `QuestionGenerateOptions` 接口与 `selectAngleWithTargeting` 随机抽样逻辑。
 
 ~~~~~act
-write_file
+patch_file
+src/utils/geometry.ts
+~~~~~
+~~~~~typescript.old
+/**
+ * 随机生成算法：根据模式与难度步长生成一道题目数据
+ */
+export function generateQuestion(
+  mode: TrainingMode,
+  gridStep: number
+): QuestionData {
+  const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const gridDim = DEFAULT_GRID_DIM;
+  const randomRow = Math.floor(Math.random() * gridDim);
+  const randomCol = Math.floor(Math.random() * gridDim);
+
+  if (mode === 'single') {
+    // === 1. 单锚点模式 ===
+    const anchorA: Point = { x: CX, y: CY };
+    const angle = Math.floor(Math.random() * 360);
+~~~~~
+~~~~~typescript.new
+export interface QuestionGenerateOptions {
+  targetingMode?: 'off' | 'auto' | 'manual';
+  targetSectors?: number[]; // [0~7]
+}
+
+/**
+ * 加权随机生成极角：70% 概率落入靶向弱点扇区，30% 概率全盘均匀探索
+ */
+function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
+  if (
+    options &&
+    options.targetingMode &&
+    options.targetingMode !== 'off' &&
+    options.targetSectors &&
+    options.targetSectors.length > 0
+  ) {
+    if (Math.random() < 0.7) {
+      const chosenSector =
+        options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
+      const sectorCenterAngle = chosenSector * 45;
+      const jitter = (Math.random() - 0.5) * 40; // ±20° 范围加权抖动
+      return Math.floor((sectorCenterAngle + jitter + 360) % 360);
+    }
+  }
+  return Math.floor(Math.random() * 360);
+}
+
+/**
+ * 随机生成算法：根据模式与难度步长生成一道题目数据
+ */
+export function generateQuestion(
+  mode: TrainingMode,
+  gridStep: number,
+  options?: QuestionGenerateOptions
+): QuestionData {
+  const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const gridDim = DEFAULT_GRID_DIM;
+  const randomRow = Math.floor(Math.random() * gridDim);
+  const randomCol = Math.floor(Math.random() * gridDim);
+
+  if (mode === 'single') {
+    // === 1. 单锚点模式 ===
+    const anchorA: Point = { x: CX, y: CY };
+    const angle = selectAngleWithTargeting(options);
+~~~~~
+
+#### Acts 3: 扩展设置弹窗 `SettingsModal.tsx` 交互界面
+
+在设置弹窗中添加“专项靶向训练设置”区，支持选择模式及勾选手动锁定扇区。
+
+~~~~~act
+patch_file
+src/components/SettingsModal.tsx
+~~~~~
+~~~~~typescript.old
+import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame } from 'lucide-preact';
+import { UserSettings, saveSettings } from '../utils/settings';
+~~~~~
+~~~~~typescript.new
+import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame, Crosshair } from 'lucide-preact';
+import { UserSettings, TargetingMode, saveSettings } from '../utils/settings';
+
+const SECTOR_NAMES = [
+  '正东(0°)',
+  '东北(45°)',
+  '正北(90°)',
+  '西北(135°)',
+  '正西(180°)',
+  '西南(225°)',
+  '正南(270°)',
+  '东南(315°)',
+];
+~~~~~
+
+~~~~~act
+patch_file
+src/components/SettingsModal.tsx
+~~~~~
+~~~~~typescript.old
+  const handleBlockSizeChange = (size: number) => {
+    setCurrent((prev) => ({ ...prev, blockSize: size }));
+  };
+
+  const handleConfirm = () => {
+~~~~~
+~~~~~typescript.new
+  const handleBlockSizeChange = (size: number) => {
+    setCurrent((prev) => ({ ...prev, blockSize: size }));
+  };
+
+  const handleTargetingModeChange = (mode: TargetingMode) => {
+    setCurrent((prev) => ({ ...prev, targetingMode: mode }));
+  };
+
+  const handleSectorToggle = (sectorIdx: number) => {
+    setCurrent((prev) => {
+      const currentSectors = prev.manualTargetSectors || [];
+      const exists = currentSectors.includes(sectorIdx);
+      const updated = exists
+        ? currentSectors.filter((s) => s !== sectorIdx)
+        : [...currentSectors, sectorIdx];
+      return { ...prev, manualTargetSectors: updated };
+    });
+  };
+
+  const handleConfirm = () => {
+~~~~~
+
+~~~~~act
+patch_file
+src/components/SettingsModal.tsx
+~~~~~
+~~~~~typescript.old
+          {/* 难度步长粒度 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">网格步长精细度</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleGranularityChange('standard')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+                  current.stepGranularity === 'standard'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                标准阶梯 (5px梯度)
+              </button>
+              <button
+                onClick={() => handleGranularityChange('fine')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+                  current.stepGranularity === 'fine'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                精细阶梯 (1px逐级)
+              </button>
+            </div>
+          </div>
+        </div>
+~~~~~
+~~~~~typescript.new
+          {/* 难度步长粒度 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">网格步长精细度</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleGranularityChange('standard')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+                  current.stepGranularity === 'standard'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                标准阶梯 (5px梯度)
+              </button>
+              <button
+                onClick={() => handleGranularityChange('fine')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+                  current.stepGranularity === 'fine'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                精细阶梯 (1px逐级)
+              </button>
+            </div>
+          </div>
+
+          {/* 专项靶向强化训练设置 */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <Crosshair className="w-4 h-4 text-indigo-600" />
+              弱点专项靶向强化
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { id: 'off', label: '关闭 (全随机)' },
+                { id: 'auto', label: '智能自动' },
+                { id: 'manual', label: '手动指定' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleTargetingModeChange(m.id as TargetingMode)}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    current.targetingMode === m.id
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 手动勾选扇区 */}
+            {current.targetingMode === 'manual' && (
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                <div className="text-[11px] font-semibold text-slate-500">
+                  选择需要靶向强化的角度扇区：
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {SECTOR_NAMES.map((name, idx) => {
+                    const selected = (current.manualTargetSectors || []).includes(idx);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSectorToggle(idx)}
+                        className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+                          selected
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+~~~~~
+
+#### Acts 4: 在 `AnalyticsModal.tsx` 中增加一键靶向强化按钮
+
+在弱点诊断区域增加“一键开启该方向靶向强化”的操作入口。
+
+~~~~~act
+patch_file
 src/components/AnalyticsModal.tsx
 ~~~~~
-~~~~~tsx
-import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
+~~~~~typescript.old
 import { X, Target, Compass, BarChart2, AlertCircle, Info } from 'lucide-preact';
 import { TrialRecord, TrainingMode } from '../types';
 import { getAllTrialRecords } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { X, Target, Compass, BarChart2, AlertCircle, Info, Crosshair } from 'lucide-preact';
+import { TrialRecord, TrainingMode } from '../types';
+import { getAllTrialRecords } from '../utils/db';
+import { loadSettings, saveSettings } from '../utils/settings';
+~~~~~
 
-interface AnalyticsModalProps {
-  initialMode?: TrainingMode | 'all';
-  onClose: () => void;
-}
-
-const SECTOR_LABELS = [
-  '正东 (0°)',
-  '东北 (45°)',
-  '正北 (90°)',
-  '西北 (135°)',
-  '正西 (180°)',
-  '西南 (225°)',
-  '正南 (270°)',
-  '东南 (315°)',
-];
-
-export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalProps) {
-  const [selectedMode, setSelectedMode] = useState<TrainingMode | 'all'>(initialMode);
-  const [activeTab, setActiveTab] = useState<'heatmap' | 'compass'>('heatmap');
-  const [records, setRecords] = useState<TrialRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  const heatmapCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const compassCanvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // 加载数据
-  useEffect(() => {
-    let isMounted = true;
-    setLoading(true);
-    const fetchRecords = async () => {
-      const data = await getAllTrialRecords(
-        selectedMode === 'all' ? undefined : selectedMode
-      );
-      if (isMounted) {
-        setRecords(data);
-        setLoading(false);
-      }
-    };
-    fetchRecords();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedMode]);
-
-  // === 统计指标算子 ===
-  const totalCount = records.length;
-  const hitCount = records.filter((r) => r.isHit).length;
-  const overallAccuracy = totalCount > 0 ? Math.round((hitCount / totalCount) * 100) : 0;
-
-  // 平均 X / Y 偏移量 (像素)
-  let avgDx = 0;
-  let avgDy = 0;
-  let avgErrorDist = 0;
-  if (totalCount > 0) {
-    let sumDx = 0;
-    let sumDy = 0;
-    let sumDist = 0;
-    records.forEach((r) => {
-      sumDx += r.userClick[0] - r.targetB[0];
-      sumDy += r.userClick[1] - r.targetB[1];
-      sumDist += r.errorPixelDistance;
-    });
-    avgDx = Math.round((sumDx / totalCount) * 10) / 10;
-    avgDy = Math.round((sumDy / totalCount) * 10) / 10;
-    avgErrorDist = Math.round((sumDist / totalCount) * 10) / 10;
-  }
-
-  // 8 方向数据桶计算
-  const sectorBuckets = Array.from({ length: 8 }, () => ({
-    total: 0,
-    hits: 0,
-    sumError: 0,
-  }));
-
-  records.forEach((r) => {
-    // 将 0~360° 归类到 8 个 45° 扇区
-    const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
-    sectorBuckets[idx].total += 1;
-    if (r.isHit) sectorBuckets[idx].hits += 1;
-    sectorBuckets[idx].sumError += r.errorPixelDistance;
-  });
-
+~~~~~act
+patch_file
+src/components/AnalyticsModal.tsx
+~~~~~
+~~~~~typescript.old
   const sectorStats = sectorBuckets.map((b, i) => {
     const acc = b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0;
     const avgErr = b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0;
@@ -182,333 +386,37 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       avgError: avgErr,
     };
   });
+~~~~~
+~~~~~typescript.new
+  const sectorStats = sectorBuckets.map((b, i) => {
+    const acc = b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0;
+    const avgErr = b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0;
+    return {
+      sectorIdx: i,
+      label: SECTOR_LABELS[i],
+      total: b.total,
+      accuracy: acc,
+      avgError: avgErr,
+    };
+  });
 
-  // 找最弱方向（做答数 >= 3 中正确率最低或误差最大的方向）
-  const validSectors = sectorStats.filter((s) => s.total >= 2);
-  const weakestSector =
-    validSectors.length > 0
-      ? validSectors.reduce((prev, curr) => (curr.accuracy < prev.accuracy ? curr : prev))
-      : null;
-
-  // === 1. 渲染：方案一 中心相对偏差热力图 ===
-  useEffect(() => {
-    if (activeTab !== 'heatmap' || loading) return;
-    const canvas = heatmapCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-    const scale = 5; // 1px 屏幕误差放大 5 倍渲染便于可视化
-
-    // 清屏
-    ctx.fillStyle = '#1E293B'; // 科技深蓝背景
-    ctx.fillRect(0, 0, width, height);
-
-    // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
-    const rings = [5, 10, 20, 30];
-    ctx.lineWidth = 1;
-    rings.forEach((r) => {
-      ctx.strokeStyle = '#334155';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#64748B';
-      ctx.font = '10px monospace';
-      ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
+  const handleApplyTargeting = (sectorIdx: number) => {
+    const settings = loadSettings();
+    saveSettings({
+      ...settings,
+      targetingMode: 'manual',
+      manualTargetSectors: [sectorIdx],
     });
+    alert(`🎯 已成功设置：将在训练中专项强化【${SECTOR_LABELS[sectorIdx]}】视角！`);
+    onClose();
+  };
+~~~~~
 
-    // 绘制十字坐标轴
-    ctx.strokeStyle = '#475569';
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath();
-    ctx.moveTo(0, cy);
-    ctx.lineTo(width, cy);
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx, height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 绘制每个做答记录的相对偏移散点
-    records.forEach((r) => {
-      const dx = r.userClick[0] - r.targetB[0];
-      const dy = r.userClick[1] - r.targetB[1];
-
-      const px = cx + dx * scale;
-      const py = cy + dy * scale;
-
-      // 根据是否击中渲染绿色/红黄色散点光晕
-      ctx.beginPath();
-      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-      if (r.isHit) {
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
-      } else {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
-      }
-      ctx.fill();
-    });
-
-    // 绘制中心目标点 B (真理原点)
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 绘制平均偏移向量线
-    if (totalCount > 0) {
-      const avgPx = cx + avgDx * scale;
-      const avgPy = cy + avgDy * scale;
-
-      ctx.strokeStyle = '#F59E0B'; // 橙色平均方向指示线
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(avgPx, avgPy);
-      ctx.stroke();
-
-      ctx.fillStyle = '#F59E0B';
-      ctx.beginPath();
-      ctx.arc(avgPx, avgPy, 5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }, [activeTab, loading, records, avgDx, avgDy, totalCount]);
-
-  // === 2. 渲染：方案三 8 方向弱点罗盘扇形图 ===
-  useEffect(() => {
-    if (activeTab !== 'compass' || loading) return;
-    const canvas = compassCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-    const outerRadius = Math.min(width, height) / 2 - 30;
-
-    // 清屏
-    ctx.fillStyle = '#1E293B';
-    ctx.fillRect(0, 0, width, height);
-
-    // 绘制 8 个扇形
-    const sectorAngle = (Math.PI * 2) / 8;
-    // 起始偏移量 -22.5° 使正东 0° 位于正中央
-    const startOffset = -Math.PI / 8;
-
-    sectorStats.forEach((stat, i) => {
-      const startA = startOffset + i * sectorAngle;
-      const endA = startA + sectorAngle;
-
-      // 根据正确率决定半径大小与填充颜色
-      const radiusRatio = stat.total > 0 ? 0.35 + (stat.accuracy / 100) * 0.65 : 0.25;
-      const r = outerRadius * radiusRatio;
-
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, startA, endA);
-      ctx.closePath();
-
-      if (stat.total === 0) {
-        ctx.fillStyle = 'rgba(51, 65, 85, 0.4)';
-      } else if (stat.accuracy >= 80) {
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.55)'; // 绿
-      } else if (stat.accuracy >= 60) {
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.65)'; // 黄
-      } else {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.75)'; // 红
-      }
-      ctx.fill();
-
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // 绘制方向文字标注
-      const midA = startA + sectorAngle / 2;
-      const labelR = outerRadius + 18;
-      const lx = cx + Math.cos(midA) * labelR;
-      const ly = cy + Math.sin(midA) * labelR;
-
-      ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#EF4444' : '#94A3B8';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(stat.label.split(' ')[0], lx, ly);
-    });
-
-    // 中心装饰基准圆
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
-    ctx.fill();
-    ctx.strokeStyle = '#64748B';
-    ctx.stroke();
-  }, [activeTab, loading, records, sectorStats]);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-              <BarChart2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-800">视角误差与弱点分析</h2>
-              <p className="text-xs text-slate-400">洞察你的视觉系统空间偏置与盲区</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* 模式筛选 & Tab 切换栏 */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-          {/* 模式 Selector */}
-          <div className="flex items-center gap-1">
-            {[
-              { id: 'all', name: '全部模式' },
-              { id: 'single', name: '单锚点' },
-              { id: 'double_h', name: '水平双锚点' },
-              { id: 'double_r', name: '旋转双锚点' },
-            ].map((m) => (
-              <button
-                key={m.id}
-                onClick={() => setSelectedMode(m.id as any)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-                  selectedMode === m.id
-                    ? 'bg-white text-indigo-600 shadow-sm'
-                    : 'text-slate-500 hover:text-slate-800'
-                }`}
-              >
-                {m.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab 选择器 */}
-          <div className="flex items-center gap-1 bg-slate-200/60 p-1 rounded-xl">
-            <button
-              onClick={() => setActiveTab('heatmap')}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'heatmap'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Target className="w-3.5 h-3.5" />
-              中心相对偏差热力图
-            </button>
-            <button
-              onClick={() => setActiveTab('compass')}
-              className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
-                activeTab === 'compass'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              8方向弱点罗盘
-            </button>
-          </div>
-        </div>
-
-        {/* 主内容展示区 */}
-        {loading ? (
-          <div className="h-72 flex items-center justify-center text-slate-400 text-xs">
-            正在分析历史答题数据...
-          </div>
-        ) : totalCount === 0 ? (
-          <div className="h-72 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-            <Info className="w-8 h-8 text-slate-300" />
-            暂无当前模式下的练习日志，先去练习几道题吧！
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
-            {/* 左侧/上方 Canvas 可视化区 */}
-            <div className="md:col-span-7 flex justify-center bg-slate-900 p-4 rounded-2xl border border-slate-800 relative">
-              {activeTab === 'heatmap' ? (
-                <canvas
-                  ref={heatmapCanvasRef}
-                  width={320}
-                  height={320}
-                  className="w-full max-w-[300px] aspect-square rounded-xl"
-                />
-              ) : (
-                <canvas
-                  ref={compassCanvasRef}
-                  width={320}
-                  height={320}
-                  className="w-full max-w-[300px] aspect-square rounded-xl"
-                />
-              )}
-            </div>
-
-            {/* 右侧/下方 数据统计面板 */}
-            <div className="md:col-span-5 flex flex-col gap-3">
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
-                <div className="text-xs font-bold text-slate-500 uppercase">总体评估</div>
-                <div className="flex justify-between items-end">
-                  <span className="text-2xl font-black text-slate-800">
-                    {overallAccuracy}%
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400 mb-1">
-                    样本量: {totalCount} 题
-                  </span>
-                </div>
-              </div>
-
-              {activeTab === 'heatmap' ? (
-                <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
-                  <div className="font-bold text-indigo-900 flex items-center gap-1">
-                    <Target className="w-3.5 h-3.5 text-indigo-600" />
-                    系统偏置诊断 (Systematic Bias)
-                  </div>
-                  <p className="text-slate-600 leading-relaxed text-[11px]">
-                    中心绿色原点为真实目标。散点越集中代表手眼协调度越高。
-                  </p>
-                  <div className="pt-1 space-y-1 font-mono text-slate-700">
-                    <div className="flex justify-between">
-                      <span>平均 X 轴偏移:</span>
-                      <span className="font-bold">
-                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}{' '}
-                        px
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>平均 Y 轴偏移:</span>
-                      <span className="font-bold">
-                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}{' '}
-                        px
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
-                      <span>平均像素误差:</span>
-                      <span>{avgErrorDist} px</span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
-                  <div className="font-bold text-amber-900 flex items-center gap-1">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                    视角盲区与弱点扇区
-                  </div>
+~~~~~act
+patch_file
+src/components/AnalyticsModal.tsx
+~~~~~
+~~~~~typescript.old
                   {weakestSector ? (
                     <div className="space-y-1">
                       <p className="text-slate-700 text-[11px]">
@@ -522,263 +430,181 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                       </div>
                     </div>
                   ) : (
-                    <p className="text-slate-600 text-[11px]">各方向表现均衡，继续保持！</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+~~~~~
+~~~~~typescript.new
+                  {weakestSector ? (
+                    <div className="space-y-2">
+                      <p className="text-slate-700 text-[11px]">
+                        你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 方向上正确率最低：
+                      </p>
+                      <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60">
+                        <span className="font-bold text-slate-800">{weakestSector.label}</span>
+                        <span className="font-black text-rose-600 text-sm">
+                          {weakestSector.accuracy}% 正确率
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleApplyTargeting(weakestSector.sectorIdx)}
+                        className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <Crosshair className="w-3.5 h-3.5" />
+                        一键开启该方向专项强化
+                      </button>
+                    </div>
+                  ) : (
+~~~~~
+
+#### Acts 5: 在 `TrainingView.tsx` 中应用靶向弱点与状态勋章展示
+
+在训练视图中根据偏好设置或实时计算自动弱点参数，生成靶向题目并在顶栏显示强化勋章。
+
+~~~~~act
+patch_file
+src/views/TrainingView.tsx
+~~~~~
+~~~~~typescript.old
+import { ArrowLeft, Clock, ChevronRight } from 'lucide-preact';
+import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
+import { StarCanvas } from '../components/StarCanvas';
+import { generateQuestion } from '../utils/geometry';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { saveTrialRecord, saveSession, SessionData } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { ArrowLeft, Clock, ChevronRight, Crosshair } from 'lucide-preact';
+import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
+import { StarCanvas } from '../components/StarCanvas';
+import { generateQuestion, QuestionGenerateOptions } from '../utils/geometry';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { saveTrialRecord, saveSession, getAllTrialRecords, SessionData } from '../utils/db';
+~~~~~
+
+~~~~~act
+patch_file
+src/views/TrainingView.tsx
+~~~~~
+~~~~~typescript.old
+  const autoNextTimerRef = useRef<number | null>(null);
+
+  const [question, setQuestion] = useState<QuestionData>(() =>
+    generateQuestion(mode, initialGridStep)
   );
-}
-~~~~~
-
-#### Acts 3: 在 `Dashboard.tsx` 中增加分析按钮与入口
-
-给 `Dashboard.tsx` 组件增加“分析”按钮。
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-}
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 ~~~~~
 ~~~~~typescript.new
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-}
+  const autoNextTimerRef = useRef<number | null>(null);
+  const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
+
+  // 辅助：获取发题配置选项
+  const getGenerateOptions = (): QuestionGenerateOptions => {
+    return {
+      targetingMode: settings.targetingMode,
+      targetSectors:
+        settings.targetingMode === 'manual'
+          ? settings.manualTargetSectors
+          : targetSectorsRef.current,
+    };
+  };
+
+  const [question, setQuestion] = useState<QuestionData>(() =>
+    generateQuestion(mode, initialGridStep, {
+      targetingMode: settings.targetingMode,
+      targetSectors: settings.manualTargetSectors,
+    })
+  );
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+
+  // 自动拉取弱点扇区（若为 auto 模式）
+  useEffect(() => {
+    if (settings.targetingMode === 'auto') {
+      getAllTrialRecords(mode).then((records) => {
+        if (records.length >= 3) {
+          const buckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
+          records.forEach((r) => {
+            const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
+            buckets[idx].total += 1;
+            if (r.isHit) buckets[idx].hits += 1;
+          });
+          let minAcc = 1.0;
+          let minIdx = 0;
+          buckets.forEach((b, i) => {
+            if (b.total >= 1) {
+              const acc = b.hits / b.total;
+              if (acc < minAcc) {
+                minAcc = acc;
+                minIdx = i;
+              }
+            }
+          });
+          targetSectorsRef.current = [minIdx];
+        }
+      });
+    }
+  }, [mode, settings.targetingMode]);
 ~~~~~
 
 ~~~~~act
 patch_file
-src/views/Dashboard.tsx
+src/views/TrainingView.tsx
 ~~~~~
 ~~~~~typescript.old
-import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
-  Award,
-  Sliders,
-} from 'lucide-preact';
-~~~~~
-~~~~~typescript.new
-import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
-  Award,
-  Sliders,
-  BarChart2,
-} from 'lucide-preact';
-~~~~~
+  // === 切题 ===
+  const handleNextQuestion = () => {
+    if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
 
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-export function Dashboard({ profiles, onStart, onRefreshProfiles, onOpenSettings }: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-~~~~~
-~~~~~typescript.new
-export function Dashboard({
-  profiles,
-  onStart,
-  onRefreshProfiles,
-  onOpenSettings,
-  onOpenAnalytics,
-}: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="偏好设置"
-          >
-            <Sliders className="w-4 h-4" />
-            设置
-          </button>
-~~~~~
-~~~~~typescript.new
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onOpenAnalytics()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="弱点分析"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-600" />
-            弱点分析
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="偏好设置"
-          >
-            <Sliders className="w-4 h-4" />
-            设置
-          </button>
-~~~~~
-
-#### Acts 4: 在 `App.tsx` 中接入分析弹窗状态
-
-在 `src/app.tsx` 中接入 `AnalyticsModal` 的显隐控制与选中模式管理。
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-import { Dashboard } from './views/Dashboard';
-import { TrainingView } from './views/TrainingView';
-import { SettingsModal } from './components/SettingsModal';
-import { getAllUserProfiles, UserProfileData } from './utils/db';
-~~~~~
-~~~~~typescript.new
-import { Dashboard } from './views/Dashboard';
-import { TrainingView } from './views/TrainingView';
-import { SettingsModal } from './components/SettingsModal';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { getAllUserProfiles, UserProfileData } from './utils/db';
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-~~~~~
-~~~~~typescript.new
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
-  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-  // 启动训练
-  const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
-    setActiveMode(mode);
-    setSessionType(type);
-    setCurrentView('training');
+    const nextStep = adaptiveEngineRef.current.getCurrentStep();
+    setShowAnswer(false);
+    setUserAnswer(null);
+    setQuestion(generateQuestion(mode, nextStep));
+    setQuestionStartTime(Date.now());
   };
 ~~~~~
 ~~~~~typescript.new
-  // 打开弱点分析
-  const handleOpenAnalytics = (mode?: TrainingMode) => {
-    setAnalyticsMode(mode || 'all');
-    setIsAnalyticsOpen(true);
-  };
+  // === 切题 ===
+  const handleNextQuestion = () => {
+    if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
 
-  // 启动训练
-  const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
-    setActiveMode(mode);
-    setSessionType(type);
-    setCurrentView('training');
+    const nextStep = adaptiveEngineRef.current.getCurrentStep();
+    setShowAnswer(false);
+    setUserAnswer(null);
+    setQuestion(generateQuestion(mode, nextStep, getGenerateOptions()));
+    setQuestionStartTime(Date.now());
   };
 ~~~~~
 
 ~~~~~act
 patch_file
-src/app.tsx
+src/views/TrainingView.tsx
 ~~~~~
 ~~~~~typescript.old
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          profiles={profiles}
-          onStart={handleStartTraining}
-          onRefreshProfiles={refreshProfiles}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-        />
-      ) : (
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
+            {mode} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+          </span>
+        </div>
 ~~~~~
 ~~~~~typescript.new
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          profiles={profiles}
-          onStart={handleStartTraining}
-          onRefreshProfiles={refreshProfiles}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenAnalytics={handleOpenAnalytics}
-        />
-      ) : (
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-      {isSettingsOpen && (
-        <SettingsModal
-          settings={settings}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={(newSettings) => setSettings(newSettings)}
-        />
-      )}
-    </div>
-  );
-}
-~~~~~
-~~~~~typescript.new
-      {isSettingsOpen && (
-        <SettingsModal
-          settings={settings}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={(newSettings) => setSettings(newSettings)}
-        />
-      )}
-
-      {isAnalyticsOpen && (
-        <AnalyticsModal
-          initialMode={analyticsMode}
-          onClose={() => setIsAnalyticsOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
+            {mode} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+          </span>
+          {settings.targetingMode !== 'off' && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <Crosshair className="w-3.5 h-3.5 text-amber-600" />
+              {settings.targetingMode === 'auto' ? '智能靶向强化' : '手动靶向强化'}
+            </span>
+          )}
+        </div>
 ~~~~~
 
 ---
 
 ### 下一步建议
-1. **构建验证与预览**：可以通过本地执行 `npm run build` 或启动开发服务器，测试做答几道题目后，点击顶栏的“弱点分析”按钮，查看相对偏差热力散点图及 8 方向罗盘效果。
-2. **专项强化模式扩展（可选）**：未来如果希望更进一步，可以根据分析结果中提示的弱点方向（例如“东北 45°”），在训练生成算法中增加定向发题的比重，实现针对性靶向训练。
+1. **测试与验证**：在“偏好设置”中将“弱点专项靶向强化”切换为“智能自动”或“手动指定”（如选择“东北 45°”），启动训练后观察生成的题目极角分布，验证 70% 概率倾斜发题的效果。
+2. **效果追踪**：在多轮靶向训练后，再次打开“弱点分析”罗盘，验证弱点扇区的正确率与误差是否有针对性的提升。

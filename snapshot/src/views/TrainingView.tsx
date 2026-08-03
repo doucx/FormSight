@@ -1,11 +1,11 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { ArrowLeft, Clock, ChevronRight } from 'lucide-preact';
+import { ArrowLeft, Clock, ChevronRight, Crosshair } from 'lucide-preact';
 import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
 import { StarCanvas } from '../components/StarCanvas';
-import { generateQuestion } from '../utils/geometry';
+import { generateQuestion, QuestionGenerateOptions } from '../utils/geometry';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import { saveTrialRecord, saveSession, SessionData } from '../utils/db';
+import { saveTrialRecord, saveSession, getAllTrialRecords, SessionData } from '../utils/db';
 import { UserSettings } from '../utils/settings';
 
 interface TrainingViewProps {
@@ -36,11 +36,54 @@ export function TrainingView({
     )
   );
   const autoNextTimerRef = useRef<number | null>(null);
+  const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
+
+  // 辅助：获取发题配置选项
+  const getGenerateOptions = (): QuestionGenerateOptions => {
+    return {
+      targetingMode: settings.targetingMode,
+      targetSectors:
+        settings.targetingMode === 'manual'
+          ? settings.manualTargetSectors
+          : targetSectorsRef.current,
+    };
+  };
 
   const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialGridStep)
+    generateQuestion(mode, initialGridStep, {
+      targetingMode: settings.targetingMode,
+      targetSectors: settings.manualTargetSectors,
+    })
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+
+  // 自动拉取弱点扇区（若为 auto 模式）
+  useEffect(() => {
+    if (settings.targetingMode === 'auto') {
+      getAllTrialRecords(mode).then((records) => {
+        if (records.length >= 3) {
+          const buckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
+          records.forEach((r) => {
+            const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
+            buckets[idx].total += 1;
+            if (r.isHit) buckets[idx].hits += 1;
+          });
+          let minAcc = 1.0;
+          let minIdx = 0;
+          buckets.forEach((b, i) => {
+            if (b.total >= 1) {
+              const acc = b.hits / b.total;
+              if (acc < minAcc) {
+                minAcc = acc;
+                minIdx = i;
+              }
+            }
+          });
+          targetSectorsRef.current = [minIdx];
+        }
+      });
+    }
+  }, [mode, settings.targetingMode]);
 
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   const [userAnswer, setUserAnswer] = useState<{
@@ -136,7 +179,7 @@ export function TrainingView({
     const nextStep = adaptiveEngineRef.current.getCurrentStep();
     setShowAnswer(false);
     setUserAnswer(null);
-    setQuestion(generateQuestion(mode, nextStep));
+    setQuestion(generateQuestion(mode, nextStep, getGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -192,6 +235,12 @@ export function TrainingView({
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
             {mode} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
+          {settings.targetingMode !== 'off' && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <Crosshair className="w-3.5 h-3.5 text-amber-600" />
+              {settings.targetingMode === 'auto' ? '智能靶向强化' : '手动靶向强化'}
+            </span>
+          )}
         </div>
 
         {/* 核心监控指标 */}

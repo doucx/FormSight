@@ -1,8 +1,9 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { X, Target, Compass, BarChart2, AlertCircle, Info } from 'lucide-preact';
+import { X, Target, Compass, BarChart2, AlertCircle, Info, Crosshair } from 'lucide-preact';
 import { TrialRecord, TrainingMode } from '../types';
 import { getAllTrialRecords } from '../utils/db';
+import { loadSettings, saveSettings } from '../utils/settings';
 
 interface AnalyticsModalProps {
   initialMode?: TrainingMode | 'all';
@@ -90,12 +91,24 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     const acc = b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0;
     const avgErr = b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0;
     return {
+      sectorIdx: i,
       label: SECTOR_LABELS[i],
       total: b.total,
       accuracy: acc,
       avgError: avgErr,
     };
   });
+
+  const handleApplyTargeting = (sectorIdx: number) => {
+    const settings = loadSettings();
+    saveSettings({
+      ...settings,
+      targetingMode: 'manual',
+      manualTargetSectors: [sectorIdx],
+    });
+    alert(`🎯 已成功设置：将在训练中专项强化【${SECTOR_LABELS[sectorIdx]}】视角！`);
+    onClose();
+  };
 
   // 找最弱方向（做答数 >= 3 中正确率最低或误差最大的方向）
   const validSectors = sectorStats.filter((s) => s.total >= 2);
@@ -424,7 +437,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                     视角盲区与弱点扇区
                   </div>
                   {weakestSector ? (
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <p className="text-slate-700 text-[11px]">
                         你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 方向上正确率最低：
                       </p>
@@ -434,6 +447,13 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                           {weakestSector.accuracy}% 正确率
                         </span>
                       </div>
+                      <button
+                        onClick={() => handleApplyTargeting(weakestSector.sectorIdx)}
+                        className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                      >
+                        <Crosshair className="w-3.5 h-3.5" />
+                        一键开启该方向专项强化
+                      </button>
                     </div>
                   ) : (
                     <p className="text-slate-600 text-[11px]">各方向表现均衡，继续保持！</p>

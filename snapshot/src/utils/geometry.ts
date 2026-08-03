@@ -128,12 +128,40 @@ export function checkHit(
   };
 }
 
+export interface QuestionGenerateOptions {
+  targetingMode?: 'off' | 'auto' | 'manual';
+  targetSectors?: number[]; // [0~7]
+}
+
+/**
+ * 加权随机生成极角：70% 概率落入靶向弱点扇区，30% 概率全盘均匀探索
+ */
+function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
+  if (
+    options &&
+    options.targetingMode &&
+    options.targetingMode !== 'off' &&
+    options.targetSectors &&
+    options.targetSectors.length > 0
+  ) {
+    if (Math.random() < 0.7) {
+      const chosenSector =
+        options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
+      const sectorCenterAngle = chosenSector * 45;
+      const jitter = (Math.random() - 0.5) * 40; // ±20° 范围加权抖动
+      return Math.floor((sectorCenterAngle + jitter + 360) % 360);
+    }
+  }
+  return Math.floor(Math.random() * 360);
+}
+
 /**
  * 随机生成算法：根据模式与难度步长生成一道题目数据
  */
 export function generateQuestion(
   mode: TrainingMode,
-  gridStep: number
+  gridStep: number,
+  options?: QuestionGenerateOptions
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
@@ -143,7 +171,7 @@ export function generateQuestion(
   if (mode === 'single') {
     // === 1. 单锚点模式 ===
     const anchorA: Point = { x: CX, y: CY };
-    const angle = Math.floor(Math.random() * 360);
+    const angle = selectAngleWithTargeting(options);
     const distChoices = [60, 90, 120, 150, 180];
     const dist = distChoices[Math.floor(Math.random() * distChoices.length)];
 

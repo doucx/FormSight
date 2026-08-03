@@ -1,7 +1,18 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame } from 'lucide-preact';
-import { UserSettings, saveSettings } from '../utils/settings';
+import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame, Crosshair } from 'lucide-preact';
+import { UserSettings, TargetingMode, saveSettings } from '../utils/settings';
+
+const SECTOR_NAMES = [
+  '正东(0°)',
+  '东北(45°)',
+  '正北(90°)',
+  '西北(135°)',
+  '正西(180°)',
+  '西南(225°)',
+  '正南(270°)',
+  '东南(315°)',
+];
 
 interface SettingsModalProps {
   settings: UserSettings;
@@ -35,6 +46,21 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
 
   const handleBlockSizeChange = (size: number) => {
     setCurrent((prev) => ({ ...prev, blockSize: size }));
+  };
+
+  const handleTargetingModeChange = (mode: TargetingMode) => {
+    setCurrent((prev) => ({ ...prev, targetingMode: mode }));
+  };
+
+  const handleSectorToggle = (sectorIdx: number) => {
+    setCurrent((prev) => {
+      const currentSectors = prev.manualTargetSectors || [];
+      const exists = currentSectors.includes(sectorIdx);
+      const updated = exists
+        ? currentSectors.filter((s) => s !== sectorIdx)
+        : [...currentSectors, sectorIdx];
+      return { ...prev, manualTargetSectors: updated };
+    });
   };
 
   const handleConfirm = () => {
@@ -208,6 +234,60 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 精细阶梯 (1px逐级)
               </button>
             </div>
+          </div>
+
+          {/* 专项靶向强化训练设置 */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <Crosshair className="w-4 h-4 text-indigo-600" />
+              弱点专项靶向强化
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { id: 'off', label: '关闭 (全随机)' },
+                { id: 'auto', label: '智能自动' },
+                { id: 'manual', label: '手动指定' },
+              ].map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => handleTargetingModeChange(m.id as TargetingMode)}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    current.targetingMode === m.id
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 手动勾选扇区 */}
+            {current.targetingMode === 'manual' && (
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                <div className="text-[11px] font-semibold text-slate-500">
+                  选择需要靶向强化的角度扇区：
+                </div>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {SECTOR_NAMES.map((name, idx) => {
+                    const selected = (current.manualTargetSectors || []).includes(idx);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSectorToggle(idx)}
+                        className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+                          selected
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
