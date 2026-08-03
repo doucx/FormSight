@@ -192,3 +192,14 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     return false;
   }
 }
+
+// === API 7: 获取历史做答日志（支持按模式筛选） ===
+export async function getAllTrialRecords(
+  mode?: TrainingMode
+): Promise<TrialRecord[]> {
+  const db = await getDB();
+  if (mode) {
+    return await db.getAllFromIndex('records', 'by-mode', mode);
+  }
+  return await db.getAll('records');
+}

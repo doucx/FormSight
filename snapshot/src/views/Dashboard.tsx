@@ -11,6 +11,7 @@ import {
   TrendingUp,
   Award,
   Sliders,
+  BarChart2,
 } from 'lucide-preact';
 import { TrainingMode } from '../types';
 import { UserProfileData, exportAllData, importAllData } from '../utils/db';
@@ -20,6 +21,7 @@ interface DashboardProps {
   onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
   onRefreshProfiles: () => void;
   onOpenSettings: () => void;
+  onOpenAnalytics: (mode?: TrainingMode) => void;
 }
 
 const MODES_CONFIG: Array<{
@@ -56,7 +58,13 @@ const MODES_CONFIG: Array<{
   },
 ];
 
-export function Dashboard({ profiles, onStart, onRefreshProfiles, onOpenSettings }: DashboardProps) {
+export function Dashboard({
+  profiles,
+  onStart,
+  onRefreshProfiles,
+  onOpenSettings,
+  onOpenAnalytics,
+}: DashboardProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExport = async () => {
@@ -94,6 +102,14 @@ export function Dashboard({ profiles, onStart, onRefreshProfiles, onOpenSettings
         </h1>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => onOpenAnalytics()}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="弱点分析"
+          >
+            <BarChart2 className="w-4 h-4 text-indigo-600" />
+            弱点分析
+          </button>
           <button
             onClick={onOpenSettings}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
