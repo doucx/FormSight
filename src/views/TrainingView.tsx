@@ -1,16 +1,18 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { ArrowLeft, Clock, Target, CheckCircle2, XCircle, ChevronRight } from 'lucide-preact';
+import { ArrowLeft, Clock, CheckCircle2, XCircle, ChevronRight } from 'lucide-preact';
 import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
 import { StarCanvas } from '../components/StarCanvas';
 import { generateQuestion } from '../utils/geometry';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import { saveTrialRecord, saveSession, SessionData } from '../utils/db';
+import { UserSettings } from '../utils/settings';
 
 interface TrainingViewProps {
   mode: TrainingMode;
   sessionType: 'training' | 'benchmark';
   initialGridStep: number;
+  settings: UserSettings;
   onExit: () => void;
 }
 
@@ -18,12 +20,16 @@ export function TrainingView({
   mode,
   sessionType,
   initialGridStep,
+  settings,
   onExit,
 }: TrainingViewProps) {
   // === 会话状态 ===
   const sessionIdRef = useRef<string>(`session_${Date.now()}`);
   const startTimeRef = useRef<number>(Date.now());
-  const adaptiveEngineRef = useRef<AdaptiveEngine>(new AdaptiveEngine(initialGridStep));
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(initialGridStep, settings.stepGranularity === 'fine')
+  );
+  const autoNextTimerRef = useRef<number | null>(null);
 
   const [question, setQuestion] = useState<QuestionData>(() =>
     generateQuestion(mode, initialGridStep)
@@ -104,21 +110,22 @@ export function TrainingView({
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
-    } else {
-      // 500ms 后自动进入下一张图
-      setTimeout(() => {
-        const nextStep = adaptiveEngineRef.current.getCurrentStep();
-        setShowAnswer(false);
-        setUserAnswer(null);
-        setQuestion(generateQuestion(mode, nextStep));
-        setQuestionStartTime(Date.now());
-      }, 500);
+    } else if (settings.autoNext) {
+      // 自动翻页延时
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        handleNextQuestion();
+      }, settings.autoNextDelay);
     }
   };
 
   // === 切题 ===
   const handleNextQuestion = () => {
     if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
 
     const nextStep = adaptiveEngineRef.current.getCurrentStep();
     setShowAnswer(false);
@@ -228,35 +235,27 @@ export function TrainingView({
         disabled={isFinished}
       />
 
-      {/* 底部提示与操作栏 */}
-      <div className="w-full max-w-2xl bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex items-center justify-between">
+      {/* 底部操作与简略反馈 */}
+      <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-between min-h-[56px]">
         <div>
-          {!showAnswer ? (
-            <p className="text-xs font-medium text-gray-500 flex items-center gap-2">
-              <Target className="w-4 h-4 text-indigo-500 animate-pulse" />
-              观察左图相对几何关系，在右图点击推演出的目标位置
-            </p>
-          ) : (
-            <div className="flex items-center gap-3">
+          {showAnswer && userAnswer && (
+            <div className="flex items-center gap-2">
               <span
-                className={`text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 ${
-                  userAnswer?.hitResult.isHit
+                className={`text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 ${
+                  userAnswer.hitResult.isHit
                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : 'bg-rose-50 text-rose-700 border border-rose-200'
                 }`}
               >
-                {userAnswer?.hitResult.isHit ? (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" /> 准确击中!
-                  </>
+                {userAnswer.hitResult.isHit ? (
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                 ) : (
-                  <>
-                    <XCircle className="w-4 h-4" /> 未击中
-                  </>
+                  <XCircle className="w-3.5 h-3.5" />
                 )}
+                {userAnswer.hitResult.isHit ? '击中' : '偏差'}
               </span>
-              <span className="text-xs font-medium text-gray-500">
-                像素偏差: <strong className="text-gray-800">{userAnswer?.hitResult.errorDistance} px</strong>
+              <span className="text-xs font-mono font-bold text-slate-600">
+                {userAnswer.hitResult.errorDistance} px
               </span>
             </div>
           )}
@@ -265,22 +264,22 @@ export function TrainingView({
         {isFinished ? (
           <button
             onClick={handleFinishSession}
-            className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl shadow-md shadow-emerald-200 transition-all"
+            className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
           >
-            完成测试并退出
+            完成并退出
           </button>
         ) : (
           <button
             onClick={handleNextQuestion}
             disabled={!showAnswer}
-            className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-md transition-all flex items-center gap-1 ${
+            className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
               showAnswer
-                ? 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-indigo-200 active:scale-95'
-                : 'bg-gray-300 shadow-none cursor-not-allowed opacity-60'
+                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >
-            下一题 (Space)
-            <ChevronRight className="w-4 h-4" />
+            下一题
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}
       </div>

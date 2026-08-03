@@ -8,9 +8,9 @@ import {
   Upload,
   Play,
   Target,
-  Sparkles,
   TrendingUp,
   Award,
+  Sliders,
 } from 'lucide-preact';
 import { TrainingMode } from '../types';
 import { UserProfileData, exportAllData, importAllData } from '../utils/db';
@@ -19,6 +19,7 @@ interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
   onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
   onRefreshProfiles: () => void;
+  onOpenSettings: () => void;
 }
 
 const MODES_CONFIG: Array<{
@@ -55,7 +56,7 @@ const MODES_CONFIG: Array<{
   },
 ];
 
-export function Dashboard({ profiles, onStart, onRefreshProfiles }: DashboardProps) {
+export function Dashboard({ profiles, onStart, onRefreshProfiles, onOpenSettings }: DashboardProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExport = async () => {
@@ -86,46 +87,42 @@ export function Dashboard({ profiles, onStart, onRefreshProfiles }: DashboardPro
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-      {/* 顶部 Banner Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-8 rounded-3xl shadow-xl border border-slate-800">
-        <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-medium">
-              <Sparkles className="w-3.5 h-3.5" />
-              自适应空间造型算法 v1.0
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
-              寻星练习 <span className="text-indigo-400 font-light">Star-Hopping</span>
-            </h1>
-            <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
-              基于 3-Up/1-Down 阶梯梯度的空间眼力与几何推演训练系统，精确度量并提升观察定点能力。
-            </p>
-          </div>
+      {/* 极简 Header */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+          寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
+        </h1>
 
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={handleExport}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition-all flex items-center gap-2 shadow-sm active:scale-95"
-            >
-              <Download className="w-4 h-4 text-slate-400" />
-              导出数据
-            </button>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-xl transition-all flex items-center gap-2 shadow-sm active:scale-95"
-            >
-              <Upload className="w-4 h-4 text-slate-400" />
-              导入数据
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenSettings}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="偏好设置"
+          >
+            <Sliders className="w-4 h-4" />
+            设置
+          </button>
+          <button
+            onClick={handleExport}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
+            title="导出数据"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
+            title="导入数据"
+          >
+            <Upload className="w-4 h-4" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImportFile}
+            className="hidden"
+          />
         </div>
       </div>
 
