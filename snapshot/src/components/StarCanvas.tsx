@@ -1,0 +1,190 @@
+import { h } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
+import { QuestionData, Point, HitResult } from '../types';
+import { checkHit, generateGridPoints, CANVAS_SIZE } from '../utils/geometry';
+
+interface StarCanvasProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
+  disabled?: boolean;
+}
+
+export function StarCanvas({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarCanvasProps) {
+  const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // === 绘图主逻辑 ===
+  useEffect(() => {
+    // 1. 渲染左侧参考图 (Reference Canvas)
+    const leftCanvas = leftCanvasRef.current;
+    if (leftCanvas) {
+      const ctx = leftCanvas.getContext('2d');
+      if (ctx) {
+        // 清屏与背景
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+        // 绘制锚点 A
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', 3.5);
+
+        // 绘制锚点 C (若存在)
+        if (question.anchorC) {
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', 3.5);
+        }
+
+        // 绘制真理点 B
+        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', 3.5);
+      }
+    }
+
+    // 2. 渲染右侧交互区 (Interactive Canvas)
+    const rightCanvas = rightCanvasRef.current;
+    if (rightCanvas) {
+      const ctx = rightCanvas.getContext('2d');
+      if (ctx) {
+        // 清屏与背景
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+        // 图层 1: 干扰点阵 (底层)
+        const gridPoints = generateGridPoints(
+          question.gridStart,
+          question.gridDim,
+          question.gridStep
+        );
+        gridPoints.forEach((p) => {
+          drawDot(ctx, p.x, p.y, '#888888', 3.5);
+        });
+
+        // 图层 2: 锚点 (顶层)
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', 3.5);
+        if (question.anchorC) {
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', 3.5);
+        }
+
+        // 图层 3: 做答后的视觉反馈 (反馈层)
+        if (showAnswer) {
+          const { x: bx, y: by } = question.targetB;
+
+          // 绘制真理点 B 实体点
+          drawDot(ctx, bx, by, '#000000', 3.5);
+
+          // 绘制深绿色十字高亮线
+          const chSize = 12;
+          ctx.strokeStyle = '#00AA00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(bx - chSize, by);
+          ctx.lineTo(bx + chSize, by);
+          ctx.moveTo(bx, by - chSize);
+          ctx.lineTo(bx, by + chSize);
+          ctx.stroke();
+
+          // 如果回答错或有用户点击坐标，绘制误差连线与点击位置
+          if (userAnswer) {
+            const { clickPoint, hitResult } = userAnswer;
+
+            if (!hitResult.isHit) {
+              // 绘制红色虚线误差指示
+              ctx.strokeStyle = '#FF0000';
+              ctx.lineWidth = 1.5;
+              ctx.setLineDash([4, 4]);
+              ctx.beginPath();
+              ctx.moveTo(clickPoint.x, clickPoint.y);
+              ctx.lineTo(bx, by);
+              ctx.stroke();
+              ctx.setLineDash([]); // 恢复实线
+
+              // 用户实点击位置标记 (红点)
+              drawDot(ctx, clickPoint.x, clickPoint.y, '#FF0000', 3.5);
+            }
+          }
+        }
+      }
+    }
+  }, [question, showAnswer, userAnswer]);
+
+  // 辅助函数：绘制圆点
+  function drawDot(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    color: string,
+    radius: number
+  ) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // === 交互事件：点击右侧 Canvas 做答 ===
+  const handleRightCanvasClick = (e: MouseEvent) => {
+    if (disabled || showAnswer) return;
+
+    const canvas = rightCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    // 换算 CSS 实际像素到 Canvas 逻辑像素 (500x500)
+    const scaleX = CANVAS_SIZE / rect.width;
+    const scaleY = CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const clickPoint: Point = { x: clickX, y: clickY };
+    const hitResult = checkHit(
+      clickPoint,
+      question.targetB,
+      question.gridStart,
+      question.gridStep,
+      question.gridDim
+    );
+
+    onAnswer(clickPoint, hitResult);
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
+      {/* 左侧参考 Canvas */}
+      <div className="flex flex-col items-center">
+        <span className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+          左图: 观察参考
+        </span>
+        <canvas
+          ref={leftCanvasRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          className="w-full max-w-[420px] aspect-square rounded-lg border border-gray-200 bg-white shadow-sm"
+        />
+      </div>
+
+      {/* 右侧交互 Canvas */}
+      <div className="flex flex-col items-center">
+        <span className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
+          右图: 点击答题区
+        </span>
+        <canvas
+          ref={rightCanvasRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          onClick={handleRightCanvasClick}
+          className={`w-full max-w-[420px] aspect-square rounded-lg border border-gray-200 bg-white shadow-sm transition-all ${
+            disabled || showAnswer
+              ? 'cursor-default'
+              : 'cursor-crosshair hover:border-gray-400'
+          }`}
+        />
+      </div>
+    </div>
+  );
+}
