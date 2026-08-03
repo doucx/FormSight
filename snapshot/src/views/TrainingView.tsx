@@ -1,10 +1,10 @@
 import { h } from 'preact';
 import { useState, useEffect, useRef } from 'preact/hooks';
-import { ArrowLeft, Clock, ChevronRight, Target } from 'lucide-preact';
+import { ArrowLeft, Clock, ChevronRight } from 'lucide-preact';
 import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
 import { StarCanvas } from '../components/StarCanvas';
 import { generateQuestion } from '../utils/geometry';
-import { AdaptiveEngine, AdaptiveProgress } from '../utils/adaptiveEngine';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import { saveTrialRecord, saveSession, SessionData } from '../utils/db';
 import { UserSettings } from '../utils/settings';
 
@@ -53,11 +53,6 @@ export function TrainingView({
   const [hitTrials, setHitTrials] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
-
-  // 轮次进度（仅在 block 模式下有效）
-  const [blockProgress, setBlockProgress] = useState<AdaptiveProgress | null>(
-    adaptiveEngineRef.current.getBlockProgress()
-  );
 
   // === 计时器 ===
   useEffect(() => {
@@ -115,10 +110,7 @@ export function TrainingView({
     await saveTrialRecord(record);
 
     // 2. 调优阶梯难度步长
-    const output = adaptiveEngineRef.current.recordResult(hitResult.isHit);
-    if (output.progress) {
-      setBlockProgress(output.progress);
-    }
+    adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
     // 3. 检查基准测试是否完成 (20 题)
     if (sessionType === 'benchmark' && newTotal >= 20) {
@@ -221,23 +213,6 @@ export function TrainingView({
               {currentAccuracy}%
             </span>
           </div>
-
-          {sessionType === 'training' && settings.adaptiveMode === 'block' && blockProgress && (
-            <div className="flex items-center gap-1.5 bg-indigo-50/80 border border-indigo-100 px-3 py-1 rounded-xl">
-              <Target className="w-3.5 h-3.5 text-indigo-600" />
-              <div>
-                <span className="text-[10px] font-extrabold text-indigo-400 block uppercase tracking-wider">
-                  本层进度 ({Math.round(settings.targetAccuracy * 100)}%通关)
-                </span>
-                <span className="font-black text-indigo-700">
-                  {blockProgress.current} / {blockProgress.total} 题
-                  <span className="ml-1 text-xs font-semibold text-indigo-500">
-                    ({blockProgress.hits} 胜)
-                  </span>
-                </span>
-              </div>
-            </div>
-          )}
 
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
