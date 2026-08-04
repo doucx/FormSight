@@ -174,7 +174,7 @@ export function SessionSummaryModal({
         ctx.textAlign = 'center';
         ctx.fillText(`${h.step}`, x, y - 8);
       }
-    });
+    }
 
     // X 轴底线
     ctx.strokeStyle = '#475569';

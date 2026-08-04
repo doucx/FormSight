@@ -313,7 +313,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                     return (
                       <button
                         type="button"
-                        key={idx}
+                        key={name}
                         onClick={() => handleSectorToggle(idx)}
                         className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
                           selected

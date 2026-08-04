@@ -137,7 +137,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
     const rings = [5, 10, 20, 30];
     ctx.lineWidth = 1;
-    rings.forEach((r) => {
+    for (const r of rings) {
       ctx.strokeStyle = '#334155';
       ctx.beginPath();
       ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
@@ -146,7 +146,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       ctx.fillStyle = '#64748B';
       ctx.font = '10px monospace';
       ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
-    });
+    }
 
     // 绘制十字坐标轴
     ctx.strokeStyle = '#475569';
@@ -270,7 +270,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(stat.label.split(' ')[0], lx, ly);
-    });
+    }
 
     // 中心装饰基准圆
     ctx.beginPath();
@@ -279,7 +279,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     ctx.fill();
     ctx.strokeStyle = '#64748B';
     ctx.stroke();
-  }, [activeTab, loading, records, sectorStats]);
+  }, [activeTab, loading, sectorStats]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -317,7 +317,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               <button
                 type="button"
                 key={m.id}
-                onClick={() => setSelectedMode(m.id as any)}
+                onClick={() => setSelectedMode(m.id as TrainingMode | 'all')}
                 className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                   selectedMode === m.id
                     ? 'bg-white text-indigo-600 shadow-sm'
