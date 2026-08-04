@@ -1,46 +1,111 @@
-## [COMMIT] feat(training): 添加无操作闲置暂停计时与会话结算弹窗，修复弹窗后计时递增问题
+好的，我将为你为本项目（FormSight）配置 Biome 代码格式化与 Linter 工具。
+
+## [WIP] chore: 为项目配置 Biome 代码格式化与 Linter 工具
 
 ### 用户需求
-用户要求将之前实现的所有功能（无操作闲置自动暂停计时、会话结算弹窗及步长曲线图、以及修复结算弹窗弹出后计时继续递增的问题）打包并创建一个 Git 提交。
+在项目中集成 Biome 工具链，配置 `biome.json` 规则文件，并在 `package.json` 中添加 `@biomejs/biome` 依赖以及相应的辅助脚本（如 `lint`、`format`、`check`、`checkf`）。
 
 ### 评论
-当前所有功能已经全部通过代码实现并集成。现在可以安全地将所有改动提交到版本控制系统中。
+配置 Biome 能够显著提升项目代码的一致性、格式化速度以及 Lint 检查效率，改善代码质量与开发体验 (DX)。
 
 ### 目标
-1. 将所有新文件和修改后的文件添加到 Git 暂存区 (`git add`)。
-2. 创建内容结构清晰的 Git Commit (`git_commit`)。
+1. 在项目根目录下创建 `biome.json` 配置文件。
+2. 在 `package.json` 中添加 `@biomejs/biome` 依赖与相关操作脚本。
 
 ### 基本原理
-按照 Quipu 协议规范，所有文件系统变更必须与 Git 提交操作在不同的计划（Plan）中隔离执行。由于文件修改已通过前面的步骤完成并验证，本次计划专门用于执行 Git 提交。
+通过在项目根目录提供统一的 `biome.json` 配置文件，Biome 可以快速分析并格式化前端代码库（包含 TypeScript/JSX 等）。在 `package.json` 的 `scripts` 中新增对应的管理命令后，开发者可以通过简单的 npm 脚本触发代码格式化与合规性检查。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high #comp/ui #concept/history #scope/dx #ai/instruct #task/domain/ui #task/object/git-commit #task/action/implementation #task/state/end
+#intent/tooling #flow/ready #priority/medium #comp/build #concept/config #scope/dx #ai/instruct #task/domain/tooling #task/object/biome-config #task/action/setup #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 添加变动到暂存区并创建 Git 提交
+#### Acts 1: 创建 `biome.json` 配置文件
+
+在项目根目录下新建 `biome.json`，配置常规文件忽略规则、导入排序、格式化样式与 Lint 规则。
 
 ~~~~~act
-git_add
-src/utils/settings.ts
-src/components/SettingsModal.tsx
-src/components/SessionSummaryModal.tsx
-src/views/TrainingView.tsx
+write_file
+biome.json
+~~~~~
+~~~~~json
+{
+  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "files": {
+    "ignore": ["dist/**", "node_modules/**", "coverage/**"]
+  },
+  "organizeImports": {
+    "enabled": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 100,
+    "attributePosition": "auto"
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "always"
+    }
+  }
+}
+~~~~~
+
+#### Acts 2: 更新 `package.json` 脚本与开发依赖
+
+在 `package.json` 的 `scripts` 中添加 `lint`、`format`、`check` 和 `checkf` 命令，并在 `devDependencies` 中加入 `@biomejs/biome` 依赖。
+
+~~~~~act
+patch_file
+package.json
+~~~~~
+~~~~~json.old
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+~~~~~
+~~~~~json.new
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "biome lint .",
+    "format": "biome format . --write",
+    "check": "biome check --write .",
+    "checkf": "biome check --fix --unsafe ."
+  },
+  "dependencies": {
 ~~~~~
 
 ~~~~~act
-git_commit
+patch_file
+package.json
 ~~~~~
-~~~~~text
-feat(training): add idle pause timer, session summary modal & step chart
-
-- Added 'idleTimeout' user setting in settings and SettingsModal to automatically pause the training elapsed timer when the user is idle.
-- Created SessionSummaryModal to present a comprehensive session review (accuracy, elapsed time, average response time, grid step evolution).
-- Implemented a dynamic canvas line chart in SessionSummaryModal to visualize the progression of difficulty steps and hit/miss status throughout the session.
-- Fixed an issue where the training elapsed timer continued incrementing even after the session summary modal was displayed.
+~~~~~json.old
+  "devDependencies": {
+    "@preact/preset-vite": "^2.8.2",
+~~~~~
+~~~~~json.new
+  "devDependencies": {
+    "@biomejs/biome": "1.9.4",
+    "@preact/preset-vite": "^2.8.2",
 ~~~~~
 
 ### 下一步建议
-- 提交已完成，所有的改动已安全记录在 Git 历史中。可以继续开始新的功能探索或进行项目打包发布！
+1. 运行 `npm install` 来安装 `@biomejs/biome` 开发依赖。
+2. 运行 `npm run check` 检查当前项目中的所有代码格式与 Lint 警告，并自动修正可修复项。
