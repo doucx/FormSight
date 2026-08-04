@@ -1,12 +1,4 @@
-import {
-  ArrowRight,
-  Award,
-  Clock,
-  Home,
-  RotateCcw,
-  Target,
-  Zap,
-} from 'lucide-preact';
+import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { TrainingMode } from '../types';
 
