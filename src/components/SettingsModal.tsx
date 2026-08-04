@@ -1,7 +1,7 @@
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame, Crosshair } from 'lucide-preact';
-import { UserSettings, TargetingMode, saveSettings } from '../utils/settings';
+import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
 
 const SECTOR_NAMES = [
   '正东(0°)',
@@ -28,7 +28,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
   };
 
   const handleDelayChange = (e: Event) => {
-    const val = parseInt((e.target as HTMLInputElement).value, 10);
+    const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
     setCurrent((prev) => ({ ...prev, autoNextDelay: val }));
   };
 
@@ -82,6 +82,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
             <h2 className="text-lg font-bold text-slate-800">训练偏好设置</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
@@ -97,6 +98,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
               <div className="text-xs text-slate-400">点击答题后无需手动按空格</div>
             </div>
             <button
+              type="button"
               onClick={handleToggleAutoNext}
               className="text-indigo-600 hover:opacity-80 transition-opacity"
             >
@@ -134,6 +136,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
             <div className="text-sm font-semibold text-slate-700">自适应算子模式</div>
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => handleModeChange('block')}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                   current.adaptiveMode === 'block'
@@ -145,6 +148,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 轮次胜率评估 (推荐)
               </button>
               <button
+                type="button"
                 onClick={() => handleModeChange('staircase')}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                   current.adaptiveMode === 'staircase'
@@ -172,6 +176,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 <div className="grid grid-cols-4 gap-1.5">
                   {[0.7, 0.8, 0.85, 0.9].map((acc) => (
                     <button
+                      type="button"
                       key={acc}
                       onClick={() => handleAccuracyChange(acc)}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
@@ -197,6 +202,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 <div className="grid grid-cols-3 gap-1.5">
                   {[10, 15, 20].map((size) => (
                     <button
+                      type="button"
                       key={size}
                       onClick={() => handleBlockSizeChange(size)}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
@@ -218,6 +224,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
             <div className="text-sm font-semibold text-slate-700">网格步长精细度</div>
             <div className="grid grid-cols-2 gap-2">
               <button
+                type="button"
                 onClick={() => handleGranularityChange('standard')}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
                   current.stepGranularity === 'standard'
@@ -228,6 +235,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 标准阶梯 (5px梯度)
               </button>
               <button
+                type="button"
                 onClick={() => handleGranularityChange('fine')}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
                   current.stepGranularity === 'fine'
@@ -251,6 +259,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 { label: '2分钟', value: 120 },
               ].map((opt) => (
                 <button
+                  type="button"
                   key={opt.value}
                   onClick={() => handleIdleTimeoutChange(opt.value)}
                   className={`py-2 text-xs font-bold rounded-xl border transition-all ${
@@ -278,6 +287,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 { id: 'manual', label: '手动指定' },
               ].map((m) => (
                 <button
+                  type="button"
                   key={m.id}
                   onClick={() => handleTargetingModeChange(m.id as TargetingMode)}
                   className={`py-2 text-xs font-bold rounded-xl border transition-all ${
@@ -302,7 +312,8 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                     const selected = (current.manualTargetSectors || []).includes(idx);
                     return (
                       <button
-                        key={idx}
+                        type="button"
+                        key={name}
                         onClick={() => handleSectorToggle(idx)}
                         className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
                           selected
@@ -322,12 +333,14 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
 
         <div className="flex gap-3 pt-2">
           <button
+            type="button"
             onClick={onClose}
             className="w-full py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
           >
             取消
           </button>
           <button
+            type="button"
             onClick={handleConfirm}
             className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
           >

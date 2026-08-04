@@ -1,13 +1,13 @@
+import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
 import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
-import { ArrowLeft, Clock, ChevronRight, Crosshair } from 'lucide-preact';
-import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';
-import { SessionSummaryModal, SessionHistoryItem } from '../components/SessionSummaryModal';
-import { generateQuestion, QuestionGenerateOptions } from '../utils/geometry';
+import type { HitResult, Point, QuestionData, TrainingMode, TrialRecord } from '../types';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import { saveTrialRecord, saveSession, getAllTrialRecords, SessionData } from '../utils/db';
-import { UserSettings } from '../utils/settings';
+import { type SessionData, getAllTrialRecords, saveSession, saveTrialRecord } from '../utils/db';
+import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
+import type { UserSettings } from '../utils/settings';
 
 interface TrainingViewProps {
   mode: TrainingMode;
@@ -33,8 +33,8 @@ export function TrainingView({
       settings.stepGranularity === 'fine',
       sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
       settings.targetAccuracy,
-      settings.blockSize
-    )
+      settings.blockSize,
+    ),
   );
   const autoNextTimerRef = useRef<number | null>(null);
   const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
@@ -54,7 +54,7 @@ export function TrainingView({
     generateQuestion(mode, initialGridStep, {
       targetingMode: settings.targetingMode,
       targetSectors: settings.manualTargetSectors,
-    })
+    }),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 
@@ -64,14 +64,15 @@ export function TrainingView({
       getAllTrialRecords(mode).then((records) => {
         if (records.length >= 3) {
           const buckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
-          records.forEach((r) => {
+          for (const r of records) {
             const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
             buckets[idx].total += 1;
             if (r.isHit) buckets[idx].hits += 1;
-          });
+          }
           let minAcc = 1.0;
           let minIdx = 0;
-          buckets.forEach((b, i) => {
+          for (let i = 0; i < buckets.length; i++) {
+            const b = buckets[i];
             if (b.total >= 1) {
               const acc = b.hits / b.total;
               if (acc < minAcc) {
@@ -79,7 +80,7 @@ export function TrainingView({
                 minIdx = i;
               }
             }
-          });
+          }
           targetSectorsRef.current = [minIdx];
         }
       });
@@ -236,11 +237,7 @@ export function TrainingView({
   };
 
   // === 保存会话数据 ===
-  const saveCurrentSession = async (
-    trials = totalTrials,
-    hits = hitTrials,
-    ended = false
-  ) => {
+  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
     const sessionData: SessionData = {
       id: sessionIdRef.current,
       mode,
@@ -299,8 +296,7 @@ export function TrainingView({
     return `${m}:${s}`;
   };
 
-  const currentAccuracy =
-    totalTrials > 0 ? Math.round((hitTrials / totalTrials) * 100) : 0;
+  const currentAccuracy = totalTrials > 0 ? Math.round((hitTrials / totalTrials) * 100) : 0;
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
@@ -308,6 +304,7 @@ export function TrainingView({
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={handleRequestFinish}
             className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
           >
@@ -340,25 +337,19 @@ export function TrainingView({
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
               总正确率
             </span>
-            <span className="font-black text-gray-800">
-              {currentAccuracy}%
-            </span>
+            <span className="font-black text-gray-800">{currentAccuracy}%</span>
           </div>
 
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
               当前网格步长
             </span>
-            <span className="font-black text-indigo-600">
-              {question.gridStep} px
-            </span>
+            <span className="font-black text-indigo-600">{question.gridStep} px</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono font-bold text-slate-700">
-              {formatTime(elapsedSeconds)}
-            </span>
+            <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
           </div>
         </div>
       </header>
@@ -377,6 +368,7 @@ export function TrainingView({
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
             <button
+              type="button"
               onClick={handleRequestFinish}
               className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
             >
@@ -384,6 +376,7 @@ export function TrainingView({
             </button>
           ) : (
             <button
+              type="button"
               onClick={handleNextQuestion}
               disabled={!showAnswer}
               className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${

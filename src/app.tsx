@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'preact/hooks';
-import { TrainingMode } from './types';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { AnalyticsModal } from './components/AnalyticsModal';
+import { SettingsModal } from './components/SettingsModal';
+import type { TrainingMode } from './types';
+import { type UserProfileData, getAllUserProfiles, getTotalTrainingTimeMs } from './utils/db';
+import { type UserSettings, loadSettings } from './utils/settings';
 import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
-import { SettingsModal } from './components/SettingsModal';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { getAllUserProfiles, getTotalTrainingTimeMs, UserProfileData } from './utils/db';
-import { UserSettings, loadSettings } from './utils/settings';
 
 export function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
@@ -24,16 +24,16 @@ export function App() {
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
 
   // 刷新用户能力度数与总练习时长
-  const refreshProfiles = async () => {
+  const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const timeMs = await getTotalTrainingTimeMs();
     setProfiles(data);
     setTotalTimeMs(timeMs);
-  };
+  }, []);
 
   useEffect(() => {
     refreshProfiles();
-  }, []);
+  }, [refreshProfiles]);
 
   // 打开弱点分析
   const handleOpenAnalytics = (mode?: TrainingMode) => {
@@ -86,10 +86,7 @@ export function App() {
       )}
 
       {isAnalyticsOpen && (
-        <AnalyticsModal
-          initialMode={analyticsMode}
-          onClose={() => setIsAnalyticsOpen(false)}
-        />
+        <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
       )}
     </div>
   );

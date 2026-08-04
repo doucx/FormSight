@@ -1,21 +1,21 @@
-import { h } from 'preact';
-import { useRef } from 'preact/hooks';
 import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
   Award,
-  Sliders,
   BarChart2,
   Clock,
+  type Compass,
+  Crosshair,
+  Download,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+  Upload,
 } from 'lucide-preact';
-import { TrainingMode } from '../types';
-import { UserProfileData, exportAllData, importAllData, formatTotalTime } from '../utils/db';
+import { h } from 'preact';
+import { useRef } from 'preact/hooks';
+import type { TrainingMode } from '../types';
+import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
 
 interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
@@ -83,7 +83,7 @@ export function Dashboard({
 
   const handleImportFile = async (e: Event) => {
     const target = e.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
+    if (target.files?.[0]) {
       const file = target.files[0];
       const text = await file.text();
       const success = await importAllData(text);
@@ -112,6 +112,7 @@ export function Dashboard({
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => onOpenAnalytics()}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="弱点分析"
@@ -120,6 +121,7 @@ export function Dashboard({
             弱点分析
           </button>
           <button
+            type="button"
             onClick={onOpenSettings}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="偏好设置"
@@ -128,6 +130,7 @@ export function Dashboard({
             设置
           </button>
           <button
+            type="button"
             onClick={handleExport}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
             title="导出数据"
@@ -135,6 +138,7 @@ export function Dashboard({
             <Download className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
             title="导入数据"
@@ -156,10 +160,7 @@ export function Dashboard({
         {MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
-          const accuracy =
-            totalCards > 0
-              ? Math.round((profile!.totalHits / totalCards) * 100)
-              : 0;
+          const accuracy = totalCards > 0 ? Math.round((profile?.totalHits / totalCards) * 100) : 0;
           const currentDegree = profile?.currentDegreeStep || 20;
           const IconComponent = config.icon;
 
@@ -180,12 +181,8 @@ export function Dashboard({
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {config.title}
-                </h3>
-                <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">
-                  {config.desc}
-                </p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{config.desc}</p>
 
                 {/* 核心指标统计 */}
                 <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -195,8 +192,7 @@ export function Dashboard({
                       能力度数
                     </div>
                     <div className="text-xl font-black text-slate-800">
-                      {currentDegree}{' '}
-                      <span className="text-xs font-normal text-slate-500">px</span>
+                      {currentDegree} <span className="text-xs font-normal text-slate-500">px</span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -204,9 +200,7 @@ export function Dashboard({
                       <Award className="w-3 h-3 text-emerald-500" />
                       正确率
                     </div>
-                    <div className="text-xl font-black text-slate-800">
-                      {accuracy}%
-                    </div>
+                    <div className="text-xl font-black text-slate-800">{accuracy}%</div>
                   </div>
                 </div>
               </div>
@@ -214,6 +208,7 @@ export function Dashboard({
               {/* 动作按钮区 */}
               <div className="flex flex-col gap-2.5">
                 <button
+                  type="button"
                   onClick={() => onStart(config.id, 'training')}
                   className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
@@ -221,6 +216,7 @@ export function Dashboard({
                   开始自适应训练
                 </button>
                 <button
+                  type="button"
                   onClick={() => onStart(config.id, 'benchmark')}
                   className="w-full py-2.5 px-4 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all flex items-center justify-center gap-1.5"
                 >

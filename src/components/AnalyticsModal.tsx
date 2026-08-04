@@ -1,7 +1,7 @@
+import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
 import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
-import { X, Target, Compass, BarChart2, AlertCircle, Info, Crosshair } from 'lucide-preact';
-import { TrialRecord, TrainingMode } from '../types';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { TrainingMode, TrialRecord } from '../types';
 import { getAllTrialRecords } from '../utils/db';
 import { loadSettings, saveSettings } from '../utils/settings';
 
@@ -35,9 +35,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     let isMounted = true;
     setLoading(true);
     const fetchRecords = async () => {
-      const data = await getAllTrialRecords(
-        selectedMode === 'all' ? undefined : selectedMode
-      );
+      const data = await getAllTrialRecords(selectedMode === 'all' ? undefined : selectedMode);
       if (isMounted) {
         setRecords(data);
         setLoading(false);
@@ -62,11 +60,11 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     let sumDx = 0;
     let sumDy = 0;
     let sumDist = 0;
-    records.forEach((r) => {
+    for (const r of records) {
       sumDx += r.userClick[0] - r.targetB[0];
       sumDy += r.userClick[1] - r.targetB[1];
       sumDist += r.errorPixelDistance;
-    });
+    }
     avgDx = Math.round((sumDx / totalCount) * 10) / 10;
     avgDy = Math.round((sumDy / totalCount) * 10) / 10;
     avgErrorDist = Math.round((sumDist / totalCount) * 10) / 10;
@@ -79,13 +77,13 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     sumError: 0,
   }));
 
-  records.forEach((r) => {
+  for (const r of records) {
     // 将 0~360° 归类到 8 个 45° 扇区
     const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
     sectorBuckets[idx].total += 1;
     if (r.isHit) sectorBuckets[idx].hits += 1;
     sectorBuckets[idx].sumError += r.errorPixelDistance;
-  });
+  }
 
   const sectorStats = sectorBuckets.map((b, i) => {
     const acc = b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0;
@@ -139,7 +137,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
     const rings = [5, 10, 20, 30];
     ctx.lineWidth = 1;
-    rings.forEach((r) => {
+    for (const r of rings) {
       ctx.strokeStyle = '#334155';
       ctx.beginPath();
       ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
@@ -148,7 +146,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       ctx.fillStyle = '#64748B';
       ctx.font = '10px monospace';
       ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
-    });
+    }
 
     // 绘制十字坐标轴
     ctx.strokeStyle = '#475569';
@@ -162,7 +160,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     ctx.setLineDash([]);
 
     // 绘制每个做答记录的相对偏移散点
-    records.forEach((r) => {
+    for (const r of records) {
       const dx = r.userClick[0] - r.targetB[0];
       const dy = r.userClick[1] - r.targetB[1];
 
@@ -178,7 +176,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
         ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
       }
       ctx.fill();
-    });
+    }
 
     // 绘制中心目标点 B (真理原点)
     ctx.fillStyle = '#FFFFFF';
@@ -232,7 +230,8 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     // 起始偏移量 -22.5° 使正东 0° 位于正中央
     const startOffset = -Math.PI / 8;
 
-    sectorStats.forEach((stat, i) => {
+    for (let i = 0; i < sectorStats.length; i++) {
+      const stat = sectorStats[i];
       const startA = startOffset + i * sectorAngle;
       const endA = startA + sectorAngle;
 
@@ -271,7 +270,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(stat.label.split(' ')[0], lx, ly);
-    });
+    }
 
     // 中心装饰基准圆
     ctx.beginPath();
@@ -280,7 +279,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     ctx.fill();
     ctx.strokeStyle = '#64748B';
     ctx.stroke();
-  }, [activeTab, loading, records, sectorStats]);
+  }, [activeTab, loading, sectorStats]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
@@ -297,6 +296,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
@@ -315,8 +315,9 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               { id: 'double_r', name: '旋转双锚点' },
             ].map((m) => (
               <button
+                type="button"
                 key={m.id}
-                onClick={() => setSelectedMode(m.id as any)}
+                onClick={() => setSelectedMode(m.id as TrainingMode | 'all')}
                 className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
                   selectedMode === m.id
                     ? 'bg-white text-indigo-600 shadow-sm'
@@ -331,6 +332,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
           {/* Tab 选择器 */}
           <div className="flex items-center gap-1 bg-slate-200/60 p-1 rounded-xl">
             <button
+              type="button"
               onClick={() => setActiveTab('heatmap')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                 activeTab === 'heatmap'
@@ -342,6 +344,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               中心相对偏差热力图
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('compass')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                 activeTab === 'compass'
@@ -391,9 +394,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
                 <div className="text-xs font-bold text-slate-500 uppercase">总体评估</div>
                 <div className="flex justify-between items-end">
-                  <span className="text-2xl font-black text-slate-800">
-                    {overallAccuracy}%
-                  </span>
+                  <span className="text-2xl font-black text-slate-800">{overallAccuracy}%</span>
                   <span className="text-xs font-semibold text-slate-400 mb-1">
                     样本量: {totalCount} 题
                   </span>
@@ -413,15 +414,13 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                     <div className="flex justify-between">
                       <span>平均 X 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}{' '}
-                        px
+                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'} px
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>平均 Y 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}{' '}
-                        px
+                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'} px
                       </span>
                     </div>
                     <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
@@ -439,7 +438,8 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                   {weakestSector ? (
                     <div className="space-y-2">
                       <p className="text-slate-700 text-[11px]">
-                        你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 方向上正确率最低：
+                        你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
+                        方向上正确率最低：
                       </p>
                       <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60">
                         <span className="font-bold text-slate-800">{weakestSector.label}</span>
@@ -448,6 +448,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                         </span>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleApplyTargeting(weakestSector.sectorIdx)}
                         className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
                       >
