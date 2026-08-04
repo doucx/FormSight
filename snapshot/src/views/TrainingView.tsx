@@ -127,6 +127,9 @@ export function TrainingView({
   useEffect(() => {
     lastTickTimeRef.current = Date.now();
     const timer = setInterval(() => {
+      // 弹窗弹出或会话完成时，冻结计时
+      if (showSummaryModal || isFinished) return;
+
       const now = Date.now();
       const delta = now - lastTickTimeRef.current;
       lastTickTimeRef.current = now;
@@ -140,7 +143,7 @@ export function TrainingView({
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [settings.idleTimeout]);
+  }, [settings.idleTimeout, showSummaryModal, isFinished]);
 
   // === 键盘监听 (Space / Esc) ===
   useEffect(() => {
