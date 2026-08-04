@@ -112,6 +112,7 @@ export function Dashboard({
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => onOpenAnalytics()}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="弱点分析"
@@ -120,6 +121,7 @@ export function Dashboard({
             弱点分析
           </button>
           <button
+            type="button"
             onClick={onOpenSettings}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="偏好设置"
@@ -128,6 +130,7 @@ export function Dashboard({
             设置
           </button>
           <button
+            type="button"
             onClick={handleExport}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
             title="导出数据"
@@ -135,6 +138,7 @@ export function Dashboard({
             <Download className="w-4 h-4" />
           </button>
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
             title="导入数据"
@@ -204,6 +208,7 @@ export function Dashboard({
               {/* 动作按钮区 */}
               <div className="flex flex-col gap-2.5">
                 <button
+                  type="button"
                   onClick={() => onStart(config.id, 'training')}
                   className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
@@ -211,6 +216,7 @@ export function Dashboard({
                   开始自适应训练
                 </button>
                 <button
+                  type="button"
                   onClick={() => onStart(config.id, 'benchmark')}
                   className="w-full py-2.5 px-4 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all flex items-center justify-center gap-1.5"
                 >

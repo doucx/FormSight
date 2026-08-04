@@ -199,12 +199,12 @@ export function generateQuestion(
 
   // 1. 生成所有合法的 (px, py) 组合，并预计算其角度
   const validPairs: { px: number; py: number; angle: number }[] = [];
-  projChoices.forEach((x) => {
-    hgtChoices.forEach((y) => {
+  for (const x of projChoices) {
+    for (const y of hgtChoices) {
       const angle = Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360);
       validPairs.push({ px: x, py: y, angle });
-    });
-  });
+    }
+  }
 
   let chosenPair = validPairs[Math.floor(Math.random() * validPairs.length)];
 

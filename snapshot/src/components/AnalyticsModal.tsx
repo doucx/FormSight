@@ -60,11 +60,11 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     let sumDx = 0;
     let sumDy = 0;
     let sumDist = 0;
-    records.forEach((r) => {
+    for (const r of records) {
       sumDx += r.userClick[0] - r.targetB[0];
       sumDy += r.userClick[1] - r.targetB[1];
       sumDist += r.errorPixelDistance;
-    });
+    }
     avgDx = Math.round((sumDx / totalCount) * 10) / 10;
     avgDy = Math.round((sumDy / totalCount) * 10) / 10;
     avgErrorDist = Math.round((sumDist / totalCount) * 10) / 10;
@@ -77,13 +77,13 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     sumError: 0,
   }));
 
-  records.forEach((r) => {
+  for (const r of records) {
     // 将 0~360° 归类到 8 个 45° 扇区
     const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
     sectorBuckets[idx].total += 1;
     if (r.isHit) sectorBuckets[idx].hits += 1;
     sectorBuckets[idx].sumError += r.errorPixelDistance;
-  });
+  }
 
   const sectorStats = sectorBuckets.map((b, i) => {
     const acc = b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0;
@@ -160,7 +160,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     ctx.setLineDash([]);
 
     // 绘制每个做答记录的相对偏移散点
-    records.forEach((r) => {
+    for (const r of records) {
       const dx = r.userClick[0] - r.targetB[0];
       const dy = r.userClick[1] - r.targetB[1];
 
@@ -176,7 +176,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
         ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
       }
       ctx.fill();
-    });
+    }
 
     // 绘制中心目标点 B (真理原点)
     ctx.fillStyle = '#FFFFFF';
@@ -230,7 +230,8 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     // 起始偏移量 -22.5° 使正东 0° 位于正中央
     const startOffset = -Math.PI / 8;
 
-    sectorStats.forEach((stat, i) => {
+    for (let i = 0; i < sectorStats.length; i++) {
+      const stat = sectorStats[i];
       const startA = startOffset + i * sectorAngle;
       const endA = startA + sectorAngle;
 
@@ -295,6 +296,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
           >
@@ -313,6 +315,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               { id: 'double_r', name: '旋转双锚点' },
             ].map((m) => (
               <button
+                type="button"
                 key={m.id}
                 onClick={() => setSelectedMode(m.id as any)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
@@ -329,6 +332,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
           {/* Tab 选择器 */}
           <div className="flex items-center gap-1 bg-slate-200/60 p-1 rounded-xl">
             <button
+              type="button"
               onClick={() => setActiveTab('heatmap')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                 activeTab === 'heatmap'
@@ -340,6 +344,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               中心相对偏差热力图
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('compass')}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all flex items-center gap-1.5 ${
                 activeTab === 'compass'
@@ -443,6 +448,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                         </span>
                       </div>
                       <button
+                        type="button"
                         onClick={() => handleApplyTargeting(weakestSector.sectorIdx)}
                         className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
                       >

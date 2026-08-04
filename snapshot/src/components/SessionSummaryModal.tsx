@@ -112,7 +112,7 @@ export function SessionSummaryModal({
     const yTicks = [maxStep, Math.round((maxStep + minStep) / 2), minStep];
     const uniqueYTicks = Array.from(new Set(yTicks));
 
-    uniqueYTicks.forEach((tickVal) => {
+    for (const tickVal of uniqueYTicks) {
       const y = getY(tickVal);
       ctx.beginPath();
       ctx.moveTo(padding.left, y);
@@ -120,7 +120,7 @@ export function SessionSummaryModal({
       ctx.stroke();
 
       ctx.fillText(`${tickVal}px`, padding.left - 8, y);
-    });
+    }
 
     // 2. 绘制渐变填充区域
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
@@ -149,7 +149,8 @@ export function SessionSummaryModal({
     ctx.stroke();
 
     // 4. 绘制数据点与作答标记
-    history.forEach((h, i) => {
+    for (let i = 0; i < history.length; i++) {
+      const h = history[i];
       const x = getX(i);
       const y = getY(h.step);
 
@@ -290,6 +291,7 @@ export function SessionSummaryModal({
         {/* 底部按钮 */}
         <div className="flex gap-3 pt-1">
           <button
+            type="button"
             onClick={onClose}
             className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95"
           >
@@ -297,6 +299,7 @@ export function SessionSummaryModal({
             返回主页
           </button>
           <button
+            type="button"
             onClick={onRestart}
             className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95"
           >

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { AnalyticsModal } from './components/AnalyticsModal';
 import { SettingsModal } from './components/SettingsModal';
 import type { TrainingMode } from './types';
@@ -24,16 +24,16 @@ export function App() {
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
 
   // 刷新用户能力度数与总练习时长
-  const refreshProfiles = async () => {
+  const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const timeMs = await getTotalTrainingTimeMs();
     setProfiles(data);
     setTotalTimeMs(timeMs);
-  };
+  }, []);
 
   useEffect(() => {
     refreshProfiles();
-  }, []);
+  }, [refreshProfiles]);
 
   // 打开弱点分析
   const handleOpenAnalytics = (mode?: TrainingMode) => {

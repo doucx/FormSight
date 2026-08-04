@@ -61,9 +61,9 @@ export function StarCanvas({
           question.gridDim,
           question.gridStep,
         );
-        gridPoints.forEach((p) => {
+        for (const p of gridPoints) {
           drawDot(ctx, p.x, p.y, '#888888', 3.5);
-        });
+        }
 
         // 图层 1.5: 鼠标悬停高亮网格点
         if (!disabled && !showAnswer && hoverPoint) {
@@ -219,6 +219,14 @@ export function StarCanvas({
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
           onClick={handleRightCanvasClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="右侧做答画布"
           onMouseMove={handleRightCanvasMouseMove}
           onMouseLeave={handleRightCanvasMouseLeave}
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
