@@ -1,7 +1,7 @@
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
-import { X, Sliders, ToggleLeft, ToggleRight, Target, Flame, Crosshair } from 'lucide-preact';
-import { UserSettings, TargetingMode, saveSettings } from '../utils/settings';
+import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
 
 const SECTOR_NAMES = [
   '正东(0°)',
@@ -28,7 +28,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
   };
 
   const handleDelayChange = (e: Event) => {
-    const val = parseInt((e.target as HTMLInputElement).value, 10);
+    const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
     setCurrent((prev) => ({ ...prev, autoNextDelay: val }));
   };
 

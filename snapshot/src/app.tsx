@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'preact/hooks';
-import { TrainingMode } from './types';
+import { useEffect, useState } from 'preact/hooks';
+import { AnalyticsModal } from './components/AnalyticsModal';
+import { SettingsModal } from './components/SettingsModal';
+import type { TrainingMode } from './types';
+import { type UserProfileData, getAllUserProfiles, getTotalTrainingTimeMs } from './utils/db';
+import { type UserSettings, loadSettings } from './utils/settings';
 import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
-import { SettingsModal } from './components/SettingsModal';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { getAllUserProfiles, getTotalTrainingTimeMs, UserProfileData } from './utils/db';
-import { UserSettings, loadSettings } from './utils/settings';
 
 export function App() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
@@ -86,10 +86,7 @@ export function App() {
       )}
 
       {isAnalyticsOpen && (
-        <AnalyticsModal
-          initialMode={analyticsMode}
-          onClose={() => setIsAnalyticsOpen(false)}
-        />
+        <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
       )}
     </div>
   );

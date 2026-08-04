@@ -1,7 +1,7 @@
+import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
 import { h } from 'preact';
-import { useState, useEffect, useRef } from 'preact/hooks';
-import { X, Target, Compass, BarChart2, AlertCircle, Info, Crosshair } from 'lucide-preact';
-import { TrialRecord, TrainingMode } from '../types';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { TrainingMode, TrialRecord } from '../types';
 import { getAllTrialRecords } from '../utils/db';
 import { loadSettings, saveSettings } from '../utils/settings';
 
@@ -35,9 +35,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     let isMounted = true;
     setLoading(true);
     const fetchRecords = async () => {
-      const data = await getAllTrialRecords(
-        selectedMode === 'all' ? undefined : selectedMode
-      );
+      const data = await getAllTrialRecords(selectedMode === 'all' ? undefined : selectedMode);
       if (isMounted) {
         setRecords(data);
         setLoading(false);
@@ -391,9 +389,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
                 <div className="text-xs font-bold text-slate-500 uppercase">总体评估</div>
                 <div className="flex justify-between items-end">
-                  <span className="text-2xl font-black text-slate-800">
-                    {overallAccuracy}%
-                  </span>
+                  <span className="text-2xl font-black text-slate-800">{overallAccuracy}%</span>
                   <span className="text-xs font-semibold text-slate-400 mb-1">
                     样本量: {totalCount} 题
                   </span>
@@ -413,15 +409,13 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                     <div className="flex justify-between">
                       <span>平均 X 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}{' '}
-                        px
+                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'} px
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>平均 Y 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}{' '}
-                        px
+                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'} px
                       </span>
                     </div>
                     <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
@@ -439,7 +433,8 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                   {weakestSector ? (
                     <div className="space-y-2">
                       <p className="text-slate-700 text-[11px]">
-                        你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 方向上正确率最低：
+                        你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
+                        方向上正确率最低：
                       </p>
                       <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60">
                         <span className="font-bold text-slate-800">{weakestSector.label}</span>

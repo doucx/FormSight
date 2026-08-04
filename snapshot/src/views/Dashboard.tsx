@@ -1,21 +1,21 @@
-import { h } from 'preact';
-import { useRef } from 'preact/hooks';
 import {
-  Compass,
-  Crosshair,
-  RotateCw,
-  Download,
-  Upload,
-  Play,
-  Target,
-  TrendingUp,
   Award,
-  Sliders,
   BarChart2,
   Clock,
+  type Compass,
+  Crosshair,
+  Download,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+  Upload,
 } from 'lucide-preact';
-import { TrainingMode } from '../types';
-import { UserProfileData, exportAllData, importAllData, formatTotalTime } from '../utils/db';
+import { h } from 'preact';
+import { useRef } from 'preact/hooks';
+import type { TrainingMode } from '../types';
+import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
 
 interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
@@ -156,10 +156,7 @@ export function Dashboard({
         {MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
-          const accuracy =
-            totalCards > 0
-              ? Math.round((profile!.totalHits / totalCards) * 100)
-              : 0;
+          const accuracy = totalCards > 0 ? Math.round((profile!.totalHits / totalCards) * 100) : 0;
           const currentDegree = profile?.currentDegreeStep || 20;
           const IconComponent = config.icon;
 
@@ -180,12 +177,8 @@ export function Dashboard({
                   </span>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {config.title}
-                </h3>
-                <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">
-                  {config.desc}
-                </p>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{config.desc}</p>
 
                 {/* 核心指标统计 */}
                 <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -195,8 +188,7 @@ export function Dashboard({
                       能力度数
                     </div>
                     <div className="text-xl font-black text-slate-800">
-                      {currentDegree}{' '}
-                      <span className="text-xs font-normal text-slate-500">px</span>
+                      {currentDegree} <span className="text-xs font-normal text-slate-500">px</span>
                     </div>
                   </div>
                   <div className="space-y-1">
@@ -204,9 +196,7 @@ export function Dashboard({
                       <Award className="w-3 h-3 text-emerald-500" />
                       正确率
                     </div>
-                    <div className="text-xl font-black text-slate-800">
-                      {accuracy}%
-                    </div>
+                    <div className="text-xl font-black text-slate-800">{accuracy}%</div>
                   </div>
                 </div>
               </div>

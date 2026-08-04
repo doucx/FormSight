@@ -1,5 +1,5 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { TrialRecord, TrainingMode } from '../types';
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
+import type { TrainingMode, TrialRecord } from '../types';
 
 export interface SessionData {
   id: string;
@@ -16,7 +16,7 @@ export interface SessionData {
 export interface UserProfileData {
   mode: TrainingMode;
   currentDegreeStep: number; // 当前自适应维持的度数
-  bestDegreeStep: number;    // 历史最佳度数
+  bestDegreeStep: number; // 历史最佳度数
   totalTrainedCards: number;
   totalHits: number;
   updatedAt: number;
@@ -88,9 +88,7 @@ export async function saveSession(session: SessionData): Promise<void> {
 }
 
 // === API 3: 获取用户指定模式的能力看板 ===
-export async function getUserProfile(
-  mode: TrainingMode
-): Promise<UserProfileData | null> {
+export async function getUserProfile(mode: TrainingMode): Promise<UserProfileData | null> {
   const db = await getDB();
   const profile = await db.get('user_profiles', mode);
   return profile || null;
@@ -114,7 +112,7 @@ export async function getAllUserProfiles(): Promise<Record<TrainingMode, UserPro
 async function updateUserProfile(
   mode: TrainingMode,
   isHit: boolean,
-  currentStep: number
+  currentStep: number,
 ): Promise<void> {
   const db = await getDB();
   const existing = await db.get('user_profiles', mode);
@@ -194,9 +192,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 }
 
 // === API 7: 获取历史做答日志（支持按模式筛选） ===
-export async function getAllTrialRecords(
-  mode?: TrainingMode
-): Promise<TrialRecord[]> {
+export async function getAllTrialRecords(mode?: TrainingMode): Promise<TrialRecord[]> {
   const db = await getDB();
   if (mode) {
     return await db.getAllFromIndex('records', 'by-mode', mode);

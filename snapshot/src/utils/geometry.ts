@@ -1,4 +1,4 @@
-import { Point, QuestionData, HitResult, TrainingMode } from '../types';
+import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 
 export const CANVAS_SIZE = 500;
 export const CX = CANVAS_SIZE / 2; // 250
@@ -8,11 +8,7 @@ export const DEFAULT_GRID_DIM = 5; // 5x5 网格
 /**
  * 将点绕指定中心旋转指定角度 (角度制)
  */
-export function rotatePoint(
-  p: Point,
-  center: Point,
-  angleDeg: number
-): Point {
+export function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
   const rad = (angleDeg * Math.PI) / 180;
   const cos = Math.cos(rad);
   const sin = Math.sin(rad);
@@ -41,7 +37,7 @@ export function calcGridStart(
   targetB: Point,
   rowIdx: number,
   colIdx: number,
-  gridStep: number
+  gridStep: number,
 ): Point {
   return {
     x: Math.round((targetB.x - colIdx * gridStep) * 100) / 100,
@@ -55,7 +51,7 @@ export function calcGridStart(
 export function generateGridPoints(
   gridStart: Point,
   dim: number = DEFAULT_GRID_DIM,
-  step: number
+  step: number,
 ): Point[] {
   const points: Point[] = [];
   for (let r = 0; r < dim; r++) {
@@ -76,7 +72,7 @@ export function findNearestGridPoint(
   clickPoint: Point,
   gridStart: Point,
   gridStep: number,
-  dim: number = DEFAULT_GRID_DIM
+  dim: number = DEFAULT_GRID_DIM,
 ): { nearestPoint: Point; minDistance: number; isWithinRange: boolean } {
   const gridPoints = generateGridPoints(gridStart, dim, gridStep);
   let nearestPoint = gridPoints[0];
@@ -107,13 +103,13 @@ export function checkHit(
   targetB: Point,
   gridStart: Point,
   gridStep: number,
-  dim: number = DEFAULT_GRID_DIM
+  dim: number = DEFAULT_GRID_DIM,
 ): HitResult {
   const { nearestPoint, isWithinRange } = findNearestGridPoint(
     clickPoint,
     gridStart,
     gridStep,
-    dim
+    dim,
   );
 
   // 1. 判断吸附后网格点与真理点 B 的直接偏差
@@ -161,7 +157,7 @@ function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
 export function generateQuestion(
   mode: TrainingMode,
   gridStep: number,
-  options?: QuestionGenerateOptions
+  options?: QuestionGenerateOptions,
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
@@ -210,7 +206,7 @@ export function generateQuestion(
   const validPairs: { px: number; py: number; angle: number }[] = [];
   projChoices.forEach((x) => {
     hgtChoices.forEach((y) => {
-      const angle = Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360);
+      const angle = Math.round(((Math.atan2(y, x) * 180) / Math.PI + 360) % 360);
       validPairs.push({ px: x, py: y, angle });
     });
   });
@@ -244,9 +240,10 @@ export function generateQuestion(
   const px = chosenPair.px;
   const py = chosenPair.py;
 
-  const rotAngle = mode === 'double_h' 
-    ? 0 
-    : [15, 30, 45, 60, 75, 90, 105, 120, 135, 150][Math.floor(Math.random() * 10)];
+  const rotAngle =
+    mode === 'double_h'
+      ? 0
+      : [15, 30, 45, 60, 75, 90, 105, 120, 135, 150][Math.floor(Math.random() * 10)];
 
   const center: Point = { x: 0, y: 0 };
   const rotatedA = rotatePoint({ x: baseAx, y: baseAy }, center, rotAngle);
@@ -254,12 +251,21 @@ export function generateQuestion(
   const rotatedB = rotatePoint({ x: px, y: py }, center, rotAngle);
 
   // 平移到画布中心 (CX, CY)
-  const anchorA: Point = { x: Math.round((rotatedA.x + CX) * 100) / 100, y: Math.round((rotatedA.y + CY) * 100) / 100 };
-  const anchorC: Point = { x: Math.round((rotatedC.x + CX) * 100) / 100, y: Math.round((rotatedC.y + CY) * 100) / 100 };
-  const targetB: Point = { x: Math.round((rotatedB.x + CX) * 100) / 100, y: Math.round((rotatedB.y + CY) * 100) / 100 };
+  const anchorA: Point = {
+    x: Math.round((rotatedA.x + CX) * 100) / 100,
+    y: Math.round((rotatedA.y + CY) * 100) / 100,
+  };
+  const anchorC: Point = {
+    x: Math.round((rotatedC.x + CX) * 100) / 100,
+    y: Math.round((rotatedC.y + CY) * 100) / 100,
+  };
+  const targetB: Point = {
+    x: Math.round((rotatedB.x + CX) * 100) / 100,
+    y: Math.round((rotatedB.y + CY) * 100) / 100,
+  };
 
   const gridStart = calcGridStart(targetB, randomRow, randomCol, gridStep);
-  const angleDegree = Math.round((Math.atan2(py, px) * 180 / Math.PI + 360) % 360);
+  const angleDegree = Math.round(((Math.atan2(py, px) * 180) / Math.PI + 360) % 360);
 
   return {
     id,

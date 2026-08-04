@@ -1,4 +1,4 @@
-import { AdaptiveMode } from './settings';
+import type { AdaptiveMode } from './settings';
 
 /**
  * 标准网格步长难度序列（单位：px）
@@ -33,17 +33,17 @@ export class AdaptiveEngine {
   private blockSize: number;
 
   // 经典 3U1D 状态
-  private consecutiveCorrect: number = 0;
+  private consecutiveCorrect = 0;
 
   // 轮次胜率评估状态
   private blockHistory: boolean[] = [];
 
   constructor(
-    initialGridStep: number = 20,
-    isFineGranularity: boolean = false,
+    initialGridStep = 20,
+    isFineGranularity = false,
     mode: AdaptiveMode = 'block',
-    targetAccuracy: number = 0.8,
-    blockSize: number = 10
+    targetAccuracy = 0.8,
+    blockSize = 10,
   ) {
     this.stepSequence = isFineGranularity ? FINE_STEP_SEQUENCE : STANDARD_STEP_SEQUENCE;
     this.mode = mode;

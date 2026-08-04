@@ -1,16 +1,16 @@
-import { h } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
 import {
+  ArrowRight,
   Award,
   Clock,
+  Home,
+  RotateCcw,
   Target,
   TrendingDown,
-  ArrowRight,
-  RotateCcw,
-  Home,
   Zap,
 } from 'lucide-preact';
-import { TrainingMode } from '../types';
+import { h } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
+import type { TrainingMode } from '../types';
 
 export interface SessionHistoryItem {
   trialIndex: number;
@@ -55,7 +55,7 @@ export function SessionSummaryModal({
   const avgResponseTimeSec =
     totalTrials > 0
       ? (history.reduce((acc, curr) => acc + curr.responseTimeMs, 0) / totalTrials / 1000).toFixed(
-          1
+          1,
         )
       : '0.0';
 
@@ -249,8 +249,8 @@ export function SessionSummaryModal({
                 {stepDiff > 0
                   ? `难度精细度提升了 ${stepDiff}px ！`
                   : stepDiff < 0
-                  ? `网格步长调整了 ${Math.abs(stepDiff)}px`
-                  : '稳健维持当前难度层阶'}
+                    ? `网格步长调整了 ${Math.abs(stepDiff)}px`
+                    : '稳健维持当前难度层阶'}
               </div>
             </div>
           </div>

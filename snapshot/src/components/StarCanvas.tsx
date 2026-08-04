@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { QuestionData, Point, HitResult } from '../types';
-import { checkHit, findNearestGridPoint, generateGridPoints, CANVAS_SIZE } from '../utils/geometry';
+import type { HitResult, Point, QuestionData } from '../types';
+import { CANVAS_SIZE, checkHit, findNearestGridPoint, generateGridPoints } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -59,7 +59,7 @@ export function StarCanvas({
         const gridPoints = generateGridPoints(
           question.gridStart,
           question.gridDim,
-          question.gridStep
+          question.gridStep,
         );
         gridPoints.forEach((p) => {
           drawDot(ctx, p.x, p.y, '#888888', 3.5);
@@ -125,7 +125,7 @@ export function StarCanvas({
     x: number,
     y: number,
     color: string,
-    radius: number
+    radius: number,
   ) {
     ctx.fillStyle = color;
     ctx.beginPath();
@@ -155,7 +155,7 @@ export function StarCanvas({
       currentPoint,
       question.gridStart,
       question.gridStep,
-      question.gridDim
+      question.gridDim,
     );
 
     if (isWithinRange) {
@@ -190,7 +190,7 @@ export function StarCanvas({
       question.targetB,
       question.gridStart,
       question.gridStep,
-      question.gridDim
+      question.gridDim,
     );
 
     // 忽略在有效感应范围之外的点击
