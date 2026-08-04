@@ -83,7 +83,7 @@ export function Dashboard({
 
   const handleImportFile = async (e: Event) => {
     const target = e.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
+    if (target.files?.[0]) {
       const file = target.files[0];
       const text = await file.text();
       const success = await importAllData(text);
@@ -156,7 +156,7 @@ export function Dashboard({
         {MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
-          const accuracy = totalCards > 0 ? Math.round((profile!.totalHits / totalCards) * 100) : 0;
+          const accuracy = totalCards > 0 ? Math.round((profile?.totalHits / totalCards) * 100) : 0;
           const currentDegree = profile?.currentDegreeStep || 20;
           const IconComponent = config.icon;
 

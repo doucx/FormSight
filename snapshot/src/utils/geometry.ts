@@ -48,11 +48,7 @@ export function calcGridStart(
 /**
  * 根据 GridStart、维度和步长生成全量干扰点阵坐标数组
  */
-export function generateGridPoints(
-  gridStart: Point,
-  dim: number = DEFAULT_GRID_DIM,
-  step: number,
-): Point[] {
+export function generateGridPoints(gridStart: Point, dim: number, step: number): Point[] {
   const points: Point[] = [];
   for (let r = 0; r < dim; r++) {
     for (let c = 0; c < dim; c++) {
@@ -134,8 +130,7 @@ export interface QuestionGenerateOptions {
  */
 function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
   if (
-    options &&
-    options.targetingMode &&
+    options?.targetingMode &&
     options.targetingMode !== 'off' &&
     options.targetSectors &&
     options.targetSectors.length > 0

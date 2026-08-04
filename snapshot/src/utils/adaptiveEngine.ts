@@ -90,9 +90,8 @@ export class AdaptiveEngine {
   public recordResult(isHit: boolean): RecordResultOutput {
     if (this.mode === 'staircase') {
       return this.recordStaircase(isHit);
-    } else {
-      return this.recordBlock(isHit);
     }
+    return this.recordBlock(isHit);
   }
 
   /**
