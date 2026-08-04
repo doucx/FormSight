@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
 import { CANVAS_SIZE, checkHit, findNearestGridPoint, generateGridPoints } from '../utils/geometry';

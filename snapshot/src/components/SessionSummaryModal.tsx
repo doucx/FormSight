@@ -5,10 +5,8 @@ import {
   Home,
   RotateCcw,
   Target,
-  TrendingDown,
   Zap,
 } from 'lucide-preact';
-import { h } from 'preact';
 import { useEffect, useRef } from 'preact/hooks';
 import type { TrainingMode } from '../types';
 

@@ -1,249 +1,203 @@
-已经分析了 `npm run check` (Biome 检查) 输出的错误信息，主要是 `SessionSummaryModal.tsx` 与 `AnalyticsModal.tsx` 中的 `for` 循环结尾遗留了多余的 `);` 导致语法解析失败，以及若干 TypeScript 类型与 Lint 警告。以下是修复计划：
+已经分析了 `npm run build` (TypeScript `tsc`) 报出的 7 个编译错误。主要原因是：
+1. 自动 JSX 转换模式下无须导入未使用的 `h`，导致 `noUnusedLocals` 规则触发 `TS6133` 错误。
+2. `SessionSummaryModal.tsx` 中导入了未使用的图标组件 `TrendingDown` (`TS6133`)。
+3. `Dashboard.tsx` 中 `profile?.totalHits` 的可选链表达式返回值可能为 `undefined`，触发了 `TS18048`。
 
-## [WIP] fix(components): 修复 Biome 检查暴露的语法解析错误与代码风格问题
+以下是修复计划：
+
+## [WIP] fix(ts): 修复未使用的变量导入及可选链 undefined 编译报错
 
 ### 错误分析
 
-1. **语法解析错误 (`SessionSummaryModal.tsx:177` & `AnalyticsModal.tsx:273`)**:
-   - 原代码将从 `forEach` 重构为 `for (let i = ...)` 循环时，循环块末尾仍保留了 `});`。语法解析器无法在 `for` 块外接收单独的 `)`，导致代码无法通过解析和格式化。
+1. **未使用的 `h` 导入 (`TS6133`)**:
+   - `tsconfig.json` 配置了 `"jsx": "react-jsx"` 与 `"jsxImportSource": "preact"`，项目采用了现代自动 JSX 转换方案，组件文件中无需手动 `import { h } from 'preact'`。在严格的 `noUnusedLocals` 规则下，未引用的 `h` 导致了 `TS6133` 编译失败。
 
-2. **Lint 报错与警告**:
-   - **`AnalyticsModal.tsx:140`**: `rings.forEach` 被提示优先使用 `for...of` 循环以保持一致性及最佳性能。
-   - **`AnalyticsModal.tsx:320`**: `m.id as any` 使用了 `any` 禁用类型检查，应用 `TrainingMode | 'all'` 显式类型断言。
-   - **`AnalyticsModal.tsx:210`**: `useEffect` 依赖项中包含了未在内部直接引用的 `records` 变量。
-   - **`SettingsModal.tsx:316`**: 在 `.map((name, idx))` 中使用了数组索引 `idx` 作为 JSX 的 `key`。
+2. **未使用的图标导入 (`TS6133`)**:
+   - `SessionSummaryModal.tsx` 导入了 `TrendingDown` 图标但未在 JSX 中引用。
+
+3. **可选链可能为 `undefined` (`TS18048`)**:
+   - `Dashboard.tsx` 163 行 `profile?.totalHits / totalCards` 中，`profile?.totalHits` 类型为 `number | undefined`。在除法表达式中使用可能为 `undefined` 的值会触发 TypeScript 错误。
 
 ### 用户需求
 
-修复 `npm run check` 检测出的全部 10 处错误，使 Biome 代码检查和格式化能够顺利通过。
+修复所有 `tsc` 报出的 TypeScript 类型和变量警告/错误，确保 `npm run build` 能够顺畅完成构建。
 
 ### 评论
 
-语法错误和提示信息是项目规范化不可缺少的一环。通过修复 `for` 循环句法错误并改进类型约束与 React 依赖控制，可以有效提升系统的健壮性。
+这是采用 JSX transform 和开启 TypeScript 严格无未使用本地变量检查时常见的清理工作。彻底清理这些无用 import 还能微小提升打包分析效率。
 
 ### 目标
 
-1. 修复 `SessionSummaryModal.tsx` 第 177 行的语法错误（`});` 替换为 `}`）。
-2. 修复 `AnalyticsModal.tsx` 中的语法错误（`});` 替换为 `}`）、依赖数组及 `any` 断言。
-3. 替换 `rings.forEach` 为 `for (const r of rings)` 循环。
-4. 替换 `SettingsModal.tsx` 中的数组索引 key `key={idx}` 为唯的一项标识 `key={name}`。
+1. 移除 `AnalyticsModal.tsx`, `SessionSummaryModal.tsx`, `SettingsModal.tsx`, `StarCanvas.tsx`, `Dashboard.tsx`, `TrainingView.tsx` 6 个文件中未使用的 `import { h } from 'preact'`。
+2. 移除 `SessionSummaryModal.tsx` 中未使用的 `TrendingDown` 图标导入。
+3. 修复 `Dashboard.tsx` 中对 `profile.totalHits` 的空安全检查，避免 `undefined` 参与计算。
 
 ### 基本原理
 
-* `for` 循环结尾应当仅有闭合的花括号 `}`。
-* 使用确切的类型声明 `TrainingMode | 'all'` 代替 `any` 以提高 TypeScript 类型安全性。
-* 将 `key={idx}` 替换为 `key={name}` 消除 React / Preact List key 相关的潜在渲染更新隐患。
+* 在 Vite + Preact (Automatic JSX Runtime) 配置下，由编译器自动注入 JSX 转换函数，因此源码中不再需要保留 `import { h } from 'preact'`。
+* 明确在 `totalCards > 0` 判定中包含 `profile` 存在性断言，从而使 TypeScript 能准确收窄 `profile.totalHits` 为 `number` 类型。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/ui #concept/parser #scope/dx #ai/instruct #task/domain/ui #task/object/biome-lint-fix #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/build #concept/config #scope/dx #ai/instruct #task/domain/build #task/object/tsc-error-fix #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 SessionSummaryModal.tsx 语法错误
+#### Acts 1: 清理组件文件中的未使用 import
 
-删除 `SessionSummaryModal.tsx` 中 `for` 循环末尾误留的括号。
+移除各组件和视图中未使用的 `h` 及 `TrendingDown` 导入。
+
+~~~~~act
+patch_file
+src/components/AnalyticsModal.tsx
+~~~~~
+~~~~~tsx.old
+import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
+import { h } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
+~~~~~tsx.new
+import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
 
 ~~~~~act
 patch_file
 src/components/SessionSummaryModal.tsx
 ~~~~~
 ~~~~~tsx.old
-      // 在主要节点标数字
-      if (
-        history.length <= 10 ||
-        i === 0 ||
-        i === history.length - 1 ||
-        h.step !== history[i - 1]?.step
-      ) {
-        ctx.fillStyle = '#CBD5E1';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${h.step}`, x, y - 8);
-      }
-    });
-
-    // X 轴底线
+import {
+  ArrowRight,
+  Award,
+  Clock,
+  Home,
+  RotateCcw,
+  Target,
+  TrendingDown,
+  Zap,
+} from 'lucide-preact';
+import { h } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
 ~~~~~
 ~~~~~tsx.new
-      // 在主要节点标数字
-      if (
-        history.length <= 10 ||
-        i === 0 ||
-        i === history.length - 1 ||
-        h.step !== history[i - 1]?.step
-      ) {
-        ctx.fillStyle = '#CBD5E1';
-        ctx.font = 'bold 9px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${h.step}`, x, y - 8);
-      }
-    }
-
-    // X 轴底线
+import {
+  ArrowRight,
+  Award,
+  Clock,
+  Home,
+  RotateCcw,
+  Target,
+  Zap,
+} from 'lucide-preact';
+import { useEffect, useRef } from 'preact/hooks';
 ~~~~~
-
-#### Acts 2: 修复 AnalyticsModal.tsx 中的语法与 Lint 错误
-
-1. 将 `rings.forEach` 改为 `for...of`。
-2. 修复扇区 `for` 循环末尾多余的 `)`。
-3. 移除 `useEffect` 中多余的 `records` 依赖。
-4. 将 `setSelectedMode(m.id as any)` 替换为 `setSelectedMode(m.id as TrainingMode | 'all')`。
-
-~~~~~act
-patch_file
-src/components/AnalyticsModal.tsx
-~~~~~
-~~~~~tsx.old
-    // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
-    const rings = [5, 10, 20, 30];
-    ctx.lineWidth = 1;
-    rings.forEach((r) => {
-      ctx.strokeStyle = '#334155';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#64748B';
-      ctx.font = '10px monospace';
-      ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
-    });
-~~~~~
-~~~~~tsx.new
-    // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
-    const rings = [5, 10, 20, 30];
-    ctx.lineWidth = 1;
-    for (const r of rings) {
-      ctx.strokeStyle = '#334155';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#64748B';
-      ctx.font = '10px monospace';
-      ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
-    }
-~~~~~
-
-~~~~~act
-patch_file
-src/components/AnalyticsModal.tsx
-~~~~~
-~~~~~tsx.old
-      ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#EF4444' : '#94A3B8';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(stat.label.split(' ')[0], lx, ly);
-    });
-
-    // 中心装饰基准圆
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
-    ctx.fill();
-    ctx.strokeStyle = '#64748B';
-    ctx.stroke();
-  }, [activeTab, loading, records, sectorStats]);
-~~~~~
-~~~~~tsx.new
-      ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#EF4444' : '#94A3B8';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(stat.label.split(' ')[0], lx, ly);
-    }
-
-    // 中心装饰基准圆
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
-    ctx.fill();
-    ctx.strokeStyle = '#64748B';
-    ctx.stroke();
-  }, [activeTab, loading, sectorStats]);
-~~~~~
-
-~~~~~act
-patch_file
-src/components/AnalyticsModal.tsx
-~~~~~
-~~~~~tsx.old
-          {/* 模式 Selector */}
-          <div className="flex items-center gap-1">
-            {[
-              { id: 'all', name: '全部模式' },
-              { id: 'single', name: '单锚点' },
-              { id: 'double_h', name: '水平双锚点' },
-              { id: 'double_r', name: '旋转双锚点' },
-            ].map((m) => (
-              <button
-                type="button"
-                key={m.id}
-                onClick={() => setSelectedMode(m.id as any)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-~~~~~
-~~~~~tsx.new
-          {/* 模式 Selector */}
-          <div className="flex items-center gap-1">
-            {[
-              { id: 'all', name: '全部模式' },
-              { id: 'single', name: '单锚点' },
-              { id: 'double_h', name: '水平双锚点' },
-              { id: 'double_r', name: '旋转双锚点' },
-            ].map((m) => (
-              <button
-                type="button"
-                key={m.id}
-                onClick={() => setSelectedMode(m.id as TrainingMode | 'all')}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
-~~~~~
-
-#### Acts 3: 修复 SettingsModal.tsx 中数组 key 警告
-
-将扇区列表中以 `idx` 变量作为 key 改为扇区名称 `name`。
 
 ~~~~~act
 patch_file
 src/components/SettingsModal.tsx
 ~~~~~
 ~~~~~tsx.old
-            {/* 手动勾选扇区 */}
-            {current.targetingMode === 'manual' && (
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
-                <div className="text-[11px] font-semibold text-slate-500">
-                  选择需要靶向强化的角度扇区：
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {SECTOR_NAMES.map((name, idx) => {
-                    const selected = (current.manualTargetSectors || []).includes(idx);
-                    return (
-                      <button
-                        type="button"
-                        key={idx}
-                        onClick={() => handleSectorToggle(idx)}
-                        className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
+import { h } from 'preact';
+import { useState } from 'preact/hooks';
 ~~~~~
 ~~~~~tsx.new
-            {/* 手动勾选扇区 */}
-            {current.targetingMode === 'manual' && (
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
-                <div className="text-[11px] font-semibold text-slate-500">
-                  选择需要靶向强化的角度扇区：
-                </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {SECTOR_NAMES.map((name, idx) => {
-                    const selected = (current.manualTargetSectors || []).includes(idx);
-                    return (
-                      <button
-                        type="button"
-                        key={name}
-                        onClick={() => handleSectorToggle(idx)}
-                        className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
+import { useState } from 'preact/hooks';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/StarCanvas.tsx
+~~~~~
+~~~~~tsx.old
+import { h } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
+~~~~~tsx.new
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
+
+~~~~~act
+patch_file
+src/views/TrainingView.tsx
+~~~~~
+~~~~~tsx.old
+import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
+import { h } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
+~~~~~tsx.new
+import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+~~~~~
+
+#### Acts 2: 修复 Dashboard.tsx 中的导入与类型断言
+
+移除 `Dashboard.tsx` 中的 `h` 导入，并为 `profile.totalHits` 提供安全的空收窄条件。
+
+~~~~~act
+patch_file
+src/views/Dashboard.tsx
+~~~~~
+~~~~~tsx.old
+import {
+  Award,
+  BarChart2,
+  Clock,
+  type Compass,
+  Crosshair,
+  Download,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+  Upload,
+} from 'lucide-preact';
+import { h } from 'preact';
+import { useRef } from 'preact/hooks';
+~~~~~
+~~~~~tsx.new
+import {
+  Award,
+  BarChart2,
+  Clock,
+  type Compass,
+  Crosshair,
+  Download,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+  Upload,
+} from 'lucide-preact';
+import { useRef } from 'preact/hooks';
+~~~~~
+
+~~~~~act
+patch_file
+src/views/Dashboard.tsx
+~~~~~
+~~~~~tsx.old
+        {MODES_CONFIG.map((config) => {
+          const profile = profiles[config.id];
+          const totalCards = profile?.totalTrainedCards || 0;
+          const accuracy = totalCards > 0 ? Math.round((profile?.totalHits / totalCards) * 100) : 0;
+          const currentDegree = profile?.currentDegreeStep || 20;
+~~~~~
+~~~~~tsx.new
+        {MODES_CONFIG.map((config) => {
+          const profile = profiles[config.id];
+          const totalCards = profile?.totalTrainedCards || 0;
+          const accuracy =
+            totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+          const currentDegree = profile?.currentDegreeStep || 20;
 ~~~~~
 
 ### 下一步建议
 
-代码修改完成后，建议在 Shell 中重新运行 `npm run check` 校验是否全部问题被修复，并可以执行 `npm run build` 确保 TypeScript 编译通过。
+修改完成后，可在命令行再次运行 `npm run build` 和 `npm run check` 验证构建与代码风格检查是否均能成功无报错通过。

@@ -12,7 +12,6 @@ import {
   TrendingUp,
   Upload,
 } from 'lucide-preact';
-import { h } from 'preact';
 import { useRef } from 'preact/hooks';
 import type { TrainingMode } from '../types';
 import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
@@ -160,7 +159,8 @@ export function Dashboard({
         {MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
-          const accuracy = totalCards > 0 ? Math.round((profile?.totalHits / totalCards) * 100) : 0;
+          const accuracy =
+            totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
           const currentDegree = profile?.currentDegreeStep || 20;
           const IconComponent = config.icon;
 
