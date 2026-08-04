@@ -1,82 +1,46 @@
-我们已经定位到了问题所在。原因是 `TrainingView.tsx` 中的计时器 `setInterval` 在回调执行时未对 `showSummaryModal`（结算弹窗是否打开）和 `isFinished`（是否已完成）状态进行检查，导致弹窗出现后定时器依然在后台运行并累加秒数。
-
-以下是具体的修复计划：
-
-## [WIP] fix: 修复会话结算弹窗弹出后训练时长继续递增的问题
-
-### 错误分析
-在会话结束或结算弹窗弹出的状态下，`TrainingView.tsx` 的 `setInterval` 定时器仍然持续触发，并且未拦截 `showSummaryModal` 或 `isFinished` 为 `true` 的情形。这导致即使用户已经停止答题并阅读总结，训练耗时 `elapsedSeconds` 依然在后台不断增加，造成时长统计失真。
+## [COMMIT] feat(training): 添加无操作闲置暂停计时与会话结算弹窗，修复弹窗后计时递增问题
 
 ### 用户需求
-在结算弹窗（会话总结）弹出后，停止右上角训练时长的增加。
+用户要求将之前实现的所有功能（无操作闲置自动暂停计时、会话结算弹窗及步长曲线图、以及修复结算弹窗弹出后计时继续递增的问题）打包并创建一个 Git 提交。
 
 ### 评论
-计时器应当仅计算用户的有效答题与看题时长，会话结算弹窗展示期间属于训练完成阶段，耗时应被立刻冻结。
+当前所有功能已经全部通过代码实现并集成。现在可以安全地将所有改动提交到版本控制系统中。
 
 ### 目标
-在 `TrainingView.tsx` 的计时器循环中加入弹窗与完成状态判定。当 `showSummaryModal` 为 `true` 或 `isFinished` 为 `true` 时，直接跳过耗时累加。
+1. 将所有新文件和修改后的文件添加到 Git 暂存区 (`git add`)。
+2. 创建内容结构清晰的 Git Commit (`git_commit`)。
 
 ### 基本原理
-1. 在计时器的 `useEffect` 依赖项中添加 `showSummaryModal` 和 `isFinished`。
-2. 在 `setInterval` 的回调函数顶部增加拦截条件 `if (showSummaryModal || isFinished) return;`，从而在弹窗出现后冻结 `accumulatedMsRef` 和 `elapsedSeconds` 的更新。
+按照 Quipu 协议规范，所有文件系统变更必须与 Git 提交操作在不同的计划（Plan）中隔离执行。由于文件修改已通过前面的步骤完成并验证，本次计划专门用于执行 Git 提交。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/ui #concept/executor #scope/ux #ai/instruct #task/domain/ui #task/object/training-timer #task/action/fix-timer-increment-on-modal #task/state/begin
+#intent/tooling #flow/ready #priority/high #comp/ui #concept/history #scope/dx #ai/instruct #task/domain/ui #task/object/git-commit #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 `TrainingView.tsx` 中的计时器条件，在结算弹窗弹出时冻结计时
+#### Acts 1: 添加变动到暂存区并创建 Git 提交
 
 ~~~~~act
-patch_file
+git_add
+src/utils/settings.ts
+src/components/SettingsModal.tsx
+src/components/SessionSummaryModal.tsx
 src/views/TrainingView.tsx
 ~~~~~
-~~~~~typescript.old
-  // === 计时器 ===
-  useEffect(() => {
-    lastTickTimeRef.current = Date.now();
-    const timer = setInterval(() => {
-      const now = Date.now();
-      const delta = now - lastTickTimeRef.current;
-      lastTickTimeRef.current = now;
 
-      const idleLimitMs = (settings.idleTimeout ?? 60) * 1000;
-      const isIdle = idleLimitMs > 0 && now - lastActivityTimeRef.current > idleLimitMs;
-
-      if (!isIdle) {
-        accumulatedMsRef.current += delta;
-        setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [settings.idleTimeout]);
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-  // === 计时器 ===
-  useEffect(() => {
-    lastTickTimeRef.current = Date.now();
-    const timer = setInterval(() => {
-      // 弹窗弹出或会话完成时，冻结计时
-      if (showSummaryModal || isFinished) return;
+~~~~~text
+feat(training): add idle pause timer, session summary modal & step chart
 
-      const now = Date.now();
-      const delta = now - lastTickTimeRef.current;
-      lastTickTimeRef.current = now;
-
-      const idleLimitMs = (settings.idleTimeout ?? 60) * 1000;
-      const isIdle = idleLimitMs > 0 && now - lastActivityTimeRef.current > idleLimitMs;
-
-      if (!isIdle) {
-        accumulatedMsRef.current += delta;
-        setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [settings.idleTimeout, showSummaryModal, isFinished]);
+- Added 'idleTimeout' user setting in settings and SettingsModal to automatically pause the training elapsed timer when the user is idle.
+- Created SessionSummaryModal to present a comprehensive session review (accuracy, elapsed time, average response time, grid step evolution).
+- Implemented a dynamic canvas line chart in SessionSummaryModal to visualize the progression of difficulty steps and hit/miss status throughout the session.
+- Fixed an issue where the training elapsed timer continued incrementing even after the session summary modal was displayed.
 ~~~~~
 
 ### 下一步建议
-- 重新测试练习流程，观察弹出结算弹窗后右上角的耗时数值是否固定不动。
-- 点击“再练一轮”按钮，验证耗时是否成功重置并恢复正常递增。
+- 提交已完成，所有的改动已安全记录在 Git 历史中。可以继续开始新的功能探索或进行项目打包发布！
