@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'preact/hooks';
 import { ArrowLeft, Clock, ChevronRight, Crosshair } from 'lucide-preact';
 import { TrainingMode, QuestionData, Point, HitResult, TrialRecord } from '../types';
 import { StarCanvas } from '../components/StarCanvas';
+import { SessionSummaryModal, SessionHistoryItem } from '../components/SessionSummaryModal';
 import { generateQuestion, QuestionGenerateOptions } from '../utils/geometry';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import { saveTrialRecord, saveSession, getAllTrialRecords, SessionData } from '../utils/db';
@@ -91,19 +92,58 @@ export function TrainingView({
     hitResult: HitResult;
   } | null>(null);
 
-  // 统计指标
+  // 统计指标与结算弹窗
   const [totalTrials, setTotalTrials] = useState<number>(0);
   const [hitTrials, setHitTrials] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+
+  const lastActivityTimeRef = useRef<number>(Date.now());
+  const accumulatedMsRef = useRef<number>(0);
+  const lastTickTimeRef = useRef<number>(Date.now());
+
+  // 用户活动监听，静默重置闲置计时器
+  useEffect(() => {
+    const handleUserActivity = () => {
+      lastActivityTimeRef.current = Date.now();
+    };
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('mousedown', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+    };
+  }, []);
 
   // === 计时器 ===
   useEffect(() => {
+    lastTickTimeRef.current = Date.now();
     const timer = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      // 弹窗弹出或会话完成时，冻结计时
+      if (showSummaryModal || isFinished) return;
+
+      const now = Date.now();
+      const delta = now - lastTickTimeRef.current;
+      lastTickTimeRef.current = now;
+
+      const idleLimitMs = (settings.idleTimeout ?? 60) * 1000;
+      const isIdle = idleLimitMs > 0 && now - lastActivityTimeRef.current > idleLimitMs;
+
+      if (!isIdle) {
+        accumulatedMsRef.current += delta;
+        setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [settings.idleTimeout, showSummaryModal, isFinished]);
 
   // === 键盘监听 (Space / Esc) ===
   useEffect(() => {
@@ -152,13 +192,25 @@ export function TrainingView({
     };
     await saveTrialRecord(record);
 
-    // 2. 调优阶梯难度步长
+    // 2. 记录做答步长历史
+    setSessionHistory((prev) => [
+      ...prev,
+      {
+        trialIndex: newTotal,
+        step: question.gridStep,
+        isHit: hitResult.isHit,
+        responseTimeMs,
+      },
+    ]);
+
+    // 3. 调优阶梯难度步长
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
-    // 3. 检查基准测试是否完成 (20 题)
+    // 4. 检查基准测试是否完成 (20 题)
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
+      setShowSummaryModal(true);
     } else if (settings.autoNext) {
       // 自动翻页延时
       if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
@@ -203,10 +255,40 @@ export function TrainingView({
     await saveSession(sessionData);
   };
 
-  // === 退出结算 ===
+  // === 触发退出/完成请求 ===
+  const handleRequestFinish = async () => {
+    if (sessionHistory.length > 0 && !showSummaryModal) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      setShowSummaryModal(true);
+    } else {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onExit();
+    }
+  };
+
+  // === 彻底退出 ===
   const handleFinishSession = async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
+  };
+
+  // === 再练一轮 ===
+  const handleRestartSession = () => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    sessionIdRef.current = `session_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    lastActivityTimeRef.current = Date.now();
+    accumulatedMsRef.current = 0;
+    setElapsedSeconds(0);
+    const nextStep = adaptiveEngineRef.current.getCurrentStep();
+    setQuestion(generateQuestion(mode, nextStep, getGenerateOptions()));
+    setQuestionStartTime(Date.now());
   };
 
   const formatTime = (sec: number) => {
@@ -226,7 +308,7 @@ export function TrainingView({
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={handleFinishSession}
+            onClick={handleRequestFinish}
             className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -295,10 +377,10 @@ export function TrainingView({
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
             <button
-              onClick={handleFinishSession}
+              onClick={handleRequestFinish}
               className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
             >
-              完成并退出
+              完成并查看总结
             </button>
           ) : (
             <button
@@ -315,6 +397,18 @@ export function TrainingView({
             </button>
           )}
         </div>
+      )}
+
+      {/* 练习结算弹窗 */}
+      {showSummaryModal && (
+        <SessionSummaryModal
+          mode={mode}
+          sessionType={sessionType}
+          elapsedSeconds={elapsedSeconds}
+          history={sessionHistory}
+          onClose={handleFinishSession}
+          onRestart={handleRestartSession}
+        />
       )}
     </div>
   );
