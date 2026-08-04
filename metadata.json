@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 添加无操作闲置暂停右上角计时的设置选项及逻辑", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785850684.5927773, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 添加训练会话结算弹窗及能力步长演进折线图", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1785850966.2463613, "duration_ms": 0}}
