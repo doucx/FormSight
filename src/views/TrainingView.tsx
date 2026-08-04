@@ -1,5 +1,4 @@
 import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
-import { h } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';

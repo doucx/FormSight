@@ -1,5 +1,4 @@
 import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
-import { h } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { TrainingMode, TrialRecord } from '../types';
 import { getAllTrialRecords } from '../utils/db';
