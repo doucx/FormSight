@@ -97,13 +97,47 @@ export function TrainingView({
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
+  const lastActivityTimeRef = useRef<number>(Date.now());
+  const accumulatedMsRef = useRef<number>(0);
+  const lastTickTimeRef = useRef<number>(Date.now());
+
+  // 用户活动监听，静默重置闲置计时器
+  useEffect(() => {
+    const handleUserActivity = () => {
+      lastActivityTimeRef.current = Date.now();
+    };
+
+    window.addEventListener('mousemove', handleUserActivity);
+    window.addEventListener('mousedown', handleUserActivity);
+    window.addEventListener('keydown', handleUserActivity);
+    window.addEventListener('touchstart', handleUserActivity);
+
+    return () => {
+      window.removeEventListener('mousemove', handleUserActivity);
+      window.removeEventListener('mousedown', handleUserActivity);
+      window.removeEventListener('keydown', handleUserActivity);
+      window.removeEventListener('touchstart', handleUserActivity);
+    };
+  }, []);
+
   // === 计时器 ===
   useEffect(() => {
+    lastTickTimeRef.current = Date.now();
     const timer = setInterval(() => {
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      const now = Date.now();
+      const delta = now - lastTickTimeRef.current;
+      lastTickTimeRef.current = now;
+
+      const idleLimitMs = (settings.idleTimeout ?? 60) * 1000;
+      const isIdle = idleLimitMs > 0 && now - lastActivityTimeRef.current > idleLimitMs;
+
+      if (!isIdle) {
+        accumulatedMsRef.current += delta;
+        setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
+      }
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [settings.idleTimeout]);
 
   // === 键盘监听 (Space / Esc) ===
   useEffect(() => {

@@ -11,6 +11,7 @@ export interface UserSettings {
   blockSize: number;           // 每轮评估题数 (10, 15, 20)
   targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
   manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
+  idleTimeout: number;         // 闲置自动暂停计时时长 (秒)，0 表示关闭
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   blockSize: 10,
   targetingMode: 'off',
   manualTargetSectors: [],
+  idleTimeout: 60,
 };
 
 export function loadSettings(): UserSettings {

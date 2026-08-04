@@ -63,6 +63,10 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
     });
   };
 
+  const handleIdleTimeoutChange = (timeout: number) => {
+    setCurrent((prev) => ({ ...prev, idleTimeout: timeout }));
+  };
+
   const handleConfirm = () => {
     saveSettings(current);
     onSave(current);
@@ -233,6 +237,31 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
               >
                 精细阶梯 (1px逐级)
               </button>
+            </div>
+          </div>
+
+          {/* 无操作闲置暂停计时 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">无操作闲置暂停计时</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { label: '关闭', value: 0 },
+                { label: '30秒', value: 30 },
+                { label: '1分钟', value: 60 },
+                { label: '2分钟', value: 120 },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => handleIdleTimeoutChange(opt.value)}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.idleTimeout ?? 60) === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
 
