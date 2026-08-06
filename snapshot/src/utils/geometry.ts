@@ -49,7 +49,7 @@ export function generatePolarGridPoints(
   // 定义 Level 1 的最大间距与 Level 35 的最小间距
   const S_MAX = 25;
   const S_MIN = 3.5;
-  
+
   // 线性计算当前 Level 对应的目标像素间距
   const t = (Math.max(1, Math.min(level, 35)) - 1) / 34; // 0 to 1
   const S = S_MAX - t * (S_MAX - S_MIN);
@@ -57,7 +57,7 @@ export function generatePolarGridPoints(
   // 反推角度步长: theta = 弧长(S) / 半径(R)
   const maxAngleStepRad = (15 * Math.PI) / 180;
   const angleStepRad = Math.min(S / R, maxAngleStepRad);
-  
+
   // 半径增量直接使用计算出的绝对像素距离
   const rStep = S;
 
@@ -99,7 +99,7 @@ export function generateBipolarGridPoints(
   // 双锚点交点可能会因夹角产生斜向拉伸拉长，所以最大间距稍微收敛一点
   const S_MAX = 20;
   const S_MIN = 3.5;
-  
+
   const t = (Math.max(1, Math.min(level, 35)) - 1) / 34; // 0 to 1
   const S = S_MAX - t * (S_MAX - S_MIN);
 
