@@ -20,6 +20,7 @@ export function StarCanvas({
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [mousePos, setMousePos] = useState<Point | null>(null);
 
   // === 绘图主逻辑 ===
   useEffect(() => {
@@ -63,9 +64,21 @@ export function StarCanvas({
           drawDot(ctx, p.x, p.y, '#888888', dotRadius);
         }
 
-        // 图层 1.5: 鼠标悬停高亮网格点
-        if (!disabled && !showAnswer && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+        // 图层 1.5: 磁性吸附准心 (未作答状态下吸附在网格点上)
+        if (!disabled && !showAnswer) {
+          if (hoverPoint) {
+            // 1. 磁吸实体核心点
+            drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+            // 2. 磁吸包围光环 (强视觉提示：鼠标已精确锁定在点上)
+            ctx.strokeStyle = '#6366F1';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(hoverPoint.x, hoverPoint.y, hoverRadius + 3.5, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (mousePos) {
+            // 空白区域：绘制跟随实际鼠标的极淡微型准心
+            drawDot(ctx, mousePos.x, mousePos.y, 'rgba(99, 102, 241, 0.35)', 2);
+          }
         }
 
         // 图层 2: 锚点 (顶层)
@@ -131,10 +144,11 @@ export function StarCanvas({
     ctx.fill();
   }
 
-  // === 交互事件：鼠标移动计算悬停高亮点 ===
+  // === 交互事件：鼠标移动计算悬停吸附与指针隐藏 ===
   const handleRightCanvasMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer) {
+    if (disabled) {
       if (hoverPoint) setHoverPoint(null);
+      if (mousePos) setMousePos(null);
       return;
     }
 
@@ -149,6 +163,8 @@ export function StarCanvas({
     const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
 
     const currentPoint: Point = { x: clickX, y: clickY };
+    setMousePos(currentPoint);
+
     const { nearestPoint, isWithinRange } = findNearestGridPoint(
       currentPoint,
       question.distractorPoints,
@@ -156,13 +172,14 @@ export function StarCanvas({
 
     if (isWithinRange) {
       setHoverPoint(nearestPoint);
-    } else if (hoverPoint) {
+    } else {
       setHoverPoint(null);
     }
   };
 
   const handleRightCanvasMouseLeave = () => {
     if (hoverPoint) setHoverPoint(null);
+    if (mousePos) setMousePos(null);
   };
 
   // === 交互事件：点击右侧 Canvas 做答 ===
@@ -189,6 +206,8 @@ export function StarCanvas({
     setHoverPoint(null);
     onAnswer(clickPoint, hitResult);
   };
+
+  const isCursorHidden = !disabled && hoverPoint !== null;
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
@@ -220,9 +239,9 @@ export function StarCanvas({
           onMouseMove={handleRightCanvasMouseMove}
           onMouseLeave={handleRightCanvasMouseLeave}
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
-            disabled || showAnswer
+            disabled
               ? 'cursor-default'
-              : hoverPoint
+              : isCursorHidden
                 ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
                 : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
