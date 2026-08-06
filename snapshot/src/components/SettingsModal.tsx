@@ -33,37 +33,20 @@ interface SettingsModalProps {
 export function SettingsModal({ settings, onClose, onSave, onDataCleared }: SettingsModalProps) {
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
 
-  const handleToggleAutoNext = () => {
-    setCurrent((prev) => ({ ...prev, autoNext: !prev.autoNext }));
-  };
-
-  const handleDelayChange = (e: Event) => {
-    const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
-    setCurrent((prev) => ({ ...prev, autoNextDelay: val }));
-  };
-
-  const handleGranularityChange = (granularity: 'standard' | 'fine') => {
-    setCurrent((prev) => ({ ...prev, stepGranularity: granularity }));
-  };
-
-  const handleModeChange = (mode: 'block' | 'staircase') => {
-    setCurrent((prev) => ({ ...prev, adaptiveMode: mode }));
-  };
-
-  const handleAccuracyChange = (acc: number) => {
-    setCurrent((prev) => ({ ...prev, targetAccuracy: acc }));
-  };
-
-  const handleBlockSizeChange = (size: number) => {
-    setCurrent((prev) => ({ ...prev, blockSize: size }));
-  };
-
-  const handleTargetingModeChange = (mode: TargetingMode) => {
-    setCurrent((prev) => ({ ...prev, targetingMode: mode }));
+  // 通用设置更新辅助方法：更新 state 并同步持久化与通知父组件，消除 DRY 冗余方法
+  const updateSettings = (
+    patch: Partial<UserSettings> | ((prev: UserSettings) => UserSettings),
+  ) => {
+    setCurrent((prev) => {
+      const next = typeof patch === 'function' ? patch(prev) : { ...prev, ...patch };
+      saveSettings(next);
+      onSave(next);
+      return next;
+    });
   };
 
   const handleSectorToggle = (sectorIdx: number) => {
-    setCurrent((prev) => {
+    updateSettings((prev) => {
       const currentSectors = prev.manualTargetSectors || [];
       const exists = currentSectors.includes(sectorIdx);
       const updated = exists
@@ -73,14 +56,6 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
     });
   };
 
-  const handleIdleTimeoutChange = (timeout: number) => {
-    setCurrent((prev) => ({ ...prev, idleTimeout: timeout }));
-  };
-
-  const handleGridSizeChange = (size: number) => {
-    setCurrent((prev) => ({ ...prev, gridSize: size }));
-  };
-
   const handleClearData = async () => {
     if (confirm('⚠️ 确定要清空所有训练日志、历史会话和能力看板数据吗？此操作无法撤销！')) {
       await clearAllData();
@@ -88,12 +63,6 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
       onDataCleared?.();
       onClose();
     }
-  };
-
-  const handleConfirm = () => {
-    saveSettings(current);
-    onSave(current);
-    onClose();
   };
 
   return (
@@ -122,7 +91,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
             </div>
             <button
               type="button"
-              onClick={handleToggleAutoNext}
+              onClick={() => updateSettings({ autoNext: !current.autoNext })}
               className="text-indigo-600 hover:opacity-80 transition-opacity"
             >
               {current.autoNext ? (
@@ -148,7 +117,11 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                 max="2000"
                 step="100"
                 value={current.autoNextDelay}
-                onInput={handleDelayChange}
+                onInput={(e) =>
+                  updateSettings({
+                    autoNextDelay: Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  })
+                }
                 className="w-full accent-indigo-600 cursor-pointer"
               />
             </div>
@@ -160,7 +133,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleModeChange('block')}
+                onClick={() => updateSettings({ adaptiveMode: 'block' })}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                   current.adaptiveMode === 'block'
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
@@ -172,7 +145,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               </button>
               <button
                 type="button"
-                onClick={() => handleModeChange('staircase')}
+                onClick={() => updateSettings({ adaptiveMode: 'staircase' })}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                   current.adaptiveMode === 'staircase'
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
@@ -201,7 +174,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                     <button
                       type="button"
                       key={acc}
-                      onClick={() => handleAccuracyChange(acc)}
+                      onClick={() => updateSettings({ targetAccuracy: acc })}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
                         current.targetAccuracy === acc
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -227,7 +200,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                     <button
                       type="button"
                       key={size}
-                      onClick={() => handleBlockSizeChange(size)}
+                      onClick={() => updateSettings({ blockSize: size })}
                       className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
                         current.blockSize === size
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -248,7 +221,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={() => handleGranularityChange('standard')}
+                onClick={() => updateSettings({ stepGranularity: 'standard' })}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
                   current.stepGranularity === 'standard'
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
@@ -259,7 +232,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               </button>
               <button
                 type="button"
-                onClick={() => handleGranularityChange('fine')}
+                onClick={() => updateSettings({ stepGranularity: 'fine' })}
                 className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
                   current.stepGranularity === 'fine'
                     ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
@@ -284,7 +257,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                 <button
                   type="button"
                   key={opt.value}
-                  onClick={() => handleIdleTimeoutChange(opt.value)}
+                  onClick={() => updateSettings({ idleTimeout: opt.value })}
                   className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                     (current.idleTimeout ?? 60) === opt.value
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -305,7 +278,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                 <button
                   type="button"
                   key={size}
-                  onClick={() => handleGridSizeChange(size)}
+                  onClick={() => updateSettings({ gridSize: size })}
                   className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                     (current.gridSize ?? 3) === size
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -333,7 +306,7 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
                 <button
                   type="button"
                   key={m.id}
-                  onClick={() => handleTargetingModeChange(m.id as TargetingMode)}
+                  onClick={() => updateSettings({ targetingMode: m.id as TargetingMode })}
                   className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                     current.targetingMode === m.id
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -391,20 +364,13 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
           </div>
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
-          >
-            取消
-          </button>
-          <button
-            type="button"
-            onClick={handleConfirm}
             className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
           >
-            保存配置
+            完成
           </button>
         </div>
       </div>
