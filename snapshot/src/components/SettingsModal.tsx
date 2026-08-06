@@ -69,10 +69,17 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={onClose}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+      role="button"
+      tabIndex={-1}
+      aria-label="关闭弹窗"
     >
       <div
         className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
