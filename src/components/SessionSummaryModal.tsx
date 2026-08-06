@@ -76,7 +76,7 @@ export function SessionSummaryModal({
     ctx.fillRect(0, 0, width, height);
 
     const levels = history.map((h) => h.level);
-    const maxLevel = Math.max(...levels, 12);
+    const maxLevel = Math.max(...levels, 35);
     const minLevel = Math.min(...levels, 1);
 
     // Y 轴转换函数 (Level 越大代表难度越高，向上增加)

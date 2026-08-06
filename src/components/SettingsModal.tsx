@@ -231,7 +231,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                标准阶梯 (12级)
+                标准阶梯 (大步幅)
               </button>
               <button
                 type="button"
@@ -242,7 +242,7 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                精细阶梯 (35级逐级)
+                精细阶梯 (小步幅)
               </button>
             </div>
           </div>

@@ -6,15 +6,6 @@ export const CY = CANVAS_SIZE / 2; // 250
 export const DEFAULT_GRID_DIM = 5; // 5x5 网格
 
 /**
- * 映射 Level 到临时网格步长 px (兼容使用)
- */
-export function levelToTempGridStep(level: number): number {
-  const steps = [35, 30, 25, 20, 16, 13, 10, 8, 6, 5, 4, 3];
-  const idx = Math.max(0, Math.min(level - 1, steps.length - 1));
-  return steps[idx];
-}
-
-/**
  * 将点绕指定中心旋转指定角度 (角度制)
  */
 export function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
@@ -55,11 +46,20 @@ export function generatePolarGridPoints(
   const R = Math.sqrt(dx * dx + dy * dy);
   const theta = Math.atan2(dy, dx);
 
-  // 角度步长：从 Level 1 的 8.0° 逐渐缩小至 高 Level 的 ~0.5°
-  const angleStepDeg = Math.max(0.5, 8.0 * 0.82 ** (level - 1));
-  const angleStepRad = (angleStepDeg * Math.PI) / 180;
-  // 径向比例步长：从 Level 1 的 15% 逐渐缩小至 高 Level 的 ~1.5%
-  const rRatioStep = Math.max(0.015, 0.15 * 0.82 ** (level - 1));
+  // 定义 Level 1 的最大间距与 Level 35 的最小间距
+  const S_MAX = 25;
+  const S_MIN = 3.5;
+
+  // 线性计算当前 Level 对应的目标像素间距
+  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34; // 0 to 1
+  const S = S_MAX - t * (S_MAX - S_MIN);
+
+  // 反推角度步长: theta = 弧长(S) / 半径(R)
+  const maxAngleStepRad = (15 * Math.PI) / 180;
+  const angleStepRad = Math.min(S / R, maxAngleStepRad);
+
+  // 半径增量直接使用计算出的绝对像素距离
+  const rStep = S;
 
   // 将 targetRow (0..4) 与 targetCol (0..4) 映射为相对偏移 (-2..2)
   const r0 = targetRow - 2;
@@ -68,7 +68,7 @@ export function generatePolarGridPoints(
   const points: Point[] = [];
   for (let rIdx = -2; rIdx <= 2; rIdx++) {
     for (let aIdx = -2; aIdx <= 2; aIdx++) {
-      const curR = R * (1 + (rIdx - r0) * rRatioStep);
+      const curR = R + (rIdx - r0) * rStep;
       const curTheta = theta + (aIdx - a0) * angleStepRad;
       const x = Math.round((anchorA.x + curR * Math.cos(curTheta)) * 100) / 100;
       const y = Math.round((anchorA.y + curR * Math.sin(curTheta)) * 100) / 100;
@@ -93,9 +93,20 @@ export function generateBipolarGridPoints(
   const alpha = Math.atan2(targetB.y - anchorA.y, targetB.x - anchorA.x);
   const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
 
-  // 视线偏角步长：从 Level 1 的 6.0° 缩小至 高 Level 的 ~0.4°
-  const phiStepDeg = Math.max(0.4, 6.0 * 0.82 ** (level - 1));
-  const phiStepRad = (phiStepDeg * Math.PI) / 180;
+  const Ra = calcDistance(anchorA, targetB);
+  const Rc = calcDistance(anchorC, targetB);
+
+  // 双锚点交点可能会因夹角产生斜向拉伸拉长，所以最大间距稍微收敛一点
+  const S_MAX = 20;
+  const S_MIN = 3.5;
+
+  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34; // 0 to 1
+  const S = S_MAX - t * (S_MAX - S_MIN);
+
+  // 反推 alpha 和 beta 的独立角度步长
+  const maxAngleStepRad = (15 * Math.PI) / 180;
+  const alphaStepRad = Math.min(S / Ra, maxAngleStepRad);
+  const betaStepRad = Math.min(S / Rc, maxAngleStepRad);
 
   const a0 = targetRow - 2;
   const c0 = targetCol - 2;
@@ -104,8 +115,8 @@ export function generateBipolarGridPoints(
 
   for (let aIdx = -2; aIdx <= 2; aIdx++) {
     for (let cIdx = -2; cIdx <= 2; cIdx++) {
-      const alphaI = alpha + (aIdx - a0) * phiStepRad;
-      const betaJ = beta + (cIdx - c0) * phiStepRad;
+      const alphaI = alpha + (aIdx - a0) * alphaStepRad;
+      const betaJ = beta + (cIdx - c0) * betaStepRad;
 
       const v1x = Math.cos(alphaI);
       const v1y = Math.sin(alphaI);
@@ -119,8 +130,8 @@ export function generateBipolarGridPoints(
       if (Math.abs(det) < 1e-5) {
         // 退化近似退回 TargetB 偏移
         points.push({
-          x: Math.round((targetB.x + (aIdx - a0) * 15) * 100) / 100,
-          y: Math.round((targetB.y + (cIdx - c0) * 15) * 100) / 100,
+          x: Math.round((targetB.x + (aIdx - a0) * S) * 100) / 100,
+          y: Math.round((targetB.y + (cIdx - c0) * S) * 100) / 100,
         });
       } else {
         const t1 = (dx * v2y - dy * v2x) / det;
@@ -243,7 +254,6 @@ export function generateQuestion(
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
-  const gridStep = levelToTempGridStep(difficultyLevel);
   const randomRow = Math.floor(Math.random() * gridDim);
   const randomCol = Math.floor(Math.random() * gridDim);
 
@@ -275,7 +285,6 @@ export function generateQuestion(
       anchorC: null,
       targetB,
       gridStart: distractorPoints[0],
-      gridStep,
       difficultyLevel,
       gridDim,
       distractorPoints,
@@ -369,7 +378,6 @@ export function generateQuestion(
     anchorC,
     targetB,
     gridStart: distractorPoints[0],
-    gridStep,
     difficultyLevel,
     gridDim,
     distractorPoints,
