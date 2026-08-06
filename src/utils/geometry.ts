@@ -188,6 +188,25 @@ export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[])
   };
 }
 
+/**
+ * 根据点阵间距动态计算渲染圆点的半径，防止点距过近时发生粘连重叠
+ */
+export function getDynamicDotRadius(gridPoints: Point[]): number {
+  if (!gridPoints || gridPoints.length < 2) return 3.5;
+  let minDist = Number.MAX_VALUE;
+  for (let i = 0; i < gridPoints.length; i++) {
+    for (let j = i + 1; j < gridPoints.length; j++) {
+      const d = calcDistance(gridPoints[i], gridPoints[j]);
+      if (d > 0 && d < minDist) {
+        minDist = d;
+      }
+    }
+  }
+  if (minDist === Number.MAX_VALUE) return 3.5;
+  // 保持圆点直径小于相邻间距的一半，最小不小于 1.2px，最大不高于 3.5px
+  return Math.max(1.2, Math.min(3.5, minDist * 0.25));
+}
+
 export interface QuestionGenerateOptions {
   targetingMode?: 'off' | 'auto' | 'manual';
   targetSectors?: number[]; // [0~7]

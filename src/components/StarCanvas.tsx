@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
-import { CANVAS_SIZE, checkHit, findNearestGridPoint } from '../utils/geometry';
+import { CANVAS_SIZE, checkHit, findNearestGridPoint, getDynamicDotRadius } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -23,6 +23,9 @@ export function StarCanvas({
 
   // === 绘图主逻辑 ===
   useEffect(() => {
+    const dotRadius = getDynamicDotRadius(question.distractorPoints);
+    const hoverRadius = Math.max(2.5, dotRadius * 1.6);
+
     // 1. 渲染左侧参考图 (Reference Canvas)
     const leftCanvas = leftCanvasRef.current;
     if (leftCanvas) {
@@ -33,15 +36,15 @@ export function StarCanvas({
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         // 绘制锚点 A
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', 3.5);
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
 
         // 绘制锚点 C (若存在)
         if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', 3.5);
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
         }
 
         // 绘制真理点 B
-        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', 3.5);
+        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', dotRadius);
       }
     }
 
@@ -57,18 +60,18 @@ export function StarCanvas({
         // 图层 1: 极坐标/双极透视干扰点阵 (底层)
         const gridPoints = question.distractorPoints;
         for (const p of gridPoints) {
-          drawDot(ctx, p.x, p.y, '#888888', 3.5);
+          drawDot(ctx, p.x, p.y, '#888888', dotRadius);
         }
 
         // 图层 1.5: 鼠标悬停高亮网格点
         if (!disabled && !showAnswer && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', 6);
+          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
         }
 
         // 图层 2: 锚点 (顶层)
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', 3.5);
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
         if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', 3.5);
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
         }
 
         // 图层 3: 做答后的视觉反馈 (反馈层)
@@ -76,7 +79,7 @@ export function StarCanvas({
           const { x: bx, y: by } = question.targetB;
 
           // 绘制真理点 B 实体点
-          drawDot(ctx, bx, by, '#000000', 3.5);
+          drawDot(ctx, bx, by, '#000000', dotRadius);
 
           // 绘制深绿色十字高亮线
           const chSize = 12;
@@ -106,7 +109,7 @@ export function StarCanvas({
               ctx.setLineDash([]); // 恢复实线
 
               // 用户点击位置标记 (红点 - 锚定在网格点中心)
-              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', 3.5);
+              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', dotRadius);
             }
           }
         }
@@ -219,7 +222,9 @@ export function StarCanvas({
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+              : hoverPoint
+                ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+                : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
         />
       </div>
