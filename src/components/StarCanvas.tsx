@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
-import { CANVAS_SIZE, checkHit, findNearestGridPoint, generateGridPoints } from '../utils/geometry';
+import { CANVAS_SIZE, checkHit, findNearestGridPoint } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -54,12 +54,8 @@ export function StarCanvas({
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        // 图层 1: 干扰点阵 (底层)
-        const gridPoints = generateGridPoints(
-          question.gridStart,
-          question.gridDim,
-          question.gridStep,
-        );
+        // 图层 1: 极坐标/双极透视干扰点阵 (底层)
+        const gridPoints = question.distractorPoints;
         for (const p of gridPoints) {
           drawDot(ctx, p.x, p.y, '#888888', 3.5);
         }
@@ -152,9 +148,7 @@ export function StarCanvas({
     const currentPoint: Point = { x: clickX, y: clickY };
     const { nearestPoint, isWithinRange } = findNearestGridPoint(
       currentPoint,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
+      question.distractorPoints,
     );
 
     if (isWithinRange) {
@@ -184,13 +178,7 @@ export function StarCanvas({
     const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
 
     const clickPoint: Point = { x: clickX, y: clickY };
-    const hitResult = checkHit(
-      clickPoint,
-      question.targetB,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
-    );
+    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
 
     // 忽略在有效感应范围之外的点击
     if (!hitResult.isWithinRange) return;

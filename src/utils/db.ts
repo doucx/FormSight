@@ -9,14 +9,14 @@ export interface SessionData {
   endTimestamp?: number;
   totalTrials: number;
   hitTrials: number;
-  startGridStep: number;
-  endGridStep: number;
+  startLevel: number;
+  endLevel: number;
 }
 
 export interface UserProfileData {
   mode: TrainingMode;
-  currentDegreeStep: number; // 当前自适应维持的度数
-  bestDegreeStep: number; // 历史最佳度数
+  currentLevel: number; // 当前维持的难度 Level
+  bestLevel: number; // 历史最高难度 Level
   totalTrainedCards: number;
   totalHits: number;
   updatedAt: number;
@@ -42,14 +42,27 @@ interface StarHoppingDBSchema extends DBSchema {
 }
 
 const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // 升级版本号以支撑 Level 难度重构
 
 let dbPromise: Promise<IDBPDatabase<StarHoppingDBSchema>> | null = null;
 
 export function getDB(): Promise<IDBPDatabase<StarHoppingDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<StarHoppingDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
+        if (oldVersion < 2) {
+          // 清理旧版本以 px 为单位的数据结构，避免层阶混淆
+          if (db.objectStoreNames.contains('sessions')) {
+            db.deleteObjectStore('sessions');
+          }
+          if (db.objectStoreNames.contains('records')) {
+            db.deleteObjectStore('records');
+          }
+          if (db.objectStoreNames.contains('user_profiles')) {
+            db.deleteObjectStore('user_profiles');
+          }
+        }
+
         // 1. 会话表
         if (!db.objectStoreNames.contains('sessions')) {
           db.createObjectStore('sessions', { keyPath: 'id' });
@@ -78,7 +91,7 @@ export async function saveTrialRecord(record: TrialRecord): Promise<void> {
   await db.put('records', record);
 
   // 同步更新模式能力看板
-  await updateUserProfile(record.mode, record.isHit, record.gridStep);
+  await updateUserProfile(record.mode, record.isHit, record.difficultyLevel);
 }
 
 // === API 2: 保存/更新训练会话 ===
@@ -112,7 +125,7 @@ export async function getAllUserProfiles(): Promise<Record<TrainingMode, UserPro
 async function updateUserProfile(
   mode: TrainingMode,
   isHit: boolean,
-  currentStep: number,
+  currentLevel: number,
 ): Promise<void> {
   const db = await getDB();
   const existing = await db.get('user_profiles', mode);
@@ -120,8 +133,8 @@ async function updateUserProfile(
   if (!existing) {
     const newProfile: UserProfileData = {
       mode,
-      currentDegreeStep: currentStep,
-      bestDegreeStep: currentStep,
+      currentLevel,
+      bestLevel: currentLevel,
       totalTrainedCards: 1,
       totalHits: isHit ? 1 : 0,
       updatedAt: Date.now(),
@@ -130,10 +143,10 @@ async function updateUserProfile(
   } else {
     existing.totalTrainedCards += 1;
     if (isHit) existing.totalHits += 1;
-    existing.currentDegreeStep = currentStep;
-    // 网格步长越小代表难度越高，因此 bestDegreeStep 取最小值
-    if (currentStep < existing.bestDegreeStep) {
-      existing.bestDegreeStep = currentStep;
+    existing.currentLevel = currentLevel;
+    // Level 越高代表能力越强，因此 bestLevel 取最大值
+    if (currentLevel > existing.bestLevel) {
+      existing.bestLevel = currentLevel;
     }
     existing.updatedAt = Date.now();
     await db.put('user_profiles', existing);
