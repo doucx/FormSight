@@ -1,14 +1,11 @@
 import type { AdaptiveMode } from './settings';
 
 /**
- * 标准网格步长难度序列（单位：px）
+ * 难度序列与最大层阶配置
+ * Level 1 最简单，Level 越高难度越大
  */
-export const STANDARD_STEP_SEQUENCE = [35, 30, 25, 20, 16, 13, 10, 8, 6, 5, 4, 3];
-
-/**
- * 1px 精细步长难度序列 (35px -> 1px)
- */
-export const FINE_STEP_SEQUENCE = Array.from({ length: 35 }, (_, i) => 35 - i);
+export const STANDARD_MAX_LEVEL = 12;
+export const FINE_MAX_LEVEL = 35;
 
 export type AdaptiveChange = 'up' | 'down' | 'same';
 
@@ -19,15 +16,15 @@ export interface AdaptiveProgress {
 }
 
 export interface RecordResultOutput {
-  newStep: number;
+  newLevel: number;
   change: AdaptiveChange;
   isBlockComplete?: boolean;
   progress?: AdaptiveProgress;
 }
 
 export class AdaptiveEngine {
-  private stepSequence: number[];
-  private currentStepIndex: number;
+  private maxLevel: number;
+  private currentLevel: number;
   private mode: AdaptiveMode;
   private targetAccuracy: number;
   private blockSize: number;
@@ -39,35 +36,24 @@ export class AdaptiveEngine {
   private blockHistory: boolean[] = [];
 
   constructor(
-    initialGridStep = 20,
+    initialLevel = 5,
     isFineGranularity = false,
     mode: AdaptiveMode = 'block',
     targetAccuracy = 0.8,
     blockSize = 10,
   ) {
-    this.stepSequence = isFineGranularity ? FINE_STEP_SEQUENCE : STANDARD_STEP_SEQUENCE;
+    this.maxLevel = isFineGranularity ? FINE_MAX_LEVEL : STANDARD_MAX_LEVEL;
     this.mode = mode;
     this.targetAccuracy = targetAccuracy;
     this.blockSize = blockSize;
-
-    // 找到与 initialGridStep 最接近的索引
-    let closestIdx = 0;
-    let minDiff = Math.abs(this.stepSequence[0] - initialGridStep);
-    for (let i = 1; i < this.stepSequence.length; i++) {
-      const diff = Math.abs(this.stepSequence[i] - initialGridStep);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestIdx = i;
-      }
-    }
-    this.currentStepIndex = closestIdx;
+    this.currentLevel = Math.max(1, Math.min(initialLevel, this.maxLevel));
   }
 
   /**
-   * 获取当前难度的 GridStep 像素值
+   * 获取当前难度等级 Level (1..maxLevel)
    */
-  public getCurrentStep(): number {
-    return this.stepSequence[this.currentStepIndex];
+  public getCurrentLevel(): number {
+    return this.currentLevel;
   }
 
   /**
@@ -84,7 +70,7 @@ export class AdaptiveEngine {
   }
 
   /**
-   * 记录做答结果并计算下一题难度
+   * 记录做答结果并计算下一题难度 Level
    * @param isHit 本题是否击中目标
    */
   public recordResult(isHit: boolean): RecordResultOutput {
@@ -95,27 +81,27 @@ export class AdaptiveEngine {
   }
 
   /**
-   * 经典 3-Up / 1-Down 算子
+   * 经典 3-Up / 1-Down 算子 (升级 = Level + 1)
    */
   private recordStaircase(isHit: boolean): RecordResultOutput {
     if (isHit) {
       this.consecutiveCorrect += 1;
       if (this.consecutiveCorrect >= 3) {
         this.consecutiveCorrect = 0;
-        if (this.currentStepIndex < this.stepSequence.length - 1) {
-          this.currentStepIndex += 1;
-          return { newStep: this.getCurrentStep(), change: 'up' };
+        if (this.currentLevel < this.maxLevel) {
+          this.currentLevel += 1;
+          return { newLevel: this.getCurrentLevel(), change: 'up' };
         }
       }
     } else {
       this.consecutiveCorrect = 0;
-      if (this.currentStepIndex > 0) {
-        this.currentStepIndex -= 1;
-        return { newStep: this.getCurrentStep(), change: 'down' };
+      if (this.currentLevel > 1) {
+        this.currentLevel -= 1;
+        return { newLevel: this.getCurrentLevel(), change: 'down' };
       }
     }
 
-    return { newStep: this.getCurrentStep(), change: 'same' };
+    return { newLevel: this.getCurrentLevel(), change: 'same' };
   }
 
   /**
@@ -129,7 +115,7 @@ export class AdaptiveEngine {
     // 尚未做满一个评估轮次
     if (count < this.blockSize) {
       return {
-        newStep: this.getCurrentStep(),
+        newLevel: this.getCurrentLevel(),
         change: 'same',
         isBlockComplete: false,
         progress: { current: count, total: this.blockSize, hits },
@@ -141,25 +127,24 @@ export class AdaptiveEngine {
     let change: AdaptiveChange = 'same';
 
     if (accuracy >= this.targetAccuracy) {
-      // 达到或超过目标正确率 -> 通关升级
-      if (this.currentStepIndex < this.stepSequence.length - 1) {
-        this.currentStepIndex += 1;
+      // 达到或超过目标正确率 -> 通关升级 (Level + 1)
+      if (this.currentLevel < this.maxLevel) {
+        this.currentLevel += 1;
         change = 'up';
       }
     } else if (accuracy < 0.5) {
-      // 正确率低于 50% -> 难度太高，降级
-      if (this.currentStepIndex > 0) {
-        this.currentStepIndex -= 1;
+      // 正确率低于 50% -> 难度太高，降级 (Level - 1)
+      if (this.currentLevel > 1) {
+        this.currentLevel -= 1;
         change = 'down';
       }
     }
-    // 正确率在 [50%, targetAccuracy) 之间 -> 保持本层，巩固练习
 
     // 清空轮次历史，开始下一轮
     this.blockHistory = [];
 
     return {
-      newStep: this.getCurrentStep(),
+      newLevel: this.getCurrentLevel(),
       change,
       isBlockComplete: true,
       progress: { current: 0, total: this.blockSize, hits: 0 },
@@ -167,14 +152,11 @@ export class AdaptiveEngine {
   }
 
   /**
-   * 强制重置难度索引
+   * 强制重置难度等级
    */
-  public setGridStep(step: number): void {
-    const idx = this.stepSequence.indexOf(step);
-    if (idx !== -1) {
-      this.currentStepIndex = idx;
-      this.consecutiveCorrect = 0;
-      this.blockHistory = [];
-    }
+  public setLevel(level: number): void {
+    this.currentLevel = Math.max(1, Math.min(level, this.maxLevel));
+    this.consecutiveCorrect = 0;
+    this.blockHistory = [];
   }
 }

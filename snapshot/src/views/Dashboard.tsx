@@ -161,7 +161,7 @@ export function Dashboard({
           const totalCards = profile?.totalTrainedCards || 0;
           const accuracy =
             totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
-          const currentDegree = profile?.currentDegreeStep || 20;
+          const currentLevel = profile?.currentLevel || 5;
           const IconComponent = config.icon;
 
           return (
@@ -189,10 +189,10 @@ export function Dashboard({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
                       <TrendingUp className="w-3 h-3 text-indigo-500" />
-                      能力度数
+                      能力层阶
                     </div>
                     <div className="text-xl font-black text-slate-800">
-                      {currentDegree} <span className="text-xs font-normal text-slate-500">px</span>
+                      Level {currentLevel}
                     </div>
                   </div>
                   <div className="space-y-1">

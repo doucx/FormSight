@@ -12,7 +12,8 @@ export interface QuestionData {
   anchorC: Point | null;
   targetB: Point;
   gridStart: Point;
-  gridStep: number;
+  gridStep: number; // 仅作为 Step 1 过渡期渲染使用
+  difficultyLevel: number; // 统一抽象难度等级 (1..N，数字越大越难)
   gridDim: number; // 默认 5 (5x5 网格)
 
   // 衍生分析指标 (用于后续弱点分析)
@@ -33,7 +34,7 @@ export interface TrialRecord {
   sessionId: string;
   mode: TrainingMode;
   timestamp: number;
-  gridStep: number;
+  difficultyLevel: number; // 存入 Level 等级
   anchorA: [number, number];
   anchorC?: [number, number];
   targetB: [number, number];

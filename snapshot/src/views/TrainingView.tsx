@@ -11,7 +11,7 @@ import type { UserSettings } from '../utils/settings';
 interface TrainingViewProps {
   mode: TrainingMode;
   sessionType: 'training' | 'benchmark';
-  initialGridStep: number;
+  initialLevel: number;
   settings: UserSettings;
   onExit: () => void;
 }
@@ -19,7 +19,7 @@ interface TrainingViewProps {
 export function TrainingView({
   mode,
   sessionType,
-  initialGridStep,
+  initialLevel,
   settings,
   onExit,
 }: TrainingViewProps) {
@@ -28,7 +28,7 @@ export function TrainingView({
   const startTimeRef = useRef<number>(Date.now());
   const adaptiveEngineRef = useRef<AdaptiveEngine>(
     new AdaptiveEngine(
-      initialGridStep,
+      initialLevel,
       settings.stepGranularity === 'fine',
       sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
       settings.targetAccuracy,
@@ -50,7 +50,7 @@ export function TrainingView({
   };
 
   const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialGridStep, {
+    generateQuestion(mode, initialLevel, {
       targetingMode: settings.targetingMode,
       targetSectors: settings.manualTargetSectors,
     }),
@@ -179,7 +179,7 @@ export function TrainingView({
       sessionId: sessionIdRef.current,
       mode,
       timestamp: Date.now(),
-      gridStep: question.gridStep,
+      difficultyLevel: question.difficultyLevel,
       anchorA: [question.anchorA.x, question.anchorA.y],
       anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
       targetB: [question.targetB.x, question.targetB.y],
@@ -192,18 +192,18 @@ export function TrainingView({
     };
     await saveTrialRecord(record);
 
-    // 2. 记录做答步长历史
+    // 2. 记录做答 Level 历史
     setSessionHistory((prev) => [
       ...prev,
       {
         trialIndex: newTotal,
-        step: question.gridStep,
+        level: question.difficultyLevel,
         isHit: hitResult.isHit,
         responseTimeMs,
       },
     ]);
 
-    // 3. 调优阶梯难度步长
+    // 3. 调优阶梯难度 Level
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
     // 4. 检查基准测试是否完成 (20 题)
@@ -228,10 +228,10 @@ export function TrainingView({
       autoNextTimerRef.current = null;
     }
 
-    const nextStep = adaptiveEngineRef.current.getCurrentStep();
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setShowAnswer(false);
     setUserAnswer(null);
-    setQuestion(generateQuestion(mode, nextStep, getGenerateOptions()));
+    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -245,8 +245,8 @@ export function TrainingView({
       endTimestamp: ended ? Date.now() : undefined,
       totalTrials: trials,
       hitTrials: hits,
-      startGridStep: initialGridStep,
-      endGridStep: adaptiveEngineRef.current.getCurrentStep(),
+      startLevel: initialLevel,
+      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
     };
     await saveSession(sessionData);
   };
@@ -282,8 +282,8 @@ export function TrainingView({
     lastActivityTimeRef.current = Date.now();
     accumulatedMsRef.current = 0;
     setElapsedSeconds(0);
-    const nextStep = adaptiveEngineRef.current.getCurrentStep();
-    setQuestion(generateQuestion(mode, nextStep, getGenerateOptions()));
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -341,9 +341,9 @@ export function TrainingView({
 
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前网格步长
+              当前难度
             </span>
-            <span className="font-black text-indigo-600">{question.gridStep} px</span>
+            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
           </div>
 
           <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">

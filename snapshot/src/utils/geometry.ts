@@ -6,6 +6,15 @@ export const CY = CANVAS_SIZE / 2; // 250
 export const DEFAULT_GRID_DIM = 5; // 5x5 网格
 
 /**
+ * 映射 Level 到临时网格步长 px (仅在 Step 1 过渡期间使用)
+ */
+export function levelToTempGridStep(level: number): number {
+  const steps = [35, 30, 25, 20, 16, 13, 10, 8, 6, 5, 4, 3];
+  const idx = Math.max(0, Math.min(level - 1, steps.length - 1));
+  return steps[idx];
+}
+
+/**
  * 将点绕指定中心旋转指定角度 (角度制)
  */
 export function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
@@ -147,15 +156,16 @@ function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
 }
 
 /**
- * 随机生成算法：根据模式与难度步长生成一道题目数据
+ * 随机生成算法：根据模式与难度 Level 生成一道题目数据
  */
 export function generateQuestion(
   mode: TrainingMode,
-  gridStep: number,
+  difficultyLevel: number,
   options?: QuestionGenerateOptions,
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
+  const gridStep = levelToTempGridStep(difficultyLevel);
   const randomRow = Math.floor(Math.random() * gridDim);
   const randomCol = Math.floor(Math.random() * gridDim);
 
@@ -182,13 +192,14 @@ export function generateQuestion(
       targetB,
       gridStart,
       gridStep,
+      difficultyLevel,
       gridDim,
       angleDegree: angle,
       distanceRatio: dist,
     };
   }
 
-  // 双锚点基础拓扑 (相对于中心的偏移)
+  // 双锚点基础拓扑
   const baseAx = -70;
   const baseAy = 0;
   const baseCx = 70;
@@ -197,7 +208,6 @@ export function generateQuestion(
   const projChoices = [-90, -45, 0, 45, 90];
   const hgtChoices = [-90, -45, 45, 90];
 
-  // 1. 生成所有合法的 (px, py) 组合，并预计算其角度
   const validPairs: { px: number; py: number; angle: number }[] = [];
   for (const x of projChoices) {
     for (const y of hgtChoices) {
@@ -208,7 +218,6 @@ export function generateQuestion(
 
   let chosenPair = validPairs[Math.floor(Math.random() * validPairs.length)];
 
-  // 2. 靶向强化逻辑拦截
   if (
     options?.targetingMode &&
     options.targetingMode !== 'off' &&
@@ -245,7 +254,6 @@ export function generateQuestion(
   const rotatedC = rotatePoint({ x: baseCx, y: baseCy }, center, rotAngle);
   const rotatedB = rotatePoint({ x: px, y: py }, center, rotAngle);
 
-  // 平移到画布中心 (CX, CY)
   const anchorA: Point = {
     x: Math.round((rotatedA.x + CX) * 100) / 100,
     y: Math.round((rotatedA.y + CY) * 100) / 100,
@@ -270,6 +278,7 @@ export function generateQuestion(
     targetB,
     gridStart,
     gridStep,
+    difficultyLevel,
     gridDim,
     angleDegree,
     distanceRatio: Math.round(Math.sqrt(px * px + py * py)),

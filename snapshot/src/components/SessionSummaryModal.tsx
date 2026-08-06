@@ -4,7 +4,7 @@ import type { TrainingMode } from '../types';
 
 export interface SessionHistoryItem {
   trialIndex: number;
-  step: number;
+  level: number;
   isHit: boolean;
   responseTimeMs: number;
 }
@@ -38,9 +38,9 @@ export function SessionSummaryModal({
   const hitCount = history.filter((h) => h.isHit).length;
   const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
 
-  const startStep = history.length > 0 ? history[0].step : 20;
-  const endStep = history.length > 0 ? history[history.length - 1].step : 20;
-  const stepDiff = startStep - endStep;
+  const startLevel = history.length > 0 ? history[0].level : 5;
+  const endLevel = history.length > 0 ? history[history.length - 1].level : 5;
+  const levelDiff = endLevel - startLevel;
 
   const avgResponseTimeSec =
     totalTrials > 0
@@ -57,7 +57,7 @@ export function SessionSummaryModal({
     return `${m}:${s}`;
   };
 
-  // 绘制步长折线图
+  // 绘制 Level 演进折线图
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || history.length === 0) return;
@@ -75,14 +75,14 @@ export function SessionSummaryModal({
     ctx.fillStyle = '#1E293B';
     ctx.fillRect(0, 0, width, height);
 
-    const steps = history.map((h) => h.step);
-    const maxStep = Math.max(...steps, 35);
-    const minStep = Math.min(...steps, 1);
+    const levels = history.map((h) => h.level);
+    const maxLevel = Math.max(...levels, 12);
+    const minLevel = Math.min(...levels, 1);
 
-    // Y 轴转换函数 (步长越小代表难度越高，显示在越靠上的位置)
+    // Y 轴转换函数 (Level 越大代表难度越高，向上增加)
     const getY = (val: number) => {
-      const ratio = (val - minStep) / (maxStep - minStep || 1);
-      return padding.top + ratio * chartH;
+      const ratio = (val - minLevel) / (maxLevel - minLevel || 1);
+      return padding.top + (1 - ratio) * chartH;
     };
 
     // X 轴转换函数
@@ -99,7 +99,7 @@ export function SessionSummaryModal({
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
 
-    const yTicks = [maxStep, Math.round((maxStep + minStep) / 2), minStep];
+    const yTicks = [maxLevel, Math.round((maxLevel + minLevel) / 2), minLevel];
     const uniqueYTicks = Array.from(new Set(yTicks));
 
     for (const tickVal of uniqueYTicks) {
@@ -109,7 +109,7 @@ export function SessionSummaryModal({
       ctx.lineTo(width - padding.right, y);
       ctx.stroke();
 
-      ctx.fillText(`${tickVal}px`, padding.left - 8, y);
+      ctx.fillText(`Lvl ${tickVal}`, padding.left - 8, y);
     }
 
     // 2. 绘制渐变填充区域
@@ -118,9 +118,9 @@ export function SessionSummaryModal({
     gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
 
     ctx.beginPath();
-    ctx.moveTo(getX(0), getY(history[0].step));
+    ctx.moveTo(getX(0), getY(history[0].level));
     for (let i = 1; i < history.length; i++) {
-      ctx.lineTo(getX(i), getY(history[i].step));
+      ctx.lineTo(getX(i), getY(history[i].level));
     }
     ctx.lineTo(getX(history.length - 1), height - padding.bottom);
     ctx.lineTo(getX(0), height - padding.bottom);
@@ -132,9 +132,9 @@ export function SessionSummaryModal({
     ctx.beginPath();
     ctx.strokeStyle = '#818CF8';
     ctx.lineWidth = 2.5;
-    ctx.moveTo(getX(0), getY(history[0].step));
+    ctx.moveTo(getX(0), getY(history[0].level));
     for (let i = 1; i < history.length; i++) {
-      ctx.lineTo(getX(i), getY(history[i].step));
+      ctx.lineTo(getX(i), getY(history[i].level));
     }
     ctx.stroke();
 
@@ -142,7 +142,7 @@ export function SessionSummaryModal({
     for (let i = 0; i < history.length; i++) {
       const h = history[i];
       const x = getX(i);
-      const y = getY(h.step);
+      const y = getY(h.level);
 
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -152,17 +152,17 @@ export function SessionSummaryModal({
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // 在主要节点标数字
+      // 在主要节点标 Level 数字
       if (
         history.length <= 10 ||
         i === 0 ||
         i === history.length - 1 ||
-        h.step !== history[i - 1]?.step
+        h.level !== history[i - 1]?.level
       ) {
         ctx.fillStyle = '#CBD5E1';
         ctx.font = 'bold 9px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(`${h.step}`, x, y - 8);
+        ctx.fillText(`L${h.level}`, x, y - 8);
       }
     }
 
@@ -228,19 +228,19 @@ export function SessionSummaryModal({
           </div>
         </div>
 
-        {/* 步长提升高亮卡片 */}
+        {/* 层阶提升高亮卡片 */}
         <div className="bg-indigo-50/70 border border-indigo-100 p-4 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-indigo-600 text-white rounded-xl">
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900">能力步长演进</div>
+              <div className="text-xs font-bold text-indigo-900">能力层阶演进</div>
               <div className="text-[11px] text-indigo-600">
-                {stepDiff > 0
-                  ? `难度精细度提升了 ${stepDiff}px ！`
-                  : stepDiff < 0
-                    ? `网格步长调整了 ${Math.abs(stepDiff)}px`
+                {levelDiff > 0
+                  ? `难度层阶提升了 ${levelDiff} 级！`
+                  : levelDiff < 0
+                    ? `难度层阶回调了 ${Math.abs(levelDiff)} 级`
                     : '稳健维持当前难度层阶'}
               </div>
             </div>
@@ -248,11 +248,11 @@ export function SessionSummaryModal({
 
           <div className="flex items-center gap-2 font-mono font-black text-slate-800 text-base">
             <span className="bg-white px-2.5 py-1 rounded-xl border border-indigo-100 shadow-sm">
-              {startStep}px
+              Lvl {startLevel}
             </span>
             <ArrowRight className="w-4 h-4 text-indigo-500" />
             <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-xl shadow-sm">
-              {endStep}px
+              Lvl {endLevel}
             </span>
           </div>
         </div>
@@ -260,7 +260,7 @@ export function SessionSummaryModal({
         {/* 折线图 Canvas 区 */}
         <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-400">步长变化曲线 (较小更精细)</span>
+            <span className="text-[11px] font-bold text-slate-400">难度层阶变化曲线</span>
             <div className="flex items-center gap-3 text-[10px]">
               <span className="flex items-center gap-1 text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> 击中
