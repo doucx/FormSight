@@ -1,4 +1,13 @@
-import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-preact';
+import {
+  Crosshair,
+  Flame,
+  Sliders,
+  Target,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  X,
+} from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { clearAllData } from '../utils/db';
 import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
