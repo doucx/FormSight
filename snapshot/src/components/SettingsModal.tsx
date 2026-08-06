@@ -364,7 +364,6 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               </div>
             )}
           </div>
-        </div>
 
           {/* 危险操作区：删除数据 */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">

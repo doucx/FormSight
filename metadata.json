@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 支持自定义网格大小(默认3x3)与清空训练数据功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786018933.6927705, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 SettingsModal.tsx 嵌套闭合标签导致的编译报错", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786019025.7128344, "duration_ms": 0}}
