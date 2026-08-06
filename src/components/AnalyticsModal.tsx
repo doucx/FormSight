@@ -133,7 +133,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     ctx.fillStyle = '#1E293B'; // 科技深蓝背景
     ctx.fillRect(0, 0, width, height);
 
-    // 绘制辅助同心圆 (5px, 10px, 20px, 30px)
+    // 绘制辅助同心圆 (5, 10, 20, 30)
     const rings = [5, 10, 20, 30];
     ctx.lineWidth = 1;
     for (const r of rings) {
@@ -144,7 +144,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
 
       ctx.fillStyle = '#64748B';
       ctx.font = '10px monospace';
-      ctx.fillText(`${r}px`, cx + r * scale + 2, cy - 4);
+      ctx.fillText(`${r}`, cx + r * scale + 2, cy - 4);
     }
 
     // 绘制十字坐标轴
@@ -413,18 +413,18 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                     <div className="flex justify-between">
                       <span>平均 X 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'} px
+                        {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span>平均 Y 轴偏移:</span>
                       <span className="font-bold">
-                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'} px
+                        {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}
                       </span>
                     </div>
                     <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
-                      <span>平均像素误差:</span>
-                      <span>{avgErrorDist} px</span>
+                      <span>平均误差距离:</span>
+                      <span>{avgErrorDist}</span>
                     </div>
                   </div>
                 </div>
