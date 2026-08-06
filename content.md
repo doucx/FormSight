@@ -1,68 +1,59 @@
-抱歉，在上一版的代码中在定义 `x` 时误将末尾的 `;` 写成了 `,` 导致了语法错误。我现在为你修复这个文件。
+好的，既然代码修改已经完成并通过了验证，现在我们将其作为一个完整的逻辑工作单元进行 Git 提交。
 
-## [WIP] fix: 修复 geometry.ts 中的语法标点符号错误
-
-### 错误分析
-在 `src/utils/geometry.ts` 文件的第 127 行中，变量 `x` 定义赋值语句的末尾使用了逗号 `,`，而下一行紧接着写了 `const y = ...`，导致 esbuild 编译器在解析时将下一行的 `const` 关键字误判为无效标识符并报错：
-`ERROR: Expected identifier but found "const"`
-
-**解决方案**：将第 127 行末尾的逗号 `,` 替换为分号 `;`。
+## [COMMIT] feat(geometry): 引入非线性极坐标与双极透视干扰网格系统
 
 ### 用户需求
-修复 `src/utils/geometry.ts` 中的语法错误，使 Vite/esbuild 开发服务器恢复正常编译与渲染。
+将寻星练习的干扰点网格从传统的笛卡尔正方形阵列重构为符合人类视觉感知规律的非线性极坐标（单锚点）与双极透视（双锚点）阵列，并将真理点随机陷落在网格的任意交叉节点上，全面提升训练的科学性与难度的一致性。
 
 ### 评论
-这是一个简单的拼写误用标点错误，修正分号后即可瞬间恢复正常的模块构建。
+这是一个重大的核心算法与架构升级。通过解耦像素物理步长、引入 Level 层阶、重构数据存储结构（DB v2），以及实现非线性拓扑点阵，系统正式脱离了局限于绝对像素的初级阶段，走向了专业视觉认知训练。
 
 ### 目标
-修正 `src/utils/geometry.ts` 第 127 行末尾的分号。
+1. 完成 Step 1：数据流与自适应难度层阶抽象（Level 1..N）。
+2. 完成 Step 2：几何引擎重构，实现极坐标扇形网格与双极透视网格。
+3. 修复真理点固定在中心节点的缺陷，实现全网格 25 个节点的随机陷落。
+4. 修复语法编译错误，确保系统平稳运行。
 
 ### 基本原理
-JavaScript/TypeScript 变量定义中，多变量同级声明可以使用逗号，但如果后续再次显式书写 `const`，前一条语句必须以分号 `;` 结尾。
+依据韦伯-费希纳定律，人类视空间定位具有相对比例和角度恒定的特性。非线性拓扑网络和随机节点陷落机制消除了远距离处的难度畸变，保证了训练质量。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/engine #concept/executor #scope/core #ai/instruct #task/domain/geometry #task/object/syntax-fix #task/action/fix #task/state/continue
+#intent/build #flow/ready #priority/high #comp/engine #concept/state #scope/core #ai/instruct #task/domain/geometry #task/object/polar-bipolar-grids #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 `geometry.ts` 的标点语法
+#### Acts 1: 添加更改并提交到 Git 仓库
 
-补全第 127 行变量声明处缺失的分号。
+将所有重构后的文件加入 Git 暂存区并创建规范的 Commit。
 
 ~~~~~act
-patch_file
+git_add
+src/types/index.ts
+src/utils/adaptiveEngine.ts
+src/utils/db.ts
 src/utils/geometry.ts
+src/components/StarCanvas.tsx
+src/components/SessionSummaryModal.tsx
+src/views/Dashboard.tsx
+src/views/TrainingView.tsx
+src/app.tsx
 ~~~~~
-~~~~~typescript
-      if (Math.abs(det) < 1e-5) {
-        // 退化近似退回 TargetB 偏移
-        points.push({
-          x: Math.round((targetB.x + (aIdx - a0) * 15) * 100) / 100,
-          y: Math.round((targetB.y + (cIdx - c0) * 15) * 100) / 100,
-        });
-      } else {
-        const t1 = (dx * v2y - dy * v2x) / det;
-        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100,
-        const y = Math.round((anchorA.y + t1 * v1y) * 100) / 100;
-        points.push({ x, y });
-      }
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript
-      if (Math.abs(det) < 1e-5) {
-        // 退化近似退回 TargetB 偏移
-        points.push({
-          x: Math.round((targetB.x + (aIdx - a0) * 15) * 100) / 100,
-          y: Math.round((targetB.y + (cIdx - c0) * 15) * 100) / 100,
-        });
-      } else {
-        const t1 = (dx * v2y - dy * v2x) / det;
-        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100;
-        const y = Math.round((anchorA.y + t1 * v1y) * 100) / 100;
-        points.push({ x, y });
-      }
+~~~~~text
+feat(geometry): implement polar and bipolar perspective grids with randomized truth points
+
+Replaces the traditional Cartesian (square) grid system with psychophysically sound topological networks:
+1. Single Anchor: Polar fan-shaped grid (denser near anchor, sparser further away, radially curved).
+2. Double Anchor: Bipolar perspective intersection grid (triangulation-based).
+3. Difficulty Level Abstraction: Replaces raw pixel steps with Level 1..N progression, updating DB schema to v2 and refactoring the adaptive engine.
+4. Truth Point Randomization: Ensures the true target point randomly falls on any of the 25 nodes in the 5x5 grid rather than fixed at the center.
+5. View & Analytics Adaptation: Updates Dashboard, TrainingView, SummaryModal, and Canvas rendering to fully support the new topology.
 ~~~~~
 
 ### 下一步建议
-编译错误现已修复！请回到浏览器查看，应用已自动热更新（HMR）。你可以开始体验非线性极坐标下随机节点陷落的训练效果。
+- **弱点热力图升级**：由于网格已过渡到极坐标系，后续可将 `AnalyticsModal` 中的直角坐标热力图升级为“极坐标/双极角度-距离误差散点图”，以便更精准地分析用户的空间偏置。
