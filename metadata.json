@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(ui): 实现自适应点半径及靠近网格点时自动隐藏光标", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786012458.217705, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 清理 UI 中的 px 显式描述并修正为 Level 层阶表达", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786012862.8301718, "duration_ms": 0}}
