@@ -3,7 +3,7 @@ import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 export const CANVAS_SIZE = 500;
 export const CX = CANVAS_SIZE / 2; // 250
 export const CY = CANVAS_SIZE / 2; // 250
-export const DEFAULT_GRID_DIM = 5; // 5x5 网格
+export const DEFAULT_GRID_DIM = 3; // 默认 3x3 网格
 
 /**
  * 将点绕指定中心旋转指定角度 (角度制)
@@ -38,8 +38,9 @@ export function generatePolarGridPoints(
   anchorA: Point,
   targetB: Point,
   level: number,
-  targetRow = Math.floor(Math.random() * 5),
-  targetCol = Math.floor(Math.random() * 5),
+  gridDim = DEFAULT_GRID_DIM,
+  targetRow = Math.floor(Math.random() * gridDim),
+  targetCol = Math.floor(Math.random() * gridDim),
 ): Point[] {
   const dx = targetB.x - anchorA.x;
   const dy = targetB.y - anchorA.y;
@@ -61,15 +62,11 @@ export function generatePolarGridPoints(
   // 半径增量直接使用计算出的绝对像素距离
   const rStep = S;
 
-  // 将 targetRow (0..4) 与 targetCol (0..4) 映射为相对偏移 (-2..2)
-  const r0 = targetRow - 2;
-  const a0 = targetCol - 2;
-
   const points: Point[] = [];
-  for (let rIdx = -2; rIdx <= 2; rIdx++) {
-    for (let aIdx = -2; aIdx <= 2; aIdx++) {
-      const curR = R + (rIdx - r0) * rStep;
-      const curTheta = theta + (aIdx - a0) * angleStepRad;
+  for (let rIdx = 0; rIdx < gridDim; rIdx++) {
+    for (let aIdx = 0; aIdx < gridDim; aIdx++) {
+      const curR = R + (rIdx - targetRow) * rStep;
+      const curTheta = theta + (aIdx - targetCol) * angleStepRad;
       const x = Math.round((anchorA.x + curR * Math.cos(curTheta)) * 100) / 100;
       const y = Math.round((anchorA.y + curR * Math.sin(curTheta)) * 100) / 100;
       points.push({ x, y });
@@ -87,8 +84,9 @@ export function generateBipolarGridPoints(
   anchorC: Point,
   targetB: Point,
   level: number,
-  targetRow = Math.floor(Math.random() * 5),
-  targetCol = Math.floor(Math.random() * 5),
+  gridDim = DEFAULT_GRID_DIM,
+  targetRow = Math.floor(Math.random() * gridDim),
+  targetCol = Math.floor(Math.random() * gridDim),
 ): Point[] {
   const alpha = Math.atan2(targetB.y - anchorA.y, targetB.x - anchorA.x);
   const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
@@ -108,15 +106,12 @@ export function generateBipolarGridPoints(
   const alphaStepRad = Math.min(S / Ra, maxAngleStepRad);
   const betaStepRad = Math.min(S / Rc, maxAngleStepRad);
 
-  const a0 = targetRow - 2;
-  const c0 = targetCol - 2;
-
   const points: Point[] = [];
 
-  for (let aIdx = -2; aIdx <= 2; aIdx++) {
-    for (let cIdx = -2; cIdx <= 2; cIdx++) {
-      const alphaI = alpha + (aIdx - a0) * alphaStepRad;
-      const betaJ = beta + (cIdx - c0) * betaStepRad;
+  for (let aIdx = 0; aIdx < gridDim; aIdx++) {
+    for (let cIdx = 0; cIdx < gridDim; cIdx++) {
+      const alphaI = alpha + (aIdx - targetRow) * alphaStepRad;
+      const betaJ = beta + (cIdx - targetCol) * betaStepRad;
 
       const v1x = Math.cos(alphaI);
       const v1y = Math.sin(alphaI);
@@ -130,8 +125,8 @@ export function generateBipolarGridPoints(
       if (Math.abs(det) < 1e-5) {
         // 退化近似退回 TargetB 偏移
         points.push({
-          x: Math.round((targetB.x + (aIdx - a0) * S) * 100) / 100,
-          y: Math.round((targetB.y + (cIdx - c0) * S) * 100) / 100,
+          x: Math.round((targetB.x + (aIdx - targetRow) * S) * 100) / 100,
+          y: Math.round((targetB.y + (cIdx - targetCol) * S) * 100) / 100,
         });
       } else {
         const t1 = (dx * v2y - dy * v2x) / det;
@@ -221,6 +216,7 @@ export function getDynamicDotRadius(gridPoints: Point[]): number {
 export interface QuestionGenerateOptions {
   targetingMode?: 'off' | 'auto' | 'manual';
   targetSectors?: number[]; // [0~7]
+  gridSize?: number;
 }
 
 /**
@@ -253,7 +249,7 @@ export function generateQuestion(
   options?: QuestionGenerateOptions,
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const gridDim = DEFAULT_GRID_DIM;
+  const gridDim = options?.gridSize ?? DEFAULT_GRID_DIM;
   const randomRow = Math.floor(Math.random() * gridDim);
   const randomCol = Math.floor(Math.random() * gridDim);
 
@@ -274,6 +270,7 @@ export function generateQuestion(
       anchorA,
       targetB,
       difficultyLevel,
+      gridDim,
       randomRow,
       randomCol,
     );
@@ -366,6 +363,7 @@ export function generateQuestion(
     anchorC,
     targetB,
     difficultyLevel,
+    gridDim,
     randomRow,
     randomCol,
   );

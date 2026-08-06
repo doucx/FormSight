@@ -46,6 +46,7 @@ export function TrainingView({
         settings.targetingMode === 'manual'
           ? settings.manualTargetSectors
           : targetSectorsRef.current,
+      gridSize: settings.gridSize,
     };
   };
 
@@ -53,6 +54,7 @@ export function TrainingView({
     generateQuestion(mode, initialLevel, {
       targetingMode: settings.targetingMode,
       targetSectors: settings.manualTargetSectors,
+      gridSize: settings.gridSize,
     }),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());

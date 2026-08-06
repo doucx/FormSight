@@ -234,3 +234,13 @@ export async function getTotalTrainingTimeMs(): Promise<number> {
   }
   return totalMs;
 }
+
+// === API 9: 清空所有本地数据 ===
+export async function clearAllData(): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  await tx.objectStore('sessions').clear();
+  await tx.objectStore('records').clear();
+  await tx.objectStore('user_profiles').clear();
+  await tx.done;
+}

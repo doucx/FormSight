@@ -1,5 +1,6 @@
-import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-preact';
 import { useState } from 'preact/hooks';
+import { clearAllData } from '../utils/db';
 import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
 
 const SECTOR_NAMES = [
@@ -17,9 +18,10 @@ interface SettingsModalProps {
   settings: UserSettings;
   onClose: () => void;
   onSave: (newSettings: UserSettings) => void;
+  onDataCleared?: () => void;
 }
 
-export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps) {
+export function SettingsModal({ settings, onClose, onSave, onDataCleared }: SettingsModalProps) {
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
 
   const handleToggleAutoNext = () => {
@@ -64,6 +66,19 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
 
   const handleIdleTimeoutChange = (timeout: number) => {
     setCurrent((prev) => ({ ...prev, idleTimeout: timeout }));
+  };
+
+  const handleGridSizeChange = (size: number) => {
+    setCurrent((prev) => ({ ...prev, gridSize: size }));
+  };
+
+  const handleClearData = async () => {
+    if (confirm('⚠️ 确定要清空所有训练日志、历史会话和能力看板数据吗？此操作无法撤销！')) {
+      await clearAllData();
+      alert('所有训练数据已清空。');
+      onDataCleared?.();
+      onClose();
+    }
   };
 
   const handleConfirm = () => {
@@ -273,6 +288,27 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
             </div>
           </div>
 
+          {/* 干扰点网格大小 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">干扰点网格大小</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[2, 3, 4, 5].map((size) => (
+                <button
+                  type="button"
+                  key={size}
+                  onClick={() => handleGridSizeChange(size)}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.gridSize ?? 3) === size
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {size}x{size}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 专项靶向强化训练设置 */}
           <div className="space-y-2 pt-2 border-t border-slate-100">
             <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
@@ -327,6 +363,23 @@ export function SettingsModal({ settings, onClose, onSave }: SettingsModalProps)
                 </div>
               </div>
             )}
+          </div>
+        </div>
+
+          {/* 危险操作区：删除数据 */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+            <div>
+              <div className="text-xs font-bold text-rose-600">删除所有数据</div>
+              <div className="text-[11px] text-slate-400">清空本地存储的全部练习记录与能力看板</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleClearData}
+              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              清空数据
+            </button>
           </div>
         </div>
 
