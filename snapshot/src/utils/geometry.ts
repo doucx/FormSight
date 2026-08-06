@@ -46,18 +46,90 @@ export function calcGridStart(
 }
 
 /**
- * 根据 GridStart、维度和步长生成全量干扰点阵坐标数组
+ * 根据题目数据生成极坐标（单锚点）或仿射透视（双锚点）全量干扰点阵坐标数组
  */
-export function generateGridPoints(gridStart: Point, dim: number, step: number): Point[] {
+export function generateGridPoints(question: QuestionData): Point[] {
+  const { mode, anchorA, anchorC, targetB, gridStep, gridDim = DEFAULT_GRID_DIM } = question;
+  const rowIdx = question.gridRowIdx ?? Math.floor(gridDim / 2);
+  const colIdx = question.gridColIdx ?? Math.floor(gridDim / 2);
+
   const points: Point[] = [];
-  for (let r = 0; r < dim; r++) {
-    for (let c = 0; c < dim; c++) {
-      points.push({
-        x: Math.round((gridStart.x + c * step) * 100) / 100,
-        y: Math.round((gridStart.y + r * step) * 100) / 100,
-      });
+
+  if (mode === 'single') {
+    // === 单锚点：极坐标扇形网格 ===
+    const dx = targetB.x - anchorA.x;
+    const dy = targetB.y - anchorA.y;
+    const Rb = Math.sqrt(dx * dx + dy * dy);
+    const thetaB = Math.atan2(dy, dx);
+
+    const effectiveR = Math.max(Rb, 30);
+    // 弧长 delta_s = R * delta_theta => delta_theta = gridStep / effectiveR
+    const deltaTheta = gridStep / effectiveR;
+
+    for (let r = 0; r < gridDim; r++) {
+      const rOffset = r - rowIdx;
+      const radius = Rb + rOffset * gridStep;
+      if (radius <= 0) continue;
+
+      for (let c = 0; c < gridDim; c++) {
+        const cOffset = c - colIdx;
+        const theta = thetaB + cOffset * deltaTheta;
+
+        points.push({
+          x: Math.round((anchorA.x + radius * Math.cos(theta)) * 100) / 100,
+          y: Math.round((anchorA.y + radius * Math.sin(theta)) * 100) / 100,
+        });
+      }
     }
+    return points;
   }
+
+  if (anchorC) {
+    // === 双锚点：AC 仿射透视网格 ===
+    const acX = anchorC.x - anchorA.x;
+    const acY = anchorC.y - anchorA.y;
+    const acLen = Math.sqrt(acX * acX + acY * acY);
+
+    if (acLen === 0) return points;
+
+    // 单位切向量 u，单位法向量 v
+    const ux = acX / acLen;
+    const uy = acY / acLen;
+    const vx = -uy;
+    const vy = ux;
+
+    // B 相对 A 的向量
+    const abX = targetB.x - anchorA.x;
+    const abY = targetB.y - anchorA.y;
+
+    // 投影坐标
+    const pB = abX * ux + abY * uy; // 平行分量
+    const hB = abX * vx + abY * vy; // 垂直高度分量
+
+    // 高度透视膨胀系数：离 AC 基线越远，垂直视觉度量误差越大
+    const heightScale = 1 + 0.25 * (Math.abs(hB) / acLen);
+    const stepH = gridStep * heightScale;
+
+    for (let r = 0; r < gridDim; r++) {
+      const hOffset = r - rowIdx;
+      const h = hB + hOffset * stepH;
+
+      for (let c = 0; c < gridDim; c++) {
+        const pOffset = c - colIdx;
+        const p = pB + pOffset * gridStep;
+
+        const px = anchorA.x + p * ux + h * vx;
+        const py = anchorA.y + p * uy + h * vy;
+
+        points.push({
+          x: Math.round(px * 100) / 100,
+          y: Math.round(py * 100) / 100,
+        });
+      }
+    }
+    return points;
+  }
+
   return points;
 }
 
@@ -66,11 +138,17 @@ export function generateGridPoints(gridStart: Point, dim: number, step: number):
  */
 export function findNearestGridPoint(
   clickPoint: Point,
-  gridStart: Point,
-  gridStep: number,
-  dim: number = DEFAULT_GRID_DIM,
+  question: QuestionData,
 ): { nearestPoint: Point; minDistance: number; isWithinRange: boolean } {
-  const gridPoints = generateGridPoints(gridStart, dim, gridStep);
+  const gridPoints = generateGridPoints(question);
+  if (gridPoints.length === 0) {
+    return {
+      nearestPoint: clickPoint,
+      minDistance: 0,
+      isWithinRange: false,
+    };
+  }
+
   let nearestPoint = gridPoints[0];
   let minDistance = calcDistance(clickPoint, nearestPoint);
 
@@ -83,7 +161,7 @@ export function findNearestGridPoint(
   }
 
   // 判定感应半径：网格步长的 55%
-  const maxRadius = gridStep * 0.55;
+  const maxRadius = question.gridStep * 0.55;
   return {
     nearestPoint,
     minDistance,
@@ -96,20 +174,15 @@ export function findNearestGridPoint(
  */
 export function checkHit(
   clickPoint: Point,
-  targetB: Point,
-  gridStart: Point,
-  gridStep: number,
-  dim: number = DEFAULT_GRID_DIM,
+  question: QuestionData,
 ): HitResult {
   const { nearestPoint, isWithinRange } = findNearestGridPoint(
     clickPoint,
-    gridStart,
-    gridStep,
-    dim,
+    question,
   );
 
   // 1. 判断吸附后网格点与真理点 B 的直接偏差
-  const errorDistance = calcDistance(nearestPoint, targetB);
+  const errorDistance = calcDistance(nearestPoint, question.targetB);
   const isHit = errorDistance < 0.5;
 
   return {
@@ -181,6 +254,8 @@ export function generateQuestion(
       anchorC: null,
       targetB,
       gridStart,
+      gridRowIdx: randomRow,
+      gridColIdx: randomCol,
       gridStep,
       gridDim,
       angleDegree: angle,
@@ -269,6 +344,8 @@ export function generateQuestion(
     anchorC,
     targetB,
     gridStart,
+    gridRowIdx: randomRow,
+    gridColIdx: randomCol,
     gridStep,
     gridDim,
     angleDegree,

@@ -55,11 +55,7 @@ export function StarCanvas({
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         // 图层 1: 干扰点阵 (底层)
-        const gridPoints = generateGridPoints(
-          question.gridStart,
-          question.gridDim,
-          question.gridStep,
-        );
+        const gridPoints = generateGridPoints(question);
         for (const p of gridPoints) {
           drawDot(ctx, p.x, p.y, '#888888', 3.5);
         }
@@ -152,9 +148,7 @@ export function StarCanvas({
     const currentPoint: Point = { x: clickX, y: clickY };
     const { nearestPoint, isWithinRange } = findNearestGridPoint(
       currentPoint,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
+      question,
     );
 
     if (isWithinRange) {
@@ -184,13 +178,7 @@ export function StarCanvas({
     const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
 
     const clickPoint: Point = { x: clickX, y: clickY };
-    const hitResult = checkHit(
-      clickPoint,
-      question.targetB,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
-    );
+    const hitResult = checkHit(clickPoint, question);
 
     // 忽略在有效感应范围之外的点击
     if (!hitResult.isWithinRange) return;

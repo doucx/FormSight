@@ -12,6 +12,8 @@ export interface QuestionData {
   anchorC: Point | null;
   targetB: Point;
   gridStart: Point;
+  gridRowIdx: number;
+  gridColIdx: number;
   gridStep: number;
   gridDim: number; // 默认 5 (5x5 网格)
 
