@@ -184,7 +184,7 @@ export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[])
     isHit,
     nearestGridPoint: nearestPoint,
     errorDistance,
-  isWithinRange,
+    isWithinRange,
   };
 }
 
