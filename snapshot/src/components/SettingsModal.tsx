@@ -137,25 +137,6 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
             </button>
           </div>
 
-          {/* 鼠标网格点吸附 */}
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-semibold text-slate-700">鼠标靠近磁性吸附</div>
-              <div className="text-xs text-slate-400">靠近点位时自动锁定准心，提供精准视觉反馈</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleToggleSnapCursor}
-              className="text-indigo-600 hover:opacity-80 transition-opacity"
-            >
-              {(current.snapCursor ?? true) ? (
-                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
-              ) : (
-                <ToggleLeft className="w-8 h-8 text-slate-300" />
-              )}
-            </button>
-          </div>
-
           {/* 自动翻页延迟 */}
           {current.autoNext && (
             <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
@@ -176,6 +157,25 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               />
             </div>
           )}
+
+          {/* 鼠标网格点吸附 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-700">鼠标靠近磁性吸附</div>
+              <div className="text-xs text-slate-400">靠近点位时自动锁定准心，提供精准视觉反馈</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleSnapCursor}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {(current.snapCursor ?? true) ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
 
           {/* 训练算子模式 */}
           <div className="space-y-2">

@@ -27,6 +27,7 @@ export function StarCanvas({
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [rawCursor, setRawCursor] = useState<Point | null>(null);
 
   // === 绘图主逻辑 ===
   useEffect(() => {
@@ -70,9 +71,10 @@ export function StarCanvas({
           drawDot(ctx, p.x, p.y, '#888888', dotRadius);
         }
 
-        // 图层 1.5: 鼠标悬停高亮网格点（吸附模式或自由模式下在感应区内高亮）
+        // 图层 1.5: 鼠标悬停高亮网格点（吸附模式画网格点中心，不吸附模式画真实鼠标坐标）
         if (!disabled && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+          const drawPos = snapCursor ? hoverPoint : (rawCursor || hoverPoint);
+          drawDot(ctx, drawPos.x, drawPos.y, '#4F46E5', hoverRadius);
         }
 
         // 图层 2: 锚点 (顶层)
@@ -142,6 +144,7 @@ export function StarCanvas({
   const handleRightCanvasMouseMove = (e: MouseEvent) => {
     if (disabled) {
       if (hoverPoint) setHoverPoint(null);
+      if (rawCursor) setRawCursor(null);
       return;
     }
 
@@ -163,13 +166,16 @@ export function StarCanvas({
 
     if (isWithinRange) {
       setHoverPoint(nearestPoint);
-    } else if (hoverPoint) {
-      setHoverPoint(null);
+      setRawCursor(currentPoint);
+    } else {
+      if (hoverPoint) setHoverPoint(null);
+      if (rawCursor) setRawCursor(null);
     }
   };
 
   const handleRightCanvasMouseLeave = () => {
     if (hoverPoint) setHoverPoint(null);
+    if (rawCursor) setRawCursor(null);
   };
 
   // === 交互事件：点击右侧 Canvas 做答 ===
@@ -194,6 +200,7 @@ export function StarCanvas({
     if (!hitResult.isWithinRange) return;
 
     setHoverPoint(null);
+    setRawCursor(null);
     onAnswer(clickPoint, hitResult);
   };
 
@@ -229,7 +236,7 @@ export function StarCanvas({
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled
               ? 'cursor-default'
-              : snapCursor && hoverPoint
+              : hoverPoint
                 ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
                 : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
