@@ -5,6 +5,7 @@ export type TargetingMode = 'off' | 'auto' | 'manual';
 export interface UserSettings {
   autoNext: boolean; // 点击后是否自动翻页
   autoNextDelay: number; // 自动翻页延迟 (ms)
+  magneticSnap: boolean; // 鼠标靠近磁性吸附
   stepGranularity: StepGranularity; // 步长粒度 ('standard': 标准阶梯 (12级), 'fine': 精细阶梯 (35级))
   adaptiveMode: AdaptiveMode; // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
   targetAccuracy: number; // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
@@ -20,6 +21,7 @@ const SETTINGS_KEY = 'star_hopping_user_settings';
 export const DEFAULT_SETTINGS: UserSettings = {
   autoNext: true,
   autoNextDelay: 500,
+  magneticSnap: true,
   stepGranularity: 'standard',
   adaptiveMode: 'block',
   targetAccuracy: 0.8,

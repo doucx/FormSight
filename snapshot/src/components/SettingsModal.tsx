@@ -42,6 +42,10 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
     setCurrent((prev) => ({ ...prev, autoNextDelay: val }));
   };
 
+  const handleToggleMagneticSnap = () => {
+    setCurrent((prev) => ({ ...prev, magneticSnap: !prev.magneticSnap }));
+  };
+
   const handleGranularityChange = (granularity: 'standard' | 'fine') => {
     setCurrent((prev) => ({ ...prev, stepGranularity: granularity }));
   };
@@ -153,6 +157,25 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               />
             </div>
           )}
+
+          {/* 鼠标靠近磁性吸附 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-700">鼠标靠近磁性吸附</div>
+              <div className="text-xs text-slate-400">靠近网格点感应区时准心吸附在点上</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleMagneticSnap}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {current.magneticSnap ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
 
           {/* 训练算子模式 */}
           <div className="space-y-2">

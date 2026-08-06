@@ -13,6 +13,7 @@ interface StarCanvasProps {
   userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
   onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
   disabled?: boolean;
+  magneticSnap?: boolean;
 }
 
 export function StarCanvas({
@@ -21,10 +22,13 @@ export function StarCanvas({
   userAnswer,
   onAnswer,
   disabled = false,
+  magneticSnap = true,
 }: StarCanvasProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [mousePos, setMousePos] = useState<Point | null>(null);
+  const [isInSensoryRange, setIsInSensoryRange] = useState<boolean>(false);
 
   // === 绘图主逻辑 ===
   useEffect(() => {
@@ -69,8 +73,11 @@ export function StarCanvas({
         }
 
         // 图层 1.5: 鼠标悬停高亮网格点
-        if (!disabled && !showAnswer && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+        if (!disabled && !showAnswer && isInSensoryRange) {
+          const drawPos = magneticSnap ? hoverPoint : mousePos;
+          if (drawPos) {
+            drawDot(ctx, drawPos.x, drawPos.y, '#4F46E5', hoverRadius);
+          }
         }
 
         // 图层 2: 锚点 (顶层)
@@ -139,7 +146,11 @@ export function StarCanvas({
   // === 交互事件：鼠标移动计算悬停高亮点 ===
   const handleRightCanvasMouseMove = (e: MouseEvent) => {
     if (disabled || showAnswer) {
-      if (hoverPoint) setHoverPoint(null);
+      if (isInSensoryRange) {
+        setIsInSensoryRange(false);
+        setHoverPoint(null);
+        setMousePos(null);
+      }
       return;
     }
 
@@ -160,14 +171,24 @@ export function StarCanvas({
     );
 
     if (isWithinRange) {
+      setIsInSensoryRange(true);
       setHoverPoint(nearestPoint);
-    } else if (hoverPoint) {
-      setHoverPoint(null);
+      setMousePos(currentPoint);
+    } else {
+      if (isInSensoryRange) {
+        setIsInSensoryRange(false);
+        setHoverPoint(null);
+        setMousePos(null);
+      }
     }
   };
 
   const handleRightCanvasMouseLeave = () => {
-    if (hoverPoint) setHoverPoint(null);
+    if (isInSensoryRange) {
+      setIsInSensoryRange(false);
+      setHoverPoint(null);
+      setMousePos(null);
+    }
   };
 
   // === 交互事件：点击右侧 Canvas 做答 ===
@@ -191,7 +212,9 @@ export function StarCanvas({
     // 忽略在有效感应范围之外的点击
     if (!hitResult.isWithinRange) return;
 
+    setIsInSensoryRange(false);
     setHoverPoint(null);
+    setMousePos(null);
     onAnswer(clickPoint, hitResult);
   };
 
@@ -227,7 +250,7 @@ export function StarCanvas({
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : hoverPoint
+              : isInSensoryRange
                 ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
                 : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
