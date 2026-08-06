@@ -1,53 +1,49 @@
-好的，我理解您的需求。因为原生的鼠标指针（如十字光标）会挡住下方极小的圆点，影响视觉判断，因此可以在**鼠标靠近并选中某个网格点感应区时，通过样式自动将系统鼠标指针隐藏（设置为 `cursor-none`）**。
+好的，我们将本次完成的所有改进（自适应动态圆点半径 + 鼠标靠近网格点时自动隐藏系统光标）作为一个逻辑完整的单元进行 Git 提交。
 
-这样页面上就只保留 Canvas 自渲染的蓝紫色高亮指示点（提示），彻底消除光标遮挡问题，提升点击精准度。
+下面是为您生成的 Quipu 提交计划：
 
-下面是为您生成的 Quipu 执行计划：
-
-## [WIP] feat: 鼠标靠近网格点时隐藏系统光标
+## [COMMIT] feat(ui): 实现自适应点半径及靠近网格点时自动隐藏光标
 
 ### 用户需求
-鼠标光标会遮挡感应点，导致高难度关卡下难以点击。需要当鼠标靠近网格点时自动透明隐藏原生指针，仅保留 Canvas 内部的高亮提示点。
+将之前完成的“高难度下动态缩小密集点半径”以及“鼠标靠近点时自动隐藏系统光标以避免遮挡”这两项改动进行打包提交。
 
 ### 评论
-这是一个非常优雅且直观的交互改进。利用 Tailwind 的 `cursor-none` 配合 Canvas 已有的 `hoverPoint` 状态，能够无缝达成“靠近吸附即隐藏指针、移开恢复指针”的效果。
+该提交极大地提升了高难度关卡下的用户体验和手眼协同点击的精准度。改动逻辑自洽且边界清晰，适合作为一个独立的 `feat` 单元。
 
 ### 目标
-在 `src/components/StarCanvas.tsx` 中，根据 `hoverPoint` 状态动态控制右侧 Canvas 的 CSS 样式类：当 `hoverPoint` 存在时切换为 `cursor-none`；远离时恢复 `cursor-crosshair`。
+1. 将修改后的 `src/utils/geometry.ts` 与 `src/components/StarCanvas.tsx` 添加到 Git 暂存区。
+2. 生成符合 Conventional Commits 规范的 Git Commit。
 
 ### 基本原理
-当鼠标移动到网格点感应范围内时，`hoverPoint` 状态生效，触发 `cursor-none` 样式隐藏系统默认光标。此时 Canvas 图层 1.5 中已绘制的高亮圈为用户提供精确的无遮挡位置视觉反馈。
+按照 ACA 协议中“文件变更操作与 Git 提交操作互斥”的原则，本次单独执行 `[COMMIT]` 计划，确保在用户确认无误后完成版本固化。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/hover-cursor #task/action/refactor #task/state/begin
+#intent/build #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/star-canvas-dots #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `StarCanvas.tsx` 中根据 `hoverPoint` 动态设置 `cursor-none`
+#### Acts 1: 添加文件到 Git 暂存区
 
 ~~~~~act
-patch_file
+git_add
+src/utils/geometry.ts
 src/components/StarCanvas.tsx
 ~~~~~
-~~~~~typescript.old
-          className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
-          }`}
+
+#### Acts 2: 提交代码变更
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-          className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : hoverPoint
-                ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
-                : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
-          }`}
+~~~~~text
+feat(ui): implement dynamic dot radius and cursor-none on hover
+
+- Added getDynamicDotRadius in geometry.ts to dynamically shrink circle radii when dot-to-dot distance is small in high-level/dense modes, preventing visual overlap and touch confusion.
+- Updated StarCanvas.tsx to dynamically apply cursor-none when hoverPoint is active, hiding the system cursor to prevent it from blocking tiny target dots during high-precision tapping.
 ~~~~~
 
 ### 下一步建议
-1. 刷新应用测试，将鼠标移至右侧做答区域网格点上方，确认鼠标指针在接近点时自动消失，仅显示蓝紫色高亮点。
-2. 体验移开网格点时指针恢复显示，以及点击答题时的顺畅体验。
+- **回归测试**: 可以尝试进行一次完整的高难度（Level 10+）训练轮次，体验密集点阵下的自适应渲染和无光标遮挡点击。
+- **数据导出**: 测试通过后，可随时通过仪表盘的导出按钮备份当前的答题数据库与配置。
