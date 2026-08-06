@@ -49,10 +49,8 @@ export function TrainingView({
     };
   };
 
-  const maxLevel = settings.stepGranularity === 'fine' ? 35 : 12;
-
   const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialLevel, maxLevel, {
+    generateQuestion(mode, initialLevel, {
       targetingMode: settings.targetingMode,
       targetSectors: settings.manualTargetSectors,
     }),
@@ -233,7 +231,7 @@ export function TrainingView({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setShowAnswer(false);
     setUserAnswer(null);
-    setQuestion(generateQuestion(mode, nextLevel, maxLevel, getGenerateOptions()));
+    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -285,7 +283,7 @@ export function TrainingView({
     accumulatedMsRef.current = 0;
     setElapsedSeconds(0);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(mode, nextLevel, maxLevel, getGenerateOptions()));
+    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 

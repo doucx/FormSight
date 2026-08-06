@@ -4,8 +4,7 @@ import type { AdaptiveMode } from './settings';
  * 难度序列与最大层阶配置
  * Level 1 最简单，Level 越高难度越大
  */
-export const STANDARD_MAX_LEVEL = 12;
-export const FINE_MAX_LEVEL = 35;
+export const MAX_LEVEL = 35;
 
 export type AdaptiveChange = 'up' | 'down' | 'same';
 
@@ -23,11 +22,12 @@ export interface RecordResultOutput {
 }
 
 export class AdaptiveEngine {
-  private maxLevel: number;
+  private maxLevel: number = MAX_LEVEL;
   private currentLevel: number;
   private mode: AdaptiveMode;
   private targetAccuracy: number;
   private blockSize: number;
+  private step: number; // 升级步幅
 
   // 经典 3U1D 状态
   private consecutiveCorrect = 0;
@@ -42,7 +42,7 @@ export class AdaptiveEngine {
     targetAccuracy = 0.8,
     blockSize = 10,
   ) {
-    this.maxLevel = isFineGranularity ? FINE_MAX_LEVEL : STANDARD_MAX_LEVEL;
+    this.step = isFineGranularity ? 1 : 3;
     this.mode = mode;
     this.targetAccuracy = targetAccuracy;
     this.blockSize = blockSize;
@@ -89,14 +89,14 @@ export class AdaptiveEngine {
       if (this.consecutiveCorrect >= 3) {
         this.consecutiveCorrect = 0;
         if (this.currentLevel < this.maxLevel) {
-          this.currentLevel += 1;
+          this.currentLevel = Math.min(this.maxLevel, this.currentLevel + this.step);
           return { newLevel: this.getCurrentLevel(), change: 'up' };
         }
       }
     } else {
       this.consecutiveCorrect = 0;
       if (this.currentLevel > 1) {
-        this.currentLevel -= 1;
+        this.currentLevel = Math.max(1, this.currentLevel - this.step);
         return { newLevel: this.getCurrentLevel(), change: 'down' };
       }
     }
@@ -127,15 +127,15 @@ export class AdaptiveEngine {
     let change: AdaptiveChange = 'same';
 
     if (accuracy >= this.targetAccuracy) {
-      // 达到或超过目标正确率 -> 通关升级 (Level + 1)
+      // 达到或超过目标正确率 -> 通关升级
       if (this.currentLevel < this.maxLevel) {
-        this.currentLevel += 1;
+        this.currentLevel = Math.min(this.maxLevel, this.currentLevel + this.step);
         change = 'up';
       }
     } else if (accuracy < 0.5) {
-      // 正确率低于 50% -> 难度太高，降级 (Level - 1)
+      // 正确率低于 50% -> 难度太高，降级
       if (this.currentLevel > 1) {
-        this.currentLevel -= 1;
+        this.currentLevel = Math.max(1, this.currentLevel - this.step);
         change = 'down';
       }
     }
