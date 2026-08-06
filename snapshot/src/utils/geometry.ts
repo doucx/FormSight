@@ -43,21 +43,17 @@ export function calcDistance(p1: Point, p2: Point): number {
  * 极坐标扇形网格生成器 (单锚点模式)
  * 以锚点 A 为原点，向真理点 B 放射。距离越远，点阵间距按比例增大，并呈现顺弧弯曲。
  */
-export function generatePolarGridPoints(
-  anchorA: Point,
-  targetB: Point,
-  level: number,
-): Point[] {
+export function generatePolarGridPoints(anchorA: Point, targetB: Point, level: number): Point[] {
   const dx = targetB.x - anchorA.x;
   const dy = targetB.y - anchorA.y;
   const R = Math.sqrt(dx * dx + dy * dy);
   const theta = Math.atan2(dy, dx);
 
   // 角度步长：从 Level 1 的 8.0° 逐渐缩小至 高 Level 的 ~0.5°
-  const angleStepDeg = Math.max(0.5, 8.0 * Math.pow(0.82, level - 1));
+  const angleStepDeg = Math.max(0.5, 8.0 * 0.82 ** (level - 1));
   const angleStepRad = (angleStepDeg * Math.PI) / 180;
   // 径向比例步长：从 Level 1 的 15% 逐渐缩小至 高 Level 的 ~1.5%
-  const rRatioStep = Math.max(0.015, 0.15 * Math.pow(0.82, level - 1));
+  const rRatioStep = Math.max(0.015, 0.15 * 0.82 ** (level - 1));
 
   const points: Point[] = [];
   // 5x5 网格，(rIdx=0, aIdx=0) 精确为真理点 B
@@ -87,7 +83,7 @@ export function generateBipolarGridPoints(
   const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
 
   // 视线偏角步长：从 Level 1 的 6.0° 缩小至 高 Level 的 ~0.4°
-  const phiStepDeg = Math.max(0.4, 6.0 * Math.pow(0.82, level - 1));
+  const phiStepDeg = Math.max(0.4, 6.0 * 0.82 ** (level - 1));
   const phiStepRad = (phiStepDeg * Math.PI) / 180;
 
   const points: Point[] = [];
@@ -163,15 +159,8 @@ export function findNearestGridPoint(
 /**
  * 点击作答 Hit Detection：判定用户的点击坐标是否击中了真理点 B 所在的网格
  */
-export function checkHit(
-  clickPoint: Point,
-  targetB: Point,
-  gridPoints: Point[],
-): HitResult {
-  const { nearestPoint, isWithinRange } = findNearestGridPoint(
-    clickPoint,
-    gridPoints,
-  );
+export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[]): HitResult {
+  const { nearestPoint, isWithinRange } = findNearestGridPoint(clickPoint, gridPoints);
 
   // 判定吸附点与真理点 B 的直接偏差（是否选中真理点）
   const errorDistance = calcDistance(nearestPoint, targetB);

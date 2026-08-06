@@ -178,11 +178,7 @@ export function StarCanvas({
     const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
 
     const clickPoint: Point = { x: clickX, y: clickY };
-    const hitResult = checkHit(
-      clickPoint,
-      question.targetB,
-      question.distractorPoints,
-    );
+    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
 
     // 忽略在有效感应范围之外的点击
     if (!hitResult.isWithinRange) return;

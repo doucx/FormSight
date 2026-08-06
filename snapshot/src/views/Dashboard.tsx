@@ -191,9 +191,7 @@ export function Dashboard({
                       <TrendingUp className="w-3 h-3 text-indigo-500" />
                       能力层阶
                     </div>
-                    <div className="text-xl font-black text-slate-800">
-                      Level {currentLevel}
-                    </div>
+                    <div className="text-xl font-black text-slate-800">Level {currentLevel}</div>
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
