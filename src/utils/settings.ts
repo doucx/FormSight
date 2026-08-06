@@ -12,6 +12,7 @@ export interface UserSettings {
   targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
   manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
+  gridSize: number; // 网格维数 (2, 3, 4, 5)
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -26,6 +27,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   targetingMode: 'off',
   manualTargetSectors: [],
   idleTimeout: 60,
+  gridSize: 3,
 };
 
 export function loadSettings(): UserSettings {

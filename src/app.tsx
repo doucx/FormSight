@@ -82,6 +82,7 @@ export function App() {
           settings={settings}
           onClose={() => setIsSettingsOpen(false)}
           onSave={(newSettings) => setSettings(newSettings)}
+          onDataCleared={refreshProfiles}
         />
       )}
 
