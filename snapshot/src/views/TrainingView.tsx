@@ -362,6 +362,7 @@ export function TrainingView({
         userAnswer={userAnswer}
         onAnswer={handleAnswer}
         disabled={isFinished}
+        snapCursor={settings.snapCursor}
       />
 
       {/* 底部操作面板（仅在未开启自动翻页时显示） */}

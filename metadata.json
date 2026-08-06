@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(settings): 支持自定义网格大小与清空本地数据功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786020253.0989976, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 增加鼠标网格点吸附功能及设置切换开关", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786021136.0245395, "duration_ms": 0}}

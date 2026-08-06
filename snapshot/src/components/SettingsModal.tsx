@@ -37,6 +37,10 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
     setCurrent((prev) => ({ ...prev, autoNext: !prev.autoNext }));
   };
 
+  const handleToggleSnapCursor = () => {
+    setCurrent((prev) => ({ ...prev, snapCursor: !(prev.snapCursor ?? true) }));
+  };
+
   const handleDelayChange = (e: Event) => {
     const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
     setCurrent((prev) => ({ ...prev, autoNextDelay: val }));
@@ -126,6 +130,25 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
               className="text-indigo-600 hover:opacity-80 transition-opacity"
             >
               {current.autoNext ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
+
+          {/* 鼠标网格点吸附 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-700">鼠标靠近磁性吸附</div>
+              <div className="text-xs text-slate-400">靠近点位时自动锁定准心，提供精准视觉反馈</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleSnapCursor}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {(current.snapCursor ?? true) ? (
                 <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
               ) : (
                 <ToggleLeft className="w-8 h-8 text-slate-300" />

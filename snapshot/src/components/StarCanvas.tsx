@@ -13,6 +13,7 @@ interface StarCanvasProps {
   userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
   onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
   disabled?: boolean;
+  snapCursor?: boolean;
 }
 
 export function StarCanvas({
@@ -21,6 +22,7 @@ export function StarCanvas({
   userAnswer,
   onAnswer,
   disabled = false,
+  snapCursor = true,
 }: StarCanvasProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,8 +70,8 @@ export function StarCanvas({
           drawDot(ctx, p.x, p.y, '#888888', dotRadius);
         }
 
-        // 图层 1.5: 鼠标悬停高亮网格点
-        if (!disabled && !showAnswer && hoverPoint) {
+        // 图层 1.5: 鼠标悬停高亮网格点（吸附模式或自由模式下在感应区内高亮）
+        if (!disabled && hoverPoint) {
           drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
         }
 
@@ -138,7 +140,7 @@ export function StarCanvas({
 
   // === 交互事件：鼠标移动计算悬停高亮点 ===
   const handleRightCanvasMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer) {
+    if (disabled) {
       if (hoverPoint) setHoverPoint(null);
       return;
     }
@@ -225,9 +227,9 @@ export function StarCanvas({
           onMouseMove={handleRightCanvasMouseMove}
           onMouseLeave={handleRightCanvasMouseLeave}
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
-            disabled || showAnswer
+            disabled
               ? 'cursor-default'
-              : hoverPoint
+              : snapCursor && hoverPoint
                 ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
                 : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
