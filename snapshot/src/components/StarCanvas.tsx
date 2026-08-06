@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
-import { CANVAS_SIZE, checkHit, findNearestGridPoint, generateGridPoints } from '../utils/geometry';
+import { CANVAS_SIZE, checkHit, findNearestGridPoint, generateDynamicGridPoints } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -55,13 +55,26 @@ export function StarCanvas({
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         // 图层 1: 干扰点阵 (底层)
-        const gridPoints = generateGridPoints(
-          question.gridStart,
-          question.gridDim,
+        const gridPoints = generateDynamicGridPoints(
+          question.mode,
+          question.anchorA,
+          question.anchorC,
+          question.targetB,
           question.gridStep,
+          question.gridDim,
         );
         for (const p of gridPoints) {
-          drawDot(ctx, p.x, p.y, '#888888', 3.5);
+          // 处理距离过近的点重叠问题：缩小靠近中心原点区域的点的渲染半径
+          let r = 3.5;
+          if (question.mode === 'single') {
+            const dx = p.x - question.anchorA.x;
+            const dy = p.y - question.anchorA.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 40) {
+              r = Math.max(1.5, 3.5 * (dist / 40));
+            }
+          }
+          drawDot(ctx, p.x, p.y, '#888888', r);
         }
 
         // 图层 1.5: 鼠标悬停高亮网格点
@@ -152,9 +165,7 @@ export function StarCanvas({
     const currentPoint: Point = { x: clickX, y: clickY };
     const { nearestPoint, isWithinRange } = findNearestGridPoint(
       currentPoint,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
+      question
     );
 
     if (isWithinRange) {
@@ -186,10 +197,7 @@ export function StarCanvas({
     const clickPoint: Point = { x: clickX, y: clickY };
     const hitResult = checkHit(
       clickPoint,
-      question.targetB,
-      question.gridStart,
-      question.gridStep,
-      question.gridDim,
+      question
     );
 
     // 忽略在有效感应范围之外的点击
