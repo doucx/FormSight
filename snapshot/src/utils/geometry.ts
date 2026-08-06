@@ -6,7 +6,7 @@ export const CY = CANVAS_SIZE / 2; // 250
 export const DEFAULT_GRID_DIM = 5; // 5x5 网格
 
 /**
- * 映射 Level 到临时网格步长 px (仅在 Step 1 过渡期间使用)
+ * 映射 Level 到临时网格步长 px (兼容使用)
  */
 export function levelToTempGridStep(level: number): number {
   const steps = [35, 30, 25, 20, 16, 13, 10, 8, 6, 5, 4, 3];
@@ -40,31 +40,84 @@ export function calcDistance(p1: Point, p2: Point): number {
 }
 
 /**
- * 根据真理点 B 以及目标在网格中的行列位置 (row, col)，推算网格左上角 GridStart 坐标
+ * 极坐标扇形网格生成器 (单锚点模式)
+ * 以锚点 A 为原点，向真理点 B 放射。距离越远，点阵间距按比例增大，并呈现顺弧弯曲。
  */
-export function calcGridStart(
+export function generatePolarGridPoints(
+  anchorA: Point,
   targetB: Point,
-  rowIdx: number,
-  colIdx: number,
-  gridStep: number,
-): Point {
-  return {
-    x: Math.round((targetB.x - colIdx * gridStep) * 100) / 100,
-    y: Math.round((targetB.y - rowIdx * gridStep) * 100) / 100,
-  };
+  level: number,
+): Point[] {
+  const dx = targetB.x - anchorA.x;
+  const dy = targetB.y - anchorA.y;
+  const R = Math.sqrt(dx * dx + dy * dy);
+  const theta = Math.atan2(dy, dx);
+
+  // 角度步长：从 Level 1 的 8.0° 逐渐缩小至 高 Level 的 ~0.5°
+  const angleStepDeg = Math.max(0.5, 8.0 * Math.pow(0.82, level - 1));
+  const angleStepRad = (angleStepDeg * Math.PI) / 180;
+  // 径向比例步长：从 Level 1 的 15% 逐渐缩小至 高 Level 的 ~1.5%
+  const rRatioStep = Math.max(0.015, 0.15 * Math.pow(0.82, level - 1));
+
+  const points: Point[] = [];
+  // 5x5 网格，(rIdx=0, aIdx=0) 精确为真理点 B
+  for (let rIdx = -2; rIdx <= 2; rIdx++) {
+    for (let aIdx = -2; aIdx <= 2; aIdx++) {
+      const curR = R * (1 + rIdx * rRatioStep);
+      const curTheta = theta + aIdx * angleStepRad;
+      const x = Math.round((anchorA.x + curR * Math.cos(curTheta)) * 100) / 100;
+      const y = Math.round((anchorA.y + curR * Math.sin(curTheta)) * 100) / 100;
+      points.push({ x, y });
+    }
+  }
+  return points;
 }
 
 /**
- * 根据 GridStart、维度和步长生成全量干扰点阵坐标数组
+ * 双极透视网格生成器 (双锚点模式)
+ * 从锚点 A 与 锚点 C 分别向真理点 B 发射 5 条视角射线，计算 5x5 交叉点。
  */
-export function generateGridPoints(gridStart: Point, dim: number, step: number): Point[] {
+export function generateBipolarGridPoints(
+  anchorA: Point,
+  anchorC: Point,
+  targetB: Point,
+  level: number,
+): Point[] {
+  const alpha = Math.atan2(targetB.y - anchorA.y, targetB.x - anchorA.x);
+  const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
+
+  // 视线偏角步长：从 Level 1 的 6.0° 缩小至 高 Level 的 ~0.4°
+  const phiStepDeg = Math.max(0.4, 6.0 * Math.pow(0.82, level - 1));
+  const phiStepRad = (phiStepDeg * Math.PI) / 180;
+
   const points: Point[] = [];
-  for (let r = 0; r < dim; r++) {
-    for (let c = 0; c < dim; c++) {
-      points.push({
-        x: Math.round((gridStart.x + c * step) * 100) / 100,
-        y: Math.round((gridStart.y + r * step) * 100) / 100,
-      });
+
+  for (let aIdx = -2; aIdx <= 2; aIdx++) {
+    for (let cIdx = -2; cIdx <= 2; cIdx++) {
+      const alphaI = alpha + aIdx * phiStepRad;
+      const betaJ = beta + cIdx * phiStepRad;
+
+      const v1x = Math.cos(alphaI);
+      const v1y = Math.sin(alphaI);
+      const v2x = Math.cos(betaJ);
+      const v2y = Math.sin(betaJ);
+
+      const dx = anchorC.x - anchorA.x;
+      const dy = anchorC.y - anchorA.y;
+      const det = v1x * v2y - v1y * v2x;
+
+      if (Math.abs(det) < 1e-5) {
+        // 退化近似退回 TargetB 偏移
+        points.push({
+          x: Math.round((targetB.x + aIdx * 15) * 100) / 100,
+          y: Math.round((targetB.y + cIdx * 15) * 100) / 100,
+        });
+      } else {
+        const t1 = (dx * v2y - dy * v2x) / det;
+        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100;
+        const y = Math.round((anchorA.y + t1 * v1y) * 100) / 100;
+        points.push({ x, y });
+      }
     }
   }
   return points;
@@ -75,11 +128,12 @@ export function generateGridPoints(gridStart: Point, dim: number, step: number):
  */
 export function findNearestGridPoint(
   clickPoint: Point,
-  gridStart: Point,
-  gridStep: number,
-  dim: number = DEFAULT_GRID_DIM,
+  gridPoints: Point[],
 ): { nearestPoint: Point; minDistance: number; isWithinRange: boolean } {
-  const gridPoints = generateGridPoints(gridStart, dim, gridStep);
+  if (!gridPoints || gridPoints.length === 0) {
+    return { nearestPoint: clickPoint, minDistance: 0, isWithinRange: false };
+  }
+
   let nearestPoint = gridPoints[0];
   let minDistance = calcDistance(clickPoint, nearestPoint);
 
@@ -91,8 +145,14 @@ export function findNearestGridPoint(
     }
   }
 
-  // 判定感应半径：网格步长的 55%
-  const maxRadius = gridStep * 0.55;
+  // 寻找网格中点与点之间的最小相邻距离作为自适应感应半径的参考
+  let minNeighborDist = Number.MAX_VALUE;
+  for (let i = 0; i < Math.min(5, gridPoints.length - 1); i++) {
+    const d = calcDistance(gridPoints[i], gridPoints[i + 1]);
+    if (d > 0 && d < minNeighborDist) minNeighborDist = d;
+  }
+  const maxRadius = Math.max(20, minNeighborDist * 0.75);
+
   return {
     nearestPoint,
     minDistance,
@@ -106,18 +166,14 @@ export function findNearestGridPoint(
 export function checkHit(
   clickPoint: Point,
   targetB: Point,
-  gridStart: Point,
-  gridStep: number,
-  dim: number = DEFAULT_GRID_DIM,
+  gridPoints: Point[],
 ): HitResult {
   const { nearestPoint, isWithinRange } = findNearestGridPoint(
     clickPoint,
-    gridStart,
-    gridStep,
-    dim,
+    gridPoints,
   );
 
-  // 1. 判断吸附后网格点与真理点 B 的直接偏差
+  // 判定吸附点与真理点 B 的直接偏差（是否选中真理点）
   const errorDistance = calcDistance(nearestPoint, targetB);
   const isHit = errorDistance < 0.5;
 
@@ -156,7 +212,7 @@ function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
 }
 
 /**
- * 随机生成算法：根据模式与难度 Level 生成一道题目数据
+ * 随机生成算法：根据模式与难度 Level 生成一道题目数据及非线性干扰点阵
  */
 export function generateQuestion(
   mode: TrainingMode,
@@ -166,8 +222,6 @@ export function generateQuestion(
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
   const gridStep = levelToTempGridStep(difficultyLevel);
-  const randomRow = Math.floor(Math.random() * gridDim);
-  const randomCol = Math.floor(Math.random() * gridDim);
 
   if (mode === 'single') {
     // === 1. 单锚点模式 ===
@@ -182,7 +236,7 @@ export function generateQuestion(
       y: Math.round((CY + dist * Math.sin(rad)) * 100) / 100,
     };
 
-    const gridStart = calcGridStart(targetB, randomRow, randomCol, gridStep);
+    const distractorPoints = generatePolarGridPoints(anchorA, targetB, difficultyLevel);
 
     return {
       id,
@@ -190,10 +244,11 @@ export function generateQuestion(
       anchorA,
       anchorC: null,
       targetB,
-      gridStart,
+      gridStart: distractorPoints[0],
       gridStep,
       difficultyLevel,
       gridDim,
+      distractorPoints,
       angleDegree: angle,
       distanceRatio: dist,
     };
@@ -267,7 +322,7 @@ export function generateQuestion(
     y: Math.round((rotatedB.y + CY) * 100) / 100,
   };
 
-  const gridStart = calcGridStart(targetB, randomRow, randomCol, gridStep);
+  const distractorPoints = generateBipolarGridPoints(anchorA, anchorC, targetB, difficultyLevel);
   const angleDegree = Math.round(((Math.atan2(py, px) * 180) / Math.PI + 360) % 360);
 
   return {
@@ -276,10 +331,11 @@ export function generateQuestion(
     anchorA,
     anchorC,
     targetB,
-    gridStart,
+    gridStart: distractorPoints[0],
     gridStep,
     difficultyLevel,
     gridDim,
+    distractorPoints,
     angleDegree,
     distanceRatio: Math.round(Math.sqrt(px * px + py * py)),
     rotationAngle: rotAngle,

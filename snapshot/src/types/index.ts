@@ -12,9 +12,10 @@ export interface QuestionData {
   anchorC: Point | null;
   targetB: Point;
   gridStart: Point;
-  gridStep: number; // 仅作为 Step 1 过渡期渲染使用
-  difficultyLevel: number; // 统一抽象难度等级 (1..N，数字越大越难)
+  gridStep: number; // 仅作为 Step 1/渲染兼容使用
+  difficultyLevel: number; // 统一抽象难度等级 (1..N)
   gridDim: number; // 默认 5 (5x5 网格)
+  distractorPoints: Point[]; // 25 个非线性干扰点阵数组
 
   // 衍生分析指标 (用于后续弱点分析)
   angleDegree: number; // 极角 (0~360°)
