@@ -6,15 +6,6 @@ export const CY = CANVAS_SIZE / 2; // 250
 export const DEFAULT_GRID_DIM = 5; // 5x5 网格
 
 /**
- * 映射 Level 到临时网格步长 px (兼容使用)
- */
-export function levelToTempGridStep(level: number): number {
-  const steps = [35, 30, 25, 20, 16, 13, 10, 8, 6, 5, 4, 3];
-  const idx = Math.max(0, Math.min(level - 1, steps.length - 1));
-  return steps[idx];
-}
-
-/**
  * 将点绕指定中心旋转指定角度 (角度制)
  */
 export function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
@@ -47,6 +38,7 @@ export function generatePolarGridPoints(
   anchorA: Point,
   targetB: Point,
   level: number,
+  maxLevel: number = 12,
   targetRow = Math.floor(Math.random() * 5),
   targetCol = Math.floor(Math.random() * 5),
 ): Point[] {
@@ -55,11 +47,11 @@ export function generatePolarGridPoints(
   const R = Math.sqrt(dx * dx + dy * dy);
   const theta = Math.atan2(dy, dx);
 
-  // 角度步长：从 Level 1 的 8.0° 逐渐缩小至 高 Level 的 ~0.5°
-  const angleStepDeg = Math.max(0.5, 8.0 * 0.82 ** (level - 1));
+  // 根据当前难度占比进行对数插值，保证 1级~maxLevel 之间的难度均匀衰减
+  const t = maxLevel > 1 ? (level - 1) / (maxLevel - 1) : 0;
+  const angleStepDeg = 8.0 * Math.pow(0.5 / 8.0, t);
   const angleStepRad = (angleStepDeg * Math.PI) / 180;
-  // 径向比例步长：从 Level 1 的 15% 逐渐缩小至 高 Level 的 ~1.5%
-  const rRatioStep = Math.max(0.015, 0.15 * 0.82 ** (level - 1));
+  const rRatioStep = 0.15 * Math.pow(0.015 / 0.15, t);
 
   // 将 targetRow (0..4) 与 targetCol (0..4) 映射为相对偏移 (-2..2)
   const r0 = targetRow - 2;
@@ -87,14 +79,16 @@ export function generateBipolarGridPoints(
   anchorC: Point,
   targetB: Point,
   level: number,
+  maxLevel: number = 12,
   targetRow = Math.floor(Math.random() * 5),
   targetCol = Math.floor(Math.random() * 5),
 ): Point[] {
   const alpha = Math.atan2(targetB.y - anchorA.y, targetB.x - anchorA.x);
   const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
 
-  // 视线偏角步长：从 Level 1 的 6.0° 缩小至 高 Level 的 ~0.4°
-  const phiStepDeg = Math.max(0.4, 6.0 * 0.82 ** (level - 1));
+  // 根据当前难度占比进行对数插值，保证 1级~maxLevel 之间的难度均匀衰减
+  const t = maxLevel > 1 ? (level - 1) / (maxLevel - 1) : 0;
+  const phiStepDeg = 6.0 * Math.pow(0.4 / 6.0, t);
   const phiStepRad = (phiStepDeg * Math.PI) / 180;
 
   const a0 = targetRow - 2;
@@ -239,11 +233,11 @@ function selectAngleWithTargeting(options?: QuestionGenerateOptions): number {
 export function generateQuestion(
   mode: TrainingMode,
   difficultyLevel: number,
+  maxLevel: number = 12,
   options?: QuestionGenerateOptions,
 ): QuestionData {
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
-  const gridStep = levelToTempGridStep(difficultyLevel);
   const randomRow = Math.floor(Math.random() * gridDim);
   const randomCol = Math.floor(Math.random() * gridDim);
 
@@ -264,6 +258,7 @@ export function generateQuestion(
       anchorA,
       targetB,
       difficultyLevel,
+      maxLevel,
       randomRow,
       randomCol,
     );
@@ -275,7 +270,6 @@ export function generateQuestion(
       anchorC: null,
       targetB,
       gridStart: distractorPoints[0],
-      gridStep,
       difficultyLevel,
       gridDim,
       distractorPoints,
@@ -357,6 +351,7 @@ export function generateQuestion(
     anchorC,
     targetB,
     difficultyLevel,
+    maxLevel,
     randomRow,
     randomCol,
   );
@@ -369,7 +364,6 @@ export function generateQuestion(
     anchorC,
     targetB,
     gridStart: distractorPoints[0],
-    gridStep,
     difficultyLevel,
     gridDim,
     distractorPoints,
