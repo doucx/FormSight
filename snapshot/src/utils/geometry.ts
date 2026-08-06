@@ -41,9 +41,15 @@ export function calcDistance(p1: Point, p2: Point): number {
 
 /**
  * 极坐标扇形网格生成器 (单锚点模式)
- * 以锚点 A 为原点，向真理点 B 放射。距离越远，点阵间距按比例增大，并呈现顺弧弯曲。
+ * 以锚点 A 为原点，向真理点 B 放射。真理点 B 会随机陷落在 5x5 网格的任意节点上。
  */
-export function generatePolarGridPoints(anchorA: Point, targetB: Point, level: number): Point[] {
+export function generatePolarGridPoints(
+  anchorA: Point,
+  targetB: Point,
+  level: number,
+  targetRow = Math.floor(Math.random() * 5),
+  targetCol = Math.floor(Math.random() * 5),
+): Point[] {
   const dx = targetB.x - anchorA.x;
   const dy = targetB.y - anchorA.y;
   const R = Math.sqrt(dx * dx + dy * dy);
@@ -55,12 +61,15 @@ export function generatePolarGridPoints(anchorA: Point, targetB: Point, level: n
   // 径向比例步长：从 Level 1 的 15% 逐渐缩小至 高 Level 的 ~1.5%
   const rRatioStep = Math.max(0.015, 0.15 * 0.82 ** (level - 1));
 
+  // 将 targetRow (0..4) 与 targetCol (0..4) 映射为相对偏移 (-2..2)
+  const r0 = targetRow - 2;
+  const a0 = targetCol - 2;
+
   const points: Point[] = [];
-  // 5x5 网格，(rIdx=0, aIdx=0) 精确为真理点 B
   for (let rIdx = -2; rIdx <= 2; rIdx++) {
     for (let aIdx = -2; aIdx <= 2; aIdx++) {
-      const curR = R * (1 + rIdx * rRatioStep);
-      const curTheta = theta + aIdx * angleStepRad;
+      const curR = R * (1 + (rIdx - r0) * rRatioStep);
+      const curTheta = theta + (aIdx - a0) * angleStepRad;
       const x = Math.round((anchorA.x + curR * Math.cos(curTheta)) * 100) / 100;
       const y = Math.round((anchorA.y + curR * Math.sin(curTheta)) * 100) / 100;
       points.push({ x, y });
@@ -71,13 +80,15 @@ export function generatePolarGridPoints(anchorA: Point, targetB: Point, level: n
 
 /**
  * 双极透视网格生成器 (双锚点模式)
- * 从锚点 A 与 锚点 C 分别向真理点 B 发射 5 条视角射线，计算 5x5 交叉点。
+ * 从锚点 A 与 锚点 C 分别向真理点 B 发射 5 条视角射线。真理点 B 会随机陷落在 5x5 交叉点的任意位置。
  */
 export function generateBipolarGridPoints(
   anchorA: Point,
   anchorC: Point,
   targetB: Point,
   level: number,
+  targetRow = Math.floor(Math.random() * 5),
+  targetCol = Math.floor(Math.random() * 5),
 ): Point[] {
   const alpha = Math.atan2(targetB.y - anchorA.y, targetB.x - anchorA.x);
   const beta = Math.atan2(targetB.y - anchorC.y, targetB.x - anchorC.x);
@@ -86,12 +97,15 @@ export function generateBipolarGridPoints(
   const phiStepDeg = Math.max(0.4, 6.0 * 0.82 ** (level - 1));
   const phiStepRad = (phiStepDeg * Math.PI) / 180;
 
+  const a0 = targetRow - 2;
+  const c0 = targetCol - 2;
+
   const points: Point[] = [];
 
   for (let aIdx = -2; aIdx <= 2; aIdx++) {
     for (let cIdx = -2; cIdx <= 2; cIdx++) {
-      const alphaI = alpha + aIdx * phiStepRad;
-      const betaJ = beta + cIdx * phiStepRad;
+      const alphaI = alpha + (aIdx - a0) * phiStepRad;
+      const betaJ = beta + (cIdx - c0) * phiStepRad;
 
       const v1x = Math.cos(alphaI);
       const v1y = Math.sin(alphaI);
@@ -105,12 +119,12 @@ export function generateBipolarGridPoints(
       if (Math.abs(det) < 1e-5) {
         // 退化近似退回 TargetB 偏移
         points.push({
-          x: Math.round((targetB.x + aIdx * 15) * 100) / 100,
-          y: Math.round((targetB.y + cIdx * 15) * 100) / 100,
+          x: Math.round((targetB.x + (aIdx - a0) * 15) * 100) / 100,
+          y: Math.round((targetB.y + (cIdx - c0) * 15) * 100) / 100,
         });
       } else {
         const t1 = (dx * v2y - dy * v2x) / det;
-        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100;
+        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100,
         const y = Math.round((anchorA.y + t1 * v1y) * 100) / 100;
         points.push({ x, y });
       }
@@ -170,7 +184,7 @@ export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[])
     isHit,
     nearestGridPoint: nearestPoint,
     errorDistance,
-    isWithinRange,
+  isWithinRange,
   };
 }
 
@@ -211,6 +225,8 @@ export function generateQuestion(
   const id = `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const gridDim = DEFAULT_GRID_DIM;
   const gridStep = levelToTempGridStep(difficultyLevel);
+  const randomRow = Math.floor(Math.random() * gridDim);
+  const randomCol = Math.floor(Math.random() * gridDim);
 
   if (mode === 'single') {
     // === 1. 单锚点模式 ===
@@ -225,7 +241,13 @@ export function generateQuestion(
       y: Math.round((CY + dist * Math.sin(rad)) * 100) / 100,
     };
 
-    const distractorPoints = generatePolarGridPoints(anchorA, targetB, difficultyLevel);
+    const distractorPoints = generatePolarGridPoints(
+      anchorA,
+      targetB,
+      difficultyLevel,
+      randomRow,
+      randomCol,
+    );
 
     return {
       id,
@@ -311,7 +333,14 @@ export function generateQuestion(
     y: Math.round((rotatedB.y + CY) * 100) / 100,
   };
 
-  const distractorPoints = generateBipolarGridPoints(anchorA, anchorC, targetB, difficultyLevel);
+  const distractorPoints = generateBipolarGridPoints(
+    anchorA,
+    anchorC,
+    targetB,
+    difficultyLevel,
+    randomRow,
+    randomCol,
+  );
   const angleDegree = Math.round(((Math.atan2(py, px) * 180) / Math.PI + 360) % 360);
 
   return {
