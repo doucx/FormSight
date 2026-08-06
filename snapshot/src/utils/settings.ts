@@ -1,6 +1,7 @@
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
 export type TargetingMode = 'off' | 'auto' | 'manual';
+export type ThemeMode = 'light' | 'dark';
 
 export interface UserSettings {
   autoNext: boolean; // 点击后是否自动翻页
@@ -13,6 +14,7 @@ export interface UserSettings {
   manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
   gridSize: number; // 网格维数 (2, 3, 4, 5)
+  theme: ThemeMode; // 主题模式 ('light': 日间, 'dark': 夜间)
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -28,6 +30,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   manualTargetSectors: [],
   idleTimeout: 60,
   gridSize: 3,
+  theme: 'light',
 };
 
 export function loadSettings(): UserSettings {

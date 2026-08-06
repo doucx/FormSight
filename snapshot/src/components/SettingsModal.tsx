@@ -1,7 +1,9 @@
 import {
   Crosshair,
   Flame,
+  Moon,
   Sliders,
+  Sun,
   Target,
   ToggleLeft,
   ToggleRight,
@@ -10,7 +12,7 @@ import {
 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { clearAllData } from '../utils/db';
-import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
+import { type TargetingMode, type ThemeMode, type UserSettings, saveSettings } from '../utils/settings';
 
 const SECTOR_NAMES = [
   '正东(0°)',
@@ -81,6 +83,10 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
     setCurrent((prev) => ({ ...prev, gridSize: size }));
   };
 
+  const handleThemeChange = (theme: ThemeMode) => {
+    setCurrent((prev) => ({ ...prev, theme }));
+  };
+
   const handleClearData = async () => {
     if (confirm('⚠️ 确定要清空所有训练日志、历史会话和能力看板数据吗？此操作无法撤销！')) {
       await clearAllData();
@@ -114,6 +120,37 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
         </div>
 
         <div className="space-y-5">
+          {/* 主题选择 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">界面主题模式</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleThemeChange('light')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  current.theme === 'light'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Sun className="w-3.5 h-3.5 text-amber-500" />
+                日间明亮模式
+              </button>
+              <button
+                type="button"
+                onClick={() => handleThemeChange('dark')}
+                className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
+                  current.theme === 'dark'
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Moon className="w-3.5 h-3.5 text-indigo-600" />
+                夜间暗色模式
+              </button>
+            </div>
+          </div>
+
           {/* 自动翻页 */}
           <div className="flex items-center justify-between">
             <div>

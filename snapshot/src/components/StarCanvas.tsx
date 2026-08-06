@@ -13,6 +13,7 @@ interface StarCanvasProps {
   userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
   onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
   disabled?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 export function StarCanvas({
@@ -21,6 +22,7 @@ export function StarCanvas({
   userAnswer,
   onAnswer,
   disabled = false,
+  theme = 'light',
 }: StarCanvasProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const rightCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,6 +30,14 @@ export function StarCanvas({
 
   // === 绘图主逻辑 ===
   useEffect(() => {
+    const isDark = theme === 'dark';
+    const bgFill = isDark ? '#0F172A' : '#FFFFFF';
+    const anchorColor = isDark ? '#FFFFFF' : '#000000';
+    const gridColor = isDark ? '#64748B' : '#888888';
+    const hoverColor = isDark ? '#818CF8' : '#4F46E5';
+    const highlightCross = isDark ? '#22C55E' : '#00AA00';
+    const errorColor = isDark ? '#EF4444' : '#FF0000';
+
     const dotRadius = getDynamicDotRadius(question.distractorPoints);
     const hoverRadius = Math.max(2.5, dotRadius * 1.6);
 
@@ -37,19 +47,19 @@ export function StarCanvas({
       const ctx = leftCanvas.getContext('2d');
       if (ctx) {
         // 清屏与背景
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = bgFill;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         // 绘制锚点 A
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, anchorColor, dotRadius);
 
         // 绘制锚点 C (若存在)
         if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, anchorColor, dotRadius);
         }
 
         // 绘制真理点 B
-        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', dotRadius);
+        drawDot(ctx, question.targetB.x, question.targetB.y, anchorColor, dotRadius);
       }
     }
 
@@ -59,24 +69,24 @@ export function StarCanvas({
       const ctx = rightCanvas.getContext('2d');
       if (ctx) {
         // 清屏与背景
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = bgFill;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
         // 图层 1: 极坐标/双极透视干扰点阵 (底层)
         const gridPoints = question.distractorPoints;
         for (const p of gridPoints) {
-          drawDot(ctx, p.x, p.y, '#888888', dotRadius);
+          drawDot(ctx, p.x, p.y, gridColor, dotRadius);
         }
 
         // 图层 1.5: 鼠标悬停高亮网格点
         if (!disabled && !showAnswer && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+          drawDot(ctx, hoverPoint.x, hoverPoint.y, hoverColor, hoverRadius);
         }
 
         // 图层 2: 锚点 (顶层)
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, anchorColor, dotRadius);
         if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, anchorColor, dotRadius);
         }
 
         // 图层 3: 做答后的视觉反馈 (反馈层)
@@ -84,11 +94,11 @@ export function StarCanvas({
           const { x: bx, y: by } = question.targetB;
 
           // 绘制真理点 B 实体点
-          drawDot(ctx, bx, by, '#000000', dotRadius);
+          drawDot(ctx, bx, by, anchorColor, dotRadius);
 
           // 绘制深绿色十字高亮线
           const chSize = 12;
-          ctx.strokeStyle = '#00AA00';
+          ctx.strokeStyle = highlightCross;
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(bx - chSize, by);
@@ -104,7 +114,7 @@ export function StarCanvas({
 
             if (!hitResult.isHit) {
               // 绘制红色虚线误差指示
-              ctx.strokeStyle = '#FF0000';
+              ctx.strokeStyle = errorColor;
               ctx.lineWidth = 1.5;
               ctx.setLineDash([4, 4]);
               ctx.beginPath();
@@ -114,13 +124,13 @@ export function StarCanvas({
               ctx.setLineDash([]); // 恢复实线
 
               // 用户点击位置标记 (红点 - 锚定在网格点中心)
-              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', dotRadius);
+              drawDot(ctx, chosenPoint.x, chosenPoint.y, errorColor, dotRadius);
             }
           }
         }
       }
     }
-  }, [question, showAnswer, userAnswer, hoverPoint, disabled]);
+  }, [question, showAnswer, userAnswer, hoverPoint, disabled, theme]);
 
   // 辅助函数：绘制圆点
   function drawDot(
@@ -198,17 +208,17 @@ export function StarCanvas({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
       {/* 左侧参考 Canvas */}
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm">
         <canvas
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner"
+          className="w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 dark:border-slate-700 shadow-inner"
         />
       </div>
 
       {/* 右侧交互 Canvas */}
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
+      <div className="bg-white dark:bg-slate-800 p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-700 shadow-sm">
         <canvas
           ref={rightCanvasRef}
           width={CANVAS_SIZE}
@@ -224,7 +234,7 @@ export function StarCanvas({
           aria-label="右侧做答画布"
           onMouseMove={handleRightCanvasMouseMove}
           onMouseLeave={handleRightCanvasMouseLeave}
-          className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
+          className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 dark:border-slate-700 shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
               : hoverPoint

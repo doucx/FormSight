@@ -3,7 +3,7 @@ import { AnalyticsModal } from './components/AnalyticsModal';
 import { SettingsModal } from './components/SettingsModal';
 import type { TrainingMode } from './types';
 import { type UserProfileData, getAllUserProfiles, getTotalTrainingTimeMs } from './utils/db';
-import { type UserSettings, loadSettings } from './utils/settings';
+import { type UserSettings, loadSettings, saveSettings } from './utils/settings';
 import { Dashboard } from './views/Dashboard';
 import { TrainingView } from './views/TrainingView';
 
@@ -35,6 +35,22 @@ export function App() {
     refreshProfiles();
   }, [refreshProfiles]);
 
+  // 响应主题切换，更新根节点的 class
+  useEffect(() => {
+    if (settings.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [settings.theme]);
+
+  const handleToggleTheme = () => {
+    const newTheme = settings.theme === 'dark' ? 'light' : 'dark';
+    const updated = { ...settings, theme: newTheme };
+    setSettings(updated);
+    saveSettings(updated);
+  };
+
   // 打开弱点分析
   const handleOpenAnalytics = (mode?: TrainingMode) => {
     setAnalyticsMode(mode || 'all');
@@ -62,6 +78,8 @@ export function App() {
         <Dashboard
           profiles={profiles}
           totalTimeMs={totalTimeMs}
+          theme={settings.theme}
+          onToggleTheme={handleToggleTheme}
           onStart={handleStartTraining}
           onRefreshProfiles={refreshProfiles}
           onOpenSettings={() => setIsSettingsOpen(true)}

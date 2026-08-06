@@ -5,9 +5,11 @@ import {
   type Compass,
   Crosshair,
   Download,
+  Moon,
   Play,
   RotateCw,
   Sliders,
+  Sun,
   Target,
   TrendingUp,
   Upload,
@@ -15,10 +17,13 @@ import {
 import { useRef } from 'preact/hooks';
 import type { TrainingMode } from '../types';
 import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
+import type { ThemeMode } from '../utils/settings';
 
 interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
   totalTimeMs: number;
+  theme?: ThemeMode;
+  onToggleTheme?: () => void;
   onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
   onRefreshProfiles: () => void;
   onOpenSettings: () => void;
@@ -62,6 +67,8 @@ const MODES_CONFIG: Array<{
 export function Dashboard({
   profiles,
   totalTimeMs,
+  theme = 'light',
+  onToggleTheme,
   onStart,
   onRefreshProfiles,
   onOpenSettings,
@@ -110,13 +117,27 @@ export function Dashboard({
         </div>
 
         <div className="flex items-center gap-2">
+          {onToggleTheme && (
+            <button
+              type="button"
+              onClick={onToggleTheme}
+              className="p-2.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+              title={theme === 'dark' ? '切换日间模式' : '切换夜间模式'}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-600" />
+              )}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onOpenAnalytics()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            className="p-2.5 text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
             title="弱点分析"
           >
-            <BarChart2 className="w-4 h-4 text-indigo-600" />
+            <BarChart2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
             弱点分析
           </button>
           <button
