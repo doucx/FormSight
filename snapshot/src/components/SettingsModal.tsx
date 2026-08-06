@@ -67,17 +67,34 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
 
   return (
     <div
+      role="presentation"
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (
+          e.target === e.currentTarget &&
+          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
+        ) {
+          onClose();
+        }
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-modal-title"
         className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto"
-        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-800">训练偏好设置</h2>
+            <h2 id="settings-modal-title" className="text-lg font-bold text-slate-800">
+              训练偏好设置
+            </h2>
           </div>
           <button
             type="button"

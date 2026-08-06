@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M SettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786022263.524496, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(settings): 修复 Biome a11y 规则警告并优化背景遮罩点击退出", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786022312.6918538, "duration_ms": 0}}
