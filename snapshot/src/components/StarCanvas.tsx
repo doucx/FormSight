@@ -222,7 +222,9 @@ export function StarCanvas({
           className={`w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+              : hoverPoint
+                ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+                : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
           }`}
         />
       </div>
