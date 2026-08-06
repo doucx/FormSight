@@ -124,7 +124,7 @@ export function generateBipolarGridPoints(
         });
       } else {
         const t1 = (dx * v2y - dy * v2x) / det;
-        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100,
+        const x = Math.round((anchorA.x + t1 * v1x) * 100) / 100;
         const y = Math.round((anchorA.y + t1 * v1y) * 100) / 100;
         points.push({ x, y });
       }
