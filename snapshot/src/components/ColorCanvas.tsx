@@ -7,6 +7,7 @@ interface ColorCanvasProps {
   userAnswer: ColorHitResult | null;
   onAnswer: (userVal: number) => void;
   disabled?: boolean;
+  hitMargin?: number;
 }
 
 export function ColorCanvas({
@@ -15,6 +16,7 @@ export function ColorCanvas({
   userAnswer,
   onAnswer,
   disabled = false,
+  hitMargin = 12,
 }: ColorCanvasProps) {
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
@@ -94,7 +96,21 @@ export function ColorCanvas({
           tabIndex={isTargetActiveMode && !showAnswer && !disabled ? 0 : undefined}
           onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
           onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
-          className={`relative flex-1 py-1.5 -my-1.5 px-3 -mx-3 flex items-center ${
+          style={
+            hitMargin > 0
+              ? {
+                  paddingLeft: `${hitMargin}px`,
+                  paddingRight: `${hitMargin}px`,
+                  marginLeft: `-${hitMargin}px`,
+                  marginRight: `-${hitMargin}px`,
+                  paddingTop: '6px',
+                  paddingBottom: '6px',
+                  marginTop: '-6px',
+                  marginBottom: '-6px',
+                }
+              : undefined
+          }
+          className={`relative flex-1 flex items-center ${
             isTargetActiveMode && !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
           }`}
         >

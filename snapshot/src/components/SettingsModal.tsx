@@ -295,6 +295,32 @@ export function SettingsModal({
             </div>
           </div>
 
+          {/* 色感滑块极值吸附外延感应区 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">色感滑块极值吸附外延感应区</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { label: '关闭 (0px)', value: 0 },
+                { label: '8px', value: 8 },
+                { label: '12px', value: 12 },
+                { label: '20px', value: 20 },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => updateSettings({ sliderHitMargin: opt.value })}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.sliderHitMargin ?? 12) === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* 仅寻星训练模式下显示干扰点网格大小与弱点靶向设置 */}
           {appContext === 'star-hopping' && (
             <>

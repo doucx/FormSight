@@ -1,138 +1,146 @@
-这个需求非常实用。在滑块交互中，极值点（如 0°/0% 或 360°/100%）在精细操作时极易因为鼠标移出轨道边缘而丢失悬停状态。
-
-我们可以通过在滑块轨道外层添加扩展感应区域（Hotzone Wrapper）来实现该效果：将鼠标事件（`mousemove` / `mouseleave` / `click`）监听提升至外层扩展容器，而将测量基准（`activeTrackRef`）保留在实际的色块轨道上。这样当鼠标移动到滑块左右两侧略微往外（如 ±12px 范围）时，事件仍会触发，同时由于逻辑中已包含 `Math.max(0, Math.min(..., rect.width))` 的边界约束，光标即可精准吸附在 0°/0% 或 360°/100% 的极值末端。
+没问题！我们将将这个滑块极值吸附感应区的大小（`sliderHitMargin`）暴露为可持久化的配置项，并在偏好设置弹窗中提供【关闭 (0px)】、【8px】、【12px (默认)】与【20px (超大感应区)】供用户灵活选择。
 
 以下是具体的实施计划：
 
-## [WIP] feat(color-sense): 扩展色感滑块感应区以支持极值吸附
+## [WIP] feat(settings): 将色感滑块极值吸附感应区暴露为设置项
 
 ### 用户需求
-在色感训练中，当鼠标移动到待测滑块左右两侧略微往外的位置时，保持长方形悬停光标吸附在滑块极值末端（如 0°、100%），而不是直接隐藏光标，以便于选择极限数值。
+将色感训练中滑块轨道的极值吸附感应外延像素大小（`sliderHitMargin`）提取为用户偏好设置项，允许用户在设置菜单中自定义（0px / 8px / 12px / 20px）。
 
 ### 评论
-这是一个显著提升交互体验（UX）与极端值选择精准度的改进。
+将硬编码的 UI 交互容差提升为配置项，提高了系统的灵活性，能适应不同硬件设备（如高 DPI 屏幕、触控屏或高敏鼠标）的使用习惯。
 
 ### 目标
-1. 在 `ColorCanvas.tsx` 中增加轨道的扩展感应容器（Hotzone Wrapper）。
-2. 将鼠标交互与点击事件托管至外层容器，保持 `ref` 指向内部物理轨道。
-3. 确保鼠标在滑块两侧微外区域移动或点击时，光标能自然吸附在极值位置。
+1. 在 `UserSettings` 类型定义与默认配置中新增 `sliderHitMargin` 字段（默认 `12` px）。
+2. 更新 `ColorCanvas` 组件，支持从外部传入 `hitMargin` 动态控制内外扩展样式。
+3. 在 `ColorTrainingView` 中将设置项传递给 `ColorCanvas`。
+4. 在 `SettingsModal` 设置面板中添加“色感滑块极值吸附外延感应区”配置按钮。
 
 ### 基本原理
-现有逻辑中，`Math.max(0, Math.min(e.clientX - rect.left, rect.width))` 已经具备极值 Clamp 截断计算能力。通过使用外层容器扩展 12px 的热区 Padding（`px-3 -mx-3`），可以避免移出轨道瞬间触发 `onMouseLeave`，从而让光标稳定显示并吸附在极值处。
+通过内联样式依据 `hitMargin` 动态计算感应容器的 `padding` 和负 `margin`，在保持 DOM 结构精简的同时实现精准的感应区延伸；用户在设置弹窗更改后会实时存储至 `localStorage` 并在训练界面生效。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-canvas #task/action/extend-hit-area #task/state/begin
+#intent/build #flow/ready #priority/medium #comp/ui #concept/config #scope/ux #ai/instruct #task/domain/ui #task/object/color-canvas #task/action/expose-setting #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 ColorCanvas.tsx 扩展滑块交互感应区
+#### Acts 1: 更新 UserSettings 类型与默认配置
+
+~~~~~act
+patch_file
+src/utils/settings.ts
+~~~~~
+~~~~~typescript.old
+export interface UserSettings {
+  autoNext: boolean; // 点击后是否自动翻页
+  autoNextDelay: number; // 自动翻页延迟 (ms)
+  stepGranularity: StepGranularity; // 步长粒度 ('standard': 标准阶梯 (12级), 'fine': 精细阶梯 (35级))
+  adaptiveMode: AdaptiveMode; // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
+  targetAccuracy: number; // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
+  blockSize: number; // 每轮评估题数 (10, 15, 20)
+  targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
+  manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
+  idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
+  gridSize: number; // 网格维数 (2, 3, 4, 5)
+}
+
+const SETTINGS_KEY = 'star_hopping_user_settings';
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+  targetingMode: 'off',
+  manualTargetSectors: [],
+  idleTimeout: 60,
+  gridSize: 3,
+};
+~~~~~
+~~~~~typescript.new
+export interface UserSettings {
+  autoNext: boolean; // 点击后是否自动翻页
+  autoNextDelay: number; // 自动翻页延迟 (ms)
+  stepGranularity: StepGranularity; // 步长粒度 ('standard': 标准阶梯 (12级), 'fine': 精细阶梯 (35级))
+  adaptiveMode: AdaptiveMode; // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
+  targetAccuracy: number; // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
+  blockSize: number; // 每轮评估题数 (10, 15, 20)
+  targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
+  manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
+  idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
+  gridSize: number; // 网格维数 (2, 3, 4, 5)
+  sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
+}
+
+const SETTINGS_KEY = 'star_hopping_user_settings';
+
+export const DEFAULT_SETTINGS: UserSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+  targetingMode: 'off',
+  manualTargetSectors: [],
+  idleTimeout: 60,
+  gridSize: 3,
+  sliderHitMargin: 12,
+};
+~~~~~
+
+#### Acts 2: 更新 ColorCanvas 支持配置化的 hitMargin
 
 ~~~~~act
 patch_file
 src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-  // 渲染单个 Slider 轨道行
-  const renderSliderRow = (
-    label: 'H' | 'S' | 'V',
-    isTargetActiveMode: boolean,
-    gradient: string,
-    val: number,
-    max: number,
-    unit: string,
-  ) => {
-    return (
-      <div key={label} className="flex items-center gap-3 w-full">
-        {/* Label */}
-        <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
+interface ColorCanvasProps {
+  question: ColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: ColorHitResult | null;
+  onAnswer: (userVal: number) => void;
+  disabled?: boolean;
+}
 
-        {/* Track */}
-        <div
-          ref={isTargetActiveMode ? activeTrackRef : null}
-          onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
-          onKeyDown={
-            isTargetActiveMode
-              ? (e) => {
-                  if (
-                    (e.key === 'Enter' || e.key === ' ') &&
-                    hoverVal !== null &&
-                    !disabled &&
-                    !showAnswer
-                  ) {
-                    e.preventDefault();
-                    onAnswer(hoverVal);
-                  }
-                }
-              : undefined
-          }
-          role={isTargetActiveMode ? 'button' : undefined}
-          tabIndex={isTargetActiveMode && !showAnswer && !disabled ? 0 : undefined}
-          onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
-          onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
-          className={`relative flex-1 h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
-            isTargetActiveMode && !showAnswer && !disabled
-              ? 'cursor-none hover:ring-2 ring-indigo-400/60'
-              : 'cursor-default'
-          }`}
-          style={{ background: gradient }}
-        >
-          {/* 已知维度标记 (细长黑色竖条) */}
-          {!isTargetActiveMode && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
-              style={{ left: getPercent(val, max) }}
-            />
-          )}
-
-          {/* 悬停准心 (细长空心竖条) */}
-          {isTargetActiveMode && !showAnswer && hoverVal !== null && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
-              style={{ left: getPercent(hoverVal, max) }}
-            />
-          )}
-
-          {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
-          {isTargetActiveMode && showAnswer && (
-            <>
-              {/* 真理目标位 (绿色竖条) */}
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
-                style={{ left: getPercent(val, max) }}
-              />
-
-              {/* 用户点击位 (红色或绿色竖条) */}
-              {userAnswer && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } rounded-sm shadow-md z-20`}
-                  style={{ left: getPercent(userAnswer.userValue, max) }}
-                />
-              )}
-            </>
-          )}
-        </div>
-
-        {/* 数值 Label */}
+export function ColorCanvas({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: ColorCanvasProps) {
 ~~~~~
 ~~~~~typescript.new
-  // 渲染单个 Slider 轨道行
-  const renderSliderRow = (
-    label: 'H' | 'S' | 'V',
-    isTargetActiveMode: boolean,
-    gradient: string,
-    val: number,
-    max: number,
-    unit: string,
-  ) => {
-    return (
-      <div key={label} className="flex items-center gap-3 w-full">
-        {/* Label */}
-        <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
+interface ColorCanvasProps {
+  question: ColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: ColorHitResult | null;
+  onAnswer: (userVal: number) => void;
+  disabled?: boolean;
+  hitMargin?: number;
+}
 
+export function ColorCanvas({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  hitMargin = 12,
+}: ColorCanvasProps) {
+~~~~~
+
+~~~~~act
+patch_file
+src/components/ColorCanvas.tsx
+~~~~~
+~~~~~typescript.old
         {/* Track Extended Hit Area */}
         <div
           onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
@@ -159,58 +167,165 @@ src/components/ColorCanvas.tsx
             isTargetActiveMode && !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
           }`}
         >
-          {/* Inner Track */}
-          <div
-            ref={isTargetActiveMode ? activeTrackRef : null}
-            className={`relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
-              isTargetActiveMode && !showAnswer && !disabled
-                ? 'hover:ring-2 ring-indigo-400/60'
-                : ''
-            }`}
-            style={{ background: gradient }}
-          >
-            {/* 已知维度标记 (细长黑色竖条) */}
-            {!isTargetActiveMode && (
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
-                style={{ left: getPercent(val, max) }}
-              />
-            )}
+~~~~~
+~~~~~typescript.new
+        {/* Track Extended Hit Area */}
+        <div
+          onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
+          onKeyDown={
+            isTargetActiveMode
+              ? (e) => {
+                  if (
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    hoverVal !== null &&
+                    !disabled &&
+                    !showAnswer
+                  ) {
+                    e.preventDefault();
+                    onAnswer(hoverVal);
+                  }
+                }
+              : undefined
+          }
+          role={isTargetActiveMode ? 'button' : undefined}
+          tabIndex={isTargetActiveMode && !showAnswer && !disabled ? 0 : undefined}
+          onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
+          onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
+          style={
+            hitMargin > 0
+              ? {
+                  paddingLeft: `${hitMargin}px`,
+                  paddingRight: `${hitMargin}px`,
+                  marginLeft: `-${hitMargin}px`,
+                  marginRight: `-${hitMargin}px`,
+                  paddingTop: '6px',
+                  paddingBottom: '6px',
+                  marginTop: '-6px',
+                  marginBottom: '-6px',
+                }
+              : undefined
+          }
+          className={`relative flex-1 flex items-center ${
+            isTargetActiveMode && !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
+          }`}
+        >
+~~~~~
 
-            {/* 悬停准心 (细长空心竖条) */}
-            {isTargetActiveMode && !showAnswer && hoverVal !== null && (
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
-                style={{ left: getPercent(hoverVal, max) }}
-              />
-            )}
+#### Acts 3: 在 ColorTrainingView 中传递 hitMargin 设置
 
-            {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
-            {isTargetActiveMode && showAnswer && (
-              <>
-                {/* 真理目标位 (绿色竖条) */}
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
-                  style={{ left: getPercent(val, max) }}
-                />
+~~~~~act
+patch_file
+src/views/ColorTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 色彩交互 Canvas */}
+      <ColorCanvas
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={handleAnswer}
+        disabled={isFinished}
+      />
+~~~~~
+~~~~~typescript.new
+      {/* 色彩交互 Canvas */}
+      <ColorCanvas
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={handleAnswer}
+        disabled={isFinished}
+        hitMargin={settings.sliderHitMargin ?? 12}
+      />
+~~~~~
 
-                {/* 用户点击位 (红色或绿色竖条) */}
-                {userAnswer && (
-                  <div
-                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
-                      userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                    } rounded-sm shadow-md z-20`}
-                    style={{ left: getPercent(userAnswer.userValue, max) }}
-                  />
-                )}
-              </>
-            )}
+#### Acts 4: 在 SettingsModal 中增加极值吸附感应区配置项
+
+~~~~~act
+patch_file
+src/components/SettingsModal.tsx
+~~~~~
+~~~~~typescript.old
+          {/* 无操作闲置暂停计时 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">无操作闲置暂停计时</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { label: '关闭', value: 0 },
+                { label: '30秒', value: 30 },
+                { label: '1分钟', value: 60 },
+                { label: '2分钟', value: 120 },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => updateSettings({ idleTimeout: opt.value })}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.idleTimeout ?? 60) === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+~~~~~
+~~~~~typescript.new
+          {/* 无操作闲置暂停计时 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">无操作闲置暂停计时</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { label: '关闭', value: 0 },
+                { label: '30秒', value: 30 },
+                { label: '1分钟', value: 60 },
+                { label: '2分钟', value: 120 },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => updateSettings({ idleTimeout: opt.value })}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.idleTimeout ?? 60) === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* 数值 Label */}
+          {/* 色感滑块极值吸附外延感应区 */}
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-slate-700">色感滑块极值吸附外延感应区</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {[
+                { label: '关闭 (0px)', value: 0 },
+                { label: '8px', value: 8 },
+                { label: '12px', value: 12 },
+                { label: '20px', value: 20 },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => updateSettings({ sliderHitMargin: opt.value })}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    (current.sliderHitMargin ?? 12) === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
 ~~~~~
 
 ### 下一步建议
-1. 在浏览器中体验色感训练（如 Hue 模式），测试将鼠标移动到滑块轨道左侧/右侧外边缘时，光标是否平滑吸附在 `0°` 或 `360°` 处。
-2. 确认没有问题后可提交变更。
+1. 打开偏好设置弹窗，测试切换“关闭 (0px)”、“8px”、“12px”及“20px”。
+2. 进入色感练习视图，验证滑块吸附感应范围是否根据设置即时变化。

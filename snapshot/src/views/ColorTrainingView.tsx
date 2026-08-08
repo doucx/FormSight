@@ -265,6 +265,7 @@ export function ColorTrainingView({
         userAnswer={userAnswer}
         onAnswer={handleAnswer}
         disabled={isFinished}
+        hitMargin={settings.sliderHitMargin ?? 12}
       />
 
       {/* 底部控制栏 */}

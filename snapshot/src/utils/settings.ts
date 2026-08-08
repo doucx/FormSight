@@ -13,6 +13,7 @@ export interface UserSettings {
   manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
   gridSize: number; // 网格维数 (2, 3, 4, 5)
+  sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   manualTargetSectors: [],
   idleTimeout: 60,
   gridSize: 3,
+  sliderHitMargin: 12,
 };
 
 export function loadSettings(): UserSettings {

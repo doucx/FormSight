@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(color-sense): 扩展色感滑块感应区以支持极值吸附", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786184403.215247, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(settings): 将色感滑块极值吸附感应区暴露为设置项", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786184494.820583, "duration_ms": 0}}
