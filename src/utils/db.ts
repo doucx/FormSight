@@ -284,7 +284,7 @@ export function formatTotalTime(ms: number): string {
   return `${days}天${hours}小时${minutes}分钟`;
 }
 
-export async function getTotalTrainingTimeMs(): Promise<number> {
+export async function getStarHoppingTrainingTimeMs(): Promise<number> {
   const db = await getDB();
   const sessions = await db.getAll('sessions');
   let totalMs = 0;
@@ -294,6 +294,24 @@ export async function getTotalTrainingTimeMs(): Promise<number> {
     }
   }
   return totalMs;
+}
+
+export async function getColorTrainingTimeMs(): Promise<number> {
+  const db = await getDB();
+  const sessions = await db.getAll('color_sessions');
+  let totalMs = 0;
+  for (const s of sessions) {
+    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
+      totalMs += s.endTimestamp - s.startTimestamp;
+    }
+  }
+  return totalMs;
+}
+
+export async function getTotalTrainingTimeMs(): Promise<number> {
+  const starMs = await getStarHoppingTrainingTimeMs();
+  const colorMs = await getColorTrainingTimeMs();
+  return starMs + colorMs;
 }
 
 // === API 9: 清空所有本地数据 ===

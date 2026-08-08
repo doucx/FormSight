@@ -3,11 +3,19 @@ import { formatTotalTime } from '../utils/db';
 
 interface HomeProps {
   totalTimeMs: number;
+  starHoppingTimeMs: number;
+  colorTimeMs: number;
   onNavigate: (app: 'star-hopping' | 'color-sense') => void;
   onOpenGlobalSettings: () => void;
 }
 
-export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProps) {
+export function Home({
+  totalTimeMs,
+  starHoppingTimeMs,
+  colorTimeMs,
+  onNavigate,
+  onOpenGlobalSettings,
+}: HomeProps) {
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
       {/* 品牌 Header */}
@@ -57,9 +65,6 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
               <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                 <Compass className="w-8 h-8" />
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                可练习
-              </span>
             </div>
 
             <div>
@@ -82,9 +87,15 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             </div>
           </div>
 
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
-            <span>进入寻星练习看板</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              <span>累计练习: {formatTotalTime(starHoppingTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入寻星练习看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
           </div>
         </button>
 
@@ -99,9 +110,6 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
               <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
                 <Palette className="w-8 h-8" />
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                色感核心 (HSV)
-              </span>
             </div>
 
             <div>
@@ -127,9 +135,15 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             </div>
           </div>
 
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
-            <span>进入色感练习看板</span>
-            <ArrowRight className="w-4 h-4" />
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>累计练习: {formatTotalTime(colorTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入色感练习看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
           </div>
         </button>
       </div>

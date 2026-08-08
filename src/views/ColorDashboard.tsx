@@ -4,7 +4,6 @@ import { type ColorProfileData, formatTotalTime } from '../utils/db';
 
 interface ColorDashboardProps {
   profiles: Record<ColorMode, ColorProfileData | null>;
-  totalTimeMs: number;
   onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
 }
@@ -41,7 +40,6 @@ const COLOR_MODES_CONFIG: Array<{
 
 export function ColorDashboard({
   profiles,
-  totalTimeMs,
   onStart,
   onBackToHome,
 }: ColorDashboardProps) {
@@ -61,10 +59,6 @@ export function ColorDashboard({
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               色感训练 <span className="text-indigo-600 font-light text-xl">Color Recognition</span>
             </h1>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
-              <span>{formatTotalTime(totalTimeMs)}</span>
-            </div>
           </div>
         </div>
       </div>
