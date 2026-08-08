@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 将 Home.tsx 卡片元素重构为语义化 button 标签", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786181621.999782, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(ui): resolve Biome a11y linter errors and use semantic button elements", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786181682.9620695, "duration_ms": 0}}
