@@ -176,9 +176,7 @@ export function App() {
         />
       )}
 
-      {isGlobalStatsOpen && (
-        <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />
-      )}
+      {isGlobalStatsOpen && <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />}
 
       {isSettingsOpen && (
         <SettingsModal

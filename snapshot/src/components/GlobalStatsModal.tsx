@@ -1,4 +1,13 @@
-import { Activity, BarChart2, Calendar, ChevronDown, Filter, Target, TrendingUp, X } from 'lucide-preact';
+import {
+  Activity,
+  BarChart2,
+  Calendar,
+  ChevronDown,
+  Filter,
+  Target,
+  TrendingUp,
+  X,
+} from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
 
@@ -298,8 +307,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
-            <Activity className="w-10 h-10 text-slate-300" />
-            【{FILTER_LABELS[selectedFilter]}】下暂无训练数据，先去练习几道题吧！
+            <Activity className="w-10 h-10 text-slate-300" />【{FILTER_LABELS[selectedFilter]}
+            】下暂无训练数据，先去练习几道题吧！
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -307,7 +316,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />今日刷题
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                  今日刷题
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.today.total}{' '}
@@ -320,7 +330,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
               <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
-                  <Target className="w-3.5 h-3.5 text-emerald-500" />最近 7 天
+                  <Target className="w-3.5 h-3.5 text-emerald-500" />
+                  最近 7 天
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.week.total}{' '}
@@ -333,7 +344,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
               <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
-                  <Activity className="w-3.5 h-3.5 text-amber-500" />本年累计
+                  <Activity className="w-3.5 h-3.5 text-amber-500" />
+                  本年累计
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.year.total}{' '}
@@ -346,7 +358,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
-                  <TrendingUp className="w-3.5 h-3.5 text-slate-500" />生涯总计
+                  <TrendingUp className="w-3.5 h-3.5 text-slate-500" />
+                  生涯总计
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.allTime.total}{' '}
