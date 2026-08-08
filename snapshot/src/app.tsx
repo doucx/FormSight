@@ -48,16 +48,21 @@ export function App() {
     S: null,
     V: null,
   });
+  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
+  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
 
-  // 刷新用户能力看板与总时间
+  // 刷新用户能力看板与独立时长
   const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const cData = await getAllColorProfiles();
-    const timeMs = await getTotalTrainingTimeMs();
+    const shMs = await getStarHoppingTrainingTimeMs();
+    const cMs = await getColorTrainingTimeMs();
     setProfiles(data);
     setColorProfiles(cData);
-    setTotalTimeMs(timeMs);
+    setStarHoppingTimeMs(shMs);
+    setColorTimeMs(cMs);
+    setTotalTimeMs(shMs + cMs);
   }, []);
 
   useEffect(() => {
@@ -117,7 +122,7 @@ export function App() {
         (currentView === 'dashboard' ? (
           <Dashboard
             profiles={profiles}
-            totalTimeMs={totalTimeMs}
+            totalTimeMs={starHoppingTimeMs}
             onStart={handleStartTraining}
             onRefreshProfiles={refreshProfiles}
             onOpenSettings={() => setIsSettingsOpen(true)}
@@ -138,7 +143,7 @@ export function App() {
         (currentView === 'dashboard' ? (
           <ColorDashboard
             profiles={colorProfiles}
-            totalTimeMs={totalTimeMs}
+            totalTimeMs={colorTimeMs}
             onStart={handleStartColorTraining}
             onBackToHome={() => setCurrentApp('home')}
           />
