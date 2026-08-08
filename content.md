@@ -1,99 +1,47 @@
-好的，我将修改 `src/views/Home.tsx`，移除寻星练习卡片右上角的“可练习”标签以及色感训练卡片右上角的“色感核心 (HSV)”标签。
-
-## [WIP] refactor(ui): 移除主页卡片右上角的标签元素
+## [COMMIT] refactor(ui): 调整练习时长显示位置至主页与模块卡片，移除看板顶栏时间并精简主页卡片标签
 
 ### 用户需求
-删除主页“寻星练习”卡片右上角的“可练习”徽章以及“色感训练”卡片右上角的“色感核心 (HSV)”徽章。
+将寻星练习和色感训练的独立与总练习时长整合到主页展示，隐藏各看板内部的重复计时，并清空主页卡片顶部的冗余徽章。
 
 ### 评论
-移除这些冗余徽章可以降低卡片顶部的视觉干扰，使整体界面更加简洁干净。
+本次迭代通过对时长统计算子与视图组件的重构，优化了多模块应用的导航体验与界面纯净度。
 
 ### 目标
-在 `src/views/Home.tsx` 中删除两处 `span` 标签节点。
+1. 提交所有关于时间展示重构与 UI 精简的代码变更。
 
 ### 基本原理
-直接修改组件中的 JSX 模板结构，去除右上角对应的状态与分类徽章。
+根据协议，当所有代码变更已完成并通过验证后，打包为规范的 Git 提交。
 
 ### 标签
-#intent/refine #flow/ready #priority/low #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/home-card-badges #task/action/refactor #task/state/begin
+#intent/build #flow/ready #priority/high #comp/build #concept/sync #scope/core #ai/instruct #task/domain/ui #task/object/git-commit #task/action/integration #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 从 `src/views/Home.tsx` 移除卡片右上角徽章
+#### Acts 1: 添加修改到暂存区
 
 ~~~~~act
-patch_file
+git_add
+src/utils/db.ts
+src/app.tsx
 src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-        {/* 1. 寻星练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('star-hopping')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                <Compass className="w-8 h-8" />
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                可练习
-              </span>
-            </div>
-~~~~~
-~~~~~typescript.new
-        {/* 1. 寻星练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('star-hopping')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                <Compass className="w-8 h-8" />
-              </div>
-            </div>
+src/views/Dashboard.tsx
+src/views/ColorDashboard.tsx
 ~~~~~
 
+#### Acts 2: 提交代码变更
+
 ~~~~~act
-patch_file
-src/views/Home.tsx
+git_commit
 ~~~~~
-~~~~~typescript.old
-        {/* 2. 色感练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('color-sense')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                <Palette className="w-8 h-8" />
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                色感核心 (HSV)
-              </span>
-            </div>
-~~~~~
-~~~~~typescript.new
-        {/* 2. 色感练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('color-sense')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                <Palette className="w-8 h-8" />
-              </div>
-            </div>
+~~~~~text
+refactor(ui): relocate training timers to home cards and streamline UI
+
+- Update database queries to independently compute star-hopping and color training durations.
+- Display overall training time on the home top bar and respective module times on the home cards.
+- Remove redundant timer badges from sub-dashboards and strip unnecessary category tags from home cards.
 ~~~~~
 
 ### 下一步建议
-再次查看主页布局，确认两张卡片右上角的徽章已成功删除。
+- **回归测试**: 可以进行一次端到端的全功能测试，确保计时器在各个模式下能够准确累计并在主页和卡片上正确呈现。
