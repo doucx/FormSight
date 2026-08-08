@@ -1,149 +1,306 @@
-当你运行 `npm run check`（即 `biome check --write .`）时，Biome 发现了 4 处需要修复的代码规范/可访问性/依赖警告。
+好的，我将为你实现此功能。在每个模式子卡片的右上角展示今日练习的题数与耗时。
 
-下面为你生成一个用于修复这 4 处 Biome 检查错误的 Quipu 计划：
-
-## [WIP] refactor(stats): 修复 Biome 检查中发现的 4 处代码规范与依赖警告
+## [WIP] feat: 在色感与寻星训练看板卡片右上角展示今日刷题数量与时间
 
 ### 用户需求
-修复在 `GlobalStatsModal.tsx` 中被 Biome 检查出的 4 处警告/错误，以满足项目的静态检查要求：
-1. 将两处 `forEach` 替换为更推荐的 `for...of` 循环。
-2. 为模态框外层的可点击 `div` 补充键盘交互事件（`onKeyDown`）。
-3. 修正 `useEffect` 中不必要的依赖项（`dailyData` 和 `filteredRecords`）。
+在每个训练子卡片（如色相、明度、饱和度、单锚点、水平双锚点、旋转双锚点等）的右上角，添加一个样式淡雅的“今日刷题”数据展示（包含今日刷题数量与用时）。
 
 ### 评论
-这是一个保持代码库健康、通过严格 CI 静态检查的重构小任务。
+这个改进能给用户提供更直观、即时的今日练习反馈，帮助用户快速感知自己在各个专项模式上的当日练习进度与投入时长。
 
 ### 目标
-1. 修改 `src/components/GlobalStatsModal.tsx`。
-2. 消除 `npm run check` 的所有报错，确保编译与代码风格完美符合 Biome 规范。
+1. 在 `ColorDashboard.tsx` 中统计并展示今日各色感模式（H/S/V）的答题数与累计耗时。
+2. 在 `Dashboard.tsx` 中统计并展示今日各寻星模式（single/double_h/double_r）的答题数与累计耗时。
+3. 保持 UI 统一与轻便，不破坏原有的卡片布局。
 
 ### 基本原理
-- 将数组的 `.forEach(...)` 改写为标准的 `for (const l of [...])`，可以避免潜在的性能问题。
-- 为带有 `onClick` 的非交互角色元素补充 `onKeyDown` 键盘监听，以符合可访问性（a11y）规范。
-- 移除 `useEffect` 中多余的依赖项，提高 React/Preact 钩子的渲染纯净度。
+从 IndexedDB 读取当天的试题做答记录 (`records` / `color_records`)，根据记录的 `timestamp`（大于等于当日 00:00:00）筛选出今日记录，累加答题数量与 `responseTimeMs`，并在子卡片右上角以淡色优雅文本进行显示。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/tests #concept/config #scope/dx #ai/instruct #task/domain/testing #task/object/biome-lint #task/action/refactor #task/state/begin
+#intent/build #flow/ready #priority/medium #comp/interfaces #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/dashboard-cards #task/action/feature-add #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 使用 patch_file 修复 GlobalStatsModal.tsx 中的 Biome 警告
-
-我们将精确修补 `src/components/GlobalStatsModal.tsx` 中的 4 处代码。
+#### Acts 1: 更新 `ColorDashboard.tsx` 以展示今日刷题数据
 
 ~~~~~act
 patch_file
-src/components/GlobalStatsModal.tsx
+src/views/ColorDashboard.tsx
 ~~~~~
 ~~~~~typescript.old
-    ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    [minLevel, Math.round(maxLevel / 2), maxLevel].forEach((l) => {
-      const y = getY(l);
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(width - padding.right, y);
-    });
-    ctx.stroke();
+import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
+import type { ColorMode } from '../utils/colorUtils';
+import type { ColorProfileData } from '../utils/db';
 
-    ctx.beginPath();
-    ctx.strokeStyle = '#6366F1';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.moveTo(getX(0), getY(levels[0]));
-    for (let i = 1; i < levels.length; i++) {
-      ctx.lineTo(getX(i), getY(levels[i]));
-    }
-    ctx.stroke();
-
-    for (let i = 0; i < levels.length; i++) {
-      ctx.beginPath();
-      ctx.arc(getX(i), getY(levels[i]), 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = '#4F46E5';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    [minLevel, maxLevel].forEach((l) => {
-      ctx.fillText(`L${l}`, padding.left - 5, getY(l));
-    });
-    ctx.textAlign = 'center';
-    ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
-  }, [loading, dailyData, filteredRecords]);
-
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
+interface ColorDashboardProps {
 ~~~~~
 ~~~~~typescript.new
-    ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (const l of [minLevel, Math.round(maxLevel / 2), maxLevel]) {
-      const y = getY(l);
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(width - padding.right, y);
-    }
-    ctx.stroke();
+import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import type { ColorMode } from '../utils/colorUtils';
+import { type ColorProfileData, getAllColorTrialRecords } from '../utils/db';
 
-    ctx.beginPath();
-    ctx.strokeStyle = '#6366F1';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.moveTo(getX(0), getY(levels[0]));
-    for (let i = 1; i < levels.length; i++) {
-      ctx.lineTo(getX(i), getY(levels[i]));
-    }
-    ctx.stroke();
+interface ColorDashboardProps {
+~~~~~
 
-    for (let i = 0; i < levels.length; i++) {
-      ctx.beginPath();
-      ctx.arc(getX(i), getY(levels[i]), 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = '#4F46E5';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
+~~~~~act
+patch_file
+src/views/ColorDashboard.tsx
+~~~~~
+~~~~~typescript.old
+export function ColorDashboard({
+  profiles,
+  onStart,
+  onBackToHome,
+  onOpenSettings,
+}: ColorDashboardProps) {
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+~~~~~
+~~~~~typescript.new
+function formatTodayTime(ms: number): string {
+  if (ms <= 0) return '0秒';
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}秒`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
+}
 
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    for (const l of [minLevel, maxLevel]) {
-      ctx.fillText(`L${l}`, padding.left - 5, getY(l));
-    }
-    ctx.textAlign = 'center';
-    ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
-  }, [loading]);
+export function ColorDashboard({
+  profiles,
+  onStart,
+  onBackToHome,
+  onOpenSettings,
+}: ColorDashboardProps) {
+  const [todayStats, setTodayStats] = useState<Record<ColorMode, { count: number; timeMs: number }>>({
+    H: { count: 0, timeMs: 0 },
+    V: { count: 0, timeMs: 0 },
+    S: { count: 0, timeMs: 0 },
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTodayStats = async () => {
+      const records = await getAllColorTrialRecords();
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      const stats: Record<ColorMode, { count: number; timeMs: number }> = {
+        H: { count: 0, timeMs: 0 },
+        V: { count: 0, timeMs: 0 },
+        S: { count: 0, timeMs: 0 },
+      };
+
+      for (const r of records) {
+        if (r.timestamp >= startOfToday && stats[r.mode]) {
+          stats[r.mode].count += 1;
+          stats[r.mode].timeMs += r.responseTimeMs || 0;
+        }
+      }
+
+      if (isMounted) {
+        setTodayStats(stats);
+      }
+    };
+    fetchTodayStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (e.target === e.currentTarget && (e.key === 'Escape' || e.key === 'Enter')) {
-          onClose();
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+~~~~~
+
+~~~~~act
+patch_file
+src/views/ColorDashboard.tsx
+~~~~~
+~~~~~typescript.old
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <RotateCw className="w-6 h-6" />
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+~~~~~
+~~~~~typescript.new
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <RotateCw className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
+                    <div className="text-xs font-bold text-slate-500 font-mono">
+                      {todayStats[config.id].count} 题
+                      {todayStats[config.id].count > 0 && (
+                        <span className="text-[11px] text-slate-400 font-normal ml-1">
+                          ({formatTodayTime(todayStats[config.id].timeMs)})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+~~~~~
+
+#### Acts 2: 更新 `Dashboard.tsx` 以展示今日刷题数据
+
+~~~~~act
+patch_file
+src/views/Dashboard.tsx
+~~~~~
+~~~~~typescript.old
+import {
+  Award,
+  BarChart2,
+  type Compass,
+  Crosshair,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+} from 'lucide-preact';
+import type { TrainingMode } from '../types';
+import type { UserProfileData } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import {
+  Award,
+  BarChart2,
+  type Compass,
+  Crosshair,
+  Play,
+  RotateCw,
+  Sliders,
+  Target,
+  TrendingUp,
+} from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import type { TrainingMode } from '../types';
+import { type UserProfileData, getAllTrialRecords } from '../utils/db';
+~~~~~
+
+~~~~~act
+patch_file
+src/views/Dashboard.tsx
+~~~~~
+~~~~~typescript.old
+export function Dashboard({
+  profiles,
+  onStart,
+  onOpenSettings,
+  onOpenAnalytics,
+  onBackToHome,
+}: DashboardProps) {
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+~~~~~
+~~~~~typescript.new
+function formatTodayTime(ms: number): string {
+  if (ms <= 0) return '0秒';
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}秒`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
+}
+
+export function Dashboard({
+  profiles,
+  onStart,
+  onOpenSettings,
+  onOpenAnalytics,
+  onBackToHome,
+}: DashboardProps) {
+  const [todayStats, setTodayStats] = useState<Record<TrainingMode, { count: number; timeMs: number }>>({
+    single: { count: 0, timeMs: 0 },
+    double_h: { count: 0, timeMs: 0 },
+    double_r: { count: 0, timeMs: 0 },
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTodayStats = async () => {
+      const records = await getAllTrialRecords();
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      const stats: Record<TrainingMode, { count: number; timeMs: number }> = {
+        single: { count: 0, timeMs: 0 },
+        double_h: { count: 0, timeMs: 0 },
+        double_r: { count: 0, timeMs: 0 },
+      };
+
+      for (const r of records) {
+        if (r.timestamp >= startOfToday && stats[r.mode]) {
+          stats[r.mode].count += 1;
+          stats[r.mode].timeMs += r.responseTimeMs || 0;
         }
-      }}
-    >
+      }
+
+      if (isMounted) {
+        setTodayStats(stats);
+      }
+    };
+    fetchTodayStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+~~~~~
+
+~~~~~act
+patch_file
+src/views/Dashboard.tsx
+~~~~~
+~~~~~typescript.old
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <IconComponent className="w-6 h-6" />
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+~~~~~
+~~~~~typescript.new
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <IconComponent className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
+                    <div className="text-xs font-bold text-slate-500 font-mono">
+                      {todayStats[config.id].count} 题
+                      {todayStats[config.id].count > 0 && (
+                        <span className="text-[11px] text-slate-400 font-normal ml-1">
+                          ({formatTodayTime(todayStats[config.id].timeMs)})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
 ~~~~~
 
 ### 下一步建议
-运行 `npm run check` 验证所有 Biome 规则是否已全部通过。
+1. 启动本地开发服务验证子卡片右上角的渲染效果，确保在未刷题时显示 `0 题`，在刷题后实时更新今日题数与用时（如 `15 题 (2分30秒)`）。
+2. 可考虑在完成训练后自动刷新该统计数据。

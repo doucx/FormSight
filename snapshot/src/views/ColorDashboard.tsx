@@ -1,6 +1,7 @@
 import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
 import type { ColorMode } from '../utils/colorUtils';
-import type { ColorProfileData } from '../utils/db';
+import { type ColorProfileData, getAllColorTrialRecords } from '../utils/db';
 
 interface ColorDashboardProps {
   profiles: Record<ColorMode, ColorProfileData | null>;
@@ -31,12 +32,59 @@ const COLOR_MODES_CONFIG: Array<{
   },
 ];
 
+function formatTodayTime(ms: number): string {
+  if (ms <= 0) return '0秒';
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}秒`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
+}
+
 export function ColorDashboard({
   profiles,
   onStart,
   onBackToHome,
   onOpenSettings,
 }: ColorDashboardProps) {
+  const [todayStats, setTodayStats] = useState<Record<ColorMode, { count: number; timeMs: number }>>({
+    H: { count: 0, timeMs: 0 },
+    V: { count: 0, timeMs: 0 },
+    S: { count: 0, timeMs: 0 },
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTodayStats = async () => {
+      const records = await getAllColorTrialRecords();
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      const stats: Record<ColorMode, { count: number; timeMs: number }> = {
+        H: { count: 0, timeMs: 0 },
+        V: { count: 0, timeMs: 0 },
+        S: { count: 0, timeMs: 0 },
+      };
+
+      for (const r of records) {
+        if (r.timestamp >= startOfToday && stats[r.mode]) {
+          stats[r.mode].count += 1;
+          stats[r.mode].timeMs += r.responseTimeMs || 0;
+        }
+      }
+
+      if (isMounted) {
+        setTodayStats(stats);
+      }
+    };
+    fetchTodayStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header */}
@@ -87,6 +135,17 @@ export function ColorDashboard({
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                     <RotateCw className="w-6 h-6" />
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
+                    <div className="text-xs font-bold text-slate-500 font-mono">
+                      {todayStats[config.id].count} 题
+                      {todayStats[config.id].count > 0 && (
+                        <span className="text-[11px] text-slate-400 font-normal ml-1">
+                          ({formatTodayTime(todayStats[config.id].timeMs)})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
