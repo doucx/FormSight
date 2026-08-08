@@ -28,34 +28,26 @@ interface DashboardProps {
 const MODES_CONFIG: Array<{
   id: TrainingMode;
   title: string;
-  subtitle: string;
   desc: string;
   icon: typeof Compass;
-  badgeColor: string;
 }> = [
   {
     id: 'single',
     title: '单锚点模式',
-    subtitle: 'Single Anchor',
     desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
     icon: Target,
-    badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
   },
   {
     id: 'double_h',
     title: '水平双锚点',
-    subtitle: 'Double Horiz',
     desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
     icon: Crosshair,
-    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   {
     id: 'double_r',
     title: '旋转双锚点',
-    subtitle: 'Double Rotated',
     desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
     icon: RotateCw,
-    badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
   },
 ];
 
@@ -138,11 +130,6 @@ export function Dashboard({
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                     <IconComponent className="w-6 h-6" />
                   </div>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
-                  >
-                    {config.subtitle}
-                  </span>
                 </div>
 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
