@@ -148,14 +148,11 @@ export function ColorCanvas({
   return (
     <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
       {/* 目标色块 */}
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center">
         <div
           className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
           style={{ backgroundColor: targetHex }}
         />
-        <div className="font-mono text-xs font-bold text-slate-400">
-          {showAnswer ? targetHex : '???'}
-        </div>
       </div>
 
       {/* 递进显隐轨道 */}

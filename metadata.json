@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(color): 改进色感滑块悬停提示与竖条标记", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786180998.1301866, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(color): 移除 16 进制色彩文本显示", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786181159.752068, "duration_ms": 0}}
