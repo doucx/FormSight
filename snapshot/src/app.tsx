@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { AnalyticsModal } from './components/AnalyticsModal';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
+import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import type { TrainingMode } from './types';
 import type { ColorMode } from './utils/colorUtils';
@@ -34,6 +35,7 @@ export function App() {
   const [colorSessionType, setColorSessionType] = useState<'training' | 'benchmark'>('training');
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
+  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [settingsContext, setSettingsContext] = useState<'star-hopping' | 'color-sense'>(
     'star-hopping',
@@ -119,6 +121,7 @@ export function App() {
             setCurrentView('dashboard');
           }}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
         />
       )}
 
@@ -171,6 +174,10 @@ export function App() {
           onClose={() => setIsGlobalSettingsOpen(false)}
           onDataChanged={refreshProfiles}
         />
+      )}
+
+      {isGlobalStatsOpen && (
+        <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />
       )}
 
       {isSettingsOpen && (
