@@ -1,226 +1,57 @@
-没问题，我将删除色感识别看板（`ColorDashboard.tsx`）和寻星练习看板（`Dashboard.tsx`）中所有训练模式卡片右上角的英文标签（如 `Hue Sensing`、`Single Anchor` 等）。
+好的，现在我们已经完成了“为色感识别模块添加偏好设置”以及“删除所有卡片右上角的英文标签”两个功能，并且所有的修改已经通过本地验证。
 
-## [WIP] refactor: 移除寻星与色感卡片右上角的英文标签
+现在是时候将这些改进作为一个完整的逻辑单元提交了。
+
+我将生成一个 `[COMMIT]` 计划，包含 `git add` 和 `git commit` 指令。
+
+## ## [COMMIT] feat(ui): 为色感识别添加偏好设置并清理卡片右上角英文标签
 
 ### 用户需求
 
-删除所有卡片（包括色感识别和寻星练习）右上角的英文内容（如 Hue Sensing）。
+用户确认之前的修改无误，并要求创建 Git 提交。
 
 ### 评论
 
-卡片右上角原有的英文 Badge 元素主要是装饰性质。移除后能够减少页面中的杂余文本，使界面更加简洁统一，提升用户的视觉体验。
+这是一个逻辑完整的版本迭代。它不仅补齐了色感识别模块的偏好设置与自适应算子调度，还精简了所有训练卡片的顶栏视觉。通过生成标准的 Commit 记录，确保版本演进清晰、可追溯。
 
 ### 目标
 
-1. 从 `ColorDashboard.tsx` 的卡片配置数据中清理 `subtitle` 与 `badgeColor` 字段，并在渲染部分移除对应的右上角英文 Badge 标签。
-2. 从 `Dashboard.tsx` 的卡片配置数据中清理 `subtitle` 与 `badgeColor` 字段，并在渲染部分移除对应的右上角英文 Badge 标签。
+1. 将变动文件加入 Git 暂存区。
+2. 生成符合 Conventional Commits 规范的结构化提交信息。
 
 ### 基本原理
 
-通过精简 `COLOR_MODES_CONFIG` 和 `MODES_CONFIG` 配置对象结构，直接切除无用的 Badge 属性并修改 DOM 节点渲染结构，避免无用代码留存。
+遵循 ACA 运行时与 Git 提交规范，将变动安全地固化在代码版本库中。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/low #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/card-badges #task/action/cleanup #task/state/begin
+#intent/build #flow/ready #priority/high #comp/cli #comp/ui #scope/dx #ai/instruct #task/domain/ui #task/object/git-commit #task/action/integration #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 清理 `ColorDashboard.tsx` 中的卡片英文标签
-
-从 `COLOR_MODES_CONFIG` 移除 `subtitle` 与 `badgeColor` 字段，并更新 JSX 结构。
+#### Acts 1: 添加变动文件并创建 Git 提交
 
 ~~~~~act
-patch_file
+git_add
+src/components/SettingsModal.tsx
 src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript.old
-const COLOR_MODES_CONFIG: Array<{
-  id: ColorMode;
-  title: string;
-  subtitle: string;
-  desc: string;
-  badgeColor: string;
-}> = [
-  {
-    id: 'H',
-    title: '色相 (Hue)',
-    subtitle: 'Hue Sensing',
-    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
-    badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
-  },
-  {
-    id: 'V',
-    title: '明度 (Value)',
-    subtitle: 'Value Contrast',
-    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
-    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
-  },
-  {
-    id: 'S',
-    title: '饱和度 (Sat)',
-    subtitle: 'Saturation Perception',
-    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
-    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  },
-];
-~~~~~
-~~~~~typescript.new
-const COLOR_MODES_CONFIG: Array<{
-  id: ColorMode;
-  title: string;
-  desc: string;
-}> = [
-  {
-    id: 'H',
-    title: '色相 (Hue)',
-    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
-  },
-  {
-    id: 'V',
-    title: '明度 (Value)',
-    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
-  },
-  {
-    id: 'S',
-    title: '饱和度 (Sat)',
-    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
-  },
-];
-~~~~~
-
-~~~~~act
-patch_file
-src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript.old
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <RotateCw className="w-6 h-6" />
-                  </div>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
-                  >
-                    {config.subtitle}
-                  </span>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-~~~~~typescript.new
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <RotateCw className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-
-#### Acts 2: 清理 `Dashboard.tsx` 中的卡片英文标签
-
-从 `MODES_CONFIG` 移除 `subtitle` 与 `badgeColor` 字段，并更新 JSX 结构。
-
-~~~~~act
-patch_file
 src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-const MODES_CONFIG: Array<{
-  id: TrainingMode;
-  title: string;
-  subtitle: string;
-  desc: string;
-  icon: typeof Compass;
-  badgeColor: string;
-}> = [
-  {
-    id: 'single',
-    title: '单锚点模式',
-    subtitle: 'Single Anchor',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    icon: Target,
-    badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
-  },
-  {
-    id: 'double_h',
-    title: '水平双锚点',
-    subtitle: 'Double Horiz',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    icon: Crosshair,
-    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  },
-  {
-    id: 'double_r',
-    title: '旋转双锚点',
-    subtitle: 'Double Rotated',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    icon: RotateCw,
-    badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
-  },
-];
-~~~~~
-~~~~~typescript.new
-const MODES_CONFIG: Array<{
-  id: TrainingMode;
-  title: string;
-  desc: string;
-  icon: typeof Compass;
-}> = [
-  {
-    id: 'single',
-    title: '单锚点模式',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    icon: Target,
-  },
-  {
-    id: 'double_h',
-    title: '水平双锚点',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    icon: Crosshair,
-  },
-  {
-    id: 'double_r',
-    title: '旋转双锚点',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    icon: RotateCw,
-  },
-];
+src/app.tsx
 ~~~~~
 
 ~~~~~act
-patch_file
-src/views/Dashboard.tsx
+git_commit
 ~~~~~
-~~~~~typescript.old
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
-                  >
-                    {config.subtitle}
-                  </span>
-                </div>
+~~~~~text
+feat(ui): add color recognition preferences & clean card headers
 
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-~~~~~typescript.new
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+- Add `appContext` support to `SettingsModal` so that Color Training can access Auto-Next and Adaptive Engine preferences.
+- Add preference settings button to `ColorDashboard` header.
+- Remove English subtitle badges (e.g. "Hue Sensing", "Single Anchor") from all training mode cards in both ColorDashboard and StarHopping Dashboard for a cleaner visual style.
 ~~~~~
 
 ### 下一步建议
 
-- 可在终端执行 `npm run check`，确保重构后代码符合 TypeScript 类型审查与 Biome 格式约束。
+- **版本发布**: 可以运行 `npm run build` 进行生产构建检查，或直接部署到线上环境。
