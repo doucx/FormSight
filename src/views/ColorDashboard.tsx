@@ -1,6 +1,6 @@
-import { Award, Clock, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
 import type { ColorMode } from '../utils/colorUtils';
-import { type ColorProfileData, formatTotalTime } from '../utils/db';
+import type { ColorProfileData } from '../utils/db';
 
 interface ColorDashboardProps {
   profiles: Record<ColorMode, ColorProfileData | null>;
