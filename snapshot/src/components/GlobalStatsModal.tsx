@@ -203,11 +203,11 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     ctx.strokeStyle = '#E2E8F0';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    [minLevel, Math.round(maxLevel / 2), maxLevel].forEach((l) => {
+    for (const l of [minLevel, Math.round(maxLevel / 2), maxLevel]) {
       const y = getY(l);
       ctx.moveTo(padding.left, y);
       ctx.lineTo(width - padding.right, y);
-    });
+    }
     ctx.stroke();
 
     ctx.beginPath();
@@ -234,12 +234,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    [minLevel, maxLevel].forEach((l) => {
+    for (const l of [minLevel, maxLevel]) {
       ctx.fillText(`L${l}`, padding.left - 5, getY(l));
-    });
+    }
     ctx.textAlign = 'center';
     ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
-  }, [loading, dailyData, filteredRecords]);
+  }, [loading]);
 
   return (
     <div
@@ -247,6 +247,11 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Escape' || e.key === 'Enter')) {
+          onClose();
+        }
       }}
     >
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
