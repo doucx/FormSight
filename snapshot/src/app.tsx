@@ -9,7 +9,8 @@ import {
   type UserProfileData,
   getAllColorProfiles,
   getAllUserProfiles,
-  getTotalTrainingTimeMs,
+  getColorTotalTimeMs,
+  getStarHoppingTotalTimeMs,
 } from './utils/db';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
@@ -49,16 +50,27 @@ export function App() {
     V: null,
   });
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
+  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const cData = await getAllColorProfiles();
-    const timeMs = await getTotalTrainingTimeMs();
+    const starMs = await getStarHoppingTotalTimeMs();
+    const colorMs = await getColorTotalTimeMs();
+
     setProfiles(data);
     setColorProfiles(cData);
-    setTotalTimeMs(timeMs);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setTotalTimeMs(starMs + colorMs);
   }, []);
+>>>>~
+
+~~~~~act
+patch_file
+src/app.tsx
 
   useEffect(() => {
     refreshProfiles();
