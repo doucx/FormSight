@@ -1,4 +1,4 @@
-import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { Award, Droplet, Play, RotateCw, Sliders, Sun, Target, TrendingUp } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { ColorMode } from '../utils/colorUtils';
 import { type ColorProfileData, getAllColorTrialRecords } from '../utils/db';
@@ -14,21 +14,25 @@ const COLOR_MODES_CONFIG: Array<{
   id: ColorMode;
   title: string;
   desc: string;
+  icon: typeof RotateCw;
 }> = [
   {
     id: 'H',
     title: '色相 (Hue)',
     desc: '识别颜色在色相环上的具体角度 (0°~360°)',
+    icon: RotateCw,
   },
   {
     id: 'V',
     title: '明度 (Value)',
     desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
+    icon: Sun,
   },
   {
     id: 'S',
     title: '饱和度 (Sat)',
     desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
+    icon: Droplet,
   },
 ];
 
@@ -136,7 +140,7 @@ export function ColorDashboard({
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <RotateCw className="w-6 h-6" />
+                    <config.icon className="w-6 h-6" />
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>

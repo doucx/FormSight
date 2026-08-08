@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M ColorDashboard.tsx, M Dashboard.tsx", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186049.0833287, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 为明度与饱和度使用更合适的图标", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186163.4713144, "duration_ms": 0}}
