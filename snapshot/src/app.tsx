@@ -9,7 +9,8 @@ import {
   type UserProfileData,
   getAllColorProfiles,
   getAllUserProfiles,
-  getTotalTrainingTimeMs,
+  getColorTrainingTimeMs,
+  getStarHoppingTrainingTimeMs,
 } from './utils/db';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
@@ -48,16 +49,19 @@ export function App() {
     S: null,
     V: null,
   });
-  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
+  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const cData = await getAllColorProfiles();
-    const timeMs = await getTotalTrainingTimeMs();
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
     setProfiles(data);
     setColorProfiles(cData);
-    setTotalTimeMs(timeMs);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
   }, []);
 
   useEffect(() => {
@@ -104,7 +108,9 @@ export function App() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={totalTimeMs}
+          totalTimeMs={starHoppingTimeMs + colorTimeMs}
+          starHoppingTimeMs={starHoppingTimeMs}
+          colorTimeMs={colorTimeMs}
           onNavigate={(app) => {
             setCurrentApp(app);
             setCurrentView('dashboard');
@@ -117,7 +123,6 @@ export function App() {
         (currentView === 'dashboard' ? (
           <Dashboard
             profiles={profiles}
-            totalTimeMs={totalTimeMs}
             onStart={handleStartTraining}
             onRefreshProfiles={refreshProfiles}
             onOpenSettings={() => setIsSettingsOpen(true)}
@@ -138,7 +143,6 @@ export function App() {
         (currentView === 'dashboard' ? (
           <ColorDashboard
             profiles={colorProfiles}
-            totalTimeMs={totalTimeMs}
             onStart={handleStartColorTraining}
             onBackToHome={() => setCurrentApp('home')}
           />

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix(ui): resolve Biome a11y linter errors and use semantic button elements", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786181682.9620695, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 调整训练时长显示位置至主页与模块卡片", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786182819.9463103, "duration_ms": 0}}

@@ -61,7 +61,6 @@ const MODES_CONFIG: Array<{
 
 interface DashboardProps {
   profiles: Record<TrainingMode, UserProfileData | null>;
-  totalTimeMs: number;
   onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
   onRefreshProfiles: () => void;
   onOpenSettings: () => void;
@@ -71,7 +70,6 @@ interface DashboardProps {
 
 export function Dashboard({
   profiles,
-  totalTimeMs,
   onStart,
   onOpenSettings,
   onOpenAnalytics,
@@ -95,10 +93,6 @@ export function Dashboard({
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
               寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
             </h1>
-            <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
-              <span>{formatTotalTime(totalTimeMs)}</span>
-            </div>
           </div>
         </div>
 
