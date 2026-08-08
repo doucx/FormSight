@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(ui):为明度与饱和度看板更换直观图标", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186196.689221, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 支持点击模糊背景关闭训练总结弹窗并返回主页", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186667.2359006, "duration_ms": 0}}

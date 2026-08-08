@@ -1,45 +1,58 @@
-# [COMMIT] feat(ui):为明度与饱和度看板更换直观图标
+# [WIP] feat(ui): 支持点击模糊背景关闭训练总结弹窗并返回主页
 
 ### 用户需求
-用户要求对已完成的代码修改创建 Git 提交。
+用户希望在完成训练或基准测试后弹出的“训练总结与成果”页面中，点击弹窗四周的模糊背景区域（Overlay）时，能够自动触发关闭弹窗并返回主页的操作，提升交互的便捷性。
 
 ### 评论
-本次修改优化了色感训练看板的视觉体验，将原本单一的旋转图标替换为了更具代表性的 `Sun`（明度）和 `Droplet`（饱和度）图标。
+当前其他模态框（如全局设置、偏好设置、弱点分析等）均已支持点击遮罩层关闭，为“训练总结与成果”弹窗补齐这一交互行为能够保持全应用交互体验的一致性。
 
 ### 目标
-1. 将修改后的文件添加到 Git 暂存区。
-2. 创建符合规范的 Git 提交。
+1. 修改 `src/components/SessionSummaryModal.tsx`。
+2. 为外层的固定全屏容器添加点击遮罩层关闭（`onClick` 判断是否点中背景）以及键盘无障碍支持（`Escape` 键）。
+3. 确保点击弹窗卡片内容区域时不会误触发关闭。
 
 ### 基本原理
-按照 ACA 规范与 Quipu 指令集，在独立的计划中执行 `git_add` 和 `git_commit` 操作。
+参照同类模态框（如 `GlobalSettingsModal.tsx`），通过判断 `e.target === e.currentTarget` 来安全地捕获对背景遮罩层的点击，同时支持 `Escape` 键快捷关闭，增强可用性与无障碍支持。
 
 ### 标签
-#intent/build #flow/ready #priority/low #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-dashboard-icons #task/action/implementation #task/state/end
+#intent/build #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/session-summary-modal #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 添加文件到 Git 暂存区并提交
+#### Acts 1: 为 SessionSummaryModal 增加遮罩层点击关闭与快捷键支持
 
 ~~~~~act
-git_add
-src/views/ColorDashboard.tsx
+patch_file
+src/components/SessionSummaryModal.tsx
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~typescript.old
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
+        {/* Header */}
 ~~~~~
-~~~~~text
-feat(ui): use intuitive icons for Value and Saturation modes in ColorDashboard
-
-Replaced the generic rotation icon (RotateCw) in the color recognition dashboard with semantically appropriate icons:
-- 'Sun' for Value (明度), representing brightness and light.
-- 'Droplet' for Saturation (饱和度), representing color purity and richness.
-- Kept 'RotateCw' for Hue (色相).
-
-This enhances the visual clarity and UX of the color training interface.
+~~~~~typescript.new
+  return (
+    <div
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Escape' || e.key === 'Enter')) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
+        {/* Header */}
 ~~~~~
 
 ### 下一步建议
-- **全面审查**: 检查整个应用中其他看板或模式的图标，确保它们均具有良好的直观性和一致性。
+
+我们已经为 `SessionSummaryModal` 添加了点击模糊背景和按下 `Escape` 键关闭并返回主页的功能。如果你对该实现满意，可以生成一个提交计划来固化此次改进。
