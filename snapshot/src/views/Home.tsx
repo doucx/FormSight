@@ -65,9 +65,6 @@ export function Home({
               <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                 <Compass className="w-8 h-8" />
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                可练习
-              </span>
             </div>
 
             <div>
@@ -113,9 +110,6 @@ export function Home({
               <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
                 <Palette className="w-8 h-8" />
               </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                色感核心 (HSV)
-              </span>
             </div>
 
             <div>
