@@ -151,11 +151,6 @@ export function Home({
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
-            <span>进入色感练习看板</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
         </button>
       </div>
     </div>
