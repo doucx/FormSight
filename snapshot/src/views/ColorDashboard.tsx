@@ -18,21 +18,21 @@ const COLOR_MODES_CONFIG: Array<{
 }> = [
   {
     id: 'H',
-    title: '1-色相 (Hue)',
+    title: '色相 (Hue)',
     subtitle: 'Hue Sensing',
     desc: '识别颜色在色相环上的具体角度 (0°~360°)',
     badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
   },
   {
     id: 'V',
-    title: '2-明度 (Value)',
+    title: '明度 (Value)',
     subtitle: 'Value Contrast',
     desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
     badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   {
     id: 'S',
-    title: '3-饱和度 (Sat)',
+    title: '饱和度 (Sat)',
     subtitle: 'Saturation Perception',
     desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
     badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
