@@ -1,29 +1,16 @@
 import {
   Award,
   BarChart2,
-  Clock,
   type Compass,
   Crosshair,
-  Download,
   Play,
   RotateCw,
   Sliders,
   Target,
   TrendingUp,
-  Upload,
 } from 'lucide-preact';
-import { useRef } from 'preact/hooks';
 import type { TrainingMode } from '../types';
-import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
-
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  totalTimeMs: number;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-}
+import type { UserProfileData } from '../utils/db';
 
 const MODES_CONFIG: Array<{
   id: TrainingMode;

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] chore(build): 建立版本号 SSOT 机制并动态注入 UI", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786183769.3732781, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TypeScript 编译阶段的类型声明重复与未引用变量错误", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786183825.911604, "duration_ms": 0}}
