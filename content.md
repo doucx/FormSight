@@ -1,306 +1,47 @@
-好的，我将为你实现此功能。在每个模式子卡片的右上角展示今日练习的题数与耗时。
+好的，我们将本次修改提交到 Git 仓库。
 
-## [WIP] feat: 在色感与寻星训练看板卡片右上角展示今日刷题数量与时间
+## [COMMIT] feat(ui): 在寻星与色感训练子卡片右上角展示今日练习题数与耗时
 
 ### 用户需求
-在每个训练子卡片（如色相、明度、饱和度、单锚点、水平双锚点、旋转双锚点等）的右上角，添加一个样式淡雅的“今日刷题”数据展示（包含今日刷题数量与用时）。
+用户要求将刚才实现的子卡片右上角今日刷题数量与时间功能进行 Git 提交。
 
 ### 评论
-这个改进能给用户提供更直观、即时的今日练习反馈，帮助用户快速感知自己在各个专项模式上的当日练习进度与投入时长。
+该功能已经成功实现，并且样式与数据源集成完美，现在可以作为稳定的增量功能进行提交。
 
 ### 目标
-1. 在 `ColorDashboard.tsx` 中统计并展示今日各色感模式（H/S/V）的答题数与累计耗时。
-2. 在 `Dashboard.tsx` 中统计并展示今日各寻星模式（single/double_h/double_r）的答题数与累计耗时。
-3. 保持 UI 统一与轻便，不破坏原有的卡片布局。
+1. 将 `src/views/ColorDashboard.tsx` 和 `src/views/Dashboard.tsx` 的改动暂存。
+2. 撰写结构清晰、符合 Conventional Commits 规范的 Commit 消息。
 
 ### 基本原理
-从 IndexedDB 读取当天的试题做答记录 (`records` / `color_records`)，根据记录的 `timestamp`（大于等于当日 00:00:00）筛选出今日记录，累加答题数量与 `responseTimeMs`，并在子卡片右上角以淡色优雅文本进行显示。
+通过 `git_add` 和 `git_commit` 将代码更改锁定到版本历史中。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/interfaces #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/dashboard-cards #task/action/feature-add #task/state/begin
+#intent/build #flow/ready #priority/medium #comp/ui #scope/dx #ai/instruct #task/domain/ui #task/object/dashboard-cards #task/action/commit #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `ColorDashboard.tsx` 以展示今日刷题数据
+#### Acts 1: 添加修改并提交
 
 ~~~~~act
-patch_file
+git_add
 src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript.old
-import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
-import type { ColorMode } from '../utils/colorUtils';
-import type { ColorProfileData } from '../utils/db';
-
-interface ColorDashboardProps {
-~~~~~
-~~~~~typescript.new
-import { Award, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-import type { ColorMode } from '../utils/colorUtils';
-import { type ColorProfileData, getAllColorTrialRecords } from '../utils/db';
-
-interface ColorDashboardProps {
-~~~~~
-
-~~~~~act
-patch_file
-src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript.old
-export function ColorDashboard({
-  profiles,
-  onStart,
-  onBackToHome,
-  onOpenSettings,
-}: ColorDashboardProps) {
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-~~~~~
-~~~~~typescript.new
-function formatTodayTime(ms: number): string {
-  if (ms <= 0) return '0秒';
-  const totalSec = Math.round(ms / 1000);
-  if (totalSec < 60) {
-    return `${totalSec}秒`;
-  }
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
-}
-
-export function ColorDashboard({
-  profiles,
-  onStart,
-  onBackToHome,
-  onOpenSettings,
-}: ColorDashboardProps) {
-  const [todayStats, setTodayStats] = useState<Record<ColorMode, { count: number; timeMs: number }>>({
-    H: { count: 0, timeMs: 0 },
-    V: { count: 0, timeMs: 0 },
-    S: { count: 0, timeMs: 0 },
-  });
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchTodayStats = async () => {
-      const records = await getAllColorTrialRecords();
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      const stats: Record<ColorMode, { count: number; timeMs: number }> = {
-        H: { count: 0, timeMs: 0 },
-        V: { count: 0, timeMs: 0 },
-        S: { count: 0, timeMs: 0 },
-      };
-
-      for (const r of records) {
-        if (r.timestamp >= startOfToday && stats[r.mode]) {
-          stats[r.mode].count += 1;
-          stats[r.mode].timeMs += r.responseTimeMs || 0;
-        }
-      }
-
-      if (isMounted) {
-        setTodayStats(stats);
-      }
-    };
-    fetchTodayStats();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-~~~~~
-
-~~~~~act
-patch_file
-src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript.old
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <RotateCw className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-~~~~~typescript.new
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <RotateCw className="w-6 h-6" />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
-                    <div className="text-xs font-bold text-slate-500 font-mono">
-                      {todayStats[config.id].count} 题
-                      {todayStats[config.id].count > 0 && (
-                        <span className="text-[11px] text-slate-400 font-normal ml-1">
-                          ({formatTodayTime(todayStats[config.id].timeMs)})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-
-#### Acts 2: 更新 `Dashboard.tsx` 以展示今日刷题数据
-
-~~~~~act
-patch_file
 src/views/Dashboard.tsx
 ~~~~~
-~~~~~typescript.old
-import {
-  Award,
-  BarChart2,
-  type Compass,
-  Crosshair,
-  Play,
-  RotateCw,
-  Sliders,
-  Target,
-  TrendingUp,
-} from 'lucide-preact';
-import type { TrainingMode } from '../types';
-import type { UserProfileData } from '../utils/db';
-~~~~~
-~~~~~typescript.new
-import {
-  Award,
-  BarChart2,
-  type Compass,
-  Crosshair,
-  Play,
-  RotateCw,
-  Sliders,
-  Target,
-  TrendingUp,
-} from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-import type { TrainingMode } from '../types';
-import { type UserProfileData, getAllTrialRecords } from '../utils/db';
-~~~~~
 
 ~~~~~act
-patch_file
-src/views/Dashboard.tsx
+git_commit
 ~~~~~
-~~~~~typescript.old
-export function Dashboard({
-  profiles,
-  onStart,
-  onOpenSettings,
-  onOpenAnalytics,
-  onBackToHome,
-}: DashboardProps) {
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-~~~~~
-~~~~~typescript.new
-function formatTodayTime(ms: number): string {
-  if (ms <= 0) return '0秒';
-  const totalSec = Math.round(ms / 1000);
-  if (totalSec < 60) {
-    return `${totalSec}秒`;
-  }
-  const min = Math.floor(totalSec / 60);
-  const sec = totalSec % 60;
-  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
-}
+~~~~~text
+feat(ui): add today's practice count and elapsed time on training mode cards
 
-export function Dashboard({
-  profiles,
-  onStart,
-  onOpenSettings,
-  onOpenAnalytics,
-  onBackToHome,
-}: DashboardProps) {
-  const [todayStats, setTodayStats] = useState<Record<TrainingMode, { count: number; timeMs: number }>>({
-    single: { count: 0, timeMs: 0 },
-    double_h: { count: 0, timeMs: 0 },
-    double_r: { count: 0, timeMs: 0 },
-  });
+Added a lightweight and sleek "Today's Practice" (今日刷题) counter and duration indicator on the top-right corner of each mode card in both the Star-Hopping (Dashboard) and Color Recognition (ColorDashboard) views.
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchTodayStats = async () => {
-      const records = await getAllTrialRecords();
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      const stats: Record<TrainingMode, { count: number; timeMs: number }> = {
-        single: { count: 0, timeMs: 0 },
-        double_h: { count: 0, timeMs: 0 },
-        double_r: { count: 0, timeMs: 0 },
-      };
-
-      for (const r of records) {
-        if (r.timestamp >= startOfToday && stats[r.mode]) {
-          stats[r.mode].count += 1;
-          stats[r.mode].timeMs += r.responseTimeMs || 0;
-        }
-      }
-
-      if (isMounted) {
-        setTodayStats(stats);
-      }
-    };
-    fetchTodayStats();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
-~~~~~
-~~~~~typescript.new
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
-                    <div className="text-xs font-bold text-slate-500 font-mono">
-                      {todayStats[config.id].count} 题
-                      {todayStats[config.id].count > 0 && (
-                        <span className="text-[11px] text-slate-400 font-normal ml-1">
-                          ({formatTodayTime(todayStats[config.id].timeMs)})
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+- Queries all trial records from IndexedDB and filters them by today's date (since 00:00:00).
+- Automatically calculates and formats today's total solved question count and active response time.
+- Enhances user feedback and engagement with immediate daily progress visibility.
 ~~~~~
 
 ### 下一步建议
-1. 启动本地开发服务验证子卡片右上角的渲染效果，确保在未刷题时显示 `0 题`，在刷题后实时更新今日题数与用时（如 `15 题 (2分30秒)`）。
-2. 可考虑在完成训练后自动刷新该统计数据。
+- 运行 `npm run build` 或 `npm run check` 确认 TypeScript 类型检查和 Biome 检查完全通过。
