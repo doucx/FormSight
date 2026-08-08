@@ -35,6 +35,9 @@ export function App() {
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [settingsContext, setSettingsContext] = useState<'star-hopping' | 'color-sense'>(
+    'star-hopping',
+  );
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
   const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
@@ -125,7 +128,10 @@ export function App() {
             profiles={profiles}
             onStart={handleStartTraining}
             onRefreshProfiles={refreshProfiles}
-            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenSettings={() => {
+              setSettingsContext('star-hopping');
+              setIsSettingsOpen(true);
+            }}
             onOpenAnalytics={handleOpenAnalytics}
             onBackToHome={() => setCurrentApp('home')}
           />
@@ -145,6 +151,10 @@ export function App() {
             profiles={colorProfiles}
             onStart={handleStartColorTraining}
             onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsContext('color-sense');
+              setIsSettingsOpen(true);
+            }}
           />
         ) : (
           <ColorTrainingView
@@ -169,6 +179,7 @@ export function App() {
           onClose={() => setIsSettingsOpen(false)}
           onSave={(newSettings) => setSettings(newSettings)}
           onDataCleared={refreshProfiles}
+          appContext={settingsContext}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { Award, Clock, Play, RotateCw, Target, TrendingUp } from 'lucide-preact';
+import { Award, Clock, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
 import type { ColorMode } from '../utils/colorUtils';
 import { type ColorProfileData, formatTotalTime } from '../utils/db';
 
@@ -6,35 +6,28 @@ interface ColorDashboardProps {
   profiles: Record<ColorMode, ColorProfileData | null>;
   onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
+  onOpenSettings: () => void;
 }
 
 const COLOR_MODES_CONFIG: Array<{
   id: ColorMode;
   title: string;
-  subtitle: string;
   desc: string;
-  badgeColor: string;
 }> = [
   {
     id: 'H',
-    title: '1-色相 (Hue)',
-    subtitle: 'Hue Sensing',
+    title: '色相 (Hue)',
     desc: '识别颜色在色相环上的具体角度 (0°~360°)',
-    badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
   },
   {
     id: 'V',
-    title: '2-明度 (Value)',
-    subtitle: 'Value Contrast',
+    title: '明度 (Value)',
     desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
-    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   {
     id: 'S',
-    title: '3-饱和度 (Sat)',
-    subtitle: 'Saturation Perception',
+    title: '饱和度 (Sat)',
     desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
-    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
 ];
 
@@ -42,6 +35,7 @@ export function ColorDashboard({
   profiles,
   onStart,
   onBackToHome,
+  onOpenSettings,
 }: ColorDashboardProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
@@ -60,6 +54,18 @@ export function ColorDashboard({
               色感训练 <span className="text-indigo-600 font-light text-xl">Color Recognition</span>
             </h1>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="偏好设置"
+          >
+            <Sliders className="w-4 h-4" />
+            偏好设置
+          </button>
         </div>
       </div>
 
@@ -82,11 +88,6 @@ export function ColorDashboard({
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                     <RotateCw className="w-6 h-6" />
                   </div>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
-                  >
-                    {config.subtitle}
-                  </span>
                 </div>
 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>

@@ -28,9 +28,16 @@ interface SettingsModalProps {
   onClose: () => void;
   onSave: (newSettings: UserSettings) => void;
   onDataCleared?: () => void;
+  appContext?: 'star-hopping' | 'color-sense';
 }
 
-export function SettingsModal({ settings, onClose, onSave, onDataCleared }: SettingsModalProps) {
+export function SettingsModal({
+  settings,
+  onClose,
+  onSave,
+  onDataCleared,
+  appContext = 'star-hopping',
+}: SettingsModalProps) {
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
 
   // 通用设置更新辅助方法：更新 state 并同步持久化与通知父组件，消除 DRY 冗余方法
@@ -87,7 +94,9 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sliders className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-800">训练偏好设置</h2>
+            <h2 className="text-lg font-bold text-slate-800">
+              {appContext === 'color-sense' ? '色感训练偏好设置' : '寻星训练偏好设置'}
+            </h2>
           </div>
           <button
             type="button"
@@ -286,82 +295,87 @@ export function SettingsModal({ settings, onClose, onSave, onDataCleared }: Sett
             </div>
           </div>
 
-          {/* 干扰点网格大小 */}
-          <div className="space-y-2">
-            <div className="text-sm font-semibold text-slate-700">干扰点网格大小</div>
-            <div className="grid grid-cols-4 gap-1.5">
-              {[2, 3, 4, 5].map((size) => (
-                <button
-                  type="button"
-                  key={size}
-                  onClick={() => updateSettings({ gridSize: size })}
-                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                    (current.gridSize ?? 3) === size
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {size}x{size}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 专项靶向强化训练设置 */}
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-              <Crosshair className="w-4 h-4 text-indigo-600" />
-              弱点专项靶向强化
-            </div>
-            <div className="grid grid-cols-3 gap-1.5">
-              {[
-                { id: 'off', label: '关闭 (全随机)' },
-                { id: 'auto', label: '智能自动' },
-                { id: 'manual', label: '手动指定' },
-              ].map((m) => (
-                <button
-                  type="button"
-                  key={m.id}
-                  onClick={() => updateSettings({ targetingMode: m.id as TargetingMode })}
-                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                    current.targetingMode === m.id
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 手动勾选扇区 */}
-            {current.targetingMode === 'manual' && (
-              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
-                <div className="text-[11px] font-semibold text-slate-500">
-                  选择需要靶向强化的角度扇区：
-                </div>
+          {/* 仅寻星训练模式下显示干扰点网格大小与弱点靶向设置 */}
+          {appContext === 'star-hopping' && (
+            <>
+              {/* 干扰点网格大小 */}
+              <div className="space-y-2">
+                <div className="text-sm font-semibold text-slate-700">干扰点网格大小</div>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {SECTOR_NAMES.map((name, idx) => {
-                    const selected = (current.manualTargetSectors || []).includes(idx);
-                    return (
-                      <button
-                        type="button"
-                        key={name}
-                        onClick={() => handleSectorToggle(idx)}
-                        className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
-                          selected
-                            ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
-                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        {name}
-                      </button>
-                    );
-                  })}
+                  {[2, 3, 4, 5].map((size) => (
+                    <button
+                      type="button"
+                      key={size}
+                      onClick={() => updateSettings({ gridSize: size })}
+                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                        (current.gridSize ?? 3) === size
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {size}x{size}
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* 专项靶向强化训练设置 */}
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+                  <Crosshair className="w-4 h-4 text-indigo-600" />
+                  弱点专项靶向强化
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { id: 'off', label: '关闭 (全随机)' },
+                    { id: 'auto', label: '智能自动' },
+                    { id: 'manual', label: '手动指定' },
+                  ].map((m) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => updateSettings({ targetingMode: m.id as TargetingMode })}
+                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                        current.targetingMode === m.id
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 手动勾选扇区 */}
+                {current.targetingMode === 'manual' && (
+                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                    <div className="text-[11px] font-semibold text-slate-500">
+                      选择需要靶向强化的角度扇区：
+                    </div>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {SECTOR_NAMES.map((name, idx) => {
+                        const selected = (current.manualTargetSectors || []).includes(idx);
+                        return (
+                          <button
+                            type="button"
+                            key={name}
+                            onClick={() => handleSectorToggle(idx)}
+                            className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+                              selected
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
+                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* 危险操作区：删除数据 */}
           <div className="pt-3 border-t border-slate-100 flex items-center justify-between">

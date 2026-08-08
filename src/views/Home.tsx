@@ -124,13 +124,13 @@ export function Home({
 
             <div className="flex flex-wrap gap-2 pt-2">
               <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-                1-色相 (Hue)
+                色相 (Hue)
               </span>
               <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-                2-明度 (Val)
+                明度 (Val)
               </span>
               <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
-                3-饱和度 (Sat)
+                饱和度 (Sat)
               </span>
             </div>
           </div>
