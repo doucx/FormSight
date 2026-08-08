@@ -1,45 +1,41 @@
-好的！我们现在将色感交互界面重构为与 Anki 卡片逻辑**完全一致的递进显隐结构**：
+好的！我已经更新了色感交互组件 `ColorCanvas.tsx`，实现了以下视觉与交互优化：
 
-1. **色相训练 (`H`)**：仅显示 **H** 一条滑块，完全不出现 S 与 V 的任何信息或数值。
-2. **明度训练 (`V`)**：显示已知固定位置的 **H** 滑块，以及等待用户点击选取的 **V** 滑块。
-3. **饱和度训练 (`S`)**：显示已知固定位置的 **H** 滑块、等待用户点击选取的 **S** 滑块，以及已知固定位置的 **V** 滑块。
+1. **鼠标悬停准心**：当鼠标移入待测选区轨道时，自动隐藏系统指针 (`cursor-none`)，并跟随鼠标位置显示一个**细长空心矩形竖条准心**；同时在右侧实时显示当前悬停位置的数值，便于精准对齐。
+2. **竖条定位标记**：将选中的目标点、固定维度的标记点及答题反馈结果点全部替换为**细长矩形竖条（Vertical Bar）**，大幅增强在色彩连续渐变轨道上的视线对齐精度。
 
-## [WIP] fix(color): 调整色感交互界面以完全契合 Anki 递进显隐卡片规则
+## [WIP] fix(color): 改进色感滑块悬停提示与竖条标记
 
 ### 用户需求
-1. 调整 `ColorCanvas.tsx` 布局，使其完全遵循 Anki 卡片的递进显隐规则。
-2. H 模式下仅展示 H 轨道；V 模式下展示已知 H 与待测 V 轨道；S 模式下展示已知 H、待测 S 与已知 V 轨道。
-3. 数值文本仅在已知维度或揭晓答案后显示，待测维度在未答题前统一显示为 `?`。
+1. 鼠标悬停在待测选区上时隐藏系统指针，实时显示细长空心竖条与悬停数值。
+2. 将点击后的标记点及已定维度的指示符全部改造为细长竖条，提升色彩定位体验。
 
 ### 评论
-这样改造使得认知难度保持了严格的递进关系，排除了多余参量的视觉干扰，能够让练习者更专注地建立单个色彩因子的感知直觉。
+使用竖条取代圆形 Dots 能消除圆弧两侧的视觉迷离感，极大提升了在 1D 连续色彩空间上的对齐精度和操纵直觉。
 
 ### 目标
-重构 `src/components/ColorCanvas.tsx`，按当前模式（`H` / `V` / `S`）动态过滤渲染的滑块行，并准确应用对应 Gradation 渐变。
+更新 `src/components/ColorCanvas.tsx`，添加 `hoverVal` 监听状态，渲染细长空心悬停竖条及竖条结果标记。
 
 ### 基本原理
-根据传入的 `mode`（`H` / `V` / `S`）按需控制 `renderSliderRow` 的渲染逻辑：
-* `H` 模式：仅渲染 `H` 行（待测 `?`）。
-* `V` 模式：渲染 `H` 行（已知）和 `V` 行（待测 `?`）。
-* `S` 模式：渲染 `H` 行（已知）、`S` 行（待测 `?`）和 `V` 行（已知）。
+1. 在活动轨道上绑定 `onMouseMove` 和 `onMouseLeave` 事件，实时换算 `hoverVal` 并定位悬停竖条。
+2. 将原本的圆形标记组件统一调整为 `w-2 h-8 border-2 rounded-sm` 风格的微型竖条，上下略微悬空突出于轨道，形成清晰的基准定位线。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-canvas-anki-alignment #task/action/refactor #task/state/continue
+#intent/tune #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-canvas-hover-and-bar-indicators #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 ColorCanvas.tsx 符合 Anki 递进规则
+#### Acts 1: 更新 ColorCanvas.tsx 的准心与竖条指示器
 
-替换 `src/components/ColorCanvas.tsx`，准确实现按模式递进显隐滑块。
+更新 `src/components/ColorCanvas.tsx`。
 
 ~~~~~act
 write_file
 src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~tsx
-import { useRef } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
 
 interface ColorCanvasProps {
@@ -58,9 +54,26 @@ export function ColorCanvas({
   disabled = false,
 }: ColorCanvasProps) {
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
+  const [hoverVal, setHoverVal] = useState<number | null>(null);
 
   const { mode, targetH, targetS, targetV } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
+
+  const maxVal = mode === 'H' ? 360 : 100;
+
+  // 鼠标悬停实时追踪
+  const handleMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer || !activeTrackRef.current) return;
+    const rect = activeTrackRef.current.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const ratio = clickX / rect.width;
+    const val = Math.round(ratio * maxVal);
+    setHoverVal(val);
+  };
+
+  const handleMouseLeave = () => {
+    setHoverVal(null);
+  };
 
   // 点击活动待测轨道选择数值
   const handleActiveTrackClick = (e: MouseEvent) => {
@@ -68,20 +81,18 @@ export function ColorCanvas({
     const rect = activeTrackRef.current.getBoundingClientRect();
     const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const ratio = clickX / rect.width;
-    const maxVal = mode === 'H' ? 360 : 100;
     const selectedVal = Math.round(ratio * maxVal);
 
+    setHoverVal(null);
     onAnswer(selectedVal);
   };
 
   const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
 
-  // === 渐变背景 (完美复刻 Anki 算法) ===
+  // === 渐变背景 ===
   const hueGradient =
     'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-
   const satGradient = `linear-gradient(to right, ${hsvToHex(targetH, 0, targetV)}, ${hsvToHex(targetH, 100, targetV)})`;
-
   const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(targetH, 100, 100)})`;
 
   // 渲染单个 Slider 轨道行
@@ -102,44 +113,48 @@ export function ColorCanvas({
         <div
           ref={isTargetActiveMode ? activeTrackRef : null}
           onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
-          className={`relative flex-1 h-5 rounded-full border border-slate-200/80 shadow-inner ${
+          onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
+          onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
+          className={`relative flex-1 h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
             isTargetActiveMode && !showAnswer && !disabled
-              ? 'cursor-pointer hover:ring-2 ring-indigo-400/60'
+              ? 'cursor-none hover:ring-2 ring-indigo-400/60'
               : 'cursor-default'
           }`}
           style={{ background: gradient }}
         >
-          {/* 已知维度滑块 Marker */}
+          {/* 已知维度标记 (细长黑色竖条) */}
           {!isTargetActiveMode && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-700 shadow-sm"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
               style={{ left: getPercent(val, max) }}
             />
           )}
 
-          {/* 待测维度答题后揭晓真理点与用户点击点 */}
+          {/* 悬停准心 (细长空心竖条) */}
+          {isTargetActiveMode && !showAnswer && hoverVal !== null && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
+              style={{ left: getPercent(hoverVal, max) }}
+            />
+          )}
+
+          {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
           {isTargetActiveMode && showAnswer && (
             <>
-              {/* 真理目标位 Marker */}
+              {/* 真理目标位 (绿色竖条) */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-emerald-500 shadow-md z-10"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
                 style={{ left: getPercent(val, max) }}
               />
 
-              {/* 用户点击 Marker */}
+              {/* 用户点击位 (红色或绿色竖条) */}
               {userAnswer && (
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 ${
-                    userAnswer.isHit ? 'border-emerald-500' : 'border-rose-500'
-                  } shadow-md z-20`}
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } rounded-sm shadow-md z-20`}
                   style={{ left: getPercent(userAnswer.userValue, max) }}
-                >
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full mx-auto my-1 ${
-                      userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                    }`}
-                  />
-                </div>
+                />
               )}
             </>
           )}
@@ -157,7 +172,11 @@ export function ColorCanvas({
               : 'text-slate-700'
           }`}
         >
-          {isTargetActiveMode && !showAnswer ? '?' : `${val}${unit}`}
+          {isTargetActiveMode && !showAnswer
+            ? hoverVal !== null
+              ? `${hoverVal}${unit}`
+              : '?'
+            : `${val}${unit}`}
         </span>
       </div>
     );
@@ -176,15 +195,15 @@ export function ColorCanvas({
         </div>
       </div>
 
-      {/* 按 Anki 规则递进显隐轨道 */}
+      {/* 递进显隐轨道 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {/* H 行: 所有模式均展示 */}
+        {/* H 行 */}
         {renderSliderRow('H', mode === 'H', hueGradient, targetH, 360, '°')}
 
-        {/* S 行: 仅在测试 S 时展示 */}
+        {/* S 行 */}
         {mode === 'S' && renderSliderRow('S', true, satGradient, targetS, 100, '%')}
 
-        {/* V 行: 在测试 V 和测试 S 时展示 */}
+        {/* V 行 */}
         {(mode === 'V' || mode === 'S') &&
           renderSliderRow('V', mode === 'V', valGradient, targetV, 100, '%')}
       </div>
@@ -194,5 +213,4 @@ export function ColorCanvas({
 ~~~~~
 
 ### 下一步建议
-1. 现在切换到 **色相 (H)** 训练时，将只会展现干净的 H 滑块；**明度 (V)** 展现固定 H + 待测 V；**饱和度 (S)** 展现固定 H + 待测 S + 固定 V。
-2. 可以在界面上练习体验并检查各角度渐变与数据保存记录。
+你可以尝试鼠标悬停在色感轨道的任意位置，体验指针隐藏、空心细长竖条滑动定位以及实时数值追踪效果。如果使用上有任何细节微调需求，随时告诉我！

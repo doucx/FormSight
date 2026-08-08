@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(color): 调整色感交互界面以完全契合 Anki 递进显隐卡片规则", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786180914.4982772, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(color): 改进色感滑块悬停提示与竖条标记", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786180998.1301866, "duration_ms": 0}}

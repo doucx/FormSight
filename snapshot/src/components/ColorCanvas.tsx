@@ -1,4 +1,4 @@
-import { useRef } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
 
 interface ColorCanvasProps {
@@ -17,9 +17,26 @@ export function ColorCanvas({
   disabled = false,
 }: ColorCanvasProps) {
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
+  const [hoverVal, setHoverVal] = useState<number | null>(null);
 
   const { mode, targetH, targetS, targetV } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
+
+  const maxVal = mode === 'H' ? 360 : 100;
+
+  // 鼠标悬停实时追踪
+  const handleMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer || !activeTrackRef.current) return;
+    const rect = activeTrackRef.current.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const ratio = clickX / rect.width;
+    const val = Math.round(ratio * maxVal);
+    setHoverVal(val);
+  };
+
+  const handleMouseLeave = () => {
+    setHoverVal(null);
+  };
 
   // 点击活动待测轨道选择数值
   const handleActiveTrackClick = (e: MouseEvent) => {
@@ -27,20 +44,18 @@ export function ColorCanvas({
     const rect = activeTrackRef.current.getBoundingClientRect();
     const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
     const ratio = clickX / rect.width;
-    const maxVal = mode === 'H' ? 360 : 100;
     const selectedVal = Math.round(ratio * maxVal);
 
+    setHoverVal(null);
     onAnswer(selectedVal);
   };
 
   const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
 
-  // === 渐变背景 (完美复刻 Anki 算法) ===
+  // === 渐变背景 ===
   const hueGradient =
     'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-
   const satGradient = `linear-gradient(to right, ${hsvToHex(targetH, 0, targetV)}, ${hsvToHex(targetH, 100, targetV)})`;
-
   const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(targetH, 100, 100)})`;
 
   // 渲染单个 Slider 轨道行
@@ -61,44 +76,48 @@ export function ColorCanvas({
         <div
           ref={isTargetActiveMode ? activeTrackRef : null}
           onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
-          className={`relative flex-1 h-5 rounded-full border border-slate-200/80 shadow-inner ${
+          onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
+          onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
+          className={`relative flex-1 h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
             isTargetActiveMode && !showAnswer && !disabled
-              ? 'cursor-pointer hover:ring-2 ring-indigo-400/60'
+              ? 'cursor-none hover:ring-2 ring-indigo-400/60'
               : 'cursor-default'
           }`}
           style={{ background: gradient }}
         >
-          {/* 已知维度滑块 Marker */}
+          {/* 已知维度标记 (细长黑色竖条) */}
           {!isTargetActiveMode && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-700 shadow-sm"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
               style={{ left: getPercent(val, max) }}
             />
           )}
 
-          {/* 待测维度答题后揭晓真理点与用户点击点 */}
+          {/* 悬停准心 (细长空心竖条) */}
+          {isTargetActiveMode && !showAnswer && hoverVal !== null && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
+              style={{ left: getPercent(hoverVal, max) }}
+            />
+          )}
+
+          {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
           {isTargetActiveMode && showAnswer && (
             <>
-              {/* 真理目标位 Marker */}
+              {/* 真理目标位 (绿色竖条) */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 border-emerald-500 shadow-md z-10"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
                 style={{ left: getPercent(val, max) }}
               />
 
-              {/* 用户点击 Marker */}
+              {/* 用户点击位 (红色或绿色竖条) */}
               {userAnswer && (
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-2 ${
-                    userAnswer.isHit ? 'border-emerald-500' : 'border-rose-500'
-                  } shadow-md z-20`}
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } rounded-sm shadow-md z-20`}
                   style={{ left: getPercent(userAnswer.userValue, max) }}
-                >
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full mx-auto my-1 ${
-                      userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                    }`}
-                  />
-                </div>
+                />
               )}
             </>
           )}
@@ -116,7 +135,11 @@ export function ColorCanvas({
               : 'text-slate-700'
           }`}
         >
-          {isTargetActiveMode && !showAnswer ? '?' : `${val}${unit}`}
+          {isTargetActiveMode && !showAnswer
+            ? hoverVal !== null
+              ? `${hoverVal}${unit}`
+              : '?'
+            : `${val}${unit}`}
         </span>
       </div>
     );
@@ -135,15 +158,15 @@ export function ColorCanvas({
         </div>
       </div>
 
-      {/* 按 Anki 规则递进显隐轨道 */}
+      {/* 递进显隐轨道 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {/* H 行: 所有模式均展示 */}
+        {/* H 行 */}
         {renderSliderRow('H', mode === 'H', hueGradient, targetH, 360, '°')}
 
-        {/* S 行: 仅在测试 S 时展示 */}
+        {/* S 行 */}
         {mode === 'S' && renderSliderRow('S', true, satGradient, targetS, 100, '%')}
 
-        {/* V 行: 在测试 V 和测试 S 时展示 */}
+        {/* V 行 */}
         {(mode === 'V' || mode === 'S') &&
           renderSliderRow('V', mode === 'V', valGradient, targetV, 100, '%')}
       </div>
