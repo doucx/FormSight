@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
+import { ArrowRight, BarChart2, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
 import { formatTotalTime } from '../utils/db';
 
 interface HomeProps {
@@ -7,6 +7,7 @@ interface HomeProps {
   colorTimeMs: number;
   onNavigate: (app: 'star-hopping' | 'color-sense') => void;
   onOpenGlobalSettings: () => void;
+  onOpenGlobalStats: () => void;
 }
 
 export function Home({
@@ -15,6 +16,7 @@ export function Home({
   colorTimeMs,
   onNavigate,
   onOpenGlobalSettings,
+  onOpenGlobalStats,
 }: HomeProps) {
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
@@ -40,6 +42,15 @@ export function Home({
             <Clock className="w-4 h-4 text-indigo-500" />
             <span>{formatTotalTime(totalTimeMs)}</span>
           </div>
+          <button
+            type="button"
+            onClick={onOpenGlobalStats}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            title="全局统计"
+          >
+            <BarChart2 className="w-4 h-4 text-indigo-500" />
+            统计
+          </button>
           <button
             type="button"
             onClick={onOpenGlobalSettings}
