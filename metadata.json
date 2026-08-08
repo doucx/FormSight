@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "## [COMMIT] feat(ui): 为色感识别添加偏好设置并清理卡片右上角英文标签", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786183501.775058, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为项目版本号建立 SSOT 注入机制与组件消费", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786183748.6464808, "duration_ms": 0}}

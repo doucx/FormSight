@@ -28,7 +28,7 @@ export function Home({
             <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               FormSight{' '}
               <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
-                v0.2.0
+                v{__APP_VERSION__}
               </span>
             </h1>
             <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知强化训练系统</p>
