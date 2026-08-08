@@ -1,4 +1,4 @@
-import { Award, Clock, Play, RotateCw, Target, TrendingUp } from 'lucide-preact';
+import { Award, Clock, Play, RotateCw, Sliders, Target, TrendingUp } from 'lucide-preact';
 import type { ColorMode } from '../utils/colorUtils';
 import { type ColorProfileData, formatTotalTime } from '../utils/db';
 
@@ -6,6 +6,7 @@ interface ColorDashboardProps {
   profiles: Record<ColorMode, ColorProfileData | null>;
   onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
+  onOpenSettings: () => void;
 }
 
 const COLOR_MODES_CONFIG: Array<{
@@ -42,6 +43,7 @@ export function ColorDashboard({
   profiles,
   onStart,
   onBackToHome,
+  onOpenSettings,
 }: ColorDashboardProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
@@ -60,6 +62,18 @@ export function ColorDashboard({
               色感训练 <span className="text-indigo-600 font-light text-xl">Color Recognition</span>
             </h1>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="偏好设置"
+          >
+            <Sliders className="w-4 h-4" />
+            偏好设置
+          </button>
         </div>
       </div>
 

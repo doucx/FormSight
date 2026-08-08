@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(ui): 调整练习时长显示位置至主页与模块卡片，移除看板顶栏时间并精简主页卡片标签", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786182984.6693175, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "## [WIP] feat: 为色感识别模块添加偏好设置功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786183088.4853752, "duration_ms": 0}}
