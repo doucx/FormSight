@@ -88,7 +88,9 @@ export function ColorDashboard({
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
                     <RotateCw className="w-6 h-6" />
                   </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
+                  >
                     {config.subtitle}
                   </span>
                 </div>

@@ -18,7 +18,10 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              FormSight <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">v0.2.0</span>
+              FormSight{' '}
+              <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                v0.2.0
+              </span>
             </h1>
             <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知强化训练系统</p>
           </div>
@@ -44,9 +47,10 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
       {/* 模块选择区 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* 1. 寻星练习 */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('star-hopping')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -66,9 +70,15 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">单锚点</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">水平双锚点</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">旋转双锚点</span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                单锚点
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                水平双锚点
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                旋转双锚点
+              </span>
             </div>
           </div>
 
@@ -76,12 +86,13 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             <span>进入寻星练习看板</span>
             <ArrowRight className="w-4 h-4" />
           </div>
-        </div>
+        </button>
 
         {/* 2. 色感练习 */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('color-sense')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -94,16 +105,25 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             </div>
 
             <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">色感训练 (Color Recognition)</h2>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                色感训练 (Color Recognition)
+              </h2>
               <p className="text-xs text-slate-500 leading-relaxed">
-                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。
+                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation)
+                的分级递进识别，全面建立微小色彩差异感知力。
               </p>
             </div>
 
             <div className="flex flex-wrap gap-2 pt-2">
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">1-色相 (Hue)</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">2-明度 (Val)</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">3-饱和度 (Sat)</span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                1-色相 (Hue)
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                2-明度 (Val)
+              </span>
+              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                3-饱和度 (Sat)
+              </span>
             </div>
           </div>
 
@@ -111,7 +131,7 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             <span>进入色感练习看板</span>
             <ArrowRight className="w-4 h-4" />
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );

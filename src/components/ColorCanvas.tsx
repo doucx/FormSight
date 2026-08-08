@@ -76,6 +76,23 @@ export function ColorCanvas({
         <div
           ref={isTargetActiveMode ? activeTrackRef : null}
           onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
+          onKeyDown={
+            isTargetActiveMode
+              ? (e) => {
+                  if (
+                    (e.key === 'Enter' || e.key === ' ') &&
+                    hoverVal !== null &&
+                    !disabled &&
+                    !showAnswer
+                  ) {
+                    e.preventDefault();
+                    onAnswer(hoverVal);
+                  }
+                }
+              : undefined
+          }
+          role={isTargetActiveMode ? 'button' : undefined}
+          tabIndex={isTargetActiveMode && !showAnswer && !disabled ? 0 : undefined}
           onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
           onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
           className={`relative flex-1 h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
