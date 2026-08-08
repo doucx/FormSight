@@ -1,43 +1,43 @@
-好的，我将开始为你实施全局统计功能。
+好的，我将为全局统计面板添加顶部下拉筛选菜单，支持按全量、寻星子模式（单锚点/水平双锚点/旋转双锚点）、色感子模式（色相/明度/饱和度）细粒度过滤。
 
-我们将创建 `GlobalStatsModal.tsx` 组件，并在 `Home.tsx` 及 `app.tsx` 中集成该功能。
-
-## [WIP] feat: 增加全局统计分析面板功能
+## [WIP] feat: 为全局统计面板增加子模块维度下拉筛选
 
 ### 用户需求
-在主页 Header 区域的全局设置按钮左侧添加“统计”按钮，点击后弹出全局统计分析面板。面板需包含：
-1. **核心指标**: 今日、近 7 天、本年及生涯总计的刷题数与正确率。
-2. **打卡热力图**: 展示过去 12 周（84 天）的每日刷题量热力分布（类似 Anki / GitHub）。
-3. **能力演进轨迹**: 绘制 Canvas 折线图，展示最近活跃日达到的最高 Level 走势。
+在全局统计面板顶部增加下拉筛选框，允许用户自由选择：
+1. **全量**: 全部练习项目
+2. **寻星模块**: 全部、单锚点、水平双锚点、旋转双锚点
+3. **色感模块**: 全部、色相 (Hue)、明度 (Value)、饱和度 (Sat)
+
+选择不同卡片/子模式后，卡片统计数据、近 12 周热力图以及最高 Level 演进轨迹均实时响应更新。
 
 ### 评论
-该功能极大地增强了系统的正向激励机制与学习量化反馈，使用户能够一目了然地看到自己的训练积累与能力提升轨迹。
+细粒度的维度筛选能够帮助用户精准识别自己在特定训练子项（如“色相识别”或“旋转双锚点”）上的练习频次、正确率及能力增长瓶颈，显著提升统计面板的实用性。
 
 ### 目标
-1. 新建 `src/components/GlobalStatsModal.tsx` 组件，整合寻星与色感两个模块的历史记录。
-2. 更新 `src/views/Home.tsx`，在 Header 中加入统计按钮及其点击回调。
-3. 更新 `src/app.tsx`，挂载全局统计 Modal 的状态管理与渲染逻辑。
+1. 扩展 `GlobalStatsModal` 中的 `UnifiedRecord` 数据结构，捕获详细的 `subMode` 字段。
+2. 在弹窗 Header 区域添加带有分组指示（`<optgroup>`）的交互下拉菜单。
+3. 实现基于选定过滤项的实时响应式数据重算逻辑，同步更新指标卡、热力图和 Canvas 折线图。
 
 ### 基本原理
-通过从 IndexedDB 中异步拉取 `records` 和 `color_records` 两个存储表的全量日志，聚合出时间维度的活跃度指标，并利用 Preact/HTML Canvas 渲染折线图与贡献热力图。由于使用了只读聚合检索，不会对已有数据库结构和数据产生破坏性影响。
+利用状态变量 `selectedFilter` 驱动派生数据 `filteredRecords` 的计算。由于数据在组件加载时已一次性全量存入内存，利用计算派生使得切换选项时的筛选操作达到 0 延迟，体验流畅。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/global-stats #task/action/implementation #task/state/begin #task/status/active
+#intent/build #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/global-stats-filter #task/action/implementation #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 创建全局统计面板组件 `GlobalStatsModal.tsx`
+#### Acts 1: 重构 `GlobalStatsModal.tsx` 实现维度筛选
 
-创建 `src/components/GlobalStatsModal.tsx`，包含数据聚合计算、GitHub 风格 12 周热力图和 Canvas 难度阶梯演进折线图。
+重构 `src/components/GlobalStatsModal.tsx`，添加下拉框并实现响应式筛选计算。
 
 ~~~~~act
 write_file
 src/components/GlobalStatsModal.tsx
 ~~~~~
 ~~~~~tsx
-import { Activity, BarChart2, Calendar, Target, TrendingUp, X } from 'lucide-preact';
+import { Activity, BarChart2, Calendar, ChevronDown, Filter, Target, TrendingUp, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
 
@@ -50,11 +50,36 @@ interface UnifiedRecord {
   isHit: boolean;
   level: number;
   module: 'star' | 'color';
+  subMode: string;
 }
+
+type FilterOption =
+  | 'all'
+  | 'star_all'
+  | 'star_single'
+  | 'star_double_h'
+  | 'star_double_r'
+  | 'color_all'
+  | 'color_H'
+  | 'color_V'
+  | 'color_S';
+
+const FILTER_LABELS: Record<FilterOption, string> = {
+  all: '全部练习项目',
+  star_all: '寻星练习 (全部模式)',
+  star_single: '寻星 • 单锚点',
+  star_double_h: '寻星 • 水平双锚点',
+  star_double_r: '寻星 • 旋转双锚点',
+  color_all: '色感训练 (全部模式)',
+  color_H: '色感 • 色相 (Hue)',
+  color_V: '色感 • 明度 (Value)',
+  color_S: '色感 • 饱和度 (Sat)',
+};
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // === 1. 数据加载与聚合 ===
@@ -71,12 +96,14 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           isHit: r.isHit,
           level: r.difficultyLevel,
           module: 'star' as const,
+          subMode: r.mode,
         })),
         ...colorData.map((r) => ({
           timestamp: r.timestamp,
           isHit: r.isHit,
           level: r.difficultyLevel,
           module: 'color' as const,
+          subMode: r.mode,
         })),
       ];
       combined.sort((a, b) => a.timestamp - b.timestamp);
@@ -92,7 +119,21 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     };
   }, []);
 
-  // === 2. 统计指标计算 ===
+  // === 2. 筛选过滤处理 ===
+  const filteredRecords = records.filter((r) => {
+    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'star_all') return r.module === 'star';
+    if (selectedFilter === 'color_all') return r.module === 'color';
+    if (selectedFilter.startsWith('star_')) {
+      return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
+    }
+    if (selectedFilter.startsWith('color_')) {
+      return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
+    }
+    return true;
+  });
+
+  // === 3. 基于筛选结果计算统计指标 ===
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
@@ -102,12 +143,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     today: { total: 0, hits: 0 },
     week: { total: 0, hits: 0 },
     year: { total: 0, hits: 0 },
-    allTime: { total: records.length, hits: records.filter((r) => r.isHit).length },
+    allTime: { total: filteredRecords.length, hits: filteredRecords.filter((r) => r.isHit).length },
   };
 
   const dailyData: Record<string, { total: number; maxLevel: number }> = {};
 
-  for (const r of records) {
+  for (const r of filteredRecords) {
     if (r.timestamp >= startOfToday) {
       stats.today.total++;
       if (r.isHit) stats.today.hits++;
@@ -132,7 +173,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const calcAcc = (hits: number, total: number) =>
     total === 0 ? 0 : Math.round((hits / total) * 100);
 
-  // === 3. 热力图数据 (近 84 天) ===
+  // === 4. 热力图数据 (近 84 天) ===
   const heatmapDays = 84;
   const heatmapData = Array.from({ length: heatmapDays }).map((_, i) => {
     const d = new Date(startOfToday - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000);
@@ -145,15 +186,15 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
   const getHeatmapColor = (count: number) => {
     if (count === 0) return 'bg-slate-100';
-    if (count < 20) return 'bg-indigo-200';
-    if (count < 50) return 'bg-indigo-400';
-    if (count < 100) return 'bg-indigo-600';
+    if (count < 10) return 'bg-indigo-200';
+    if (count < 25) return 'bg-indigo-400';
+    if (count < 50) return 'bg-indigo-600';
     return 'bg-indigo-800';
   };
 
-  // === 4. 折线图渲染 ===
+  // === 5. 折线图渲染 ===
   useEffect(() => {
-    if (loading || records.length === 0) return;
+    if (loading) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -170,7 +211,15 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
     const activeDates = Object.keys(dailyData).sort();
     const recentDates = activeDates.slice(-30);
-    if (recentDates.length === 0) return;
+
+    if (recentDates.length === 0) {
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('当前筛选条件下暂无做答轨迹', width / 2, height / 2);
+      return;
+    }
 
     const levels = recentDates.map((d) => dailyData[d].maxLevel);
     const maxLevel = Math.max(...levels, 35);
@@ -220,7 +269,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     });
     ctx.textAlign = 'center';
     ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
-  }, [loading, dailyData, records]);
+  }, [loading, dailyData, filteredRecords]);
 
   return (
     <div
@@ -231,7 +280,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       }}
     >
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl">
               <BarChart2 className="w-6 h-6 text-indigo-600" />
@@ -241,26 +291,58 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <p className="text-xs text-slate-400">洞察你的训练足迹与能力成长</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+
+          {/* 右侧下拉筛选与关闭 */}
+          <div className="flex items-center gap-3">
+            {/* 维度 Select 下拉菜单 */}
+            <div className="relative flex items-center">
+              <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
+              <select
+                value={selectedFilter}
+                onChange={(e) =>
+                  setSelectedFilter((e.target as HTMLSelectElement).value as FilterOption)
+                }
+                className="pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm"
+              >
+                <option value="all">全部练习项目</option>
+                <optgroup label="寻星练习">
+                  <option value="star_all">寻星练习 (全部)</option>
+                  <option value="star_single">单锚点模式</option>
+                  <option value="star_double_h">水平双锚点</option>
+                  <option value="star_double_r">旋转双锚点</option>
+                </optgroup>
+                <optgroup label="色感训练">
+                  <option value="color_all">色感训练 (全部)</option>
+                  <option value="color_H">色相 (Hue)</option>
+                  <option value="color_V">明度 (Value)</option>
+                  <option value="color_S">饱和度 (Saturation)</option>
+                </optgroup>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {loading ? (
           <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
             正在统计海量数据...
           </div>
-        ) : records.length === 0 ? (
+        ) : filteredRecords.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
             <Activity className="w-10 h-10 text-slate-300" />
-            暂无训练数据，赶紧开始你的第一场训练吧！
+            【{FILTER_LABELS[selectedFilter]}】下暂无训练数据，先去练习几道题吧！
           </div>
         ) : (
           <div className="flex flex-col gap-6">
+            {/* 1. 核心指标卡片群 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
@@ -316,6 +398,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 2. 热力图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-4">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>近 12 周训练热力图</span>
@@ -340,11 +423,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
               </div>
 
+              {/* 3. 折线图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-2">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>能力峰值演进轨迹</span>
                   <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                    取每日达到的最高 Level
+                    每日最高 Level
                   </span>
                 </div>
                 <canvas ref={canvasRef} width={340} height={150} className="w-full mt-2" />
@@ -358,202 +442,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 }
 ~~~~~
 
-#### Acts 2: 更新 `src/views/Home.tsx`
-
-在 Home 页面的顶部 Header 添加“统计”按钮。
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-import { ArrowRight, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
-import { formatTotalTime } from '../utils/db';
-
-interface HomeProps {
-  totalTimeMs: number;
-  starHoppingTimeMs: number;
-  colorTimeMs: number;
-  onNavigate: (app: 'star-hopping' | 'color-sense') => void;
-  onOpenGlobalSettings: () => void;
-}
-
-export function Home({
-  totalTimeMs,
-  starHoppingTimeMs,
-  colorTimeMs,
-  onNavigate,
-  onOpenGlobalSettings,
-}: HomeProps) {
-~~~~~
-~~~~~typescript.new
-import { ArrowRight, BarChart2, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
-import { formatTotalTime } from '../utils/db';
-
-interface HomeProps {
-  totalTimeMs: number;
-  starHoppingTimeMs: number;
-  colorTimeMs: number;
-  onNavigate: (app: 'star-hopping' | 'color-sense') => void;
-  onOpenGlobalSettings: () => void;
-  onOpenGlobalStats: () => void;
-}
-
-export function Home({
-  totalTimeMs,
-  starHoppingTimeMs,
-  colorTimeMs,
-  onNavigate,
-  onOpenGlobalSettings,
-  onOpenGlobalStats,
-}: HomeProps) {
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold">
-            <Clock className="w-4 h-4 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
-            title="全局设置"
-          >
-            <Sliders className="w-4 h-4" />
-            全局设置
-          </button>
-        </div>
-~~~~~
-~~~~~typescript.new
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold">
-            <Clock className="w-4 h-4 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenGlobalStats}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
-            title="全局统计"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-500" />
-            统计
-          </button>
-          <button
-            type="button"
-            onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
-            title="全局设置"
-          >
-            <Sliders className="w-4 h-4" />
-            全局设置
-          </button>
-        </div>
-~~~~~
-
-#### Acts 3: 更新 `src/app.tsx`
-
-在 `App` 组件中管理 `isGlobalStatsOpen` 状态，传递 `onOpenGlobalStats` 并条件渲染 `GlobalStatsModal`。
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { GlobalSettingsModal } from './components/GlobalSettingsModal';
-import { SettingsModal } from './components/SettingsModal';
-~~~~~
-~~~~~typescript.new
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { GlobalSettingsModal } from './components/GlobalSettingsModal';
-import { GlobalStatsModal } from './components/GlobalStatsModal';
-import { SettingsModal } from './components/SettingsModal';
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-~~~~~
-~~~~~typescript.new
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-      {currentApp === 'home' && (
-        <Home
-          totalTimeMs={starHoppingTimeMs + colorTimeMs}
-          starHoppingTimeMs={starHoppingTimeMs}
-          colorTimeMs={colorTimeMs}
-          onNavigate={(app) => {
-            setCurrentApp(app);
-            setCurrentView('dashboard');
-          }}
-          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-        />
-      )}
-~~~~~
-~~~~~typescript.new
-      {currentApp === 'home' && (
-        <Home
-          totalTimeMs={starHoppingTimeMs + colorTimeMs}
-          starHoppingTimeMs={starHoppingTimeMs}
-          colorTimeMs={colorTimeMs}
-          onNavigate={(app) => {
-            setCurrentApp(app);
-            setCurrentView('dashboard');
-          }}
-          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
-        />
-      )}
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-      {isGlobalSettingsOpen && (
-        <GlobalSettingsModal
-          onClose={() => setIsGlobalSettingsOpen(false)}
-          onDataChanged={refreshProfiles}
-        />
-      )}
-~~~~~
-~~~~~typescript.new
-      {isGlobalSettingsOpen && (
-        <GlobalSettingsModal
-          onClose={() => setIsGlobalSettingsOpen(false)}
-          onDataChanged={refreshProfiles}
-        />
-      )}
-
-      {isGlobalStatsOpen && (
-        <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />
-      )}
-~~~~~
-
 ### 下一步建议
 
-- 启动 Vite 开发服务器 (`npm run dev`)，验证全局统计面板的弹出效果及数据计算。
-- 练习若干试题后打开统计面板，确认今日/近7天/本年指标、热力图深浅变化及能力演进趋势图更新正常。
-- 确认功能无误后，可以在下一个独立 Plan 中进行提交。
+- 启动开发预览体验顶部的下拉筛选栏，试着切换到“色感 • 色相 (Hue)”或“寻星 • 单锚点”，验证卡片数据与热力图、折线图的即时响应。
+- 可以继续针对其他视图界面（如基准测试结算）进行样式优化或增加数据打卡分享功能。

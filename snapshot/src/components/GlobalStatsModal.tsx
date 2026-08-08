@@ -1,4 +1,4 @@
-import { Activity, BarChart2, Calendar, Target, TrendingUp, X } from 'lucide-preact';
+import { Activity, BarChart2, Calendar, ChevronDown, Filter, Target, TrendingUp, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
 
@@ -11,11 +11,36 @@ interface UnifiedRecord {
   isHit: boolean;
   level: number;
   module: 'star' | 'color';
+  subMode: string;
 }
+
+type FilterOption =
+  | 'all'
+  | 'star_all'
+  | 'star_single'
+  | 'star_double_h'
+  | 'star_double_r'
+  | 'color_all'
+  | 'color_H'
+  | 'color_V'
+  | 'color_S';
+
+const FILTER_LABELS: Record<FilterOption, string> = {
+  all: '全部练习项目',
+  star_all: '寻星练习 (全部模式)',
+  star_single: '寻星 • 单锚点',
+  star_double_h: '寻星 • 水平双锚点',
+  star_double_r: '寻星 • 旋转双锚点',
+  color_all: '色感训练 (全部模式)',
+  color_H: '色感 • 色相 (Hue)',
+  color_V: '色感 • 明度 (Value)',
+  color_S: '色感 • 饱和度 (Sat)',
+};
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // === 1. 数据加载与聚合 ===
@@ -32,12 +57,14 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           isHit: r.isHit,
           level: r.difficultyLevel,
           module: 'star' as const,
+          subMode: r.mode,
         })),
         ...colorData.map((r) => ({
           timestamp: r.timestamp,
           isHit: r.isHit,
           level: r.difficultyLevel,
           module: 'color' as const,
+          subMode: r.mode,
         })),
       ];
       combined.sort((a, b) => a.timestamp - b.timestamp);
@@ -53,7 +80,21 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     };
   }, []);
 
-  // === 2. 统计指标计算 ===
+  // === 2. 筛选过滤处理 ===
+  const filteredRecords = records.filter((r) => {
+    if (selectedFilter === 'all') return true;
+    if (selectedFilter === 'star_all') return r.module === 'star';
+    if (selectedFilter === 'color_all') return r.module === 'color';
+    if (selectedFilter.startsWith('star_')) {
+      return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
+    }
+    if (selectedFilter.startsWith('color_')) {
+      return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
+    }
+    return true;
+  });
+
+  // === 3. 基于筛选结果计算统计指标 ===
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
@@ -63,12 +104,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     today: { total: 0, hits: 0 },
     week: { total: 0, hits: 0 },
     year: { total: 0, hits: 0 },
-    allTime: { total: records.length, hits: records.filter((r) => r.isHit).length },
+    allTime: { total: filteredRecords.length, hits: filteredRecords.filter((r) => r.isHit).length },
   };
 
   const dailyData: Record<string, { total: number; maxLevel: number }> = {};
 
-  for (const r of records) {
+  for (const r of filteredRecords) {
     if (r.timestamp >= startOfToday) {
       stats.today.total++;
       if (r.isHit) stats.today.hits++;
@@ -93,7 +134,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const calcAcc = (hits: number, total: number) =>
     total === 0 ? 0 : Math.round((hits / total) * 100);
 
-  // === 3. 热力图数据 (近 84 天) ===
+  // === 4. 热力图数据 (近 84 天) ===
   const heatmapDays = 84;
   const heatmapData = Array.from({ length: heatmapDays }).map((_, i) => {
     const d = new Date(startOfToday - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000);
@@ -106,15 +147,15 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
   const getHeatmapColor = (count: number) => {
     if (count === 0) return 'bg-slate-100';
-    if (count < 20) return 'bg-indigo-200';
-    if (count < 50) return 'bg-indigo-400';
-    if (count < 100) return 'bg-indigo-600';
+    if (count < 10) return 'bg-indigo-200';
+    if (count < 25) return 'bg-indigo-400';
+    if (count < 50) return 'bg-indigo-600';
     return 'bg-indigo-800';
   };
 
-  // === 4. 折线图渲染 ===
+  // === 5. 折线图渲染 ===
   useEffect(() => {
-    if (loading || records.length === 0) return;
+    if (loading) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -131,7 +172,15 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
     const activeDates = Object.keys(dailyData).sort();
     const recentDates = activeDates.slice(-30);
-    if (recentDates.length === 0) return;
+
+    if (recentDates.length === 0) {
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('当前筛选条件下暂无做答轨迹', width / 2, height / 2);
+      return;
+    }
 
     const levels = recentDates.map((d) => dailyData[d].maxLevel);
     const maxLevel = Math.max(...levels, 35);
@@ -181,7 +230,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     });
     ctx.textAlign = 'center';
     ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
-  }, [loading, dailyData, records]);
+  }, [loading, dailyData, filteredRecords]);
 
   return (
     <div
@@ -192,7 +241,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       }}
     >
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl">
               <BarChart2 className="w-6 h-6 text-indigo-600" />
@@ -202,26 +252,58 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <p className="text-xs text-slate-400">洞察你的训练足迹与能力成长</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
+
+          {/* 右侧下拉筛选与关闭 */}
+          <div className="flex items-center gap-3">
+            {/* 维度 Select 下拉菜单 */}
+            <div className="relative flex items-center">
+              <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
+              <select
+                value={selectedFilter}
+                onChange={(e) =>
+                  setSelectedFilter((e.target as HTMLSelectElement).value as FilterOption)
+                }
+                className="pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm"
+              >
+                <option value="all">全部练习项目</option>
+                <optgroup label="寻星练习">
+                  <option value="star_all">寻星练习 (全部)</option>
+                  <option value="star_single">单锚点模式</option>
+                  <option value="star_double_h">水平双锚点</option>
+                  <option value="star_double_r">旋转双锚点</option>
+                </optgroup>
+                <optgroup label="色感训练">
+                  <option value="color_all">色感训练 (全部)</option>
+                  <option value="color_H">色相 (Hue)</option>
+                  <option value="color_V">明度 (Value)</option>
+                  <option value="color_S">饱和度 (Saturation)</option>
+                </optgroup>
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {loading ? (
           <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
             正在统计海量数据...
           </div>
-        ) : records.length === 0 ? (
+        ) : filteredRecords.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
             <Activity className="w-10 h-10 text-slate-300" />
-            暂无训练数据，赶紧开始你的第一场训练吧！
+            【{FILTER_LABELS[selectedFilter]}】下暂无训练数据，先去练习几道题吧！
           </div>
         ) : (
           <div className="flex flex-col gap-6">
+            {/* 1. 核心指标卡片群 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
@@ -277,6 +359,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* 2. 热力图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-4">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>近 12 周训练热力图</span>
@@ -301,11 +384,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
               </div>
 
+              {/* 3. 折线图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-2">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>能力峰值演进轨迹</span>
                   <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                    取每日达到的最高 Level
+                    每日最高 Level
                   </span>
                 </div>
                 <canvas ref={canvasRef} width={340} height={150} className="w-full mt-2" />

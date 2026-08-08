@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 增加全局统计分析面板功能", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786185343.238552, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为全局统计面板增加子模块维度下拉筛选", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786185533.196848, "duration_ms": 0}}
