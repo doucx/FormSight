@@ -208,17 +208,22 @@ export function TrainingView({
     // 3. 调优阶梯难度 Level
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
+    const delay = settings.starAutoNextDelay ?? settings.autoNextDelay;
+
     // 4. 检查基准测试是否完成 (20 题)
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
-      setShowSummaryModal(true);
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        setShowSummaryModal(true);
+      }, delay);
     } else if (settings.autoNext) {
       // 自动翻页延时
       if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
       autoNextTimerRef.current = window.setTimeout(() => {
         handleNextQuestion();
-      }, settings.autoNextDelay);
+      }, delay);
     }
   };
 
