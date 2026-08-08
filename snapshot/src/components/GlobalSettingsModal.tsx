@@ -72,7 +72,9 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
 
         {/* 数据管理 */}
         <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">数据备份与恢复</div>
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            数据备份与恢复
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"

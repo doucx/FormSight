@@ -309,7 +309,9 @@ export async function saveColorSession(session: ColorSessionData): Promise<void>
   await db.put('color_sessions', session);
 }
 
-export async function getAllColorProfiles(): Promise<Record<'H' | 'S' | 'V', ColorProfileData | null>> {
+export async function getAllColorProfiles(): Promise<
+  Record<'H' | 'S' | 'V', ColorProfileData | null>
+> {
   const db = await getDB();
   const h = (await db.get('color_profiles', 'H')) || null;
   const s = (await db.get('color_profiles', 'S')) || null;

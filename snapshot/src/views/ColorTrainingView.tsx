@@ -10,7 +10,12 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../utils/colorUtils';
-import { type ColorSessionData, type ColorTrialRecord, saveColorSession, saveColorTrialRecord } from '../utils/db';
+import {
+  type ColorSessionData,
+  type ColorTrialRecord,
+  saveColorSession,
+  saveColorTrialRecord,
+} from '../utils/db';
 import type { UserSettings } from '../utils/settings';
 
 interface ColorTrainingViewProps {
@@ -113,7 +118,12 @@ export function ColorTrainingView({
 
     setSessionHistory((prev) => [
       ...prev,
-      { trialIndex: newTotal, level: question.difficultyLevel, isHit: hitResult.isHit, responseTimeMs },
+      {
+        trialIndex: newTotal,
+        level: question.difficultyLevel,
+        isHit: hitResult.isHit,
+        responseTimeMs,
+      },
     ]);
 
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
@@ -191,7 +201,9 @@ export function ColorTrainingView({
   };
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
@@ -212,22 +224,31 @@ export function ColorTrainingView({
             退出训练 (Esc)
           </button>
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {mode === 'H' ? '色相' : mode === 'V' ? '明度' : '饱和度'} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+            {mode === 'H' ? '色相' : mode === 'V' ? '明度' : '饱和度'} |{' '}
+            {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
         </div>
 
         {/* 监控指标 */}
         <div className="flex items-center gap-6 text-sm">
           <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">已练题数</span>
-            <span className="font-black text-gray-800">{totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}</span>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              已练题数
+            </span>
+            <span className="font-black text-gray-800">
+              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
+            </span>
           </div>
           <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">总正确率</span>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              总正确率
+            </span>
             <span className="font-black text-gray-800">{currentAccuracy}%</span>
           </div>
           <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">当前难度</span>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              当前难度
+            </span>
             <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
           </div>
           <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
@@ -263,7 +284,9 @@ export function ColorTrainingView({
               onClick={handleNextQuestion}
               disabled={!showAnswer}
               className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
-                showAnswer ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                showAnswer
+                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
             >
               下一题
