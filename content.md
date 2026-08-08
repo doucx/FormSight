@@ -1,58 +1,40 @@
-# [WIP] feat(ui): 支持点击模糊背景关闭训练总结弹窗并返回主页
+# [COMMIT] feat(ui): 为训练总结弹窗添加背景遮罩点击关闭与快捷键支持
 
 ### 用户需求
-用户希望在完成训练或基准测试后弹出的“训练总结与成果”页面中，点击弹窗四周的模糊背景区域（Overlay）时，能够自动触发关闭弹窗并返回主页的操作，提升交互的便捷性。
+用户要求为刚刚完成的代码修改创建 Git 提交。
 
 ### 评论
-当前其他模态框（如全局设置、偏好设置、弱点分析等）均已支持点击遮罩层关闭，为“训练总结与成果”弹窗补齐这一交互行为能够保持全应用交互体验的一致性。
+本次修改优化了 `SessionSummaryModal` 组件的交互行为，使其行为与其他全局模态框保持一致，支持用户通过点击外部模糊背景或按下 `Escape` 键便捷关闭并返回主页。
 
 ### 目标
-1. 修改 `src/components/SessionSummaryModal.tsx`。
-2. 为外层的固定全屏容器添加点击遮罩层关闭（`onClick` 判断是否点中背景）以及键盘无障碍支持（`Escape` 键）。
-3. 确保点击弹窗卡片内容区域时不会误触发关闭。
+1. 将修改后的文件添加到 Git 暂存区。
+2. 创建内容详尽、符合规范的 Git 提交。
 
 ### 基本原理
-参照同类模态框（如 `GlobalSettingsModal.tsx`），通过判断 `e.target === e.currentTarget` 来安全地捕获对背景遮罩层的点击，同时支持 `Escape` 键快捷关闭，增强可用性与无障碍支持。
+严格遵循 Quipu 规范，在独立的计划中执行 `git_add` 和 `git_commit` 操作。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/session-summary-modal #task/action/implementation #task/state/begin
+#intent/build #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/session-summary-modal #task/action/implementation #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 为 SessionSummaryModal 增加遮罩层点击关闭与快捷键支持
+#### Acts 1: 添加修改到暂存区并创建提交
 
 ~~~~~act
-patch_file
+git_add
 src/components/SessionSummaryModal.tsx
 ~~~~~
-~~~~~typescript.old
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        {/* Header */}
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          onClose();
-        }
-      }}
-      onKeyDown={(e) => {
-        if (e.target === e.currentTarget && (e.key === 'Escape' || e.key === 'Enter')) {
-          onClose();
-        }
-      }}
-    >
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        {/* Header */}
+~~~~~text
+feat(ui): add backdrop click-to-close support to SessionSummaryModal
+
+Enhanced the SessionSummaryModal component to allow users to close the training summary dialog and return to the dashboard by clicking the outer backdrop blur area or pressing the 'Escape' key. This brings consistency to modal interactions across the FormSight platform.
 ~~~~~
 
 ### 下一步建议
-
-我们已经为 `SessionSummaryModal` 添加了点击模糊背景和按下 `Escape` 键关闭并返回主页的功能。如果你对该实现满意，可以生成一个提交计划来固化此次改进。
+- **持续维护**: 检查其他所有弹窗组件，确保它们在移动端和桌面端均具备一致的背景遮罩点击与键盘导航体验。
