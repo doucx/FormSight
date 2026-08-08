@@ -53,6 +53,14 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      onKeyDown={(e) => {
+        if (
+          e.target === e.currentTarget &&
+          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
+        ) {
+          onClose();
+        }
+      }}
     >
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
         {/* Header */}

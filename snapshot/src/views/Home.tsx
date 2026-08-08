@@ -49,6 +49,13 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
         {/* 1. 寻星练习 */}
         <div
           onClick={() => onNavigate('star-hopping')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onNavigate('star-hopping');
+            }
+          }}
+          role="button"
+          tabIndex={0}
           className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
         >
           <div className="space-y-4">
@@ -90,6 +97,13 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
         {/* 2. 色感练习 */}
         <div
           onClick={() => onNavigate('color-sense')}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              onNavigate('color-sense');
+            }
+          }}
+          role="button"
+          tabIndex={0}
           className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
         >
           <div className="space-y-4">
