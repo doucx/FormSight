@@ -72,9 +72,8 @@ export function ColorCanvas({
         {/* Label */}
         <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
 
-        {/* Track */}
+        {/* Track Extended Hit Area */}
         <div
-          ref={isTargetActiveMode ? activeTrackRef : null}
           onClick={isTargetActiveMode ? handleActiveTrackClick : undefined}
           onKeyDown={
             isTargetActiveMode
@@ -95,49 +94,57 @@ export function ColorCanvas({
           tabIndex={isTargetActiveMode && !showAnswer && !disabled ? 0 : undefined}
           onMouseMove={isTargetActiveMode ? handleMouseMove : undefined}
           onMouseLeave={isTargetActiveMode ? handleMouseLeave : undefined}
-          className={`relative flex-1 h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
-            isTargetActiveMode && !showAnswer && !disabled
-              ? 'cursor-none hover:ring-2 ring-indigo-400/60'
-              : 'cursor-default'
+          className={`relative flex-1 py-1.5 -my-1.5 px-3 -mx-3 flex items-center ${
+            isTargetActiveMode && !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
           }`}
-          style={{ background: gradient }}
         >
-          {/* 已知维度标记 (细长黑色竖条) */}
-          {!isTargetActiveMode && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
-              style={{ left: getPercent(val, max) }}
-            />
-          )}
-
-          {/* 悬停准心 (细长空心竖条) */}
-          {isTargetActiveMode && !showAnswer && hoverVal !== null && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
-              style={{ left: getPercent(hoverVal, max) }}
-            />
-          )}
-
-          {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
-          {isTargetActiveMode && showAnswer && (
-            <>
-              {/* 真理目标位 (绿色竖条) */}
+          {/* Inner Track */}
+          <div
+            ref={isTargetActiveMode ? activeTrackRef : null}
+            className={`relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
+              isTargetActiveMode && !showAnswer && !disabled
+                ? 'hover:ring-2 ring-indigo-400/60'
+                : ''
+            }`}
+            style={{ background: gradient }}
+          >
+            {/* 已知维度标记 (细长黑色竖条) */}
+            {!isTargetActiveMode && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
                 style={{ left: getPercent(val, max) }}
               />
+            )}
 
-              {/* 用户点击位 (红色或绿色竖条) */}
-              {userAnswer && (
+            {/* 悬停准心 (细长空心竖条) */}
+            {isTargetActiveMode && !showAnswer && hoverVal !== null && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
+                style={{ left: getPercent(hoverVal, max) }}
+              />
+            )}
+
+            {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
+            {isTargetActiveMode && showAnswer && (
+              <>
+                {/* 真理目标位 (绿色竖条) */}
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } rounded-sm shadow-md z-20`}
-                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
+                  style={{ left: getPercent(val, max) }}
                 />
-              )}
-            </>
-          )}
+
+                {/* 用户点击位 (红色或绿色竖条) */}
+                {userAnswer && (
+                  <div
+                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
+                      userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                    } rounded-sm shadow-md z-20`}
+                    style={{ left: getPercent(userAnswer.userValue, max) }}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* 数值 Label */}
