@@ -1,15 +1,5 @@
-import {
-  Crosshair,
-  Flame,
-  Sliders,
-  Target,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-  X,
-} from 'lucide-preact';
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
 import { useState } from 'preact/hooks';
-import { clearAllData } from '../utils/db';
 import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
 
 const SECTOR_NAMES = [
@@ -61,15 +51,6 @@ export function SettingsModal({
         : [...currentSectors, sectorIdx];
       return { ...prev, manualTargetSectors: updated };
     });
-  };
-
-  const handleClearData = async () => {
-    if (confirm('⚠️ 确定要清空所有训练日志、历史会话和能力看板数据吗？此操作无法撤销！')) {
-      await clearAllData();
-      alert('所有训练数据已清空。');
-      onDataCleared?.();
-      onClose();
-    }
   };
 
   return (
@@ -131,9 +112,14 @@ export function SettingsModal({
           {current.autoNext && (
             <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
               <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
-                <span>切换延迟</span>
+                <span>
+                  {appContext === 'color-sense' ? '色感训练切换延迟' : '寻星练习切换延迟'}
+                </span>
                 <span className="font-mono text-indigo-600 font-bold">
-                  {current.autoNextDelay} ms
+                  {appContext === 'color-sense'
+                    ? (current.colorAutoNextDelay ?? current.autoNextDelay)
+                    : (current.starAutoNextDelay ?? current.autoNextDelay)}{' '}
+                  ms
                 </span>
               </div>
               <input
@@ -141,12 +127,19 @@ export function SettingsModal({
                 min="100"
                 max="2000"
                 step="100"
-                value={current.autoNextDelay}
-                onInput={(e) =>
-                  updateSettings({
-                    autoNextDelay: Number.parseInt((e.target as HTMLInputElement).value, 10),
-                  })
+                value={
+                  appContext === 'color-sense'
+                    ? (current.colorAutoNextDelay ?? current.autoNextDelay)
+                    : (current.starAutoNextDelay ?? current.autoNextDelay)
                 }
+                onInput={(e) => {
+                  const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
+                  if (appContext === 'color-sense') {
+                    updateSettings({ colorAutoNextDelay: val });
+                  } else {
+                    updateSettings({ starAutoNextDelay: val });
+                  }
+                }}
                 className="w-full accent-indigo-600 cursor-pointer"
               />
             </div>
@@ -402,22 +395,6 @@ export function SettingsModal({
               </div>
             </>
           )}
-
-          {/* 危险操作区：删除数据 */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-rose-600">删除所有数据</div>
-              <div className="text-[11px] text-slate-400">清空本地存储的全部练习记录与能力看板</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleClearData}
-              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              清空数据
-            </button>
-          </div>
         </div>
 
         <div className="pt-2">

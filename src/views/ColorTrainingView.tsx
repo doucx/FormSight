@@ -128,15 +128,20 @@ export function ColorTrainingView({
 
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
+    const delay = settings.colorAutoNextDelay ?? settings.autoNextDelay;
+
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
-      setShowSummaryModal(true);
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        setShowSummaryModal(true);
+      }, delay);
     } else if (settings.autoNext) {
       if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
       autoNextTimerRef.current = window.setTimeout(() => {
         handleNextQuestion();
-      }, settings.autoNextDelay);
+      }, delay);
     }
   };
 
