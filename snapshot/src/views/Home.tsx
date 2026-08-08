@@ -47,16 +47,10 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
       {/* 模块选择区 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* 1. 寻星练习 */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('star-hopping')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              onNavigate('star-hopping');
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -92,19 +86,13 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             <span>进入寻星练习看板</span>
             <ArrowRight className="w-4 h-4" />
           </div>
-        </div>
+        </button>
 
         {/* 2. 色感练习 */}
-        <div
+        <button
+          type="button"
           onClick={() => onNavigate('color-sense')}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              onNavigate('color-sense');
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
         >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -143,7 +131,7 @@ export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProp
             <span>进入色感练习看板</span>
             <ArrowRight className="w-4 h-4" />
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );
