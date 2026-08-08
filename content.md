@@ -1,388 +1,423 @@
-好的，我们现在开始进行 **支线二：主页框架重构**。
+现在启动 **支线一：色感识别功能开发**。
 
-我将为你建立全新的 `FormSight` 顶部主页，平滑升级 IndexedDB 数据库结构（为后续色感模块留出独立表），并将数据管理（导入/导出/清空）提升至全局主页设置中，同时为各训练模块增加“返回主页”导航和动态页面 Title 支持。
+我将为你实现 HSV 双向转换与难度递进对齐算法、支持极佳视觉渐变的交互式滑块组件、色感专属能力看板 Dashboard、自适应训练视图 TrainingView，以及 IndexedDB 的保存/查询配套逻辑。
 
-## [WIP] refactor: 重构应用框架与新增 FormSight 主页
+## [WIP] feat: 实现色感识别训练 (HSV) 核心算法与交互界面
 
 ### 用户需求
-1. 重构系统为多模块平台架构，新增 FormSight 主页，作为“寻星练习”与“色感练习”的统一入口。
-2. 将数据导入/导出、清空等全局数据管理功能平滑迁移至主页全局设置中。
-3. 升级 IndexedDB 数据库至 v3，新增色感模块专用的对象存储，确保现有寻星练习数据完全不受影响。
-4. 在寻星练习 Dashboard 中增加“返回主页”按钮，并根据当前模块动态更新浏览器标签页 `document.title`。
+1. 实现 HSV 色彩生成与难度映射算法，针对低饱和度/明度情境下 Hue 识别难度指数级上升的特点进行锥形难度对齐。
+2. 开发具备丰富渐变渲染与精准点击反馈的交互式色彩滑块组件。
+3. 提供色感练习的专属 Dashboard 能力看板（包含色相 Hue、明度 Value、饱和度 Saturation 三个子模式）。
+4. 实现色感练习的 TrainingView 视图，复用 `AdaptiveEngine` 难度演进引擎并保存训练记录。
+5. 整合进 `app.tsx` 建立完整且闭环的色感训练体验。
 
 ### 评论
-将单一应用拓展为多模块训练平台是极其合理的架构升级。通过统一全局导航、状态管理与数据库升级，不仅改善了 UX，也为接下来干净、无耦合地引入“色感识别训练”奠定了坚实的基础。
+通过精准映射色彩空间，并结合自适应步长算法，能大幅提升视觉色彩区分敏感度。复用现有的 `AdaptiveEngine` 与 `SessionSummaryModal`，能保持项目架构的强一致性与简洁性。
 
 ### 目标
-1. 升级 `db.ts` 中的 `DB_VERSION` 至 `3`，新增 `color_sessions`、`color_records` 和 `color_profiles` 三张表。
-2. 创建 `GlobalSettingsModal.tsx`，集中管理数据导入/导出与全局清空逻辑。
-3. 创建 `Home.tsx` 视图，提供精致的视觉入口卡片（寻星练习与色感练习）。
-4. 修改 `Dashboard.tsx`，添加“返回主页”按钮并收拢局部按钮。
-5. 修改 `app.tsx`，实现全局路由 (`home` | `star-hopping` | `color-sense`) 和动态页面标题设置。
+1. 新建 `src/utils/colorUtils.ts`：包含 HSV 与 HEX 转换、基于 Level 映射出题范围与容错阈值的算子，以及 Hit Detection 判定算法。
+2. 扩充 `src/utils/db.ts`：增加色感训练 Record、Session 和 Profile 的数据库存取函数。
+3. 新建 `src/components/ColorCanvas.tsx`：实现包含目标色块预览、渐变色彩轨道以及点击选择/答案对比视效的交互组件。
+4. 新建 `src/views/ColorDashboard.tsx` 与 `src/views/ColorTrainingView.tsx`：构建色感模块的看板与练习逻辑。
+5. 更新 `src/app.tsx`：挂载完整的色感训练组件。
 
 ### 基本原理
-1. **数据库版本迁移策略**：在 IndexedDB 的 `upgrade` 钩子中，仅在 `oldVersion < 3` 时针对新增对象存储做 `createObjectStore` 增量操作，完全不触动旧有的 `sessions`、`records` 和 `user_profiles` 表，实现无损升级。
-2. **两层 View 路由架构**：`app.tsx` 掌控最高层级 `currentApp` 路由 (`home` | `star-hopping` | `color-sense`)，各子应用独立掌控内部视图。这样各模块间互不干扰。
-3. **动态 Title**：使用 Preact 的 `useEffect` 钩子，根据 `currentApp` 的切换同步更改 `document.title`。
+1. **锥形难度对齐算法**：在低 Level 时，限制 Hue 模式在 $S \ge 75, V \ge 75$ 的高鲜艳度区域出题，并给予较大角度容错（如 $\pm 30^\circ$）；随 Level 升高，逐步下探开放低纯度/低明度区域（最低开放至 $S, V \ge 15$），并将容错收紧至 $\pm 4^\circ$。
+2. **渐变轨道生成**：Value 轨道的渐变端点为 `#000000` 至 `hsvToHex(H, 100, 100)`；Saturation 轨道的渐变端点为 `hsvToHex(H, 0, V)` 至 `hsvToHex(H, 100, V)`，保持极佳的视觉感知准确度。
 
 ### 标签
-#intent/architect #intent/build #intent/refine #flow/ready #priority/high #comp/cli #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/homepage-and-db-migration #task/action/refactor #task/state/begin
+#intent/build #flow/ready #priority/high #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-recognition-feature #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级数据库架构 (IndexedDB v3)
+#### Acts 1: 创建色感算子工具集 (colorUtils.ts)
 
-升级 `src/utils/db.ts` 至版本 3，并为“色感练习”定义增量数据类型与 Schema 表。
+新建 `src/utils/colorUtils.ts`，实现 HSV 与 HEX 转换、难度映射出题算子及命中判定。
+
+~~~~~act
+write_file
+src/utils/colorUtils.ts
+~~~~~
+~~~~~typescript
+export type ColorMode = 'H' | 'S' | 'V';
+
+export interface ColorQuestionData {
+  id: string;
+  mode: ColorMode;
+  difficultyLevel: number; // 1..35
+  targetH: number; // 0..359
+  targetS: number; // 0..100
+  targetV: number; // 0..100
+  tolerance: number; // 允许的误差阈值 (角度或百分比)
+}
+
+export interface ColorHitResult {
+  isHit: boolean;
+  userValue: number;
+  targetValue: number;
+  errorValue: number; // 绝对误差
+  tolerance: number;
+}
+
+/**
+ * HSV (0..360, 0..100, 0..100) 转 16 进制 Hex
+ */
+export function hsvToHex(h: number, s: number, v: number): string {
+  const normS = s / 100;
+  const normV = v / 100;
+  const c = normV * normS;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = normV - c;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c; g = x; b = 0;
+  } else if (h >= 60 && h < 120) {
+    r = x; g = c; b = 0;
+  } else if (h >= 120 && h < 180) {
+    r = 0; g = c; b = x;
+  } else if (h >= 180 && h < 240) {
+    r = 0; g = x; b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x; g = 0; b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c; g = 0; b = x;
+  }
+
+  const rHex = Math.round((r + m) * 255).toString(16).padStart(2, '0');
+  const gHex = Math.round((g + m) * 255).toString(16).padStart(2, '0');
+  const bHex = Math.round((b + m) * 255).toString(16).padStart(2, '0');
+
+  return `#${rHex}${gHex}${bHex}`.toUpperCase();
+}
+
+/**
+ * 根据 Level (1..35) 计算允许的容错阈值
+ */
+export function getToleranceForLevel(mode: ColorMode, level: number): number {
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1
+
+  if (mode === 'H') {
+    // Hue 模式: Level 1 容错 ±30°，Level 35 缩紧至 ±4°
+    return Math.max(4, Math.round(30 - t * 26));
+  }
+  // S / V 模式: Level 1 容错 ±15%，Level 35 缩紧至 ±2%
+  return Math.max(2, Math.round(15 - t * 13));
+}
+
+/**
+ * 生成色感练习题目 (包含锥形难度对齐策略)
+ */
+export function generateColorQuestion(mode: ColorMode, level: number): ColorQuestionData {
+  const id = `cq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const tolerance = getToleranceForLevel(mode, level);
+  const clampedLevel = Math.max(1, Math.min(35, level));
+
+  let targetH = Math.floor(Math.random() * 360);
+  let targetS = 100;
+  let targetV = 100;
+
+  if (mode === 'H') {
+    // 低 Level 限制在高鲜艳度区 (S/V 处于 75~100)；高 Level 逐渐下探至低 S/V 区
+    const minSV = Math.max(15, Math.round(75 - ((clampedLevel - 1) / 34) * 60));
+    targetS = Math.floor(Math.random() * (100 - minSV + 1)) + minSV;
+    targetV = Math.floor(Math.random() * (100 - minSV + 1)) + minSV;
+  } else if (mode === 'V') {
+    // 考察 V 时，S 保持在 30 以上防止纯灰无明度变化感
+    targetS = Math.floor(Math.random() * 71) + 30;
+    targetV = Math.floor(Math.random() * 101);
+  } else {
+    // 考察 S 时，V 保持在 30 以上防止纯黑无饱和度感
+    targetV = Math.floor(Math.random() * 71) + 30;
+    targetS = Math.floor(Math.random() * 101);
+  }
+
+  return {
+    id,
+    mode,
+    difficultyLevel: clampedLevel,
+    targetH,
+    targetS,
+    targetV,
+    tolerance,
+  };
+}
+
+/**
+ * 色感答题命中检测
+ */
+export function checkColorHit(
+  mode: ColorMode,
+  userVal: number,
+  question: ColorQuestionData,
+): ColorHitResult {
+  let targetVal = question.targetH;
+  let errorVal = 0;
+
+  if (mode === 'H') {
+    targetVal = question.targetH;
+    // 环形 0..360° 最小角距离
+    const diff = Math.abs(userVal - targetVal);
+    errorVal = Math.min(diff, 360 - diff);
+  } else if (mode === 'V') {
+    targetVal = question.targetV;
+    errorVal = Math.abs(userVal - targetVal);
+  } else {
+    targetVal = question.targetS;
+    errorVal = Math.abs(userVal - targetVal);
+  }
+
+  const isHit = errorVal <= question.tolerance;
+
+  return {
+    isHit,
+    userValue: userVal,
+    targetValue: targetVal,
+    errorValue: Math.round(errorVal * 10) / 10,
+    tolerance: question.tolerance,
+  };
+}
+~~~~~
+
+#### Acts 2: 扩展 IndexedDB 色感存取 API
+
+更新 `src/utils/db.ts` 增加色感专属保存与读取方法。
 
 ~~~~~act
 patch_file
 src/utils/db.ts
 ~~~~~
 ~~~~~typescript.old
-export interface UserProfileData {
-  mode: TrainingMode;
-  currentLevel: number; // 当前维持的难度 Level
-  bestLevel: number; // 历史最高难度 Level
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
-}
-
-interface StarHoppingDBSchema extends DBSchema {
-  sessions: {
-    key: string;
-    value: SessionData;
-  };
-  records: {
-    key: string;
-    value: TrialRecord;
-    indexes: {
-      'by-session': string;
-      'by-mode': string;
-    };
-  };
-  user_profiles: {
-    key: TrainingMode;
-    value: UserProfileData;
-  };
-}
-
-const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 2; // 升级版本号以支撑 Level 难度重构
-
-let dbPromise: Promise<IDBPDatabase<StarHoppingDBSchema>> | null = null;
-
-export function getDB(): Promise<IDBPDatabase<StarHoppingDBSchema>> {
-  if (!dbPromise) {
-    dbPromise = openDB<StarHoppingDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 2) {
-          // 清理旧版本以 px 为单位的数据结构，避免层阶混淆
-          if (db.objectStoreNames.contains('sessions')) {
-            db.deleteObjectStore('sessions');
-          }
-          if (db.objectStoreNames.contains('records')) {
-            db.deleteObjectStore('records');
-          }
-          if (db.objectStoreNames.contains('user_profiles')) {
-            db.deleteObjectStore('user_profiles');
-          }
-        }
-
-        // 1. 会话表
-        if (!db.objectStoreNames.contains('sessions')) {
-          db.createObjectStore('sessions', { keyPath: 'id' });
-        }
-
-        // 2. 试题点击日志表
-        if (!db.objectStoreNames.contains('records')) {
-          const recordStore = db.createObjectStore('records', { keyPath: 'id' });
-          recordStore.createIndex('by-session', 'sessionId');
-          recordStore.createIndex('by-mode', 'mode');
-        }
-
-        // 3. 用户模式能力表
-        if (!db.objectStoreNames.contains('user_profiles')) {
-          db.createObjectStore('user_profiles', { keyPath: 'mode' });
-        }
-      },
-    });
-  }
-  return dbPromise;
+export async function clearAllData(): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  await tx.objectStore('sessions').clear();
+  await tx.objectStore('records').clear();
+  await tx.objectStore('user_profiles').clear();
+  await tx.done;
 }
 ~~~~~
 ~~~~~typescript.new
-export interface UserProfileData {
-  mode: TrainingMode;
-  currentLevel: number; // 当前维持的难度 Level
-  bestLevel: number; // 历史最高难度 Level
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
+// === API 10: 色感训练数据库操作 ===
+export async function saveColorTrialRecord(record: ColorTrialRecord): Promise<void> {
+  const db = await getDB();
+  await db.put('color_records', record);
+  await updateColorProfile(record.mode, record.isHit, record.difficultyLevel);
 }
 
-export interface ColorSessionData {
-  id: string;
-  mode: 'H' | 'S' | 'V';
-  type: 'training' | 'benchmark';
-  startTimestamp: number;
-  endTimestamp?: number;
-  totalTrials: number;
-  hitTrials: number;
-  startLevel: number;
-  endLevel: number;
+export async function saveColorSession(session: ColorSessionData): Promise<void> {
+  const db = await getDB();
+  await db.put('color_sessions', session);
 }
 
-export interface ColorTrialRecord {
-  id: string;
-  sessionId: string;
-  mode: 'H' | 'S' | 'V';
-  timestamp: number;
-  difficultyLevel: number;
-  targetHSV: [number, number, number];
-  userHSV: [number, number, number];
-  isHit: boolean;
-  errorValue: number;
-  responseTimeMs: number;
+export async function getAllColorProfiles(): Promise<Record<'H' | 'S' | 'V', ColorProfileData | null>> {
+  const db = await getDB();
+  const h = (await db.get('color_profiles', 'H')) || null;
+  const s = (await db.get('color_profiles', 'S')) || null;
+  const v = (await db.get('color_profiles', 'V')) || null;
+
+  return { H: h, S: s, V: v };
 }
 
-export interface ColorProfileData {
-  mode: 'H' | 'S' | 'V';
-  currentLevel: number;
-  bestLevel: number;
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
-}
-
-interface FormSightDBSchema extends DBSchema {
-  // === 寻星练习数据表 ===
-  sessions: {
-    key: string;
-    value: SessionData;
-  };
-  records: {
-    key: string;
-    value: TrialRecord;
-    indexes: {
-      'by-session': string;
-      'by-mode': string;
-    };
-  };
-  user_profiles: {
-    key: TrainingMode;
-    value: UserProfileData;
-  };
-
-  // === 色感练习数据表 (v3 新增) ===
-  color_sessions: {
-    key: string;
-    value: ColorSessionData;
-  };
-  color_records: {
-    key: string;
-    value: ColorTrialRecord;
-    indexes: {
-      'by-session': string;
-      'by-mode': string;
-    };
-  };
-  color_profiles: {
-    key: 'H' | 'S' | 'V';
-    value: ColorProfileData;
-  };
-}
-
-const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 3; // v3: 支持色感训练与全局平台
-
-let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
-
-export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
-  if (!dbPromise) {
-    dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 2) {
-          if (db.objectStoreNames.contains('sessions')) db.deleteObjectStore('sessions');
-          if (db.objectStoreNames.contains('records')) db.deleteObjectStore('records');
-          if (db.objectStoreNames.contains('user_profiles')) db.deleteObjectStore('user_profiles');
-        }
-
-        // 1. 寻星练习会话表
-        if (!db.objectStoreNames.contains('sessions')) {
-          db.createObjectStore('sessions', { keyPath: 'id' });
-        }
-
-        // 2. 寻星试题日志表
-        if (!db.objectStoreNames.contains('records')) {
-          const recordStore = db.createObjectStore('records', { keyPath: 'id' });
-          recordStore.createIndex('by-session', 'sessionId');
-          recordStore.createIndex('by-mode', 'mode');
-        }
-
-        // 3. 寻星用户能力表
-        if (!db.objectStoreNames.contains('user_profiles')) {
-          db.createObjectStore('user_profiles', { keyPath: 'mode' });
-        }
-
-        // === v3 新增：色感练习表 ===
-        if (oldVersion < 3) {
-          if (!db.objectStoreNames.contains('color_sessions')) {
-            db.createObjectStore('color_sessions', { keyPath: 'id' });
-          }
-          if (!db.objectStoreNames.contains('color_records')) {
-            const colorRecordStore = db.createObjectStore('color_records', { keyPath: 'id' });
-            colorRecordStore.createIndex('by-session', 'sessionId');
-            colorRecordStore.createIndex('by-mode', 'mode');
-          }
-          if (!db.objectStoreNames.contains('color_profiles')) {
-            db.createObjectStore('color_profiles', { keyPath: 'mode' });
-          }
-        }
-      },
-    });
+export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V'): Promise<ColorTrialRecord[]> {
+  const db = await getDB();
+  if (mode) {
+    return await db.getAllFromIndex('color_records', 'by-mode', mode);
   }
-  return dbPromise;
+  return await db.getAll('color_records');
+}
+
+async function updateColorProfile(
+  mode: 'H' | 'S' | 'V',
+  isHit: boolean,
+  currentLevel: number,
+): Promise<void> {
+  const db = await getDB();
+  const existing = await db.get('color_profiles', mode);
+
+  if (!existing) {
+    const newProfile: ColorProfileData = {
+      mode,
+      currentLevel,
+      bestLevel: currentLevel,
+      totalTrainedCards: 1,
+      totalHits: isHit ? 1 : 0,
+      updatedAt: Date.now(),
+    };
+    await db.put('color_profiles', newProfile);
+  } else {
+    existing.totalTrainedCards += 1;
+    if (isHit) existing.totalHits += 1;
+    existing.currentLevel = currentLevel;
+    if (currentLevel > existing.bestLevel) {
+      existing.bestLevel = currentLevel;
+    }
+    existing.updatedAt = Date.now();
+    await db.put('color_profiles', existing);
+  }
+}
+
+export async function clearAllData(): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(
+    ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
+    'readwrite',
+  );
+  await tx.objectStore('sessions').clear();
+  await tx.objectStore('records').clear();
+  await tx.objectStore('user_profiles').clear();
+  await tx.objectStore('color_sessions').clear();
+  await tx.objectStore('color_records').clear();
+  await tx.objectStore('color_profiles').clear();
+  await tx.done;
 }
 ~~~~~
 
-#### Acts 2: 创建全局设置与数据管理弹窗组件
+#### Acts 3: 新建交互式色彩画布与滑块组件 (ColorCanvas.tsx)
 
-新建 `src/components/GlobalSettingsModal.tsx`，集中管理数据导出、导入与清空功能。
+新建 `src/components/ColorCanvas.tsx`，支持动态色彩预览、滑动交互与答案揭晓动画。
 
 ~~~~~act
 write_file
-src/components/GlobalSettingsModal.tsx
+src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~tsx
-import { Download, Sliders, Trash2, Upload, X } from 'lucide-preact';
 import { useRef } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
 
-interface GlobalSettingsModalProps {
-  onClose: () => void;
-  onDataChanged: () => void;
+interface ColorCanvasProps {
+  question: ColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: ColorHitResult | null;
+  onAnswer: (userVal: number) => void;
+  disabled?: boolean;
 }
 
-export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsModalProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+export function ColorCanvas({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: ColorCanvasProps) {
+  const trackRef = useRef<HTMLDivElement | null>(null);
 
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `formsight_data_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const { mode, targetH, targetS, targetV } = question;
+  const targetHex = hsvToHex(targetH, targetS, targetV);
+
+  // 轨道参数
+  const maxVal = mode === 'H' ? 360 : 100;
+
+  const handleTrackClick = (e: MouseEvent) => {
+    if (disabled || showAnswer || !trackRef.current) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const ratio = clickX / rect.width;
+    const selectedVal = Math.round(ratio * maxVal);
+
+    onAnswer(selectedVal);
   };
 
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        alert('✅ 数据导入成功！');
-        onDataChanged();
-        onClose();
-      } else {
-        alert('❌ 导入失败，数据格式不匹配。');
-      }
+  // 生成轨道 CSS 背景样式
+  const getTrackBackground = () => {
+    if (mode === 'H') {
+      return 'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
     }
+    if (mode === 'V') {
+      const endHex = hsvToHex(targetH, targetS, 100);
+      return `linear-gradient(to right, #000000, ${endHex})`;
+    }
+    // mode === 'S'
+    const startHex = hsvToHex(targetH, 0, targetV);
+    const endHex = hsvToHex(targetH, 100, targetV);
+    return `linear-gradient(to right, ${startHex}, ${endHex})`;
   };
 
-  const handleClearData = async () => {
-    if (confirm('⚠️ 确定要清空 FormSight 所有训练日志、历史会话与能力数据吗？此操作无法撤销！')) {
-      await clearAllData();
-      alert('所有训练数据已清空。');
-      onDataChanged();
-      onClose();
-    }
+  // 角度/百分比位置计算
+  const getThumbPosPercent = (val: number) => {
+    return `${(val / maxVal) * 100}%`;
   };
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sliders className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-800">FormSight 全局设置</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+      {/* 1. 目标色块展示 */}
+      <div className="flex flex-col items-center gap-2">
+        <div
+          className="w-36 h-36 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300 scale-100 hover:scale-105"
+          style={{ backgroundColor: targetHex }}
+        />
+        <div className="font-mono text-xs font-bold text-slate-400">
+          {showAnswer ? targetHex : '???'}
+        </div>
+      </div>
+
+      {/* 2. 当前已知维度展示 */}
+      <div className="w-full grid grid-cols-3 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-center font-mono text-xs">
+        <div>
+          <span className="text-[10px] text-slate-400 block font-sans">色相 (H)</span>
+          <span className={`font-bold ${mode === 'H' && !showAnswer ? 'text-amber-500' : 'text-slate-800'}`}>
+            {mode === 'H' ? (showAnswer ? `${targetH}°` : '?') : `${targetH}°`}
+          </span>
+        </div>
+        <div>
+          <span className="text-[10px] text-slate-400 block font-sans">饱和度 (S)</span>
+          <span className={`font-bold ${mode === 'S' && !showAnswer ? 'text-amber-500' : 'text-slate-800'}`}>
+            {mode === 'S' ? (showAnswer ? `${targetS}%` : '?') : `${targetS}%`}
+          </span>
+        </div>
+        <div>
+          <span className="text-[10px] text-slate-400 block font-sans">明度 (V)</span>
+          <span className={`font-bold ${mode === 'V' && !showAnswer ? 'text-amber-500' : 'text-slate-800'}`}>
+            {mode === 'V' ? (showAnswer ? `${targetV}%` : '?') : `${targetV}%`}
+          </span>
+        </div>
+      </div>
+
+      {/* 3. 滑块点击交互轨道 */}
+      <div className="w-full space-y-2 pt-2">
+        <div className="flex justify-between text-xs font-bold text-slate-500">
+          <span>{mode === 'H' ? '色相选区 (0° ~ 360°)' : mode === 'V' ? '明度选区 (0% ~ 100%)' : '饱和度选区 (0% ~ 100%)'}</span>
+          <span className="text-indigo-600 font-mono">容错: ±{question.tolerance}{mode === 'H' ? '°' : '%'}</span>
         </div>
 
-        {/* 数据管理 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">数据备份与恢复</div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={handleExport}
-              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4 text-indigo-600" />
-              导出全量 JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2"
-            >
-              <Upload className="w-4 h-4 text-indigo-600" />
-              导入 JSON 备份
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-          </div>
+        <div
+          ref={trackRef}
+          onClick={handleTrackClick}
+          className={`relative w-full h-8 rounded-xl shadow-inner border border-slate-200 cursor-pointer transition-all ${
+            disabled || showAnswer ? 'cursor-default opacity-90' : 'hover:ring-2 ring-indigo-400/50'
+          }`}
+          style={{ background: getTrackBackground() }}
+        >
+          {/* 揭晓答案后的标记位 */}
+          {showAnswer && (
+            <>
+              {/* 正确真理标记位 */}
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border-2 border-emerald-500 shadow-md flex items-center justify-center z-10"
+                style={{ left: getThumbPosPercent(mode === 'H' ? targetH : mode === 'V' ? targetV : targetS) }}
+              >
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
+              </div>
 
-          {/* 危险操作 */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-rose-600">删除所有数据</div>
-              <div className="text-[11px] text-slate-400">清空所有模块的本地练习记录</div>
-            </div>
-            <button
-              type="button"
-              onClick={handleClearData}
-              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              清空数据
-            </button>
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
-          >
-            完成
-          </button>
+              {/* 用户点击标记位 (若未完全重合) */}
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border-2 ${
+                    userAnswer.isHit ? 'border-emerald-500' : 'border-rose-500'
+                  } shadow-md flex items-center justify-center z-20`}
+                  style={{ left: getThumbPosPercent(userAnswer.userValue) }}
+                >
+                  <div className={`w-2 h-2 rounded-full ${userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -390,275 +425,77 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
 }
 ~~~~~
 
-#### Acts 3: 创建 FormSight 主页视图 (Home.tsx)
+#### Acts 4: 新建色感练习 Dashboard 页面 (ColorDashboard.tsx)
 
-新建 `src/views/Home.tsx` 页面，展示系统导航卡片（寻星练习、色感练习）。
+新建 `src/views/ColorDashboard.tsx`，展示三个色彩子模式的能力卡片。
 
 ~~~~~act
 write_file
-src/views/Home.tsx
+src/views/ColorDashboard.tsx
 ~~~~~
 ~~~~~tsx
-import { ArrowRight, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
-import { formatTotalTime } from '../utils/db';
+import { Award, Clock, Play, RotateCw, Target, TrendingUp } from 'lucide-preact';
+import type { ColorMode } from '../utils/colorUtils';
+import { type ColorProfileData, formatTotalTime } from '../utils/db';
 
-interface HomeProps {
+interface ColorDashboardProps {
+  profiles: Record<ColorMode, ColorProfileData | null>;
   totalTimeMs: number;
-  onNavigate: (app: 'star-hopping' | 'color-sense') => void;
-  onOpenGlobalSettings: () => void;
+  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
+  onBackToHome: () => void;
 }
 
-export function Home({ totalTimeMs, onNavigate, onOpenGlobalSettings }: HomeProps) {
-  return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
-      {/* 品牌 Header */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-8 py-6 rounded-3xl shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-200">
-            <Sparkles className="w-7 h-7" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              FormSight <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">v0.2.0</span>
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知强化训练系统</p>
-          </div>
-        </div>
+const COLOR_MODES_CONFIG: Array<{
+  id: ColorMode;
+  title: string;
+  subtitle: string;
+  desc: string;
+  badgeColor: string;
+}> = [
+  {
+    id: 'H',
+    title: '1-色相 (Hue)',
+    subtitle: 'Hue Sensing',
+    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
+    badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
+  },
+  {
+    id: 'V',
+    title: '2-明度 (Value)',
+    subtitle: 'Value Contrast',
+    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
+    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  {
+    id: 'S',
+    title: '3-饱和度 (Sat)',
+    subtitle: 'Saturation Perception',
+    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
+    badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  },
+];
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold">
-            <Clock className="w-4 h-4 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-          <button
-            type="button"
-            onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
-            title="全局设置"
-          >
-            <Sliders className="w-4 h-4" />
-            全局设置
-          </button>
-        </div>
-      </div>
-
-      {/* 模块选择区 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* 1. 寻星练习 */}
-        <div
-          onClick={() => onNavigate('star-hopping')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                <Compass className="w-8 h-8" />
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                可练习
-              </span>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">寻星练习 (Star-Hopping)</h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">单锚点</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">水平双锚点</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">旋转双锚点</span>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
-            <span>进入寻星练习看板</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-
-        {/* 2. 色感练习 */}
-        <div
-          onClick={() => onNavigate('color-sense')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                <Palette className="w-8 h-8" />
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                色感核心 (HSV)
-              </span>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">色感训练 (Color Recognition)</h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2 pt-2">
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">1-色相 (Hue)</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">2-明度 (Val)</span>
-              <span className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg">3-饱和度 (Sat)</span>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform">
-            <span>进入色感练习看板</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 4: 调整 Dashboard 添加“返回主页”导航
-
-修改 `src/views/Dashboard.tsx`，在左上角提供“返回主页”按钮，并将原本多余的导出/导入数据按钮调整归纳。
-
-~~~~~act
-patch_file
-src/views/Dashboard.tsx
-~~~~~
-~~~~~typescript.old
-export function Dashboard({
+export function ColorDashboard({
   profiles,
   totalTimeMs,
   onStart,
-  onRefreshProfiles,
-  onOpenSettings,
-  onOpenAnalytics,
-}: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `star_hopping_data_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        alert('✅ 数据导入成功！');
-        onRefreshProfiles();
-      } else {
-        alert('❌ 导入失败，数据格式不匹配。');
-      }
-    }
-  };
-
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-      {/* 极简 Header */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
-          </h1>
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
-            <Clock className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onOpenAnalytics()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="弱点分析"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-600" />
-            弱点分析
-          </button>
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="偏好设置"
-          >
-            <Sliders className="w-4 h-4" />
-            设置
-          </button>
-          <button
-            type="button"
-            onClick={handleExport}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
-            title="导出数据"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
-            title="导入数据"
-          >
-            <Upload className="w-4 h-4" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportFile}
-            className="hidden"
-          />
-        </div>
-      </div>
-~~~~~
-~~~~~typescript.new
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  totalTimeMs: number;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-  onBackToHome?: () => void;
-}
-
-export function Dashboard({
-  profiles,
-  totalTimeMs,
-  onStart,
-  onOpenSettings,
-  onOpenAnalytics,
   onBackToHome,
-}: DashboardProps) {
+}: ColorDashboardProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header */}
       <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
         <div className="flex items-center gap-4">
-          {onBackToHome && (
-            <button
-              type="button"
-              onClick={onBackToHome}
-              className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
-            >
-              ← 返回主页
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            ← 返回主页
+          </button>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
+              色感训练 <span className="text-indigo-600 font-light text-xl">Color Recognition</span>
             </h1>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
@@ -666,135 +503,391 @@ export function Dashboard({
             </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onOpenAnalytics()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="弱点分析"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-600" />
-            弱点分析
-          </button>
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="偏好设置"
-          >
-            <Sliders className="w-4 h-4" />
-            偏好设置
-          </button>
-        </div>
       </div>
+
+      {/* 3 个色彩子模式卡片 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {COLOR_MODES_CONFIG.map((config) => {
+          const profile = profiles[config.id];
+          const totalCards = profile?.totalTrainedCards || 0;
+          const accuracy =
+            totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+          const currentLevel = profile?.currentLevel || 5;
+
+          return (
+            <div
+              key={config.id}
+              className="group bg-white border border-gray-200/80 hover:border-indigo-300 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <RotateCw className="w-6 h-6" />
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}>
+                    {config.subtitle}
+                  </span>
+                </div>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
+                <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{config.desc}</p>
+
+                {/* 核心指标 */}
+                <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
+                      <TrendingUp className="w-3 h-3 text-indigo-500" />
+                      能力层阶
+                    </div>
+                    <div className="text-xl font-black text-slate-800">Level {currentLevel}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
+                      <Award className="w-3 h-3 text-emerald-500" />
+                      正确率
+                    </div>
+                    <div className="text-xl font-black text-slate-800">{accuracy}%</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 动作按钮区 */}
+              <div className="flex flex-col gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => onStart(config.id, 'training')}
+                  className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                >
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  开始自适应训练
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onStart(config.id, 'benchmark')}
+                  className="w-full py-2.5 px-4 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Target className="w-3.5 h-3.5 text-gray-500" />
+                  20 题基准测试
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 ~~~~~
 
-#### Acts 5: 修改系统主入口 (app.tsx)
+#### Acts 5: 新建色感练习 TrainingView 页面 (ColorTrainingView.tsx)
 
-更新 `src/app.tsx` 实现顶级路由、`GlobalSettingsModal` 整合与动态 `document.title` 控制。
+新建 `src/views/ColorTrainingView.tsx`，管理题目演进与答题结算。
+
+~~~~~act
+write_file
+src/views/ColorTrainingView.tsx
+~~~~~
+~~~~~tsx
+import { ArrowLeft, ChevronRight, Clock } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { ColorCanvas } from '../components/ColorCanvas';
+import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import {
+  type ColorHitResult,
+  type ColorMode,
+  type ColorQuestionData,
+  checkColorHit,
+  generateColorQuestion,
+} from '../utils/colorUtils';
+import { type ColorSessionData, type ColorTrialRecord, saveColorSession, saveColorTrialRecord } from '../utils/db';
+import type { UserSettings } from '../utils/settings';
+
+interface ColorTrainingViewProps {
+  mode: ColorMode;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  settings: UserSettings;
+  onExit: () => void;
+}
+
+export function ColorTrainingView({
+  mode,
+  sessionType,
+  initialLevel,
+  settings,
+  onExit,
+}: ColorTrainingViewProps) {
+  const sessionIdRef = useRef<string>(`csession_${Date.now()}`);
+  const startTimeRef = useRef<number>(Date.now());
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(
+      initialLevel,
+      settings.stepGranularity === 'fine',
+      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
+      settings.targetAccuracy,
+      settings.blockSize,
+    ),
+  );
+  const autoNextTimerRef = useRef<number | null>(null);
+
+  const [question, setQuestion] = useState<ColorQuestionData>(() =>
+    generateColorQuestion(mode, initialLevel),
+  );
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [userAnswer, setUserAnswer] = useState<ColorHitResult | null>(null);
+
+  const [totalTrials, setTotalTrials] = useState<number>(0);
+  const [hitTrials, setHitTrials] = useState<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+
+  // 计时器逻辑
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (showSummaryModal || isFinished) return;
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showSummaryModal, isFinished]);
+
+  // 键盘响应
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (showAnswer && !isFinished) handleNextQuestion();
+      } else if (e.code === 'Escape') {
+        e.preventDefault();
+        handleFinishSession();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, isFinished]);
+
+  // 作答响应
+  const handleAnswer = async (userVal: number) => {
+    const responseTimeMs = Date.now() - questionStartTime;
+    const hitResult = checkColorHit(mode, userVal, question);
+
+    setUserAnswer(hitResult);
+    setShowAnswer(true);
+
+    const newTotal = totalTrials + 1;
+    const newHits = hitTrials + (hitResult.isHit ? 1 : 0);
+    setTotalTrials(newTotal);
+    setHitTrials(newHits);
+
+    // 数据库存盘
+    const record: ColorTrialRecord = {
+      id: `crec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      sessionId: sessionIdRef.current,
+      mode,
+      timestamp: Date.now(),
+      difficultyLevel: question.difficultyLevel,
+      targetHSV: [question.targetH, question.targetS, question.targetV],
+      userHSV: [
+        mode === 'H' ? userVal : question.targetH,
+        mode === 'S' ? userVal : question.targetS,
+        mode === 'V' ? userVal : question.targetV,
+      ],
+      isHit: hitResult.isHit,
+      errorValue: hitResult.errorValue,
+      responseTimeMs,
+    };
+    await saveColorTrialRecord(record);
+
+    setSessionHistory((prev) => [
+      ...prev,
+      { trialIndex: newTotal, level: question.difficultyLevel, isHit: hitResult.isHit, responseTimeMs },
+    ]);
+
+    adaptiveEngineRef.current.recordResult(hitResult.isHit);
+
+    if (sessionType === 'benchmark' && newTotal >= 20) {
+      setIsFinished(true);
+      await saveCurrentSession(newTotal, newHits, true);
+      setShowSummaryModal(true);
+    } else if (settings.autoNext) {
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        handleNextQuestion();
+      }, settings.autoNextDelay);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
+
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setShowAnswer(false);
+    setUserAnswer(null);
+    setQuestion(generateColorQuestion(mode, nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
+    const sessionData: ColorSessionData = {
+      id: sessionIdRef.current,
+      mode,
+      type: sessionType,
+      startTimestamp: startTimeRef.current,
+      endTimestamp: ended ? Date.now() : undefined,
+      totalTrials: trials,
+      hitTrials: hits,
+      startLevel: initialLevel,
+      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
+    };
+    await saveColorSession(sessionData);
+  };
+
+  const handleRequestFinish = async () => {
+    if (sessionHistory.length > 0 && !showSummaryModal) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      setShowSummaryModal(true);
+    } else {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onExit();
+    }
+  };
+
+  const handleFinishSession = async () => {
+    await saveCurrentSession(totalTrials, hitTrials, true);
+    onExit();
+  };
+
+  const handleRestartSession = () => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    sessionIdRef.current = `csession_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateColorQuestion(mode, nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  const currentAccuracy = totalTrials > 0 ? Math.round((hitTrials / totalTrials) * 100) : 0;
+
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
+      {/* 顶栏 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestFinish}
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练 (Esc)
+          </button>
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
+            {mode === 'H' ? '色相' : mode === 'V' ? '明度' : '饱和度'} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+          </span>
+        </div>
+
+        {/* 监控指标 */}
+        <div className="flex items-center gap-6 text-sm">
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">已练题数</span>
+            <span className="font-black text-gray-800">{totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}</span>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">总正确率</span>
+            <span className="font-black text-gray-800">{currentAccuracy}%</span>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">当前难度</span>
+            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* 色彩交互 Canvas */}
+      <ColorCanvas
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={handleAnswer}
+        disabled={isFinished}
+      />
+
+      {/* 底部控制栏 */}
+      {!settings.autoNext && (
+        <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
+          {isFinished ? (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+            >
+              完成并查看总结
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNextQuestion}
+              disabled={!showAnswer}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+                showAnswer ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              下一题
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 练习结算弹窗 */}
+      {showSummaryModal && (
+        <SessionSummaryModal
+          mode="single"
+          sessionType={sessionType}
+          elapsedSeconds={elapsedSeconds}
+          history={sessionHistory}
+          onClose={handleFinishSession}
+          onRestart={handleRestartSession}
+        />
+      )}
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 6: 整合至入口逻辑 (app.tsx)
+
+修改 `src/app.tsx`，将色感模块视图打通。
 
 ~~~~~act
 patch_file
 src/app.tsx
 ~~~~~
 ~~~~~typescript.old
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { SettingsModal } from './components/SettingsModal';
-import type { TrainingMode } from './types';
-import { type UserProfileData, getAllUserProfiles, getTotalTrainingTimeMs } from './utils/db';
-import { type UserSettings, loadSettings } from './utils/settings';
-import { Dashboard } from './views/Dashboard';
-import { TrainingView } from './views/TrainingView';
-
-export function App() {
-  const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
-  const [activeMode, setActiveMode] = useState<TrainingMode>('single');
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
-  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-
-  const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
-    single: null,
-    double_h: null,
-    double_r: null,
-  });
-  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
-
-  // 刷新用户能力度数与总练习时长
-  const refreshProfiles = useCallback(async () => {
-    const data = await getAllUserProfiles();
-    const timeMs = await getTotalTrainingTimeMs();
-    setProfiles(data);
-    setTotalTimeMs(timeMs);
-  }, []);
-
-  useEffect(() => {
-    refreshProfiles();
-  }, [refreshProfiles]);
-
-  // 打开弱点分析
-  const handleOpenAnalytics = (mode?: TrainingMode) => {
-    setAnalyticsMode(mode || 'all');
-    setIsAnalyticsOpen(true);
-  };
-
-  // 启动训练
-  const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
-    setActiveMode(mode);
-    setSessionType(type);
-    setCurrentView('training');
-  };
-
-  // 退出训练返回主页
-  const handleExitTraining = () => {
-    setCurrentView('dashboard');
-    refreshProfiles();
-  };
-
-  const activeLevel = profiles[activeMode]?.currentLevel || 5;
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
-      {currentView === 'dashboard' ? (
-        <Dashboard
-          profiles={profiles}
-          totalTimeMs={totalTimeMs}
-          onStart={handleStartTraining}
-          onRefreshProfiles={refreshProfiles}
-          onOpenSettings={() => setIsSettingsOpen(true)}
-          onOpenAnalytics={handleOpenAnalytics}
-        />
-      ) : (
-        <TrainingView
-          mode={activeMode}
-          sessionType={sessionType}
-          initialLevel={activeLevel}
-          settings={settings}
-          onExit={handleExitTraining}
-        />
-      )}
-
-      {isSettingsOpen && (
-        <SettingsModal
-          settings={settings}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={(newSettings) => setSettings(newSettings)}
-          onDataCleared={refreshProfiles}
-        />
-      )}
-
-      {isAnalyticsOpen && (
-        <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
-      )}
-    </div>
-  );
-}
-~~~~~
-~~~~~typescript.new
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { AnalyticsModal } from './components/AnalyticsModal';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
@@ -945,7 +1038,185 @@ export function App() {
   );
 }
 ~~~~~
+~~~~~typescript.new
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { AnalyticsModal } from './components/AnalyticsModal';
+import { GlobalSettingsModal } from './components/GlobalSettingsModal';
+import { SettingsModal } from './components/SettingsModal';
+import type { TrainingMode } from './types';
+import type { ColorMode } from './utils/colorUtils';
+import {
+  type ColorProfileData,
+  type UserProfileData,
+  getAllColorProfiles,
+  getAllUserProfiles,
+  getTotalTrainingTimeMs,
+} from './utils/db';
+import { type UserSettings, loadSettings } from './utils/settings';
+import { ColorDashboard } from './views/ColorDashboard';
+import { ColorTrainingView } from './views/ColorTrainingView';
+import { Dashboard } from './views/Dashboard';
+import { Home } from './views/Home';
+import { TrainingView } from './views/TrainingView';
+
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense';
+
+export function App() {
+  const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
+
+  // 寻星状态
+  const [activeMode, setActiveMode] = useState<TrainingMode>('single');
+  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
+
+  // 色感状态
+  const [activeColorMode, setActiveColorMode] = useState<ColorMode>('H');
+  const [colorSessionType, setColorSessionType] = useState<'training' | 'benchmark'>('training');
+
+  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
+  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+
+  const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
+    single: null,
+    double_h: null,
+    double_r: null,
+  });
+  const [colorProfiles, setColorProfiles] = useState<Record<ColorMode, ColorProfileData | null>>({
+    H: null,
+    S: null,
+    V: null,
+  });
+  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+
+  // 刷新用户能力看板与总时间
+  const refreshProfiles = useCallback(async () => {
+    const data = await getAllUserProfiles();
+    const cData = await getAllColorProfiles();
+    const timeMs = await getTotalTrainingTimeMs();
+    setProfiles(data);
+    setColorProfiles(cData);
+    setTotalTimeMs(timeMs);
+  }, []);
+
+  useEffect(() => {
+    refreshProfiles();
+  }, [refreshProfiles]);
+
+  // 动态同步 Title
+  useEffect(() => {
+    if (currentApp === 'home') {
+      document.title = 'FormSight - 造型构图与色彩感知训练系统';
+    } else if (currentApp === 'star-hopping') {
+      document.title = '寻星练习 (Star-Hopping) - FormSight';
+    } else if (currentApp === 'color-sense') {
+      document.title = '色感训练 (Color Recognition) - FormSight';
+    }
+  }, [currentApp]);
+
+  const handleOpenAnalytics = (mode?: TrainingMode) => {
+    setAnalyticsMode(mode || 'all');
+    setIsAnalyticsOpen(true);
+  };
+
+  const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
+    setActiveMode(mode);
+    setSessionType(type);
+    setCurrentView('training');
+  };
+
+  const handleStartColorTraining = (mode: ColorMode, type: 'training' | 'benchmark') => {
+    setActiveColorMode(mode);
+    setColorSessionType(type);
+    setCurrentView('training');
+  };
+
+  const handleExitTraining = () => {
+    setCurrentView('dashboard');
+    refreshProfiles();
+  };
+
+  const activeLevel = profiles[activeMode]?.currentLevel || 5;
+  const activeColorLevel = colorProfiles[activeColorMode]?.currentLevel || 5;
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
+      {currentApp === 'home' && (
+        <Home
+          totalTimeMs={totalTimeMs}
+          onNavigate={(app) => {
+            setCurrentApp(app);
+            setCurrentView('dashboard');
+          }}
+          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+        />
+      )}
+
+      {currentApp === 'star-hopping' &&
+        (currentView === 'dashboard' ? (
+          <Dashboard
+            profiles={profiles}
+            totalTimeMs={totalTimeMs}
+            onStart={handleStartTraining}
+            onRefreshProfiles={refreshProfiles}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenAnalytics={handleOpenAnalytics}
+            onBackToHome={() => setCurrentApp('home')}
+          />
+        ) : (
+          <TrainingView
+            mode={activeMode}
+            sessionType={sessionType}
+            initialLevel={activeLevel}
+            settings={settings}
+            onExit={handleExitTraining}
+          />
+        ))}
+
+      {currentApp === 'color-sense' &&
+        (currentView === 'dashboard' ? (
+          <ColorDashboard
+            profiles={colorProfiles}
+            totalTimeMs={totalTimeMs}
+            onStart={handleStartColorTraining}
+            onBackToHome={() => setCurrentApp('home')}
+          />
+        ) : (
+          <ColorTrainingView
+            mode={activeColorMode}
+            sessionType={colorSessionType}
+            initialLevel={activeColorLevel}
+            settings={settings}
+            onExit={handleExitTraining}
+          />
+        ))}
+
+      {isGlobalSettingsOpen && (
+        <GlobalSettingsModal
+          onClose={() => setIsGlobalSettingsOpen(false)}
+          onDataChanged={refreshProfiles}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          settings={settings}
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={(newSettings) => setSettings(newSettings)}
+          onDataCleared={refreshProfiles}
+        />
+      )}
+
+      {isAnalyticsOpen && (
+        <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
+      )}
+    </div>
+  );
+}
+~~~~~
 
 ### 下一步建议
-1. **测试框架与数据平滑性**：请在浏览器中验证主页效果、标题切换、备份/清空数据功能，以及从寻星练习返回主页的流畅度。
-2. **启动支线一 (色感识别功能开发)**：接下来我们可以开始构建 `colorUtils.ts` (HSV 难度映射与目标色生成) 以及 `ColorDashboard` / `ColorTrainingView` 组件。
+1. **测试色感功能**：请测试主页“色感训练”入口，验证 Hue、Value 和 Saturation 三个子模式的生成、滑动点击交互、答案揭晓以及能力层阶上升/下降。
+2. **构建色感弱点分析 (Optional)**：可以为色感模块也接入类似的极角/明暗区间弱点分析图表。

@@ -297,11 +297,76 @@ export async function getTotalTrainingTimeMs(): Promise<number> {
 }
 
 // === API 9: 清空所有本地数据 ===
+// === API 10: 色感训练数据库操作 ===
+export async function saveColorTrialRecord(record: ColorTrialRecord): Promise<void> {
+  const db = await getDB();
+  await db.put('color_records', record);
+  await updateColorProfile(record.mode, record.isHit, record.difficultyLevel);
+}
+
+export async function saveColorSession(session: ColorSessionData): Promise<void> {
+  const db = await getDB();
+  await db.put('color_sessions', session);
+}
+
+export async function getAllColorProfiles(): Promise<Record<'H' | 'S' | 'V', ColorProfileData | null>> {
+  const db = await getDB();
+  const h = (await db.get('color_profiles', 'H')) || null;
+  const s = (await db.get('color_profiles', 'S')) || null;
+  const v = (await db.get('color_profiles', 'V')) || null;
+
+  return { H: h, S: s, V: v };
+}
+
+export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V'): Promise<ColorTrialRecord[]> {
+  const db = await getDB();
+  if (mode) {
+    return await db.getAllFromIndex('color_records', 'by-mode', mode);
+  }
+  return await db.getAll('color_records');
+}
+
+async function updateColorProfile(
+  mode: 'H' | 'S' | 'V',
+  isHit: boolean,
+  currentLevel: number,
+): Promise<void> {
+  const db = await getDB();
+  const existing = await db.get('color_profiles', mode);
+
+  if (!existing) {
+    const newProfile: ColorProfileData = {
+      mode,
+      currentLevel,
+      bestLevel: currentLevel,
+      totalTrainedCards: 1,
+      totalHits: isHit ? 1 : 0,
+      updatedAt: Date.now(),
+    };
+    await db.put('color_profiles', newProfile);
+  } else {
+    existing.totalTrainedCards += 1;
+    if (isHit) existing.totalHits += 1;
+    existing.currentLevel = currentLevel;
+    if (currentLevel > existing.bestLevel) {
+      existing.bestLevel = currentLevel;
+    }
+    existing.updatedAt = Date.now();
+    await db.put('color_profiles', existing);
+  }
+}
+
 export async function clearAllData(): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  const tx = db.transaction(
+    ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
+    'readwrite',
+  );
   await tx.objectStore('sessions').clear();
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
+  await tx.objectStore('color_sessions').clear();
+  await tx.objectStore('color_records').clear();
+  await tx.objectStore('color_profiles').clear();
   await tx.done;
 }

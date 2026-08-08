@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构应用框架与新增 FormSight 主页", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786180129.1922863, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现色感识别训练 (HSV) 核心算法与交互界面", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786180454.9094057, "duration_ms": 0}}
