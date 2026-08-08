@@ -59,53 +59,46 @@ const MODES_CONFIG: Array<{
   },
 ];
 
+interface DashboardProps {
+  profiles: Record<TrainingMode, UserProfileData | null>;
+  totalTimeMs: number;
+  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
+  onRefreshProfiles: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics: (mode?: TrainingMode) => void;
+  onBackToHome?: () => void;
+}
+
 export function Dashboard({
   profiles,
   totalTimeMs,
   onStart,
-  onRefreshProfiles,
   onOpenSettings,
   onOpenAnalytics,
+  onBackToHome,
 }: DashboardProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `star_hopping_data_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        alert('✅ 数据导入成功！');
-        onRefreshProfiles();
-      } else {
-        alert('❌ 导入失败，数据格式不匹配。');
-      }
-    }
-  };
-
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-      {/* 极简 Header */}
+      {/* Header */}
       <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
-          </h1>
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
-            <Clock className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
+        <div className="flex items-center gap-4">
+          {onBackToHome && (
+            <button
+              type="button"
+              onClick={onBackToHome}
+              className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              ← 返回主页
+            </button>
+          )}
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
+            </h1>
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
+              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{formatTotalTime(totalTimeMs)}</span>
+            </div>
           </div>
         </div>
 
@@ -126,31 +119,8 @@ export function Dashboard({
             title="偏好设置"
           >
             <Sliders className="w-4 h-4" />
-            设置
+            偏好设置
           </button>
-          <button
-            type="button"
-            onClick={handleExport}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
-            title="导出数据"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all"
-            title="导入数据"
-          >
-            <Upload className="w-4 h-4" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportFile}
-            className="hidden"
-          />
         </div>
       </div>
 
