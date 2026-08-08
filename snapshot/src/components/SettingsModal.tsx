@@ -1,12 +1,4 @@
-import {
-  Crosshair,
-  Flame,
-  Sliders,
-  Target,
-  ToggleLeft,
-  ToggleRight,
-  X,
-} from 'lucide-preact';
+import { Crosshair, Flame, Sliders, Target, ToggleLeft, ToggleRight, X } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { type TargetingMode, type UserSettings, saveSettings } from '../utils/settings';
 
@@ -403,7 +395,6 @@ export function SettingsModal({
               </div>
             </>
           )}
-
         </div>
 
         <div className="pt-2">
