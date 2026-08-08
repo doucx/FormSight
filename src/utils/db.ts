@@ -22,7 +22,42 @@ export interface UserProfileData {
   updatedAt: number;
 }
 
-interface StarHoppingDBSchema extends DBSchema {
+export interface ColorSessionData {
+  id: string;
+  mode: 'H' | 'S' | 'V';
+  type: 'training' | 'benchmark';
+  startTimestamp: number;
+  endTimestamp?: number;
+  totalTrials: number;
+  hitTrials: number;
+  startLevel: number;
+  endLevel: number;
+}
+
+export interface ColorTrialRecord {
+  id: string;
+  sessionId: string;
+  mode: 'H' | 'S' | 'V';
+  timestamp: number;
+  difficultyLevel: number;
+  targetHSV: [number, number, number];
+  userHSV: [number, number, number];
+  isHit: boolean;
+  errorValue: number;
+  responseTimeMs: number;
+}
+
+export interface ColorProfileData {
+  mode: 'H' | 'S' | 'V';
+  currentLevel: number;
+  bestLevel: number;
+  totalTrainedCards: number;
+  totalHits: number;
+  updatedAt: number;
+}
+
+interface FormSightDBSchema extends DBSchema {
+  // === 寻星练习数据表 ===
   sessions: {
     key: string;
     value: SessionData;
@@ -39,45 +74,71 @@ interface StarHoppingDBSchema extends DBSchema {
     key: TrainingMode;
     value: UserProfileData;
   };
+
+  // === 色感练习数据表 (v3 新增) ===
+  color_sessions: {
+    key: string;
+    value: ColorSessionData;
+  };
+  color_records: {
+    key: string;
+    value: ColorTrialRecord;
+    indexes: {
+      'by-session': string;
+      'by-mode': string;
+    };
+  };
+  color_profiles: {
+    key: 'H' | 'S' | 'V';
+    value: ColorProfileData;
+  };
 }
 
 const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 2; // 升级版本号以支撑 Level 难度重构
+const DB_VERSION = 3; // v3: 支持色感训练与全局平台
 
-let dbPromise: Promise<IDBPDatabase<StarHoppingDBSchema>> | null = null;
+let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
-export function getDB(): Promise<IDBPDatabase<StarHoppingDBSchema>> {
+export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
-    dbPromise = openDB<StarHoppingDBSchema>(DB_NAME, DB_VERSION, {
+    dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion) {
         if (oldVersion < 2) {
-          // 清理旧版本以 px 为单位的数据结构，避免层阶混淆
-          if (db.objectStoreNames.contains('sessions')) {
-            db.deleteObjectStore('sessions');
-          }
-          if (db.objectStoreNames.contains('records')) {
-            db.deleteObjectStore('records');
-          }
-          if (db.objectStoreNames.contains('user_profiles')) {
-            db.deleteObjectStore('user_profiles');
-          }
+          if (db.objectStoreNames.contains('sessions')) db.deleteObjectStore('sessions');
+          if (db.objectStoreNames.contains('records')) db.deleteObjectStore('records');
+          if (db.objectStoreNames.contains('user_profiles')) db.deleteObjectStore('user_profiles');
         }
 
-        // 1. 会话表
+        // 1. 寻星练习会话表
         if (!db.objectStoreNames.contains('sessions')) {
           db.createObjectStore('sessions', { keyPath: 'id' });
         }
 
-        // 2. 试题点击日志表
+        // 2. 寻星试题日志表
         if (!db.objectStoreNames.contains('records')) {
           const recordStore = db.createObjectStore('records', { keyPath: 'id' });
           recordStore.createIndex('by-session', 'sessionId');
           recordStore.createIndex('by-mode', 'mode');
         }
 
-        // 3. 用户模式能力表
+        // 3. 寻星用户能力表
         if (!db.objectStoreNames.contains('user_profiles')) {
           db.createObjectStore('user_profiles', { keyPath: 'mode' });
+        }
+
+        // === v3 新增：色感练习表 ===
+        if (oldVersion < 3) {
+          if (!db.objectStoreNames.contains('color_sessions')) {
+            db.createObjectStore('color_sessions', { keyPath: 'id' });
+          }
+          if (!db.objectStoreNames.contains('color_records')) {
+            const colorRecordStore = db.createObjectStore('color_records', { keyPath: 'id' });
+            colorRecordStore.createIndex('by-session', 'sessionId');
+            colorRecordStore.createIndex('by-mode', 'mode');
+          }
+          if (!db.objectStoreNames.contains('color_profiles')) {
+            db.createObjectStore('color_profiles', { keyPath: 'mode' });
+          }
         }
       },
     });
@@ -236,11 +297,76 @@ export async function getTotalTrainingTimeMs(): Promise<number> {
 }
 
 // === API 9: 清空所有本地数据 ===
+// === API 10: 色感训练数据库操作 ===
+export async function saveColorTrialRecord(record: ColorTrialRecord): Promise<void> {
+  const db = await getDB();
+  await db.put('color_records', record);
+  await updateColorProfile(record.mode, record.isHit, record.difficultyLevel);
+}
+
+export async function saveColorSession(session: ColorSessionData): Promise<void> {
+  const db = await getDB();
+  await db.put('color_sessions', session);
+}
+
+export async function getAllColorProfiles(): Promise<Record<'H' | 'S' | 'V', ColorProfileData | null>> {
+  const db = await getDB();
+  const h = (await db.get('color_profiles', 'H')) || null;
+  const s = (await db.get('color_profiles', 'S')) || null;
+  const v = (await db.get('color_profiles', 'V')) || null;
+
+  return { H: h, S: s, V: v };
+}
+
+export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V'): Promise<ColorTrialRecord[]> {
+  const db = await getDB();
+  if (mode) {
+    return await db.getAllFromIndex('color_records', 'by-mode', mode);
+  }
+  return await db.getAll('color_records');
+}
+
+async function updateColorProfile(
+  mode: 'H' | 'S' | 'V',
+  isHit: boolean,
+  currentLevel: number,
+): Promise<void> {
+  const db = await getDB();
+  const existing = await db.get('color_profiles', mode);
+
+  if (!existing) {
+    const newProfile: ColorProfileData = {
+      mode,
+      currentLevel,
+      bestLevel: currentLevel,
+      totalTrainedCards: 1,
+      totalHits: isHit ? 1 : 0,
+      updatedAt: Date.now(),
+    };
+    await db.put('color_profiles', newProfile);
+  } else {
+    existing.totalTrainedCards += 1;
+    if (isHit) existing.totalHits += 1;
+    existing.currentLevel = currentLevel;
+    if (currentLevel > existing.bestLevel) {
+      existing.bestLevel = currentLevel;
+    }
+    existing.updatedAt = Date.now();
+    await db.put('color_profiles', existing);
+  }
+}
+
 export async function clearAllData(): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  const tx = db.transaction(
+    ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
+    'readwrite',
+  );
   await tx.objectStore('sessions').clear();
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
+  await tx.objectStore('color_sessions').clear();
+  await tx.objectStore('color_records').clear();
+  await tx.objectStore('color_profiles').clear();
   await tx.done;
 }

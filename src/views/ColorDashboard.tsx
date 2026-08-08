@@ -1,99 +1,65 @@
-import {
-  Award,
-  BarChart2,
-  Clock,
-  type Compass,
-  Crosshair,
-  Download,
-  Play,
-  RotateCw,
-  Sliders,
-  Target,
-  TrendingUp,
-  Upload,
-} from 'lucide-preact';
-import { useRef } from 'preact/hooks';
-import type { TrainingMode } from '../types';
-import { type UserProfileData, exportAllData, formatTotalTime, importAllData } from '../utils/db';
+import { Award, Clock, Play, RotateCw, Target, TrendingUp } from 'lucide-preact';
+import type { ColorMode } from '../utils/colorUtils';
+import { type ColorProfileData, formatTotalTime } from '../utils/db';
 
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
+interface ColorDashboardProps {
+  profiles: Record<ColorMode, ColorProfileData | null>;
   totalTimeMs: number;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
+  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
+  onBackToHome: () => void;
 }
 
-const MODES_CONFIG: Array<{
-  id: TrainingMode;
+const COLOR_MODES_CONFIG: Array<{
+  id: ColorMode;
   title: string;
   subtitle: string;
   desc: string;
-  icon: typeof Compass;
   badgeColor: string;
 }> = [
   {
-    id: 'single',
-    title: '单锚点模式',
-    subtitle: 'Single Anchor',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    icon: Target,
-    badgeColor: 'bg-blue-50 text-blue-700 border-blue-200',
+    id: 'H',
+    title: '1-色相 (Hue)',
+    subtitle: 'Hue Sensing',
+    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
+    badgeColor: 'bg-rose-50 text-rose-700 border-rose-200',
   },
   {
-    id: 'double_h',
-    title: '水平双锚点',
-    subtitle: 'Double Horiz',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    icon: Crosshair,
+    id: 'V',
+    title: '2-明度 (Value)',
+    subtitle: 'Value Contrast',
+    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
+    badgeColor: 'bg-amber-50 text-amber-700 border-amber-200',
+  },
+  {
+    id: 'S',
+    title: '3-饱和度 (Sat)',
+    subtitle: 'Saturation Perception',
+    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
     badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  },
-  {
-    id: 'double_r',
-    title: '旋转双锚点',
-    subtitle: 'Double Rotated',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    icon: RotateCw,
-    badgeColor: 'bg-purple-50 text-purple-700 border-purple-200',
   },
 ];
 
-interface DashboardProps {
-  profiles: Record<TrainingMode, UserProfileData | null>;
-  totalTimeMs: number;
-  onStart: (mode: TrainingMode, type: 'training' | 'benchmark') => void;
-  onRefreshProfiles: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: (mode?: TrainingMode) => void;
-  onBackToHome?: () => void;
-}
-
-export function Dashboard({
+export function ColorDashboard({
   profiles,
   totalTimeMs,
   onStart,
-  onOpenSettings,
-  onOpenAnalytics,
   onBackToHome,
-}: DashboardProps) {
+}: ColorDashboardProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header */}
       <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
         <div className="flex items-center gap-4">
-          {onBackToHome && (
-            <button
-              type="button"
-              onClick={onBackToHome}
-              className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
-            >
-              ← 返回主页
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            ← 返回主页
+          </button>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              寻星练习 <span className="text-indigo-600 font-light text-xl">Star-Hopping</span>
+              色感训练 <span className="text-indigo-600 font-light text-xl">Color Recognition</span>
             </h1>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-semibold">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
@@ -101,38 +67,16 @@ export function Dashboard({
             </div>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onOpenAnalytics()}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="弱点分析"
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-600" />
-            弱点分析
-          </button>
-          <button
-            type="button"
-            onClick={onOpenSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
-            title="偏好设置"
-          >
-            <Sliders className="w-4 h-4" />
-            偏好设置
-          </button>
-        </div>
       </div>
 
-      {/* 3 个训练卡片区 */}
+      {/* 3 个色彩子模式卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {MODES_CONFIG.map((config) => {
+        {COLOR_MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
           const accuracy =
             totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
           const currentLevel = profile?.currentLevel || 5;
-          const IconComponent = config.icon;
 
           return (
             <div
@@ -142,11 +86,9 @@ export function Dashboard({
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <IconComponent className="w-6 h-6" />
+                    <RotateCw className="w-6 h-6" />
                   </div>
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}
-                  >
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${config.badgeColor}`}>
                     {config.subtitle}
                   </span>
                 </div>
@@ -154,7 +96,7 @@ export function Dashboard({
                 <h3 className="text-xl font-bold text-gray-900 mb-2">{config.title}</h3>
                 <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{config.desc}</p>
 
-                {/* 核心指标统计 */}
+                {/* 核心指标 */}
                 <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                   <div className="space-y-1">
                     <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
