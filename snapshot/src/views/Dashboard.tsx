@@ -66,7 +66,9 @@ export function Dashboard({
   onOpenAnalytics,
   onBackToHome,
 }: DashboardProps) {
-  const [todayStats, setTodayStats] = useState<Record<TrainingMode, { count: number; timeMs: number }>>({
+  const [todayStats, setTodayStats] = useState<
+    Record<TrainingMode, { count: number; timeMs: number }>
+  >({
     single: { count: 0, timeMs: 0 },
     double_h: { count: 0, timeMs: 0 },
     double_r: { count: 0, timeMs: 0 },

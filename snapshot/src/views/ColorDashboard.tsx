@@ -49,7 +49,9 @@ export function ColorDashboard({
   onBackToHome,
   onOpenSettings,
 }: ColorDashboardProps) {
-  const [todayStats, setTodayStats] = useState<Record<ColorMode, { count: number; timeMs: number }>>({
+  const [todayStats, setTodayStats] = useState<
+    Record<ColorMode, { count: number; timeMs: number }>
+  >({
     H: { count: 0, timeMs: 0 },
     V: { count: 0, timeMs: 0 },
     S: { count: 0, timeMs: 0 },

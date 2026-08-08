@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(ui): 在寻星与色感训练子卡片右上角展示今日练习题数与耗时", "type": "plan", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186043.9379406, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M ColorDashboard.tsx, M Dashboard.tsx", "type": "capture", "generator": {"id": "manual", "tool": "pyquipu-cli"}, "env": {"quipu": "0.1.0", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786186049.0833287, "duration_ms": 0}}
