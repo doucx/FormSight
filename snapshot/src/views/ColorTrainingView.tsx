@@ -257,8 +257,6 @@ export function ColorTrainingView({
     return `${m}:${s}`;
   };
 
-  const currentAccuracy = totalTrials > 0 ? Math.round((hitTrials / totalTrials) * 100) : 0;
-
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
       {/* 顶栏 */}

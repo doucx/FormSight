@@ -1,4 +1,4 @@
-import { Award, Droplet, Play, RotateCw, Sliders, Sun, Target, TrendingUp } from 'lucide-preact';
+import { Award, BarChart2, Droplet, Play, RotateCw, Sliders, Sun, Target, TrendingUp } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 import type { ColorMode } from '../utils/colorUtils';
 import { type ColorProfileData, getAllColorTrialRecords } from '../utils/db';

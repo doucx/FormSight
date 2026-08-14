@@ -1,4 +1,4 @@
-import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
+import { AlertCircle, BarChart2, Crosshair, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { hsvToHex } from '../utils/colorUtils';
 import { type ColorTrialRecord, getAllColorTrialRecords } from '../utils/db';
