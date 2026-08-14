@@ -214,7 +214,7 @@ export function getDynamicDotRadius(gridPoints: Point[]): number {
 }
 
 export interface QuestionGenerateOptions {
-  targetingMode?: 'off' | 'auto' | 'manual';
+  targetingMode?: 'off' | 'manual';
   targetSectors?: number[]; // [0~7]
   gridSize?: number;
 }

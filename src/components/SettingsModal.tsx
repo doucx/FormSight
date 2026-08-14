@@ -368,10 +368,9 @@ export function SettingsModal({
               <Crosshair className="w-4 h-4 text-indigo-600" />
               弱点专项靶向强化
             </div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-2 gap-1.5">
               {[
                 { id: 'off', label: '关闭 (全随机)' },
-                { id: 'auto', label: '智能自动' },
                 { id: 'manual', label: '手动指定' },
               ].map((m) => {
                 const isActive =

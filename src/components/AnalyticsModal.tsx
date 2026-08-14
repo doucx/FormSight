@@ -1,8 +1,7 @@
-import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
+import { AlertCircle, BarChart2, Compass, Info, Target, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { TrainingMode, TrialRecord } from '../types';
 import { getAllTrialRecords } from '../utils/db';
-import { loadSettings, saveSettings } from '../utils/settings';
 
 interface AnalyticsModalProps {
   initialMode?: TrainingMode | 'all';
@@ -95,17 +94,6 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
       avgError: avgErr,
     };
   });
-
-  const handleApplyTargeting = (sectorIdx: number) => {
-    const settings = loadSettings();
-    saveSettings({
-      ...settings,
-      targetingMode: 'manual',
-      manualTargetSectors: [sectorIdx],
-    });
-    alert(`🎯 已成功设置：将在训练中专项强化【${SECTOR_LABELS[sectorIdx]}】视角！`);
-    onClose();
-  };
 
   // 找最弱方向（做答数 >= 3 中正确率最低或误差最大的方向）
   const validSectors = sectorStats.filter((s) => s.total >= 2);
@@ -460,14 +448,6 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
                           {weakestSector.accuracy}% 正确率
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleApplyTargeting(weakestSector.sectorIdx)}
-                        className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95"
-                      >
-                        <Crosshair className="w-3.5 h-3.5" />
-                        一键开启该方向专项强化
-                      </button>
                     </div>
                   ) : (
                     <p className="text-slate-600 text-[11px]">各方向表现均衡，继续保持！</p>
