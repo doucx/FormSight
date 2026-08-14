@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Clock } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { ColorCanvas } from '../components/ColorCanvas';
 import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
@@ -7,12 +7,14 @@ import {
   type ColorHitResult,
   type ColorMode,
   type ColorQuestionData,
+  type ColorQuestionGenerateOptions,
   checkColorHit,
   generateColorQuestion,
 } from '../utils/colorUtils';
 import {
   type ColorSessionData,
   type ColorTrialRecord,
+  getAllColorTrialRecords,
   saveColorSession,
   saveColorTrialRecord,
 } from '../utils/db';
@@ -45,12 +47,54 @@ export function ColorTrainingView({
     ),
   );
   const autoNextTimerRef = useRef<number | null>(null);
+  const targetSectorsRef = useRef<number[]>(settings.colorManualTargetSectors || []);
+
+  const getColorGenerateOptions = (): ColorQuestionGenerateOptions => {
+    return {
+      targetingMode: settings.colorTargetingMode,
+      targetSectors:
+        settings.colorTargetingMode === 'manual'
+          ? settings.colorManualTargetSectors
+          : targetSectorsRef.current,
+    };
+  };
 
   const [question, setQuestion] = useState<ColorQuestionData>(() =>
-    generateColorQuestion(mode, initialLevel),
+    generateColorQuestion(mode, initialLevel, getColorGenerateOptions()),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
+
+  // 智能自动模式下，加载历史色相盲点
+  useEffect(() => {
+    if (settings.colorTargetingMode === 'auto' && mode === 'H') {
+      getAllColorTrialRecords('H').then((records) => {
+        if (records.length >= 3) {
+          const buckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0 }));
+          for (const r of records) {
+            const targetH = r.targetHSV[0];
+            const idx = Math.floor(targetH / 30);
+            const safeIdx = Math.max(0, Math.min(11, idx));
+            buckets[safeIdx].total += 1;
+            if (r.isHit) buckets[safeIdx].hits += 1;
+          }
+          let minAcc = 1.0;
+          let minIdx = 0;
+          for (let i = 0; i < buckets.length; i++) {
+            const b = buckets[i];
+            if (b.total >= 1) {
+              const acc = b.hits / b.total;
+              if (acc < minAcc) {
+                minAcc = acc;
+                minIdx = i;
+              }
+            }
+          }
+          targetSectorsRef.current = [minIdx];
+        }
+      });
+    }
+  }, [mode, settings.colorTargetingMode]);
   const [userAnswer, setUserAnswer] = useState<ColorHitResult | null>(null);
 
   const [totalTrials, setTotalTrials] = useState<number>(0);
@@ -155,7 +199,7 @@ export function ColorTrainingView({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setShowAnswer(false);
     setUserAnswer(null);
-    setQuestion(generateColorQuestion(mode, nextLevel));
+    setQuestion(generateColorQuestion(mode, nextLevel, getColorGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -201,7 +245,7 @@ export function ColorTrainingView({
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateColorQuestion(mode, nextLevel));
+    setQuestion(generateColorQuestion(mode, nextLevel, getColorGenerateOptions()));
     setQuestionStartTime(Date.now());
   };
 
@@ -232,6 +276,12 @@ export function ColorTrainingView({
             {mode === 'H' ? '色相' : mode === 'V' ? '明度' : '饱和度'} |{' '}
             {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
+          {settings.colorTargetingMode !== 'off' && mode === 'H' && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <Crosshair className="w-3.5 h-3.5 text-amber-600" />
+              {settings.colorTargetingMode === 'auto' ? '智能靶向强化' : '手动靶向强化'}
+            </span>
+          )}
         </div>
 
         {/* 监控指标 */}

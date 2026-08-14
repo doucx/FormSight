@@ -8,6 +8,7 @@ interface ColorDashboardProps {
   onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
   onOpenSettings: () => void;
+  onOpenAnalytics: () => void;
 }
 
 const COLOR_MODES_CONFIG: Array<{
@@ -111,6 +112,15 @@ export function ColorDashboard({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onOpenAnalytics}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+            title="弱点分析"
+          >
+            <BarChart2 className="w-4 h-4 text-indigo-600" />
+            弱点分析
+          </button>
           <button
             type="button"
             onClick={onOpenSettings}
