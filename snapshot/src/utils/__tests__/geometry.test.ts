@@ -94,4 +94,26 @@ describe('geometry utils', () => {
     expect(qDoubleR.mode).toBe('double_r');
     expect(qDoubleR.rotationAngle).toBeDefined();
   });
+
+  it('generateQuestion with manual targeting - should generate targeted angles with higher probability', () => {
+    // 锁定扇区 0 (对应 0° 正东，允许加权抖动 ±20°)
+    const options = {
+      targetingMode: 'manual' as const,
+      targetSectors: [0],
+    };
+
+    let targetedCount = 0;
+    const totalRuns = 200;
+
+    for (let i = 0; i < totalRuns; i++) {
+      const q = generateQuestion('single', 5, options);
+      // 0° ± 25° 范围 (0~25° 或 335~360°)
+      if (q.angleDegree <= 25 || q.angleDegree >= 335) {
+        targetedCount++;
+      }
+    }
+
+    const ratio = targetedCount / totalRuns;
+    expect(ratio).toBeGreaterThan(0.4);
+  });
 });

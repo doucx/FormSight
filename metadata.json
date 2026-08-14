@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M .gitignore, D index.html, D postcss.config.js.html ... and 35 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786681361.6538053, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 补齐练习时长、看板聚合与弱点靶向生成算法的单元测试", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786681413.4701087, "duration_ms": 0}}

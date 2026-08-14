@@ -60,4 +60,25 @@ describe('colorUtils', () => {
     const hitVFail = checkColorHit('V', 55, questionV);
     expect(hitVFail.isHit).toBe(false);
   });
+
+  it('generateColorQuestion with manual targeting - should generate targeted hues with higher probability', () => {
+    // 锁定 0 号扇区 (0°-30°，中心 15°，抖动 ±15°)
+    const options = {
+      targetingMode: 'manual' as const,
+      targetSectors: [0],
+    };
+
+    let targetedCount = 0;
+    const totalRuns = 200;
+
+    for (let i = 0; i < totalRuns; i++) {
+      const q = generateColorQuestion('H', 5, options);
+      if (q.targetH >= 0 && q.targetH <= 35) {
+        targetedCount++;
+      }
+    }
+
+    const ratio = targetedCount / totalRuns;
+    expect(ratio).toBeGreaterThan(0.4);
+  });
 });
