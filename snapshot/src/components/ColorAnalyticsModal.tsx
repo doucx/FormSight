@@ -1,17 +1,26 @@
 import { AlertCircle, BarChart2, Compass, Crosshair, Info, Target, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { hsvToHex } from '../utils/colorUtils';
 import { type ColorTrialRecord, getAllColorTrialRecords } from '../utils/db';
 import { loadSettings, saveSettings } from '../utils/settings';
-import { hsvToHex } from '../utils/colorUtils';
 
 interface ColorAnalyticsModalProps {
   onClose: () => void;
 }
 
 const SECTOR_LABELS = [
-  '红 (0°-30°)', '橙 (30°-60°)', '黄 (60°-90°)', '黄绿 (90°-120°)',
-  '绿 (120°-150°)', '青绿 (150°-180°)', '青 (180°-210°)', '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)', '紫 (270°-300°)', '品红 (300°-330°)', '紫红 (330°-360°)'
+  '红 (0°-30°)',
+  '橙 (30°-60°)',
+  '黄 (60°-90°)',
+  '黄绿 (90°-120°)',
+  '绿 (120°-150°)',
+  '青绿 (150°-180°)',
+  '青 (180°-210°)',
+  '蓝 (210°-240°)',
+  '蓝紫 (240°-270°)',
+  '紫 (270°-300°)',
+  '品红 (300°-330°)',
+  '紫红 (330°-360°)',
 ];
 
 export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
@@ -122,11 +131,11 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
       const stat = sectorStats[i];
       const startA = startOffset + i * sectorAngle;
       const endA = startA + sectorAngle;
-      
+
       // 1. 绘制最外圈彩色光谱指示带
       const hueAngle = i * 30 + 15; // 扇区中心色相
       const hexColor = hsvToHex(hueAngle, 100, 100);
-      
+
       ctx.beginPath();
       ctx.arc(cx, cy, outerRadius + 12, startA, endA);
       ctx.arc(cx, cy, outerRadius + 2, endA, startA, true);
@@ -167,7 +176,7 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
       ctx.font = 'bold 10px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      
+
       // 取名字的前两个字（如 "红", "黄绿"）
       const shortName = stat.label.split(' ')[0];
       ctx.fillText(shortName, lx, ly);
@@ -180,7 +189,7 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
     ctx.fill();
     ctx.strokeStyle = '#64748B';
     ctx.stroke();
-    
+
     // 中心文字
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 12px sans-serif';
@@ -189,7 +198,6 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
     ctx.fillStyle = '#94A3B8';
     ctx.font = '10px sans-serif';
     ctx.fillText('Accuracy', cx, cy + 8);
-    
   }, [loading, sectorStats]);
 
   return (
@@ -229,12 +237,12 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
             {/* 左侧 Canvas 可视化区 */}
             <div className="md:col-span-7 flex justify-center bg-slate-900 p-4 rounded-2xl border border-slate-800 relative">
-               <canvas
-                  ref={ringCanvasRef}
-                  width={320}
-                  height={320}
-                  className="w-full max-w-[300px] aspect-square rounded-xl"
-                />
+              <canvas
+                ref={ringCanvasRef}
+                width={320}
+                height={320}
+                className="w-full max-w-[300px] aspect-square rounded-xl"
+              />
             </div>
 
             {/* 右侧数据统计面板 */}
@@ -266,11 +274,15 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
                     </p>
                     <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
                       <div className="flex items-center gap-1.5">
-                        <div 
-                          className="w-3 h-3 rounded-full border border-slate-200" 
-                          style={{ backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100) }} 
+                        <div
+                          className="w-3 h-3 rounded-full border border-slate-200"
+                          style={{
+                            backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100),
+                          }}
                         />
-                        <span className="font-bold text-slate-800">{weakestSector.label.split(' ')[0]}</span>
+                        <span className="font-bold text-slate-800">
+                          {weakestSector.label.split(' ')[0]}
+                        </span>
                       </div>
                       <span className="font-black text-rose-600 text-sm">
                         {weakestSector.accuracy}% 正确率
@@ -286,7 +298,9 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-slate-600 text-[11px]">需每个色相扇区完成至少 3 题才能生成弱点诊断。</p>
+                  <p className="text-slate-600 text-[11px]">
+                    需每个色相扇区完成至少 3 题才能生成弱点诊断。
+                  </p>
                 )}
               </div>
             </div>

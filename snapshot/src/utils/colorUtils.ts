@@ -116,7 +116,11 @@ function selectHueWithTargeting(options?: ColorQuestionGenerateOptions): number 
 /**
  * 生成色感练习题目 (包含锥形难度对齐策略)
  */
-export function generateColorQuestion(mode: ColorMode, level: number, options?: ColorQuestionGenerateOptions): ColorQuestionData {
+export function generateColorQuestion(
+  mode: ColorMode,
+  level: number,
+  options?: ColorQuestionGenerateOptions,
+): ColorQuestionData {
   const id = `cq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const tolerance = getToleranceForLevel(mode, level);
   const clampedLevel = Math.max(1, Math.min(35, level));
