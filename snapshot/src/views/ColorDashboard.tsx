@@ -53,6 +53,7 @@ export function ColorDashboard({
   onStart,
   onBackToHome,
   onOpenSettings,
+  onOpenAnalytics,
 }: ColorDashboardProps) {
   const [todayStats, setTodayStats] = useState<
     Record<ColorMode, { count: number; timeMs: number }>
