@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(build): 修复缺失图标导入与未使用的 TS 变量", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786679744.5455863, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 为分析弹窗背景遮罩添加点击空白退出功能", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786679864.4579833, "duration_ms": 0}}
