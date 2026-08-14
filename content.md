@@ -1,39 +1,29 @@
-# 📸 Snapshot Capture
+## [COMMIT] test(utils): Add comprehensive unit tests and Vitest setup
 
-检测到工作区发生变更。
+~~~~~act
+git_add
+package.json
+src/utils/__tests__/adaptiveEngine.test.ts
+src/utils/__tests__/colorUtils.test.ts
+src/utils/__tests__/db.test.ts
+src/utils/__tests__/geometry.test.ts
+src/utils/__tests__/settings.test.ts
+vite.config.ts
+~~~~~
 
-### 📝 变更文件摘要:
-```
-coverage/FormSight/index.html                      |   2 +-
- coverage/FormSight/postcss.config.js.html          |   2 +-
- coverage/FormSight/src/app.tsx.html                |   2 +-
- .../src/components/AnalyticsModal.tsx.html         |   2 +-
- .../src/components/ColorAnalyticsModal.tsx.html    |   2 +-
- .../FormSight/src/components/ColorCanvas.tsx.html  |   2 +-
- .../src/components/GlobalSettingsModal.tsx.html    |   2 +-
- .../src/components/GlobalStatsModal.tsx.html       |   2 +-
- .../src/components/SessionSummaryModal.tsx.html    |   2 +-
- .../src/components/SettingsModal.tsx.html          |   2 +-
- .../FormSight/src/components/StarCanvas.tsx.html   |   2 +-
- coverage/FormSight/src/components/index.html       |   2 +-
- coverage/FormSight/src/index.html                  |   2 +-
- coverage/FormSight/src/main.tsx.html               |   2 +-
- .../FormSight/src/utils/adaptiveEngine.ts.html     |   2 +-
- coverage/FormSight/src/utils/colorUtils.ts.html    | 150 ++---
- coverage/FormSight/src/utils/db.ts.html            | 388 ++++++------
- coverage/FormSight/src/utils/geometry.ts.html      | 340 +++++-----
- coverage/FormSight/src/utils/index.html            |  72 +--
- coverage/FormSight/src/utils/settings.ts.html      |   2 +-
- .../FormSight/src/views/ColorDashboard.tsx.html    |   2 +-
- .../FormSight/src/views/ColorTrainingView.tsx.html |   2 +-
- coverage/FormSight/src/views/Dashboard.tsx.html    |   2 +-
- coverage/FormSight/src/views/Home.tsx.html         |   2 +-
- coverage/FormSight/src/views/TrainingView.tsx.html |   2 +-
- coverage/FormSight/src/views/index.html            |   2 +-
- coverage/FormSight/tailwind.config.js.html         |   2 +-
- coverage/clover.xml                                | 698 ++++++++++-----------
- coverage/coverage-final.json                       |   6 +-
- coverage/index.html                                |  38 +-
- ...
- 35 files changed, 874 insertions(+), 874 deletions(-)
-```
+~~~~~act
+git_commit
+~~~~~
+~~~~~text
+test(utils): Add comprehensive unit tests and Vitest setup
+
+- Configured Vitest and `@vitest/coverage-v8` in vite.config.ts and package.json.
+- Added fake-indexeddb to support offline IndexedDB and database import/export testing.
+- Created robust unit test suites for:
+  - Spatial geometry algorithms and question generation (geometry.test.ts).
+  - HSV color conversion, tolerance, cyclic hue distance, and color question generation (colorUtils.test.ts).
+  - Staircase & block adaptive training progression engine (adaptiveEngine.test.ts).
+  - LocalStorage settings persistence (settings.test.ts).
+  - DB record persistence, time formatting, session aggregation, and full JSON export/import (db.test.ts).
+- Implemented weighted target sector generation tests for star-hopping and color recognition.
+~~~~~
