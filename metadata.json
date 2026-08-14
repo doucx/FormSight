@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(analysis): 添加 Python 数据分析工具链并修复数据库全量导出", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786678954.5868556, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M .gitignore, D ai_analysis_prompt.md", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786679028.1671433, "duration_ms": 0}}
