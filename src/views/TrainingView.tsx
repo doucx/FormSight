@@ -341,13 +341,6 @@ export function TrainingView({
 
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              总正确率
-            </span>
-            <span className="font-black text-gray-800">{currentAccuracy}%</span>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
               当前难度
             </span>
             <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
