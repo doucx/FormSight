@@ -87,7 +87,7 @@ export function getToleranceForLevel(mode: ColorMode, level: number): number {
 }
 
 export interface ColorQuestionGenerateOptions {
-  targetingMode?: 'off' | 'auto' | 'manual';
+  targetingMode?: 'off' | 'manual';
   targetSectors?: number[]; // [0~11] 代表 12 个 30° 的色相扇区
 }
 

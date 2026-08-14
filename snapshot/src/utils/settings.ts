@@ -1,6 +1,6 @@
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
-export type TargetingMode = 'off' | 'auto' | 'manual';
+export type TargetingMode = 'off' | 'manual';
 
 export interface UserSettings {
   autoNext: boolean; // 点击后是否自动翻页
@@ -44,7 +44,10 @@ export function loadSettings(): UserSettings {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+      const parsed = JSON.parse(raw);
+      if (parsed.targetingMode === 'auto') parsed.targetingMode = 'off';
+      if (parsed.colorTargetingMode === 'auto') parsed.colorTargetingMode = 'off';
+      return { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch (e) {
     console.error('Failed to load user settings:', e);

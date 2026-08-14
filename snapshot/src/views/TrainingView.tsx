@@ -4,7 +4,7 @@ import { type SessionHistoryItem, SessionSummaryModal } from '../components/Sess
 import { StarCanvas } from '../components/StarCanvas';
 import type { HitResult, Point, QuestionData, TrainingMode, TrialRecord } from '../types';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import { type SessionData, getAllTrialRecords, saveSession, saveTrialRecord } from '../utils/db';
+import { type SessionData, saveSession, saveTrialRecord } from '../utils/db';
 import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
 import type { UserSettings } from '../utils/settings';
 
@@ -58,35 +58,6 @@ export function TrainingView({
     }),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-
-  // 自动拉取弱点扇区（若为 auto 模式）
-  useEffect(() => {
-    if (settings.targetingMode === 'auto') {
-      getAllTrialRecords(mode).then((records) => {
-        if (records.length >= 3) {
-          const buckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
-          for (const r of records) {
-            const idx = Math.floor(((r.angleDegree + 22.5) % 360) / 45);
-            buckets[idx].total += 1;
-            if (r.isHit) buckets[idx].hits += 1;
-          }
-          let minAcc = 1.0;
-          let minIdx = 0;
-          for (let i = 0; i < buckets.length; i++) {
-            const b = buckets[i];
-            if (b.total >= 1) {
-              const acc = b.hits / b.total;
-              if (acc < minAcc) {
-                minAcc = acc;
-                minIdx = i;
-              }
-            }
-          }
-          targetSectorsRef.current = [minIdx];
-        }
-      });
-    }
-  }, [mode, settings.targetingMode]);
 
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
   const [userAnswer, setUserAnswer] = useState<{
@@ -318,10 +289,10 @@ export function TrainingView({
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
             {mode} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
-          {settings.targetingMode !== 'off' && (
+          {settings.targetingMode === 'manual' && (
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-amber-600" />
-              {settings.targetingMode === 'auto' ? '智能靶向强化' : '手动靶向强化'}
+              靶向强化训练
             </span>
           )}
         </div>
