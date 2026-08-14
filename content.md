@@ -4,6 +4,7 @@
 
 ### 📝 变更文件摘要:
 ```
-src/components/SettingsModal.tsx | 11 +----------
- 1 file changed, 1 insertion(+), 10 deletions(-)
+package.json                     | 2 +-
+ src/components/SettingsModal.tsx | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
 ```

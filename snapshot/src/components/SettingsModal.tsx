@@ -25,7 +25,6 @@ export function SettingsModal({
   settings,
   onClose,
   onSave,
-  onDataCleared,
   appContext = 'star-hopping',
 }: SettingsModalProps) {
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
