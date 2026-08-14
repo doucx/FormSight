@@ -86,15 +86,46 @@ export function getToleranceForLevel(mode: ColorMode, level: number): number {
   return Math.max(2, Math.round(15 - t * 13));
 }
 
+export interface ColorQuestionGenerateOptions {
+  targetingMode?: 'off' | 'auto' | 'manual';
+  targetSectors?: number[]; // [0~11] 代表 12 个 30° 的色相扇区
+}
+
+/**
+ * 色相加权生成：70% 概率落在指定弱点靶向区间内，30% 全局随机
+ */
+function selectHueWithTargeting(options?: ColorQuestionGenerateOptions): number {
+  if (
+    options?.targetingMode &&
+    options.targetingMode !== 'off' &&
+    options.targetSectors &&
+    options.targetSectors.length > 0
+  ) {
+    if (Math.random() < 0.7) {
+      const chosenSector =
+        options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
+      // 每个扇区 30度。例如 0号扇区是 0~30度，中心是 15度
+      const sectorCenterAngle = chosenSector * 30 + 15;
+      const jitter = (Math.random() - 0.5) * 30; // ±15° 范围抖动
+      return Math.floor((sectorCenterAngle + jitter + 360) % 360);
+    }
+  }
+  return Math.floor(Math.random() * 360);
+}
+
 /**
  * 生成色感练习题目 (包含锥形难度对齐策略)
  */
-export function generateColorQuestion(mode: ColorMode, level: number): ColorQuestionData {
+export function generateColorQuestion(
+  mode: ColorMode,
+  level: number,
+  options?: ColorQuestionGenerateOptions,
+): ColorQuestionData {
   const id = `cq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const tolerance = getToleranceForLevel(mode, level);
   const clampedLevel = Math.max(1, Math.min(35, level));
 
-  const targetH = Math.floor(Math.random() * 360);
+  const targetH = mode === 'H' ? selectHueWithTargeting(options) : Math.floor(Math.random() * 360);
   let targetS = 100;
   let targetV = 100;
 

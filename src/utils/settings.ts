@@ -11,8 +11,10 @@ export interface UserSettings {
   adaptiveMode: AdaptiveMode; // 自适应算子模式 ('block': 轮次胜率评估, 'staircase': 经典3U1D)
   targetAccuracy: number; // 目标通关正确率 (0.7, 0.8, 0.85, 0.9)
   blockSize: number; // 每轮评估题数 (10, 15, 20)
-  targetingMode: TargetingMode; // 专项靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
-  manualTargetSectors: number[]; // 手动锁定的扇区索引数组 [0~7]
+  targetingMode: TargetingMode; // 寻星靶向训练模式 ('off': 关闭, 'auto': 智能自动, 'manual': 手动指定)
+  manualTargetSectors: number[]; // 寻星手动锁定的扇区 [0~7]
+  colorTargetingMode: TargetingMode; // 色感靶向训练模式 ('off', 'auto', 'manual')
+  colorManualTargetSectors: number[]; // 色感手动锁定的扇区 [0~11]
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
   gridSize: number; // 网格维数 (2, 3, 4, 5)
   sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
@@ -31,6 +33,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
   blockSize: 10,
   targetingMode: 'off',
   manualTargetSectors: [],
+  colorTargetingMode: 'off',
+  colorManualTargetSectors: [],
   idleTimeout: 60,
   gridSize: 3,
   sliderHitMargin: 12,

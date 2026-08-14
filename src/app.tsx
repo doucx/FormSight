@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { AnalyticsModal } from './components/AnalyticsModal';
+import { ColorAnalyticsModal } from './components/ColorAnalyticsModal';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -41,6 +42,7 @@ export function App() {
     'star-hopping',
   );
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
+  const [isColorAnalyticsOpen, setIsColorAnalyticsOpen] = useState<boolean>(false);
   const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
@@ -158,6 +160,7 @@ export function App() {
               setSettingsContext('color-sense');
               setIsSettingsOpen(true);
             }}
+            onOpenAnalytics={() => setIsColorAnalyticsOpen(true)}
           />
         ) : (
           <ColorTrainingView
@@ -190,6 +193,10 @@ export function App() {
 
       {isAnalyticsOpen && (
         <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
+      )}
+
+      {isColorAnalyticsOpen && (
+        <ColorAnalyticsModal onClose={() => setIsColorAnalyticsOpen(false)} />
       )}
     </div>
   );

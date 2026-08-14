@@ -13,6 +13,21 @@ const SECTOR_NAMES = [
   '东南(315°)',
 ];
 
+const COLOR_SECTOR_NAMES = [
+  '红 (0°-30°)',
+  '橙 (30°-60°)',
+  '黄 (60°-90°)',
+  '黄绿 (90°-120°)',
+  '绿 (120°-150°)',
+  '青绿 (150°-180°)',
+  '青 (180°-210°)',
+  '蓝 (210°-240°)',
+  '蓝紫 (240°-270°)',
+  '紫 (270°-300°)',
+  '品红 (300°-330°)',
+  '紫红 (330°-360°)',
+];
+
 interface SettingsModalProps {
   settings: UserSettings;
   onClose: () => void;
@@ -43,12 +58,18 @@ export function SettingsModal({
 
   const handleSectorToggle = (sectorIdx: number) => {
     updateSettings((prev) => {
-      const currentSectors = prev.manualTargetSectors || [];
+      const isColor = appContext === 'color-sense';
+      const currentSectors = isColor
+        ? prev.colorManualTargetSectors || []
+        : prev.manualTargetSectors || [];
       const exists = currentSectors.includes(sectorIdx);
       const updated = exists
         ? currentSectors.filter((s) => s !== sectorIdx)
         : [...currentSectors, sectorIdx];
-      return { ...prev, manualTargetSectors: updated };
+
+      return isColor
+        ? { ...prev, colorManualTargetSectors: updated }
+        : { ...prev, manualTargetSectors: updated };
     });
   };
 
@@ -337,63 +358,87 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* 专项靶向强化训练设置 */}
-              <div className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-                  <Crosshair className="w-4 h-4 text-indigo-600" />
-                  弱点专项靶向强化
-                </div>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { id: 'off', label: '关闭 (全随机)' },
-                    { id: 'auto', label: '智能自动' },
-                    { id: 'manual', label: '手动指定' },
-                  ].map((m) => (
-                    <button
-                      type="button"
-                      key={m.id}
-                      onClick={() => updateSettings({ targetingMode: m.id as TargetingMode })}
-                      className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                        current.targetingMode === m.id
-                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 手动勾选扇区 */}
-                {current.targetingMode === 'manual' && (
-                  <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
-                    <div className="text-[11px] font-semibold text-slate-500">
-                      选择需要靶向强化的角度扇区：
-                    </div>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {SECTOR_NAMES.map((name, idx) => {
-                        const selected = (current.manualTargetSectors || []).includes(idx);
-                        return (
-                          <button
-                            type="button"
-                            key={name}
-                            onClick={() => handleSectorToggle(idx)}
-                            className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
-                              selected
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300'
-                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
-                            }`}
-                          >
-                            {name}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* 寻星专属 - 干扰点网格大小等被隐藏，靶向训练由于寻星和色感共用，提取到外面 */}
             </>
           )}
+
+          {/* 专项靶向强化训练设置 (两者共用) */}
+          <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <Crosshair className="w-4 h-4 text-indigo-600" />
+              弱点专项靶向强化
+            </div>
+            <div className="grid grid-cols-3 gap-1.5">
+              {[
+                { id: 'off', label: '关闭 (全随机)' },
+                { id: 'auto', label: '智能自动' },
+                { id: 'manual', label: '手动指定' },
+              ].map((m) => {
+                const isActive =
+                  appContext === 'color-sense'
+                    ? current.colorTargetingMode === m.id
+                    : current.targetingMode === m.id;
+
+                return (
+                  <button
+                    type="button"
+                    key={m.id}
+                    onClick={() =>
+                      updateSettings(
+                        appContext === 'color-sense'
+                          ? { colorTargetingMode: m.id as TargetingMode }
+                          : { targetingMode: m.id as TargetingMode },
+                      )
+                    }
+                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                      isActive
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 手动勾选扇区 */}
+            {((appContext === 'star-hopping' && current.targetingMode === 'manual') ||
+              (appContext === 'color-sense' && current.colorTargetingMode === 'manual')) && (
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+                <div className="text-[11px] font-semibold text-slate-500">
+                  选择需要靶向强化的 {appContext === 'color-sense' ? '色相' : '角度'} 扇区：
+                </div>
+                <div
+                  className={`grid gap-1.5 ${appContext === 'color-sense' ? 'grid-cols-3' : 'grid-cols-4'}`}
+                >
+                  {(appContext === 'color-sense' ? COLOR_SECTOR_NAMES : SECTOR_NAMES).map(
+                    (name, idx) => {
+                      const selected =
+                        appContext === 'color-sense'
+                          ? (current.colorManualTargetSectors || []).includes(idx)
+                          : (current.manualTargetSectors || []).includes(idx);
+
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => handleSectorToggle(idx)}
+                          className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+                            selected
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-sm'
+                              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      );
+                    },
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="pt-2">
