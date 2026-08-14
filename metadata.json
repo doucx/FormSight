@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: A index.html, A postcss.config.js.html, A app.tsx.html ... and 35 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786680865.2301805, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test: 为纯函数与数据导入导出编写单元测试套件", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786680866.95825, "duration_ms": 0}}
