@@ -220,6 +220,9 @@ export async function exportAllData(): Promise<string> {
   const sessions = await db.getAll('sessions');
   const records = await db.getAll('records');
   const profiles = await db.getAll('user_profiles');
+  const colorSessions = await db.getAll('color_sessions');
+  const colorRecords = await db.getAll('color_records');
+  const colorProfiles = await db.getAll('color_profiles');
 
   const exportObject = {
     version: DB_VERSION,
@@ -227,6 +230,9 @@ export async function exportAllData(): Promise<string> {
     sessions,
     records,
     profiles,
+    color_sessions: colorSessions,
+    color_records: colorRecords,
+    color_profiles: colorProfiles,
   };
 
   return JSON.stringify(exportObject, null, 2);
@@ -236,20 +242,22 @@ export async function exportAllData(): Promise<string> {
 export async function importAllData(jsonString: string): Promise<boolean> {
   try {
     const data = JSON.parse(jsonString);
-    if (!data.records || !Array.isArray(data.records)) {
-      throw new Error('无效的寻星练习导出格式');
-    }
 
     const db = await getDB();
-    const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+    const tx = db.transaction(
+      ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
+      'readwrite',
+    );
 
     if (data.sessions) {
       for (const s of data.sessions) {
         await tx.objectStore('sessions').put(s);
       }
     }
-    for (const r of data.records) {
-      await tx.objectStore('records').put(r);
+    if (data.records) {
+      for (const r of data.records) {
+        await tx.objectStore('records').put(r);
+      }
     }
     if (data.profiles) {
       for (const p of data.profiles) {
@@ -257,10 +265,26 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       }
     }
 
+    if (data.color_sessions) {
+      for (const cs of data.color_sessions) {
+        await tx.objectStore('color_sessions').put(cs);
+      }
+    }
+    if (data.color_records) {
+      for (const cr of data.color_records) {
+        await tx.objectStore('color_records').put(cr);
+      }
+    }
+    if (data.color_profiles) {
+      for (const cp of data.color_profiles) {
+        await tx.objectStore('color_profiles').put(cp);
+      }
+    }
+
     await tx.done;
     return true;
   } catch (err) {
-    console.error('导入寻星数据失败:', err);
+    console.error('导入寻星与色感数据失败:', err);
     return false;
   }
 }
