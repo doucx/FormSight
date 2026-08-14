@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(db): 补全 exportAllData 与 importAllData 中色感训练表的数据", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786678589.8588257, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: A ai_analysis_prompt.md", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786678953.6459942, "duration_ms": 0}}
