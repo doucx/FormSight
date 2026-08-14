@@ -1,126 +1,45 @@
-好的，我将修改刷题界面的顶栏监控指标，移除“总正确率”的显示，仅保留“已练题数”与“当前难度”。
+好的，现在我们将这些改动作为一个完整的逻辑单元提交到 Git 仓库。
 
-## [WIP] refactor: 移除刷题界面顶栏的总正确率显示
+## [COMMIT] fix(ui): 移除刷题界面顶栏的实时总正确率显示
 
 ### 用户需求
-在寻星练习与色感训练的刷题界面（`TrainingView` 和 `ColorTrainingView`）顶栏监控指标区域中，移除“总正确率”的展示，保留“已练题数”和“当前难度”。
+用户要求创建 Git 提交，将前面完成的关于“删除刷题界面顶栏总正确率”的代码修改记录正式固化。
 
 ### 评论
-在练习过程中，实时总正确率的跳动可能会给练习者造成不必要的心理负担。隐藏该指标能让用户更加专注于当前的题目，提升沉浸式训练效果。
+将代码改动封装为规范的 Git 提交，确保开发历史记录清晰。
 
 ### 目标
-1. 从 `src/views/TrainingView.tsx` 的 Header 区域移除总正确率 DOM 结构。
-2. 从 `src/views/ColorTrainingView.tsx` 的 Header 区域移除总正确率 DOM 结构。
+1. 将修改后的 `TrainingView.tsx` 和 `ColorTrainingView.tsx` 添加到暂存区。
+2. 创建符合 Conventional Commits 规范的 Git 提交。
 
 ### 基本原理
-通过对 `TrainingView.tsx` 和 `ColorTrainingView.tsx` 两个组件的顶栏结构进行精确补丁修改，删除渲染“总正确率”及其对应数值的 `div` 节点。
+按照 Quipu 架构规范，文件系统变更与 Git 提交操作必须在不同的计划中隔离执行。现在文件修改已落地且验证通过，我们可以安全地执行 `git_add` 和 `git_commit`。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-header #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-header #task/action/refactor #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 移除 `TrainingView.tsx` 和 `ColorTrainingView.tsx` 中的总正确率显示
+#### Acts 1: 暂存并提交代码修改
 
 ~~~~~act
-patch_file
+git_add
 src/views/TrainingView.tsx
-~~~~~
-~~~~~tsx.old
-        {/* 核心监控指标 */}
-        <div className="flex items-center gap-6 text-sm">
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              已练题数
-            </span>
-            <span className="font-black text-gray-800">
-              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
-            </span>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              总正确率
-            </span>
-            <span className="font-black text-gray-800">{currentAccuracy}%</span>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
-          </div>
-~~~~~
-~~~~~tsx.new
-        {/* 核心监控指标 */}
-        <div className="flex items-center gap-6 text-sm">
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              已练题数
-            </span>
-            <span className="font-black text-gray-800">
-              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
-            </span>
-          </div>
-
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
-          </div>
-~~~~~
-
-~~~~~act
-patch_file
 src/views/ColorTrainingView.tsx
 ~~~~~
-~~~~~tsx.old
-        {/* 监控指标 */}
-        <div className="flex items-center gap-6 text-sm">
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              已练题数
-            </span>
-            <span className="font-black text-gray-800">
-              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              总正确率
-            </span>
-            <span className="font-black text-gray-800">{currentAccuracy}%</span>
-          </div>
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
-          </div>
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~tsx.new
-        {/* 监控指标 */}
-        <div className="flex items-center gap-6 text-sm">
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              已练题数
-            </span>
-            <span className="font-black text-gray-800">
-              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
-            </span>
-          </div>
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
-          </div>
+~~~~~text
+refactor(ui): remove overall accuracy metric from training headers
+
+Removes the real-time overall accuracy display from the header component in both Star Hopping (TrainingView) and Color Recognition (ColorTrainingView) modes.
+
+This change reduces psychological pressure on users during practice sessions, allowing them to focus entirely on visual intuition and task performance rather than fluctuating metrics.
 ~~~~~
 
 ### 下一步建议
-
-你可以启动前端应用并进入刷题界面（寻星练习及色感训练），验证顶栏界面效果是否符合预期的简洁度。
+- **回归测试**: 可以执行 `npm run lint` 或 `npm run build` 确保没有引入任何 TypeScript 类型错误或未使用的变量告警。
