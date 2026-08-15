@@ -148,7 +148,7 @@ export function ColorCanvas({
 
               return (
                 <div
-                  className="absolute top-0 bottom-0 pointer-events-none z-20 border-x-2 border-indigo-500/80 bg-indigo-500/20 rounded-sm transition-all duration-75"
+                  className="absolute top-0 bottom-0 pointer-events-none z-20 border-x-2 border-indigo-500/80 bg-transparent rounded-sm transition-all duration-75"
                   style={{
                     left: `${leftPct}%`,
                     width: `${widthPct}%`,
