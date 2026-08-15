@@ -165,21 +165,21 @@ export function ColorCanvas({
               />
             )}
 
-            {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
+            {/* 待测维度答题揭晓：真理目标与用户选择 (细竖线标记) */}
             {isTargetActiveMode && showAnswer && (
               <>
-                {/* 真理目标位 (绿色竖条) */}
+                {/* 真理目标位 (绿色细竖线) */}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
                   style={{ left: getPercent(val, max) }}
                 />
 
-                {/* 用户点击位 (红色或绿色竖条) */}
+                {/* 用户点击位 (红色或绿色细竖线) */}
                 {userAnswer && (
                   <div
-                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
+                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
                       userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                    } rounded-sm shadow-md z-20`}
+                    } shadow-md z-20`}
                     style={{ left: getPercent(userAnswer.userValue, max) }}
                   />
                 )}

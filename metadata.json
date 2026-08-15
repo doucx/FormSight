@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] style(color): 将色感滑块悬停准心调整为半透明细线", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786766007.664033, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] style(color): 将答题揭晓的红绿标记方块调整为细竖线", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786766157.697345, "duration_ms": 0}}
