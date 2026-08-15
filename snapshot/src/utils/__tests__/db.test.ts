@@ -18,6 +18,7 @@ import {
   saveSession,
   saveTrialRecord,
 } from '../db';
+import { loadSettings, saveSettings } from '../settings';
 
 describe('db storage & import/export', () => {
   beforeEach(async () => {
@@ -136,8 +137,10 @@ describe('db storage & import/export', () => {
     expect(totalMs).toBe(90000);
   });
 
-  it('exportAllData and importAllData - should correctly export and restore data', async () => {
-    // 1. Prepare initial data
+  it('exportAllData and importAllData - should correctly export and restore data and settings', async () => {
+    // 1. Prepare initial data and custom settings
+    saveSettings({ ...loadSettings(), gridSize: 5, autoNext: false });
+
     await saveTrialRecord({
       id: 'star_1',
       sessionId: 's1',
@@ -171,9 +174,11 @@ describe('db storage & import/export', () => {
     const exportedJson = await exportAllData();
     expect(exportedJson).toContain('star_1');
     expect(exportedJson).toContain('color_1');
+    expect(exportedJson).toContain('"gridSize": 5');
 
-    // 3. Clear DB
+    // 3. Clear DB & reset settings
     await clearAllData();
+    saveSettings({ ...loadSettings(), gridSize: 3, autoNext: true });
     const recordsEmpty = await getAllTrialRecords();
     expect(recordsEmpty.length).toBe(0);
 
@@ -181,12 +186,16 @@ describe('db storage & import/export', () => {
     const success = await importAllData(exportedJson);
     expect(success).toBe(true);
 
-    // 5. Verify restored data
+    // 5. Verify restored data and settings
     const recordsRestored = await getAllTrialRecords('single');
     expect(recordsRestored.length).toBe(1);
     expect(recordsRestored[0].id).toBe('star_1');
 
     const colorProfiles = await getAllColorProfiles();
     expect(colorProfiles.H?.totalTrainedCards).toBe(1);
+
+    const restoredSettings = loadSettings();
+    expect(restoredSettings.gridSize).toBe(5);
+    expect(restoredSettings.autoNext).toBe(false);
   });
 });
