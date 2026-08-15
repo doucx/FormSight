@@ -1,137 +1,144 @@
-已为你制定补齐 `db.ts` 时长与看板聚合测试，以及 `geometry.ts` 和 `colorUtils.ts` 靶向算法测试的计划。
+没问题，我已经为你制定了将用户偏好设置一并包含在全量 JSON 导出/导入数据中，并为此补齐单元测试与 Node 环境下 Web Storage 内存垫片的修改计划。
 
-## [WIP] test: 补齐练习时长、看板聚合与弱点靶向生成算法的单元测试
+## [WIP] feat: 支撑偏好设置随全量 JSON 数据的导出与恢复
 
 ### 用户需求
-1. 为 `db.ts` 补齐 `formatTotalTime` 格式化函数、`getStarHoppingTrainingTimeMs` / `getColorTrainingTimeMs` / `getTotalTrainingTimeMs` 会话练习时长聚合，以及 `getAllUserProfiles` / `getAllColorProfiles` 看板提取的单元测试。
-2. 为 `geometry.ts` 和 `colorUtils.ts` 补齐弱点专项靶向强化生成算法（手动指定锁定扇区加权生成）的单元测试。
+在导出 JSON 备份时，将用户的偏好设置（如网格维度、自动翻页、弱点靶向、自适应模式等配置项）一并导出；在导入 JSON 数据时，自动还原恢复用户的偏好设置；同时编写对应的单元测试，且在轻量 Node 测试环境下增加 Web Storage API 内存键值持久化垫片。
 
 ### 评论
-通过补齐练习时长计算与看板聚合的逻辑测试，能够保障统计数据的准确性；通过测试弱点靶向生成算法在特定扇区锁定下的概率分布（70% 概率加权集中），能够确保专项强化模式按预期工作。
+将偏好设置（`UserSettings`）同训练会话与日志一并纳入全量 JSON 备份中，能够确保用户在跨设备迁移或备份恢复后获得完全一致的使用体验。在单体测试层面，为缺乏 DOM 环境的 Node 测试上下文补充 `localStorage` 垫片，确保单元测试可以在无外置浏览器模拟器的环境下稳定高效运行。
 
 ### 目标
-1. 在 `db.test.ts` 中补充 `formatTotalTime` 格式化、会话时长累加、全模式 Profiles 获取及按模式筛选记录的单元测试。
-2. 在 `geometry.test.ts` 中补充 `single` 模式下 `targetingMode: 'manual'` 指定扇区的加权极角测试。
-3. 在 `colorUtils.test.ts` 中补充 `H` 色相模式下 `colorTargetingMode: 'manual'` 指定扇区的加权色相测试。
+1. 修改 `src/utils/db.ts` 的 `exportAllData` 与 `importAllData` 函数，使其支持读取和写入用户偏好设置。
+2. 在 `src/utils/__tests__/db.test.ts` 头部添加轻量级 `localStorage` 内存垫片。
+3. 在 `src/utils/__tests__/db.test.ts` 中增加导出 JSON 备份包含偏好设置、清空后导入并成功还原偏好设置的断言测试。
 
 ### 基本原理
-对概率性生成算法通过统计多次调用（如 200 次生成）落域比例是否显著高于普通全随机基线（例如 14% -> >40%），来验证加权靶向逻辑的正确性；对 `db.ts` 使用模拟会话记录验证时长计算与多模式 profile 的空值/非空映射。
+在 `exportAllData()` 执行时调用 `loadSettings()` 获取保存在 `localStorage` 中的用户偏好设置并打包进 JSON 根字段 `settings` 中；在 `importAllData()` 处理解析时，检测是否存在 `data.settings` 字段并调用 `saveSettings()` 恢复设置。在测试文件中准备内存 `localStorage` 对象作为缺失的 Web Storage 垫片，从而在 Node 测试环境下平滑支持偏好设置读写测试。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high #comp/tests #concept/executor #scope/dx #ai/instruct #task/domain/testing #task/object/p1-unit-tests #task/action/implementation #task/state/continue
+#intent/build #flow/ready #priority/high #comp/storage #comp/tests #concept/config #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/settings-backup #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 补齐 db.ts 时长格式化、会话累加与 Profiles 聚合测试
+#### Acts 1: 修改 db.ts 以在全量 JSON 导出/导入中支持用户偏好设置
+
+~~~~~act
+patch_file
+src/utils/db.ts
+~~~~~
+~~~~~typescript.old
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
+import type { TrainingMode, TrialRecord } from '../types';
+
+export interface SessionData {
+~~~~~
+~~~~~typescript.new
+import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
+import type { TrainingMode, TrialRecord } from '../types';
+import { loadSettings, saveSettings } from './settings';
+
+export interface SessionData {
+~~~~~
+
+~~~~~act
+patch_file
+src/utils/db.ts
+~~~~~
+~~~~~typescript.old
+// === API 5: 全量 JSON 数据导出 ===
+export async function exportAllData(): Promise<string> {
+  const db = await getDB();
+  const sessions = await db.getAll('sessions');
+  const records = await db.getAll('records');
+  const profiles = await db.getAll('user_profiles');
+  const colorSessions = await db.getAll('color_sessions');
+  const colorRecords = await db.getAll('color_records');
+  const colorProfiles = await db.getAll('color_profiles');
+
+  const exportObject = {
+    version: DB_VERSION,
+    exportAt: new Date().toISOString(),
+    sessions,
+    records,
+    profiles,
+    color_sessions: colorSessions,
+    color_records: colorRecords,
+    color_profiles: colorProfiles,
+  };
+
+  return JSON.stringify(exportObject, null, 2);
+}
+~~~~~
+~~~~~typescript.new
+// === API 5: 全量 JSON 数据导出 ===
+export async function exportAllData(): Promise<string> {
+  const db = await getDB();
+  const sessions = await db.getAll('sessions');
+  const records = await db.getAll('records');
+  const profiles = await db.getAll('user_profiles');
+  const colorSessions = await db.getAll('color_sessions');
+  const colorRecords = await db.getAll('color_records');
+  const colorProfiles = await db.getAll('color_profiles');
+  const settings = loadSettings();
+
+  const exportObject = {
+    version: DB_VERSION,
+    exportAt: new Date().toISOString(),
+    sessions,
+    records,
+    profiles,
+    color_sessions: colorSessions,
+    color_records: colorRecords,
+    color_profiles: colorProfiles,
+    settings,
+  };
+
+  return JSON.stringify(exportObject, null, 2);
+}
+~~~~~
+
+~~~~~act
+patch_file
+src/utils/db.ts
+~~~~~
+~~~~~typescript.old
+    if (data.color_profiles) {
+      for (const cp of data.color_profiles) {
+        await tx.objectStore('color_profiles').put(cp);
+      }
+    }
+
+    await tx.done;
+    return true;
+  } catch (err) {
+~~~~~
+~~~~~typescript.new
+    if (data.color_profiles) {
+      for (const cp of data.color_profiles) {
+        await tx.objectStore('color_profiles').put(cp);
+      }
+    }
+
+    await tx.done;
+
+    if (data.settings) {
+      saveSettings(data.settings);
+    }
+
+    return true;
+  } catch (err) {
+~~~~~
+
+#### Acts 2: 更新 db.test.ts 补充 localStorage 内存垫片与偏好设置导出/导入测试
 
 ~~~~~act
 patch_file
 src/utils/__tests__/db.test.ts
 ~~~~~
 ~~~~~typescript.old
-import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  clearAllData,
-  exportAllData,
-  getAllColorProfiles,
-  getAllTrialRecords,
-  getUserProfile,
-  importAllData,
-  saveColorTrialRecord,
-  saveTrialRecord,
-} from '../db';
-
-describe('db storage & import/export', () => {
-  beforeEach(async () => {
-    await clearAllData();
-  });
-
-  it('saveTrialRecord - should save trial record and update profile', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 500,
-    });
-
-    const records = await getAllTrialRecords('single');
-    expect(records.length).toBe(1);
-    expect(records[0].id).toBe('r1');
-
-    const profile = await getUserProfile('single');
-    expect(profile).not.toBeNull();
-    expect(profile?.totalTrainedCards).toBe(1);
-    expect(profile?.totalHits).toBe(1);
-  });
-
-  it('exportAllData and importAllData - should correctly export and restore data', async () => {
-    // 1. Prepare initial data
-    await saveTrialRecord({
-      id: 'star_1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: 1000,
-      difficultyLevel: 10,
-      anchorA: [100, 100],
-      targetB: [200, 200],
-      userClick: [200, 200],
-      angleDegree: 45,
-      distanceRatio: 100,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 300,
-    });
-
-    await saveColorTrialRecord({
-      id: 'color_1',
-      sessionId: 'cs1',
-      mode: 'H',
-      timestamp: 1000,
-      difficultyLevel: 8,
-      targetHSV: [120, 100, 100],
-      userHSV: [120, 100, 100],
-      isHit: true,
-      errorValue: 0,
-      responseTimeMs: 400,
-    });
-
-    // 2. Export
-    const exportedJson = await exportAllData();
-    expect(exportedJson).toContain('star_1');
-    expect(exportedJson).toContain('color_1');
-
-    // 3. Clear DB
-    await clearAllData();
-    const recordsEmpty = await getAllTrialRecords();
-    expect(recordsEmpty.length).toBe(0);
-
-    // 4. Import
-    const success = await importAllData(exportedJson);
-    expect(success).toBe(true);
-
-    // 5. Verify restored data
-    const recordsRestored = await getAllTrialRecords('single');
-    expect(recordsRestored.length).toBe(1);
-    expect(recordsRestored[0].id).toBe('star_1');
-
-    const colorProfiles = await getAllColorProfiles();
-    expect(colorProfiles.H?.totalTrainedCards).toBe(1);
-  });
-});
-~~~~~
-~~~~~typescript.new
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -157,119 +164,65 @@ describe('db storage & import/export', () => {
   beforeEach(async () => {
     await clearAllData();
   });
+~~~~~
+~~~~~typescript.new
+import 'fake-indexeddb/auto';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  clearAllData,
+  exportAllData,
+  formatTotalTime,
+  getAllColorProfiles,
+  getAllColorTrialRecords,
+  getAllTrialRecords,
+  getAllUserProfiles,
+  getColorTrainingTimeMs,
+  getStarHoppingTrainingTimeMs,
+  getTotalTrainingTimeMs,
+  getUserProfile,
+  importAllData,
+  saveColorSession,
+  saveColorTrialRecord,
+  saveSession,
+  saveTrialRecord,
+} from '../db';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
 
-  it('formatTotalTime - should format milliseconds into days, hours, and minutes', () => {
-    expect(formatTotalTime(0)).toBe('0天0小时0分钟');
-    expect(formatTotalTime(65 * 1000)).toBe('0天0小时1分钟');
-    expect(formatTotalTime((60 * 60 + 120) * 1000)).toBe('0天1小时2分钟');
-    expect(formatTotalTime((24 * 3600 + 3600 * 2 + 180) * 1000)).toBe('1天2小时3分钟');
+const memoryStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    clear: () => {
+      store = {};
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+  };
+})();
+
+if (typeof globalThis.localStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    writable: true,
   });
+}
 
-  it('saveTrialRecord - should save trial record and update profile', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 500,
-    });
-
-    const records = await getAllTrialRecords('single');
-    expect(records.length).toBe(1);
-    expect(records[0].id).toBe('r1');
-
-    const profile = await getUserProfile('single');
-    expect(profile).not.toBeNull();
-    expect(profile?.totalTrainedCards).toBe(1);
-    expect(profile?.totalHits).toBe(1);
+describe('db storage & import/export', () => {
+  beforeEach(async () => {
+    await clearAllData();
+    localStorage.clear();
   });
+~~~~~
 
-  it('getAllUserProfiles & getAllColorProfiles - should retrieve all mode profiles', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 500,
-    });
-
-    const userProfiles = await getAllUserProfiles();
-    expect(userProfiles.single).not.toBeNull();
-    expect(userProfiles.double_h).toBeNull();
-    expect(userProfiles.double_r).toBeNull();
-
-    await saveColorTrialRecord({
-      id: 'cr1',
-      sessionId: 'cs1',
-      mode: 'H',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      targetHSV: [0, 100, 100],
-      userHSV: [0, 100, 100],
-      isHit: true,
-      errorValue: 0,
-      responseTimeMs: 500,
-    });
-
-    const colorProfiles = await getAllColorProfiles();
-    expect(colorProfiles.H).not.toBeNull();
-    expect(colorProfiles.S).toBeNull();
-    expect(colorProfiles.V).toBeNull();
-
-    const colorRecords = await getAllColorTrialRecords('H');
-    expect(colorRecords.length).toBe(1);
-  });
-
-  it('training time calculation - should aggregate valid session durations', async () => {
-    await saveSession({
-      id: 's1',
-      mode: 'single',
-      type: 'training',
-      startTimestamp: 1000,
-      endTimestamp: 61000, // +60s
-      totalTrials: 5,
-      hitTrials: 4,
-      startLevel: 5,
-      endLevel: 6,
-    });
-
-    await saveColorSession({
-      id: 'cs1',
-      mode: 'H',
-      type: 'training',
-      startTimestamp: 1000,
-      endTimestamp: 31000, // +30s
-      totalTrials: 3,
-      hitTrials: 3,
-      startLevel: 5,
-      endLevel: 6,
-    });
-
-    const starMs = await getStarHoppingTrainingTimeMs();
-    const colorMs = await getColorTrainingTimeMs();
-    const totalMs = await getTotalTrainingTimeMs();
-
-    expect(starMs).toBe(60000);
-    expect(colorMs).toBe(30000);
-    expect(totalMs).toBe(90000);
-  });
-
+~~~~~act
+patch_file
+src/utils/__tests__/db.test.ts
+~~~~~
+~~~~~typescript.old
   it('exportAllData and importAllData - should correctly export and restore data', async () => {
     // 1. Prepare initial data
     await saveTrialRecord({
@@ -323,91 +276,72 @@ describe('db storage & import/export', () => {
     const colorProfiles = await getAllColorProfiles();
     expect(colorProfiles.H?.totalTrainedCards).toBe(1);
   });
-});
-~~~~~
-
-#### Acts 2: 补齐 geometry.ts 寻星弱点靶向生成算法测试
-
-~~~~~act
-patch_file
-src/utils/__tests__/geometry.test.ts
-~~~~~
-~~~~~typescript.old
-    const qDoubleR = generateQuestion('double_r', 15);
-    expect(qDoubleR.mode).toBe('double_r');
-    expect(qDoubleR.rotationAngle).toBeDefined();
-  });
-});
 ~~~~~
 ~~~~~typescript.new
-    const qDoubleR = generateQuestion('double_r', 15);
-    expect(qDoubleR.mode).toBe('double_r');
-    expect(qDoubleR.rotationAngle).toBeDefined();
+  it('exportAllData and importAllData - should correctly export and restore data', async () => {
+    // 1. Prepare initial data
+    await saveTrialRecord({
+      id: 'star_1',
+      sessionId: 's1',
+      mode: 'single',
+      timestamp: 1000,
+      difficultyLevel: 10,
+      anchorA: [100, 100],
+      targetB: [200, 200],
+      userClick: [200, 200],
+      angleDegree: 45,
+      distanceRatio: 100,
+      isHit: true,
+      errorPixelDistance: 0,
+      responseTimeMs: 300,
+    });
+
+    await saveColorTrialRecord({
+      id: 'color_1',
+      sessionId: 'cs1',
+      mode: 'H',
+      timestamp: 1000,
+      difficultyLevel: 8,
+      targetHSV: [120, 100, 100],
+      userHSV: [120, 100, 100],
+      isHit: true,
+      errorValue: 0,
+      responseTimeMs: 400,
+    });
+
+    const customSettings = { ...DEFAULT_SETTINGS, gridSize: 5, autoNext: false };
+    saveSettings(customSettings);
+
+    // 2. Export
+    const exportedJson = await exportAllData();
+    expect(exportedJson).toContain('star_1');
+    expect(exportedJson).toContain('color_1');
+    expect(exportedJson).toContain('"gridSize": 5');
+
+    // 3. Clear DB & localStorage
+    await clearAllData();
+    localStorage.clear();
+    const recordsEmpty = await getAllTrialRecords();
+    expect(recordsEmpty.length).toBe(0);
+    expect(loadSettings().gridSize).toBe(DEFAULT_SETTINGS.gridSize);
+
+    // 4. Import
+    const success = await importAllData(exportedJson);
+    expect(success).toBe(true);
+
+    // 5. Verify restored data and settings
+    const recordsRestored = await getAllTrialRecords('single');
+    expect(recordsRestored.length).toBe(1);
+    expect(recordsRestored[0].id).toBe('star_1');
+
+    const colorProfiles = await getAllColorProfiles();
+    expect(colorProfiles.H?.totalTrainedCards).toBe(1);
+
+    const restoredSettings = loadSettings();
+    expect(restoredSettings.gridSize).toBe(5);
+    expect(restoredSettings.autoNext).toBe(false);
   });
-
-  it('generateQuestion with manual targeting - should generate targeted angles with higher probability', () => {
-    // 锁定扇区 0 (对应 0° 正东，允许加权抖动 ±20°)
-    const options = {
-      targetingMode: 'manual' as const,
-      targetSectors: [0],
-    };
-
-    let targetedCount = 0;
-    const totalRuns = 200;
-
-    for (let i = 0; i < totalRuns; i++) {
-      const q = generateQuestion('single', 5, options);
-      // 0° ± 25° 范围 (0~25° 或 335~360°)
-      if (q.angleDegree <= 25 || q.angleDegree >= 335) {
-        targetedCount++;
-      }
-    }
-
-    const ratio = targetedCount / totalRuns;
-    expect(ratio).toBeGreaterThan(0.4);
-  });
-});
-~~~~~
-
-#### Acts 3: 补齐 colorUtils.ts 色感弱点靶向生成算法测试
-
-~~~~~act
-patch_file
-src/utils/__tests__/colorUtils.test.ts
-~~~~~
-~~~~~typescript.old
-    const hitVFail = checkColorHit('V', 55, questionV);
-    expect(hitVFail.isHit).toBe(false);
-  });
-});
-~~~~~
-~~~~~typescript.new
-    const hitVFail = checkColorHit('V', 55, questionV);
-    expect(hitVFail.isHit).toBe(false);
-  });
-
-  it('generateColorQuestion with manual targeting - should generate targeted hues with higher probability', () => {
-    // 锁定 0 号扇区 (0°-30°，中心 15°，抖动 ±15°)
-    const options = {
-      targetingMode: 'manual' as const,
-      targetSectors: [0],
-    };
-
-    let targetedCount = 0;
-    const totalRuns = 200;
-
-    for (let i = 0; i < totalRuns; i++) {
-      const q = generateColorQuestion('H', 5, options);
-      if (q.targetH >= 0 && q.targetH <= 35) {
-        targetedCount++;
-      }
-    }
-
-    const ratio = targetedCount / totalRuns;
-    expect(ratio).toBeGreaterThan(0.4);
-  });
-});
 ~~~~~
 
 ### 下一步建议
-运行 `npm run test:coverage`，检查 `src/utils` 目录下核心算法与数据库模组的覆盖率统计指标。
+可以运行 `npm run test` 执行单体测试，验证包含偏好设置在内的所有数据库持久化与全量导出/导入测试是否顺利通过。

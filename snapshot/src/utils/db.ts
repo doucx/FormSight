@@ -1,5 +1,6 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 import type { TrainingMode, TrialRecord } from '../types';
+import { loadSettings, saveSettings } from './settings';
 
 export interface SessionData {
   id: string;
@@ -223,6 +224,7 @@ export async function exportAllData(): Promise<string> {
   const colorSessions = await db.getAll('color_sessions');
   const colorRecords = await db.getAll('color_records');
   const colorProfiles = await db.getAll('color_profiles');
+  const settings = loadSettings();
 
   const exportObject = {
     version: DB_VERSION,
@@ -233,6 +235,7 @@ export async function exportAllData(): Promise<string> {
     color_sessions: colorSessions,
     color_records: colorRecords,
     color_profiles: colorProfiles,
+    settings,
   };
 
   return JSON.stringify(exportObject, null, 2);
@@ -282,6 +285,11 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     }
 
     await tx.done;
+
+    if (data.settings) {
+      saveSettings(data.settings);
+    }
+
     return true;
   } catch (err) {
     console.error('导入寻星与色感数据失败:', err);

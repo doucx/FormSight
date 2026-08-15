@@ -18,10 +18,35 @@ import {
   saveSession,
   saveTrialRecord,
 } from '../db';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
+
+const memoryStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    clear: () => {
+      store = {};
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+  };
+})();
+
+if (typeof globalThis.localStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    writable: true,
+  });
+}
 
 describe('db storage & import/export', () => {
   beforeEach(async () => {
     await clearAllData();
+    localStorage.clear();
   });
 
   it('formatTotalTime - should format milliseconds into days, hours, and minutes', () => {
@@ -167,26 +192,36 @@ describe('db storage & import/export', () => {
       responseTimeMs: 400,
     });
 
+    const customSettings = { ...DEFAULT_SETTINGS, gridSize: 5, autoNext: false };
+    saveSettings(customSettings);
+
     // 2. Export
     const exportedJson = await exportAllData();
     expect(exportedJson).toContain('star_1');
     expect(exportedJson).toContain('color_1');
+    expect(exportedJson).toContain('"gridSize": 5');
 
-    // 3. Clear DB
+    // 3. Clear DB & localStorage
     await clearAllData();
+    localStorage.clear();
     const recordsEmpty = await getAllTrialRecords();
     expect(recordsEmpty.length).toBe(0);
+    expect(loadSettings().gridSize).toBe(DEFAULT_SETTINGS.gridSize);
 
     // 4. Import
     const success = await importAllData(exportedJson);
     expect(success).toBe(true);
 
-    // 5. Verify restored data
+    // 5. Verify restored data and settings
     const recordsRestored = await getAllTrialRecords('single');
     expect(recordsRestored.length).toBe(1);
     expect(recordsRestored[0].id).toBe('star_1');
 
     const colorProfiles = await getAllColorProfiles();
     expect(colorProfiles.H?.totalTrainedCards).toBe(1);
+
+    const restoredSettings = loadSettings();
+    expect(restoredSettings.gridSize).toBe(5);
+    expect(restoredSettings.autoNext).toBe(false);
   });
 });
