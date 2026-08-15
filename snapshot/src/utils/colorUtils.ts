@@ -1,9 +1,4 @@
-import {
-  calcDeltaEOk,
-  getOkChroma,
-  getTargetDeltaEForLevel,
-  hsvToOkLab,
-} from './oklchUtils';
+import { calcDeltaEOk, getOkChroma, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
 export type ColorMode = 'H' | 'S' | 'V';
 
@@ -123,7 +118,7 @@ export function generateColorQuestion(
   const clampedLevel = Math.max(1, Math.min(35, level));
   const tolerance = getTargetDeltaEForLevel(clampedLevel);
 
-  let targetH = mode === 'H' ? selectHueWithTargeting(options) : Math.floor(Math.random() * 360);
+  const targetH = mode === 'H' ? selectHueWithTargeting(options) : Math.floor(Math.random() * 360);
   let targetS = 100;
   let targetV = 100;
 
