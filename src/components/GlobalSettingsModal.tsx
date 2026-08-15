@@ -16,7 +16,11 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `formsight_data_${new Date().toISOString().slice(0, 10)}.json`;
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    a.download = `formsight_data_${dateStr}_${timeStr}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

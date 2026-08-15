@@ -19,6 +19,7 @@ export interface UserSettings {
   gridSize: number; // 网格维数 (2, 3, 4, 5)
   sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
   showToleranceBand: boolean; // 是否显示滑块容错感应区
+  enableHoverColorPreview: boolean; // 综合拾色悬停时是否实时联动颜色预览
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -40,6 +41,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   gridSize: 3,
   sliderHitMargin: 12,
   showToleranceBand: true,
+  enableHoverColorPreview: true,
 };
 
 export function loadSettings(): UserSettings {
