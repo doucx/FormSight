@@ -1,73 +1,61 @@
-你的定位非常准确！这正是 CSS 过渡属性 `transition-all duration-75` 造成的。
+根据 ACA 协议及 Quipu 任务运行规范，在代码修改完成且功能验证无误后，我们需要创建一个独立的 Git 提交计划（`[COMMIT]` 状态），将本次色感训练滑块容错可视化及环形卷叠等优化成果固化到 Git 版本库中。
 
-在鼠标跨越 $0^\circ / 360^\circ$ 边界时，样式中的 `left` 百分比发生了突变（例如从 `1%` 跳变到 `98%`），CSS 的 `transition` 会强制在这 75ms 内对这两个百分比进行平滑插值，从而产生了“卡尺线快速横跨整个色相条”的拉丝扫过现象。
+下面我将生成该提交计划。
 
-由于卡尺线的位置是由鼠标移动事件实时驱动的，**移除卡尺线的 CSS `transition-all`** 不仅能彻底解决此跨屏横拉问题，还能消除鼠标跟随的轻微延迟，实现零延迟即时响应。
+---
 
-下面生成具体的实施计划。
-
-## [WIP] fix(color): 移除容错卡尺线的 CSS 过渡平滑，解决色相卷叠拉丝现象
+## [COMMIT] feat(color): 实现色相模式滑块容错感应区可视化及环形卷叠优化
 
 ### 错误分析
 
-**错误原因**: 在 `ColorCanvas.tsx` 中，容错卡尺线元素包含了 `transition-all duration-75` 类名。当鼠标在色相模式下靠近边界，$leftPct$ 发生卷叠跳变（例如从 $1\%$ 突变为 $98\%$）时，CSS 动画引擎会对 `left` 属性进行 75ms 的平滑插值，导致卡尺线横向扫过整个色相轨。
-
-**解决方案**: 移除左右卡尺线元素上的 `transition-all duration-75` 类名，改为即时定位（Instant Positoning），消除动画插值。
+> 本次操作为用户主动请求的 Git 提交阶段，无错误修复背景，跳过错误分析。
 
 ### 用户需求
-修复色相卡尺线在首尾卷叠时快速横跨整个色相轨道的动画拉丝问题，使其在跨越边界时直接瞬间呈现在对应端。
+将近期对色感识别模块所做的所有 UI 与逻辑优化（包括 `UserSettings` 配置扩展、`getToleranceSpan` 算法、无遮挡纯透明卡尺边界线、色相环形卷叠处理以及移除过渡插值拉丝现象）提交到 Git 版本库中。
 
 ### 评论
-在由鼠标像素坐标实时驱动（Event-Driven）的 UI 交互元素上，应尽量避免使用 CSS `transition` 平滑插值。移除后不仅解决了卷叠突变时的过渡插值异常，更提升了手感与响应灵敏度。
+本次迭代将色感训练的交互体验提升到了一个新高度。通过引入 OKLab 感知色差动态容错卡尺线，并针对色相环拓扑特性实现了无过渡延迟的环形卷叠，使FormSight 的色彩感知微调训练变得更加科学、直观且流畅。
 
 ### 目标
-在 `src/components/ColorCanvas.tsx` 中，移除左右卡尺线 `div` 元素类名中的 `transition-all duration-75`。
+1. 将 `src/utils/settings.ts`、`src/utils/colorUtils.ts`、`src/components/ColorCanvas.tsx`、`src/views/ColorTrainingView.tsx` 与 `src/components/SettingsModal.tsx` 的变更添加至 Git 暂存区。
+2. 创建符合 Conventional Commits 规范的 Git Commit。
 
 ### 基本原理
-直接将 `className` 中的 `transition-all duration-75` 移除后，当 `leftPct` 发生离散跳变时，浏览器渲染引擎会在下一帧直接绘制在目标位置，彻底避免了跨屏平滑插值。
+按照 ACA 协议及 Quipu 任务运行规范，文件系统变更与 Git 提交操作必须严格互斥。在确保代码变更独立且完整的前提下，通过独立的 `[COMMIT]` 计划将工作成果持久化至 Git 历史版本中。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/color-recognition #task/object/hue-ring-tolerance-wrap #task/action/bug-fix #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/engine #concept/state #scope/core #scope/ux #ai/instruct #task/domain/color-recognition #task/object/slider-tolerance-visualization #task/action/refactor #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 `ColorCanvas.tsx` 移除卡尺线 CSS transition 属性
+#### Acts 1: 添加文件至暂存区
 
 ~~~~~act
-patch_file
+git_add
+src/utils/settings.ts
+src/utils/colorUtils.ts
 src/components/ColorCanvas.tsx
+src/views/ColorTrainingView.tsx
+src/components/SettingsModal.tsx
 ~~~~~
-~~~~~typescript.old
-                <>
-                  {/* 左容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
-                    style={{ left: `${leftPct}%` }}
-                  />
-                  {/* 右容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
-                    style={{ left: `${rightPct}%` }}
-                  />
-                </>
+
+#### Acts 2: 提交更改
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-                <>
-                  {/* 左容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${leftPct}%` }}
-                  />
-                  {/* 右容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${rightPct}%` }}
-                  />
-                </>
+~~~~~text
+feat(color): implement slider tolerance visualization and hue ring wrap-around
+
+- Added 'showToleranceBand' setting to UserSettings and SettingsModal for toggling tolerance visualization.
+- Implemented 'getToleranceSpan' in colorUtils to compute level-based perceptual Delta E span on sliders.
+- Refactored ColorCanvas to render precise 2px caliper boundary lines (with transparent background) and 4px refined answer markers, avoiding color obstruction.
+- Added hue wrap-around logic for the tolerance caliper lines when approaching 0°/360° boundaries.
+- Removed CSS transition-all from caliper lines to eliminate interpolation sliding/lag artifacts across track boundaries.
 ~~~~~
 
 ### 下一步建议
-- **回归测试**: 运行 `npm run dev` 重新测试，验证鼠标移动到色相条最左/最右边缘时，卡尺线是否能瞬间无缝跳变到另一端。
-- **阶段提交**: 如果无其他样式或交互问题，我们可以发起最终的 Git 提交。
+- **构建校验**: 执行 `npm run build` 确保 TypeScript 编译通过。
+- **单元测试**: 执行 `npm run test` 确保所有测试用例绿灯通过。
