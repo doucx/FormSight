@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 在综合拾色模式下滑块试探时保留当前设定值标记与鼠标悬停准心共存", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786801983.1625624, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(color): 支持综合拾色鼠标按住并拖动时强制实时同步更新与拖动感", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786802148.4321494, "duration_ms": 0}}

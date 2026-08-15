@@ -56,50 +56,81 @@ export function ColorCanvas({
     S: null,
     V: null,
   });
+  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
 
   const maxVal = mode === 'H' ? 360 : 100;
 
-  // 鼠标悬停追踪 (支持单维度与 ALL 模式)
-  const handleMouseMove = (label: 'H' | 'S' | 'V', e: MouseEvent, trackEl: HTMLDivElement | null) => {
-    if (disabled || showAnswer || !trackEl) return;
+  // 计算并应用数值更新
+  const updateValueFromClientX = (label: 'H' | 'S' | 'V', clientX: number, trackEl: HTMLDivElement | null) => {
+    if (!trackEl) return;
     const rect = trackEl.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
     const ratio = clickX / rect.width;
     const currentMax = label === 'H' ? 360 : 100;
     const val = Math.round(ratio * currentMax);
 
     if (mode === 'ALL') {
+      if (label === 'H') setUserH(val);
+      else if (label === 'S') setUserS(val);
+      else if (label === 'V') setUserV(val);
       setAllHoverVals((prev) => ({ ...prev, [label]: val }));
     } else {
       setHoverVal(val);
     }
   };
 
+  // 指针按下开始拖动
+  const handlePointerDown = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+    if (disabled || showAnswer || !trackEl) return;
+    setDraggingLabel(label);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    updateValueFromClientX(label, e.clientX, trackEl);
+  };
+
+  // 指针移动
+  const handlePointerMove = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+    if (disabled || showAnswer || !trackEl) return;
+    if (draggingLabel === label) {
+      updateValueFromClientX(label, e.clientX, trackEl);
+    } else {
+      const rect = trackEl.getBoundingClientRect();
+      const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const ratio = clickX / rect.width;
+      const currentMax = label === 'H' ? 360 : 100;
+      const val = Math.round(ratio * currentMax);
+
+      if (mode === 'ALL') {
+        setAllHoverVals((prev) => ({ ...prev, [label]: val }));
+      } else {
+        setHoverVal(val);
+      }
+    }
+  };
+
+  // 指针释放结束拖动
+  const handlePointerUp = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+    if (draggingLabel === label) {
+      setDraggingLabel(null);
+      try {
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      } catch {}
+      if (mode !== 'ALL' && trackEl) {
+        const rect = trackEl.getBoundingClientRect();
+        const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+        const ratio = clickX / rect.width;
+        const selectedVal = Math.round(ratio * maxVal);
+        setHoverVal(null);
+        onAnswer(selectedVal);
+      }
+    }
+  };
+
   const handleMouseLeave = (label?: 'H' | 'S' | 'V') => {
+    if (draggingLabel) return;
     if (mode === 'ALL' && label) {
       setAllHoverVals((prev) => ({ ...prev, [label]: null }));
     } else {
       setHoverVal(null);
-    }
-  };
-
-  // 点击活动轨道
-  const handleTrackClick = (label: 'H' | 'S' | 'V', e: MouseEvent, trackEl: HTMLDivElement | null) => {
-    if (disabled || showAnswer || !trackEl) return;
-    const rect = trackEl.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-    const ratio = clickX / rect.width;
-    const currentMax = label === 'H' ? 360 : 100;
-    const selectedVal = Math.round(ratio * currentMax);
-
-    if (mode === 'ALL') {
-      if (label === 'H') setUserH(selectedVal);
-      else if (label === 'S') setUserS(selectedVal);
-      else if (label === 'V') setUserV(selectedVal);
-      setAllHoverVals((prev) => ({ ...prev, [label]: null }));
-    } else {
-      setHoverVal(null);
-      onAnswer(selectedVal);
     }
   };
 
@@ -146,27 +177,9 @@ export function ColorCanvas({
 
         {/* Track Extended Hit Area */}
         <div
-          onClick={(e) => handleTrackClick(label, e, trackRefs[label].current)}
-          onKeyDown={(e) => {
-            if (
-              (e.key === 'Enter' || e.key === ' ') &&
-              currentHoverVal !== null &&
-              !disabled &&
-              !showAnswer
-            ) {
-              e.preventDefault();
-              if (mode === 'ALL') {
-                if (label === 'H') setUserH(currentHoverVal);
-                else if (label === 'S') setUserS(currentHoverVal);
-                else if (label === 'V') setUserV(currentHoverVal);
-              } else {
-                onAnswer(currentHoverVal);
-              }
-            }
-          }}
-          role="button"
-          tabIndex={!showAnswer && !disabled ? 0 : undefined}
-          onMouseMove={(e) => handleMouseMove(label, e, trackRefs[label].current)}
+          onPointerDown={(e) => handlePointerDown(label, e, trackRefs[label].current)}
+          onPointerMove={(e) => handlePointerMove(label, e, trackRefs[label].current)}
+          onPointerUp={(e) => handlePointerUp(label, e, trackRefs[label].current)}
           onMouseLeave={() => handleMouseLeave(label)}
           style={
             hitMargin > 0
@@ -182,7 +195,7 @@ export function ColorCanvas({
                 }
               : undefined
           }
-          className={`relative flex-1 flex items-center ${
+          className={`relative flex-1 flex items-center select-none touch-none ${
             isInteractive ? 'cursor-none' : 'cursor-default'
           }`}
         >
@@ -200,15 +213,15 @@ export function ColorCanvas({
               />
             )}
 
-            {/* ALL 模式下的当前设定值标记 (无论是否悬停均始终显示) */}
-            {mode === 'ALL' && !showAnswer && (
+            {/* 当前设定值标记 (无论是否悬停均始终显示) */}
+            {!showAnswer && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
                 style={{ left: getPercent(val, max) }}
               />
             )}
 
-            {/* 容错感应区指示线 (支持单维度与 ALL 模式悬停实时联动) */}
+            {/* 容错感应区指示线 */}
             {!showAnswer &&
               showToleranceBand &&
               currentHoverVal !== null &&
@@ -250,10 +263,10 @@ export function ColorCanvas({
                 );
               })()}
 
-            {/* 鼠标悬停准心 (黑色双像素竖条，支持所有模式) */}
-            {!showAnswer && currentHoverVal !== null && (
+            {/* 鼠标悬停准心 */}
+            {!showAnswer && currentHoverVal !== null && currentHoverVal !== val && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-75"
                 style={{ left: getPercent(currentHoverVal, max) }}
               />
             )}
@@ -325,9 +338,9 @@ export function ColorCanvas({
               className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
               style={{
                 backgroundColor: hsvToHex(
-                  enableHoverColorPreview && allHoverVals.H !== null ? allHoverVals.H : userH,
-                  enableHoverColorPreview && allHoverVals.S !== null ? allHoverVals.S : userS,
-                  enableHoverColorPreview && allHoverVals.V !== null ? allHoverVals.V : userV,
+                  draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null) ? (draggingLabel === 'H' ? userH : (allHoverVals.H ?? userH)) : userH,
+                  draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null) ? (draggingLabel === 'S' ? userS : (allHoverVals.S ?? userS)) : userS,
+                  draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null) ? (draggingLabel === 'V' ? userV : (allHoverVals.V ?? userV)) : userV,
                 ),
               }}
             />
