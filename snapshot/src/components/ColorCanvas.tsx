@@ -157,10 +157,10 @@ export function ColorCanvas({
               );
             })()}
 
-            {/* 悬停准心 (细长空心竖条) */}
+            {/* 悬停准心 (细长半透明竖线) */}
             {isTargetActiveMode && !showAnswer && hoverVal !== null && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-indigo-600/90 shadow-sm pointer-events-none z-30"
                 style={{ left: getPercent(hoverVal, max) }}
               />
             )}
