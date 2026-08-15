@@ -32,7 +32,8 @@ type FilterOption =
   | 'color_all'
   | 'color_H'
   | 'color_V'
-  | 'color_S';
+  | 'color_S'
+  | 'color_ALL';
 
 const FILTER_LABELS: Record<FilterOption, string> = {
   all: '全部练习项目',
@@ -44,6 +45,7 @@ const FILTER_LABELS: Record<FilterOption, string> = {
   color_H: '色感 • 色相 (Hue)',
   color_V: '色感 • 明度 (Value)',
   color_S: '色感 • 饱和度 (Sat)',
+  color_ALL: '色感 • 综合拾色 (Match)',
 };
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
@@ -291,6 +293,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   <option value="color_H">色相 (Hue)</option>
                   <option value="color_V">明度 (Value)</option>
                   <option value="color_S">饱和度 (Saturation)</option>
+                  <option value="color_ALL">综合拾色 (Match)</option>
                 </optgroup>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />

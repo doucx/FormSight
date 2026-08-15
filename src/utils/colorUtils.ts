@@ -1,6 +1,6 @@
 import { calcDeltaEOk, getOkChroma, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
-export type ColorMode = 'H' | 'S' | 'V';
+export type ColorMode = 'H' | 'S' | 'V' | 'ALL';
 
 export interface ColorQuestionData {
   id: string;
@@ -16,8 +16,9 @@ export interface ColorHitResult {
   isHit: boolean;
   userValue: number;
   targetValue: number;
-  errorValue: number; // 绝对数值误差 (角度或百分比)
+  errorValue: number; // 绝对数值误差 (角度、百分比或 OKLab ΔE)
   tolerance: number;
+  userHSV?: [number, number, number];
 }
 
 /**
@@ -126,7 +127,7 @@ export function generateColorQuestion(
   let attempts = 0;
   while (attempts < 50) {
     attempts++;
-    if (mode === 'H') {
+    if (mode === 'H' || mode === 'ALL') {
       targetS = Math.floor(Math.random() * 81) + 20; // 20..100
       targetV = Math.floor(Math.random() * 81) + 20; // 20..100
 
@@ -163,14 +164,23 @@ export function generateColorQuestion(
  */
 export function checkColorHit(
   mode: ColorMode,
-  userVal: number,
+  userVal: number | [number, number, number],
   question: ColorQuestionData,
 ): ColorHitResult {
   const { targetH, targetS, targetV, difficultyLevel } = question;
 
-  const userH = mode === 'H' ? userVal : targetH;
-  const userS = mode === 'S' ? userVal : targetS;
-  const userV = mode === 'V' ? userVal : targetV;
+  let userH: number;
+  let userS: number;
+  let userV: number;
+
+  if (mode === 'ALL' && Array.isArray(userVal)) {
+    [userH, userS, userV] = userVal;
+  } else {
+    const singleVal = typeof userVal === 'number' ? userVal : userVal[0];
+    userH = mode === 'H' ? singleVal : targetH;
+    userS = mode === 'S' ? singleVal : targetS;
+    userV = mode === 'V' ? singleVal : targetV;
+  }
 
   const targetLab = hsvToOkLab(targetH, targetS, targetV);
   const userLab = hsvToOkLab(userH, userS, userV);
@@ -182,24 +192,28 @@ export function checkColorHit(
   let targetVal = targetH;
   let errorVal = 0;
 
-  if (mode === 'H') {
+  if (mode === 'ALL') {
+    targetVal = 0;
+    errorVal = Math.round(realDeltaE * 1000) / 1000;
+  } else if (mode === 'H') {
     targetVal = targetH;
-    const diff = Math.abs(userVal - targetVal);
+    const diff = Math.abs((userVal as number) - targetVal);
     errorVal = Math.min(diff, 360 - diff);
   } else if (mode === 'V') {
     targetVal = targetV;
-    errorVal = Math.abs(userVal - targetVal);
+    errorVal = Math.abs((userVal as number) - targetVal);
   } else {
     targetVal = targetS;
-    errorVal = Math.abs(userVal - targetVal);
+    errorVal = Math.abs((userVal as number) - targetVal);
   }
 
   return {
     isHit,
-    userValue: userVal,
+    userValue: typeof userVal === 'number' ? userVal : userH,
     targetValue: targetVal,
     errorValue: Math.round(errorVal * 10) / 10,
     tolerance: targetDeltaE,
+    userHSV: [userH, userS, userV],
   };
 }
 

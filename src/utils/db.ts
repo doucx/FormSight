@@ -25,7 +25,7 @@ export interface UserProfileData {
 
 export interface ColorSessionData {
   id: string;
-  mode: 'H' | 'S' | 'V';
+  mode: 'H' | 'S' | 'V' | 'ALL';
   type: 'training' | 'benchmark';
   startTimestamp: number;
   endTimestamp?: number;
@@ -38,7 +38,7 @@ export interface ColorSessionData {
 export interface ColorTrialRecord {
   id: string;
   sessionId: string;
-  mode: 'H' | 'S' | 'V';
+  mode: 'H' | 'S' | 'V' | 'ALL';
   timestamp: number;
   difficultyLevel: number;
   targetHSV: [number, number, number];
@@ -49,7 +49,7 @@ export interface ColorTrialRecord {
 }
 
 export interface ColorProfileData {
-  mode: 'H' | 'S' | 'V';
+  mode: 'H' | 'S' | 'V' | 'ALL';
   currentLevel: number;
   bestLevel: number;
   totalTrainedCards: number;
@@ -90,7 +90,7 @@ interface FormSightDBSchema extends DBSchema {
     };
   };
   color_profiles: {
-    key: 'H' | 'S' | 'V';
+    key: 'H' | 'S' | 'V' | 'ALL';
     value: ColorProfileData;
   };
 }
@@ -360,17 +360,20 @@ export async function saveColorSession(session: ColorSessionData): Promise<void>
 }
 
 export async function getAllColorProfiles(): Promise<
-  Record<'H' | 'S' | 'V', ColorProfileData | null>
+  Record<'H' | 'S' | 'V' | 'ALL', ColorProfileData | null>
 > {
   const db = await getDB();
   const h = (await db.get('color_profiles', 'H')) || null;
   const s = (await db.get('color_profiles', 'S')) || null;
   const v = (await db.get('color_profiles', 'V')) || null;
+  const all = (await db.get('color_profiles', 'ALL')) || null;
 
-  return { H: h, S: s, V: v };
+  return { H: h, S: s, V: v, ALL: all };
 }
 
-export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V'): Promise<ColorTrialRecord[]> {
+export async function getAllColorTrialRecords(
+  mode?: 'H' | 'S' | 'V' | 'ALL',
+): Promise<ColorTrialRecord[]> {
   const db = await getDB();
   if (mode) {
     return await db.getAllFromIndex('color_records', 'by-mode', mode);
@@ -379,7 +382,7 @@ export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V'): Promise<C
 }
 
 async function updateColorProfile(
-  mode: 'H' | 'S' | 'V',
+  mode: 'H' | 'S' | 'V' | 'ALL',
   isHit: boolean,
   currentLevel: number,
 ): Promise<void> {

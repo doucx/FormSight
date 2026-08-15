@@ -2,6 +2,7 @@ import {
   Award,
   BarChart2,
   Droplet,
+  Palette,
   Play,
   RotateCw,
   Sliders,
@@ -45,6 +46,12 @@ const COLOR_MODES_CONFIG: Array<{
     desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
     icon: Droplet,
   },
+  {
+    id: 'ALL',
+    title: '综合拾色 (Match)',
+    desc: '同时调整色相、饱和度与明度，逼近真理色彩',
+    icon: Palette,
+  },
 ];
 
 function formatTodayTime(ms: number): string {
@@ -71,6 +78,7 @@ export function ColorDashboard({
     H: { count: 0, timeMs: 0 },
     V: { count: 0, timeMs: 0 },
     S: { count: 0, timeMs: 0 },
+    ALL: { count: 0, timeMs: 0 },
   });
 
   useEffect(() => {
@@ -84,6 +92,7 @@ export function ColorDashboard({
         H: { count: 0, timeMs: 0 },
         V: { count: 0, timeMs: 0 },
         S: { count: 0, timeMs: 0 },
+        ALL: { count: 0, timeMs: 0 },
       };
 
       for (const r of records) {
@@ -144,7 +153,7 @@ export function ColorDashboard({
         </div>
       </div>
 
-      {/* 3 个色彩子模式卡片 */}
+      {/* 4 个色彩子模式卡片 (每行 3 个) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {COLOR_MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];

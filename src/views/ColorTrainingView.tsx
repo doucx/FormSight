@@ -81,12 +81,19 @@ export function ColorTrainingView({
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished]);
 
-  // 键盘响应
+  // 键盘响应 (Space 双阶段支持)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
         e.preventDefault();
-        if (showAnswer && !isFinished) handleNextQuestion();
+        if (!showAnswer && mode === 'ALL') {
+          // 第一阶段：ALL 模式下触发显式提交按钮事件
+          const submitBtn = document.querySelector('button[onClick]') as HTMLButtonElement | null;
+          submitBtn?.click();
+        } else if (showAnswer && !isFinished) {
+          // 第二阶段：切题
+          handleNextQuestion();
+        }
       } else if (e.code === 'Escape') {
         e.preventDefault();
         handleFinishSession();
@@ -94,10 +101,10 @@ export function ColorTrainingView({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
+  }, [showAnswer, isFinished, mode]);
 
   // 作答响应
-  const handleAnswer = async (userVal: number) => {
+  const handleAnswer = async (userVal: number | [number, number, number]) => {
     const responseTimeMs = Date.now() - questionStartTime;
     const hitResult = checkColorHit(mode, userVal, question);
 
@@ -109,6 +116,15 @@ export function ColorTrainingView({
     setTotalTrials(newTotal);
     setHitTrials(newHits);
 
+    const computedUserHSV: [number, number, number] =
+      mode === 'ALL' && Array.isArray(userVal)
+        ? userVal
+        : [
+            mode === 'H' ? (userVal as number) : question.targetH,
+            mode === 'S' ? (userVal as number) : question.targetS,
+            mode === 'V' ? (userVal as number) : question.targetV,
+          ];
+
     // 数据库存盘
     const record: ColorTrialRecord = {
       id: `crec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -117,11 +133,7 @@ export function ColorTrainingView({
       timestamp: Date.now(),
       difficultyLevel: question.difficultyLevel,
       targetHSV: [question.targetH, question.targetS, question.targetV],
-      userHSV: [
-        mode === 'H' ? userVal : question.targetH,
-        mode === 'S' ? userVal : question.targetS,
-        mode === 'V' ? userVal : question.targetV,
-      ],
+      userHSV: computedUserHSV,
       isHit: hitResult.isHit,
       errorValue: hitResult.errorValue,
       responseTimeMs,
@@ -239,7 +251,7 @@ export function ColorTrainingView({
             退出训练 (Esc)
           </button>
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {mode === 'H' ? '色相' : mode === 'V' ? '明度' : '饱和度'} |{' '}
+            {mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色'} |{' '}
             {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
           {settings.colorTargetingMode === 'manual' && mode === 'H' && (
