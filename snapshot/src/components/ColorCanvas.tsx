@@ -167,10 +167,10 @@ export function ColorCanvas({
             }`}
             style={{ background: gradient }}
           >
-            {/* 已知维度/单维度标记 (细长黑色竖条) */}
+            {/* 已知维度/单维度标记 (无边框双像素黑色竖条) */}
             {(!isTargetActiveMode || (mode !== 'ALL' && !isTargetActiveMode)) && mode !== 'ALL' && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm"
                 style={{ left: getPercent(val, max) }}
               />
             )}
@@ -199,10 +199,10 @@ export function ColorCanvas({
               />
             )}
 
-            {/* ALL 模式调制中的当前游标 (与单维度一致的黑色竖条) */}
+            {/* ALL 模式调制中的当前游标 (无边框双像素黑色竖条) */}
             {mode === 'ALL' && !showAnswer && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm pointer-events-none z-20"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
                 style={{ left: getPercent(val, max) }}
               />
             )}

@@ -1,60 +1,114 @@
-好的，我们来将导出的 JSON 文件名中的日期格式从 `YYYY-MM-DD` 升级为精确到秒的时间戳 `YYYY-MM-DD_HH-mm-ss`，从而彻底避免在同一天内多次导出时出现文件名重复的问题。
+好的，我将 `ColorCanvas` 中所有滑块游标（包括单维度鼠标悬停准心、已知维度标记以及 ALL 模式调制的游标）统一调整为双像素黑色竖条样式（`w-0.5 h-8 bg-slate-900`），并且去掉了白色边框。
 
 下面为您生成实施计划：
 
-## [WIP] refactor(settings): 优化全局 JSON 备份文件名，精确到秒以防重复
+## [WIP] refactor(color): 将 ColorCanvas 游标样式统一为无边框双像素黑色竖条
 
 ### 用户需求
-在 `GlobalSettingsModal.tsx` 中，导出全量 JSON 时生成的文件名原先只精确到日期（`formsight_data_YYYY-MM-DD.json`），现需修改为精确到秒（形如 `formsight_data_YYYY-MM-DD_HH-mm-ss.json`），避免一天内多次备份导致文件名冲突。
+将 `ColorCanvas` 中所有滑块的游标及当前选中标记统一修改为与色相训练中鼠标悬停时相同的样式：细长的双像素纯黑色竖条（`w-0.5` 或 `w-1` 窄黑线），且不带白色边框。
 
 ### 评论
-这是一个提升开发者体验（DX）和小细节健壮性的实用改进。通过引入带有完整时分秒的时间戳后缀，用户在进行频繁备份或管理离线数据档案时将更加安全和清晰。
+统一的视觉反馈能带来极致的精致感与专业操作体验。将粗黑线及白色外边框去除，换成精细的纯黑微型游标，与整体冷色科技风底色相得益彰。
 
 ### 目标
-1. 修改 `src/components/GlobalSettingsModal.tsx` 中的 `handleExport` 逻辑。
-2. 构造符合 `formsight_data_YYYY-MM-DD_HH-mm-ss.json` 格式的时间戳字符串。
+1. 修改 `src/components/ColorCanvas.tsx` 中已知维度标记、ALL 模式游标、单维度悬停准心的样式类。
+2. 统一移除带有 `border` 和较大宽度的样式，精简为 `w-0.5 h-8 bg-slate-900`（或 `w-1`）。
 
 ### 标签
-#intent/refine #flow/ready #priority/low #comp/cli #concept/config #scope/dx #ai/instruct #task/domain/settings #task/object/json-export-filename #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/color-recognition #task/object/color-canvas-cursors #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 GlobalSettingsModal 导出文件名逻辑
+#### Acts 1: 精简并统一 ColorCanvas 游标样式
 
 ~~~~~act
 patch_file
-src/components/GlobalSettingsModal.tsx
+src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `formsight_data_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+            {/* 已知维度/单维度标记 (细长黑色竖条) */}
+            {(!isTargetActiveMode || (mode !== 'ALL' && !isTargetActiveMode)) && mode !== 'ALL' && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm"
+                style={{ left: getPercent(val, max) }}
+              />
+            )}
+
+            {/* ALL 模式拖拽 Range Input */}
+            {mode === 'ALL' && (
+              <input
+                type="range"
+                min="0"
+                max={max}
+                value={val}
+                disabled={disabled || showAnswer}
+                onChange={(e) =>
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
+                }
+                onInput={(e) =>
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
+                }
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default z-30"
+              />
+            )}
+
+            {/* ALL 模式调制中的当前游标 (与单维度一致的黑色竖条) */}
+            {mode === 'ALL' && !showAnswer && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm pointer-events-none z-20"
+                style={{ left: getPercent(val, max) }}
+              />
+            )}
 ~~~~~
 ~~~~~typescript.new
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-    a.download = `formsight_data_${dateStr}_${timeStr}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+            {/* 已知维度/单维度标记 (无边框双像素黑色竖条) */}
+            {(!isTargetActiveMode || (mode !== 'ALL' && !isTargetActiveMode)) && mode !== 'ALL' && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm"
+                style={{ left: getPercent(val, max) }}
+              />
+            )}
+
+            {/* ALL 模式拖拽 Range Input */}
+            {mode === 'ALL' && (
+              <input
+                type="range"
+                min="0"
+                max={max}
+                value={val}
+                disabled={disabled || showAnswer}
+                onChange={(e) =>
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
+                }
+                onInput={(e) =>
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
+                }
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default z-30"
+              />
+            )}
+
+            {/* ALL 模式调制中的当前游标 (无边框双像素黑色竖条) */}
+            {mode === 'ALL' && !showAnswer && (
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
+                style={{ left: getPercent(val, max) }}
+              />
+            )}
 ~~~~~
 
 ### 下一步建议
-- **执行构建与校验**: 运行 `npm run check` 及 `npm run build` 确保一切正常。
+- **执行构建与校验**: 运行 `npm run check` 及 `npm run build` 确保样式变更后类型和打包完全通过。

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(settings): 优化全局 JSON 备份文件名，精确到秒以防重复", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786800595.1520026, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(color): 将 ColorCanvas 游标样式统一为无边框双像素黑色竖条", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786800806.3666666, "duration_ms": 0}}
