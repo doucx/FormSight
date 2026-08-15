@@ -110,13 +110,13 @@ export function getTargetDeltaEForLevel(level: number): number {
  */
 export function oklchToHex(L: number, C: number, H: number): string {
   const rad = (H * Math.PI) / 180;
-  const a = C * Math.cos(rad);
-  const b = C * Math.sin(rad);
+  const aLab = C * Math.cos(rad);
+  const bLab = C * Math.sin(rad);
 
   // 1. OKLab -> LMS
-  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
-  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+  const l_ = L + 0.3963377774 * aLab + 0.2158037573 * bLab;
+  const m_ = L - 0.1055613458 * aLab - 0.0638541728 * bLab;
+  const s_ = L - 0.0894841775 * aLab - 1.291485548 * bLab;
 
   const lCone = l_ ** 3;
   const mCone = m_ ** 3;
