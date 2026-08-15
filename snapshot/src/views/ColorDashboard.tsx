@@ -153,8 +153,8 @@ export function ColorDashboard({
         </div>
       </div>
 
-      {/* 4 个色彩子模式卡片 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 4 个色彩子模式卡片 (每行 3 个) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {COLOR_MODES_CONFIG.map((config) => {
           const profile = profiles[config.id];
           const totalCards = profile?.totalTrainedCards || 0;
