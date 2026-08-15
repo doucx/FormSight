@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 拆分 ColorCanvas 拾色轨道逻辑，修复单维度答案泄露与越权拖动问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786802727.037411, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(color): 修复综合拾色模式下按 Space 无法自动提交的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786802904.1302032, "duration_ms": 0}}

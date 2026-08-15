@@ -499,6 +499,18 @@ export function ColorCanvas({
     onAnswer([userH, userS, userV]);
   };
 
+  // 键盘快捷键响应 (ALL 模式下 Space 显式提交)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && mode === 'ALL' && !showAnswer && !disabled) {
+        e.preventDefault();
+        onAnswer([userH, userS, userV]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mode, showAnswer, disabled, userH, userS, userV, onAnswer]);
+
   // 渐变背景计算
   const currentH = mode === 'ALL' ? userH : targetH;
   const currentV = mode === 'ALL' ? userV : targetV;

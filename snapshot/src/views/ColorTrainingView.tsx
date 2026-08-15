@@ -81,17 +81,12 @@ export function ColorTrainingView({
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished]);
 
-  // 键盘响应 (Space 双阶段支持)
+  // 键盘响应 (Space 揭晓答案后切题 / Esc 退出)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        e.preventDefault();
-        if (!showAnswer && mode === 'ALL') {
-          // 第一阶段：ALL 模式下触发显式提交按钮事件
-          const submitBtn = document.querySelector('button[onClick]') as HTMLButtonElement | null;
-          submitBtn?.click();
-        } else if (showAnswer && !isFinished) {
-          // 第二阶段：切题
+        if (showAnswer && !isFinished) {
+          e.preventDefault();
           handleNextQuestion();
         }
       } else if (e.code === 'Escape') {
@@ -101,7 +96,7 @@ export function ColorTrainingView({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished, mode]);
+  }, [showAnswer, isFinished]);
 
   // 作答响应
   const handleAnswer = async (userVal: number | [number, number, number]) => {
