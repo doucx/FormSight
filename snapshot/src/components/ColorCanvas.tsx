@@ -320,8 +320,14 @@ export function ColorCanvas({
               style={{ backgroundColor: targetHex }}
             />
             <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-150"
-              style={{ backgroundColor: hsvToHex(userH, userS, userV) }}
+              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
+              style={{
+                backgroundColor: hsvToHex(
+                  allHoverVals.H !== null ? allHoverVals.H : userH,
+                  allHoverVals.S !== null ? allHoverVals.S : userS,
+                  allHoverVals.V !== null ? allHoverVals.V : userV,
+                ),
+              }}
             />
           </div>
         ) : (

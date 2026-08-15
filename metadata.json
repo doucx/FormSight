@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 为综合拾色模式增加鼠标悬停游标跟随与实时 ΔE 动态容错联动", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786801305.520462, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(color): 确保综合拾色悬停试探时颜色预览与色值状态实时联动", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786801365.5484293, "duration_ms": 0}}
