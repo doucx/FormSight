@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 确保综合拾色悬停试探时颜色预览与色值状态实时联动", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786801365.5484293, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(settings): 为综合拾色悬停试探颜色实时联动增加偏好设置开关", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786801655.3528519, "duration_ms": 0}}

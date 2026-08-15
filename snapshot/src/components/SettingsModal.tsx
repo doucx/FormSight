@@ -355,6 +355,31 @@ export function SettingsModal({
             </button>
           </div>
 
+          {/* 综合拾色悬停颜色实时联动开关 */}
+          {appContext === 'color-sense' && (
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm font-semibold text-slate-700">综合拾色悬停颜色实时联动</div>
+                <div className="text-xs text-slate-400">鼠标悬停滑块时右侧色块实时跟随试探预览</div>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  updateSettings({
+                    enableHoverColorPreview: !(current.enableHoverColorPreview ?? true),
+                  })
+                }
+                className="text-indigo-600 hover:opacity-80 transition-opacity"
+              >
+                {(current.enableHoverColorPreview ?? true) ? (
+                  <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+                ) : (
+                  <ToggleLeft className="w-8 h-8 text-slate-300" />
+                )}
+              </button>
+            </div>
+          )}
+
           {/* 仅寻星训练模式下显示干扰点网格大小与弱点靶向设置 */}
           {appContext === 'star-hopping' && (
             <>
