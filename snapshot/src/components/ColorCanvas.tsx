@@ -199,30 +199,32 @@ export function ColorCanvas({
               />
             )}
 
-            {/* ALL 模式调制中的当前游标 (纯色竖条) */}
+            {/* ALL 模式调制中的当前游标 (与单维度一致的黑色竖条) */}
             {mode === 'ALL' && !showAnswer && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 bg-indigo-600 border border-white rounded-md shadow-md pointer-events-none z-20"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 border border-white/80 rounded-sm shadow-sm pointer-events-none z-20"
                 style={{ left: getPercent(val, max) }}
               />
             )}
 
-            {/* 单维度悬停容错感应区 */}
-            {mode !== 'ALL' &&
-              isTargetActiveMode &&
-              !showAnswer &&
-              hoverVal !== null &&
+            {/* 容错感应区指示线 (支持单维度悬停与 ALL 模式实时调制) */}
+            {!showAnswer &&
               showToleranceBand &&
+              ((mode !== 'ALL' && isTargetActiveMode && hoverVal !== null) || mode === 'ALL') &&
               (() => {
-                const span = getToleranceSpan(mode, hoverVal, question);
-                const isWrapMode = mode === 'H';
+                const activeVal = mode === 'ALL' ? val : (hoverVal as number);
+                const currentHSVTuple: [number, number, number] | undefined =
+                  mode === 'ALL' ? [userH, userS, userV] : undefined;
+
+                const span = getToleranceSpan(label, activeVal, question, currentHSVTuple);
+                const isWrapMode = label === 'H';
 
                 const leftVal = isWrapMode
-                  ? (hoverVal - span.halfSpan + max) % max
-                  : Math.max(0, hoverVal - span.halfSpan);
+                  ? (activeVal - span.halfSpan + max) % max
+                  : Math.max(0, activeVal - span.halfSpan);
                 const rightVal = isWrapMode
-                  ? (hoverVal + span.halfSpan + max) % max
-                  : Math.min(max, hoverVal + span.halfSpan);
+                  ? (activeVal + span.halfSpan + max) % max
+                  : Math.min(max, activeVal + span.halfSpan);
 
                 const leftPct = (leftVal / max) * 100;
                 const rightPct = (rightVal / max) * 100;

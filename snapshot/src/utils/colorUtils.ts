@@ -224,31 +224,32 @@ export interface ToleranceSpan {
 }
 
 /**
- * 根据悬停数值 hoverVal 和 OKLab 容错，计算滑块轨道上的容错数值跨度
+ * 根据数值 val 和 OKLab 容错，计算滑块轨道上的容错数值跨度
  */
 export function getToleranceSpan(
-  mode: ColorMode,
-  hoverVal: number,
+  dimension: 'H' | 'S' | 'V',
+  val: number,
   question: ColorQuestionData,
+  currentHSV?: [number, number, number],
 ): ToleranceSpan {
   const { targetH, targetS, targetV, difficultyLevel } = question;
   const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
 
-  const curH = mode === 'H' ? hoverVal : targetH;
-  const curS = mode === 'S' ? hoverVal : targetS;
-  const curV = mode === 'V' ? hoverVal : targetV;
+  const curH = currentHSV ? currentHSV[0] : dimension === 'H' ? val : targetH;
+  const curS = currentHSV ? currentHSV[1] : dimension === 'S' ? val : targetS;
+  const curV = currentHSV ? currentHSV[2] : dimension === 'V' ? val : targetV;
   const baseLab = hsvToOkLab(curH, curS, curV);
 
-  const maxValLimit = mode === 'H' ? 360 : 100;
-  const step = mode === 'H' ? 0.5 : 0.2;
+  const maxValLimit = dimension === 'H' ? 360 : 100;
+  const step = dimension === 'H' ? 0.5 : 0.2;
 
   // 向左探索界限
-  let leftVal = hoverVal;
-  while (leftVal > (mode === 'H' ? hoverVal - 180 : 0)) {
+  let leftVal = val;
+  while (leftVal > (dimension === 'H' ? val - 180 : 0)) {
     const testVal = leftVal - step;
-    const testH = mode === 'H' ? (testVal + 360) % 360 : targetH;
-    const testS = mode === 'S' ? Math.max(0, testVal) : targetS;
-    const testV = mode === 'V' ? Math.max(0, testVal) : targetV;
+    const testH = dimension === 'H' ? (testVal + 360) % 360 : curH;
+    const testS = dimension === 'S' ? Math.max(0, testVal) : curS;
+    const testV = dimension === 'V' ? Math.max(0, testVal) : curV;
     const testLab = hsvToOkLab(testH, testS, testV);
 
     if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
@@ -256,12 +257,12 @@ export function getToleranceSpan(
   }
 
   // 向右探索界限
-  let rightVal = hoverVal;
-  while (rightVal < (mode === 'H' ? hoverVal + 180 : 100)) {
+  let rightVal = val;
+  while (rightVal < (dimension === 'H' ? val + 180 : 100)) {
     const testVal = rightVal + step;
-    const testH = mode === 'H' ? testVal % 360 : targetH;
-    const testS = mode === 'S' ? Math.min(100, testVal) : targetS;
-    const testV = mode === 'V' ? Math.min(100, testVal) : targetV;
+    const testH = dimension === 'H' ? testVal % 360 : curH;
+    const testS = dimension === 'S' ? Math.min(100, testVal) : curS;
+    const testV = dimension === 'V' ? Math.min(100, testVal) : curV;
     const testLab = hsvToOkLab(testH, testS, testV);
 
     if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
@@ -270,8 +271,8 @@ export function getToleranceSpan(
 
   const halfSpan = (rightVal - leftVal) / 2;
   return {
-    minVal: Math.max(0, hoverVal - halfSpan),
-    maxVal: Math.min(maxValLimit, hoverVal + halfSpan),
+    minVal: Math.max(0, val - halfSpan),
+    maxVal: Math.min(maxValLimit, val + halfSpan),
     halfSpan: Math.round(halfSpan * 10) / 10,
   };
 }
