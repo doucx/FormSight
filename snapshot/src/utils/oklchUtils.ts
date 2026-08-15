@@ -104,3 +104,63 @@ export function getTargetDeltaEForLevel(level: number): number {
 
   return maxDeltaE * (minDeltaE / maxDeltaE) ** t;
 }
+
+/**
+ * OKLCH (L: 0..1, C: 0..0.4, H: 0..360) -> OKLab -> Linear RGB -> sRGB HEX
+ */
+export function oklchToHex(L: number, C: number, H: number): string {
+  const rad = (H * Math.PI) / 180;
+  const a = C * Math.cos(rad);
+  const b = C * Math.sin(rad);
+
+  // 1. OKLab -> LMS
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const lCone = l_ ** 3;
+  const mCone = m_ ** 3;
+  const sCone = s_ ** 3;
+
+  // 2. LMS -> Linear RGB
+  let rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  let gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  let bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
+
+  // Gamut Clamping (剪裁至 sRGB [0, 1] 色域)
+  rLin = Math.max(0, Math.min(1, rLin));
+  gLin = Math.max(0, Math.min(1, gLin));
+  bLin = Math.max(0, Math.min(1, bLin));
+
+  // 3. Linear RGB -> Gamma Corrected sRGB
+  const toSRGB = (val: number) =>
+    val <= 0.0031308 ? val * 12.92 : 1.055 * val ** (1 / 2.4) - 0.055;
+
+  const r = Math.round(toSRGB(rLin) * 255);
+  const g = Math.round(toSRGB(gLin) * 255);
+  const b = Math.round(toSRGB(bLin) * 255);
+
+  const hex = ((1 << 24) + (r << 16) + (g << 8) + b)
+    .toString(16)
+    .slice(1)
+    .toUpperCase();
+
+  return `#${hex}`;
+}
+
+/**
+ * 生成 12 节点基于 OKLCH 等明度/等彩度的感知均匀 CSS 色相渐变字符串
+ */
+export function getPerceptualHueGradient(): string {
+  const L = 0.7;
+  const C = 0.16;
+  const stops: string[] = [];
+
+  for (let h = 0; h <= 360; h += 30) {
+    const hex = oklchToHex(L, C, h);
+    const pct = Math.round((h / 360) * 100);
+    stops.push(`${hex} ${pct}%`);
+  }
+
+  return `linear-gradient(to right, ${stops.join(', ')})`;
+}

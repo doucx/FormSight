@@ -5,7 +5,13 @@ import {
   getToleranceForLevel,
   hsvToHex,
 } from '../colorUtils';
-import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../oklchUtils';
+import {
+  calcDeltaEOk,
+  getPerceptualHueGradient,
+  getTargetDeltaEForLevel,
+  hsvToOkLab,
+  oklchToHex,
+} from '../oklchUtils';
 
 describe('colorUtils & oklchUtils', () => {
   it('hsvToHex - should correctly convert HSV to HEX string including 360 boundary', () => {
@@ -29,6 +35,15 @@ describe('colorUtils & oklchUtils', () => {
     // Black L should be close to 0, White L close to 1
     expect(blackLab[0]).toBeCloseTo(0, 1);
     expect(whiteLab[0]).toBeCloseTo(1, 1);
+  });
+
+  it('oklchUtils - should generate valid hex from OKLCH and create perceptual hue gradient string', () => {
+    const hexRed = oklchToHex(0.7, 0.16, 0);
+    expect(hexRed).toMatch(/^#[0-9A-F]{6}$/);
+
+    const gradient = getPerceptualHueGradient();
+    expect(gradient).toContain('linear-gradient(to right,');
+    expect(gradient).toContain('100%');
   });
 
   it('getTargetDeltaEForLevel - should return decreasing delta E tolerance as level increases', () => {

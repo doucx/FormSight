@@ -5,6 +5,7 @@ import {
   getToleranceSpan,
   hsvToHex,
 } from '../utils/colorUtils';
+import { getPerceptualHueGradient } from '../utils/oklchUtils';
 
 interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -513,8 +514,7 @@ export function ColorCanvas({
   const currentH = mode === 'ALL' ? userH : targetH;
   const currentV = mode === 'ALL' ? userV : targetV;
 
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const hueGradient = getPerceptualHueGradient();
   const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
   const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(currentH, 100, 100)})`;
 

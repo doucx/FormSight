@@ -2,6 +2,7 @@ import { AlertCircle, BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { hsvToHex } from '../utils/colorUtils';
 import { type ColorTrialRecord, getAllColorTrialRecords } from '../utils/db';
+import { oklchToHex } from '../utils/oklchUtils';
 
 interface ColorAnalyticsModalProps {
   onClose: () => void;
@@ -122,7 +123,7 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
 
       // 1. 绘制最外圈彩色光谱指示带
       const hueAngle = i * 30 + 15; // 扇区中心色相
-      const hexColor = hsvToHex(hueAngle, 100, 100);
+      const hexColor = oklchToHex(0.7, 0.16, hueAngle);
 
       ctx.beginPath();
       ctx.arc(cx, cy, outerRadius + 12, startA, endA);
