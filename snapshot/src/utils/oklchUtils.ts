@@ -149,16 +149,46 @@ export function oklchToHex(L: number, C: number, H: number): string {
 }
 
 /**
- * 生成 12 节点基于 OKLCH 等明度/等彩度的感知均匀 CSS 色相渐变字符串
+ * 将 HSV 的色相角 (0~360°) 重映射为 OKLCH 中感知语义对齐的色相角
+ * 消除 OKLCH 与 HSV 在主要色彩节点上的物理角度差异（如 HSV 60° 映射至 OKLCH 97° 正黄）
+ */
+export function mapHsvHueToOklchHue(hsvH: number): number {
+  const normH = ((hsvH % 360) + 360) % 360;
+
+  const anchors = [
+    { hsv: 0, oklch: 29 },    // 红
+    { hsv: 60, oklch: 97 },   // 黄 (60° -> 97° 正黄)
+    { hsv: 120, oklch: 142 }, // 绿
+    { hsv: 180, oklch: 195 }, // 青
+    { hsv: 240, oklch: 264 }, // 蓝
+    { hsv: 300, oklch: 328 }, // 品红
+    { hsv: 360, oklch: 389 }, // 360° 闭环 (29 + 360)
+  ];
+
+  for (let i = 0; i < anchors.length - 1; i++) {
+    const curr = anchors[i];
+    const next = anchors[i + 1];
+    if (normH >= curr.hsv && normH <= next.hsv) {
+      const t = (normH - curr.hsv) / (next.hsv - curr.hsv);
+      return (curr.oklch + t * (next.oklch - curr.oklch)) % 360;
+    }
+  }
+
+  return normH;
+}
+
+/**
+ * 生成 12 节点基于 OKLCH 等明度/等彩度且经色相重映射的感知均匀 CSS 色相渐变字符串
  */
 export function getPerceptualHueGradient(): string {
   const L = 0.7;
   const C = 0.16;
   const stops: string[] = [];
 
-  for (let h = 0; h <= 360; h += 30) {
-    const hex = oklchToHex(L, C, h);
-    const pct = Math.round((h / 360) * 100);
+  for (let hsvH = 0; hsvH <= 360; hsvH += 30) {
+    const oklchH = mapHsvHueToOklchHue(hsvH);
+    const hex = oklchToHex(L, C, oklchH);
+    const pct = Math.round((hsvH / 360) * 100);
     stops.push(`${hex} ${pct}%`);
   }
 

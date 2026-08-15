@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(color): 修复 oklchUtils.ts 中 b 变量重复声明的编译错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786804003.8233829, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(color): 实现 HSV 到 OKLCH 色相角语义重映射", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786804865.0013256, "duration_ms": 0}}

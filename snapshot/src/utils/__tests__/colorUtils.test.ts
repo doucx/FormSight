@@ -10,6 +10,7 @@ import {
   getPerceptualHueGradient,
   getTargetDeltaEForLevel,
   hsvToOkLab,
+  mapHsvHueToOklchHue,
   oklchToHex,
 } from '../oklchUtils';
 
@@ -44,6 +45,12 @@ describe('colorUtils & oklchUtils', () => {
     const gradient = getPerceptualHueGradient();
     expect(gradient).toContain('linear-gradient(to right,');
     expect(gradient).toContain('100%');
+  });
+
+  it('oklchUtils - mapHsvHueToOklchHue should accurately map HSV 60 to OKLCH ~97 pure yellow', () => {
+    expect(mapHsvHueToOklchHue(0)).toBeCloseTo(29, 1);
+    expect(mapHsvHueToOklchHue(60)).toBeCloseTo(97, 1);
+    expect(mapHsvHueToOklchHue(120)).toBeCloseTo(142, 1);
   });
 
   it('getTargetDeltaEForLevel - should return decreasing delta E tolerance as level increases', () => {
