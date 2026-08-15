@@ -1,3 +1,5 @@
+import { calcDeltaEOk, getOkChroma, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
+
 export type ColorMode = 'H' | 'S' | 'V';
 
 export interface ColorQuestionData {
@@ -7,14 +9,14 @@ export interface ColorQuestionData {
   targetH: number; // 0..359
   targetS: number; // 0..100
   targetV: number; // 0..100
-  tolerance: number; // 允许的误差阈值 (角度或百分比)
+  tolerance: number; // 允许的感知色差阈值 ΔE_target
 }
 
 export interface ColorHitResult {
   isHit: boolean;
   userValue: number;
   targetValue: number;
-  errorValue: number; // 绝对误差
+  errorValue: number; // 绝对数值误差 (角度或百分比)
   tolerance: number;
 }
 
@@ -72,18 +74,10 @@ export function hsvToHex(h: number, s: number, v: number): string {
 }
 
 /**
- * 根据 Level (1..35) 计算允许的容错阈值
+ * 根据 Level (1..35) 计算允许的容错阈值（感知色差 ΔE）
  */
-export function getToleranceForLevel(mode: ColorMode, level: number): number {
-  const clampedLevel = Math.max(1, Math.min(35, level));
-  const t = (clampedLevel - 1) / 34; // 0..1
-
-  if (mode === 'H') {
-    // Hue 模式: Level 1 容错 ±30°，Level 35 缩紧至 ±4°
-    return Math.max(4, Math.round(30 - t * 26));
-  }
-  // S / V 模式: Level 1 容错 ±15%，Level 35 缩紧至 ±2%
-  return Math.max(2, Math.round(15 - t * 13));
+export function getToleranceForLevel(_mode: ColorMode, level: number): number {
+  return getTargetDeltaEForLevel(level);
 }
 
 export interface ColorQuestionGenerateOptions {
@@ -104,7 +98,6 @@ function selectHueWithTargeting(options?: ColorQuestionGenerateOptions): number 
     if (Math.random() < 0.7) {
       const chosenSector =
         options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
-      // 每个扇区 30度。例如 0号扇区是 0~30度，中心是 15度
       const sectorCenterAngle = chosenSector * 30 + 15;
       const jitter = (Math.random() - 0.5) * 30; // ±15° 范围抖动
       return Math.floor((sectorCenterAngle + jitter + 360) % 360);
@@ -114,7 +107,7 @@ function selectHueWithTargeting(options?: ColorQuestionGenerateOptions): number 
 }
 
 /**
- * 生成色感练习题目 (包含锥形难度对齐策略)
+ * 生成色感练习题目 (基于 OKLab 可观测彩度与感知难度对齐)
  */
 export function generateColorQuestion(
   mode: ColorMode,
@@ -122,26 +115,36 @@ export function generateColorQuestion(
   options?: ColorQuestionGenerateOptions,
 ): ColorQuestionData {
   const id = `cq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const tolerance = getToleranceForLevel(mode, level);
   const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
 
   const targetH = mode === 'H' ? selectHueWithTargeting(options) : Math.floor(Math.random() * 360);
   let targetS = 100;
   let targetV = 100;
 
-  if (mode === 'H') {
-    // 低 Level 限制在高鲜艳度区 (S/V 处于 75~100)；高 Level 逐渐下探至低 S/V 区
-    const minSV = Math.max(15, Math.round(75 - ((clampedLevel - 1) / 34) * 60));
-    targetS = Math.floor(Math.random() * (100 - minSV + 1)) + minSV;
-    targetV = Math.floor(Math.random() * (100 - minSV + 1)) + minSV;
-  } else if (mode === 'V') {
-    // 考察 V 时，S 保持在 30 以上防止纯灰无明度变化感
-    targetS = Math.floor(Math.random() * 71) + 30;
-    targetV = Math.floor(Math.random() * 101);
-  } else {
-    // 考察 S 时，V 保持在 30 以上防止纯黑无饱和度感
-    targetV = Math.floor(Math.random() * 71) + 30;
-    targetS = Math.floor(Math.random() * 101);
+  // 题目生成过滤逻辑：确保抽取的色彩具备视觉可观测量
+  let attempts = 0;
+  while (attempts < 50) {
+    attempts++;
+    if (mode === 'H') {
+      targetS = Math.floor(Math.random() * 81) + 20; // 20..100
+      targetV = Math.floor(Math.random() * 81) + 20; // 20..100
+
+      // 检验 OKLab 彩度：必须保证彩度足够大，否则色相被低 S/V 遮蔽不可辩
+      const lab = hsvToOkLab(targetH, targetS, targetV);
+      if (getOkChroma(lab) >= tolerance * 1.5) {
+        break;
+      }
+    } else if (mode === 'V') {
+      targetS = Math.floor(Math.random() * 71) + 30; // S >= 30% 防止纯灰无明度变化感
+      targetV = Math.floor(Math.random() * 101);
+      break;
+    } else {
+      // mode === 'S'
+      targetV = Math.floor(Math.random() * 71) + 30; // V >= 30% 防止纯黑无饱和度感
+      targetS = Math.floor(Math.random() * 101);
+      break;
+    }
   }
 
   return {
@@ -156,36 +159,46 @@ export function generateColorQuestion(
 }
 
 /**
- * 色感答题命中检测
+ * 基于 OKLab 色差 ΔE_OK 的色感答题命中检测
  */
 export function checkColorHit(
   mode: ColorMode,
   userVal: number,
   question: ColorQuestionData,
 ): ColorHitResult {
-  let targetVal = question.targetH;
+  const { targetH, targetS, targetV, difficultyLevel } = question;
+
+  const userH = mode === 'H' ? userVal : targetH;
+  const userS = mode === 'S' ? userVal : targetS;
+  const userV = mode === 'V' ? userVal : targetV;
+
+  const targetLab = hsvToOkLab(targetH, targetS, targetV);
+  const userLab = hsvToOkLab(userH, userS, userV);
+  const realDeltaE = calcDeltaEOk(targetLab, userLab);
+
+  const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
+  const isHit = realDeltaE <= targetDeltaE;
+
+  let targetVal = targetH;
   let errorVal = 0;
 
   if (mode === 'H') {
-    targetVal = question.targetH;
-    // 环形 0..360° 最小角距离
+    targetVal = targetH;
     const diff = Math.abs(userVal - targetVal);
     errorVal = Math.min(diff, 360 - diff);
   } else if (mode === 'V') {
-    targetVal = question.targetV;
+    targetVal = targetV;
     errorVal = Math.abs(userVal - targetVal);
   } else {
-    targetVal = question.targetS;
+    targetVal = targetS;
     errorVal = Math.abs(userVal - targetVal);
   }
-
-  const isHit = errorVal <= question.tolerance;
 
   return {
     isHit,
     userValue: userVal,
     targetValue: targetVal,
     errorValue: Math.round(errorVal * 10) / 10,
-    tolerance: question.tolerance,
+    tolerance: targetDeltaE,
   };
 }
