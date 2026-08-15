@@ -371,7 +371,9 @@ export async function getAllColorProfiles(): Promise<
   return { H: h, S: s, V: v, ALL: all };
 }
 
-export async function getAllColorTrialRecords(mode?: 'H' | 'S' | 'V' | 'ALL'): Promise<ColorTrialRecord[]> {
+export async function getAllColorTrialRecords(
+  mode?: 'H' | 'S' | 'V' | 'ALL',
+): Promise<ColorTrialRecord[]> {
   const db = await getDB();
   if (mode) {
     return await db.getAllFromIndex('color_records', 'by-mode', mode);

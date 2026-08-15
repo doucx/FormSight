@@ -133,7 +133,9 @@ export function ColorCanvas({
               : undefined
           }
           role={isTargetActiveMode && mode !== 'ALL' ? 'button' : undefined}
-          tabIndex={isTargetActiveMode && mode !== 'ALL' && !showAnswer && !disabled ? 0 : undefined}
+          tabIndex={
+            isTargetActiveMode && mode !== 'ALL' && !showAnswer && !disabled ? 0 : undefined
+          }
           onMouseMove={isTargetActiveMode && mode !== 'ALL' ? handleMouseMove : undefined}
           onMouseLeave={isTargetActiveMode && mode !== 'ALL' ? handleMouseLeave : undefined}
           style={
@@ -151,7 +153,9 @@ export function ColorCanvas({
               : undefined
           }
           className={`relative flex-1 flex items-center ${
-            isTargetActiveMode && mode !== 'ALL' && !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
+            isTargetActiveMode && mode !== 'ALL' && !showAnswer && !disabled
+              ? 'cursor-none'
+              : 'cursor-default'
           }`}
         >
           {/* Inner Track */}
@@ -181,10 +185,16 @@ export function ColorCanvas({
                 value={val}
                 disabled={disabled || showAnswer}
                 onChange={(e) =>
-                  handleAllSliderChange(label, Number.parseInt((e.target as HTMLInputElement).value, 10))
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
                 }
                 onInput={(e) =>
-                  handleAllSliderChange(label, Number.parseInt((e.target as HTMLInputElement).value, 10))
+                  handleAllSliderChange(
+                    label,
+                    Number.parseInt((e.target as HTMLInputElement).value, 10),
+                  )
                 }
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-default z-30"
               />
@@ -325,15 +335,36 @@ export function ColorCanvas({
       {/* 递进显隐/三轨交互 Slider */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         {/* H 行 */}
-        {renderSliderRow('H', mode === 'H' || mode === 'ALL', hueGradient, mode === 'ALL' ? userH : targetH, 360, '°')}
+        {renderSliderRow(
+          'H',
+          mode === 'H' || mode === 'ALL',
+          hueGradient,
+          mode === 'ALL' ? userH : targetH,
+          360,
+          '°',
+        )}
 
         {/* S 行 */}
         {(mode === 'S' || mode === 'ALL') &&
-          renderSliderRow('S', mode === 'S' || mode === 'ALL', satGradient, mode === 'ALL' ? userS : targetS, 100, '%')}
+          renderSliderRow(
+            'S',
+            mode === 'S' || mode === 'ALL',
+            satGradient,
+            mode === 'ALL' ? userS : targetS,
+            100,
+            '%',
+          )}
 
         {/* V 行 */}
         {(mode === 'V' || mode === 'S' || mode === 'ALL') &&
-          renderSliderRow('V', mode === 'V' || mode === 'ALL', valGradient, mode === 'ALL' ? userV : targetV, 100, '%')}
+          renderSliderRow(
+            'V',
+            mode === 'V' || mode === 'ALL',
+            valGradient,
+            mode === 'ALL' ? userV : targetV,
+            100,
+            '%',
+          )}
       </div>
 
       {/* ALL 模式显式提交控制按钮 */}
