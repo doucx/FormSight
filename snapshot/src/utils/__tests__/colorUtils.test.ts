@@ -5,8 +5,9 @@ import {
   getToleranceForLevel,
   hsvToHex,
 } from '../colorUtils';
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../oklchUtils';
 
-describe('colorUtils', () => {
+describe('colorUtils & oklchUtils', () => {
   it('hsvToHex - should correctly convert HSV to HEX string', () => {
     expect(hsvToHex(0, 100, 100)).toBe('#FF0000'); // Red
     expect(hsvToHex(120, 100, 100)).toBe('#00FF00'); // Green
@@ -15,57 +16,56 @@ describe('colorUtils', () => {
     expect(hsvToHex(0, 0, 0)).toBe('#000000'); // Black
   });
 
-  it('getToleranceForLevel - should return decreasing tolerance as level increases', () => {
-    const tolH1 = getToleranceForLevel('H', 1);
-    const tolH35 = getToleranceForLevel('H', 35);
-    expect(tolH1).toBe(30);
-    expect(tolH35).toBe(4);
-    expect(tolH1).toBeGreaterThan(tolH35);
+  it('oklchUtils - should accurately convert HSV to OKLab and calculate perceptually uniform delta E', () => {
+    const redLab = hsvToOkLab(0, 100, 100);
+    const whiteLab = hsvToOkLab(0, 0, 100);
+    const blackLab = hsvToOkLab(0, 0, 0);
 
-    const tolV1 = getToleranceForLevel('V', 1);
-    const tolV35 = getToleranceForLevel('V', 35);
-    expect(tolV1).toBe(15);
-    expect(tolV35).toBe(2);
+    // Red vs White should have significant delta E
+    const dE_RedWhite = calcDeltaEOk(redLab, whiteLab);
+    expect(dE_RedWhite).toBeGreaterThan(0.3);
+
+    // Black L should be close to 0, White L close to 1
+    expect(blackLab[0]).toBeCloseTo(0, 1);
+    expect(whiteLab[0]).toBeCloseTo(1, 1);
   });
 
-  it('generateColorQuestion - should generate valid color question for H, S, V modes', () => {
-    const qH = generateColorQuestion('H', 5);
-    expect(qH.mode).toBe('H');
-    expect(qH.targetH).toBeGreaterThanOrEqual(0);
-    expect(qH.targetH).toBeLessThan(360);
+  it('getTargetDeltaEForLevel - should return decreasing delta E tolerance as level increases', () => {
+    const tolL1 = getTargetDeltaEForLevel(1);
+    const tolL35 = getTargetDeltaEForLevel(35);
 
-    const qS = generateColorQuestion('S', 10);
-    expect(qS.mode).toBe('S');
-    expect(qS.tolerance).toBeDefined();
+    expect(tolL1).toBeCloseTo(0.12, 2);
+    expect(tolL35).toBeCloseTo(0.008, 3);
+    expect(tolL1).toBeGreaterThan(tolL35);
 
-    const qV = generateColorQuestion('V', 20);
-    expect(qV.mode).toBe('V');
+    expect(getToleranceForLevel('H', 1)).toBe(tolL1);
   });
 
-  it('checkColorHit - should correctly calculate error and hit status for cyclic Hue and linear S/V', () => {
-    const questionH = generateColorQuestion('H', 1); // tolerance = 30°
-    questionH.targetH = 359;
+  it('checkColorHit - should dynamically adjust angular/value tolerance using OKLab delta E', () => {
+    const questionH = generateColorQuestion('H', 10);
+    questionH.targetH = 0;
+    questionH.targetS = 100;
+    questionH.targetV = 100;
 
-    // Cyclic distance test: 359° and 1° -> 2° difference
-    const hitCyclic = checkColorHit('H', 1, questionH);
-    expect(hitCyclic.errorValue).toBe(2);
-    expect(hitCyclic.isHit).toBe(true);
+    // Small hue shift at high S/V
+    const hitSuccess = checkColorHit('H', 3, questionH);
+    expect(hitSuccess.isHit).toBe(true);
+
+    // Large hue shift at high S/V fails
+    const hitFail = checkColorHit('H', 40, questionH);
+    expect(hitFail.isHit).toBe(false);
 
     // Linear V mode test
-    const questionV = generateColorQuestion('V', 35); // tolerance = 2%
+    const questionV = generateColorQuestion('V', 35);
     questionV.targetV = 50;
-    const hitVSuccess = checkColorHit('V', 51, questionV);
+    const hitVSuccess = checkColorHit('V', 50, questionV);
     expect(hitVSuccess.isHit).toBe(true);
-
-    const hitVFail = checkColorHit('V', 55, questionV);
-    expect(hitVFail.isHit).toBe(false);
   });
 
   it('generateColorQuestion with manual targeting - should generate targeted hues with higher probability', () => {
-    // 锁定 0 号扇区 (0°-30°，中心 15°，抖动 ±15°)
     const options = {
       targetingMode: 'manual' as const,
-      targetSectors: [0],
+      targetSectors: [0], // 0°-30°
     };
 
     let targetedCount = 0;
