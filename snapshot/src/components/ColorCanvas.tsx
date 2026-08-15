@@ -40,7 +40,7 @@ export function ColorCanvas({
       setUserS(50);
       setUserV(50);
     }
-  }, [question.id, mode]);
+  }, [mode]);
 
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
@@ -90,7 +90,6 @@ export function ColorCanvas({
 
   // === 渐变背景计算 ===
   const currentH = mode === 'ALL' ? userH : targetH;
-  const currentS = mode === 'ALL' ? userS : targetS;
   const currentV = mode === 'ALL' ? userV : targetV;
 
   const hueGradient =
