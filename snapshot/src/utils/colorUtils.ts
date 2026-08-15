@@ -25,37 +25,38 @@ export interface ColorHitResult {
  * HSV (0..360, 0..100, 0..100) 转 16 进制 Hex
  */
 export function hsvToHex(h: number, s: number, v: number): string {
+  const normH = ((h % 360) + 360) % 360;
   const normS = s / 100;
   const normV = v / 100;
   const c = normV * normS;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const x = c * (1 - Math.abs(((normH / 60) % 2) - 1));
   const m = normV - c;
 
   let r = 0;
   let g = 0;
   let b = 0;
 
-  if (h >= 0 && h < 60) {
+  if (normH >= 0 && normH < 60) {
     r = c;
     g = x;
     b = 0;
-  } else if (h >= 60 && h < 120) {
+  } else if (normH >= 60 && normH < 120) {
     r = x;
     g = c;
     b = 0;
-  } else if (h >= 120 && h < 180) {
+  } else if (normH >= 120 && normH < 180) {
     r = 0;
     g = c;
     b = x;
-  } else if (h >= 180 && h < 240) {
+  } else if (normH >= 180 && normH < 240) {
     r = 0;
     g = x;
     b = c;
-  } else if (h >= 240 && h < 300) {
+  } else if (normH >= 240 && normH < 300) {
     r = x;
     g = 0;
     b = c;
-  } else if (h >= 300 && h < 360) {
+  } else {
     r = c;
     g = 0;
     b = x;

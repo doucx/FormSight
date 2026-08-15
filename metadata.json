@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(color): 修复综合拾色模式下按 Space 无法自动提交的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786802904.1302032, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(color): 修复色相值为 360° 时色彩渲染退化为纯黑的边界 Bug", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786803031.1256914, "duration_ms": 0}}

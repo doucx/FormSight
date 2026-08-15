@@ -8,8 +8,9 @@ import {
 import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../oklchUtils';
 
 describe('colorUtils & oklchUtils', () => {
-  it('hsvToHex - should correctly convert HSV to HEX string', () => {
+  it('hsvToHex - should correctly convert HSV to HEX string including 360 boundary', () => {
     expect(hsvToHex(0, 100, 100)).toBe('#FF0000'); // Red
+    expect(hsvToHex(360, 100, 100)).toBe('#FF0000'); // Red 360 boundary
     expect(hsvToHex(120, 100, 100)).toBe('#00FF00'); // Green
     expect(hsvToHex(240, 100, 100)).toBe('#0000FF'); // Blue
     expect(hsvToHex(0, 0, 100)).toBe('#FFFFFF'); // White

@@ -8,33 +8,34 @@
  */
 export function hsvToOkLab(h: number, s: number, v: number): [number, number, number] {
   // 1. HSV -> sRGB (0..1)
+  const normH = ((h % 360) + 360) % 360;
   const normS = s / 100;
   const normV = v / 100;
   const c = normV * normS;
-  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const x = c * (1 - Math.abs(((normH / 60) % 2) - 1));
   const m = normV - c;
 
   let r = 0;
   let g = 0;
   let b = 0;
 
-  if (h < 60) {
+  if (normH < 60) {
     r = c;
     g = x;
     b = 0;
-  } else if (h < 120) {
+  } else if (normH < 120) {
     r = x;
     g = c;
     b = 0;
-  } else if (h < 180) {
+  } else if (normH < 180) {
     r = 0;
     g = c;
     b = x;
-  } else if (h < 240) {
+  } else if (normH < 240) {
     r = 0;
     g = x;
     b = c;
-  } else if (h < 300) {
+  } else if (normH < 300) {
     r = x;
     g = 0;
     b = c;
