@@ -61,7 +61,11 @@ export function ColorCanvas({
   const maxVal = mode === 'H' ? 360 : 100;
 
   // 计算并应用数值更新
-  const updateValueFromClientX = (label: 'H' | 'S' | 'V', clientX: number, trackEl: HTMLDivElement | null) => {
+  const updateValueFromClientX = (
+    label: 'H' | 'S' | 'V',
+    clientX: number,
+    trackEl: HTMLDivElement | null,
+  ) => {
     if (!trackEl) return;
     const rect = trackEl.getBoundingClientRect();
     const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
@@ -80,7 +84,11 @@ export function ColorCanvas({
   };
 
   // 指针按下开始拖动
-  const handlePointerDown = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+  const handlePointerDown = (
+    label: 'H' | 'S' | 'V',
+    e: PointerEvent,
+    trackEl: HTMLDivElement | null,
+  ) => {
     if (disabled || showAnswer || !trackEl) return;
     setDraggingLabel(label);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -88,7 +96,11 @@ export function ColorCanvas({
   };
 
   // 指针移动
-  const handlePointerMove = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+  const handlePointerMove = (
+    label: 'H' | 'S' | 'V',
+    e: PointerEvent,
+    trackEl: HTMLDivElement | null,
+  ) => {
     if (disabled || showAnswer || !trackEl) return;
     if (draggingLabel === label) {
       updateValueFromClientX(label, e.clientX, trackEl);
@@ -108,7 +120,11 @@ export function ColorCanvas({
   };
 
   // 指针释放结束拖动
-  const handlePointerUp = (label: 'H' | 'S' | 'V', e: PointerEvent, trackEl: HTMLDivElement | null) => {
+  const handlePointerUp = (
+    label: 'H' | 'S' | 'V',
+    e: PointerEvent,
+    trackEl: HTMLDivElement | null,
+  ) => {
     if (draggingLabel === label) {
       setDraggingLabel(null);
       try {
@@ -338,9 +354,21 @@ export function ColorCanvas({
               className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
               style={{
                 backgroundColor: hsvToHex(
-                  draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null) ? (draggingLabel === 'H' ? userH : (allHoverVals.H ?? userH)) : userH,
-                  draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null) ? (draggingLabel === 'S' ? userS : (allHoverVals.S ?? userS)) : userS,
-                  draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null) ? (draggingLabel === 'V' ? userV : (allHoverVals.V ?? userV)) : userV,
+                  draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
+                    ? draggingLabel === 'H'
+                      ? userH
+                      : (allHoverVals.H ?? userH)
+                    : userH,
+                  draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
+                    ? draggingLabel === 'S'
+                      ? userS
+                      : (allHoverVals.S ?? userS)
+                    : userS,
+                  draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
+                    ? draggingLabel === 'V'
+                      ? userV
+                      : (allHoverVals.V ?? userV)
+                    : userV,
                 ),
               }}
             />
