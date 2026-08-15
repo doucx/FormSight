@@ -1,5 +1,10 @@
 import { useRef, useState } from 'preact/hooks';
-import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
+import {
+  type ColorHitResult,
+  type ColorQuestionData,
+  getToleranceSpan,
+  hsvToHex,
+} from '../utils/colorUtils';
 
 interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -8,6 +13,7 @@ interface ColorCanvasProps {
   onAnswer: (userVal: number) => void;
   disabled?: boolean;
   hitMargin?: number;
+  showToleranceBand?: boolean;
 }
 
 export function ColorCanvas({
@@ -17,6 +23,7 @@ export function ColorCanvas({
   onAnswer,
   disabled = false,
   hitMargin = 12,
+  showToleranceBand = true,
 }: ColorCanvasProps) {
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
@@ -132,29 +139,64 @@ export function ColorCanvas({
               />
             )}
 
-            {/* 悬停准心 (细长空心竖条) */}
+            {/* 悬停容错感应区 (左右卡尺边界线，支持色相环形卷叠) */}
+            {isTargetActiveMode &&
+              !showAnswer &&
+              hoverVal !== null &&
+              showToleranceBand &&
+              (() => {
+                const span = getToleranceSpan(mode, hoverVal, question);
+                const isWrapMode = mode === 'H';
+
+                const leftVal = isWrapMode
+                  ? (hoverVal - span.halfSpan + max) % max
+                  : Math.max(0, hoverVal - span.halfSpan);
+                const rightVal = isWrapMode
+                  ? (hoverVal + span.halfSpan + max) % max
+                  : Math.min(max, hoverVal + span.halfSpan);
+
+                const leftPct = (leftVal / max) * 100;
+                const rightPct = (rightVal / max) * 100;
+
+                return (
+                  <>
+                    {/* 左容错边界卡尺线 */}
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                      style={{ left: `${leftPct}%` }}
+                    />
+                    {/* 右容错边界卡尺线 */}
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                      style={{ left: `${rightPct}%` }}
+                    />
+                  </>
+                );
+              })()}
+
+            {/* 悬停准心 (细长半透明竖线) */}
             {isTargetActiveMode && !showAnswer && hoverVal !== null && (
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 border-2 border-indigo-600 bg-white/40 rounded-sm shadow-md pointer-events-none z-30"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-indigo-600/90 shadow-sm pointer-events-none z-30"
                 style={{ left: getPercent(hoverVal, max) }}
               />
             )}
 
-            {/* 待测维度答题揭晓：真理目标与用户选择 (竖条标记) */}
+            {/* 待测维度答题揭晓：真理目标与用户选择 (细竖线标记) */}
             {isTargetActiveMode && showAnswer && (
               <>
-                {/* 真理目标位 (绿色竖条) */}
+                {/* 真理目标位 (绿色细竖线) */}
                 <div
-                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 bg-emerald-500 border-2 border-white rounded-sm shadow-md z-10"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
                   style={{ left: getPercent(val, max) }}
                 />
 
-                {/* 用户点击位 (红色或绿色竖条) */}
+                {/* 用户点击位 (红色或绿色细竖线) */}
                 {userAnswer && (
                   <div
-                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-8 border-2 border-white ${
+                    className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
                       userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                    } rounded-sm shadow-md z-20`}
+                    } shadow-md z-20`}
                     style={{ left: getPercent(userAnswer.userValue, max) }}
                   />
                 )}

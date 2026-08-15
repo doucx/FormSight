@@ -202,3 +202,62 @@ export function checkColorHit(
     tolerance: targetDeltaE,
   };
 }
+
+export interface ToleranceSpan {
+  minVal: number;
+  maxVal: number;
+  halfSpan: number;
+}
+
+/**
+ * 根据悬停数值 hoverVal 和 OKLab 容错，计算滑块轨道上的容错数值跨度
+ */
+export function getToleranceSpan(
+  mode: ColorMode,
+  hoverVal: number,
+  question: ColorQuestionData,
+): ToleranceSpan {
+  const { targetH, targetS, targetV, difficultyLevel } = question;
+  const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
+
+  const curH = mode === 'H' ? hoverVal : targetH;
+  const curS = mode === 'S' ? hoverVal : targetS;
+  const curV = mode === 'V' ? hoverVal : targetV;
+  const baseLab = hsvToOkLab(curH, curS, curV);
+
+  const maxValLimit = mode === 'H' ? 360 : 100;
+  const step = mode === 'H' ? 0.5 : 0.2;
+
+  // 向左探索界限
+  let leftVal = hoverVal;
+  while (leftVal > (mode === 'H' ? hoverVal - 180 : 0)) {
+    const testVal = leftVal - step;
+    const testH = mode === 'H' ? (testVal + 360) % 360 : targetH;
+    const testS = mode === 'S' ? Math.max(0, testVal) : targetS;
+    const testV = mode === 'V' ? Math.max(0, testVal) : targetV;
+    const testLab = hsvToOkLab(testH, testS, testV);
+
+    if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
+    leftVal = testVal;
+  }
+
+  // 向右探索界限
+  let rightVal = hoverVal;
+  while (rightVal < (mode === 'H' ? hoverVal + 180 : 100)) {
+    const testVal = rightVal + step;
+    const testH = mode === 'H' ? testVal % 360 : targetH;
+    const testS = mode === 'S' ? Math.min(100, testVal) : targetS;
+    const testV = mode === 'V' ? Math.min(100, testVal) : targetV;
+    const testLab = hsvToOkLab(testH, testS, testV);
+
+    if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
+    rightVal = testVal;
+  }
+
+  const halfSpan = (rightVal - leftVal) / 2;
+  return {
+    minVal: Math.max(0, hoverVal - halfSpan),
+    maxVal: Math.min(maxValLimit, hoverVal + halfSpan),
+    halfSpan: Math.round(halfSpan * 10) / 10,
+  };
+}

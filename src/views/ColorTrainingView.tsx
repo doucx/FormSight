@@ -281,6 +281,7 @@ export function ColorTrainingView({
         onAnswer={handleAnswer}
         disabled={isFinished}
         hitMargin={settings.sliderHitMargin ?? 12}
+        showToleranceBand={settings.showToleranceBand ?? true}
       />
 
       {/* 底部控制栏 */}
