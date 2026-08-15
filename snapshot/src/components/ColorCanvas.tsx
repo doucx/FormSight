@@ -1,5 +1,10 @@
 import { useRef, useState } from 'preact/hooks';
-import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
+import {
+  type ColorHitResult,
+  type ColorQuestionData,
+  getToleranceSpan,
+  hsvToHex,
+} from '../utils/colorUtils';
 
 interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -8,6 +13,7 @@ interface ColorCanvasProps {
   onAnswer: (userVal: number) => void;
   disabled?: boolean;
   hitMargin?: number;
+  showToleranceBand?: boolean;
 }
 
 export function ColorCanvas({
@@ -17,6 +23,7 @@ export function ColorCanvas({
   onAnswer,
   disabled = false,
   hitMargin = 12,
+  showToleranceBand = true,
 }: ColorCanvasProps) {
   const activeTrackRef = useRef<HTMLDivElement | null>(null);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
@@ -131,6 +138,24 @@ export function ColorCanvas({
                 style={{ left: getPercent(val, max) }}
               />
             )}
+
+            {/* 悬停容错感应区 (半透明高亮与卡尺边界线) */}
+            {isTargetActiveMode && !showAnswer && hoverVal !== null && showToleranceBand && (() => {
+              const span = getToleranceSpan(mode, hoverVal, question);
+              const leftPct = Math.max(0, ((hoverVal - span.halfSpan) / max) * 100);
+              const rightPct = Math.min(100, ((hoverVal + span.halfSpan) / max) * 100);
+              const widthPct = rightPct - leftPct;
+
+              return (
+                <div
+                  className="absolute top-0 bottom-0 pointer-events-none z-20 border-x-2 border-indigo-500/80 bg-indigo-500/20 rounded-sm transition-all duration-75"
+                  style={{
+                    left: `${leftPct}%`,
+                    width: `${widthPct}%`,
+                  }}
+                />
+              );
+            })()}
 
             {/* 悬停准心 (细长空心竖条) */}
             {isTargetActiveMode && !showAnswer && hoverVal !== null && (

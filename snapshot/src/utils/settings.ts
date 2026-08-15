@@ -18,6 +18,7 @@ export interface UserSettings {
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
   gridSize: number; // 网格维数 (2, 3, 4, 5)
   sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
+  showToleranceBand: boolean; // 是否显示滑块容错感应区
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -38,6 +39,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   idleTimeout: 60,
   gridSize: 3,
   sliderHitMargin: 12,
+  showToleranceBand: true,
 };
 
 export function loadSettings(): UserSettings {

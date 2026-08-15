@@ -334,6 +334,27 @@ export function SettingsModal({
             </div>
           </div>
 
+          {/* 色感滑块容错感应区可视化开关 */}
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-semibold text-slate-700">显示滑块容错感应区</div>
+              <div className="text-xs text-slate-400">在悬停光标两侧实时显示 ΔE 动态容错区间</div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                updateSettings({ showToleranceBand: !(current.showToleranceBand ?? true) })
+              }
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {(current.showToleranceBand ?? true) ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
+
           {/* 仅寻星训练模式下显示干扰点网格大小与弱点靶向设置 */}
           {appContext === 'star-hopping' && (
             <>
