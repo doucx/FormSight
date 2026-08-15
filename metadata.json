@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 将 ColorCanvas 游标样式统一为无边框双像素黑色竖条", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786800806.3666666, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(color): 移除色相、明度、饱和度条带鼠标悬停时的蓝色外边框", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786800865.1337447, "duration_ms": 0}}

@@ -160,11 +160,7 @@ export function ColorCanvas({
           {/* Inner Track */}
           <div
             ref={isTargetActiveMode && mode !== 'ALL' ? activeTrackRef : null}
-            className={`relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center ${
-              isTargetActiveMode && mode !== 'ALL' && !showAnswer && !disabled
-                ? 'hover:ring-2 ring-indigo-400/60'
-                : ''
-            }`}
+            className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
             style={{ background: gradient }}
           >
             {/* 已知维度/单维度标记 (无边框双像素黑色竖条) */}
