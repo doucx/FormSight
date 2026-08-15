@@ -200,8 +200,8 @@ export function ColorCanvas({
               />
             )}
 
-            {/* ALL 模式下的当前滑块数值标记 (未悬停时显示当前设定值) */}
-            {mode === 'ALL' && !showAnswer && allHoverVals[label] === null && (
+            {/* ALL 模式下的当前设定值标记 (无论是否悬停均始终显示) */}
+            {mode === 'ALL' && !showAnswer && (
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
                 style={{ left: getPercent(val, max) }}
