@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
   type ColorHitResult,
-  type ColorMode,
   type ColorQuestionData,
   getToleranceSpan,
   hsvToHex,
@@ -161,7 +160,10 @@ function SingleDimensionSlider({
           )}
 
           {/* 活跃轨道悬停时的容错感应线 */}
-          {!showAnswer && isTargetActiveMode && showToleranceBand && hoverVal !== null && (
+          {!showAnswer &&
+            isTargetActiveMode &&
+            showToleranceBand &&
+            hoverVal !== null &&
             (() => {
               const span = getToleranceSpan(label, hoverVal, question);
               const isWrapMode = label === 'H';
@@ -184,8 +186,7 @@ function SingleDimensionSlider({
                   />
                 </>
               );
-            })()
-          )}
+            })()}
 
           {/* 活跃轨道的鼠标悬停准心线 */}
           {!showAnswer && isTargetActiveMode && hoverVal !== null && (
@@ -331,7 +332,8 @@ function AllMatchSlider({
   };
 
   const activeVal = hoverVal !== null ? hoverVal : val;
-  const targetVal = label === 'H' ? question.targetH : label === 'S' ? question.targetS : question.targetV;
+  const targetVal =
+    label === 'H' ? question.targetH : label === 'S' ? question.targetS : question.targetV;
 
   return (
     <div className="flex items-center gap-3 w-full">
@@ -374,7 +376,8 @@ function AllMatchSlider({
           )}
 
           {/* 动态 ΔE 容错感应指示线 */}
-          {!showAnswer && showToleranceBand && (
+          {!showAnswer &&
+            showToleranceBand &&
             (() => {
               const currentTuple: [number, number, number] = [
                 label === 'H' ? activeVal : allUserHSV[0],
@@ -403,8 +406,7 @@ function AllMatchSlider({
                   />
                 </>
               );
-            })()
-          )}
+            })()}
 
           {/* 鼠标悬停准心线 */}
           {!showAnswer && hoverVal !== null && hoverVal !== val && (
@@ -441,11 +443,7 @@ function AllMatchSlider({
 
       <span
         className={`w-12 text-right font-mono font-bold text-xs ${
-          !showAnswer
-            ? 'text-amber-500'
-            : userAnswer?.isHit
-              ? 'text-emerald-600'
-              : 'text-rose-600'
+          !showAnswer ? 'text-amber-500' : userAnswer?.isHit ? 'text-emerald-600' : 'text-rose-600'
         }`}
       >
         {`${activeVal}${unit}`}
