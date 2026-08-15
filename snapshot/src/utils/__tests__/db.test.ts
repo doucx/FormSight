@@ -122,6 +122,7 @@ describe('db storage & import/export', () => {
     expect(colorProfiles.H).not.toBeNull();
     expect(colorProfiles.S).toBeNull();
     expect(colorProfiles.V).toBeNull();
+    expect(colorProfiles.ALL).toBeNull();
 
     const colorRecords = await getAllColorTrialRecords('H');
     expect(colorRecords.length).toBe(1);

@@ -62,6 +62,23 @@ describe('colorUtils & oklchUtils', () => {
     expect(hitVSuccess.isHit).toBe(true);
   });
 
+  it('checkColorHit - should evaluate ALL mode using OKLab delta E with full user HSV tuple', () => {
+    const questionALL = generateColorQuestion('ALL', 1);
+    questionALL.targetH = 0;
+    questionALL.targetS = 100;
+    questionALL.targetV = 100;
+
+    // Exact match in ALL mode
+    const hitExact = checkColorHit('ALL', [0, 100, 100], questionALL);
+    expect(hitExact.isHit).toBe(true);
+    expect(hitExact.errorValue).toBe(0);
+
+    // Large deviation in ALL mode
+    const hitFar = checkColorHit('ALL', [180, 20, 20], questionALL);
+    expect(hitFar.isHit).toBe(false);
+    expect(hitFar.errorValue).toBeGreaterThan(0.2);
+  });
+
   it('generateColorQuestion with manual targeting - should generate targeted hues with higher probability', () => {
     const options = {
       targetingMode: 'manual' as const,
