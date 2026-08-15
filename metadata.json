@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(color): 实现色相模式滑块容错感应区可视化及环形卷叠优化", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786767283.4655752, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package.json, M ColorCanvas.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786799429.040006, "duration_ms": 0}}

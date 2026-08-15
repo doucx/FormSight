@@ -140,35 +140,39 @@ export function ColorCanvas({
             )}
 
             {/* 悬停容错感应区 (左右卡尺边界线，支持色相环形卷叠) */}
-            {isTargetActiveMode && !showAnswer && hoverVal !== null && showToleranceBand && (() => {
-              const span = getToleranceSpan(mode, hoverVal, question);
-              const isWrapMode = mode === 'H';
+            {isTargetActiveMode &&
+              !showAnswer &&
+              hoverVal !== null &&
+              showToleranceBand &&
+              (() => {
+                const span = getToleranceSpan(mode, hoverVal, question);
+                const isWrapMode = mode === 'H';
 
-              const leftVal = isWrapMode
-                ? (hoverVal - span.halfSpan + max) % max
-                : Math.max(0, hoverVal - span.halfSpan);
-              const rightVal = isWrapMode
-                ? (hoverVal + span.halfSpan + max) % max
-                : Math.min(max, hoverVal + span.halfSpan);
+                const leftVal = isWrapMode
+                  ? (hoverVal - span.halfSpan + max) % max
+                  : Math.max(0, hoverVal - span.halfSpan);
+                const rightVal = isWrapMode
+                  ? (hoverVal + span.halfSpan + max) % max
+                  : Math.min(max, hoverVal + span.halfSpan);
 
-              const leftPct = (leftVal / max) * 100;
-              const rightPct = (rightVal / max) * 100;
+                const leftPct = (leftVal / max) * 100;
+                const rightPct = (rightVal / max) * 100;
 
-              return (
-                <>
-                  {/* 左容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${leftPct}%` }}
-                  />
-                  {/* 右容错边界卡尺线 */}
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${rightPct}%` }}
-                  />
-                </>
-              );
-            })()}
+                return (
+                  <>
+                    {/* 左容错边界卡尺线 */}
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                      style={{ left: `${leftPct}%` }}
+                    />
+                    {/* 右容错边界卡尺线 */}
+                    <div
+                      className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                      style={{ left: `${rightPct}%` }}
+                    />
+                  </>
+                );
+              })()}
 
             {/* 悬停准心 (细长半透明竖线) */}
             {isTargetActiveMode && !showAnswer && hoverVal !== null && (
