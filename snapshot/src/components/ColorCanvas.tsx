@@ -158,12 +158,12 @@ export function ColorCanvas({
                 <>
                   {/* 左容错边界卡尺线 */}
                   <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
                     style={{ left: `${leftPct}%` }}
                   />
                   {/* 右容错边界卡尺线 */}
                   <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
                     style={{ left: `${rightPct}%` }}
                   />
                 </>
