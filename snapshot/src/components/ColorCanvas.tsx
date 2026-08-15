@@ -139,21 +139,34 @@ export function ColorCanvas({
               />
             )}
 
-            {/* 悬停容错感应区 (半透明高亮与卡尺边界线) */}
+            {/* 悬停容错感应区 (左右卡尺边界线，支持色相环形卷叠) */}
             {isTargetActiveMode && !showAnswer && hoverVal !== null && showToleranceBand && (() => {
               const span = getToleranceSpan(mode, hoverVal, question);
-              const leftPct = Math.max(0, ((hoverVal - span.halfSpan) / max) * 100);
-              const rightPct = Math.min(100, ((hoverVal + span.halfSpan) / max) * 100);
-              const widthPct = rightPct - leftPct;
+              const isWrapMode = mode === 'H';
+
+              const leftVal = isWrapMode
+                ? (hoverVal - span.halfSpan + max) % max
+                : Math.max(0, hoverVal - span.halfSpan);
+              const rightVal = isWrapMode
+                ? (hoverVal + span.halfSpan + max) % max
+                : Math.min(max, hoverVal + span.halfSpan);
+
+              const leftPct = (leftVal / max) * 100;
+              const rightPct = (rightVal / max) * 100;
 
               return (
-                <div
-                  className="absolute top-0 bottom-0 pointer-events-none z-20 border-x-2 border-indigo-500/80 bg-transparent rounded-sm transition-all duration-75"
-                  style={{
-                    left: `${leftPct}%`,
-                    width: `${widthPct}%`,
-                  }}
-                />
+                <>
+                  {/* 左容错边界卡尺线 */}
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
+                    style={{ left: `${leftPct}%` }}
+                  />
+                  {/* 右容错边界卡尺线 */}
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2 transition-all duration-75"
+                    style={{ left: `${rightPct}%` }}
+                  />
+                </>
               );
             })()}
 
