@@ -24,73 +24,74 @@ if (typeof globalThis.localStorage === 'undefined') {
   });
 }
 
-describe('settings utils (domain-scoped)', () => {
+describe('settings utils (domain-scoped isolation)', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
-  it('loadSettings - should return default settings when localStorage is empty', () => {
+  it('loadSettings - should return domain-tuned default settings', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
-    expect(settings.star.autoNext).toBe(true);
-    expect(settings.color.autoNext).toBe(true);
-    expect(settings.relative_color.autoNext).toBe(true);
+
+    // 验证各领域特定的合理默认延迟
+    expect(settings.star.autoNextDelay).toBe(500);
+    expect(settings.color.autoNextDelay).toBe(600);
+    expect(settings.relative_color.autoNextDelay).toBe(800);
+
+    // 验证 star 域不存在滑块容错相关字段
+    expect((settings.star as unknown as Record<string, unknown>).showToleranceBand).toBeUndefined();
+    expect((settings.star as unknown as Record<string, unknown>).sliderHitMargin).toBeUndefined();
   });
 
-  it('saveSettings & loadSettings - should persist and retrieve domain-scoped settings', () => {
+  it('saveSettings & loadSettings - should maintain strict domain isolation for autoNext switch', () => {
     const custom: UserSettings = {
-      global: { idleTimeout: 120 },
+      ...DEFAULT_SETTINGS,
       star: {
         ...DEFAULT_SETTINGS.star,
-        autoNext: false,
+        autoNext: false, // 寻星关闭自动翻页
         autoNextDelay: 300,
-        gridSize: 4,
       },
       color: {
         ...DEFAULT_SETTINGS.color,
-        autoNext: true,
-        autoNextDelay: 800,
-        sliderHitMargin: 20,
+        autoNext: true, // 绝对色感开启自动翻页
+        autoNextDelay: 700,
       },
       relative_color: {
         ...DEFAULT_SETTINGS.relative_color,
-        autoNext: false,
-        autoNextDelay: 1000,
+        autoNext: false, // 相对色感关闭自动翻页
+        autoNextDelay: 1200,
       },
     };
 
     saveSettings(custom);
     const loaded = loadSettings();
 
-    expect(loaded.global.idleTimeout).toBe(120);
-    // 验证各领域的隔离性
+    // 验证各领域的 autoNext 开关完全独立互不影响
     expect(loaded.star.autoNext).toBe(false);
     expect(loaded.star.autoNextDelay).toBe(300);
-    expect(loaded.star.gridSize).toBe(4);
 
     expect(loaded.color.autoNext).toBe(true);
-    expect(loaded.color.autoNextDelay).toBe(800);
-    expect(loaded.color.sliderHitMargin).toBe(20);
+    expect(loaded.color.autoNextDelay).toBe(700);
 
     expect(loaded.relative_color.autoNext).toBe(false);
-    expect(loaded.relative_color.autoNextDelay).toBe(1000);
+    expect(loaded.relative_color.autoNextDelay).toBe(1200);
   });
 
-  it('loadSettings - should seamlessly migrate legacy flat settings structure', () => {
+  it('loadSettings - should seamlessly migrate legacy flat structure into domain settings', () => {
     const legacyFlat = {
       autoNext: false,
-      autoNextDelay: 600,
+      autoNextDelay: 500,
       starAutoNextDelay: 400,
-      colorAutoNextDelay: 900,
-      gridSize: 5,
-      idleTimeout: 30,
+      colorAutoNextDelay: 750,
+      gridSize: 4,
+      idleTimeout: 45,
       stepGranularity: 'fine',
       adaptiveMode: 'staircase',
       targetingMode: 'manual',
-      manualTargetSectors: [0, 1],
+      manualTargetSectors: [2, 3],
       colorTargetingMode: 'manual',
-      colorManualTargetSectors: [3, 4],
-      sliderHitMargin: 8,
+      colorManualTargetSectors: [5, 6],
+      sliderHitMargin: 20,
       showToleranceBand: false,
       enableHoverColorPreview: false,
     };
@@ -98,30 +99,27 @@ describe('settings utils (domain-scoped)', () => {
     localStorage.setItem('star_hopping_user_settings', JSON.stringify(legacyFlat));
     const migrated = loadSettings();
 
-    // 验证全局迁移
-    expect(migrated.global.idleTimeout).toBe(30);
+    expect(migrated.global.idleTimeout).toBe(45);
 
-    // 验证寻星域迁移
+    // star
     expect(migrated.star.autoNext).toBe(false);
     expect(migrated.star.autoNextDelay).toBe(400);
-    expect(migrated.star.gridSize).toBe(5);
+    expect(migrated.star.gridSize).toBe(4);
     expect(migrated.star.stepGranularity).toBe('fine');
     expect(migrated.star.adaptiveMode).toBe('staircase');
     expect(migrated.star.targetingMode).toBe('manual');
-    expect(migrated.star.manualTargetSectors).toEqual([0, 1]);
+    expect(migrated.star.manualTargetSectors).toEqual([2, 3]);
 
-    // 验证绝对色感域迁移
+    // color
     expect(migrated.color.autoNext).toBe(false);
-    expect(migrated.color.autoNextDelay).toBe(900);
-    expect(migrated.color.targetingMode).toBe('manual');
-    expect(migrated.color.manualTargetSectors).toEqual([3, 4]);
-    expect(migrated.color.sliderHitMargin).toBe(8);
+    expect(migrated.color.autoNextDelay).toBe(750);
+    expect(migrated.color.sliderHitMargin).toBe(20);
     expect(migrated.color.showToleranceBand).toBe(false);
     expect(migrated.color.enableHoverColorPreview).toBe(false);
 
-    // 验证相对色感域初始填充
+    // relative_color
     expect(migrated.relative_color.autoNext).toBe(false);
-    expect(migrated.relative_color.autoNextDelay).toBe(900);
-    expect(migrated.relative_color.sliderHitMargin).toBe(8);
+    expect(migrated.relative_color.autoNextDelay).toBe(800); // 采用默认 800ms
+    expect(migrated.relative_color.sliderHitMargin).toBe(20);
   });
 });

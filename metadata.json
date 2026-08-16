@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(settings): 重构用户设置模型为领域隔离结构并支持无损迁移", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786854896.4001818, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(settings): 细化领域隔离配置与默认参数，确保各领域开关与属性完全独立", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786855154.4109297, "duration_ms": 0}}
