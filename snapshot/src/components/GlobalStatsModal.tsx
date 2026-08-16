@@ -10,7 +10,7 @@ import {
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
+import { getAllColorTrialRecords, getAllTrialRecords, getTrialRecords } from '../utils/db';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
@@ -20,7 +20,7 @@ interface UnifiedRecord {
   timestamp: number;
   isHit: boolean;
   level: number;
-  module: 'star' | 'color';
+  module: 'star' | 'color' | 'relative_color';
   subMode: string;
 }
 
@@ -34,7 +34,9 @@ type FilterOption =
   | 'color_H'
   | 'color_V'
   | 'color_S'
-  | 'color_ALL';
+  | 'color_ALL'
+  | 'relative_color_all'
+  | 'relative_color_VECTOR_SHIFT';
 
 const FILTER_LABELS: Record<FilterOption, string> = {
   all: '全部练习项目',
@@ -47,6 +49,8 @@ const FILTER_LABELS: Record<FilterOption, string> = {
   color_V: '色感 • 明度 (Value)',
   color_S: '色感 • 饱和度 (Sat)',
   color_ALL: '色感 • 综合拾色 (Match)',
+  relative_color_all: '相对色感 (全部模式)',
+  relative_color_VECTOR_SHIFT: '相对色感 • 色彩矢量迁移',
 };
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
@@ -62,6 +66,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       setLoading(true);
       const starData = await getAllTrialRecords();
       const colorData = await getAllColorTrialRecords();
+      const relData = await getTrialRecords('relative_color');
 
       const combined: UnifiedRecord[] = [
         ...starData.map((r) => ({
@@ -76,6 +81,13 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           isHit: r.isHit,
           level: r.difficultyLevel,
           module: 'color' as const,
+          subMode: r.mode,
+        })),
+        ...relData.map((r) => ({
+          timestamp: r.timestamp,
+          isHit: r.isHit,
+          level: r.difficultyLevel,
+          module: 'relative_color' as const,
           subMode: r.mode,
         })),
       ];
@@ -97,11 +109,15 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (selectedFilter === 'all') return true;
     if (selectedFilter === 'star_all') return r.module === 'star';
     if (selectedFilter === 'color_all') return r.module === 'color';
+    if (selectedFilter === 'relative_color_all') return r.module === 'relative_color';
     if (selectedFilter.startsWith('star_')) {
       return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
     }
     if (selectedFilter.startsWith('color_')) {
       return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
+    }
+    if (selectedFilter.startsWith('relative_color_')) {
+      return r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '');
     }
     return true;
   });
@@ -225,6 +241,10 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   <option value="color_V">明度 (Value)</option>
                   <option value="color_S">饱和度 (Saturation)</option>
                   <option value="color_ALL">综合拾色 (Match)</option>
+                </optgroup>
+                <optgroup label="相对色感">
+                  <option value="relative_color_all">相对色感 (全部)</option>
+                  <option value="relative_color_VECTOR_SHIFT">色彩矢量迁移</option>
                 </optgroup>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
