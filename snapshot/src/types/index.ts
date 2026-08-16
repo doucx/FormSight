@@ -45,3 +45,45 @@ export interface TrialRecord {
   errorPixelDistance: number;
   responseTimeMs: number;
 }
+
+// === 相对色感类型定义 ===
+export type RelativeColorMode = 'VECTOR_SHIFT' | 'CONTRAST_MATCH' | 'THREE_TONE_SCALE';
+
+export interface RelativeColorQuestionData {
+  id: string;
+  mode: RelativeColorMode;
+  difficultyLevel: number;
+  colorA: [number, number, number]; // HSV [0..360, 0..100, 0..100]
+  colorB: [number, number, number]; // HSV
+  colorC: [number, number, number]; // HSV
+  targetD: [number, number, number]; // HSV 真理值
+  tolerance: number; // OKLab 允许色差 ΔE
+}
+
+export interface RelativeColorHitResult {
+  isHit: boolean;
+  userHSV: [number, number, number];
+  targetHSV: [number, number, number];
+  deltaEError: number;
+  magnitudeError: number; // 模长误差 (明度/彩度跨度偏离)
+  angleErrorDeg: number;  // 矢量方向夹角偏转 (色温偏向)
+  tolerance: number;
+}
+
+export interface RelativeColorTrialRecord {
+  id: string;
+  sessionId: string;
+  mode: RelativeColorMode;
+  timestamp: number;
+  difficultyLevel: number;
+  colorA: [number, number, number];
+  colorB: [number, number, number];
+  colorC: [number, number, number];
+  targetD: [number, number, number];
+  userD: [number, number, number];
+  isHit: boolean;
+  deltaEError: number;
+  magnitudeError: number;
+  angleErrorDeg: number;
+  responseTimeMs: number;
+}
