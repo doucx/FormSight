@@ -26,65 +26,67 @@ export function RelativeColorCanvas({
   disabled = false,
   hitMargin = 12,
   showToleranceBand = true,
-  enableHoverColorPreview = true,
 }: RelativeColorCanvasProps) {
-  const { colorA, colorB, colorC, targetD, difficultyLevel } = question;
+  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
 
-  const [userH, setUserH] = useState<number>(colorC[0]);
-  const [userS, setUserS] = useState<number>(colorC[1]);
-  const [userV, setUserV] = useState<number>(colorC[2]);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-  // 悬停与拖拽试探预览状态
-  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
-    H: null,
-    S: null,
-    V: null,
-  });
-  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
-
-  // 题目切换时重置 D 为 C 的初始状态
   useEffect(() => {
-    setUserH(colorC[0]);
-    setUserS(colorC[1]);
-    setUserV(colorC[2]);
-    setAllHoverVals({ H: null, S: null, V: null });
-    setDraggingLabel(null);
-  }, [colorC]);
+    if (question.id) {
+      setSelectedIndex(0);
+    }
+  }, [question.id]);
+
+  const activeColor = options?.[selectedIndex] ?? targetD;
+  const userH = activeColor[0];
+  const userS = activeColor[1];
+  const userV = activeColor[2];
 
   const handleSubmit = () => {
     if (disabled || showAnswer) return;
-    onAnswer([userH, userS, userV]);
+    onAnswer(activeColor);
   };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !showAnswer && !disabled) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (disabled || showAnswer) return;
+
+      let targetIdx: number | null = null;
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        targetIdx = Number.parseInt(e.key, 10) - 1;
+      } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
+        const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
+        if (num >= 1 && num <= 4) {
+          targetIdx = num - 1;
+        }
+      }
+
+      if (targetIdx !== null && options && targetIdx < options.length) {
         e.preventDefault();
-        onAnswer([userH, userS, userV]);
+        setSelectedIndex(targetIdx);
+        return;
+      }
+
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        const chosenColor = options?.[selectedIndex] ?? targetD;
+        onAnswer(chosenColor);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, disabled, userH, userS, userV, onAnswer]);
+  }, [showAnswer, disabled, selectedIndex, options, targetD, onAnswer]);
 
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
   const hexC = hsvToHex(...colorC);
 
-  const previewH =
-    draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-      ? (allHoverVals.H ?? userH)
-      : userH;
-  const previewS =
-    draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-      ? (allHoverVals.S ?? userS)
-      : userS;
-  const previewV =
-    draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-      ? (allHoverVals.V ?? userV)
-      : userV;
-
-  const hexUserD = hsvToHex(previewH, previewS, previewV);
+  const hexSelectedD = hsvToHex(userH, userS, userV);
   const hexTargetD = hsvToHex(...targetD);
 
   const hueGradient =
@@ -94,47 +96,43 @@ export function RelativeColorCanvas({
 
   return (
     <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      {/* 上方对比展示区 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      {/* 对比展示区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         {/* 基准推移组 (A -> B) */}
-        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
-          <div className="flex items-center justify-center gap-4 w-full">
-            <div
-              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexA }}
-            />
-            <ArrowRight className="w-6 h-6 text-indigo-400" />
-            <div
-              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexB }}
-            />
-          </div>
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexA }}
+          />
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexB }}
+          />
         </div>
 
         {/* 目标推移组 (C -> D) */}
-        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
-          <div className="flex items-center justify-center gap-4 w-full">
-            <div
-              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexC }}
-            />
-            <ArrowRight className="w-6 h-6 text-indigo-400" />
-            <div
-              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative overflow-hidden"
-              style={{ backgroundColor: hexUserD }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: hexTargetD }}
-                />
-              )}
-            </div>
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexC }}
+          />
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+            style={{ backgroundColor: hexSelectedD }}
+          >
+            {showAnswer && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1/2 border-t border-white/40"
+                style={{ backgroundColor: hexTargetD }}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      {/* 下方 D 颜色调制滑块轨道 (使用通用 HsvTrackSlider) */}
+      {/* 轨道面板 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <HsvTrackSlider
           label="H"
@@ -148,13 +146,11 @@ export function RelativeColorCanvas({
           targetVal={targetD[0]}
           userVal={userAnswer?.userD?.[0] ?? userH}
           isHit={userAnswer?.isHit}
-          onValChange={setUserH}
+          onValChange={() => {}}
           allUserHSV={[userH, userS, userV]}
-          disabled={disabled}
+          disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
-          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, H: hVal }))}
-          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'H' : null)}
         />
         <HsvTrackSlider
           label="S"
@@ -168,13 +164,11 @@ export function RelativeColorCanvas({
           targetVal={targetD[1]}
           userVal={userAnswer?.userD?.[1] ?? userS}
           isHit={userAnswer?.isHit}
-          onValChange={setUserS}
+          onValChange={() => {}}
           allUserHSV={[userH, userS, userV]}
-          disabled={disabled}
+          disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
-          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, S: hVal }))}
-          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'S' : null)}
         />
         <HsvTrackSlider
           label="V"
@@ -188,16 +182,57 @@ export function RelativeColorCanvas({
           targetVal={targetD[2]}
           userVal={userAnswer?.userD?.[2] ?? userV}
           isHit={userAnswer?.isHit}
-          onValChange={setUserV}
+          onValChange={() => {}}
           allUserHSV={[userH, userS, userV]}
-          disabled={disabled}
+          disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
-          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, V: hVal }))}
-          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'V' : null)}
         />
       </div>
 
+      {/* 候选色块卡片区 */}
+      <div className="grid grid-cols-4 gap-3 w-full">
+        {options?.map((opt, idx) => {
+          const isSelected = selectedIndex === idx;
+          const isTarget = idx === correctIndex;
+          const hexVal = hsvToHex(...opt);
+
+          let borderStyle = 'border-slate-200 hover:border-slate-300';
+          let ringStyle = '';
+
+          if (showAnswer) {
+            if (isTarget) {
+              borderStyle = 'border-emerald-500';
+              ringStyle = 'ring-2 ring-emerald-500/40';
+            } else if (isSelected && !isTarget) {
+              borderStyle = 'border-rose-400';
+              ringStyle = 'ring-1 ring-rose-400/40 opacity-80';
+            } else {
+              borderStyle = 'border-slate-200 opacity-40';
+            }
+          } else if (isSelected) {
+            borderStyle = 'border-indigo-600';
+            ringStyle = 'ring-2 ring-indigo-500/30 shadow-sm';
+          }
+
+          return (
+            <button
+              key={`${idx}-${hexVal}`}
+              type="button"
+              disabled={disabled || showAnswer}
+              onClick={() => setSelectedIndex(idx)}
+              className={`p-1.5 rounded-2xl border bg-white transition-all duration-150 active:scale-95 cursor-pointer ${borderStyle} ${ringStyle}`}
+            >
+              <div
+                className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+                style={{ backgroundColor: hexVal }}
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 确认提交按钮 */}
       {!showAnswer && (
         <button
           type="button"
