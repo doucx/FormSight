@@ -89,10 +89,17 @@ export function RelativeColorCanvas({
   const hexSelectedD = hsvToHex(userH, userS, userV);
   const hexTargetD = hsvToHex(...targetD);
 
+  const cH = colorC[0];
+  const cS = colorC[1];
+  const cV = colorC[2];
+
   const hueGradient =
     'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
   const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
   const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
+
+  const cSatGradient = `linear-gradient(to right, ${hsvToHex(cH, 0, cV)}, ${hsvToHex(cH, 100, cV)})`;
+  const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
 
   return (
     <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
@@ -134,60 +141,139 @@ export function RelativeColorCanvas({
 
       {/* 轨道面板 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <HsvTrackSlider
-          label="H"
-          gradient={hueGradient}
-          val={userH}
-          max={360}
-          unit="°"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[0]}
-          userVal={userAnswer?.userD?.[0] ?? userH}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-        <HsvTrackSlider
-          label="S"
-          gradient={satGradient}
-          val={userS}
-          max={100}
-          unit="%"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[1]}
-          userVal={userAnswer?.userD?.[1] ?? userS}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-        <HsvTrackSlider
-          label="V"
-          gradient={valGradient}
-          val={userV}
-          max={100}
-          unit="%"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[2]}
-          userVal={userAnswer?.userD?.[2] ?? userV}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
+        {/* C 节点颜色 (基准 C) */}
+        <div className="space-y-3 pb-3 border-b border-slate-200/60">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-sm"
+                style={{ backgroundColor: hexC }}
+              />
+              C 节点颜色 (基准 C)
+            </span>
+            <span className="font-mono text-[11px] text-slate-400">
+              {cH}° / {cS}% / {cV}%
+            </span>
+          </div>
+          <HsvTrackSlider
+            label="H"
+            gradient={hueGradient}
+            val={cH}
+            max={360}
+            unit="°"
+            targetHSV={colorC}
+            difficultyLevel={difficultyLevel}
+            showAnswer={false}
+            targetVal={cH}
+            userVal={cH}
+            allUserHSV={colorC}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={false}
+          />
+          <HsvTrackSlider
+            label="S"
+            gradient={cSatGradient}
+            val={cS}
+            max={100}
+            unit="%"
+            targetHSV={colorC}
+            difficultyLevel={difficultyLevel}
+            showAnswer={false}
+            targetVal={cS}
+            userVal={cS}
+            allUserHSV={colorC}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={false}
+          />
+          <HsvTrackSlider
+            label="V"
+            gradient={cValGradient}
+            val={cV}
+            max={100}
+            unit="%"
+            targetHSV={colorC}
+            difficultyLevel={difficultyLevel}
+            showAnswer={false}
+            targetVal={cV}
+            userVal={cV}
+            allUserHSV={colorC}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={false}
+          />
+        </div>
+
+        {/* D 节点颜色 (当前选择) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <span
+                className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-sm"
+                style={{ backgroundColor: hexSelectedD }}
+              />
+              D 节点颜色 (当前选择)
+            </span>
+            <span className="font-mono text-[11px] text-slate-400">
+              {userH}° / {userS}% / {userV}%
+            </span>
+          </div>
+          <HsvTrackSlider
+            label="H"
+            gradient={hueGradient}
+            val={userH}
+            max={360}
+            unit="°"
+            targetHSV={targetD}
+            difficultyLevel={difficultyLevel}
+            showAnswer={showAnswer}
+            targetVal={targetD[0]}
+            userVal={userAnswer?.userD?.[0] ?? userH}
+            isHit={userAnswer?.isHit}
+            onValChange={() => {}}
+            allUserHSV={[userH, userS, userV]}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={showToleranceBand}
+          />
+          <HsvTrackSlider
+            label="S"
+            gradient={satGradient}
+            val={userS}
+            max={100}
+            unit="%"
+            targetHSV={targetD}
+            difficultyLevel={difficultyLevel}
+            showAnswer={showAnswer}
+            targetVal={targetD[1]}
+            userVal={userAnswer?.userD?.[1] ?? userS}
+            isHit={userAnswer?.isHit}
+            onValChange={() => {}}
+            allUserHSV={[userH, userS, userV]}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={showToleranceBand}
+          />
+          <HsvTrackSlider
+            label="V"
+            gradient={valGradient}
+            val={userV}
+            max={100}
+            unit="%"
+            targetHSV={targetD}
+            difficultyLevel={difficultyLevel}
+            showAnswer={showAnswer}
+            targetVal={targetD[2]}
+            userVal={userAnswer?.userD?.[2] ?? userV}
+            isHit={userAnswer?.isHit}
+            onValChange={() => {}}
+            allUserHSV={[userH, userS, userV]}
+            disabled={true}
+            hitMargin={hitMargin}
+            showToleranceBand={showToleranceBand}
+          />
+        </div>
       </div>
 
       {/* 候选色块卡片区 */}
