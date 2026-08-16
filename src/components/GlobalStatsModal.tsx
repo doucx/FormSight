@@ -9,6 +9,7 @@ import {
   X,
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
 
 interface GlobalStatsModalProps {
@@ -168,79 +169,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   useEffect(() => {
     if (loading) return;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-    const padding = { top: 20, right: 20, bottom: 25, left: 30 };
-    const chartW = width - padding.left - padding.right;
-    const chartH = height - padding.top - padding.bottom;
-
-    ctx.clearRect(0, 0, width, height);
-
-    const activeDates = Object.keys(dailyData).sort();
-    const recentDates = activeDates.slice(-30);
-
-    if (recentDates.length === 0) {
-      ctx.fillStyle = '#94A3B8';
-      ctx.font = '12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('当前筛选条件下暂无做答轨迹', width / 2, height / 2);
-      return;
+    if (canvas) {
+      renderTrendChartCanvas(canvas, dailyData);
     }
-
-    const levels = recentDates.map((d) => dailyData[d].maxLevel);
-    const maxLevel = Math.max(...levels, 35);
-    const minLevel = 1;
-
-    const getY = (val: number) =>
-      padding.top + (1 - (val - minLevel) / (maxLevel - minLevel || 1)) * chartH;
-    const getX = (idx: number) =>
-      padding.left + (idx / Math.max(1, recentDates.length - 1)) * chartW;
-
-    ctx.strokeStyle = '#E2E8F0';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (const l of [minLevel, Math.round(maxLevel / 2), maxLevel]) {
-      const y = getY(l);
-      ctx.moveTo(padding.left, y);
-      ctx.lineTo(width - padding.right, y);
-    }
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.strokeStyle = '#6366F1';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.moveTo(getX(0), getY(levels[0]));
-    for (let i = 1; i < levels.length; i++) {
-      ctx.lineTo(getX(i), getY(levels[i]));
-    }
-    ctx.stroke();
-
-    for (let i = 0; i < levels.length; i++) {
-      ctx.beginPath();
-      ctx.arc(getX(i), getY(levels[i]), 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = '#4F46E5';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    for (const l of [minLevel, maxLevel]) {
-      ctx.fillText(`L${l}`, padding.left - 5, getY(l));
-    }
-    ctx.textAlign = 'center';
-    ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
   }, [loading]);
 
   return (
