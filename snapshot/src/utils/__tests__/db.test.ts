@@ -60,16 +60,11 @@ describe('db storage & import/export', () => {
     await saveTrialRecord({
       id: 'r1',
       sessionId: 's1',
+      domain: 'star',
       mode: 'single',
       timestamp: Date.now(),
       difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
       isHit: true,
-      errorPixelDistance: 0,
       responseTimeMs: 500,
     });
 

@@ -1,10 +1,17 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
-import type { TrainingMode, TrialRecord } from '../types';
+import type { TrainingMode } from '../types';
 import { loadSettings, saveSettings } from './settings';
 
-export interface SessionData {
+// ==========================================
+// 1. 统一数据模型类型定义
+// ==========================================
+
+export type TrainingDomain = 'star' | 'color' | 'relative_color';
+
+export interface UnifiedSessionData {
   id: string;
-  mode: TrainingMode;
+  domain: TrainingDomain;
+  mode: string;
   type: 'training' | 'benchmark';
   startTimestamp: number;
   endTimestamp?: number;
@@ -14,42 +21,22 @@ export interface SessionData {
   endLevel: number;
 }
 
-export interface UserProfileData {
-  mode: TrainingMode;
-  currentLevel: number; // 当前维持的难度 Level
-  bestLevel: number; // 历史最高难度 Level
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
-}
-
-export interface ColorSessionData {
-  id: string;
-  mode: 'H' | 'S' | 'V' | 'ALL';
-  type: 'training' | 'benchmark';
-  startTimestamp: number;
-  endTimestamp?: number;
-  totalTrials: number;
-  hitTrials: number;
-  startLevel: number;
-  endLevel: number;
-}
-
-export interface ColorTrialRecord {
+export interface UnifiedTrialRecord {
   id: string;
   sessionId: string;
-  mode: 'H' | 'S' | 'V' | 'ALL';
+  domain: TrainingDomain;
+  mode: string;
   timestamp: number;
   difficultyLevel: number;
-  targetHSV: [number, number, number];
-  userHSV: [number, number, number];
   isHit: boolean;
-  errorValue: number;
   responseTimeMs: number;
+  details?: Record<string, any>;
 }
 
-export interface ColorProfileData {
-  mode: 'H' | 'S' | 'V' | 'ALL';
+export interface UnifiedProfileData {
+  key: string; // `${domain}:${mode}`
+  domain: TrainingDomain;
+  mode: string;
   currentLevel: number;
   bestLevel: number;
   totalTrainedCards: number;
@@ -57,88 +44,164 @@ export interface ColorProfileData {
   updatedAt: number;
 }
 
+// 兼容别名导出
+export type SessionData = UnifiedSessionData;
+export type UserProfileData = UnifiedProfileData;
+export type ColorSessionData = UnifiedSessionData;
+export type ColorTrialRecord = UnifiedTrialRecord;
+export type ColorProfileData = UnifiedProfileData;
+
+// ==========================================
+// 2. IDB Schema 统一表定义
+// ==========================================
+
 interface FormSightDBSchema extends DBSchema {
-  // === 寻星练习数据表 ===
   sessions: {
     key: string;
-    value: SessionData;
+    value: UnifiedSessionData;
+    indexes: {
+      'by-domain': TrainingDomain;
+      'by-domain-mode': [TrainingDomain, string];
+    };
   };
   records: {
     key: string;
-    value: TrialRecord;
+    value: UnifiedTrialRecord;
     indexes: {
       'by-session': string;
+      'by-domain': TrainingDomain;
+      'by-domain-mode': [TrainingDomain, string];
       'by-mode': string;
     };
   };
   user_profiles: {
-    key: TrainingMode;
-    value: UserProfileData;
-  };
-
-  // === 色感练习数据表 (v3 新增) ===
-  color_sessions: {
     key: string;
-    value: ColorSessionData;
-  };
-  color_records: {
-    key: string;
-    value: ColorTrialRecord;
+    value: UnifiedProfileData;
     indexes: {
-      'by-session': string;
-      'by-mode': string;
+      'by-domain': TrainingDomain;
     };
-  };
-  color_profiles: {
-    key: 'H' | 'S' | 'V' | 'ALL';
-    value: ColorProfileData;
   };
 }
 
 const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 3; // v3: 支持色感训练与全局平台
+const DB_VERSION = 4; // v4: 通用实体架构，合并所有领域表为通用 3 表结构
 
 let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
 export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion) {
-        if (oldVersion < 2) {
-          if (db.objectStoreNames.contains('sessions')) db.deleteObjectStore('sessions');
-          if (db.objectStoreNames.contains('records')) db.deleteObjectStore('records');
-          if (db.objectStoreNames.contains('user_profiles')) db.deleteObjectStore('user_profiles');
-        }
+      upgrade(db, oldVersion, _newVersion, transaction) {
+        let sessionsStore: any;
+        let recordsStore: any;
+        let profilesStore: any;
 
-        // 1. 寻星练习会话表
         if (!db.objectStoreNames.contains('sessions')) {
-          db.createObjectStore('sessions', { keyPath: 'id' });
+          sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
+        } else {
+          sessionsStore = transaction.objectStore('sessions');
         }
 
-        // 2. 寻星试题日志表
         if (!db.objectStoreNames.contains('records')) {
-          const recordStore = db.createObjectStore('records', { keyPath: 'id' });
-          recordStore.createIndex('by-session', 'sessionId');
-          recordStore.createIndex('by-mode', 'mode');
+          recordsStore = db.createObjectStore('records', { keyPath: 'id' });
+        } else {
+          recordsStore = transaction.objectStore('records');
         }
 
-        // 3. 寻星用户能力表
         if (!db.objectStoreNames.contains('user_profiles')) {
-          db.createObjectStore('user_profiles', { keyPath: 'mode' });
+          profilesStore = db.createObjectStore('user_profiles', { keyPath: 'key' });
+        } else {
+          profilesStore = transaction.objectStore('user_profiles');
         }
 
-        // === v3 新增：色感练习表 ===
-        if (oldVersion < 3) {
-          if (!db.objectStoreNames.contains('color_sessions')) {
-            db.createObjectStore('color_sessions', { keyPath: 'id' });
+        if (!sessionsStore.indexNames.contains('by-domain')) {
+          sessionsStore.createIndex('by-domain', 'domain');
+        }
+        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
+          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
+        }
+
+        if (!recordsStore.indexNames.contains('by-session')) {
+          recordsStore.createIndex('by-session', 'sessionId');
+        }
+        if (!recordsStore.indexNames.contains('by-domain')) {
+          recordsStore.createIndex('by-domain', 'domain');
+        }
+        if (!recordsStore.indexNames.contains('by-domain-mode')) {
+          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
+        }
+        if (!recordsStore.indexNames.contains('by-mode')) {
+          recordsStore.createIndex('by-mode', 'mode');
+        }
+
+        if (!profilesStore.indexNames.contains('by-domain')) {
+          profilesStore.createIndex('by-domain', 'domain');
+        }
+
+        // v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
+        if (oldVersion < 4) {
+          if (db.objectStoreNames.contains('color_sessions' as any)) {
+            const colorSessionsStore = transaction.objectStore('color_sessions' as any);
+            colorSessionsStore.getAll().then((oldCSessions: any[]) => {
+              for (const cs of oldCSessions) {
+                sessionsStore.put({
+                  id: cs.id,
+                  domain: 'color',
+                  mode: cs.mode,
+                  type: cs.type,
+                  startTimestamp: cs.startTimestamp,
+                  endTimestamp: cs.endTimestamp,
+                  totalTrials: cs.totalTrials,
+                  hitTrials: cs.hitTrials,
+                  startLevel: cs.startLevel,
+                  endLevel: cs.endLevel,
+                });
+              }
+            });
+            db.deleteObjectStore('color_sessions' as any);
           }
-          if (!db.objectStoreNames.contains('color_records')) {
-            const colorRecordStore = db.createObjectStore('color_records', { keyPath: 'id' });
-            colorRecordStore.createIndex('by-session', 'sessionId');
-            colorRecordStore.createIndex('by-mode', 'mode');
+
+          if (db.objectStoreNames.contains('color_records' as any)) {
+            const colorRecordsStore = transaction.objectStore('color_records' as any);
+            colorRecordsStore.getAll().then((oldCRecords: any[]) => {
+              for (const cr of oldCRecords) {
+                recordsStore.put({
+                  id: cr.id,
+                  sessionId: cr.sessionId,
+                  domain: 'color',
+                  mode: cr.mode,
+                  timestamp: cr.timestamp,
+                  difficultyLevel: cr.difficultyLevel,
+                  isHit: cr.isHit,
+                  responseTimeMs: cr.responseTimeMs,
+                  details: {
+                    targetHSV: cr.targetHSV,
+                    userHSV: cr.userHSV,
+                    errorValue: cr.errorValue,
+                  },
+                });
+              }
+            });
+            db.deleteObjectStore('color_records' as any);
           }
-          if (!db.objectStoreNames.contains('color_profiles')) {
-            db.createObjectStore('color_profiles', { keyPath: 'mode' });
+
+          if (db.objectStoreNames.contains('color_profiles' as any)) {
+            const colorProfilesStore = transaction.objectStore('color_profiles' as any);
+            colorProfilesStore.getAll().then((oldCProfiles: any[]) => {
+              for (const cp of oldCProfiles) {
+                profilesStore.put({
+                  key: `color:${cp.mode}`,
+                  domain: 'color',
+                  mode: cp.mode,
+                  currentLevel: cp.currentLevel,
+                  bestLevel: cp.bestLevel,
+                  totalTrainedCards: cp.totalTrainedCards,
+                  totalHits: cp.totalHits,
+                  updatedAt: cp.updatedAt,
+                });
+              }
+            });
+            db.deleteObjectStore('color_profiles' as any);
           }
         }
       },
@@ -147,53 +210,68 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   return dbPromise;
 }
 
-// === API 1: 保存单次答题记录 ===
-export async function saveTrialRecord(record: TrialRecord): Promise<void> {
-  const db = await getDB();
-  await db.put('records', record);
+// ==========================================
+// 3. 泛型通用 API 接口
+// ==========================================
 
-  // 同步更新模式能力看板
-  await updateUserProfile(record.mode, record.isHit, record.difficultyLevel);
+export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
+  const db = await getDB();
+  const domain = record.domain || 'star';
+  const normalizedRecord = { ...record, domain };
+  await db.put('records', normalizedRecord);
+  await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
 }
 
-// === API 2: 保存/更新训练会话 ===
-export async function saveSession(session: SessionData): Promise<void> {
+export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
-  await db.put('sessions', session);
+  const domain = session.domain || 'star';
+  await db.put('sessions', { ...session, domain });
 }
 
-// === API 3: 获取用户指定模式的能力看板 ===
-export async function getUserProfile(mode: TrainingMode): Promise<UserProfileData | null> {
+export async function getProfile(
+  domain: TrainingDomain,
+  mode: string,
+): Promise<UnifiedProfileData | null> {
   const db = await getDB();
-  const profile = await db.get('user_profiles', mode);
+  const profile = await db.get('user_profiles', `${domain}:${mode}`);
   return profile || null;
 }
 
-// === API 4: 获取用户所有模式的能力看板 ===
-export async function getAllUserProfiles(): Promise<Record<TrainingMode, UserProfileData | null>> {
+export async function getProfilesByDomain(
+  domain: TrainingDomain,
+): Promise<UnifiedProfileData[]> {
   const db = await getDB();
-  const single = (await db.get('user_profiles', 'single')) || null;
-  const doubleH = (await db.get('user_profiles', 'double_h')) || null;
-  const doubleR = (await db.get('user_profiles', 'double_r')) || null;
-
-  return {
-    single,
-    double_h: doubleH,
-    double_r: doubleR,
-  };
+  return await db.getAllFromIndex('user_profiles', 'by-domain', domain);
 }
 
-// === 内部辅助：更新能力看板 ===
-async function updateUserProfile(
-  mode: TrainingMode,
+export async function getTrialRecords(
+  domain?: TrainingDomain,
+  mode?: string,
+): Promise<UnifiedTrialRecord[]> {
+  const db = await getDB();
+  if (domain && mode) {
+    return await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
+  }
+  if (domain) {
+    return await db.getAllFromIndex('records', 'by-domain', domain);
+  }
+  return await db.getAll('records');
+}
+
+async function updateProfile(
+  domain: TrainingDomain,
+  mode: string,
   isHit: boolean,
   currentLevel: number,
 ): Promise<void> {
   const db = await getDB();
-  const existing = await db.get('user_profiles', mode);
+  const key = `${domain}:${mode}`;
+  const existing = await db.get('user_profiles', key);
 
   if (!existing) {
-    const newProfile: UserProfileData = {
+    const newProfile: UnifiedProfileData = {
+      key,
+      domain,
       mode,
       currentLevel,
       bestLevel: currentLevel,
@@ -206,7 +284,6 @@ async function updateUserProfile(
     existing.totalTrainedCards += 1;
     if (isHit) existing.totalHits += 1;
     existing.currentLevel = currentLevel;
-    // Level 越高代表能力越强，因此 bestLevel 取最大值
     if (currentLevel > existing.bestLevel) {
       existing.bestLevel = currentLevel;
     }
@@ -215,15 +292,15 @@ async function updateUserProfile(
   }
 }
 
-// === API 5: 全量 JSON 数据导出 ===
+// ==========================================
+// 4. 通用导入 / 导出与统计 API
+// ==========================================
+
 export async function exportAllData(): Promise<string> {
   const db = await getDB();
   const sessions = await db.getAll('sessions');
   const records = await db.getAll('records');
   const profiles = await db.getAll('user_profiles');
-  const colorSessions = await db.getAll('color_sessions');
-  const colorRecords = await db.getAll('color_records');
-  const colorProfiles = await db.getAll('color_profiles');
   const settings = loadSettings();
 
   const exportObject = {
@@ -232,55 +309,75 @@ export async function exportAllData(): Promise<string> {
     sessions,
     records,
     profiles,
-    color_sessions: colorSessions,
-    color_records: colorRecords,
-    color_profiles: colorProfiles,
     settings,
   };
 
   return JSON.stringify(exportObject, null, 2);
 }
 
-// === API 6: 全量 JSON 数据导入 ===
 export async function importAllData(jsonString: string): Promise<boolean> {
   try {
     const data = JSON.parse(jsonString);
-
     const db = await getDB();
-    const tx = db.transaction(
-      ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
-      'readwrite',
-    );
+    const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
 
     if (data.sessions) {
       for (const s of data.sessions) {
-        await tx.objectStore('sessions').put(s);
+        const domain = s.domain || 'star';
+        await tx.objectStore('sessions').put({ ...s, domain });
       }
     }
     if (data.records) {
       for (const r of data.records) {
-        await tx.objectStore('records').put(r);
+        const domain = r.domain || 'star';
+        await tx.objectStore('records').put({ ...r, domain });
       }
     }
     if (data.profiles) {
       for (const p of data.profiles) {
-        await tx.objectStore('user_profiles').put(p);
+        const domain = p.domain || 'star';
+        const key = p.key || `${domain}:${p.mode}`;
+        await tx.objectStore('user_profiles').put({ ...p, key, domain });
       }
     }
 
+    // 兼容导入旧格式 JSON 文件中的 color 数据
     if (data.color_sessions) {
       for (const cs of data.color_sessions) {
-        await tx.objectStore('color_sessions').put(cs);
+        await tx.objectStore('sessions').put({ ...cs, domain: 'color' });
       }
     }
     if (data.color_records) {
       for (const cr of data.color_records) {
-        await tx.objectStore('color_records').put(cr);
+        await tx.objectStore('records').put({
+          id: cr.id,
+          sessionId: cr.sessionId,
+          domain: 'color',
+          mode: cr.mode,
+          timestamp: cr.timestamp,
+          difficultyLevel: cr.difficultyLevel,
+          isHit: cr.isHit,
+          responseTimeMs: cr.responseTimeMs,
+          details: {
+            targetHSV: cr.targetHSV,
+            userHSV: cr.userHSV,
+            errorValue: cr.errorValue,
+          },
+        });
       }
     }
     if (data.color_profiles) {
       for (const cp of data.color_profiles) {
-        await tx.objectStore('color_profiles').put(cp);
+        await tx.objectStore('user_profiles').put({
+          key: `color:${cp.mode}`,
+          domain: 'color',
+          mode: cp.mode,
+          currentLevel: cp.currentLevel,
+          bestLevel: cp.bestLevel,
+          totalTrainedCards: cp.totalTrainedCards,
+          totalHits: cp.totalHits,
+          updatedAt: cp.updatedAt,
+        });
       }
     }
 
@@ -292,21 +389,35 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 
     return true;
   } catch (err) {
-    console.error('导入寻星与色感数据失败:', err);
+    console.error('导入数据失败:', err);
     return false;
   }
 }
 
-// === API 7: 获取历史做答日志（支持按模式筛选） ===
-export async function getAllTrialRecords(mode?: TrainingMode): Promise<TrialRecord[]> {
+export async function clearAllData(): Promise<void> {
   const db = await getDB();
-  if (mode) {
-    return await db.getAllFromIndex('records', 'by-mode', mode);
-  }
-  return await db.getAll('records');
+  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  await tx.objectStore('sessions').clear();
+  await tx.objectStore('records').clear();
+  await tx.objectStore('user_profiles').clear();
+  await tx.done;
 }
 
-// === API 8: 获取累积练习总时长 (ms) 与格式化辅助 ===
+export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number> {
+  const db = await getDB();
+  const sessions = domain
+    ? await db.getAllFromIndex('sessions', 'by-domain', domain)
+    : await db.getAll('sessions');
+
+  let totalMs = 0;
+  for (const s of sessions) {
+    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
+      totalMs += s.endTimestamp - s.startTimestamp;
+    }
+  }
+  return totalMs;
+}
+
 export function formatTotalTime(ms: number): string {
   const totalMinutes = Math.floor(ms / (1000 * 60));
   const days = Math.floor(totalMinutes / (60 * 24));
@@ -316,112 +427,90 @@ export function formatTotalTime(ms: number): string {
   return `${days}天${hours}小时${minutes}分钟`;
 }
 
-export async function getStarHoppingTrainingTimeMs(): Promise<number> {
-  const db = await getDB();
-  const sessions = await db.getAll('sessions');
-  let totalMs = 0;
-  for (const s of sessions) {
-    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
-      totalMs += s.endTimestamp - s.startTimestamp;
+// ==========================================
+// 5. 兼容层别名函数 (对既有页面逻辑完全透明)
+// ==========================================
+
+export async function getUserProfile(mode: TrainingMode): Promise<UnifiedProfileData | null> {
+  return await getProfile('star', mode);
+}
+
+export async function getAllUserProfiles(): Promise<Record<TrainingMode, UnifiedProfileData | null>> {
+  const profiles = await getProfilesByDomain('star');
+  const result: Record<TrainingMode, UnifiedProfileData | null> = {
+    single: null,
+    double_h: null,
+    double_r: null,
+  };
+  for (const p of profiles) {
+    if (p.mode in result) {
+      result[p.mode as TrainingMode] = p;
     }
   }
-  return totalMs;
+  return result;
 }
 
-export async function getColorTrainingTimeMs(): Promise<number> {
-  const db = await getDB();
-  const sessions = await db.getAll('color_sessions');
-  let totalMs = 0;
-  for (const s of sessions) {
-    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
-      totalMs += s.endTimestamp - s.startTimestamp;
-    }
-  }
-  return totalMs;
+export async function getAllTrialRecords(mode?: TrainingMode): Promise<UnifiedTrialRecord[]> {
+  return await getTrialRecords('star', mode);
 }
 
-export async function getTotalTrainingTimeMs(): Promise<number> {
-  const starMs = await getStarHoppingTrainingTimeMs();
-  const colorMs = await getColorTrainingTimeMs();
-  return starMs + colorMs;
+export async function saveColorTrialRecord(record: any): Promise<void> {
+  return await saveTrialRecord({
+    id: record.id,
+    sessionId: record.sessionId,
+    domain: 'color',
+    mode: record.mode,
+    timestamp: record.timestamp,
+    difficultyLevel: record.difficultyLevel,
+    isHit: record.isHit,
+    responseTimeMs: record.responseTimeMs,
+    details: {
+      targetHSV: record.targetHSV,
+      userHSV: record.userHSV,
+      errorValue: record.errorValue,
+    },
+  });
 }
 
-// === API 9: 清空所有本地数据 ===
-// === API 10: 色感训练数据库操作 ===
-export async function saveColorTrialRecord(record: ColorTrialRecord): Promise<void> {
-  const db = await getDB();
-  await db.put('color_records', record);
-  await updateColorProfile(record.mode, record.isHit, record.difficultyLevel);
-}
-
-export async function saveColorSession(session: ColorSessionData): Promise<void> {
-  const db = await getDB();
-  await db.put('color_sessions', session);
+export async function saveColorSession(session: any): Promise<void> {
+  return await saveSession({
+    ...session,
+    domain: 'color',
+  });
 }
 
 export async function getAllColorProfiles(): Promise<
-  Record<'H' | 'S' | 'V' | 'ALL', ColorProfileData | null>
+  Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null>
 > {
-  const db = await getDB();
-  const h = (await db.get('color_profiles', 'H')) || null;
-  const s = (await db.get('color_profiles', 'S')) || null;
-  const v = (await db.get('color_profiles', 'V')) || null;
-  const all = (await db.get('color_profiles', 'ALL')) || null;
-
-  return { H: h, S: s, V: v, ALL: all };
+  const profiles = await getProfilesByDomain('color');
+  const result: Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null> = {
+    H: null,
+    S: null,
+    V: null,
+    ALL: null,
+  };
+  for (const p of profiles) {
+    if (p.mode in result) {
+      result[p.mode as 'H' | 'S' | 'V' | 'ALL'] = p;
+    }
+  }
+  return result;
 }
 
 export async function getAllColorTrialRecords(
   mode?: 'H' | 'S' | 'V' | 'ALL',
-): Promise<ColorTrialRecord[]> {
-  const db = await getDB();
-  if (mode) {
-    return await db.getAllFromIndex('color_records', 'by-mode', mode);
-  }
-  return await db.getAll('color_records');
+): Promise<UnifiedTrialRecord[]> {
+  return await getTrialRecords('color', mode);
 }
 
-async function updateColorProfile(
-  mode: 'H' | 'S' | 'V' | 'ALL',
-  isHit: boolean,
-  currentLevel: number,
-): Promise<void> {
-  const db = await getDB();
-  const existing = await db.get('color_profiles', mode);
-
-  if (!existing) {
-    const newProfile: ColorProfileData = {
-      mode,
-      currentLevel,
-      bestLevel: currentLevel,
-      totalTrainedCards: 1,
-      totalHits: isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await db.put('color_profiles', newProfile);
-  } else {
-    existing.totalTrainedCards += 1;
-    if (isHit) existing.totalHits += 1;
-    existing.currentLevel = currentLevel;
-    if (currentLevel > existing.bestLevel) {
-      existing.bestLevel = currentLevel;
-    }
-    existing.updatedAt = Date.now();
-    await db.put('color_profiles', existing);
-  }
+export async function getStarHoppingTrainingTimeMs(): Promise<number> {
+  return await getTrainingTimeMs('star');
 }
 
-export async function clearAllData(): Promise<void> {
-  const db = await getDB();
-  const tx = db.transaction(
-    ['sessions', 'records', 'user_profiles', 'color_sessions', 'color_records', 'color_profiles'],
-    'readwrite',
-  );
-  await tx.objectStore('sessions').clear();
-  await tx.objectStore('records').clear();
-  await tx.objectStore('user_profiles').clear();
-  await tx.objectStore('color_sessions').clear();
-  await tx.objectStore('color_records').clear();
-  await tx.objectStore('color_profiles').clear();
-  await tx.done;
+export async function getColorTrainingTimeMs(): Promise<number> {
+  return await getTrainingTimeMs('color');
+}
+
+export async function getTotalTrainingTimeMs(): Promise<number> {
+  return await getTrainingTimeMs();
 }
