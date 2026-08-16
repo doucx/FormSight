@@ -61,13 +61,15 @@ export function ColorAnalyticsModal({ onClose }: ColorAnalyticsModalProps) {
   if (totalCount > 0) {
     let sumDist = 0;
     for (const r of records) {
-      sumDist += r.errorValue;
-      const targetH = r.targetHSV[0];
+      const errVal = Number(r.errorValue ?? 0);
+      const tHsv = (r.targetHSV ?? [0, 0, 0]) as [number, number, number];
+      sumDist += errVal;
+      const targetH = tHsv[0];
       const idx = Math.floor(targetH / 30);
       const safeIdx = Math.max(0, Math.min(11, idx));
       sectorBuckets[safeIdx].total += 1;
       if (r.isHit) sectorBuckets[safeIdx].hits += 1;
-      sectorBuckets[safeIdx].sumError += r.errorValue;
+      sectorBuckets[safeIdx].sumError += errVal;
     }
     avgErrorDist = Math.round((sumDist / totalCount) * 10) / 10;
   }

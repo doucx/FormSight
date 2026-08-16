@@ -1,11 +1,21 @@
-import { ArrowRight, BarChart2, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
+import {
+  ArrowRight,
+  BarChart2,
+  Clock,
+  Compass,
+  Palette,
+  Shuffle,
+  Sliders,
+  Sparkles,
+} from 'lucide-preact';
 import { formatTotalTime } from '../utils/db';
 
 interface HomeProps {
   totalTimeMs: number;
   starHoppingTimeMs: number;
   colorTimeMs: number;
-  onNavigate: (app: 'star-hopping' | 'color-sense') => void;
+  relativeColorTimeMs: number;
+  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color') => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
 }
@@ -14,6 +24,7 @@ export function Home({
   totalTimeMs,
   starHoppingTimeMs,
   colorTimeMs,
+  relativeColorTimeMs,
   onNavigate,
   onOpenGlobalSettings,
   onOpenGlobalStats,
@@ -98,7 +109,7 @@ export function Home({
           </div>
         </button>
 
-        {/* 2. 色感练习 */}
+        {/* 2. 绝对色感练习 */}
         <button
           type="button"
           onClick={() => onNavigate('color-sense')}
@@ -113,7 +124,7 @@ export function Home({
 
             <div>
               <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                色感训练 (Color Recognition)
+                绝对色感 (Color Recognition)
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed">
                 拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation)
@@ -128,7 +139,43 @@ export function Home({
               <span>累计练习: {formatTotalTime(colorTimeMs)}</span>
             </div>
             <div className="flex items-center gap-1">
-              <span>进入色感练习看板</span>
+              <span>进入绝对色感看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {/* 3. 相对色感训练 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('relative-color')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left md:col-span-2"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform">
+                <Shuffle className="w-8 h-8" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                相对色感 (Relative Color Perception)
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector
+                v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-purple-500" />
+              <span>累计练习: {formatTotalTime(relativeColorTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入相对色感看板</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>

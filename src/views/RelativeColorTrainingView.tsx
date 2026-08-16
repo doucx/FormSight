@@ -1,30 +1,34 @@
-import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { RelativeColorCanvas } from '../components/RelativeColorCanvas';
 import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
-import { StarCanvas } from '../components/StarCanvas';
-import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import { type SessionData, saveSession, saveTrialRecord } from '../utils/db';
-import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
-import type { StarSettings } from '../utils/settings';
+import { saveSession, saveTrialRecord } from '../utils/db';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorMode,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateRelativeColorQuestion,
+} from '../utils/relativeColorUtils';
+import type { RelativeColorSettings } from '../utils/settings';
 
-interface TrainingViewProps {
-  mode: TrainingMode;
+interface RelativeColorTrainingViewProps {
+  mode: RelativeColorMode;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: StarSettings;
+  settings: RelativeColorSettings;
   onExit: () => void;
 }
 
-export function TrainingView({
+export function RelativeColorTrainingView({
   mode,
   sessionType,
   initialLevel,
   settings,
   onExit,
-}: TrainingViewProps) {
-  // === 会话状态 ===
-  const sessionIdRef = useRef<string>(`session_${Date.now()}`);
+}: RelativeColorTrainingViewProps) {
+  const sessionIdRef = useRef<string>(`rcsession_${Date.now()}`);
   const startTimeRef = useRef<number>(Date.now());
   const adaptiveEngineRef = useRef<AdaptiveEngine>(
     new AdaptiveEngine(
@@ -36,32 +40,14 @@ export function TrainingView({
     ),
   );
   const autoNextTimerRef = useRef<number | null>(null);
-  const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
 
-  // 辅助：获取发题配置选项
-  const getGenerateOptions = (): QuestionGenerateOptions => {
-    return {
-      targetingMode: settings.targetingMode,
-      targetSectors:
-        settings.targetingMode === 'manual'
-          ? settings.manualTargetSectors
-          : targetSectorsRef.current,
-      gridSize: settings.gridSize,
-    };
-  };
-
-  const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialLevel, getGenerateOptions()),
+  const [question, setQuestion] = useState<RelativeColorQuestionData>(() =>
+    generateRelativeColorQuestion(mode, initialLevel),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-
   const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [userAnswer, setUserAnswer] = useState<{
-    clickPoint: Point;
-    hitResult: HitResult;
-  } | null>(null);
+  const [userAnswer, setUserAnswer] = useState<RelativeColorHitResult | null>(null);
 
-  // 统计指标与结算弹窗
   const [totalTrials, setTotalTrials] = useState<number>(0);
   const [hitTrials, setHitTrials] = useState<number>(0);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
@@ -69,7 +55,6 @@ export function TrainingView({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // === 计时器 ===
   useEffect(() => {
     const timer = setInterval(() => {
       if (showSummaryModal || isFinished) return;
@@ -78,12 +63,11 @@ export function TrainingView({
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished]);
 
-  // === 键盘监听 (Space / Esc) ===
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        e.preventDefault();
         if (showAnswer && !isFinished) {
+          e.preventDefault();
           handleNextQuestion();
         }
       } else if (e.code === 'Escape') {
@@ -95,10 +79,11 @@ export function TrainingView({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAnswer, isFinished]);
 
-  // === 作答处理 ===
-  const handleAnswer = async (clickPoint: Point, hitResult: HitResult) => {
+  const handleAnswer = async (userD: [number, number, number]) => {
     const responseTimeMs = Date.now() - questionStartTime;
-    setUserAnswer({ clickPoint, hitResult });
+    const hitResult = checkRelativeColorHit(mode, userD, question);
+
+    setUserAnswer(hitResult);
     setShowAnswer(true);
 
     const newTotal = totalTrials + 1;
@@ -106,28 +91,26 @@ export function TrainingView({
     setTotalTrials(newTotal);
     setHitTrials(newHits);
 
-    // 1. 存数据库原子记录
+    // 通用 DB API 提交
     await saveTrialRecord({
-      id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      id: `rcrec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       sessionId: sessionIdRef.current,
-      domain: 'star',
+      domain: 'relative_color',
       mode,
       timestamp: Date.now(),
       difficultyLevel: question.difficultyLevel,
       isHit: hitResult.isHit,
       responseTimeMs,
       details: {
-        anchorA: [question.anchorA.x, question.anchorA.y],
-        anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
-        targetB: [question.targetB.x, question.targetB.y],
-        userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
-        angleDegree: question.angleDegree,
-        distanceRatio: question.distanceRatio,
-        errorPixelDistance: hitResult.errorDistance,
+        colorA: question.colorA,
+        colorB: question.colorB,
+        colorC: question.colorC,
+        targetD: question.targetD,
+        userD,
+        deltaEError: hitResult.deltaEError,
       },
     });
 
-    // 2. 记录做答 Level 历史
     setSessionHistory((prev) => [
       ...prev,
       {
@@ -138,12 +121,10 @@ export function TrainingView({
       },
     ]);
 
-    // 3. 调优阶梯难度 Level
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
     const delay = settings.autoNextDelay;
 
-    // 4. 检查基准测试是否完成 (20 题)
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
       await saveCurrentSession(newTotal, newHits, true);
@@ -152,7 +133,6 @@ export function TrainingView({
         setShowSummaryModal(true);
       }, delay);
     } else if (settings.autoNext) {
-      // 自动翻页延时
       if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
       autoNextTimerRef.current = window.setTimeout(() => {
         handleNextQuestion();
@@ -160,7 +140,6 @@ export function TrainingView({
     }
   };
 
-  // === 切题 ===
   const handleNextQuestion = () => {
     if (isFinished) return;
     if (autoNextTimerRef.current) {
@@ -171,15 +150,14 @@ export function TrainingView({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setShowAnswer(false);
     setUserAnswer(null);
-    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
+    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
     setQuestionStartTime(Date.now());
   };
 
-  // === 保存会话数据 ===
   const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
-    const sessionData: SessionData = {
+    await saveSession({
       id: sessionIdRef.current,
-      domain: 'star',
+      domain: 'relative_color',
       mode,
       type: sessionType,
       startTimestamp: startTimeRef.current,
@@ -188,11 +166,9 @@ export function TrainingView({
       hitTrials: hits,
       startLevel: initialLevel,
       endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    };
-    await saveSession(sessionData);
+    });
   };
 
-  // === 触发退出/完成请求 ===
   const handleRequestFinish = async () => {
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
@@ -203,13 +179,11 @@ export function TrainingView({
     }
   };
 
-  // === 彻底退出 ===
   const handleFinishSession = async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
   };
 
-  // === 再练一轮 ===
   const handleRestartSession = () => {
     setShowSummaryModal(false);
     setIsFinished(false);
@@ -218,11 +192,11 @@ export function TrainingView({
     setSessionHistory([]);
     setShowAnswer(false);
     setUserAnswer(null);
-    sessionIdRef.current = `session_${Date.now()}`;
+    sessionIdRef.current = `rcsession_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
+    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
     setQuestionStartTime(Date.now());
   };
 
@@ -236,7 +210,7 @@ export function TrainingView({
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 顶栏控制面板 */}
+      {/* 顶栏 */}
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -248,17 +222,11 @@ export function TrainingView({
             退出训练 (Esc)
           </button>
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {mode} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+            色彩矢量迁移 | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
-          {settings.targetingMode === 'manual' && (
-            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
-              <Crosshair className="w-3.5 h-3.5 text-amber-600" />
-              靶向强化训练
-            </span>
-          )}
         </div>
 
-        {/* 核心监控指标 */}
+        {/* 监控指标 */}
         <div className="flex items-center gap-6 text-sm">
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
@@ -268,14 +236,12 @@ export function TrainingView({
               {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
             </span>
           </div>
-
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
               当前难度
             </span>
             <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
           </div>
-
           <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
@@ -283,16 +249,19 @@ export function TrainingView({
         </div>
       </header>
 
-      {/* 核心双 Canvas 交互区 */}
-      <StarCanvas
+      {/* 相对色彩矢量 Canvas */}
+      <RelativeColorCanvas
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
         onAnswer={handleAnswer}
         disabled={isFinished}
+        hitMargin={settings.sliderHitMargin ?? 12}
+        showToleranceBand={settings.showToleranceBand ?? true}
+        enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
       />
 
-      {/* 底部操作面板（仅在未开启自动翻页时显示） */}
+      {/* 底部控制栏 */}
       {!settings.autoNext && (
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
@@ -321,10 +290,10 @@ export function TrainingView({
         </div>
       )}
 
-      {/* 练习结算弹窗 */}
+      {/* 结算弹窗 */}
       {showSummaryModal && (
         <SessionSummaryModal
-          mode={mode}
+          mode="single"
           sessionType={sessionType}
           elapsedSeconds={elapsedSeconds}
           history={sessionHistory}

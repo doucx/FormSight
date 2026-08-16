@@ -8,20 +8,25 @@ import type { TrainingMode } from './types';
 import type { ColorMode } from './utils/colorUtils';
 import {
   type ColorProfileData,
+  type TrainingDomain,
   type UserProfileData,
   getAllColorProfiles,
   getAllUserProfiles,
   getColorTrainingTimeMs,
   getStarHoppingTrainingTimeMs,
+  getTrainingTimeMs,
 } from './utils/db';
+import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
 import { Dashboard } from './views/Dashboard';
 import { Home } from './views/Home';
+import { RelativeColorDashboard } from './views/RelativeColorDashboard';
+import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
 import { TrainingView } from './views/TrainingView';
 
-type GlobalApp = 'home' | 'star-hopping' | 'color-sense';
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color';
 
 export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
@@ -38,9 +43,8 @@ export function App() {
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settingsContext, setSettingsContext] = useState<'star-hopping' | 'color-sense'>(
-    'star-hopping',
-  );
+  const [settingsDomain, setSettingsDomain] = useState<TrainingDomain>('star');
+
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
   const [isColorAnalyticsOpen, setIsColorAnalyticsOpen] = useState<boolean>(false);
   const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
@@ -59,6 +63,13 @@ export function App() {
   });
   const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
   const [colorTimeMs, setColorTimeMs] = useState<number>(0);
+  const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
+
+  // 相对色感状态
+  const [activeRelativeMode, setActiveRelativeMode] = useState<RelativeColorMode>('VECTOR_SHIFT');
+  const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>(
+    'training',
+  );
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
@@ -66,10 +77,12 @@ export function App() {
     const cData = await getAllColorProfiles();
     const starMs = await getStarHoppingTrainingTimeMs();
     const colorMs = await getColorTrainingTimeMs();
+    const relMs = await getTrainingTimeMs('relative_color');
     setProfiles(data);
     setColorProfiles(cData);
     setStarHoppingTimeMs(starMs);
     setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
   }, []);
 
   useEffect(() => {
@@ -84,6 +97,8 @@ export function App() {
       document.title = '寻星练习 (Star-Hopping) - FormSight';
     } else if (currentApp === 'color-sense') {
       document.title = '色感训练 (Color Recognition) - FormSight';
+    } else if (currentApp === 'relative-color') {
+      document.title = '相对色感 (Relative Color) - FormSight';
     }
   }, [currentApp]);
 
@@ -116,9 +131,10 @@ export function App() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={starHoppingTimeMs + colorTimeMs}
+          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs}
           starHoppingTimeMs={starHoppingTimeMs}
           colorTimeMs={colorTimeMs}
+          relativeColorTimeMs={relativeColorTimeMs}
           onNavigate={(app) => {
             setCurrentApp(app);
             setCurrentView('dashboard');
@@ -135,7 +151,7 @@ export function App() {
             onStart={handleStartTraining}
             onRefreshProfiles={refreshProfiles}
             onOpenSettings={() => {
-              setSettingsContext('star-hopping');
+              setSettingsDomain('star');
               setIsSettingsOpen(true);
             }}
             onOpenAnalytics={handleOpenAnalytics}
@@ -146,7 +162,7 @@ export function App() {
             mode={activeMode}
             sessionType={sessionType}
             initialLevel={activeLevel}
-            settings={settings}
+            settings={settings.star}
             onExit={handleExitTraining}
           />
         ))}
@@ -158,7 +174,7 @@ export function App() {
             onStart={handleStartColorTraining}
             onBackToHome={() => setCurrentApp('home')}
             onOpenSettings={() => {
-              setSettingsContext('color-sense');
+              setSettingsDomain('color');
               setIsSettingsOpen(true);
             }}
             onOpenAnalytics={() => setIsColorAnalyticsOpen(true)}
@@ -168,7 +184,31 @@ export function App() {
             mode={activeColorMode}
             sessionType={colorSessionType}
             initialLevel={activeColorLevel}
-            settings={settings}
+            settings={settings.color}
+            onExit={handleExitTraining}
+          />
+        ))}
+
+      {currentApp === 'relative-color' &&
+        (currentView === 'dashboard' ? (
+          <RelativeColorDashboard
+            onStart={(relMode, type) => {
+              setActiveRelativeMode(relMode);
+              setRelativeSessionType(type);
+              setCurrentView('training');
+            }}
+            onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsDomain('relative_color');
+              setIsSettingsOpen(true);
+            }}
+          />
+        ) : (
+          <RelativeColorTrainingView
+            mode={activeRelativeMode}
+            sessionType={relativeSessionType}
+            initialLevel={5}
+            settings={settings.relative_color}
             onExit={handleExitTraining}
           />
         ))}
@@ -184,11 +224,10 @@ export function App() {
 
       {isSettingsOpen && (
         <SettingsModal
+          domain={settingsDomain}
           settings={settings}
           onClose={() => setIsSettingsOpen(false)}
           onSave={(newSettings) => setSettings(newSettings)}
-          onDataCleared={refreshProfiles}
-          appContext={settingsContext}
         />
       )}
 

@@ -60,16 +60,11 @@ describe('db storage & import/export', () => {
     await saveTrialRecord({
       id: 'r1',
       sessionId: 's1',
+      domain: 'star',
       mode: 'single',
       timestamp: Date.now(),
       difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
       isHit: true,
-      errorPixelDistance: 0,
       responseTimeMs: 500,
     });
 
@@ -131,6 +126,7 @@ describe('db storage & import/export', () => {
   it('training time calculation - should aggregate valid session durations', async () => {
     await saveSession({
       id: 's1',
+      domain: 'star',
       mode: 'single',
       type: 'training',
       startTimestamp: 1000,
@@ -193,7 +189,9 @@ describe('db storage & import/export', () => {
       responseTimeMs: 400,
     });
 
-    const customSettings = { ...DEFAULT_SETTINGS, gridSize: 5, autoNext: false };
+    const customSettings: typeof DEFAULT_SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    customSettings.star.gridSize = 5;
+    customSettings.star.autoNext = false;
     saveSettings(customSettings);
 
     // 2. Export
@@ -207,7 +205,7 @@ describe('db storage & import/export', () => {
     localStorage.clear();
     const recordsEmpty = await getAllTrialRecords();
     expect(recordsEmpty.length).toBe(0);
-    expect(loadSettings().gridSize).toBe(DEFAULT_SETTINGS.gridSize);
+    expect(loadSettings().star.gridSize).toBe(DEFAULT_SETTINGS.star.gridSize);
 
     // 4. Import
     const success = await importAllData(exportedJson);
@@ -222,7 +220,7 @@ describe('db storage & import/export', () => {
     expect(colorProfiles.H?.totalTrainedCards).toBe(1);
 
     const restoredSettings = loadSettings();
-    expect(restoredSettings.gridSize).toBe(5);
-    expect(restoredSettings.autoNext).toBe(false);
+    expect(restoredSettings.star.gridSize).toBe(5);
+    expect(restoredSettings.star.autoNext).toBe(false);
   });
 });

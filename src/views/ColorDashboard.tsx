@@ -96,9 +96,10 @@ export function ColorDashboard({
       };
 
       for (const r of records) {
-        if (r.timestamp >= startOfToday && stats[r.mode]) {
-          stats[r.mode].count += 1;
-          stats[r.mode].timeMs += r.responseTimeMs || 0;
+        const modeKey = r.mode as ColorMode;
+        if (r.timestamp >= startOfToday && stats[modeKey]) {
+          stats[modeKey].count += 1;
+          stats[modeKey].timeMs += r.responseTimeMs || 0;
         }
       }
 
