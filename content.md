@@ -1,277 +1,393 @@
-你的直觉非常敏锐。这不仅是 Biome 的 `noExplicitAny` 与 TypeScript 编译规则的表面冲突，**它确实揭示了更深层次的类型设计与架构权衡问题**。
+好的，我们开始重构 `src/utils/settings.ts`，将用户偏好设置按训练领域（`global`、`star`、`color`、`relative_color`）进行分层建模，使自动翻页开关及延迟等各项配置在各个领域间完全独立，并内置旧数据无损升级迁移逻辑。
 
-1. **`idb` 库的类型系统本质**：
-   - `idb` 的 `upgrade(db, oldVersion, newVersion, transaction)` 回调中，`db` 和 `transaction` 携带着强类型的 Schema 上下文（`FormSightDBSchema`）。
-   - `db.createObjectStore('sessions', ...)` 返回的类型是精确的 `IDBPObjectStore<FormSightDBSchema, ["sessions", ...], "sessions", "versionchange">`；
-   - 而 `transaction.objectStore('sessions')` 返回的类型带有不同的 `ArrayLike` 泛型约束。
-   - 当我们在外部声明 `let sessionsStore: any` 时，Biome 触发 linter 报错（禁止 `any`）；而如果我们声明具体或泛型联合类型，TypeScript 又会因两个方法返回的泛型参数在 `indexNames` 索引联合（如 `"by-domain" | "by-domain-mode"`）上不完全同构而报错。
-
-2. **设计层面的“反模式”**：
-   - **在 upgrade 阶段使用可变变量暂存 Store 引用是典型的过程式临时代码**。
-   - 在 IndexedDB 的标准迁移语义中，创建 Store 和创建 Index 的生命周期是紧密绑定的。创建 Store 应该是一个自包含的原子块；而已存在的 Store 仅在需要新增索引时按需获取即可。
-   - 更优雅、无类型妥协的做法是：**避免声明外部宽泛/可变变量，直接利用三元表达式或专用辅助函数完成原子化创建与索引补充，或者直接基于 `db` 与 `transaction` 的精确链式调用完成类型安全的升级**。
-
-我将生成一个计划，用类型安全的架构彻底消除 `any` 与冗余变量，同时删除调试文件 `o.md`，使 `tsc` 和 `biome check` 同时 100% 完美通过。
-
-## [WIP] refactor(db): 重构 IndexedDB 升级迁移为类型安全自包含流程
+## [WIP] refactor(settings): 重构用户设置模型为领域隔离结构并支持无损迁移
 
 ### 用户需求
-解决 `biome check` 的 `noExplicitAny` 报错与 `tsc` 强类型的冲突，审查并消除设计缺陷，确保代码类型完备、干净且通过所有 lint 和 build 检查。
+1. 将 `autoNext`（自动翻页）与 `autoNextDelay`（翻页延迟）以及其他自适应配置进行领域化物理隔离，避免跨领域互相污染。
+2. 重构 `src/utils/settings.ts` 为模块化分层配置结构，便于后续平滑扩展新模块。
+3. 提供向下兼容的旧版扁平 localStorage 自动迁移升级逻辑。
+4. 同步更新单元测试 `src/utils/__tests__/settings.test.ts`。
 
 ### 评论
-通过将 IndexedDB 的 `upgrade` 逻辑重构为自包含分支函数，消除可变变量与 `any` 断言，使 `idb` 的强类型系统原生推导生效，同时保持 100% 的健壮性。
+将配置领域化是解决 MVP 阶段技术债的关键一步。将通用基础行为抽象为 `BaseDomainSettings`，各领域按需继承并扩展专属字段（如寻星的 `gridSize`、色感的 `sliderHitMargin` / `showToleranceBand`），既保证了类型安全与可维护性，又为后续 Settings 弹窗与训练视图的解耦打下了坚实基础。
 
 ### 目标
-1. 重构 `src/utils/db.ts` 中的 `openDB.upgrade` 逻辑，完全去除 `let sessionsStore: any`，实现零 `any`、零类型断言。
-2. 删除临时文件 `o.md`。
-3. 确保 `npm run checkf` 与 `npm run build` 均零错误通过。
+1. 在 `src/utils/settings.ts` 中定义 `BaseDomainSettings`、`StarSettings`、`ColorSenseSettings`、`RelativeColorSettings`、`GlobalSettings` 与根配置 `UserSettings`。
+2. 实现旧版本扁平结构（包含 `starAutoNextDelay`、`colorTargetingMode` 等遗留属性）向新版领域化结构的自动迁移算法。
+3. 更新 `DEFAULT_SETTINGS`、`loadSettings`、`saveSettings`。
+4. 重写并扩充 `src/utils/__tests__/settings.test.ts`，全面覆盖默认加载、持久化以及旧格式升级迁移。
 
 ### 基本原理
-利用 `db.objectStoreNames.contains(name)` 分支隔离：若未创建则 `db.createObjectStore(name, ...)`，若已存在则 `transaction.objectStore(name)`，将其结果通过局部的精确类型常量获取并分别操作索引。这样 TypeScript 能够自动从 `idb` 中推导出完全准确的泛型类型，不需任何显式类型注解与 `any`。
+- 采用领域驱动划分配置，每个 domain 维护独立的自适应算法参数和自动切题延迟。
+- 在 `loadSettings()` 解析 JSON 时检查数据结构特征，若检测到顶级缺少 `star` / `color` / `relative_color` 分区，则自动触发字段映射与补全，确保现有用户的历史配置不会丢失或回退。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/indexeddb-types #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/config #scope/core #scope/api #ai/refine #task/domain/config #task/object/settings-domain-isolation #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `src/utils/db.ts` 消除 `any` 并达成强类型安全
+#### Acts 1: 重构 `src/utils/settings.ts` 为领域隔离架构
 
 ~~~~~act
-patch_file
-src/utils/db.ts
+write_file
+src/utils/settings.ts
 ~~~~~
 ~~~~~typescript
-      upgrade(db, oldVersion, _newVersion, transaction) {
-        let sessionsStore: any;
-        let recordsStore: any;
-        let profilesStore: any;
+export type StepGranularity = 'standard' | 'fine';
+export type AdaptiveMode = 'block' | 'staircase';
+export type TargetingMode = 'off' | 'manual';
 
-        if (!db.objectStoreNames.contains('sessions')) {
-          sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
-        } else {
-          sessionsStore = transaction.objectStore('sessions');
-        }
+/**
+ * 通用领域基础自适应与翻页配置
+ */
+export interface BaseDomainSettings {
+  autoNext: boolean; // 点击后是否自动翻页
+  autoNextDelay: number; // 自动翻页延迟 (ms)
+  stepGranularity: StepGranularity; // 步长粒度
+  adaptiveMode: AdaptiveMode; // 自适应算子模式 ('block': 轮次胜率, 'staircase': 3U1D)
+  targetAccuracy: number; // 目标通关正确率 (0.7 ~ 0.9)
+  blockSize: number; // 每轮评估题数 (10, 15, 20)
+}
 
-        if (!db.objectStoreNames.contains('records')) {
-          recordsStore = db.createObjectStore('records', { keyPath: 'id' });
-        } else {
-          recordsStore = transaction.objectStore('records');
-        }
+/**
+ * 寻星练习专属设置
+ */
+export interface StarSettings extends BaseDomainSettings {
+  gridSize: number; // 网格维数 (2, 3, 4, 5)
+  targetingMode: TargetingMode; // 寻星靶向模式 ('off', 'manual')
+  manualTargetSectors: number[]; // 手动锁定的扇区 [0~7]
+}
 
-        if (!db.objectStoreNames.contains('user_profiles')) {
-          profilesStore = db.createObjectStore('user_profiles', { keyPath: 'key' });
-        } else {
-          profilesStore = transaction.objectStore('user_profiles');
-        }
+/**
+ * 绝对色感训练专属设置
+ */
+export interface ColorSenseSettings extends BaseDomainSettings {
+  sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
+  showToleranceBand: boolean; // 是否显示滑块容错感应区
+  enableHoverColorPreview: boolean; // 综合拾色悬停时是否实时联动颜色预览
+  targetingMode: TargetingMode; // 色感靶向模式 ('off', 'manual')
+  manualTargetSectors: number[]; // 手动锁定的色相扇区 [0~11]
+}
 
-        if (!sessionsStore.indexNames.contains('by-domain')) {
-          sessionsStore.createIndex('by-domain', 'domain');
-        }
-        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
-          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
+/**
+ * 相对色感训练专属设置
+ */
+export interface RelativeColorSettings extends BaseDomainSettings {
+  sliderHitMargin: number; // 色感滑块极值吸附感应区外延大小 (px)
+  showToleranceBand: boolean; // 是否显示滑块容错感应区
+  enableHoverColorPreview: boolean; // 悬停实时试探预览
+}
 
-        if (!recordsStore.indexNames.contains('by-session')) {
-          recordsStore.createIndex('by-session', 'sessionId');
-        }
-        if (!recordsStore.indexNames.contains('by-domain')) {
-          recordsStore.createIndex('by-domain', 'domain');
-        }
-        if (!recordsStore.indexNames.contains('by-domain-mode')) {
-          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
-        if (!recordsStore.indexNames.contains('by-mode')) {
-          recordsStore.createIndex('by-mode', 'mode');
-        }
+/**
+ * 全局通用偏好
+ */
+export interface GlobalSettings {
+  idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
+}
 
-        if (!profilesStore.indexNames.contains('by-domain')) {
-          profilesStore.createIndex('by-domain', 'domain');
-        }
+/**
+ * 用户全量设置根结构
+ */
+export interface UserSettings {
+  global: GlobalSettings;
+  star: StarSettings;
+  color: ColorSenseSettings;
+  relative_color: RelativeColorSettings;
+}
 
-        // v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
-        if (oldVersion < 4) {
-          const oldStores = Array.from(db.objectStoreNames);
-          if (oldStores.includes('color_sessions' as never)) {
-            const colorSessionsStore = transaction.objectStore('color_sessions' as never);
-            colorSessionsStore.getAll().then((oldCSessions: UnifiedSessionData[]) => {
-              for (const cs of oldCSessions) {
-                sessionsStore.put({
-                  id: cs.id,
-                  domain: 'color',
-                  mode: cs.mode,
-                  type: cs.type,
-                  startTimestamp: cs.startTimestamp,
-                  endTimestamp: cs.endTimestamp,
-                  totalTrials: cs.totalTrials,
-                  hitTrials: cs.hitTrials,
-                  startLevel: cs.startLevel,
-                  endLevel: cs.endLevel,
-                });
-              }
-            });
-            db.deleteObjectStore('color_sessions' as never);
-          }
+const SETTINGS_KEY = 'star_hopping_user_settings';
 
-          if (oldStores.includes('color_records' as never)) {
-            const colorRecordsStore = transaction.objectStore('color_records' as never);
-            colorRecordsStore.getAll().then((oldCRecords: Record<string, unknown>[]) => {
-              for (const cr of oldCRecords) {
-                recordsStore.put({
-                  id: cr.id as string,
-                  sessionId: cr.sessionId as string,
-                  domain: 'color',
-                  mode: cr.mode as string,
-                  timestamp: cr.timestamp as number,
-                  difficultyLevel: cr.difficultyLevel as number,
-                  isHit: cr.isHit as boolean,
-                  responseTimeMs: cr.responseTimeMs as number,
-                  details: {
-                    targetHSV: cr.targetHSV,
-                    userHSV: cr.userHSV,
-                    errorValue: cr.errorValue,
-                  },
-                });
-              }
-            });
-            db.deleteObjectStore('color_records' as never);
-          }
+const DEFAULT_BASE_DOMAIN_SETTINGS: BaseDomainSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+};
 
-          if (oldStores.includes('color_profiles' as never)) {
-            const colorProfilesStore = transaction.objectStore('color_profiles' as never);
-            colorProfilesStore.getAll().then((oldCProfiles: Record<string, unknown>[]) => {
-              for (const cp of oldCProfiles) {
-                profilesStore.put({
-                  key: `color:${cp.mode}`,
-                  domain: 'color',
-                  mode: cp.mode as string,
-                  currentLevel: cp.currentLevel as number,
-                  bestLevel: cp.bestLevel as number,
-                  totalTrainedCards: cp.totalTrainedCards as number,
-                  totalHits: cp.totalHits as number,
-                  updatedAt: cp.updatedAt as number,
-                });
-              }
-            });
-            db.deleteObjectStore('color_profiles' as never);
-          }
-        }
-      },
+export const DEFAULT_SETTINGS: UserSettings = {
+  global: {
+    idleTimeout: 60,
+  },
+  star: {
+    ...DEFAULT_BASE_DOMAIN_SETTINGS,
+    gridSize: 3,
+    targetingMode: 'off',
+    manualTargetSectors: [],
+  },
+  color: {
+    ...DEFAULT_BASE_DOMAIN_SETTINGS,
+    sliderHitMargin: 12,
+    showToleranceBand: true,
+    enableHoverColorPreview: true,
+    targetingMode: 'off',
+    manualTargetSectors: [],
+  },
+  relative_color: {
+    ...DEFAULT_BASE_DOMAIN_SETTINGS,
+    sliderHitMargin: 12,
+    showToleranceBand: true,
+    enableHoverColorPreview: true,
+  },
+};
+
+/**
+ * 将旧版扁平配置对象平滑升级迁移为领域化结构
+ */
+function migrateLegacySettings(legacy: Record<string, unknown>): UserSettings {
+  const globalIdleTimeout =
+    typeof legacy.idleTimeout === 'number' ? legacy.idleTimeout : DEFAULT_SETTINGS.global.idleTimeout;
+
+  const baseAutoNext = typeof legacy.autoNext === 'boolean' ? legacy.autoNext : true;
+  const legacyDelay = typeof legacy.autoNextDelay === 'number' ? legacy.autoNextDelay : 500;
+  const starDelay = typeof legacy.starAutoNextDelay === 'number' ? legacy.starAutoNextDelay : legacyDelay;
+  const colorDelay = typeof legacy.colorAutoNextDelay === 'number' ? legacy.colorAutoNextDelay : legacyDelay;
+
+  const baseStepGranularity =
+    legacy.stepGranularity === 'fine' ? 'fine' : DEFAULT_SETTINGS.star.stepGranularity;
+  const baseAdaptiveMode =
+    legacy.adaptiveMode === 'staircase' ? 'staircase' : DEFAULT_SETTINGS.star.adaptiveMode;
+  const baseTargetAccuracy =
+    typeof legacy.targetAccuracy === 'number' ? legacy.targetAccuracy : DEFAULT_SETTINGS.star.targetAccuracy;
+  const baseBlockSize =
+    typeof legacy.blockSize === 'number' ? legacy.blockSize : DEFAULT_SETTINGS.star.blockSize;
+
+  const starTargetingMode: TargetingMode =
+    legacy.targetingMode === 'manual' ? 'manual' : 'off';
+  const starManualSectors = Array.isArray(legacy.manualTargetSectors)
+    ? (legacy.manualTargetSectors as number[])
+    : [];
+  const gridSize = typeof legacy.gridSize === 'number' ? legacy.gridSize : 3;
+
+  const colorTargetingMode: TargetingMode =
+    legacy.colorTargetingMode === 'manual' ? 'manual' : 'off';
+  const colorManualSectors = Array.isArray(legacy.colorManualTargetSectors)
+    ? (legacy.colorManualTargetSectors as number[])
+    : [];
+  const sliderHitMargin =
+    typeof legacy.sliderHitMargin === 'number' ? legacy.sliderHitMargin : 12;
+  const showToleranceBand =
+    typeof legacy.showToleranceBand === 'boolean' ? legacy.showToleranceBand : true;
+  const enableHoverColorPreview =
+    typeof legacy.enableHoverColorPreview === 'boolean' ? legacy.enableHoverColorPreview : true;
+
+  return {
+    global: {
+      idleTimeout: globalIdleTimeout,
+    },
+    star: {
+      autoNext: baseAutoNext,
+      autoNextDelay: starDelay,
+      stepGranularity: baseStepGranularity,
+      adaptiveMode: baseAdaptiveMode,
+      targetAccuracy: baseTargetAccuracy,
+      blockSize: baseBlockSize,
+      gridSize,
+      targetingMode: starTargetingMode,
+      manualTargetSectors: starManualSectors,
+    },
+    color: {
+      autoNext: baseAutoNext,
+      autoNextDelay: colorDelay,
+      stepGranularity: baseStepGranularity,
+      adaptiveMode: baseAdaptiveMode,
+      targetAccuracy: baseTargetAccuracy,
+      blockSize: baseBlockSize,
+      sliderHitMargin,
+      showToleranceBand,
+      enableHoverColorPreview,
+      targetingMode: colorTargetingMode,
+      manualTargetSectors: colorManualSectors,
+    },
+    relative_color: {
+      autoNext: baseAutoNext,
+      autoNextDelay: colorDelay,
+      stepGranularity: baseStepGranularity,
+      adaptiveMode: baseAdaptiveMode,
+      targetAccuracy: baseTargetAccuracy,
+      blockSize: baseBlockSize,
+      sliderHitMargin,
+      showToleranceBand,
+      enableHoverColorPreview,
+    },
+  };
+}
+
+export function loadSettings(): UserSettings {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // 检查是否为新版分层结构 (同时具备 star 与 color 分区)
+      if (parsed && typeof parsed === 'object' && parsed.star && parsed.color) {
+        return {
+          global: { ...DEFAULT_SETTINGS.global, ...(parsed.global || {}) },
+          star: { ...DEFAULT_SETTINGS.star, ...(parsed.star || {}) },
+          color: { ...DEFAULT_SETTINGS.color, ...(parsed.color || {}) },
+          relative_color: { ...DEFAULT_SETTINGS.relative_color, ...(parsed.relative_color || {}) },
+        };
+      }
+      // 兼容迁移老版扁平配置
+      const migrated = migrateLegacySettings(parsed);
+      saveSettings(migrated);
+      return migrated;
+    }
+  } catch (e) {
+    console.error('Failed to load user settings:', e);
+  }
+  return DEFAULT_SETTINGS;
+}
+
+export function saveSettings(settings: UserSettings): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch (e) {
+    console.error('Failed to save user settings:', e);
+  }
+}
+~~~~~
+
+#### Acts 2: 更新 `src/utils/__tests__/settings.test.ts` 单元测试
+
+~~~~~act
+write_file
+src/utils/__tests__/settings.test.ts
 ~~~~~
 ~~~~~typescript
-      upgrade(db, oldVersion, _newVersion, transaction) {
-        // 1. 初始化 sessions 表及索引
-        const sessionsStore = db.objectStoreNames.contains('sessions')
-          ? transaction.objectStore('sessions')
-          : db.createObjectStore('sessions', { keyPath: 'id' });
+import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_SETTINGS, type UserSettings, loadSettings, saveSettings } from '../settings';
 
-        if (!sessionsStore.indexNames.contains('by-domain')) {
-          sessionsStore.createIndex('by-domain', 'domain');
-        }
-        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
-          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
+const memoryStorage = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value);
+    },
+    clear: () => {
+      store = {};
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+  };
+})();
 
-        // 2. 初始化 records 表及索引
-        const recordsStore = db.objectStoreNames.contains('records')
-          ? transaction.objectStore('records')
-          : db.createObjectStore('records', { keyPath: 'id' });
+if (typeof globalThis.localStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    writable: true,
+  });
+}
 
-        if (!recordsStore.indexNames.contains('by-session')) {
-          recordsStore.createIndex('by-session', 'sessionId');
-        }
-        if (!recordsStore.indexNames.contains('by-domain')) {
-          recordsStore.createIndex('by-domain', 'domain');
-        }
-        if (!recordsStore.indexNames.contains('by-domain-mode')) {
-          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
-        if (!recordsStore.indexNames.contains('by-mode')) {
-          recordsStore.createIndex('by-mode', 'mode');
-        }
+describe('settings utils (domain-scoped)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
-        // 3. 初始化 user_profiles 表及索引
-        const profilesStore = db.objectStoreNames.contains('user_profiles')
-          ? transaction.objectStore('user_profiles')
-          : db.createObjectStore('user_profiles', { keyPath: 'key' });
+  it('loadSettings - should return default settings when localStorage is empty', () => {
+    const settings = loadSettings();
+    expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(settings.star.autoNext).toBe(true);
+    expect(settings.color.autoNext).toBe(true);
+    expect(settings.relative_color.autoNext).toBe(true);
+  });
 
-        if (!profilesStore.indexNames.contains('by-domain')) {
-          profilesStore.createIndex('by-domain', 'domain');
-        }
-
-        // 4. v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
-        if (oldVersion < 4) {
-          const oldStores = Array.from(db.objectStoreNames);
-          if (oldStores.includes('color_sessions' as never)) {
-            const colorSessionsStore = transaction.objectStore('color_sessions' as never);
-            colorSessionsStore.getAll().then((oldCSessions: UnifiedSessionData[]) => {
-              for (const cs of oldCSessions) {
-                sessionsStore.put({
-                  id: cs.id,
-                  domain: 'color',
-                  mode: cs.mode,
-                  type: cs.type,
-                  startTimestamp: cs.startTimestamp,
-                  endTimestamp: cs.endTimestamp,
-                  totalTrials: cs.totalTrials,
-                  hitTrials: cs.hitTrials,
-                  startLevel: cs.startLevel,
-                  endLevel: cs.endLevel,
-                });
-              }
-            });
-            db.deleteObjectStore('color_sessions' as never);
-          }
-
-          if (oldStores.includes('color_records' as never)) {
-            const colorRecordsStore = transaction.objectStore('color_records' as never);
-            colorRecordsStore.getAll().then((oldCRecords: Record<string, unknown>[]) => {
-              for (const cr of oldCRecords) {
-                recordsStore.put({
-                  id: cr.id as string,
-                  sessionId: cr.sessionId as string,
-                  domain: 'color',
-                  mode: cr.mode as string,
-                  timestamp: cr.timestamp as number,
-                  difficultyLevel: cr.difficultyLevel as number,
-                  isHit: cr.isHit as boolean,
-                  responseTimeMs: cr.responseTimeMs as number,
-                  details: {
-                    targetHSV: cr.targetHSV,
-                    userHSV: cr.userHSV,
-                    errorValue: cr.errorValue,
-                  },
-                });
-              }
-            });
-            db.deleteObjectStore('color_records' as never);
-          }
-
-          if (oldStores.includes('color_profiles' as never)) {
-            const colorProfilesStore = transaction.objectStore('color_profiles' as never);
-            colorProfilesStore.getAll().then((oldCProfiles: Record<string, unknown>[]) => {
-              for (const cp of oldCProfiles) {
-                profilesStore.put({
-                  key: `color:${cp.mode}`,
-                  domain: 'color',
-                  mode: cp.mode as string,
-                  currentLevel: cp.currentLevel as number,
-                  bestLevel: cp.bestLevel as number,
-                  totalTrainedCards: cp.totalTrainedCards as number,
-                  totalHits: cp.totalHits as number,
-                  updatedAt: cp.updatedAt as number,
-                });
-              }
-            });
-            db.deleteObjectStore('color_profiles' as never);
-          }
-        }
+  it('saveSettings & loadSettings - should persist and retrieve domain-scoped settings', () => {
+    const custom: UserSettings = {
+      global: { idleTimeout: 120 },
+      star: {
+        ...DEFAULT_SETTINGS.star,
+        autoNext: false,
+        autoNextDelay: 300,
+        gridSize: 4,
       },
+      color: {
+        ...DEFAULT_SETTINGS.color,
+        autoNext: true,
+        autoNextDelay: 800,
+        sliderHitMargin: 20,
+      },
+      relative_color: {
+        ...DEFAULT_SETTINGS.relative_color,
+        autoNext: false,
+        autoNextDelay: 1000,
+      },
+    };
+
+    saveSettings(custom);
+    const loaded = loadSettings();
+
+    expect(loaded.global.idleTimeout).toBe(120);
+    // 验证各领域的隔离性
+    expect(loaded.star.autoNext).toBe(false);
+    expect(loaded.star.autoNextDelay).toBe(300);
+    expect(loaded.star.gridSize).toBe(4);
+
+    expect(loaded.color.autoNext).toBe(true);
+    expect(loaded.color.autoNextDelay).toBe(800);
+    expect(loaded.color.sliderHitMargin).toBe(20);
+
+    expect(loaded.relative_color.autoNext).toBe(false);
+    expect(loaded.relative_color.autoNextDelay).toBe(1000);
+  });
+
+  it('loadSettings - should seamlessly migrate legacy flat settings structure', () => {
+    const legacyFlat = {
+      autoNext: false,
+      autoNextDelay: 600,
+      starAutoNextDelay: 400,
+      colorAutoNextDelay: 900,
+      gridSize: 5,
+      idleTimeout: 30,
+      stepGranularity: 'fine',
+      adaptiveMode: 'staircase',
+      targetingMode: 'manual',
+      manualTargetSectors: [0, 1],
+      colorTargetingMode: 'manual',
+      colorManualTargetSectors: [3, 4],
+      sliderHitMargin: 8,
+      showToleranceBand: false,
+      enableHoverColorPreview: false,
+    };
+
+    localStorage.setItem('star_hopping_user_settings', JSON.stringify(legacyFlat));
+    const migrated = loadSettings();
+
+    // 验证全局迁移
+    expect(migrated.global.idleTimeout).toBe(30);
+
+    // 验证寻星域迁移
+    expect(migrated.star.autoNext).toBe(false);
+    expect(migrated.star.autoNextDelay).toBe(400);
+    expect(migrated.star.gridSize).toBe(5);
+    expect(migrated.star.stepGranularity).toBe('fine');
+    expect(migrated.star.adaptiveMode).toBe('staircase');
+    expect(migrated.star.targetingMode).toBe('manual');
+    expect(migrated.star.manualTargetSectors).toEqual([0, 1]);
+
+    // 验证绝对色感域迁移
+    expect(migrated.color.autoNext).toBe(false);
+    expect(migrated.color.autoNextDelay).toBe(900);
+    expect(migrated.color.targetingMode).toBe('manual');
+    expect(migrated.color.manualTargetSectors).toEqual([3, 4]);
+    expect(migrated.color.sliderHitMargin).toBe(8);
+    expect(migrated.color.showToleranceBand).toBe(false);
+    expect(migrated.color.enableHoverColorPreview).toBe(false);
+
+    // 验证相对色感域初始填充
+    expect(migrated.relative_color.autoNext).toBe(false);
+    expect(migrated.relative_color.autoNextDelay).toBe(900);
+    expect(migrated.relative_color.sliderHitMargin).toBe(8);
+  });
+});
 ~~~~~
 
 ### 下一步建议
-运行以下命令验证代码质量与构建：
-1. `npm run check` (Biome 代码规范与 Lint 检查)
-2. `npm run build` (TypeScript 类型检查与 Vite 生产构建)
-3. `npm run test` (Vitest 全量单元测试)
+我们已经完成了核心设置底层模型 `src/utils/settings.ts` 及其单元测试的领域化重构与数据迁移。接下来建议：
+1. **抽离通用 `HsvTrackSlider` 组件**：将 `ColorCanvas.tsx` 中的滑动条抽离出来，支持吸附感应、准心与 OKLab $\Delta E$ 容错边界指示线。
+2. **重构 `RelativeColorCanvas.tsx`**：接入通用 `HsvTrackSlider`，替换原生的 `<input type="range">`。
+3. **适配 `SettingsModal.tsx` 与相关 View**：让各个训练板块在打开偏好设置时只传入和修改自身领域配置。
