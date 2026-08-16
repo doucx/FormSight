@@ -172,7 +172,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (canvas) {
       renderTrendChartCanvas(canvas, dailyData);
     }
-  }, [loading, dailyData]);
+  }, [loading]);
 
   return (
     <div
