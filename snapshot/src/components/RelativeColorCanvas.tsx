@@ -15,6 +15,7 @@ interface RelativeColorCanvasProps {
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
 }
 
 export function RelativeColorCanvas({
@@ -31,7 +32,9 @@ export function RelativeColorCanvas({
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   useEffect(() => {
-    setSelectedIndex(0);
+    if (question.id) {
+      setSelectedIndex(0);
+    }
   }, [question.id]);
 
   const activeColor = options?.[selectedIndex] ?? targetD;
