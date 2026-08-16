@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import type { AdaptiveMode, StepGranularity } from '../utils/settings';
@@ -80,20 +80,21 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // === 使用 function 语句提升声明，彻底根除 TDZ 问题 ===
+  const saveCurrentSession = useCallback(
+    async (trials = totalTrials, hits = hitTrials, ended = false) => {
+      await saveSession({
+        sessionId: sessionIdRef.current,
+        totalTrials: trials,
+        hitTrials: hits,
+        ended,
+        startTimestamp: startTimeRef.current,
+        endLevel: adaptiveEngineRef.current.getCurrentLevel(),
+      });
+    },
+    [saveSession, totalTrials, hitTrials],
+  );
 
-  async function saveCurrentSession(trials = totalTrials, hits = hitTrials, ended = false) {
-    await saveSession({
-      sessionId: sessionIdRef.current,
-      totalTrials: trials,
-      hitTrials: hits,
-      ended,
-      startTimestamp: startTimeRef.current,
-      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    });
-  }
-
-  function handleNextQuestion() {
+  const handleNextQuestion = useCallback(() => {
     if (isFinished) return;
     if (autoNextTimerRef.current) {
       clearTimeout(autoNextTimerRef.current);
@@ -105,7 +106,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setUserAnswer(null);
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }
+  }, [isFinished, generateQuestion]);
 
   async function handleAnswer(userVal: TAnswerVal) {
     const responseTimeMs = Date.now() - questionStartTime;
@@ -155,7 +156,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     }
   }
 
-  async function handleRequestFinish() {
+  const handleRequestFinish = useCallback(async () => {
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -163,7 +164,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }
+  }, [
+    sessionHistory.length,
+    showSummaryModal,
+    saveCurrentSession,
+    totalTrials,
+    hitTrials,
+    onExit,
+  ]);
 
   async function handleFinishSession() {
     await saveCurrentSession(totalTrials, hitTrials, true);
@@ -210,7 +218,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished, sessionHistory, showSummaryModal, totalTrials, hitTrials]);
+  }, [showAnswer, isFinished, handleNextQuestion, handleRequestFinish]);
 
   return {
     question,
