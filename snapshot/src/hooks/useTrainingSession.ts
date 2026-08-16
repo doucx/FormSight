@@ -210,14 +210,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    showAnswer,
-    isFinished,
-    sessionHistory,
-    showSummaryModal,
-    totalTrials,
-    hitTrials,
-  ]);
+  }, [showAnswer, isFinished, sessionHistory, showSummaryModal, totalTrials, hitTrials]);
 
   return {
     question,
