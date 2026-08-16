@@ -181,14 +181,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }, [
-    sessionHistory.length,
-    showSummaryModal,
-    saveCurrentSession,
-    totalTrials,
-    hitTrials,
-    onExit,
-  ]);
+  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
 
   const handleFinishSession = useCallback(async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
