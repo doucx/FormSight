@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(build): 修复 IndexedDB 强类型存储变量冲突与图表组件数据访问类型", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786854171.9725418, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M db.ts, M ColorTrainingView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786854183.9571767, "duration_ms": 0}}

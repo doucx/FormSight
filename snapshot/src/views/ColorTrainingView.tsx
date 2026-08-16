@@ -11,11 +11,7 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../utils/colorUtils';
-import {
-  type ColorSessionData,
-  saveColorSession,
-  saveColorTrialRecord,
-} from '../utils/db';
+import { type ColorSessionData, saveColorSession, saveColorTrialRecord } from '../utils/db';
 import type { UserSettings } from '../utils/settings';
 
 interface ColorTrainingViewProps {
