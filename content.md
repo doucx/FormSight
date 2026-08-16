@@ -1,70 +1,42 @@
-好的，我已经了解了新的需求：
-1. **答对时也需要显示箭头**：只要已进行做答，无论是否击中容错带，均渲染指示箭头；
-2. **样式与寻星练习一致**：线宽设为 `1.5`，采用 `4 4` 虚线（`strokeDasharray="4 4"`），线条与箭头颜色采用寻星练习中的标准标准色（答错 `#FF0000` 红色，答对 `#00AA00` 绿色）。
+分析了该问题，出现只有直线而没有箭头尖端的原因在于：在单页应用 (SPA) 与动态 React/Preact DOM 渲染环境中，使用 SVG `<marker>` 配合 `markerEnd="url(#id)"` 极易因 base URL / 路由上下文或相同的全局 ID 匹配失效，导致浏览器忽略 marker 仅绘制 `<line>`。
 
-我将为你生成对应的更新计划。
+我们将渲染方式改用直接在终点绝对定位手绘箭头 `<polygon>` / `<path>`，彻底摆脱对 `<marker>` 和 URL ID 引用的依赖，确保箭头 100% 精准可靠地显示在目标位置。
 
-## [WIP] refactor(components): 统一色彩滑块箭头的显示逻辑与寻星练习样式
+## [WIP] fix(components): 修复滑块指示箭头尖端未渲染的问题
+
+### 错误分析
+原先的实现依赖 SVG `<marker>` 和 `markerEnd="url(#id)"` 机制。在现代 SPA 单页应用与 DOM 重新渲染过程中：
+1. **URL 引用失效**：`url(#id)` 可能会受当前路由或 `<base>` 标签影响而无法在 Shadow/DOM 树中成功匹配 `<defs>` 中的 `marker` 元素；
+2. **重名冲突与定位偏移**：多个滑块实例同时渲染时，同名 marker ID 或 `markerUnits` 缩放可能导致箭头被隐藏或裁剪。
 
 ### 用户需求
-1. 答对（Hit）时也同样渲染从用户选择点指向真理点的箭头。
-2. 将箭头的虚线样式、线宽及颜色，调整为与寻星练习（`StarCanvas.tsx`）中的渲染标准完全一致（线宽 `1.5`，虚线 `4 4`，答错 `#FF0000`，答对 `#00AA00`）。
+修复色彩滑块指示箭头的尖端缺失问题，确保任何情况下都能清晰看到指向真理位置的箭头，且箭头尖端与真理线完美贴合。
 
 ### 评论
-这样可以保证全站视觉反馈语言的高度一致性。无论是几何寻星还是色彩调制，做答揭晓后的误差/方向指示都遵循统一的线条虚实、粗细与颜色规范。
+使用绝对定位的内联 SVG 箭头替代 `<marker>` 引用是解决此类 SVG 渲染遗失问题的标准健壮解法，不仅保证了跨浏览器兼容性，而且渲染性能更好。
 
 ### 目标
-1. 移除 `HsvTrackSlider.tsx` 与 `ColorCanvas.tsx` 中仅在 `!isHit` 时才渲染箭头的限定条件。
-2. 将 SVG 指示线条的 `strokeWidth` 设为 `1.5`，`strokeDasharray` 设为 `4 4`。
-3. 根据 `isHit` 状态，分别应用 `#00AA00`（答对）与 `#FF0000`（答错）作为线条与箭头的颜色。
+1. 将 `HsvTrackSlider.tsx` 和 `ColorCanvas.tsx` 中依赖 `<marker>` 的实现替换为基于终点位置 `tPct%` 绝对定位的内联箭头。
+2. 根据指向方向（向左或向右），自动调整箭头的 Path 尖端方向与偏移量，使其精准与连线及真理标线对齐。
 
 ### 基本原理
-直接对 `showAnswer` 渲染块中的 SVG 连线进行逻辑优化与样式更新。去掉 `!isHit` 条件判断后，只要包含用户作答结果，便会生成带有箭头的虚线。SVG 的 marker 定义也会动态接收对应的标准状态色，从而实现与 Canvas Canvas 渲染一致的视觉体验。
+通过计算起点百分比 `uPct` 与终点百分比 `tPct` 判断向量方向 `isRight = tPct >= uPct`。连线 `<line>` 继续保持从 `uPct%` 到 `tPct%` 的虚线，箭头的三角形 `<path>` 则直接放置在 `left: tPct%` 的位置，并用 CSS `transform` 将三角形的尖端刚好偏移对齐至 `tPct%`。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium
+#intent/fix #flow/ready #priority/high
 #comp/ui #concept/ui #scope/ux
 #ai/instruct
-#task/domain/ui #task/object/color-slider-arrow #task/action/refactor #task/state/continue
+#task/domain/ui #task/object/color-slider-arrow #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 HsvTrackSlider.tsx 中的箭头渲染逻辑与样式
+#### Acts 1: 替换 HsvTrackSlider.tsx 中的箭头渲染方式
 
 ~~~~~act
 patch_file
 src/components/HsvTrackSlider.tsx
-~~~~~
-~~~~~tsx
-              {userVal !== undefined && !isHit && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
-                  <defs>
-                    <marker
-                      id={`arrow-${label}`}
-                      viewBox="0 0 6 6"
-                      refX="5"
-                      refY="3"
-                      markerWidth="6"
-                      markerHeight="6"
-                      orient="auto"
-                    >
-                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
-                    </marker>
-                  </defs>
-                  <line
-                    x1={getPercent(userVal, max)}
-                    y1="50%"
-                    x2={getPercent(actualTargetVal, max)}
-                    y2="50%"
-                    stroke="#F43F5E"
-                    strokeWidth="2"
-                    strokeDasharray="3 3"
-                    markerEnd={`url(#arrow-${label})`}
-                  />
-                </svg>
-              )}
 ~~~~~
 ~~~~~tsx
               {userVal !== undefined && (
@@ -95,41 +67,49 @@ src/components/HsvTrackSlider.tsx
                 </svg>
               )}
 ~~~~~
+~~~~~tsx
+              {userVal !== undefined && (() => {
+                const uPct = (userVal / max) * 100;
+                const tPct = (actualTargetVal / max) * 100;
+                const isRight = tPct >= uPct;
+                const color = isHit ? '#00AA00' : '#FF0000';
+                return (
+                  <div className="absolute inset-0 pointer-events-none z-25">
+                    <svg className="w-full h-full overflow-visible">
+                      <line
+                        x1={`${uPct}%`}
+                        y1="50%"
+                        x2={`${tPct}%`}
+                        y2="50%"
+                        stroke={color}
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                      />
+                    </svg>
+                    <div
+                      className="absolute top-1/2"
+                      style={{
+                        left: `${tPct}%`,
+                        transform: isRight ? 'translate(-8px, -5px)' : 'translate(0px, -5px)',
+                      }}
+                    >
+                      <svg width="8" height="10" viewBox="0 0 8 10">
+                        <path
+                          d={isRight ? 'M 0 0 L 8 5 L 0 10 z' : 'M 8 0 L 0 5 L 8 10 z'}
+                          fill={color}
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+~~~~~
 
-#### Acts 2: 更新 ColorCanvas.tsx 中的 SingleDimensionSlider 箭头渲染逻辑与样式
+#### Acts 2: 替换 ColorCanvas.tsx 中的箭头渲染方式
 
 ~~~~~act
 patch_file
 src/components/ColorCanvas.tsx
-~~~~~
-~~~~~tsx
-              {userAnswer && !userAnswer.isHit && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
-                  <defs>
-                    <marker
-                      id={`arrow-single-${label}`}
-                      viewBox="0 0 6 6"
-                      refX="5"
-                      refY="3"
-                      markerWidth="6"
-                      markerHeight="6"
-                      orient="auto"
-                    >
-                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
-                    </marker>
-                  </defs>
-                  <line
-                    x1={getPercent(userAnswer.userValue, max)}
-                    y1="50%"
-                    x2={getPercent(val, max)}
-                    y2="50%"
-                    stroke="#F43F5E"
-                    strokeWidth="2"
-                    strokeDasharray="3 3"
-                    markerEnd={`url(#arrow-single-${label})`}
-                  />
-                </svg>
-              )}
 ~~~~~
 ~~~~~tsx
               {userAnswer && (
@@ -160,6 +140,43 @@ src/components/ColorCanvas.tsx
                 </svg>
               )}
 ~~~~~
+~~~~~tsx
+              {userAnswer && (() => {
+                const uPct = (userAnswer.userValue / max) * 100;
+                const tPct = (val / max) * 100;
+                const isRight = tPct >= uPct;
+                const color = userAnswer.isHit ? '#00AA00' : '#FF0000';
+                return (
+                  <div className="absolute inset-0 pointer-events-none z-25">
+                    <svg className="w-full h-full overflow-visible">
+                      <line
+                        x1={`${uPct}%`}
+                        y1="50%"
+                        x2={`${tPct}%`}
+                        y2="50%"
+                        stroke={color}
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                      />
+                    </svg>
+                    <div
+                      className="absolute top-1/2"
+                      style={{
+                        left: `${tPct}%`,
+                        transform: isRight ? 'translate(-8px, -5px)' : 'translate(0px, -5px)',
+                      }}
+                    >
+                      <svg width="8" height="10" viewBox="0 0 8 10">
+                        <path
+                          d={isRight ? 'M 0 0 L 8 5 L 0 10 z' : 'M 8 0 L 0 5 L 8 10 z'}
+                          fill={color}
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })()}
+~~~~~
 
 ### 下一步建议
-- 在界面中测试不同难度下的答对/答错情况，确认绿线/红线与箭头的指向是否清晰美观。
+- 重新测试滑块做答后的显示情况，验证向左与向右偏差时箭头尖端是否均能准确无误地指向绿色真理位线。

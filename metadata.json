@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(components): 统一色彩滑块箭头的显示逻辑与寻星练习样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786857694.4331143, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(components): 修复滑块指示箭头尖端未渲染的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786857772.353656, "duration_ms": 0}}

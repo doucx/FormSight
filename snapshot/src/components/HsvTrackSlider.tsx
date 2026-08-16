@@ -215,33 +215,41 @@ export function HsvTrackSlider({
                   style={{ left: getPercent(userVal, max) }}
                 />
               )}
-              {userVal !== undefined && (
-                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
-                  <defs>
-                    <marker
-                      id={`arrow-${label}-${isHit ? 'hit' : 'miss'}`}
-                      viewBox="0 0 6 6"
-                      refX="5"
-                      refY="3"
-                      markerWidth="6"
-                      markerHeight="6"
-                      orient="auto"
+              {userVal !== undefined && (() => {
+                const uPct = (userVal / max) * 100;
+                const tPct = (actualTargetVal / max) * 100;
+                const isRight = tPct >= uPct;
+                const color = isHit ? '#00AA00' : '#FF0000';
+                return (
+                  <div className="absolute inset-0 pointer-events-none z-25">
+                    <svg className="w-full h-full overflow-visible">
+                      <line
+                        x1={`${uPct}%`}
+                        y1="50%"
+                        x2={`${tPct}%`}
+                        y2="50%"
+                        stroke={color}
+                        strokeWidth="1.5"
+                        strokeDasharray="4 4"
+                      />
+                    </svg>
+                    <div
+                      className="absolute top-1/2"
+                      style={{
+                        left: `${tPct}%`,
+                        transform: isRight ? 'translate(-8px, -5px)' : 'translate(0px, -5px)',
+                      }}
                     >
-                      <path d="M 0 0 L 6 3 L 0 6 z" fill={isHit ? '#00AA00' : '#FF0000'} />
-                    </marker>
-                  </defs>
-                  <line
-                    x1={getPercent(userVal, max)}
-                    y1="50%"
-                    x2={getPercent(actualTargetVal, max)}
-                    y2="50%"
-                    stroke={isHit ? '#00AA00' : '#FF0000'}
-                    strokeWidth="1.5"
-                    strokeDasharray="4 4"
-                    markerEnd={`url(#arrow-${label}-${isHit ? 'hit' : 'miss'})`}
-                  />
-                </svg>
-              )}
+                      <svg width="8" height="10" viewBox="0 0 8 10">
+                        <path
+                          d={isRight ? 'M 0 0 L 8 5 L 0 10 z' : 'M 8 0 L 0 5 L 8 10 z'}
+                          fill={color}
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
