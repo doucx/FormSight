@@ -35,7 +35,7 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
     const fetchRecords = async () => {
       const data = await getAllTrialRecords(selectedMode === 'all' ? undefined : selectedMode);
       if (isMounted) {
-        setRecords(data);
+        setRecords(data as unknown as TrialRecord[]);
         setLoading(false);
       }
     };

@@ -93,9 +93,9 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion, _newVersion, transaction) {
-        let sessionsStore: ReturnType<typeof db.createObjectStore>;
-        let recordsStore: ReturnType<typeof db.createObjectStore>;
-        let profilesStore: ReturnType<typeof db.createObjectStore>;
+        let sessionsStore: any;
+        let recordsStore: any;
+        let profilesStore: any;
 
         if (!db.objectStoreNames.contains('sessions')) {
           sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });

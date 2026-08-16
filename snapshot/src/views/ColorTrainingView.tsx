@@ -13,7 +13,6 @@ import {
 } from '../utils/colorUtils';
 import {
   type ColorSessionData,
-  type ColorTrialRecord,
   saveColorSession,
   saveColorTrialRecord,
 } from '../utils/db';

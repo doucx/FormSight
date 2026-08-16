@@ -2,7 +2,7 @@ import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';
-import type { HitResult, Point, QuestionData, TrainingMode, TrialRecord } from '../types';
+import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import { type SessionData, saveSession, saveTrialRecord } from '../utils/db';
 import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
