@@ -91,8 +91,8 @@ export function RelativeColorCanvas({
 
   const hueGradient =
     'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-  const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
-  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
+  const satGradient = `linear-gradient(to right, ${hsvToHex(colorC[0], 0, colorC[2])}, ${hsvToHex(colorC[0], 100, colorC[2])})`;
+  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(colorC[0], 100, 100)})`;
 
   return (
     <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
@@ -137,7 +137,7 @@ export function RelativeColorCanvas({
         <HsvTrackSlider
           label="H"
           gradient={hueGradient}
-          val={userH}
+          val={colorC[0]}
           max={360}
           unit="°"
           targetHSV={targetD}
@@ -147,15 +147,16 @@ export function RelativeColorCanvas({
           userVal={userAnswer?.userD?.[0] ?? userH}
           isHit={userAnswer?.isHit}
           onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
+          allUserHSV={colorC}
           disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
+          alwaysShowValueMark={true}
         />
         <HsvTrackSlider
           label="S"
           gradient={satGradient}
-          val={userS}
+          val={colorC[1]}
           max={100}
           unit="%"
           targetHSV={targetD}
@@ -165,15 +166,16 @@ export function RelativeColorCanvas({
           userVal={userAnswer?.userD?.[1] ?? userS}
           isHit={userAnswer?.isHit}
           onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
+          allUserHSV={colorC}
           disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
+          alwaysShowValueMark={true}
         />
         <HsvTrackSlider
           label="V"
           gradient={valGradient}
-          val={userV}
+          val={colorC[2]}
           max={100}
           unit="%"
           targetHSV={targetD}
@@ -183,10 +185,11 @@ export function RelativeColorCanvas({
           userVal={userAnswer?.userD?.[2] ?? userV}
           isHit={userAnswer?.isHit}
           onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
+          allUserHSV={colorC}
           disabled={true}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
+          alwaysShowValueMark={true}
         />
       </div>
 

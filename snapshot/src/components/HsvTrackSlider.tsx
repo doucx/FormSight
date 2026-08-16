@@ -20,6 +20,7 @@ export interface HsvTrackSliderProps {
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
+  alwaysShowValueMark?: boolean;
   onHoverStateChange?: (hoverVal: number | null) => void;
   onDraggingStateChange?: (isDragging: boolean) => void;
 }
@@ -41,6 +42,7 @@ export function HsvTrackSlider({
   disabled = false,
   hitMargin = 12,
   showToleranceBand = true,
+  alwaysShowValueMark = false,
   onHoverStateChange,
   onDraggingStateChange,
 }: HsvTrackSliderProps) {
@@ -140,7 +142,7 @@ export function HsvTrackSlider({
           style={{ background: gradient }}
         >
           {/* 当前设定值标记线 */}
-          {!showAnswer && (
+          {(!showAnswer || alwaysShowValueMark) && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
               style={{ left: getPercent(val, max) }}
