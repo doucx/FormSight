@@ -1,55 +1,175 @@
-我将为你创建一个描述清晰的 Git Commit，将本次针对界面排版和视觉精简的所有优化提交到代码库。
+好的，我理解了你的需求。在答错的情况下，我们需要在色彩滑块轨道的揭晓阶段渲染一条从用户选择的位置指向真实答案位置的指示箭头，以增强直观的视觉反馈。
 
-## [COMMIT] refactor(ui): 优化主页网格布局与相对色感训练界面视觉细节
+我将生成一个包含精确 `patch_file` 修改的 Quipu 执行计划。
+
+## [WIP] feat: 在色彩滑块答错时渲染从用户选择指向真理答案的指示箭头
 
 ### 用户需求
-
-用户提出创建 Git Commit，以保存本次关于 UI 排版与布局的改进。
+在绝对色感与相对色感训练的色彩控制滑块中，当揭晓答案且用户未击中目标时，在用户答案指示条（`bg-rose-500`）与真理指示条（`bg-emerald-500`）之间渲染一条带有方向箭头的虚线，直观标识与真理答案的偏移方向及距离。
 
 ### 评论
-
-本次更新包括：
-1. 主页卡片网格布局优化，移除相对色感卡片独占整行的样式，与其他模块统一卡片列宽度。
-2. 精简相对色感看板中的干扰性文本，并放大展示色块，使其更清晰易辨。
-3. 优化答案揭晓时的真理色彩对比展示，改为无缝上下半区分割。
-4. 移除“下一题”底栏不必要的全宽框体，消除多余空白。
+这是一个非常实用的 UX 增强功能。在现有的展示中，用户只能看到两个独立的指示条，在距离较远或色彩微调时不够直观。增加动态 SVG 指示线与箭头能显著提升训练时的视觉提示效果。
 
 ### 目标
-执行 `git_add` 和 `git_commit` 提交所有更改。
+1. 在 `HsvTrackSlider.tsx` 的揭晓答案区域，增加当 `!isHit` 且用户已做答时的 SVG 虚线与箭头指示器。
+2. 在 `ColorCanvas.tsx` (单维度滑块) 的揭晓答案区域，同样增加对应的 SVG 虚线与箭头指示器。
+3. 确保 SVG 元素层级适宜、线段连接精准且不遮挡主指示线。
 
 ### 基本原理
-按照规范，`[COMMIT]` 计划只包含 Git 相关的命令（`git_add` 和 `git_commit`），用于将前面已经修改完成并验证好的改动提交到版本库中。
+利用 SVG 的绝对定位 overlay 盖在 1D 轨道上，以用户答案百分比 `getPercent(userVal, max)` 为起点 `x1`，以真实答案百分比 `getPercent(actualTargetVal, max)` 为终点 `x2`。通过 `<marker>` 元素定义端点箭头，使用玫瑰红虚线 (`#F43F5E`) 链接两点，无论方向向左或向右均能自动适应并正确指向真实目标。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/ui-refinement #task/action/git-commit #task/state/end #task/status/completed
+#intent/build #flow/ready #priority/medium
+#comp/ui #concept/ui #scope/ux
+#ai/instruct
+#task/domain/ui #task/object/color-slider-arrow #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交变更
+#### Acts 1: 在 HsvTrackSlider.tsx 中添加方向指示箭头
 
 ~~~~~act
-git_add
-src/views/Home.tsx
-src/views/TrainingView.tsx
-src/views/ColorTrainingView.tsx
-src/views/RelativeColorTrainingView.tsx
-src/components/RelativeColorCanvas.tsx
+patch_file
+src/components/HsvTrackSlider.tsx
 ~~~~~
+~~~~~tsx
+          {/* 揭晓答案之后的真理位与提交位 */}
+          {showAnswer && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(actualTargetVal, max) }}
+              />
+              {userVal !== undefined && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userVal, max) }}
+                />
+              )}
+            </>
+          )}
+~~~~~
+~~~~~tsx
+          {/* 揭晓答案之后的真理位与提交位 */}
+          {showAnswer && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(actualTargetVal, max) }}
+              />
+              {userVal !== undefined && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userVal, max) }}
+                />
+              )}
+              {userVal !== undefined && !isHit && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
+                  <defs>
+                    <marker
+                      id={`arrow-${label}`}
+                      viewBox="0 0 6 6"
+                      refX="5"
+                      refY="3"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto"
+                    >
+                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
+                    </marker>
+                  </defs>
+                  <line
+                    x1={getPercent(userVal, max)}
+                    y1="50%"
+                    x2={getPercent(actualTargetVal, max)}
+                    y2="50%"
+                    stroke="#F43F5E"
+                    strokeWidth="2"
+                    strokeDasharray="3 3"
+                    markerEnd={`url(#arrow-${label})`}
+                  />
+                </svg>
+              )}
+            </>
+          )}
+~~~~~
+
+#### Acts 2: 在 ColorCanvas.tsx 中的 SingleDimensionSlider 中添加方向指示箭头
 
 ~~~~~act
-git_commit
+patch_file
+src/components/ColorCanvas.tsx
 ~~~~~
-~~~~~text
-refactor(ui): refine home layout and relative color perception canvas
-
-- Update Home view grid layout so Relative Color module card takes standard single-column width instead of spanning 2 columns.
-- Remove redundant/distracting text labels and indicators in RelativeColorCanvas.
-- Increase color block dimensions in RelativeColorCanvas for enhanced visual clarity.
-- Refine color comparison display upon answer reveal: split target color block directly into seamless top (user) and bottom (truth) halves without white gap.
-- Remove full-width card wrapper from 'Next Question' button bar across all training views to eliminate excessive whitespace.
+~~~~~tsx
+          {showAnswer && isTargetActiveMode && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(val, max) }}
+              />
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                />
+              )}
+            </>
+          )}
+~~~~~
+~~~~~tsx
+          {showAnswer && isTargetActiveMode && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(val, max) }}
+              />
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                />
+              )}
+              {userAnswer && !userAnswer.isHit && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
+                  <defs>
+                    <marker
+                      id={`arrow-single-${label}`}
+                      viewBox="0 0 6 6"
+                      refX="5"
+                      refY="3"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto"
+                    >
+                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
+                    </marker>
+                  </defs>
+                  <line
+                    x1={getPercent(userAnswer.userValue, max)}
+                    y1="50%"
+                    x2={getPercent(val, max)}
+                    y2="50%"
+                    stroke="#F43F5E"
+                    strokeWidth="2"
+                    strokeDasharray="3 3"
+                    markerEnd={`url(#arrow-single-${label})`}
+                  />
+                </svg>
+              )}
+            </>
+          )}
 ~~~~~
 
 ### 下一步建议
-- 所有 UI 改进与提交均已完成。你可以直接启动 `npm run dev` 体验全新的简约排版效果，或运行 `npm test` 确认代码测试通过。
+- 可以运行测试套件（如 `npm run test`）以验证组件逻辑与现有色彩算法无冲突。
+- 在页面中实际操作答题，观察色相环、明度及饱和度各轨道在回答错误时的指示效果是否符合预期的视觉舒适度。

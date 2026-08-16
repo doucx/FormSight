@@ -210,6 +210,33 @@ function SingleDimensionSlider({
                   style={{ left: getPercent(userAnswer.userValue, max) }}
                 />
               )}
+              {userAnswer && !userAnswer.isHit && (
+                <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
+                  <defs>
+                    <marker
+                      id={`arrow-single-${label}`}
+                      viewBox="0 0 6 6"
+                      refX="5"
+                      refY="3"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto"
+                    >
+                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
+                    </marker>
+                  </defs>
+                  <line
+                    x1={getPercent(userAnswer.userValue, max)}
+                    y1="50%"
+                    x2={getPercent(val, max)}
+                    y2="50%"
+                    stroke="#F43F5E"
+                    strokeWidth="2"
+                    strokeDasharray="3 3"
+                    markerEnd={`url(#arrow-single-${label})`}
+                  />
+                </svg>
+              )}
             </>
           )}
         </div>
