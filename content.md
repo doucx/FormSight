@@ -1,35 +1,6 @@
-好的，我将为你生成执行此改动的 Quipu Plan 并实施代码重构。
+## [WIP] 实施“OKLab 空间正交绝对位移算法”。
 
-## [WIP] feat: 将相对色感模块改造为四选一候选色问答模式
-
-### 用户需求
-在相对色感（色彩矢量迁移）模块中，用户难以直接通过调节 HSV 滑块做出精准的色彩推移。需求将填空式的 HSV 手动滑块调节改造为“四选一”候选色对比选择模式：
-1. 在 OKLab 色彩空间中根据当前难度等级生成 1 个真理目标色与 3 个具辨析度的干扰色。
-2. 调整页面布局，将 HSV 滑块仪表盘放置在 4 选项色块卡片的上方，锁定为只读联动展示。
-3. 采用轻量级的反馈样式（细边框与低调 Tag），避免重彩与粗框给用户带来视觉疲劳。
-4. 保持与现有 IndexedDB 数据结构 100% 兼容。
-
-### 评论
-将连续维度的色彩调节转化为离散的候选色辨析，极大地提升了相对色感练习的艺术训练效果与趣味性。布局重构与轻量级视觉反馈的加入进一步优化了用户体验。
-
-### 目标
-1. 升级 `src/utils/relativeColorUtils.ts` 中的数据接口与题目生成函数，支持 OKLab 空间干扰项生成。
-2. 重构 `src/components/RelativeColorCanvas.tsx` 页面布局与交互逻辑，提供 4 选项卡片与 HSV 只读观察仪表盘。
-3. 更新 `src/utils/__tests__/relativeColorUtils.test.ts` 单元测试，确保自动化测试全部通过。
-
-### 基本原理
-1. 在 `generateRelativeColorQuestion` 中根据当前 difficulty level 导出干扰参数，生成模长偏差、明度偏差及色相偏转 3 种典型的 OKLab 矢量干扰项。
-2. 将选中的候选色 HSV 实时绑定到上方 `HsvTrackSlider` 只读轨道的展示值中，作为成份拆解仪表盘。
-3. 支持键盘 `1~4` 选择选项与 `Space` 空格交卷，符合流畅训练的快捷键惯例。
-
-### 标签
-#intent/build #flow/ready #priority/high #comp/interfaces #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/relative-color-picker #task/action/refactor #task/state/begin #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 更新相对色感工具算法 `relativeColorUtils.ts`
+我们将更新 `src/utils/relativeColorUtils.ts`，引入 `getDistractorDistanceForLevel` 函数与色域边界反弹检测机制，确保选项在低难度时有足够清晰的感知安全距离，且绝对不触发死循环。
 
 ~~~~~act
 write_file
@@ -115,7 +86,53 @@ export function okLabToHsv(lab: [number, number, number]): [number, number, numb
 }
 
 /**
- * 随机生成色彩矢量迁移题目与 4 个 candidate 干扰选项
+ * 根据难度等级 (Level 1..35) 计算干扰项的绝对 OKLab 距离 Radius R
+ */
+export function getDistractorDistanceForLevel(level: number): number {
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1
+  const maxR = 0.14; // Level 1 干扰项距离目标 ΔE ≈ 0.14 (清晰可辨)
+  const minR = 0.015; // Level 35 干扰项距离目标 ΔE ≈ 0.015 (极度精细)
+
+  return maxR * (minR / maxR) ** t;
+}
+
+/**
+ * 带有色域边缘检测与反射的加点辅助函数
+ */
+function applyOffsetWithGamutCheck(
+  baseLab: [number, number, number],
+  directionVector: [number, number, number],
+  distance: number,
+): [number, number, number] {
+  // 试探正向偏移
+  const candidateLab1: [number, number, number] = [
+    baseLab[0] + directionVector[0] * distance,
+    baseLab[1] + directionVector[1] * distance,
+    baseLab[2] + directionVector[2] * distance,
+  ];
+
+  const hsv1 = okLabToHsv(candidateLab1);
+  const reprojectedLab1 = hsvToOkLab(...hsv1);
+  const actualDist1 = calcDeltaEOk(baseLab, reprojectedLab1);
+
+  // 如果正向偏移转换回 HSV 后未发生严重的色域裁剪 (有效感知距离保留了至少 70%)
+  if (actualDist1 >= distance * 0.7) {
+    return hsv1;
+  }
+
+  // 否则尝试反方向（反弹机制），避免撞墙被裁剪导致颜色重合
+  const candidateLab2: [number, number, number] = [
+    baseLab[0] - directionVector[0] * distance,
+    baseLab[1] - directionVector[1] * distance,
+    baseLab[2] - directionVector[2] * distance,
+  ];
+
+  return okLabToHsv(candidateLab2);
+}
+
+/**
+ * 随机生成色彩矢量迁移题目与 4 个满足确定性绝对安全距离的 candidate 干扰选项
  */
 export function generateRelativeColorQuestion(
   mode: RelativeColorMode,
@@ -124,6 +141,7 @@ export function generateRelativeColorQuestion(
   const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
   const tolerance = getTargetDeltaEForLevel(clampedLevel);
+  const R = getDistractorDistanceForLevel(clampedLevel);
 
   let attempts = 0;
   let colorA: [number, number, number] = [0, 0, 0];
@@ -153,61 +171,48 @@ export function generateRelativeColorQuestion(
     const vC = Math.floor(Math.random() * 60) + 30;
     colorC = [hC, sC, vC];
 
-    // 计算 OKLab 矢量: v_AB = Lab(B) - Lab(A)
     const labA = hsvToOkLab(...colorA);
     const labB = hsvToOkLab(...colorB);
     const labC = hsvToOkLab(...colorC);
 
     vAB = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+    const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
+
+    // 确保基准推移矢量 vAB 具备足够的感知长度，避免矢量过短
+    if (vMag < 0.03) continue;
 
     labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
 
-    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.95) {
+    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.9) {
       targetD = okLabToHsv(labTargetD);
       break;
     }
   }
 
-  // === 干扰项生成逻辑 (OKLab 空间中基于 Level 递减的扰动) ===
-  const t = (clampedLevel - 1) / 34;
-  const spreadScale = 0.08 * (1 - t * 0.75) + 0.015;
+  // 计算正交单位向量
+  const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
+  const uV: [number, number, number] = [vAB[0] / vMag, vAB[1] / vMag, vAB[2] / vMag];
 
-  // 干扰项 1: 推移模长/幅度误差 (Magnitude error)
-  const magFactor = Math.random() > 0.5 ? 1 + spreadScale * 1.5 : Math.max(0.2, 1 - spreadScale * 1.5);
-  const labD1: [number, number, number] = [
-    Math.max(0.05, Math.min(0.98, labTargetD[0] + vAB[0] * (magFactor - 1))),
-    labTargetD[1] + vAB[1] * (magFactor - 1),
-    labTargetD[2] + vAB[2] * (magFactor - 1),
-  ];
+  // 1. 矢量方向干扰项 D1 (在推移矢量方向上做绝对距离 R 的偏移)
+  const hsvD1 = applyOffsetWithGamutCheck(labTargetD, uV, R);
 
-  // 干扰项 2: 明度单维度偏差 (Lightness error)
-  const lightShift = (Math.random() > 0.5 ? 1 : -1) * spreadScale * 1.2;
-  const labD2: [number, number, number] = [
-    Math.max(0.05, Math.min(0.98, labTargetD[0] + lightShift)),
-    labTargetD[1],
-    labTargetD[2],
-  ];
+  // 2. 明度方向干扰项 D2 (纯 L 轴向量方向上做绝对距离 R 的偏移)
+  const uL: [number, number, number] = [1, 0, 0];
+  const hsvD2 = applyOffsetWithGamutCheck(labTargetD, uL, R);
 
-  // 干扰项 3: 色相/色偏旋转误差 (Hue/Direction error)
-  const rotAngle = (Math.random() > 0.5 ? 1 : -1) * (15 + (1 - t) * 30) * (Math.PI / 180);
-  const cosA = Math.cos(rotAngle);
-  const sinA = Math.sin(rotAngle);
-  const rotatedA = vAB[1] * cosA - vAB[2] * sinA;
-  const rotatedB = vAB[1] * sinA + vAB[2] * cosA;
-  const labD3: [number, number, number] = [
-    labTargetD[0],
-    labTargetD[1] + (rotatedA - vAB[1]),
-    labTargetD[2] + (rotatedB - vAB[2]),
-  ];
+  // 3. 色相/色偏法向干扰项 D3 (在 a-b 平面上寻找与 vAB 正交的方向向量)
+  let uOrth: [number, number, number] = [0, -uV[2], uV[1]];
+  const uOrthMag = Math.sqrt(uOrth[1] ** 2 + uOrth[2] ** 2);
+  if (uOrthMag < 1e-4) {
+    uOrth = [0, 1, 0];
+  } else {
+    uOrth = [0, uOrth[1] / uOrthMag, uOrth[2] / uOrthMag];
+  }
+  const hsvD3 = applyOffsetWithGamutCheck(labTargetD, uOrth, R);
 
-  const rawOptions: [number, number, number][] = [
-    targetD,
-    okLabToHsv(labD1),
-    okLabToHsv(labD2),
-    okLabToHsv(labD3),
-  ];
+  const rawOptions: [number, number, number][] = [targetD, hsvD1, hsvD2, hsvD3];
 
-  // 打乱选项并计算正确的索引
+  // 打乱选项并记录正确选项索引
   const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
   for (let i = indexedOptions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -290,297 +295,6 @@ export function checkRelativeColorHit(
 }
 ~~~~~
 
-#### Acts 2: 重构相对色感视图组件 `RelativeColorCanvas.tsx`
-
-~~~~~act
-write_file
-src/components/RelativeColorCanvas.tsx
-~~~~~
-~~~~~tsx
-import { ArrowRight } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-import { hsvToHex } from '../utils/colorUtils';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../utils/relativeColorUtils';
-import { HsvTrackSlider } from './HsvTrackSlider';
-
-interface RelativeColorCanvasProps {
-  question: RelativeColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
-  onAnswer: (userD: [number, number, number]) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-}
-
-export function RelativeColorCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-}: RelativeColorCanvasProps) {
-  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
-
-  // 默认选中第 0 个选项
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
-
-  // 题目切换时重置为第 0 项
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [question.id]);
-
-  const activeColor = options?.[selectedIndex] ?? targetD;
-  const userH = activeColor[0];
-  const userS = activeColor[1];
-  const userV = activeColor[2];
-
-  const handleSubmit = () => {
-    if (disabled || showAnswer) return;
-    onAnswer(activeColor);
-  };
-
-  // 键盘响应 (1/2/3/4 选择选项，Space 提交)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (disabled || showAnswer) return;
-      if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
-        const idx = Number.parseInt(e.code.replace('Digit', ''), 10) - 1;
-        if (options && idx < options.length) {
-          setSelectedIndex(idx);
-        }
-      } else if (e.code === 'Space') {
-        e.preventDefault();
-        onAnswer(activeColor);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, disabled, activeColor, options, onAnswer]);
-
-  const hexA = hsvToHex(...colorA);
-  const hexB = hsvToHex(...colorB);
-  const hexC = hsvToHex(...colorC);
-
-  const hexSelectedD = hsvToHex(userH, userS, userV);
-  const hexTargetD = hsvToHex(...targetD);
-
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-  const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
-  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
-
-  return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      {/* 1. 上方对比展示区 (A -> B  VS  C -> D) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        {/* 基准推移组 (A -> B) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            基准推移 (A ➔ B)
-          </div>
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div
-              className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexA }}
-            />
-            <ArrowRight className="w-5 h-5 text-indigo-400" />
-            <div
-              className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexB }}
-            />
-          </div>
-        </div>
-
-        {/* 目标推移组 (C -> D) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-2">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            目标推移 (C ➔ D)
-          </div>
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div
-              className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
-              style={{ backgroundColor: hexC }}
-            />
-            <ArrowRight className="w-5 h-5 text-indigo-400" />
-            <div
-              className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
-              style={{ backgroundColor: hexSelectedD }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2 border-t border-white/40"
-                  style={{ backgroundColor: hexTargetD }}
-                  title="下方半区为真理目标色 D"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. 中间 HSV 滑块轨道区 (锁定为观察仪表盘，跟着上方选中的 candidate 实时联动) */}
-      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div className="text-[11px] font-bold text-slate-400 mb-1">
-          当前选中色彩的分色成分 (Locked Slider):
-        </div>
-        <HsvTrackSlider
-          label="H"
-          gradient={hueGradient}
-          val={userH}
-          max={360}
-          unit="°"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[0]}
-          userVal={userAnswer?.userD?.[0] ?? userH}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-        <HsvTrackSlider
-          label="S"
-          gradient={satGradient}
-          val={userS}
-          max={100}
-          unit="%"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[1]}
-          userVal={userAnswer?.userD?.[1] ?? userS}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-        <HsvTrackSlider
-          label="V"
-          gradient={valGradient}
-          val={userV}
-          max={100}
-          unit="%"
-          targetHSV={targetD}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetD[2]}
-          userVal={userAnswer?.userD?.[2] ?? userV}
-          isHit={userAnswer?.isHit}
-          onValChange={() => {}}
-          allUserHSV={[userH, userS, userV]}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-      </div>
-
-      {/* 3. 下方 4 个色彩候选选项卡片 (轻量级反馈) */}
-      <div className="w-full space-y-2">
-        <div className="text-xs font-bold text-slate-600 flex justify-between items-center px-1">
-          <span>选择符合矢量推移规律的正确颜色 D：</span>
-          <span className="text-[10px] text-slate-400 font-normal">支持键盘数字键 1~4 选择</span>
-        </div>
-
-        <div className="grid grid-cols-4 gap-3 w-full">
-          {options?.map((opt, idx) => {
-            const isSelected = selectedIndex === idx;
-            const isTarget = idx === correctIndex;
-            const hexVal = hsvToHex(...opt);
-
-            // 揭晓答案后的轻量级样式
-            let borderStyle = 'border-slate-200 hover:border-slate-300';
-            let bgStyle = 'bg-white';
-            let statusBadge = null;
-
-            if (showAnswer) {
-              if (isTarget) {
-                // 正确选项：细绿框 + 极简绿点标记
-                borderStyle = 'border-emerald-500 ring-1 ring-emerald-500/30';
-                bgStyle = 'bg-emerald-50/20';
-                statusBadge = (
-                  <span className="text-[10px] font-extrabold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded">
-                    正确
-                  </span>
-                );
-              } else if (isSelected && !isTarget) {
-                // 选错项：淡红框 + 选错小标记
-                borderStyle = 'border-rose-300';
-                bgStyle = 'bg-rose-50/20';
-                statusBadge = (
-                  <span className="text-[10px] font-medium text-rose-500 bg-rose-100 px-1.5 py-0.5 rounded">
-                    选择
-                  </span>
-                );
-              } else {
-                // 其他未选中的非目标项：轻微降低不透明度
-                borderStyle = 'border-slate-100 opacity-40';
-              }
-            } else if (isSelected) {
-              // 答题中选中项：优雅的 Indigo 细边框 + 轻微阴影
-              borderStyle = 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm';
-              bgStyle = 'bg-indigo-50/10';
-            }
-
-            return (
-              <button
-                key={`${idx}-${hexVal}`}
-                type="button"
-                disabled={disabled || showAnswer}
-                onClick={() => setSelectedIndex(idx)}
-                className={`relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all duration-150 active:scale-95 text-left ${borderStyle} ${bgStyle}`}
-              >
-                {/* 顶部按键角标 & 揭晓状态 Badge */}
-                <div className="w-full flex justify-between items-center px-0.5">
-                  <span
-                    className={`text-[10px] font-mono font-bold ${
-                      isSelected && !showAnswer ? 'text-indigo-600' : 'text-slate-400'
-                    }`}
-                  >
-                    #{idx + 1}
-                  </span>
-                  {statusBadge}
-                </div>
-
-                {/* 色块卡片 */}
-                <div
-                  className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
-                  style={{ backgroundColor: hexVal }}
-                />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 4. 提交按钮 */}
-      {!showAnswer && (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
-        >
-          确认提交 (Space)
-        </button>
-      )}
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 3: 更新单元测试 `relativeColorUtils.test.ts`
-
 ~~~~~act
 write_file
 src/utils/__tests__/relativeColorUtils.test.ts
@@ -590,24 +304,28 @@ import { describe, expect, it } from 'vitest';
 import {
   checkRelativeColorHit,
   generateRelativeColorQuestion,
+  getDistractorDistanceForLevel,
   okLabToHsv,
 } from '../relativeColorUtils';
 
-describe('relativeColorUtils', () => {
-  it('generateRelativeColorQuestion - should generate valid color vector shift question with 4 candidate options', () => {
+describe('relativeColorUtils with deterministic orthogonal distractors', () => {
+  it('getDistractorDistanceForLevel - should decrease distractor radius as level increases', () => {
+    const rL1 = getDistractorDistanceForLevel(1);
+    const rL35 = getDistractorDistanceForLevel(35);
+    expect(rL1).toBeCloseTo(0.14, 2);
+    expect(rL35).toBeCloseTo(0.015, 2);
+    expect(rL1).toBeGreaterThan(rL35);
+  });
+
+  it('generateRelativeColorQuestion - should generate valid question with distinct candidate options', () => {
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     expect(q.mode).toBe('VECTOR_SHIFT');
-    expect(q.colorA).toBeDefined();
-    expect(q.colorB).toBeDefined();
-    expect(q.colorC).toBeDefined();
-    expect(q.targetD).toBeDefined();
-    expect(q.tolerance).toBeGreaterThan(0);
     expect(q.options.length).toBe(4);
     expect(q.correctIndex).toBeGreaterThanOrEqual(0);
     expect(q.correctIndex).toBeLessThanOrEqual(3);
   });
 
-  it('checkRelativeColorHit - should detect target option choice correctly', () => {
+  it('checkRelativeColorHit - should detect target choice correctly', () => {
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     const correctOption = q.options[q.correctIndex];
     const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
@@ -624,6 +342,9 @@ describe('relativeColorUtils', () => {
 });
 ~~~~~
 
-### 下一步建议
-1. 运行系统的单元测试，验证修改后的函数及数据结构完全符合预期。
-2. 启动本地开发服务，在浏览器中测试四选一做答与键盘 `1~4` 快捷键的平滑联动情况。
+算法重构实施完成！
+
+### 改进要点总结：
+1. **绝对感知距离 $R$ 驱动**：根据 `Level` 导出绝对的 OKLab 色差半径 $R$（Level 1 时 $R \approx 0.14$，确保低难度下选项具备极其清晰的辨析距离）。
+2. **正交向量派生**：从基准推移向量 $\vec{v}_{AB}$ 衍生出“推移幅度向量”、“明度 $L$ 轴向量”以及“$a-b$ 平面法向向量”，在三个独立维度上各放置一个干扰项，避免干扰项重叠。
+3. **色域边缘反弹校验（Gamut Rebound）**：计算偏移后通过 `okLabToHsv` $\rightarrow$ `hsvToOkLab` 校验有效感知距离。若撞上色域边界被过度裁剪，自动反转向量方向，保证 $O(1)$ 性能且绝不触发死循环。

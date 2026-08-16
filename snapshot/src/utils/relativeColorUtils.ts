@@ -77,7 +77,53 @@ export function okLabToHsv(lab: [number, number, number]): [number, number, numb
 }
 
 /**
- * 随机生成色彩矢量迁移题目与 4 个 candidate 干扰选项
+ * 根据难度等级 (Level 1..35) 计算干扰项的绝对 OKLab 距离 Radius R
+ */
+export function getDistractorDistanceForLevel(level: number): number {
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1
+  const maxR = 0.14; // Level 1 干扰项距离目标 ΔE ≈ 0.14 (清晰可辨)
+  const minR = 0.015; // Level 35 干扰项距离目标 ΔE ≈ 0.015 (极度精细)
+
+  return maxR * (minR / maxR) ** t;
+}
+
+/**
+ * 带有色域边缘检测与反射的加点辅助函数
+ */
+function applyOffsetWithGamutCheck(
+  baseLab: [number, number, number],
+  directionVector: [number, number, number],
+  distance: number,
+): [number, number, number] {
+  // 试探正向偏移
+  const candidateLab1: [number, number, number] = [
+    baseLab[0] + directionVector[0] * distance,
+    baseLab[1] + directionVector[1] * distance,
+    baseLab[2] + directionVector[2] * distance,
+  ];
+
+  const hsv1 = okLabToHsv(candidateLab1);
+  const reprojectedLab1 = hsvToOkLab(...hsv1);
+  const actualDist1 = calcDeltaEOk(baseLab, reprojectedLab1);
+
+  // 如果正向偏移转换回 HSV 后未发生严重的色域裁剪 (有效感知距离保留了至少 70%)
+  if (actualDist1 >= distance * 0.7) {
+    return hsv1;
+  }
+
+  // 否则尝试反方向（反弹机制），避免撞墙被裁剪导致颜色重合
+  const candidateLab2: [number, number, number] = [
+    baseLab[0] - directionVector[0] * distance,
+    baseLab[1] - directionVector[1] * distance,
+    baseLab[2] - directionVector[2] * distance,
+  ];
+
+  return okLabToHsv(candidateLab2);
+}
+
+/**
+ * 随机生成色彩矢量迁移题目与 4 个满足确定性绝对安全距离的 candidate 干扰选项
  */
 export function generateRelativeColorQuestion(
   mode: RelativeColorMode,
@@ -86,6 +132,7 @@ export function generateRelativeColorQuestion(
   const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
   const tolerance = getTargetDeltaEForLevel(clampedLevel);
+  const R = getDistractorDistanceForLevel(clampedLevel);
 
   let attempts = 0;
   let colorA: [number, number, number] = [0, 0, 0];
@@ -115,61 +162,48 @@ export function generateRelativeColorQuestion(
     const vC = Math.floor(Math.random() * 60) + 30;
     colorC = [hC, sC, vC];
 
-    // 计算 OKLab 矢量: v_AB = Lab(B) - Lab(A)
     const labA = hsvToOkLab(...colorA);
     const labB = hsvToOkLab(...colorB);
     const labC = hsvToOkLab(...colorC);
 
     vAB = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+    const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
+
+    // 确保基准推移矢量 vAB 具备足够的感知长度，避免矢量过短
+    if (vMag < 0.03) continue;
 
     labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
 
-    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.95) {
+    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.9) {
       targetD = okLabToHsv(labTargetD);
       break;
     }
   }
 
-  // === 干扰项生成逻辑 (OKLab 空间中基于 Level 递减的扰动) ===
-  const t = (clampedLevel - 1) / 34;
-  const spreadScale = 0.08 * (1 - t * 0.75) + 0.015;
+  // 计算正交单位向量
+  const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
+  const uV: [number, number, number] = [vAB[0] / vMag, vAB[1] / vMag, vAB[2] / vMag];
 
-  // 干扰项 1: 推移模长/幅度误差 (Magnitude error)
-  const magFactor = Math.random() > 0.5 ? 1 + spreadScale * 1.5 : Math.max(0.2, 1 - spreadScale * 1.5);
-  const labD1: [number, number, number] = [
-    Math.max(0.05, Math.min(0.98, labTargetD[0] + vAB[0] * (magFactor - 1))),
-    labTargetD[1] + vAB[1] * (magFactor - 1),
-    labTargetD[2] + vAB[2] * (magFactor - 1),
-  ];
+  // 1. 矢量方向干扰项 D1 (在推移矢量方向上做绝对距离 R 的偏移)
+  const hsvD1 = applyOffsetWithGamutCheck(labTargetD, uV, R);
 
-  // 干扰项 2: 明度单维度偏差 (Lightness error)
-  const lightShift = (Math.random() > 0.5 ? 1 : -1) * spreadScale * 1.2;
-  const labD2: [number, number, number] = [
-    Math.max(0.05, Math.min(0.98, labTargetD[0] + lightShift)),
-    labTargetD[1],
-    labTargetD[2],
-  ];
+  // 2. 明度方向干扰项 D2 (纯 L 轴向量方向上做绝对距离 R 的偏移)
+  const uL: [number, number, number] = [1, 0, 0];
+  const hsvD2 = applyOffsetWithGamutCheck(labTargetD, uL, R);
 
-  // 干扰项 3: 色相/色偏旋转误差 (Hue/Direction error)
-  const rotAngle = (Math.random() > 0.5 ? 1 : -1) * (15 + (1 - t) * 30) * (Math.PI / 180);
-  const cosA = Math.cos(rotAngle);
-  const sinA = Math.sin(rotAngle);
-  const rotatedA = vAB[1] * cosA - vAB[2] * sinA;
-  const rotatedB = vAB[1] * sinA + vAB[2] * cosA;
-  const labD3: [number, number, number] = [
-    labTargetD[0],
-    labTargetD[1] + (rotatedA - vAB[1]),
-    labTargetD[2] + (rotatedB - vAB[2]),
-  ];
+  // 3. 色相/色偏法向干扰项 D3 (在 a-b 平面上寻找与 vAB 正交的方向向量)
+  let uOrth: [number, number, number] = [0, -uV[2], uV[1]];
+  const uOrthMag = Math.sqrt(uOrth[1] ** 2 + uOrth[2] ** 2);
+  if (uOrthMag < 1e-4) {
+    uOrth = [0, 1, 0];
+  } else {
+    uOrth = [0, uOrth[1] / uOrthMag, uOrth[2] / uOrthMag];
+  }
+  const hsvD3 = applyOffsetWithGamutCheck(labTargetD, uOrth, R);
 
-  const rawOptions: [number, number, number][] = [
-    targetD,
-    okLabToHsv(labD1),
-    okLabToHsv(labD2),
-    okLabToHsv(labD3),
-  ];
+  const rawOptions: [number, number, number][] = [targetD, hsvD1, hsvD2, hsvD3];
 
-  // 打乱选项并计算正确的索引
+  // 打乱选项并记录正确选项索引
   const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
   for (let i = indexedOptions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
