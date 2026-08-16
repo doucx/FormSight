@@ -46,23 +46,44 @@ export function RelativeColorCanvas({
     onAnswer(activeColor);
   };
 
-  // 键盘响应 (1/2/3/4 选择选项，Space 提交)
+  // 全键盘监听支持 (主键盘 1~4, 小键盘 1~4, 空格 Space 提交)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 若当前聚焦在输入框或弹窗表单中，则不拦截快捷键
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       if (disabled || showAnswer) return;
-      if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
-        const idx = Number.parseInt(e.code.replace('Digit', ''), 10) - 1;
-        if (options && idx < options.length) {
-          setSelectedIndex(idx);
+
+      // 1. 判断是否按下 1 ~ 4 键 (同时兼容 e.key 与 e.code)
+      let targetIdx: number | null = null;
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        targetIdx = Number.parseInt(e.key, 10) - 1;
+      } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
+        const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
+        if (num >= 1 && num <= 4) {
+          targetIdx = num - 1;
         }
-      } else if (e.code === 'Space') {
+      }
+
+      if (targetIdx !== null && options && targetIdx < options.length) {
         e.preventDefault();
-        onAnswer(activeColor);
+        setSelectedIndex(targetIdx);
+        return;
+      }
+
+      // 2. 空格 Space 提交
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        const chosenColor = options?.[selectedIndex] ?? targetD;
+        onAnswer(chosenColor);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, disabled, activeColor, options, onAnswer]);
+  }, [showAnswer, disabled, selectedIndex, options, targetD, onAnswer]);
 
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
@@ -125,7 +146,7 @@ export function RelativeColorCanvas({
         </div>
       </div>
 
-      {/* 2. 中间 HSV 滑块轨道区 (锁定为观察仪表盘，跟着上方选中的 candidate 实时联动) */}
+      {/* 2. 中间 HSV 滑块轨道区 (锁定为观察仪表盘，跟随选中选项的值实时联动) */}
       <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <div className="text-[11px] font-bold text-slate-400 mb-1">
           当前选中色彩的分色成分 (Locked Slider):
@@ -215,7 +236,7 @@ export function RelativeColorCanvas({
                   </span>
                 );
               } else if (isSelected && !isTarget) {
-                // 选错项：淡红框 + 选错小标记
+                // 选错项：淡红框 + 选错标记
                 borderStyle = 'border-rose-300';
                 bgStyle = 'bg-rose-50/20';
                 statusBadge = (
@@ -228,7 +249,7 @@ export function RelativeColorCanvas({
                 borderStyle = 'border-slate-100 opacity-40';
               }
             } else if (isSelected) {
-              // 答题中选中项：优雅的 Indigo 细边框 + 轻微阴影
+              // 答题中选中项：Indigo 细边框 + 轻微阴影
               borderStyle = 'border-indigo-600 ring-2 ring-indigo-500/20 shadow-sm';
               bgStyle = 'bg-indigo-50/10';
             }
@@ -239,7 +260,7 @@ export function RelativeColorCanvas({
                 type="button"
                 disabled={disabled || showAnswer}
                 onClick={() => setSelectedIndex(idx)}
-                className={`relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all duration-150 active:scale-95 text-left ${borderStyle} ${bgStyle}`}
+                className={`relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all duration-150 active:scale-95 text-left cursor-pointer ${borderStyle} ${bgStyle}`}
               >
                 {/* 顶部按键角标 & 揭晓状态 Badge */}
                 <div className="w-full flex justify-between items-center px-0.5">
