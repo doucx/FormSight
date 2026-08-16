@@ -5,7 +5,7 @@ import type { AdaptiveMode, StepGranularity } from '../utils/settings';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   domain: string;
-  mode: string;
+  _mode: string;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   autoNext: boolean;
