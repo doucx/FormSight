@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "提交", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786885103.7986994, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "修复 build 错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786885146.839196, "duration_ms": 0}}

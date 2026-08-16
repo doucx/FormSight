@@ -1,17 +1,115 @@
-## 提交
+## 修复 build 错误
 
 ~~~~~act
-git_add
+patch_file
 src/components/RelativeColorCanvas.tsx
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~typescript.old
+          {/* 左侧：C 节点颜色 */}
+          <div className="space-y-3 md:pr-4 md:border-r border-slate-200/60">
+            <HsvTrackSlider
+              label="H"
+              gradient={hueGradient}
+              val={cH}
+              max={360}
+              unit="°"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cH}
+              userVal={cH}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+            />
+            <HsvTrackSlider
+              label="S"
+              gradient={cSatGradient}
+              val={cS}
+              max={100}
+              unit="%"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cS}
+              userVal={cS}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+            />
+            <HsvTrackSlider
+              label="V"
+              gradient={cValGradient}
+              val={cV}
+              max={100}
+              unit="%"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cV}
+              userVal={cV}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+            />
+          </div>
 ~~~~~
-~~~~~text
-feat(relative-color): Add side-by-side C and D HSV tracks and 2x2 layout
-
-- Added a side-by-side comparison layout for C (benchmark) and D (current selection) HSV track sliders in RelativeColorCanvas.
-- Reconfigured the color comparison display area from a 1x4 horizontal flow into a clean 2x2 grid (A->B on top, C->D on bottom).
-- Removed the dividing border from the answer comparison preview block.
+~~~~~typescript.new
+          {/* 左侧：C 节点颜色 */}
+          <div className="space-y-3 md:pr-4 md:border-r border-slate-200/60">
+            <HsvTrackSlider
+              label="H"
+              gradient={hueGradient}
+              val={cH}
+              max={360}
+              unit="°"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cH}
+              userVal={cH}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+              onValChange={() => {}}
+            />
+            <HsvTrackSlider
+              label="S"
+              gradient={cSatGradient}
+              val={cS}
+              max={100}
+              unit="%"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cS}
+              userVal={cS}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+              onValChange={() => {}}
+            />
+            <HsvTrackSlider
+              label="V"
+              gradient={cValGradient}
+              val={cV}
+              max={100}
+              unit="%"
+              targetHSV={colorC}
+              difficultyLevel={difficultyLevel}
+              showAnswer={false}
+              targetVal={cV}
+              userVal={cV}
+              allUserHSV={colorC}
+              disabled={true}
+              hitMargin={hitMargin}
+              showToleranceBand={false}
+              onValChange={() => {}}
+            />
+          </div>
 ~~~~~

@@ -159,6 +159,7 @@ export function RelativeColorCanvas({
               disabled={true}
               hitMargin={hitMargin}
               showToleranceBand={false}
+              onValChange={() => {}}
             />
             <HsvTrackSlider
               label="S"
@@ -175,6 +176,7 @@ export function RelativeColorCanvas({
               disabled={true}
               hitMargin={hitMargin}
               showToleranceBand={false}
+              onValChange={() => {}}
             />
             <HsvTrackSlider
               label="V"
@@ -191,6 +193,7 @@ export function RelativeColorCanvas({
               disabled={true}
               hitMargin={hitMargin}
               showToleranceBand={false}
+              onValChange={() => {}}
             />
           </div>
 
