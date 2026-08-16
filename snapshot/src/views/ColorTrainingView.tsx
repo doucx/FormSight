@@ -1,8 +1,8 @@
 import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useRef } from 'preact/hooks';
 import { ColorCanvas } from '../components/ColorCanvas';
-import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { SessionSummaryModal } from '../components/SessionSummaryModal';
+import { useTrainingSession } from '../hooks/useTrainingSession';
 import {
   type ColorHitResult,
   type ColorMode,
@@ -11,7 +11,7 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../utils/colorUtils';
-import { type ColorSessionData, saveColorSession, saveColorTrialRecord } from '../utils/db';
+import { saveColorSession, saveColorTrialRecord } from '../utils/db';
 import type { ColorSenseSettings } from '../utils/settings';
 
 interface ColorTrainingViewProps {
@@ -29,21 +29,9 @@ export function ColorTrainingView({
   settings,
   onExit,
 }: ColorTrainingViewProps) {
-  const sessionIdRef = useRef<string>(`csession_${Date.now()}`);
-  const startTimeRef = useRef<number>(Date.now());
-  const adaptiveEngineRef = useRef<AdaptiveEngine>(
-    new AdaptiveEngine(
-      initialLevel,
-      settings.stepGranularity === 'fine',
-      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
-      settings.targetAccuracy,
-      settings.blockSize,
-    ),
-  );
-  const autoNextTimerRef = useRef<number | null>(null);
   const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
 
-  const getColorGenerateOptions = (): ColorQuestionGenerateOptions => {
+  const getColorGenerateOptions = useCallback((): ColorQuestionGenerateOptions => {
     return {
       targetingMode: settings.targetingMode,
       targetSectors:
@@ -51,188 +39,88 @@ export function ColorTrainingView({
           ? settings.manualTargetSectors
           : targetSectorsRef.current,
     };
-  };
+  }, [settings]);
 
-  const [question, setQuestion] = useState<ColorQuestionData>(() =>
-    generateColorQuestion(mode, initialLevel, getColorGenerateOptions()),
-  );
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [userAnswer, setUserAnswer] = useState<ColorHitResult | null>(null);
+  const {
+    question,
+    showAnswer,
+    userAnswer,
+    totalTrials,
+    elapsedSeconds,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    handleAnswer,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  } = useTrainingSession<ColorQuestionData, ColorHitResult, number | [number, number, number]>({
+    domain: 'color',
+    mode,
+    sessionType,
+    initialLevel,
+    autoNext: settings.autoNext,
+    autoNextDelay: settings.autoNextDelay,
+    stepGranularity: settings.stepGranularity,
+    adaptiveMode: settings.adaptiveMode,
+    targetAccuracy: settings.targetAccuracy,
+    blockSize: settings.blockSize,
+    generateQuestion: (level) => generateColorQuestion(mode, level, getColorGenerateOptions()),
+    evaluateAnswer: (userVal, q) => checkColorHit(mode, userVal, q),
+    isHit: (hitResult) => hitResult.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
+      const computedUserHSV: [number, number, number] =
+        mode === 'ALL' && Array.isArray(userVal)
+          ? userVal
+          : [
+              mode === 'H' ? (userVal as number) : q.targetH,
+              mode === 'S' ? (userVal as number) : q.targetS,
+              mode === 'V' ? (userVal as number) : q.targetV,
+            ];
 
-  const [totalTrials, setTotalTrials] = useState<number>(0);
-  const [hitTrials, setHitTrials] = useState<number>(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-
-  // 计时器逻辑
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
-
-  // 键盘响应 (Space 揭晓答案后切题 / Esc 退出)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape') {
-        e.preventDefault();
-        handleFinishSession();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
-
-  // 作答响应
-  const handleAnswer = async (userVal: number | [number, number, number]) => {
-    const responseTimeMs = Date.now() - questionStartTime;
-    const hitResult = checkColorHit(mode, userVal, question);
-
-    setUserAnswer(hitResult);
-    setShowAnswer(true);
-
-    const newTotal = totalTrials + 1;
-    const newHits = hitTrials + (hitResult.isHit ? 1 : 0);
-    setTotalTrials(newTotal);
-    setHitTrials(newHits);
-
-    const computedUserHSV: [number, number, number] =
-      mode === 'ALL' && Array.isArray(userVal)
-        ? userVal
-        : [
-            mode === 'H' ? (userVal as number) : question.targetH,
-            mode === 'S' ? (userVal as number) : question.targetS,
-            mode === 'V' ? (userVal as number) : question.targetV,
-          ];
-
-    // 数据库存盘
-    await saveColorTrialRecord({
-      id: `crec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      sessionId: sessionIdRef.current,
-      domain: 'color',
-      mode,
-      timestamp: Date.now(),
-      difficultyLevel: question.difficultyLevel,
-      isHit: hitResult.isHit,
-      responseTimeMs,
-      details: {
-        targetHSV: [question.targetH, question.targetS, question.targetV],
-        userHSV: computedUserHSV,
-        errorValue: hitResult.errorValue,
-      },
-    });
-
-    setSessionHistory((prev) => [
-      ...prev,
-      {
-        trialIndex: newTotal,
-        level: question.difficultyLevel,
+      await saveColorTrialRecord({
+        id: `crec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sessionId,
+        domain: 'color',
+        mode,
+        timestamp: Date.now(),
+        difficultyLevel: q.difficultyLevel,
         isHit: hitResult.isHit,
         responseTimeMs,
-      },
-    ]);
-
-    adaptiveEngineRef.current.recordResult(hitResult.isHit);
-
-    const delay = settings.autoNextDelay;
-
-    if (sessionType === 'benchmark' && newTotal >= 20) {
-      setIsFinished(true);
-      await saveCurrentSession(newTotal, newHits, true);
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        setShowSummaryModal(true);
-      }, delay);
-    } else if (settings.autoNext) {
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        handleNextQuestion();
-      }, delay);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    if (isFinished) return;
-    if (autoNextTimerRef.current) {
-      clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = null;
-    }
-
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setShowAnswer(false);
-    setUserAnswer(null);
-    setQuestion(generateColorQuestion(mode, nextLevel, getColorGenerateOptions()));
-    setQuestionStartTime(Date.now());
-  };
-
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
-    const sessionData: ColorSessionData = {
-      id: sessionIdRef.current,
-      domain: 'color',
-      mode,
-      type: sessionType,
-      startTimestamp: startTimeRef.current,
-      endTimestamp: ended ? Date.now() : undefined,
-      totalTrials: trials,
-      hitTrials: hits,
-      startLevel: initialLevel,
-      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    };
-    await saveColorSession(sessionData);
-  };
-
-  const handleRequestFinish = async () => {
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
-    } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
-    }
-  };
-
-  const handleFinishSession = async () => {
-    await saveCurrentSession(totalTrials, hitTrials, true);
-    onExit();
-  };
-
-  const handleRestartSession = () => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    sessionIdRef.current = `csession_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateColorQuestion(mode, nextLevel, getColorGenerateOptions()));
-    setQuestionStartTime(Date.now());
-  };
+        details: {
+          targetHSV: [q.targetH, q.targetS, q.targetV],
+          userHSV: computedUserHSV,
+          errorValue: hitResult.errorValue,
+        },
+      });
+    },
+    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+      await saveColorSession({
+        id: sessionId,
+        domain: 'color',
+        mode,
+        type: sessionType,
+        startTimestamp,
+        endTimestamp: ended ? Date.now() : undefined,
+        totalTrials: t,
+        hitTrials: h,
+        startLevel: initialLevel,
+        endLevel,
+      });
+    },
+    onExit,
+  });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 顶栏 */}
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -255,7 +143,6 @@ export function ColorTrainingView({
           )}
         </div>
 
-        {/* 监控指标 */}
         <div className="flex items-center gap-6 text-sm">
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
@@ -278,7 +165,6 @@ export function ColorTrainingView({
         </div>
       </header>
 
-      {/* 色彩交互 Canvas */}
       <ColorCanvas
         question={question}
         showAnswer={showAnswer}
@@ -290,7 +176,6 @@ export function ColorTrainingView({
         enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
       />
 
-      {/* 底部控制栏 */}
       {!settings.autoNext && (
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
@@ -319,7 +204,6 @@ export function ColorTrainingView({
         </div>
       )}
 
-      {/* 练习结算弹窗 */}
       {showSummaryModal && (
         <SessionSummaryModal
           mode="single"

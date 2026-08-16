@@ -1,8 +1,7 @@
 import { ArrowLeft, ChevronRight, Clock } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
 import { RelativeColorCanvas } from '../components/RelativeColorCanvas';
-import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { SessionSummaryModal } from '../components/SessionSummaryModal';
+import { useTrainingSession } from '../hooks/useTrainingSession';
 import { saveSession, saveTrialRecord } from '../utils/db';
 import {
   type RelativeColorHitResult,
@@ -28,189 +27,84 @@ export function RelativeColorTrainingView({
   settings,
   onExit,
 }: RelativeColorTrainingViewProps) {
-  const sessionIdRef = useRef<string>(`rcsession_${Date.now()}`);
-  const startTimeRef = useRef<number>(Date.now());
-  const adaptiveEngineRef = useRef<AdaptiveEngine>(
-    new AdaptiveEngine(
-      initialLevel,
-      settings.stepGranularity === 'fine',
-      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
-      settings.targetAccuracy,
-      settings.blockSize,
-    ),
-  );
-  const autoNextTimerRef = useRef<number | null>(null);
-
-  const [question, setQuestion] = useState<RelativeColorQuestionData>(() =>
-    generateRelativeColorQuestion(mode, initialLevel),
-  );
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [userAnswer, setUserAnswer] = useState<RelativeColorHitResult | null>(null);
-
-  const [totalTrials, setTotalTrials] = useState<number>(0);
-  const [hitTrials, setHitTrials] = useState<number>(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape') {
-        e.preventDefault();
-        handleFinishSession();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
-
-  const handleAnswer = async (userD: [number, number, number]) => {
-    const responseTimeMs = Date.now() - questionStartTime;
-    const hitResult = checkRelativeColorHit(mode, userD, question);
-
-    setUserAnswer(hitResult);
-    setShowAnswer(true);
-
-    const newTotal = totalTrials + 1;
-    const newHits = hitTrials + (hitResult.isHit ? 1 : 0);
-    setTotalTrials(newTotal);
-    setHitTrials(newHits);
-
-    // 通用 DB API 提交
-    await saveTrialRecord({
-      id: `rcrec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      sessionId: sessionIdRef.current,
-      domain: 'relative_color',
-      mode,
-      timestamp: Date.now(),
-      difficultyLevel: question.difficultyLevel,
-      isHit: hitResult.isHit,
-      responseTimeMs,
-      details: {
-        colorA: question.colorA,
-        colorB: question.colorB,
-        colorC: question.colorC,
-        targetD: question.targetD,
-        userD,
-        deltaEError: hitResult.deltaEError,
-      },
-    });
-
-    setSessionHistory((prev) => [
-      ...prev,
-      {
-        trialIndex: newTotal,
-        level: question.difficultyLevel,
+  const {
+    question,
+    showAnswer,
+    userAnswer,
+    totalTrials,
+    elapsedSeconds,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    handleAnswer,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  } = useTrainingSession<
+    RelativeColorQuestionData,
+    RelativeColorHitResult,
+    [number, number, number]
+  >({
+    domain: 'relative_color',
+    mode,
+    sessionType,
+    initialLevel,
+    autoNext: settings.autoNext,
+    autoNextDelay: settings.autoNextDelay,
+    stepGranularity: settings.stepGranularity,
+    adaptiveMode: settings.adaptiveMode,
+    targetAccuracy: settings.targetAccuracy,
+    blockSize: settings.blockSize,
+    generateQuestion: (level) => generateRelativeColorQuestion(mode, level),
+    evaluateAnswer: (userD, q) => checkRelativeColorHit(mode, userD, q),
+    isHit: (hitResult) => hitResult.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
+      await saveTrialRecord({
+        id: `rcrec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sessionId,
+        domain: 'relative_color',
+        mode,
+        timestamp: Date.now(),
+        difficultyLevel: q.difficultyLevel,
         isHit: hitResult.isHit,
         responseTimeMs,
-      },
-    ]);
-
-    adaptiveEngineRef.current.recordResult(hitResult.isHit);
-
-    const delay = settings.autoNextDelay;
-
-    if (sessionType === 'benchmark' && newTotal >= 20) {
-      setIsFinished(true);
-      await saveCurrentSession(newTotal, newHits, true);
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        setShowSummaryModal(true);
-      }, delay);
-    } else if (settings.autoNext) {
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        handleNextQuestion();
-      }, delay);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    if (isFinished) return;
-    if (autoNextTimerRef.current) {
-      clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = null;
-    }
-
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setShowAnswer(false);
-    setUserAnswer(null);
-    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
-    setQuestionStartTime(Date.now());
-  };
-
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
-    await saveSession({
-      id: sessionIdRef.current,
-      domain: 'relative_color',
-      mode,
-      type: sessionType,
-      startTimestamp: startTimeRef.current,
-      endTimestamp: ended ? Date.now() : undefined,
-      totalTrials: trials,
-      hitTrials: hits,
-      startLevel: initialLevel,
-      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    });
-  };
-
-  const handleRequestFinish = async () => {
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
-    } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
-    }
-  };
-
-  const handleFinishSession = async () => {
-    await saveCurrentSession(totalTrials, hitTrials, true);
-    onExit();
-  };
-
-  const handleRestartSession = () => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    sessionIdRef.current = `rcsession_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
-    setQuestionStartTime(Date.now());
-  };
+        details: {
+          colorA: q.colorA,
+          colorB: q.colorB,
+          colorC: q.colorC,
+          targetD: q.targetD,
+          userD: userVal,
+          deltaEError: hitResult.deltaEError,
+        },
+      });
+    },
+    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+      await saveSession({
+        id: sessionId,
+        domain: 'relative_color',
+        mode,
+        type: sessionType,
+        startTimestamp,
+        endTimestamp: ended ? Date.now() : undefined,
+        totalTrials: t,
+        hitTrials: h,
+        startLevel: initialLevel,
+        endLevel,
+      });
+    },
+    onExit,
+  });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 顶栏 */}
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -226,7 +120,6 @@ export function RelativeColorTrainingView({
           </span>
         </div>
 
-        {/* 监控指标 */}
         <div className="flex items-center gap-6 text-sm">
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
@@ -249,7 +142,6 @@ export function RelativeColorTrainingView({
         </div>
       </header>
 
-      {/* 相对色彩矢量 Canvas */}
       <RelativeColorCanvas
         question={question}
         showAnswer={showAnswer}
@@ -261,7 +153,6 @@ export function RelativeColorTrainingView({
         enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
       />
 
-      {/* 底部控制栏 */}
       {!settings.autoNext && (
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
@@ -290,7 +181,6 @@ export function RelativeColorTrainingView({
         </div>
       )}
 
-      {/* 结算弹窗 */}
       {showSummaryModal && (
         <SessionSummaryModal
           mode="single"

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(relative-color): 新增相对色感训练模块与通用领域隔离架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786856108.1595278, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(architecture): 拆分大型模块与抽象通用训练 Hook", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786856559.2931514, "duration_ms": 0}}

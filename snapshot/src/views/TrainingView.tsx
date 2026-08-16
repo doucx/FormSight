@@ -1,11 +1,11 @@
 import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
+import { useCallback, useRef } from 'preact/hooks';
+import { SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';
 import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import { type SessionData, saveSession, saveTrialRecord } from '../utils/db';
-import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
+import { useTrainingSession } from '../hooks/useTrainingSession';
+import { saveSession, saveTrialRecord } from '../utils/db';
+import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../utils/geometry';
 import type { StarSettings } from '../utils/settings';
 
 interface TrainingViewProps {
@@ -23,23 +23,9 @@ export function TrainingView({
   settings,
   onExit,
 }: TrainingViewProps) {
-  // === 会话状态 ===
-  const sessionIdRef = useRef<string>(`session_${Date.now()}`);
-  const startTimeRef = useRef<number>(Date.now());
-  const adaptiveEngineRef = useRef<AdaptiveEngine>(
-    new AdaptiveEngine(
-      initialLevel,
-      settings.stepGranularity === 'fine',
-      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
-      settings.targetAccuracy,
-      settings.blockSize,
-    ),
-  );
-  const autoNextTimerRef = useRef<number | null>(null);
   const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
 
-  // 辅助：获取发题配置选项
-  const getGenerateOptions = (): QuestionGenerateOptions => {
+  const getGenerateOptions = useCallback((): QuestionGenerateOptions => {
     return {
       targetingMode: settings.targetingMode,
       targetSectors:
@@ -48,195 +34,87 @@ export function TrainingView({
           : targetSectorsRef.current,
       gridSize: settings.gridSize,
     };
-  };
+  }, [settings]);
 
-  const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialLevel, getGenerateOptions()),
-  );
-  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
-
-  const [showAnswer, setShowAnswer] = useState<boolean>(false);
-  const [userAnswer, setUserAnswer] = useState<{
-    clickPoint: Point;
-    hitResult: HitResult;
-  } | null>(null);
-
-  // 统计指标与结算弹窗
-  const [totalTrials, setTotalTrials] = useState<number>(0);
-  const [hitTrials, setHitTrials] = useState<number>(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-
-  // === 计时器 ===
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
-
-  // === 键盘监听 (Space / Esc) ===
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        e.preventDefault();
-        if (showAnswer && !isFinished) {
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape') {
-        e.preventDefault();
-        handleFinishSession();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
-
-  // === 作答处理 ===
-  const handleAnswer = async (clickPoint: Point, hitResult: HitResult) => {
-    const responseTimeMs = Date.now() - questionStartTime;
-    setUserAnswer({ clickPoint, hitResult });
-    setShowAnswer(true);
-
-    const newTotal = totalTrials + 1;
-    const newHits = hitTrials + (hitResult.isHit ? 1 : 0);
-    setTotalTrials(newTotal);
-    setHitTrials(newHits);
-
-    // 1. 存数据库原子记录
-    await saveTrialRecord({
-      id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      sessionId: sessionIdRef.current,
-      domain: 'star',
-      mode,
-      timestamp: Date.now(),
-      difficultyLevel: question.difficultyLevel,
-      isHit: hitResult.isHit,
-      responseTimeMs,
-      details: {
-        anchorA: [question.anchorA.x, question.anchorA.y],
-        anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
-        targetB: [question.targetB.x, question.targetB.y],
-        userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
-        angleDegree: question.angleDegree,
-        distanceRatio: question.distanceRatio,
-        errorPixelDistance: hitResult.errorDistance,
-      },
-    });
-
-    // 2. 记录做答 Level 历史
-    setSessionHistory((prev) => [
-      ...prev,
-      {
-        trialIndex: newTotal,
-        level: question.difficultyLevel,
+  const {
+    question,
+    showAnswer,
+    userAnswer,
+    totalTrials,
+    elapsedSeconds,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    handleAnswer,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  } = useTrainingSession<QuestionData, HitResult, { clickPoint: Point; hitResult: HitResult }>({
+    domain: 'star',
+    mode,
+    sessionType,
+    initialLevel,
+    autoNext: settings.autoNext,
+    autoNextDelay: settings.autoNextDelay,
+    stepGranularity: settings.stepGranularity,
+    adaptiveMode: settings.adaptiveMode,
+    targetAccuracy: settings.targetAccuracy,
+    blockSize: settings.blockSize,
+    generateQuestion: (level) => generateQuestion(mode, level, getGenerateOptions()),
+    evaluateAnswer: (userVal) => userVal.hitResult,
+    isHit: (hitResult) => hitResult.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs }) => {
+      await saveTrialRecord({
+        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sessionId,
+        domain: 'star',
+        mode,
+        timestamp: Date.now(),
+        difficultyLevel: q.difficultyLevel,
         isHit: hitResult.isHit,
         responseTimeMs,
-      },
-    ]);
-
-    // 3. 调优阶梯难度 Level
-    adaptiveEngineRef.current.recordResult(hitResult.isHit);
-
-    const delay = settings.autoNextDelay;
-
-    // 4. 检查基准测试是否完成 (20 题)
-    if (sessionType === 'benchmark' && newTotal >= 20) {
-      setIsFinished(true);
-      await saveCurrentSession(newTotal, newHits, true);
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        setShowSummaryModal(true);
-      }, delay);
-    } else if (settings.autoNext) {
-      // 自动翻页延时
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        handleNextQuestion();
-      }, delay);
-    }
-  };
-
-  // === 切题 ===
-  const handleNextQuestion = () => {
-    if (isFinished) return;
-    if (autoNextTimerRef.current) {
-      clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = null;
-    }
-
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setShowAnswer(false);
-    setUserAnswer(null);
-    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
-    setQuestionStartTime(Date.now());
-  };
-
-  // === 保存会话数据 ===
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
-    const sessionData: SessionData = {
-      id: sessionIdRef.current,
-      domain: 'star',
-      mode,
-      type: sessionType,
-      startTimestamp: startTimeRef.current,
-      endTimestamp: ended ? Date.now() : undefined,
-      totalTrials: trials,
-      hitTrials: hits,
-      startLevel: initialLevel,
-      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    };
-    await saveSession(sessionData);
-  };
-
-  // === 触发退出/完成请求 ===
-  const handleRequestFinish = async () => {
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
-    } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
-    }
-  };
-
-  // === 彻底退出 ===
-  const handleFinishSession = async () => {
-    await saveCurrentSession(totalTrials, hitTrials, true);
-    onExit();
-  };
-
-  // === 再练一轮 ===
-  const handleRestartSession = () => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    sessionIdRef.current = `session_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));
-    setQuestionStartTime(Date.now());
-  };
+        details: {
+          anchorA: [q.anchorA.x, q.anchorA.y],
+          anchorC: q.anchorC ? [q.anchorC.x, q.anchorC.y] : undefined,
+          targetB: [q.targetB.x, q.targetB.y],
+          userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
+          angleDegree: q.angleDegree,
+          distanceRatio: q.distanceRatio,
+          errorPixelDistance: hitResult.errorDistance,
+        },
+      });
+    },
+    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+      await saveSession({
+        id: sessionId,
+        domain: 'star',
+        mode,
+        type: sessionType,
+        startTimestamp,
+        endTimestamp: ended ? Date.now() : undefined,
+        totalTrials: t,
+        hitTrials: h,
+        startLevel: initialLevel,
+        endLevel,
+      });
+    },
+    onExit,
+  });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
 
+  const canvasUserAnswer = userAnswer
+    ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer }
+    : null;
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 顶栏控制面板 */}
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <button
@@ -258,7 +136,6 @@ export function TrainingView({
           )}
         </div>
 
-        {/* 核心监控指标 */}
         <div className="flex items-center gap-6 text-sm">
           <div>
             <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
@@ -283,16 +160,19 @@ export function TrainingView({
         </div>
       </header>
 
-      {/* 核心双 Canvas 交互区 */}
       <StarCanvas
         question={question}
         showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={handleAnswer}
+        userAnswer={canvasUserAnswer}
+        onAnswer={(clickPoint) => {
+          const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
+          if (hitRes.isWithinRange) {
+            handleAnswer({ clickPoint, hitResult: hitRes });
+          }
+        }}
         disabled={isFinished}
       />
 
-      {/* 底部操作面板（仅在未开启自动翻页时显示） */}
       {!settings.autoNext && (
         <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
           {isFinished ? (
@@ -321,7 +201,6 @@ export function TrainingView({
         </div>
       )}
 
-      {/* 练习结算弹窗 */}
       {showSummaryModal && (
         <SessionSummaryModal
           mode={mode}

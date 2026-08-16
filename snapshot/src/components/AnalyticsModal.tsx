@@ -1,6 +1,8 @@
 import { AlertCircle, BarChart2, Compass, Info, Target, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { TrainingMode, TrialRecord } from '../types';
+import { renderCompassCanvas } from '../utils/canvas/drawCompass';
+import { renderHeatmapCanvas } from '../utils/canvas/drawHeatmap';
 import { getAllTrialRecords } from '../utils/db';
 
 interface AnalyticsModalProps {
@@ -106,90 +108,8 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
   useEffect(() => {
     if (activeTab !== 'heatmap' || loading) return;
     const canvas = heatmapCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-    const scale = 5; // 1px 屏幕误差放大 5 倍渲染便于可视化
-
-    // 清屏
-    ctx.fillStyle = '#1E293B'; // 科技深蓝背景
-    ctx.fillRect(0, 0, width, height);
-
-    // 绘制辅助同心圆 (5, 10, 20, 30)
-    const rings = [5, 10, 20, 30];
-    ctx.lineWidth = 1;
-    for (const r of rings) {
-      ctx.strokeStyle = '#334155';
-      ctx.beginPath();
-      ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#64748B';
-      ctx.font = '10px monospace';
-      ctx.fillText(`${r}`, cx + r * scale + 2, cy - 4);
-    }
-
-    // 绘制十字坐标轴
-    ctx.strokeStyle = '#475569';
-    ctx.setLineDash([2, 2]);
-    ctx.beginPath();
-    ctx.moveTo(0, cy);
-    ctx.lineTo(width, cy);
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx, height);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 绘制每个做答记录的相对偏移散点
-    for (const r of records) {
-      const dx = r.userClick[0] - r.targetB[0];
-      const dy = r.userClick[1] - r.targetB[1];
-
-      const px = cx + dx * scale;
-      const py = cy + dy * scale;
-
-      // 根据是否击中渲染绿色/红黄色散点光晕
-      ctx.beginPath();
-      ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-      if (r.isHit) {
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
-      } else {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
-      }
-      ctx.fill();
-    }
-
-    // 绘制中心目标点 B (真理原点)
-    ctx.fillStyle = '#FFFFFF';
-    ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 绘制平均偏移向量线
-    if (totalCount > 0) {
-      const avgPx = cx + avgDx * scale;
-      const avgPy = cy + avgDy * scale;
-
-      ctx.strokeStyle = '#F59E0B'; // 橙色平均方向指示线
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(avgPx, avgPy);
-      ctx.stroke();
-
-      ctx.fillStyle = '#F59E0B';
-      ctx.beginPath();
-      ctx.arc(avgPx, avgPy, 5, 0, Math.PI * 2);
-      ctx.fill();
+    if (canvas) {
+      renderHeatmapCanvas(canvas, records, avgDx, avgDy, totalCount);
     }
   }, [activeTab, loading, records, avgDx, avgDy, totalCount]);
 
@@ -197,75 +117,9 @@ export function AnalyticsModal({ initialMode = 'all', onClose }: AnalyticsModalP
   useEffect(() => {
     if (activeTab !== 'compass' || loading) return;
     const canvas = compassCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-    const cx = width / 2;
-    const cy = height / 2;
-    const outerRadius = Math.min(width, height) / 2 - 30;
-
-    // 清屏
-    ctx.fillStyle = '#1E293B';
-    ctx.fillRect(0, 0, width, height);
-
-    // 绘制 8 个扇形
-    const sectorAngle = (Math.PI * 2) / 8;
-    // 起始偏移量 -22.5° 使正东 0° 位于正中央
-    const startOffset = -Math.PI / 8;
-
-    for (let i = 0; i < sectorStats.length; i++) {
-      const stat = sectorStats[i];
-      const startA = startOffset + i * sectorAngle;
-      const endA = startA + sectorAngle;
-
-      // 根据正确率决定半径大小与填充颜色
-      const radiusRatio = stat.total > 0 ? 0.35 + (stat.accuracy / 100) * 0.65 : 0.25;
-      const r = outerRadius * radiusRatio;
-
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, startA, endA);
-      ctx.closePath();
-
-      if (stat.total === 0) {
-        ctx.fillStyle = 'rgba(51, 65, 85, 0.4)';
-      } else if (stat.accuracy >= 80) {
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.55)'; // 绿
-      } else if (stat.accuracy >= 60) {
-        ctx.fillStyle = 'rgba(245, 158, 11, 0.65)'; // 黄
-      } else {
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.75)'; // 红
-      }
-      ctx.fill();
-
-      ctx.strokeStyle = '#475569';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // 绘制方向文字标注
-      const midA = startA + sectorAngle / 2;
-      const labelR = outerRadius + 18;
-      const lx = cx + Math.cos(midA) * labelR;
-      const ly = cy + Math.sin(midA) * labelR;
-
-      ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#EF4444' : '#94A3B8';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(stat.label.split(' ')[0], lx, ly);
+    if (canvas) {
+      renderCompassCanvas(canvas, sectorStats);
     }
-
-    // 中心装饰基准圆
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
-    ctx.fill();
-    ctx.strokeStyle = '#64748B';
-    ctx.stroke();
   }, [activeTab, loading, sectorStats]);
 
   return (
