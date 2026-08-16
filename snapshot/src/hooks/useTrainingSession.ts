@@ -80,9 +80,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // === 业务处理逻辑函数 (定义在 useEffect 之前) ===
+  // === 使用 function 语句提升声明，彻底根除 TDZ 问题 ===
 
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
+  async function saveCurrentSession(trials = totalTrials, hits = hitTrials, ended = false) {
     await saveSession({
       sessionId: sessionIdRef.current,
       totalTrials: trials,
@@ -91,9 +91,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       startTimestamp: startTimeRef.current,
       endLevel: adaptiveEngineRef.current.getCurrentLevel(),
     });
-  };
+  }
 
-  const handleNextQuestion = () => {
+  function handleNextQuestion() {
     if (isFinished) return;
     if (autoNextTimerRef.current) {
       clearTimeout(autoNextTimerRef.current);
@@ -105,9 +105,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setUserAnswer(null);
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }
 
-  const handleAnswer = async (userVal: TAnswerVal) => {
+  async function handleAnswer(userVal: TAnswerVal) {
     const responseTimeMs = Date.now() - questionStartTime;
     const hitResult = evaluateAnswer(userVal, question);
     const hit = isHit(hitResult);
@@ -153,9 +153,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         handleNextQuestion();
       }, autoNextDelay);
     }
-  };
+  }
 
-  const handleRequestFinish = async () => {
+  async function handleRequestFinish() {
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -163,14 +163,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  };
+  }
 
-  const handleFinishSession = async () => {
+  async function handleFinishSession() {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
-  };
+  }
 
-  const handleRestartSession = () => {
+  function handleRestartSession() {
     setShowSummaryModal(false);
     setIsFinished(false);
     setTotalTrials(0);
@@ -184,11 +184,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }
 
-  // === 副作用监听器 (定义在 handler 之后) ===
-
-  // 计时器
+  // === 计时器 ===
   useEffect(() => {
     const timer = setInterval(() => {
       if (showSummaryModal || isFinished) return;
@@ -197,7 +195,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished]);
 
-  // 快捷键响应 (Space / Escape)
+  // === 快捷键响应 (Space / Escape) ===
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.key === ' ') {
@@ -219,8 +217,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     showSummaryModal,
     totalTrials,
     hitTrials,
-    handleNextQuestion,
-    handleRequestFinish,
   ]);
 
   return {

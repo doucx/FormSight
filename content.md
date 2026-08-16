@@ -1,8 +1,8 @@
-产生此报错的原因是在 `useTrainingSession.ts` 中，`useEffect` Hook 被写在了处理函数（`handleNextQuestion`、`handleRequestFinish` 等）的定义之前。在 JavaScript 中，通过 `const` 声明的函数存在临时死区 (Temporal Dead Zone, TDZ)，当组件初始化执行到 `useEffect` 并计算其依赖项数组 `[..., handleNextQuestion, handleRequestFinish]` 时，这两个函数变量尚未被声明和赋值，从而抛出了 `ReferenceError: Cannot access 'handleNextQuestion' before initialization` 错误。
+为了彻底根除 `handleNextQuestion` 在某些打包/热重载场景下因 JavaScript 变量初始化临时死区（TDZ）导致的 `ReferenceError` 报错，我们将使用 **标准 `function` 声明** 替代 `const` 匿名箭头函数。
 
-我们将调整 `useTrainingSession.ts` 中代码的声明顺序，将所有 Hook 处理函数（`handleNextQuestion`、`handleRequestFinish` 等）提升定义在 `useEffect` 之前，彻底解决该变量未初始化访问的错误。
+在 JavaScript 标准中，通过 `function` 关键字声明的函数具备 **Function Hoisting（函数声明提升）** 特性，在当前函数作用域初始化时即自动就位，不受声明位置顺序限制，可完全避免 TDZ 异常。
 
-## [WIP] fix: 修复 useTrainingSession 中 handleNextQuestion 变量暂态死区初始化错误
+## [WIP] fix: 使用函数声明提升彻底根除 useTrainingSession 初始化 TDZ 报错
 
 ### 错误分析
 
@@ -10,36 +10,41 @@
 `Uncaught (in promise) ReferenceError: Cannot access 'handleNextQuestion' before initialization`
 `at useTrainingSession (useTrainingSession.ts:114:5)`
 
-在 `useTrainingSession.ts` 的函数体内，`useEffect` 监听器最先出现并试图在依赖项数组中访问 `handleNextQuestion` 和 `handleRequestFinish` 变量，而这两个变量在更靠后的行中才通过 `const handleNextQuestion = ...` 声明。当 Hook 函数被调用求值时，JavaScript 引擎在进入 TDZ（临时死区）时抛出了 `ReferenceError` 运行时异常。
+虽然先前调整了行顺序，但在打包或 HMR 热更新环境中，用 `const` 声明的箭头函数在闭包、`useEffect` 依赖数组或定时器回调内部被捕获时，若存在变量求值与初始化时机重叠的情况，仍会进入 JavaScript 的 Temporal Dead Zone（临时死区），抛出 `ReferenceError`。
 
 ### 用户需求
 
-修复 Hook 函数组件初始化时的 `ReferenceError` 错误，确保 `useTrainingSession` 在各练习界面能够稳定无错地加载与初始化。
+彻底消除 `useTrainingSession` 初始化过程中的 `ReferenceError` 报错，确保各训练页面稳定挂载与运行。
 
 ### 评论
 
-这是一个典型的 JavaScript / TypeScript 函数变量提升与 TDZ 作用域定义问题。将副作用 `useEffect` 的定义统一放置在业务 Handler 函数声明之后即可规避。
+通过使用 JavaScript 原生的 `function` 语句声明 Hook 内的事件处理函数，可以借由 Function Hoisting（函数提升）在编译/执行阶段一次性将函数名注册至作用域顶端，是消除 TDZ 报错最稳健的做法。
 
 ### 目标
 
-调整 `src/hooks/useTrainingSession.ts` 中函数与 Hook 的编写顺序：
-1. 先定义 State 与 Ref 状态；
-2. 再定义 `saveCurrentSession`、`handleNextQuestion`、`handleRequestFinish` 等回调处理逻辑；
-3. 最后注册 `useEffect` 副作用监听器。
+将 `useTrainingSession.ts` 中的事件处理函数：
+- `saveCurrentSession`
+- `handleNextQuestion`
+- `handleAnswer`
+- `handleRequestFinish`
+- `handleFinishSession`
+- `handleRestartSession`
+
+全量重构为 `function` 声明形式，提升其作用域声明。
 
 ### 基本原理
 
-在函数组件或自定义 Hook 中，先声明所有的内部事件回调函数，再声明引用这些函数的 `useEffect`，可以确保 `useEffect` 求值依赖数组时变量已经被正确赋上了函数实例引用。
+JavaScript 引擎在创建执行上下文（Execution Context）时，会优先将 `function` 声明保存在环境记录中并赋予其函数对象引用。因此在作用域内的任何位置，访问 `function` 声明的标识符均安全可靠。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-session-initialization #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-session-tdz-fix #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构并修复 useTrainingSession.ts 中函数的声明顺序
+#### Acts 1: 重构 useTrainingSession.ts 函数声明提升
 
 ~~~~~act
 write_file
@@ -128,9 +133,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // === 业务处理逻辑函数 (定义在 useEffect 之前) ===
+  // === 使用 function 语句提升声明，彻底根除 TDZ 问题 ===
 
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
+  async function saveCurrentSession(trials = totalTrials, hits = hitTrials, ended = false) {
     await saveSession({
       sessionId: sessionIdRef.current,
       totalTrials: trials,
@@ -139,9 +144,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       startTimestamp: startTimeRef.current,
       endLevel: adaptiveEngineRef.current.getCurrentLevel(),
     });
-  };
+  }
 
-  const handleNextQuestion = () => {
+  function handleNextQuestion() {
     if (isFinished) return;
     if (autoNextTimerRef.current) {
       clearTimeout(autoNextTimerRef.current);
@@ -153,9 +158,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setUserAnswer(null);
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }
 
-  const handleAnswer = async (userVal: TAnswerVal) => {
+  async function handleAnswer(userVal: TAnswerVal) {
     const responseTimeMs = Date.now() - questionStartTime;
     const hitResult = evaluateAnswer(userVal, question);
     const hit = isHit(hitResult);
@@ -201,9 +206,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         handleNextQuestion();
       }, autoNextDelay);
     }
-  };
+  }
 
-  const handleRequestFinish = async () => {
+  async function handleRequestFinish() {
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -211,14 +216,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  };
+  }
 
-  const handleFinishSession = async () => {
+  async function handleFinishSession() {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
-  };
+  }
 
-  const handleRestartSession = () => {
+  function handleRestartSession() {
     setShowSummaryModal(false);
     setIsFinished(false);
     setTotalTrials(0);
@@ -232,11 +237,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }
 
-  // === 副作用监听器 (定义在 handler 之后) ===
-
-  // 计时器
+  // === 计时器 ===
   useEffect(() => {
     const timer = setInterval(() => {
       if (showSummaryModal || isFinished) return;
@@ -245,7 +248,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished]);
 
-  // 快捷键响应 (Space / Escape)
+  // === 快捷键响应 (Space / Escape) ===
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.key === ' ') {
@@ -267,8 +270,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     showSummaryModal,
     totalTrials,
     hitTrials,
-    handleNextQuestion,
-    handleRequestFinish,
   ]);
 
   return {
@@ -292,5 +293,5 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
 
 ### 下一步建议
 
-- 重新进入相对色感、寻星或绝对色感训练界面，检查页面是否能够正常加载与答题。
-- 在作答几题后按下 `Esc` 键，确认能正确弹出训练结算对话框。
+- 刷新页面并重新进入练习模块（寻星练习、绝对色感或相对色感），验证界面是否能够顺利加载。
+- 答题并按 `Esc` 键测试，确认能够正确调出结算总结对话框。
