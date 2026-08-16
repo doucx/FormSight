@@ -60,6 +60,7 @@ export function App() {
     S: null,
     V: null,
     ALL: null,
+    COMPENSATION: null,
   });
   const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
   const [colorTimeMs, setColorTimeMs] = useState<number>(0);

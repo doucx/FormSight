@@ -52,6 +52,12 @@ const COLOR_MODES_CONFIG: Array<{
     desc: '同时调整色相、饱和度与明度，逼近真理色彩',
     icon: Palette,
   },
+  {
+    id: 'COMPENSATION',
+    title: 'HSV 缺陷补偿 (Comp)',
+    desc: '克服 HSV 轴线非线性假象，通过 3 轨调色逼近 OKLab 视觉感知目标',
+    icon: Sliders,
+  },
 ];
 
 function formatTodayTime(ms: number): string {
@@ -79,6 +85,7 @@ export function ColorDashboard({
     V: { count: 0, timeMs: 0 },
     S: { count: 0, timeMs: 0 },
     ALL: { count: 0, timeMs: 0 },
+    COMPENSATION: { count: 0, timeMs: 0 },
   });
 
   useEffect(() => {
@@ -93,6 +100,7 @@ export function ColorDashboard({
         V: { count: 0, timeMs: 0 },
         S: { count: 0, timeMs: 0 },
         ALL: { count: 0, timeMs: 0 },
+        COMPENSATION: { count: 0, timeMs: 0 },
       };
 
       for (const r of records) {

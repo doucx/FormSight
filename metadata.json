@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(db): 确保全量数据导出与导入时完整同步用户偏好设置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786858775.7088194, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(color): 实现绝对色感中的“HSV 缺陷补偿训练”模式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786860504.4128392, "duration_ms": 0}}

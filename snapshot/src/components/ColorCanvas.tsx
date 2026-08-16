@@ -249,10 +249,12 @@ export function ColorCanvas({
   const targetHex = hsvToHex(targetH, targetS, targetV);
   const targetHSV: [number, number, number] = [targetH, targetS, targetV];
 
-  // ALL 模式下的本地调制状态
-  const [userH, setUserH] = useState<number>(180);
-  const [userS, setUserS] = useState<number>(50);
-  const [userV, setUserV] = useState<number>(50);
+  const isMultiTrackMode = mode === 'ALL' || mode === 'COMPENSATION';
+
+  // ALL / COMPENSATION 模式下的本地调制状态
+  const [userH, setUserH] = useState<number>(question.baseHSV ? question.baseHSV[0] : 180);
+  const [userS, setUserS] = useState<number>(question.baseHSV ? question.baseHSV[1] : 50);
+  const [userV, setUserV] = useState<number>(question.baseHSV ? question.baseHSV[2] : 50);
 
   // ALL 模式下悬停与拖拽状态 (控制右侧色块预览)
   const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
@@ -262,37 +264,37 @@ export function ColorCanvas({
   });
   const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
 
-  // 题目切换时重置 ALL 模式状态
+  // 题目切换时重置状态
   useEffect(() => {
-    if (mode === 'ALL') {
-      setUserH(180);
-      setUserS(50);
-      setUserV(50);
+    if (isMultiTrackMode) {
+      setUserH(question.baseHSV ? question.baseHSV[0] : 180);
+      setUserS(question.baseHSV ? question.baseHSV[1] : 50);
+      setUserV(question.baseHSV ? question.baseHSV[2] : 50);
       setAllHoverVals({ H: null, S: null, V: null });
       setDraggingLabel(null);
     }
-  }, [mode]);
+  }, [mode, question.baseHSV]);
 
   const handleSubmitAll = () => {
     if (disabled || showAnswer) return;
     onAnswer([userH, userS, userV]);
   };
 
-  // 键盘快捷键响应 (ALL 模式下 Space 显式提交)
+  // 键盘快捷键响应 (ALL / COMPENSATION 模式下 Space 显式提交)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && mode === 'ALL' && !showAnswer && !disabled) {
+      if (e.code === 'Space' && isMultiTrackMode && !showAnswer && !disabled) {
         e.preventDefault();
         onAnswer([userH, userS, userV]);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, showAnswer, disabled, userH, userS, userV, onAnswer]);
+  }, [isMultiTrackMode, showAnswer, disabled, userH, userS, userV, onAnswer]);
 
   // 渐变背景计算
-  const currentH = mode === 'ALL' ? userH : targetH;
-  const currentV = mode === 'ALL' ? userV : targetV;
+  const currentH = isMultiTrackMode ? userH : targetH;
+  const currentV = isMultiTrackMode ? userV : targetV;
 
   const hueGradient =
     'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
@@ -301,30 +303,52 @@ export function ColorCanvas({
 
   return (
     <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+      {/* 缺陷补偿模式感知目标提示文案 */}
+      {mode === 'COMPENSATION' && question.goalDescription && (
+        <div className="w-full bg-indigo-50/80 border border-indigo-100 p-3.5 rounded-2xl text-xs font-semibold text-indigo-900 text-center">
+          🎯 <span className="font-bold">{question.goalDescription}</span>
+        </div>
+      )}
+
       {/* 目标色块 / 综合对比色块 */}
       <div className="flex flex-col items-center gap-2 w-full">
-        {mode === 'ALL' ? (
+        {isMultiTrackMode ? (
           <div className="flex items-center justify-center gap-4 w-full">
-            <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
-              style={{ backgroundColor: targetHex }}
-            />
-            <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
-              style={{
-                backgroundColor: hsvToHex(
-                  draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                    ? (allHoverVals.H ?? userH)
-                    : userH,
-                  draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                    ? (allHoverVals.S ?? userS)
-                    : userS,
-                  draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                    ? (allHoverVals.V ?? userV)
-                    : userV,
-                ),
-              }}
-            />
+            {question.baseHSV && (
+              <div className="flex flex-col items-center gap-1 flex-1">
+                <span className="text-[10px] font-bold text-slate-400">起始基准色</span>
+                <div
+                  className="w-full h-24 rounded-2xl shadow-inner border-2 border-white ring-1 ring-slate-200"
+                  style={{ backgroundColor: hsvToHex(...question.baseHSV) }}
+                />
+              </div>
+            )}
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <span className="text-[10px] font-bold text-indigo-600">目标色彩</span>
+              <div
+                className="w-full h-24 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
+                style={{ backgroundColor: targetHex }}
+              />
+            </div>
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <span className="text-[10px] font-bold text-slate-600">你的调制色</span>
+              <div
+                className="w-full h-24 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
+                style={{
+                  backgroundColor: hsvToHex(
+                    draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
+                      ? (allHoverVals.H ?? userH)
+                      : userH,
+                    draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
+                      ? (allHoverVals.S ?? userS)
+                      : userS,
+                    draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
+                      ? (allHoverVals.V ?? userV)
+                      : userV,
+                  ),
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div
@@ -336,7 +360,7 @@ export function ColorCanvas({
 
       {/* 轨道面板 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {mode === 'ALL' ? (
+        {isMultiTrackMode ? (
           <>
             <HsvTrackSlider
               label="H"
@@ -459,8 +483,8 @@ export function ColorCanvas({
         )}
       </div>
 
-      {/* ALL 模式确认提交按钮 */}
-      {mode === 'ALL' && !showAnswer && (
+      {/* 多轨道确认提交按钮 */}
+      {isMultiTrackMode && !showAnswer && (
         <button
           type="button"
           onClick={handleSubmitAll}

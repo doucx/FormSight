@@ -99,4 +99,16 @@ describe('colorUtils & oklchUtils', () => {
     const ratio = targetedCount / totalRuns;
     expect(ratio).toBeGreaterThan(0.4);
   });
+
+  it('generateColorQuestion - COMPENSATION mode should generate baseHSV and goalDescription', () => {
+    const questionComp = generateColorQuestion('COMPENSATION', 5);
+    expect(questionComp.mode).toBe('COMPENSATION');
+    expect(questionComp.baseHSV).toBeDefined();
+    expect(questionComp.baseHSV?.length).toBe(3);
+    expect(questionComp.goalDescription).toContain('感知明度 L');
+
+    const hitResult = checkColorHit('COMPENSATION', [180, 50, 50], questionComp);
+    expect(hitResult).toBeDefined();
+    expect(hitResult.tolerance).toBeGreaterThan(0);
+  });
 });

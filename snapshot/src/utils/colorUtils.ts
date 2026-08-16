@@ -1,6 +1,6 @@
 import { calcDeltaEOk, getOkChroma, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
-export type ColorMode = 'H' | 'S' | 'V' | 'ALL';
+export type ColorMode = 'H' | 'S' | 'V' | 'ALL' | 'COMPENSATION';
 
 export interface ColorQuestionData {
   id: string;
@@ -10,6 +10,8 @@ export interface ColorQuestionData {
   targetS: number; // 0..100
   targetV: number; // 0..100
   tolerance: number; // 允许的感知色差阈值 ΔE_target
+  baseHSV?: [number, number, number]; // 补偿模式下的起始基准色彩 [H, S, V]
+  goalDescription?: string; // 补偿模式下的视觉感知目标说明
 }
 
 export interface ColorHitResult {
@@ -149,6 +151,55 @@ export function generateColorQuestion(
     }
   }
 
+  if (mode === 'COMPENSATION') {
+    // 缺陷补偿模式：生成基准色与 OKLab 感知偏移目标
+    const baseH = Math.floor(Math.random() * 360);
+    const baseS = Math.floor(Math.random() * 60) + 30; // 30..90
+    const baseV = Math.floor(Math.random() * 60) + 30; // 30..90
+    const baseLab = hsvToOkLab(baseH, baseS, baseV);
+
+    // 在 OKLab 空间施加定量的视觉明度 L 偏移 (±0.15~0.25)
+    const deltaL = (Math.random() > 0.5 ? 1 : -1) * (0.15 + Math.random() * 0.1);
+    const targetL = Math.max(0.15, Math.min(0.9, baseLab[0] + deltaL));
+
+    // 目标 OKLab: 保持 a, b 近似彩度不变，仅调整视觉明度
+    const targetLab: [number, number, number] = [targetL, baseLab[1], baseLab[2]];
+
+    // 逆向计算目标 HSV (粗略匹配最接近的 sRGB / HSV)
+    let bestH = baseH;
+    let bestS = baseS;
+    let bestV = Math.max(0, Math.min(100, Math.round(baseV + deltaL * 100)));
+    let minErr = Number.MAX_VALUE;
+
+    // 搜索能够匹配目标 Lab 的最佳 HSV 组合
+    for (let v = 10; v <= 100; v += 5) {
+      for (let s = 10; s <= 100; s += 5) {
+        const testLab = hsvToOkLab(baseH, s, v);
+        const err = calcDeltaEOk(targetLab, testLab);
+        if (err < minErr) {
+          minErr = err;
+          bestS = s;
+          bestV = v;
+        }
+      }
+    }
+
+    const directionText = deltaL > 0 ? '提升' : '降低';
+    const goalDescription = `基准色出发：保持视觉纯度 C 不变，将感知明度 L ${directionText} ${Math.abs(Math.round(deltaL * 100))}%`;
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      targetH: bestH,
+      targetS: bestS,
+      targetV: bestV,
+      tolerance,
+      baseHSV: [baseH, baseS, baseV],
+      goalDescription,
+    };
+  }
+
   return {
     id,
     mode,
@@ -174,7 +225,7 @@ export function checkColorHit(
   let userS: number;
   let userV: number;
 
-  if (mode === 'ALL' && Array.isArray(userVal)) {
+  if ((mode === 'ALL' || mode === 'COMPENSATION') && Array.isArray(userVal)) {
     [userH, userS, userV] = userVal;
   } else {
     const singleVal = typeof userVal === 'number' ? userVal : userVal[0];
@@ -193,7 +244,7 @@ export function checkColorHit(
   let targetVal = targetH;
   let errorVal = 0;
 
-  if (mode === 'ALL') {
+  if (mode === 'ALL' || mode === 'COMPENSATION') {
     targetVal = 0;
     errorVal = Math.round(realDeltaE * 1000) / 1000;
   } else if (mode === 'H') {

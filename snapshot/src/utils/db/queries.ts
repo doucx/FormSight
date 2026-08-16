@@ -154,18 +154,19 @@ export async function saveColorSession(session: UnifiedSessionData): Promise<voi
 }
 
 export async function getAllColorProfiles(): Promise<
-  Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null>
+  Record<'H' | 'S' | 'V' | 'ALL' | 'COMPENSATION', UnifiedProfileData | null>
 > {
   const profiles = await getProfilesByDomain('color');
-  const result: Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null> = {
+  const result: Record<'H' | 'S' | 'V' | 'ALL' | 'COMPENSATION', UnifiedProfileData | null> = {
     H: null,
     S: null,
     V: null,
     ALL: null,
+    COMPENSATION: null,
   };
   for (const p of profiles) {
     if (p.mode in result) {
-      result[p.mode as 'H' | 'S' | 'V' | 'ALL'] = p;
+      result[p.mode as 'H' | 'S' | 'V' | 'ALL' | 'COMPENSATION'] = p;
     }
   }
   return result;
