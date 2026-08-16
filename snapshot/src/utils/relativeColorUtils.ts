@@ -11,6 +11,8 @@ export interface RelativeColorQuestionData {
   colorC: [number, number, number]; // [H, S, V]
   targetD: [number, number, number]; // [H, S, V]
   tolerance: number; // ΔE_target
+  options: [number, number, number][]; // 4 个候选 HSV tuple
+  correctIndex: number; // 正确选项的索引 (0~3)
 }
 
 export interface RelativeColorHitResult {
@@ -21,10 +23,11 @@ export interface RelativeColorHitResult {
   magnitudeError: number;
   angleErrorDeg: number;
   tolerance: number;
+  selectedIndex?: number;
 }
 
 /**
- * 将 OKLab 坐标坐标逆向近似换算为可显示 sRGB / HSV
+ * 将 OKLab 坐标逆向近似换算为可显示 sRGB / HSV
  */
 export function okLabToHsv(lab: [number, number, number]): [number, number, number] {
   const [L, a, b] = lab;
@@ -74,7 +77,7 @@ export function okLabToHsv(lab: [number, number, number]): [number, number, numb
 }
 
 /**
- * 随机生成色彩矢量迁移题目
+ * 随机生成色彩矢量迁移题目与 4 个 candidate 干扰选项
  */
 export function generateRelativeColorQuestion(
   mode: RelativeColorMode,
@@ -89,6 +92,8 @@ export function generateRelativeColorQuestion(
   let colorB: [number, number, number] = [0, 0, 0];
   let colorC: [number, number, number] = [0, 0, 0];
   let targetD: [number, number, number] = [0, 0, 0];
+  let labTargetD: [number, number, number] = [0, 0, 0];
+  let vAB: [number, number, number] = [0, 0, 0];
 
   while (attempts < 100) {
     attempts++;
@@ -115,19 +120,64 @@ export function generateRelativeColorQuestion(
     const labB = hsvToOkLab(...colorB);
     const labC = hsvToOkLab(...colorC);
 
-    const vAB: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+    vAB = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
 
-    const targetLabD: [number, number, number] = [
-      labC[0] + vAB[0],
-      labC[1] + vAB[1],
-      labC[2] + vAB[2],
-    ];
+    labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
 
-    if (targetLabD[0] >= 0.1 && targetLabD[0] <= 0.95) {
-      targetD = okLabToHsv(targetLabD);
+    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.95) {
+      targetD = okLabToHsv(labTargetD);
       break;
     }
   }
+
+  // === 干扰项生成逻辑 (OKLab 空间中基于 Level 递减的扰动) ===
+  const t = (clampedLevel - 1) / 34;
+  const spreadScale = 0.08 * (1 - t * 0.75) + 0.015;
+
+  // 干扰项 1: 推移模长/幅度误差 (Magnitude error)
+  const magFactor = Math.random() > 0.5 ? 1 + spreadScale * 1.5 : Math.max(0.2, 1 - spreadScale * 1.5);
+  const labD1: [number, number, number] = [
+    Math.max(0.05, Math.min(0.98, labTargetD[0] + vAB[0] * (magFactor - 1))),
+    labTargetD[1] + vAB[1] * (magFactor - 1),
+    labTargetD[2] + vAB[2] * (magFactor - 1),
+  ];
+
+  // 干扰项 2: 明度单维度偏差 (Lightness error)
+  const lightShift = (Math.random() > 0.5 ? 1 : -1) * spreadScale * 1.2;
+  const labD2: [number, number, number] = [
+    Math.max(0.05, Math.min(0.98, labTargetD[0] + lightShift)),
+    labTargetD[1],
+    labTargetD[2],
+  ];
+
+  // 干扰项 3: 色相/色偏旋转误差 (Hue/Direction error)
+  const rotAngle = (Math.random() > 0.5 ? 1 : -1) * (15 + (1 - t) * 30) * (Math.PI / 180);
+  const cosA = Math.cos(rotAngle);
+  const sinA = Math.sin(rotAngle);
+  const rotatedA = vAB[1] * cosA - vAB[2] * sinA;
+  const rotatedB = vAB[1] * sinA + vAB[2] * cosA;
+  const labD3: [number, number, number] = [
+    labTargetD[0],
+    labTargetD[1] + (rotatedA - vAB[1]),
+    labTargetD[2] + (rotatedB - vAB[2]),
+  ];
+
+  const rawOptions: [number, number, number][] = [
+    targetD,
+    okLabToHsv(labD1),
+    okLabToHsv(labD2),
+    okLabToHsv(labD3),
+  ];
+
+  // 打乱选项并计算正确的索引
+  const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
+  for (let i = indexedOptions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexedOptions[i], indexedOptions[j]] = [indexedOptions[j], indexedOptions[i]];
+  }
+
+  const options = indexedOptions.map((o) => o.opt);
+  const correctIndex = indexedOptions.findIndex((o) => o.isTarget);
 
   return {
     id,
@@ -138,6 +188,8 @@ export function generateRelativeColorQuestion(
     colorC,
     targetD,
     tolerance,
+    options,
+    correctIndex,
   };
 }
 
@@ -149,7 +201,7 @@ export function checkRelativeColorHit(
   userD: [number, number, number],
   question: RelativeColorQuestionData,
 ): RelativeColorHitResult {
-  const { colorA, colorB, colorC, targetD, difficultyLevel } = question;
+  const { colorA, colorB, colorC, targetD, difficultyLevel, options, correctIndex } = question;
 
   const labA = hsvToOkLab(...colorA);
   const labB = hsvToOkLab(...colorB);
@@ -157,9 +209,16 @@ export function checkRelativeColorHit(
   const labTargetD = hsvToOkLab(...targetD);
   const labUserD = hsvToOkLab(...userD);
 
+  const selectedIndex = options?.findIndex(
+    (opt) => opt[0] === userD[0] && opt[1] === userD[1] && opt[2] === userD[2],
+  );
+
   const deltaEError = calcDeltaEOk(labTargetD, labUserD);
   const tolerance = getTargetDeltaEForLevel(difficultyLevel);
-  const isHit = deltaEError <= tolerance;
+  const isHit =
+    selectedIndex !== undefined && selectedIndex !== -1
+      ? selectedIndex === correctIndex
+      : deltaEError <= tolerance;
 
   // 测量矢量模长误差与方向夹角
   const vRef: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
@@ -188,5 +247,6 @@ export function checkRelativeColorHit(
     magnitudeError: Math.round(magnitudeError * 1000) / 1000,
     angleErrorDeg,
     tolerance,
+    selectedIndex,
   };
 }

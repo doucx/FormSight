@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M GlobalStatsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786862963.047726, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将相对色感模块改造为四选一候选色问答模式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786877062.0742512, "duration_ms": 0}}
