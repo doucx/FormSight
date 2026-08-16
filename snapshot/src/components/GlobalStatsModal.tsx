@@ -117,7 +117,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
     }
     if (selectedFilter.startsWith('relative_color_')) {
-      return r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '');
+      return (
+        r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '')
+      );
     }
     return true;
   });
