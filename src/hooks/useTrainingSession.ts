@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import type { AdaptiveMode, StepGranularity } from '../utils/settings';
@@ -80,44 +80,21 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // 计时器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
+  const saveCurrentSession = useCallback(
+    async (trials = totalTrials, hits = hitTrials, ended = false) => {
+      await saveSession({
+        sessionId: sessionIdRef.current,
+        totalTrials: trials,
+        hitTrials: hits,
+        ended,
+        startTimestamp: startTimeRef.current,
+        endLevel: adaptiveEngineRef.current.getCurrentLevel(),
+      });
+    },
+    [saveSession, totalTrials, hitTrials],
+  );
 
-  // 快捷键响应 (Space / Escape)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape') {
-        e.preventDefault();
-        handleFinishSession();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
-
-  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
-    await saveSession({
-      sessionId: sessionIdRef.current,
-      totalTrials: trials,
-      hitTrials: hits,
-      ended,
-      startTimestamp: startTimeRef.current,
-      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
-    });
-  };
-
-  const handleNextQuestion = () => {
+  const handleNextQuestion = useCallback(() => {
     if (isFinished) return;
     if (autoNextTimerRef.current) {
       clearTimeout(autoNextTimerRef.current);
@@ -129,57 +106,74 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setUserAnswer(null);
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }, [isFinished, generateQuestion]);
 
-  const handleAnswer = async (userVal: TAnswerVal) => {
-    const responseTimeMs = Date.now() - questionStartTime;
-    const hitResult = evaluateAnswer(userVal, question);
-    const hit = isHit(hitResult);
+  const handleAnswer = useCallback(
+    async (userVal: TAnswerVal) => {
+      const responseTimeMs = Date.now() - questionStartTime;
+      const hitResult = evaluateAnswer(userVal, question);
+      const hit = isHit(hitResult);
 
-    setUserAnswer(hitResult);
-    setShowAnswer(true);
+      setUserAnswer(hitResult);
+      setShowAnswer(true);
 
-    const newTotal = totalTrials + 1;
-    const newHits = hitTrials + (hit ? 1 : 0);
-    setTotalTrials(newTotal);
-    setHitTrials(newHits);
+      const newTotal = totalTrials + 1;
+      const newHits = hitTrials + (hit ? 1 : 0);
+      setTotalTrials(newTotal);
+      setHitTrials(newHits);
 
-    await saveTrialRecord({
-      sessionId: sessionIdRef.current,
-      question,
-      hitResult,
-      responseTimeMs,
-      userVal,
-    });
-
-    setSessionHistory((prev) => [
-      ...prev,
-      {
-        trialIndex: newTotal,
-        level: getQuestionLevel(question),
-        isHit: hit,
+      await saveTrialRecord({
+        sessionId: sessionIdRef.current,
+        question,
+        hitResult,
         responseTimeMs,
-      },
-    ]);
+        userVal,
+      });
 
-    adaptiveEngineRef.current.recordResult(hit);
+      setSessionHistory((prev) => [
+        ...prev,
+        {
+          trialIndex: newTotal,
+          level: getQuestionLevel(question),
+          isHit: hit,
+          responseTimeMs,
+        },
+      ]);
 
-    if (sessionType === 'benchmark' && newTotal >= 20) {
-      setIsFinished(true);
-      await saveCurrentSession(newTotal, newHits, true);
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        setShowSummaryModal(true);
-      }, autoNextDelay);
-    } else if (autoNext) {
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        handleNextQuestion();
-      }, autoNextDelay);
-    }
-  };
+      adaptiveEngineRef.current.recordResult(hit);
 
-  const handleRequestFinish = async () => {
+      if (sessionType === 'benchmark' && newTotal >= 20) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        autoNextTimerRef.current = window.setTimeout(() => {
+          setShowSummaryModal(true);
+        }, autoNextDelay);
+      } else if (autoNext) {
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        autoNextTimerRef.current = window.setTimeout(() => {
+          handleNextQuestion();
+        }, autoNextDelay);
+      }
+    },
+    [
+      questionStartTime,
+      evaluateAnswer,
+      question,
+      isHit,
+      totalTrials,
+      hitTrials,
+      saveTrialRecord,
+      getQuestionLevel,
+      sessionType,
+      saveCurrentSession,
+      autoNextDelay,
+      autoNext,
+      handleNextQuestion,
+    ],
+  );
+
+  const handleRequestFinish = useCallback(async () => {
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -187,14 +181,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  };
+  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
 
-  const handleFinishSession = async () => {
+  const handleFinishSession = useCallback(async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
-  };
+  }, [saveCurrentSession, totalTrials, hitTrials, onExit]);
 
-  const handleRestartSession = () => {
+  const handleRestartSession = useCallback(() => {
     setShowSummaryModal(false);
     setIsFinished(false);
     setTotalTrials(0);
@@ -208,7 +202,33 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  };
+  }, [domain, mode, generateQuestion]);
+
+  // === 计时器 ===
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (showSummaryModal || isFinished) return;
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showSummaryModal, isFinished]);
+
+  // === 快捷键响应 (Space / Escape) ===
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        if (showAnswer && !isFinished) {
+          e.preventDefault();
+          handleNextQuestion();
+        }
+      } else if (e.code === 'Escape' || e.key === 'Escape') {
+        e.preventDefault();
+        handleRequestFinish();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, isFinished, handleNextQuestion, handleRequestFinish]);
 
   return {
     question,
