@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(db): 重构 IndexedDB 为通用实体架构以消除技术债", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786853623.2203162, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(relative-color): 实现相对色感训练板块与“色彩矢量迁移”模式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786853767.6503205, "duration_ms": 0}}

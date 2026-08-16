@@ -1,599 +1,1345 @@
-好的，我们现在开始执行 **IndexedDB 数据库架构通用化重构**。
+好的，我们将基于已经升级的通用 IDB 数据库 API，全面开发**“相对色感 (Relative Color Perception)”**主卡片以及**“色彩矢量迁移 (Color Vector Translation)”**训练模块！
 
 下面为您生成 `[WIP]` 计划：
 
-## [WIP] refactor(db): 重构 IndexedDB 为通用实体架构以消除技术债
+## [WIP] feat(relative-color): 实现相对色感训练板块与“色彩矢量迁移”模式
 
 ### 用户需求
-重构 `src/utils/db.ts` 数据库结构，将原本针对每个训练领域独立建表模式重构为基于 `domain` 标识的“通用 3 表架构”（`sessions`, `records`, `user_profiles`），升级 IDB 版本至 4，在平滑无损迁移现有数据的同时提供通用泛型 CRUD API，消除未来新增模式时的重构成本。
+在 FormSight 中集成相对色感训练能力，引入全新的顶层主卡片“相对色感 (Relative Color Perception)”，并实现第一阶段核心功能——**“色彩矢量迁移 (Color Vector Translation)”模式**，训练用户在不同固有色之间保持客观光照/明暗推移矢量的视觉心理感知力。
 
 ### 评论
-这是一次非常关键的架构解耦重构。重构后，不论后续新增“相对色感”、“构图强化”或“画风分析”等任何新功能，数据库表结构和导入/导出逻辑均保持完全稳定，不需要再因增加新模块而频繁升级 IDB 版本。
+绘画的核心在于对相对色彩关系（色彩矢量偏转与明度阶梯推移）的精准捕捉，而非拟合绝对色值。本功能填补了视知觉训练工具在实战色彩关系上的空白，大幅提升了 FormSight 在绘画与设计实战中的指导价值。
 
 ### 目标
-1. 将 IDB 版本升级至 4，创建由 `domain` 与 `mode` 复合驱动的通用 3 表结构（`sessions`, `records`, `user_profiles`）。
-2. 在 v4 升级钩子函数中，将原 `color_*` 专属表中的数据清洗迁移至通用表中，并删除过期的旧表。
-3. 实现泛型化的通用 CRUD、全量导入/导出与时长统计 API。
-4. 保留兼容层别名函数，确保旧有页面与组件调用零中断。
-5. 更新测试脚本，验证新老 API 的兼容性与导出恢复能力。
+1. **矢量算法封装 (`relativeColorUtils.ts`)**：
+   - 在 OKLab 均匀空间中实现色彩推移矢量 $\vec{v}_{AB} = \mathbf{Lab}_B - \mathbf{Lab}_A$ 的推导与真理点 $D_{\text{target}}$ 计算。
+   - 实现包含色差 $\Delta E$、矢量模长误差与方向夹角偏转（色温偏向）的评分判定函数。
+2. **交互画布组件 (`RelativeColorCanvas.tsx`)**：
+   - 直观展示基准组色彩推移关系 $A \to B$ 与目标组色彩推移关系 $C \to D$。
+   - 提供 H/S/V 多轨道调制面板与揭晓阶段真理色对比。
+3. **主视图与看板组件**：
+   - 创建 `RelativeColorDashboard.tsx` 模式选择看板。
+   - 创建 `RelativeColorTrainingView.tsx` 训练交互视图，使用通用 DB API `saveTrialRecord({ domain: 'relative_color', ... })` 保存做答记录。
+4. **顶层入口集成**：
+   - 在 `Home.tsx` 中添加“相对色感训练”主卡片。
+   - 在 `App.tsx` 中接通相对色感模块的导航路由与能力 Profile 加载。
 
 ### 基本原理
-引入 `domain` 字段（如 `'star'`, `'color'`, `'relative_color'`）作为数据租户隔离，结合组合主键 `${domain}:${mode}` 存储能力 Profile。这既保证了统一的数据管线，又允许在 `details` 字段中灵活扩展各领域的个性化数据。
+利用 OKLab 感知均匀色彩空间，将基准色彩对 $(A, B)$ 的转换抽象为一个三维空间矢量 $\vec{v}_{AB}$。在给定新的固有色 $C$ 时，理想答题点 $D_{\text{target}} = C + \vec{v}_{AB}$。通过计算用户调制点 $D_{\text{user}}$ 产生的实际矢量 $\vec{v}_{CD_{\text{user}}}$ 与 $\vec{v}_{AB}$ 的模长与方向差异，对用户的相对色彩推移直觉进行多维度量化评估。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #concept/state #scope/core #scope/dx #ai/instruct #task/domain/storage #task/object/indexeddb-refactoring #task/action/refactor #task/state/begin
+#intent/build #flow/ready #priority/high #comp/ui #concept/executor #scope/ux #scope/core #ai/instruct #task/domain/relative-color #task/object/color-vector-translation #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `src/utils/db.ts` 为通用实体架构
+#### Acts 1: 创建相对色感矢量算法工具集
 
-使用 `write_file` 覆盖更新 `src/utils/db.ts`，实现版本 4 迁移逻辑与泛型 API。
+创建 `src/utils/relativeColorUtils.ts`，实现色彩矢量推导、生成器与评分函数。
 
 ~~~~~act
 write_file
-src/utils/db.ts
+src/utils/relativeColorUtils.ts
 ~~~~~
 ~~~~~typescript
-import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
-import type { TrainingMode } from '../types';
-import { loadSettings, saveSettings } from './settings';
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
-// ==========================================
-// 1. 统一数据模型类型定义
-// ==========================================
+export type RelativeColorMode = 'VECTOR_SHIFT';
 
-export type TrainingDomain = 'star' | 'color' | 'relative_color';
-
-export interface UnifiedSessionData {
+export interface RelativeColorQuestionData {
   id: string;
-  domain: TrainingDomain;
-  mode: string;
-  type: 'training' | 'benchmark';
-  startTimestamp: number;
-  endTimestamp?: number;
-  totalTrials: number;
-  hitTrials: number;
-  startLevel: number;
-  endLevel: number;
-}
-
-export interface UnifiedTrialRecord {
-  id: string;
-  sessionId: string;
-  domain: TrainingDomain;
-  mode: string;
-  timestamp: number;
+  mode: RelativeColorMode;
   difficultyLevel: number;
+  colorA: [number, number, number]; // [H, S, V]
+  colorB: [number, number, number]; // [H, S, V]
+  colorC: [number, number, number]; // [H, S, V]
+  targetD: [number, number, number]; // [H, S, V]
+  tolerance: number; // ΔE_target
+}
+
+export interface RelativeColorHitResult {
   isHit: boolean;
-  responseTimeMs: number;
-  details?: Record<string, any>;
+  userD: [number, number, number];
+  targetD: [number, number, number];
+  deltaEError: number;
+  magnitudeError: number;
+  angleErrorDeg: number;
+  tolerance: number;
 }
 
-export interface UnifiedProfileData {
-  key: string; // `${domain}:${mode}`
-  domain: TrainingDomain;
-  mode: string;
-  currentLevel: number;
-  bestLevel: number;
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
+/**
+ * 将 OKLab 坐标坐标逆向近似换算为可显示 sRGB / HSV
+ */
+export function okLabToHsv(lab: [number, number, number]): [number, number, number] {
+  const [L, a, b] = lab;
+
+  const lCbrt = L + 0.3963377774 * a + 0.2158037573 * b;
+  const mCbrt = L - 0.1055613458 * a - 0.0638541728 * b;
+  const sCbrt = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const lCone = lCbrt ** 3;
+  const mCone = mCbrt ** 3;
+  const sCone = sCbrt ** 3;
+
+  let rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  let gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  let bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
+
+  rLin = Math.max(0, Math.min(1, rLin));
+  gLin = Math.max(0, Math.min(1, gLin));
+  bLin = Math.max(0, Math.min(1, bLin));
+
+  const toSrgb = (val: number) =>
+    val <= 0.0031308 ? val * 12.92 : 1.055 * val ** (1 / 2.4) - 0.055;
+  const rSrgb = Math.max(0, Math.min(1, toSrgb(rLin)));
+  const gSrgb = Math.max(0, Math.min(1, toSrgb(gLin)));
+  const bSrgb = Math.max(0, Math.min(1, toSrgb(bLin)));
+
+  const max = Math.max(rSrgb, gSrgb, bSrgb);
+  const min = Math.min(rSrgb, gSrgb, bSrgb);
+  const delta = max - min;
+
+  let h = 0;
+  if (delta > 1e-5) {
+    if (max === rSrgb) {
+      h = 60 * (((gSrgb - bSrgb) / delta) % 6);
+    } else if (max === gSrgb) {
+      h = 60 * ((bSrgb - rSrgb) / delta + 2);
+    } else {
+      h = 60 * ((rSrgb - gSrgb) / delta + 4);
+    }
+  }
+  if (h < 0) h += 360;
+
+  const s = max === 0 ? 0 : delta / max;
+  const v = max;
+
+  return [Math.round(h), Math.round(s * 100), Math.round(v * 100)];
 }
 
-// 兼容别名导出
-export type SessionData = UnifiedSessionData;
-export type UserProfileData = UnifiedProfileData;
-export type ColorSessionData = UnifiedSessionData;
-export type ColorTrialRecord = UnifiedTrialRecord;
-export type ColorProfileData = UnifiedProfileData;
+/**
+ * 随机生成色彩矢量迁移题目
+ */
+export function generateRelativeColorQuestion(
+  mode: RelativeColorMode,
+  level: number,
+): RelativeColorQuestionData {
+  const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
 
-// ==========================================
-// 2. IDB Schema 统一表定义
-// ==========================================
+  let attempts = 0;
+  let colorA: [number, number, number] = [0, 0, 0];
+  let colorB: [number, number, number] = [0, 0, 0];
+  let colorC: [number, number, number] = [0, 0, 0];
+  let targetD: [number, number, number] = [0, 0, 0];
 
-interface FormSightDBSchema extends DBSchema {
-  sessions: {
-    key: string;
-    value: UnifiedSessionData;
-    indexes: {
-      'by-domain': TrainingDomain;
-      'by-domain-mode': [TrainingDomain, string];
-    };
+  while (attempts < 100) {
+    attempts++;
+    // 生成 A (固有色 1)
+    const hA = Math.floor(Math.random() * 360);
+    const sA = Math.floor(Math.random() * 60) + 30; // 30..90
+    const vA = Math.floor(Math.random() * 60) + 30; // 30..90
+    colorA = [hA, sA, vA];
+
+    // 生成 B (在 A 基础上有明暗与色相矢量推移)
+    const hB = (hA + (Math.floor(Math.random() * 60) - 30) + 360) % 360;
+    const sB = Math.max(10, Math.min(100, sA + (Math.floor(Math.random() * 40) - 20)));
+    const vB = Math.max(10, Math.min(100, vA + (Math.floor(Math.random() * 50) - 25)));
+    colorB = [hB, sB, vB];
+
+    // 生成 C (全新的固有色 2)
+    const hC = Math.floor(Math.random() * 360);
+    const sC = Math.floor(Math.random() * 60) + 30;
+    const vC = Math.floor(Math.random() * 60) + 30;
+    colorC = [hC, sC, vC];
+
+    // 计算 OKLab 矢量: v_AB = Lab(B) - Lab(A)
+    const labA = hsvToOkLab(...colorA);
+    const labB = hsvToOkLab(...colorB);
+    const labC = hsvToOkLab(...colorC);
+
+    const vAB: [number, number, number] = [
+      labB[0] - labA[0],
+      labB[1] - labA[1],
+      labB[2] - labA[2],
+    ];
+
+    const targetLabD: [number, number, number] = [
+      labC[0] + vAB[0],
+      labC[1] + vAB[1],
+      labC[2] + vAB[2],
+    ];
+
+    if (targetLabD[0] >= 0.1 && targetLabD[0] <= 0.95) {
+      targetD = okLabToHsv(targetLabD);
+      break;
+    }
+  }
+
+  return {
+    id,
+    mode,
+    difficultyLevel: clampedLevel,
+    colorA,
+    colorB,
+    colorC,
+    targetD,
+    tolerance,
   };
-  records: {
-    key: string;
-    value: UnifiedTrialRecord;
-    indexes: {
-      'by-session': string;
-      'by-domain': TrainingDomain;
-      'by-domain-mode': [TrainingDomain, string];
-      'by-mode': string;
-    };
+}
+
+/**
+ * 基于 OKLab 空间色差与矢量特性的答题判定函数
+ */
+export function checkRelativeColorHit(
+  _mode: RelativeColorMode,
+  userD: [number, number, number],
+  question: RelativeColorQuestionData,
+): RelativeColorHitResult {
+  const { colorA, colorB, colorC, targetD, difficultyLevel } = question;
+
+  const labA = hsvToOkLab(...colorA);
+  const labB = hsvToOkLab(...colorB);
+  const labC = hsvToOkLab(...colorC);
+  const labTargetD = hsvToOkLab(...targetD);
+  const labUserD = hsvToOkLab(...userD);
+
+  const deltaEError = calcDeltaEOk(labTargetD, labUserD);
+  const tolerance = getTargetDeltaEForLevel(difficultyLevel);
+  const isHit = deltaEError <= tolerance;
+
+  // 测量矢量模长误差与方向夹角
+  const vRef: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+  const vUser: [number, number, number] = [
+    labUserD[0] - labC[0],
+    labUserD[1] - labC[1],
+    labUserD[2] - labC[2],
+  ];
+
+  const magRef = Math.sqrt(vRef[0] ** 2 + vRef[1] ** 2 + vRef[2] ** 2);
+  const magUser = Math.sqrt(vUser[0] ** 2 + vUser[1] ** 2 + vUser[2] ** 2);
+  const magnitudeError = Math.abs(magUser - magRef);
+
+  let angleErrorDeg = 0;
+  if (magRef > 1e-4 && magUser > 1e-4) {
+    const dot = vRef[0] * vUser[0] + vRef[1] * vUser[1] + vRef[2] * vUser[2];
+    const cosTheta = Math.max(-1, Math.min(1, dot / (magRef * magUser)));
+    angleErrorDeg = Math.round((Math.acos(cosTheta) * 180) / Math.PI);
+  }
+
+  return {
+    isHit,
+    userD,
+    targetD,
+    deltaEError: Math.round(deltaEError * 1000) / 1000,
+    magnitudeError: Math.round(magnitudeError * 1000) / 1000,
+    angleErrorDeg,
+    tolerance,
   };
-  user_profiles: {
-    key: string;
-    value: UnifiedProfileData;
-    indexes: {
-      'by-domain': TrainingDomain;
-    };
-  };
-}
-
-const DB_NAME = 'StarHoppingDB';
-const DB_VERSION = 4; // v4: 通用实体架构，合并所有领域表为通用 3 表结构
-
-let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
-
-export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
-  if (!dbPromise) {
-    dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, _newVersion, transaction) {
-        let sessionsStore: any;
-        let recordsStore: any;
-        let profilesStore: any;
-
-        if (!db.objectStoreNames.contains('sessions')) {
-          sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
-        } else {
-          sessionsStore = transaction.objectStore('sessions');
-        }
-
-        if (!db.objectStoreNames.contains('records')) {
-          recordsStore = db.createObjectStore('records', { keyPath: 'id' });
-        } else {
-          recordsStore = transaction.objectStore('records');
-        }
-
-        if (!db.objectStoreNames.contains('user_profiles')) {
-          profilesStore = db.createObjectStore('user_profiles', { keyPath: 'key' });
-        } else {
-          profilesStore = transaction.objectStore('user_profiles');
-        }
-
-        if (!sessionsStore.indexNames.contains('by-domain')) {
-          sessionsStore.createIndex('by-domain', 'domain');
-        }
-        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
-          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
-
-        if (!recordsStore.indexNames.contains('by-session')) {
-          recordsStore.createIndex('by-session', 'sessionId');
-        }
-        if (!recordsStore.indexNames.contains('by-domain')) {
-          recordsStore.createIndex('by-domain', 'domain');
-        }
-        if (!recordsStore.indexNames.contains('by-domain-mode')) {
-          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
-        if (!recordsStore.indexNames.contains('by-mode')) {
-          recordsStore.createIndex('by-mode', 'mode');
-        }
-
-        if (!profilesStore.indexNames.contains('by-domain')) {
-          profilesStore.createIndex('by-domain', 'domain');
-        }
-
-        // v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
-        if (oldVersion < 4) {
-          if (db.objectStoreNames.contains('color_sessions' as any)) {
-            const colorSessionsStore = transaction.objectStore('color_sessions' as any);
-            colorSessionsStore.getAll().then((oldCSessions: any[]) => {
-              for (const cs of oldCSessions) {
-                sessionsStore.put({
-                  id: cs.id,
-                  domain: 'color',
-                  mode: cs.mode,
-                  type: cs.type,
-                  startTimestamp: cs.startTimestamp,
-                  endTimestamp: cs.endTimestamp,
-                  totalTrials: cs.totalTrials,
-                  hitTrials: cs.hitTrials,
-                  startLevel: cs.startLevel,
-                  endLevel: cs.endLevel,
-                });
-              }
-            });
-            db.deleteObjectStore('color_sessions' as any);
-          }
-
-          if (db.objectStoreNames.contains('color_records' as any)) {
-            const colorRecordsStore = transaction.objectStore('color_records' as any);
-            colorRecordsStore.getAll().then((oldCRecords: any[]) => {
-              for (const cr of oldCRecords) {
-                recordsStore.put({
-                  id: cr.id,
-                  sessionId: cr.sessionId,
-                  domain: 'color',
-                  mode: cr.mode,
-                  timestamp: cr.timestamp,
-                  difficultyLevel: cr.difficultyLevel,
-                  isHit: cr.isHit,
-                  responseTimeMs: cr.responseTimeMs,
-                  details: {
-                    targetHSV: cr.targetHSV,
-                    userHSV: cr.userHSV,
-                    errorValue: cr.errorValue,
-                  },
-                });
-              }
-            });
-            db.deleteObjectStore('color_records' as any);
-          }
-
-          if (db.objectStoreNames.contains('color_profiles' as any)) {
-            const colorProfilesStore = transaction.objectStore('color_profiles' as any);
-            colorProfilesStore.getAll().then((oldCProfiles: any[]) => {
-              for (const cp of oldCProfiles) {
-                profilesStore.put({
-                  key: `color:${cp.mode}`,
-                  domain: 'color',
-                  mode: cp.mode,
-                  currentLevel: cp.currentLevel,
-                  bestLevel: cp.bestLevel,
-                  totalTrainedCards: cp.totalTrainedCards,
-                  totalHits: cp.totalHits,
-                  updatedAt: cp.updatedAt,
-                });
-              }
-            });
-            db.deleteObjectStore('color_profiles' as any);
-          }
-        }
-      },
-    });
-  }
-  return dbPromise;
-}
-
-// ==========================================
-// 3. 泛型通用 API 接口
-// ==========================================
-
-export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
-  const db = await getDB();
-  const domain = record.domain || 'star';
-  const normalizedRecord = { ...record, domain };
-  await db.put('records', normalizedRecord);
-  await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
-}
-
-export async function saveSession(session: UnifiedSessionData): Promise<void> {
-  const db = await getDB();
-  const domain = session.domain || 'star';
-  await db.put('sessions', { ...session, domain });
-}
-
-export async function getProfile(
-  domain: TrainingDomain,
-  mode: string,
-): Promise<UnifiedProfileData | null> {
-  const db = await getDB();
-  const profile = await db.get('user_profiles', `${domain}:${mode}`);
-  return profile || null;
-}
-
-export async function getProfilesByDomain(
-  domain: TrainingDomain,
-): Promise<UnifiedProfileData[]> {
-  const db = await getDB();
-  return await db.getAllFromIndex('user_profiles', 'by-domain', domain);
-}
-
-export async function getTrialRecords(
-  domain?: TrainingDomain,
-  mode?: string,
-): Promise<UnifiedTrialRecord[]> {
-  const db = await getDB();
-  if (domain && mode) {
-    return await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
-  }
-  if (domain) {
-    return await db.getAllFromIndex('records', 'by-domain', domain);
-  }
-  return await db.getAll('records');
-}
-
-async function updateProfile(
-  domain: TrainingDomain,
-  mode: string,
-  isHit: boolean,
-  currentLevel: number,
-): Promise<void> {
-  const db = await getDB();
-  const key = `${domain}:${mode}`;
-  const existing = await db.get('user_profiles', key);
-
-  if (!existing) {
-    const newProfile: UnifiedProfileData = {
-      key,
-      domain,
-      mode,
-      currentLevel,
-      bestLevel: currentLevel,
-      totalTrainedCards: 1,
-      totalHits: isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await db.put('user_profiles', newProfile);
-  } else {
-    existing.totalTrainedCards += 1;
-    if (isHit) existing.totalHits += 1;
-    existing.currentLevel = currentLevel;
-    if (currentLevel > existing.bestLevel) {
-      existing.bestLevel = currentLevel;
-    }
-    existing.updatedAt = Date.now();
-    await db.put('user_profiles', existing);
-  }
-}
-
-// ==========================================
-// 4. 通用导入 / 导出与统计 API
-// ==========================================
-
-export async function exportAllData(): Promise<string> {
-  const db = await getDB();
-  const sessions = await db.getAll('sessions');
-  const records = await db.getAll('records');
-  const profiles = await db.getAll('user_profiles');
-  const settings = loadSettings();
-
-  const exportObject = {
-    version: DB_VERSION,
-    exportAt: new Date().toISOString(),
-    sessions,
-    records,
-    profiles,
-    settings,
-  };
-
-  return JSON.stringify(exportObject, null, 2);
-}
-
-export async function importAllData(jsonString: string): Promise<boolean> {
-  try {
-    const data = JSON.parse(jsonString);
-    const db = await getDB();
-    const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
-
-    if (data.sessions) {
-      for (const s of data.sessions) {
-        const domain = s.domain || 'star';
-        await tx.objectStore('sessions').put({ ...s, domain });
-      }
-    }
-    if (data.records) {
-      for (const r of data.records) {
-        const domain = r.domain || 'star';
-        await tx.objectStore('records').put({ ...r, domain });
-      }
-    }
-    if (data.profiles) {
-      for (const p of data.profiles) {
-        const domain = p.domain || 'star';
-        const key = p.key || `${domain}:${p.mode}`;
-        await tx.objectStore('user_profiles').put({ ...p, key, domain });
-      }
-    }
-
-    // 兼容导入旧格式 JSON 文件中的 color 数据
-    if (data.color_sessions) {
-      for (const cs of data.color_sessions) {
-        await tx.objectStore('sessions').put({ ...cs, domain: 'color' });
-      }
-    }
-    if (data.color_records) {
-      for (const cr of data.color_records) {
-        await tx.objectStore('records').put({
-          id: cr.id,
-          sessionId: cr.sessionId,
-          domain: 'color',
-          mode: cr.mode,
-          timestamp: cr.timestamp,
-          difficultyLevel: cr.difficultyLevel,
-          isHit: cr.isHit,
-          responseTimeMs: cr.responseTimeMs,
-          details: {
-            targetHSV: cr.targetHSV,
-            userHSV: cr.userHSV,
-            errorValue: cr.errorValue,
-          },
-        });
-      }
-    }
-    if (data.color_profiles) {
-      for (const cp of data.color_profiles) {
-        await tx.objectStore('user_profiles').put({
-          key: `color:${cp.mode}`,
-          domain: 'color',
-          mode: cp.mode,
-          currentLevel: cp.currentLevel,
-          bestLevel: cp.bestLevel,
-          totalTrainedCards: cp.totalTrainedCards,
-          totalHits: cp.totalHits,
-          updatedAt: cp.updatedAt,
-        });
-      }
-    }
-
-    await tx.done;
-
-    if (data.settings) {
-      saveSettings(data.settings);
-    }
-
-    return true;
-  } catch (err) {
-    console.error('导入数据失败:', err);
-    return false;
-  }
-}
-
-export async function clearAllData(): Promise<void> {
-  const db = await getDB();
-  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
-  await tx.objectStore('sessions').clear();
-  await tx.objectStore('records').clear();
-  await tx.objectStore('user_profiles').clear();
-  await tx.done;
-}
-
-export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number> {
-  const db = await getDB();
-  const sessions = domain
-    ? await db.getAllFromIndex('sessions', 'by-domain', domain)
-    : await db.getAll('sessions');
-
-  let totalMs = 0;
-  for (const s of sessions) {
-    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
-      totalMs += s.endTimestamp - s.startTimestamp;
-    }
-  }
-  return totalMs;
-}
-
-export function formatTotalTime(ms: number): string {
-  const totalMinutes = Math.floor(ms / (1000 * 60));
-  const days = Math.floor(totalMinutes / (60 * 24));
-  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
-  const minutes = totalMinutes % 60;
-
-  return `${days}天${hours}小时${minutes}分钟`;
-}
-
-// ==========================================
-// 5. 兼容层别名函数 (对既有页面逻辑完全透明)
-// ==========================================
-
-export async function getUserProfile(mode: TrainingMode): Promise<UnifiedProfileData | null> {
-  return await getProfile('star', mode);
-}
-
-export async function getAllUserProfiles(): Promise<Record<TrainingMode, UnifiedProfileData | null>> {
-  const profiles = await getProfilesByDomain('star');
-  const result: Record<TrainingMode, UnifiedProfileData | null> = {
-    single: null,
-    double_h: null,
-    double_r: null,
-  };
-  for (const p of profiles) {
-    if (p.mode in result) {
-      result[p.mode as TrainingMode] = p;
-    }
-  }
-  return result;
-}
-
-export async function getAllTrialRecords(mode?: TrainingMode): Promise<UnifiedTrialRecord[]> {
-  return await getTrialRecords('star', mode);
-}
-
-export async function saveColorTrialRecord(record: any): Promise<void> {
-  return await saveTrialRecord({
-    id: record.id,
-    sessionId: record.sessionId,
-    domain: 'color',
-    mode: record.mode,
-    timestamp: record.timestamp,
-    difficultyLevel: record.difficultyLevel,
-    isHit: record.isHit,
-    responseTimeMs: record.responseTimeMs,
-    details: {
-      targetHSV: record.targetHSV,
-      userHSV: record.userHSV,
-      errorValue: record.errorValue,
-    },
-  });
-}
-
-export async function saveColorSession(session: any): Promise<void> {
-  return await saveSession({
-    ...session,
-    domain: 'color',
-  });
-}
-
-export async function getAllColorProfiles(): Promise<
-  Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null>
-> {
-  const profiles = await getProfilesByDomain('color');
-  const result: Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null> = {
-    H: null,
-    S: null,
-    V: null,
-    ALL: null,
-  };
-  for (const p of profiles) {
-    if (p.mode in result) {
-      result[p.mode as 'H' | 'S' | 'V' | 'ALL'] = p;
-    }
-  }
-  return result;
-}
-
-export async function getAllColorTrialRecords(
-  mode?: 'H' | 'S' | 'V' | 'ALL',
-): Promise<UnifiedTrialRecord[]> {
-  return await getTrialRecords('color', mode);
-}
-
-export async function getStarHoppingTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs('star');
-}
-
-export async function getColorTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs('color');
-}
-
-export async function getTotalTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs();
 }
 ~~~~~
 
-#### Acts 2: 补充数据库单元测试
+#### Acts 2: 创建相对色感交互画布组件
 
-更新 `src/utils/__tests__/db.test.ts`，增加对通用接口与多租户 `domain` 存储特性的校验。
+创建 `src/components/RelativeColorCanvas.tsx` 展示 $A \to B$ 基准推移与 $C \to D$ 用户调制。
+
+~~~~~act
+write_file
+src/components/RelativeColorCanvas.tsx
+~~~~~
+~~~~~typescript
+import { ArrowRight } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import { hsvToHex } from '../utils/colorUtils';
+import type {
+  RelativeColorHitResult,
+  RelativeColorQuestionData,
+} from '../utils/relativeColorUtils';
+
+interface RelativeColorCanvasProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: RelativeColorHitResult | null;
+  onAnswer: (userD: [number, number, number]) => void;
+  disabled?: boolean;
+}
+
+export function RelativeColorCanvas({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: RelativeColorCanvasProps) {
+  const { colorA, colorB, colorC, targetD } = question;
+
+  const [userH, setUserH] = useState<number>(colorC[0]);
+  const [userS, setUserS] = useState<number>(colorC[1]);
+  const [userV, setUserV] = useState<number>(colorC[2]);
+
+  // 题目切换时重置 D 为 C 的初始状态
+  useEffect(() => {
+    setUserH(colorC[0]);
+    setUserS(colorC[1]);
+    setUserV(colorC[2]);
+  }, [colorC]);
+
+  const handleSubmit = () => {
+    if (disabled || showAnswer) return;
+    onAnswer([userH, userS, userV]);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !showAnswer && !disabled) {
+        e.preventDefault();
+        onAnswer([userH, userS, userV]);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, disabled, userH, userS, userV, onAnswer]);
+
+  const hexA = hsvToHex(...colorA);
+  const hexB = hsvToHex(...colorB);
+  const hexC = hsvToHex(...colorC);
+  const hexUserD = hsvToHex(userH, userS, userV);
+  const hexTargetD = hsvToHex(...targetD);
+
+  const hueGradient =
+    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
+  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
+
+  return (
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+      {/* 上方对比展示区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        {/* 基准推移组 (A -> B) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            1. 基准色彩矢量推移 (A ➔ B)
+          </span>
+          <div className="flex items-center justify-center gap-3 w-full">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexA }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">固有色 A</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexB }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">推移色 B</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 目标推移组 (C -> D) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            2. 目标色彩矢量推移 (C ➔ D)
+          </span>
+          <div className="flex items-center justify-center gap-3 w-full">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexC }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">固有色 C</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
+                style={{ backgroundColor: hexUserD }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 border-white shadow-md"
+                    style={{ backgroundColor: hexTargetD }}
+                    title="真理色彩 D"
+                  />
+                )}
+              </div>
+              <span className="text-[10px] font-mono text-indigo-600 font-bold">待调色 D</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 揭晓答案诊断数据 */}
+      {showAnswer && userAnswer && (
+        <div
+          className={`w-full p-3.5 rounded-2xl border text-xs flex justify-between items-center ${
+            userAnswer.isHit
+              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
+              : 'bg-rose-50 text-rose-900 border-rose-200'
+          }`}
+        >
+          <div className="font-bold">
+            {userAnswer.isHit ? '✅ 矢量匹配成功！' : '❌ 矢量偏转较大'}
+          </div>
+          <div className="flex items-center gap-4 font-mono text-[11px]">
+            <span>感知色差 ΔE: {userAnswer.deltaEError}</span>
+            <span>矢量模长差: {userAnswer.magnitudeError}</span>
+            <span>色温偏角: {userAnswer.angleErrorDeg}°</span>
+          </div>
+        </div>
+      )}
+
+      {/* 下方 D 颜色调制滑块轨道 */}
+      <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+        {/* H 轨 */}
+        <div className="flex items-center gap-3 w-full">
+          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">H</span>
+          <div className="relative flex-1 flex items-center">
+            <div
+              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
+              style={{ background: hueGradient }}
+            />
+            <input
+              type="range"
+              min="0"
+              max="360"
+              value={userH}
+              disabled={disabled || showAnswer}
+              onInput={(e) => setUserH(Number.parseInt((e.target as HTMLInputElement).value, 10))}
+              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
+              style={{ left: `${(userH / 360) * 100}%` }}
+            />
+          </div>
+          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
+            {userH}°
+          </span>
+        </div>
+
+        {/* S 轨 */}
+        <div className="flex items-center gap-3 w-full">
+          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">S</span>
+          <div className="relative flex-1 flex items-center">
+            <div
+              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
+              style={{ background: satGradient }}
+            />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={userS}
+              disabled={disabled || showAnswer}
+              onInput={(e) => setUserS(Number.parseInt((e.target as HTMLInputElement).value, 10))}
+              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
+              style={{ left: `${userS}%` }}
+            />
+          </div>
+          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
+            {userS}%
+          </span>
+        </div>
+
+        {/* V 轨 */}
+        <div className="flex items-center gap-3 w-full">
+          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">V</span>
+          <div className="relative flex-1 flex items-center">
+            <div
+              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
+              style={{ background: valGradient }}
+            />
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={userV}
+              disabled={disabled || showAnswer}
+              onInput={(e) => setUserV(Number.parseInt((e.target as HTMLInputElement).value, 10))}
+              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
+              style={{ left: `${userV}%` }}
+            />
+          </div>
+          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
+            {userV}%
+          </span>
+        </div>
+      </div>
+
+      {!showAnswer && (
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={disabled}
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
+        >
+          确认提交 (Space)
+        </button>
+      )}
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 3: 创建相对色感 Dashboard 看板与 View 训练视图
+
+创建 `src/views/RelativeColorDashboard.tsx` 与 `src/views/RelativeColorTrainingView.tsx`。
+
+~~~~~act
+write_file
+src/views/RelativeColorDashboard.tsx
+~~~~~
+~~~~~typescript
+import { Award, ArrowLeft, Play, Sliders, Target, TrendingUp, Shuffle } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import { getProfilesByDomain, getTrialRecords, type UnifiedProfileData } from '../utils/db';
+import type { RelativeColorMode } from '../utils/relativeColorUtils';
+
+interface RelativeColorDashboardProps {
+  onStart: (mode: RelativeColorMode, type: 'training' | 'benchmark') => void;
+  onBackToHome: () => void;
+  onOpenSettings: () => void;
+}
+
+export function RelativeColorDashboard({
+  onStart,
+  onBackToHome,
+  onOpenSettings,
+}: RelativeColorDashboardProps) {
+  const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData | null>>({});
+  const [todayCount, setTodayCount] = useState<number>(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchData = async () => {
+      const pList = await getProfilesByDomain('relative_color');
+      const pMap: Record<string, UnifiedProfileData> = {};
+      for (const p of pList) {
+        pMap[p.mode] = p;
+      }
+
+      const records = await getTrialRecords('relative_color');
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+      const count = records.filter((r) => r.timestamp >= startOfToday).length;
+
+      if (isMounted) {
+        setProfiles(pMap);
+        setTodayCount(count);
+      }
+    };
+    fetchData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const profile = profiles.VECTOR_SHIFT;
+  const totalCards = profile?.totalTrainedCards || 0;
+  const accuracy = totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+  const currentLevel = profile?.currentLevel || 5;
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+      {/* Header */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-6 py-5 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onBackToHome}
+            className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            返回主页
+          </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              相对色感 <span className="text-indigo-600 font-light text-xl">Relative Color</span>
+            </h1>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 text-xs font-semibold"
+          title="偏好设置"
+        >
+          <Sliders className="w-4 h-4" />
+          偏好设置
+        </button>
+      </div>
+
+      {/* 相对色感子模式卡片网格 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="group bg-white border border-gray-200/80 hover:border-indigo-300 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                <Shuffle className="w-6 h-6" />
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
+                <div className="text-xs font-bold text-slate-500 font-mono">{todayCount} 题</div>
+              </div>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 mb-2">色彩矢量迁移</h3>
+            <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">
+              保持固有色推移矢量 $\vec{v}_{AB}$ 在全场施加统一推移，建立光影相对偏转直觉。
+            </p>
+
+            {/* 核心指标 */}
+            <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
+                  <TrendingUp className="w-3 h-3 text-indigo-500" />
+                  能力层阶
+                </div>
+                <div className="text-xl font-black text-slate-800">Level {currentLevel}</div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
+                  <Award className="w-3 h-3 text-emerald-500" />
+                  正确率
+                </div>
+                <div className="text-xl font-black text-slate-800">{accuracy}%</div>
+              </div>
+            </div>
+          </div>
+
+          {/* 动作按钮区 */}
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              onClick={() => onStart('VECTOR_SHIFT', 'training')}
+              className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              开始自适应训练
+            </button>
+            <button
+              type="button"
+              onClick={() => onStart('VECTOR_SHIFT', 'benchmark')}
+              className="w-full py-2.5 px-4 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all flex items-center justify-center gap-1.5"
+            >
+              <Target className="w-3.5 h-3.5 text-gray-500" />
+              20 题基准测试
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/views/RelativeColorTrainingView.tsx
+~~~~~
+~~~~~typescript
+import { ArrowLeft, ChevronRight, Clock } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { RelativeColorCanvas } from '../components/RelativeColorCanvas';
+import { type SessionHistoryItem, SessionSummaryModal } from '../components/SessionSummaryModal';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { saveSession, saveTrialRecord } from '../utils/db';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorMode,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateRelativeColorQuestion,
+} from '../utils/relativeColorUtils';
+import type { UserSettings } from '../utils/settings';
+
+interface RelativeColorTrainingViewProps {
+  mode: RelativeColorMode;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  settings: UserSettings;
+  onExit: () => void;
+}
+
+export function RelativeColorTrainingView({
+  mode,
+  sessionType,
+  initialLevel,
+  settings,
+  onExit,
+}: RelativeColorTrainingViewProps) {
+  const sessionIdRef = useRef<string>(`rcsession_${Date.now()}`);
+  const startTimeRef = useRef<number>(Date.now());
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(
+      initialLevel,
+      settings.stepGranularity === 'fine',
+      sessionType === 'benchmark' ? 'staircase' : settings.adaptiveMode,
+      settings.targetAccuracy,
+      settings.blockSize,
+    ),
+  );
+  const autoNextTimerRef = useRef<number | null>(null);
+
+  const [question, setQuestion] = useState<RelativeColorQuestionData>(() =>
+    generateRelativeColorQuestion(mode, initialLevel),
+  );
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [userAnswer, setUserAnswer] = useState<RelativeColorHitResult | null>(null);
+
+  const [totalTrials, setTotalTrials] = useState<number>(0);
+  const [hitTrials, setHitTrials] = useState<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (showSummaryModal || isFinished) return;
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showSummaryModal, isFinished]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        if (showAnswer && !isFinished) {
+          e.preventDefault();
+          handleNextQuestion();
+        }
+      } else if (e.code === 'Escape') {
+        e.preventDefault();
+        handleFinishSession();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAnswer, isFinished]);
+
+  const handleAnswer = async (userD: [number, number, number]) => {
+    const responseTimeMs = Date.now() - questionStartTime;
+    const hitResult = checkRelativeColorHit(mode, userD, question);
+
+    setUserAnswer(hitResult);
+    setShowAnswer(true);
+
+    const newTotal = totalTrials + 1;
+    const newHits = hitTrials + (hitResult.isHit ? 1 : 0);
+    setTotalTrials(newTotal);
+    setHitTrials(newHits);
+
+    // 通用 DB API 提交
+    await saveTrialRecord({
+      id: `rcrec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      sessionId: sessionIdRef.current,
+      domain: 'relative_color',
+      mode,
+      timestamp: Date.now(),
+      difficultyLevel: question.difficultyLevel,
+      isHit: hitResult.isHit,
+      responseTimeMs,
+      details: {
+        colorA: question.colorA,
+        colorB: question.colorB,
+        colorC: question.colorC,
+        targetD: question.targetD,
+        userD,
+        deltaEError: hitResult.deltaEError,
+      },
+    });
+
+    setSessionHistory((prev) => [
+      ...prev,
+      {
+        trialIndex: newTotal,
+        level: question.difficultyLevel,
+        isHit: hitResult.isHit,
+        responseTimeMs,
+      },
+    ]);
+
+    adaptiveEngineRef.current.recordResult(hitResult.isHit);
+
+    const delay = settings.colorAutoNextDelay ?? settings.autoNextDelay;
+
+    if (sessionType === 'benchmark' && newTotal >= 20) {
+      setIsFinished(true);
+      await saveCurrentSession(newTotal, newHits, true);
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        setShowSummaryModal(true);
+      }, delay);
+    } else if (settings.autoNext) {
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        handleNextQuestion();
+      }, delay);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
+
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setShowAnswer(false);
+    setUserAnswer(null);
+    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
+    await saveSession({
+      id: sessionIdRef.current,
+      domain: 'relative_color',
+      mode,
+      type: sessionType,
+      startTimestamp: startTimeRef.current,
+      endTimestamp: ended ? Date.now() : undefined,
+      totalTrials: trials,
+      hitTrials: hits,
+      startLevel: initialLevel,
+      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
+    });
+  };
+
+  const handleRequestFinish = async () => {
+    if (sessionHistory.length > 0 && !showSummaryModal) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      setShowSummaryModal(true);
+    } else {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onExit();
+    }
+  };
+
+  const handleFinishSession = async () => {
+    await saveCurrentSession(totalTrials, hitTrials, true);
+    onExit();
+  };
+
+  const handleRestartSession = () => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    sessionIdRef.current = `rcsession_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateRelativeColorQuestion(mode, nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
+      {/* 顶栏 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestFinish}
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练 (Esc)
+          </button>
+          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
+            色彩矢量迁移 | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+          </span>
+        </div>
+
+        {/* 监控指标 */}
+        <div className="flex items-center gap-6 text-sm">
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              已练题数
+            </span>
+            <span className="font-black text-gray-800">
+              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
+            </span>
+          </div>
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              当前难度
+            </span>
+            <span className="font-black text-indigo-600">Level {question.difficultyLevel}</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* 相对色彩矢量 Canvas */}
+      <RelativeColorCanvas
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={handleAnswer}
+        disabled={isFinished}
+      />
+
+      {/* 底部控制栏 */}
+      {!settings.autoNext && (
+        <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
+          {isFinished ? (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+            >
+              完成并查看总结
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleNextQuestion}
+              disabled={!showAnswer}
+              className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+                showAnswer
+                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              下一题
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 结算弹窗 */}
+      {showSummaryModal && (
+        <SessionSummaryModal
+          mode="single"
+          sessionType={sessionType}
+          elapsedSeconds={elapsedSeconds}
+          history={sessionHistory}
+          onClose={handleFinishSession}
+          onRestart={handleRestartSession}
+        />
+      )}
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 4: 集成顶层主页与 App 路由管理
+
+更新 `src/views/Home.tsx` 和 `src/app.tsx`。
 
 ~~~~~act
 patch_file
-src/utils/__tests__/db.test.ts
+src/views/Home.tsx
 ~~~~~
 ~~~~~typescript
-  it('saveTrialRecord - should save trial record and update profile', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 500,
-    });
+import { ArrowRight, BarChart2, Clock, Compass, Palette, Sliders, Sparkles } from 'lucide-preact';
+import { formatTotalTime } from '../utils/db';
+
+interface HomeProps {
+  totalTimeMs: number;
+  starHoppingTimeMs: number;
+  colorTimeMs: number;
+  onNavigate: (app: 'star-hopping' | 'color-sense') => void;
+  onOpenGlobalSettings: () => void;
+  onOpenGlobalStats: () => void;
+}
 ~~~~~
 ~~~~~typescript
-  it('saveTrialRecord - should save trial record and update profile', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      domain: 'star',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      isHit: true,
-      responseTimeMs: 500,
-    });
+import { ArrowRight, BarChart2, Clock, Compass, Palette, Shuffle, Sliders, Sparkles } from 'lucide-preact';
+import { formatTotalTime } from '../utils/db';
+
+interface HomeProps {
+  totalTimeMs: number;
+  starHoppingTimeMs: number;
+  colorTimeMs: number;
+  relativeColorTimeMs: number;
+  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color') => void;
+  onOpenGlobalSettings: () => void;
+  onOpenGlobalStats: () => void;
+}
+~~~~~
+
+~~~~~act
+patch_file
+src/views/Home.tsx
+~~~~~
+~~~~~typescript
+        {/* 2. 色感练习 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('color-sense')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
+                <Palette className="w-8 h-8" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                色感训练 (Color Recognition)
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation)
+                的分级递进识别，全面建立微小色彩差异感知力。
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>累计练习: {formatTotalTime(colorTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入色感练习看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
+~~~~~
+~~~~~typescript
+        {/* 2. 绝对色感练习 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('color-sense')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
+                <Palette className="w-8 h-8" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                绝对色感 (Color Recognition)
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation)
+                的分级递进识别，全面建立微小色彩差异感知力。
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>累计练习: {formatTotalTime(colorTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入绝对色感看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {/* 3. 相对色感训练 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('relative-color')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left md:col-span-2"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform">
+                <Shuffle className="w-8 h-8" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                相对色感 (Relative Color Perception)
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 ($\vec{v}_{AB}$)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-purple-500" />
+              <span>累计练习: {formatTotalTime(relativeColorTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入相对色感看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+import { ColorDashboard } from './views/ColorDashboard';
+import { ColorTrainingView } from './views/ColorTrainingView';
+import { Dashboard } from './views/Dashboard';
+import { Home } from './views/Home';
+import { TrainingView } from './views/TrainingView';
+
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense';
+~~~~~
+~~~~~typescript
+import { getProfilesByDomain, getTrainingTimeMs } from './utils/db';
+import type { RelativeColorMode } from './utils/relativeColorUtils';
+import { ColorDashboard } from './views/ColorDashboard';
+import { ColorTrainingView } from './views/ColorTrainingView';
+import { Dashboard } from './views/Dashboard';
+import { Home } from './views/Home';
+import { RelativeColorDashboard } from './views/RelativeColorDashboard';
+import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
+import { TrainingView } from './views/TrainingView';
+
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color';
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
+  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
+
+  // 刷新用户能力看板与总时间
+  const refreshProfiles = useCallback(async () => {
+    const data = await getAllUserProfiles();
+    const cData = await getAllColorProfiles();
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
+    setProfiles(data);
+    setColorProfiles(cData);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+  }, []);
+~~~~~
+~~~~~typescript
+  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
+  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
+  const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
+
+  // 相对色感状态
+  const [activeRelativeMode, setActiveRelativeMode] = useState<RelativeColorMode>('VECTOR_SHIFT');
+  const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>('training');
+
+  // 刷新用户能力看板与总时间
+  const refreshProfiles = useCallback(async () => {
+    const data = await getAllUserProfiles();
+    const cData = await getAllColorProfiles();
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
+    const relMs = await getTrainingTimeMs('relative_color');
+    setProfiles(data);
+    setColorProfiles(cData);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
+  }, []);
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+      {currentApp === 'home' && (
+        <Home
+          totalTimeMs={starHoppingTimeMs + colorTimeMs}
+          starHoppingTimeMs={starHoppingTimeMs}
+          colorTimeMs={colorTimeMs}
+          onNavigate={(app) => {
+            setCurrentApp(app);
+            setCurrentView('dashboard');
+          }}
+          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
+        />
+      )}
+~~~~~
+~~~~~typescript
+      {currentApp === 'home' && (
+        <Home
+          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs}
+          starHoppingTimeMs={starHoppingTimeMs}
+          colorTimeMs={colorTimeMs}
+          relativeColorTimeMs={relativeColorTimeMs}
+          onNavigate={(app) => {
+            setCurrentApp(app);
+            setCurrentView('dashboard');
+          }}
+          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
+        />
+      )}
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+      {currentApp === 'color-sense' &&
+        (currentView === 'dashboard' ? (
+          <ColorDashboard
+            profiles={colorProfiles}
+            onStart={handleStartColorTraining}
+            onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsContext('color-sense');
+              setIsSettingsOpen(true);
+            }}
+            onOpenAnalytics={() => setIsColorAnalyticsOpen(true)}
+          />
+        ) : (
+          <ColorTrainingView
+            mode={activeColorMode}
+            sessionType={colorSessionType}
+            initialLevel={activeColorLevel}
+            settings={settings}
+            onExit={handleExitTraining}
+          />
+        ))}
+~~~~~
+~~~~~typescript
+      {currentApp === 'color-sense' &&
+        (currentView === 'dashboard' ? (
+          <ColorDashboard
+            profiles={colorProfiles}
+            onStart={handleStartColorTraining}
+            onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsContext('color-sense');
+              setIsSettingsOpen(true);
+            }}
+            onOpenAnalytics={() => setIsColorAnalyticsOpen(true)}
+          />
+        ) : (
+          <ColorTrainingView
+            mode={activeColorMode}
+            sessionType={colorSessionType}
+            initialLevel={activeColorLevel}
+            settings={settings}
+            onExit={handleExitTraining}
+          />
+        ))}
+
+      {currentApp === 'relative-color' &&
+        (currentView === 'dashboard' ? (
+          <RelativeColorDashboard
+            onStart={(relMode, type) => {
+              setActiveRelativeMode(relMode);
+              setRelativeSessionType(type);
+              setCurrentView('training');
+            }}
+            onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsContext('color-sense');
+              setIsSettingsOpen(true);
+            }}
+          />
+        ) : (
+          <RelativeColorTrainingView
+            mode={activeRelativeMode}
+            sessionType={relativeSessionType}
+            initialLevel={5}
+            settings={settings}
+            onExit={handleExitTraining}
+          />
+        ))}
+~~~~~
+
+#### Acts 5: 补充相对色感算子单元测试
+
+创建 `src/utils/__tests__/relativeColorUtils.test.ts`。
+
+~~~~~act
+write_file
+src/utils/__tests__/relativeColorUtils.test.ts
+~~~~~
+~~~~~typescript
+import { describe, expect, it } from 'vitest';
+import {
+  checkRelativeColorHit,
+  generateRelativeColorQuestion,
+  okLabToHsv,
+} from '../relativeColorUtils';
+
+describe('relativeColorUtils', () => {
+  it('generateRelativeColorQuestion - should generate valid color vector shift question', () => {
+    const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
+    expect(q.mode).toBe('VECTOR_SHIFT');
+    expect(q.colorA).toBeDefined();
+    expect(q.colorB).toBeDefined();
+    expect(q.colorC).toBeDefined();
+    expect(q.targetD).toBeDefined();
+    expect(q.tolerance).toBeGreaterThan(0);
+  });
+
+  it('checkRelativeColorHit - should detect exact match and yield zero deltaEError', () => {
+    const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
+    const result = checkRelativeColorHit('VECTOR_SHIFT', q.targetD, q);
+    expect(result.isHit).toBe(true);
+    expect(result.deltaEError).toBeLessThan(0.05);
+  });
+
+  it('okLabToHsv - should convert OKLab bounds back to valid HSV tuple', () => {
+    const hsv = okLabToHsv([0.7, 0, 0]);
+    expect(hsv[0]).toBeGreaterThanOrEqual(0);
+    expect(hsv[0]).toBeLessThanOrEqual(360);
+    expect(hsv[1]).toBeGreaterThanOrEqual(0);
+    expect(hsv[2]).toBeGreaterThanOrEqual(0);
+  });
+});
 ~~~~~
 
 ### 下一步建议
-- **运行单元测试**: 执行 `npm run test` 确保数据存储、迁移和导入导出逻辑全部通过。
-- **构建通用相对色感模式**: 基于重构后的通用 DB API (`saveTrialRecord({ domain: 'relative_color', ... })`)，直接开始开发相对色感卡片及“色彩矢量迁移”视图组件！
+- **自动化测试**: 运行 `npm run test` 验证 `relativeColorUtils` 算法与全新通用 DB 的单元测试。
+- **界面体验调试**: 在开发环境中启动应用，进入“相对色感 (Relative Color Perception)”主卡片，试玩“色彩矢量迁移”题型，体验光影推移矢量的互动感受。
