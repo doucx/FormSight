@@ -108,53 +108,70 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestionStartTime(Date.now());
   }, [isFinished, generateQuestion]);
 
-  async function handleAnswer(userVal: TAnswerVal) {
-    const responseTimeMs = Date.now() - questionStartTime;
-    const hitResult = evaluateAnswer(userVal, question);
-    const hit = isHit(hitResult);
+  const handleAnswer = useCallback(
+    async (userVal: TAnswerVal) => {
+      const responseTimeMs = Date.now() - questionStartTime;
+      const hitResult = evaluateAnswer(userVal, question);
+      const hit = isHit(hitResult);
 
-    setUserAnswer(hitResult);
-    setShowAnswer(true);
+      setUserAnswer(hitResult);
+      setShowAnswer(true);
 
-    const newTotal = totalTrials + 1;
-    const newHits = hitTrials + (hit ? 1 : 0);
-    setTotalTrials(newTotal);
-    setHitTrials(newHits);
+      const newTotal = totalTrials + 1;
+      const newHits = hitTrials + (hit ? 1 : 0);
+      setTotalTrials(newTotal);
+      setHitTrials(newHits);
 
-    await saveTrialRecord({
-      sessionId: sessionIdRef.current,
-      question,
-      hitResult,
-      responseTimeMs,
-      userVal,
-    });
-
-    setSessionHistory((prev) => [
-      ...prev,
-      {
-        trialIndex: newTotal,
-        level: getQuestionLevel(question),
-        isHit: hit,
+      await saveTrialRecord({
+        sessionId: sessionIdRef.current,
+        question,
+        hitResult,
         responseTimeMs,
-      },
-    ]);
+        userVal,
+      });
 
-    adaptiveEngineRef.current.recordResult(hit);
+      setSessionHistory((prev) => [
+        ...prev,
+        {
+          trialIndex: newTotal,
+          level: getQuestionLevel(question),
+          isHit: hit,
+          responseTimeMs,
+        },
+      ]);
 
-    if (sessionType === 'benchmark' && newTotal >= 20) {
-      setIsFinished(true);
-      await saveCurrentSession(newTotal, newHits, true);
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        setShowSummaryModal(true);
-      }, autoNextDelay);
-    } else if (autoNext) {
-      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-      autoNextTimerRef.current = window.setTimeout(() => {
-        handleNextQuestion();
-      }, autoNextDelay);
-    }
-  }
+      adaptiveEngineRef.current.recordResult(hit);
+
+      if (sessionType === 'benchmark' && newTotal >= 20) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        autoNextTimerRef.current = window.setTimeout(() => {
+          setShowSummaryModal(true);
+        }, autoNextDelay);
+      } else if (autoNext) {
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        autoNextTimerRef.current = window.setTimeout(() => {
+          handleNextQuestion();
+        }, autoNextDelay);
+      }
+    },
+    [
+      questionStartTime,
+      evaluateAnswer,
+      question,
+      isHit,
+      totalTrials,
+      hitTrials,
+      saveTrialRecord,
+      getQuestionLevel,
+      sessionType,
+      saveCurrentSession,
+      autoNextDelay,
+      autoNext,
+      handleNextQuestion,
+    ],
+  );
 
   const handleRequestFinish = useCallback(async () => {
     if (sessionHistory.length > 0 && !showSummaryModal) {
@@ -164,14 +181,21 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
+  }, [
+    sessionHistory.length,
+    showSummaryModal,
+    saveCurrentSession,
+    totalTrials,
+    hitTrials,
+    onExit,
+  ]);
 
-  async function handleFinishSession() {
+  const handleFinishSession = useCallback(async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
     onExit();
-  }
+  }, [saveCurrentSession, totalTrials, hitTrials, onExit]);
 
-  function handleRestartSession() {
+  const handleRestartSession = useCallback(() => {
     setShowSummaryModal(false);
     setIsFinished(false);
     setTotalTrials(0);
@@ -185,7 +209,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }
+  }, [domain, mode, generateQuestion]);
 
   // === 计时器 ===
   useEffect(() => {
