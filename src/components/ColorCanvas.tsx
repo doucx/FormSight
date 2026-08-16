@@ -199,14 +199,14 @@ function SingleDimensionSlider({
           {showAnswer && isTargetActiveMode && (
             <>
               <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
                 style={{ left: getPercent(val, max) }}
               />
               {userAnswer && (
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
                     userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
+                  } shadow-md z-10`}
                   style={{ left: getPercent(userAnswer.userValue, max) }}
                 />
               )}
