@@ -215,11 +215,11 @@ export function HsvTrackSlider({
                   style={{ left: getPercent(userVal, max) }}
                 />
               )}
-              {userVal !== undefined && !isHit && (
+              {userVal !== undefined && (
                 <svg className="absolute inset-0 w-full h-full pointer-events-none z-25 overflow-visible">
                   <defs>
                     <marker
-                      id={`arrow-${label}`}
+                      id={`arrow-${label}-${isHit ? 'hit' : 'miss'}`}
                       viewBox="0 0 6 6"
                       refX="5"
                       refY="3"
@@ -227,7 +227,7 @@ export function HsvTrackSlider({
                       markerHeight="6"
                       orient="auto"
                     >
-                      <path d="M 0 0 L 6 3 L 0 6 z" fill="#F43F5E" />
+                      <path d="M 0 0 L 6 3 L 0 6 z" fill={isHit ? '#00AA00' : '#FF0000'} />
                     </marker>
                   </defs>
                   <line
@@ -235,10 +235,10 @@ export function HsvTrackSlider({
                     y1="50%"
                     x2={getPercent(actualTargetVal, max)}
                     y2="50%"
-                    stroke="#F43F5E"
-                    strokeWidth="2"
-                    strokeDasharray="3 3"
-                    markerEnd={`url(#arrow-${label})`}
+                    stroke={isHit ? '#00AA00' : '#FF0000'}
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                    markerEnd={`url(#arrow-${label}-${isHit ? 'hit' : 'miss'})`}
                   />
                 </svg>
               )}
