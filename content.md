@@ -1,120 +1,73 @@
-好的，没问题！我们将在色彩滑块轨道的揭晓阶段，将“真理标记线”的高度调整为 `h-10`（40px），并将“用户选择标记线”调整为 `h-7`（28px），从而使真理线上下显著超出轨道，形成明确的主次对比与视觉层级。
+好的！我们在检查后发现，数据导出函数 `exportAllData()` 实际上已包含导出的 `settings` 节点，但先前在全局导入/刷新数据（`refreshProfiles`）时，顶层的 React/Preact `settings` 状态未能同步加载并刷新 LocalStorage 中更新的偏好设置，导致导入的偏好设置无法及时更新。
 
-以下是本次修改的完整执行计划。
+我们将通过在全局数据变更和刷新函数中重新调用 `loadSettings()` 来同步 `settings` 状态，确保导出与导入偏好设置的全面生效。
 
-## [WIP] style(ui): 增加色彩滑块轨道揭晓阶段真理线高度以强化视觉对比
+以下是具体的执行计划。
+
+## [WIP] feat(db): 确保全量数据导出与导入时完整同步用户偏好设置
 
 ### 用户需求
-在色彩答题揭晓阶段，真理线（标准答案位置）应当比用户选择的标记线高度更高、更长，从而形成清晰的主次视觉对比，方便用户快速识别偏差。
+确保导出全量备份数据时包含用户的全部偏好设置，并在恢复/导入数据时能够实时同步与生效。
 
 ### 评论
-这是一个很棒的 UI/UX 微调。通过引入视觉高度差（`h-10` 对比 `h-7`）和层级调整（真理线处于更高的 `z-20` 图层），可以显著提升答题反馈的直观度与可读性。
+在 `exportAllData` 中，系统已经将 `loadSettings()` 获取到的偏好设置数据序列化进 JSON 的 `settings` 属性。但原先在导入数据回调 `onDataChanged`（即 `refreshProfiles`）触发时，顶层组件并未重新拉取 `loadSettings()` 更新 state，导致导入后的偏好设置无法实时生效甚至可能被旧内存状态覆盖。
 
 ### 目标
-1. 修改 `src/components/ColorCanvas.tsx` 中单维度滑块揭晓阶段真理线与用户线的样式。
-2. 修改 `src/components/HsvTrackSlider.tsx` 中 HSV 综合调制滑块揭晓阶段真理线与用户线的样式。
+1. 在 `App.tsx` 的 `refreshProfiles` 刷新逻辑中，加入 `setSettings(loadSettings())`，确保导入全量数据后偏好设置即时同步到 UI 和交互应用中。
+2. 确保 `importExport.ts` 中偏好设置导出与导入的准确性。
 
 ### 基本原理
-将揭晓时的真理线（翡翠绿线）的高度由 `h-8` 提高至 `h-10`，使其明显长于轨道的 28px（`h-7`），突出轨道边界；同时将用户选择线高度设定为 `h-7`，与轨道保持同高，并调整 z-index，让真理线具备更强的视觉权重。
+通过在数据变更（导入全量 JSON 数据或重置清空数据）时联动触发顶层 `settings` State 的重新加载，使得导出的偏好设置无论在导出端还是导入端都能保持100%一致与实时同步。
 
 ### 标签
-#intent/tune #flow/ready #priority/medium
-#comp/interfaces #concept/ui #scope/ux
+#intent/build #flow/ready #priority/high
+#comp/runtime #concept/config #concept/sync #scope/core
 #ai/instruct
-#task/domain/ui #task/object/slider-truth-line #task/action/style-adjustment
+#task/domain/storage #task/object/user-settings #task/action/export-import-sync
 #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 调整 `ColorCanvas.tsx` 中揭晓阶段标记线样式
+#### Acts 1: 在 `App.tsx` 的 `refreshProfiles` 中增加偏好设置同步逻辑
 
 ~~~~~act
 patch_file
-src/components/ColorCanvas.tsx
+src/app.tsx
 ~~~~~
 ~~~~~tsx.old
-          {showAnswer && isTargetActiveMode && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
-                style={{ left: getPercent(val, max) }}
-              />
-              {userAnswer && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
-                  style={{ left: getPercent(userAnswer.userValue, max) }}
-                />
-              )}
-            </>
-          )}
+  // 刷新用户能力看板与总时间
+  const refreshProfiles = useCallback(async () => {
+    const data = await getAllUserProfiles();
+    const cData = await getAllColorProfiles();
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
+    const relMs = await getTrainingTimeMs('relative_color');
+    setProfiles(data);
+    setColorProfiles(cData);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
+  }, []);
 ~~~~~
 ~~~~~tsx.new
-          {showAnswer && isTargetActiveMode && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
-                style={{ left: getPercent(val, max) }}
-              />
-              {userAnswer && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-10`}
-                  style={{ left: getPercent(userAnswer.userValue, max) }}
-                />
-              )}
-            </>
-          )}
-~~~~~
-
-#### Acts 2: 调整 `HsvTrackSlider.tsx` 中揭晓阶段标记线样式
-
-~~~~~act
-patch_file
-src/components/HsvTrackSlider.tsx
-~~~~~
-~~~~~tsx.old
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
-                style={{ left: getPercent(actualTargetVal, max) }}
-              />
-              {userVal !== undefined && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
-                  style={{ left: getPercent(userVal, max) }}
-                />
-              )}
-            </>
-          )}
-~~~~~
-~~~~~tsx.new
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
-                style={{ left: getPercent(actualTargetVal, max) }}
-              />
-              {userVal !== undefined && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-10`}
-                  style={{ left: getPercent(userVal, max) }}
-                />
-              )}
-            </>
-          )}
+  // 刷新用户能力看板与总时间
+  const refreshProfiles = useCallback(async () => {
+    const data = await getAllUserProfiles();
+    const cData = await getAllColorProfiles();
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
+    const relMs = await getTrainingTimeMs('relative_color');
+    setProfiles(data);
+    setColorProfiles(cData);
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
+    setSettings(loadSettings());
+  }, []);
 ~~~~~
 
 ### 下一步建议
-- 建议运行一次前端构建或测试（如 `npm run check` 或 `npm test`），确认没有打破已有的代码类型和逻辑校验。
+- 可以在全局设置弹窗中尝试导出 JSON 文件，检查 JSON 根节点中的 `settings` 对象是否完整包含 `global`、`star`、`color` 以及 `relative_color` 的全部配置项。
+- 进行一次导入测试，验证导入后各练习模块的偏好设置（如自适应算子模式、网格大小等）是否已即时更新。
