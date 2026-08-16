@@ -93,27 +93,10 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion, _newVersion, transaction) {
-        let sessionsStore: any;
-        let recordsStore: any;
-        let profilesStore: any;
-
-        if (!db.objectStoreNames.contains('sessions')) {
-          sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
-        } else {
-          sessionsStore = transaction.objectStore('sessions');
-        }
-
-        if (!db.objectStoreNames.contains('records')) {
-          recordsStore = db.createObjectStore('records', { keyPath: 'id' });
-        } else {
-          recordsStore = transaction.objectStore('records');
-        }
-
-        if (!db.objectStoreNames.contains('user_profiles')) {
-          profilesStore = db.createObjectStore('user_profiles', { keyPath: 'key' });
-        } else {
-          profilesStore = transaction.objectStore('user_profiles');
-        }
+        // 1. 初始化 sessions 表及索引
+        const sessionsStore = db.objectStoreNames.contains('sessions')
+          ? transaction.objectStore('sessions')
+          : db.createObjectStore('sessions', { keyPath: 'id' });
 
         if (!sessionsStore.indexNames.contains('by-domain')) {
           sessionsStore.createIndex('by-domain', 'domain');
@@ -121,6 +104,11 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
         if (!sessionsStore.indexNames.contains('by-domain-mode')) {
           sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
         }
+
+        // 2. 初始化 records 表及索引
+        const recordsStore = db.objectStoreNames.contains('records')
+          ? transaction.objectStore('records')
+          : db.createObjectStore('records', { keyPath: 'id' });
 
         if (!recordsStore.indexNames.contains('by-session')) {
           recordsStore.createIndex('by-session', 'sessionId');
@@ -135,11 +123,16 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
           recordsStore.createIndex('by-mode', 'mode');
         }
 
+        // 3. 初始化 user_profiles 表及索引
+        const profilesStore = db.objectStoreNames.contains('user_profiles')
+          ? transaction.objectStore('user_profiles')
+          : db.createObjectStore('user_profiles', { keyPath: 'key' });
+
         if (!profilesStore.indexNames.contains('by-domain')) {
           profilesStore.createIndex('by-domain', 'domain');
         }
 
-        // v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
+        // 4. v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
         if (oldVersion < 4) {
           const oldStores = Array.from(db.objectStoreNames);
           if (oldStores.includes('color_sessions' as never)) {
