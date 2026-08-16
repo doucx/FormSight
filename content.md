@@ -1,56 +1,149 @@
-## [WIP] refactor(ui): 调整主页相对色感卡片布局为标准网格单列
+## [WIP] refactor(ui): 简化相对色感交互看板并放大色块尺寸
 
 ### 错误分析
 
-无错误，本次为纯 UI 布局优化。
+无错误，本次根据用户要求进行 UI 界面精简与视觉强化。
 
 ### 用户需求
 
-主页里，相对色感 (Relative Color Perception) 单独占据了一整行，需要让它调整为与其他模块卡片一致的单列标准大小（不再独占整行）。
+1. 去除 `RelativeColorCanvas.tsx` 中所有的干扰性文字（例如“1. 基准色彩矢量推移 (A ➔ B)”、“固有色 A”、“推移色 B”、“固有色 C”、“待调色 D”、“真理色彩 D”等）。
+2. 将色块尺寸从原本的 `w-20 h-20` 显著放大。
 
 ### 评论
 
-通过移除 `Home.tsx` 中相对色感卡片上的 `md:col-span-2` 样式类，可以让三个训练模块（寻星练习、绝对色感、相对色感）在大屏幕下整齐地以网格形式并排排列。
+通过移除看板中的引导说明文字，使界面更加纯粹、沉浸；同时将展示色块放大，有助于更清晰地进行微小色彩差别的判断。
 
 ### 目标
-1. 修改 `src/views/Home.tsx` 中相对色感卡片的 Tailwind CSS 类，移除 `md:col-span-2`。
-2. 运行测试套件确保一切正常。
+1. 修改 `src/components/RelativeColorCanvas.tsx`：
+   - 移除 A -> B 以及 C -> D 区域上方及下方的所有提示文本、箭头标签等干扰文字。
+   - 将色块尺寸由 `w-20 h-20`（80px）扩大至 `w-28 h-28` 或 `w-32 h-32`。
+2. 保持底部的 HSV 调节滑块与核心色差判定逻辑完全不变。
 
 ### 基本原理
 
-主页采用的是 Tailwind 的 `grid-cols-1 md:grid-cols-2` 布局（如果总共有3个卡片，通常会排列为 2 列：第一行放寻星和色感，第二行放相对色感并居左，或者需要适配 3 列。查看 `Home.tsx` 的网格定义发现父容器是 `grid-cols-1 md:grid-cols-2`，因此去掉 `md:col-span-2` 后，相对色感将作为第三个子元素自动排列在第二行的左侧，符合“左下角四分之一/半宽”的网格布局）。
+通过直接清理 `RelativeColorCanvas.tsx` 中渲染文字标签的 `span` 元素，并调整 Tailwind 的 `w-* h-*` 类名，可以完美达成用户的设计直觉。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/home-dashboard #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/relative-color-canvas #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 调整相对色感卡片宽度并运行测试
+#### Acts 1: 修改 RelativeColorCanvas 简化文字并放大色块
 
 ~~~~~act
 patch_file
-src/views/Home.tsx
+src/components/RelativeColorCanvas.tsx
 ~~~~~
 ~~~~~tsx.old
-        {/* 3. 相对色感训练 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('relative-color')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left md:col-span-2"
-        >
+  return (
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+      {/* 上方对比展示区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        {/* 基准推移组 (A -> B) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            1. 基准色彩矢量推移 (A ➔ B)
+          </span>
+          <div className="flex items-center justify-center gap-3 w-full">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexA }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">固有色 A</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexB }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">推移色 B</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 目标推移组 (C -> D) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            2. 目标色彩矢量推移 (C ➔ D)
+          </span>
+          <div className="flex items-center justify-center gap-3 w-full">
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+                style={{ backgroundColor: hexC }}
+              />
+              <span className="text-[10px] font-mono text-slate-400">固有色 C</span>
+            </div>
+            <ArrowRight className="w-5 h-5 text-indigo-500" />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
+                style={{ backgroundColor: hexUserD }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 border-white shadow-md"
+                    style={{ backgroundColor: hexTargetD }}
+                    title="真理色彩 D"
+                  />
+                )}
+              </div>
+              <span className="text-[10px] font-mono text-indigo-600 font-bold">待调色 D</span>
+            </div>
+          </div>
+        </div>
+      </div>
 ~~~~~
 ~~~~~tsx.new
-        {/* 3. 相对色感训练 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('relative-color')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
+  return (
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+      {/* 上方对比展示区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        {/* 基准推移组 (A -> B) */}
+        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4 w-full">
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexA }}
+            />
+            <ArrowRight className="w-6 h-6 text-indigo-400" />
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexB }}
+            />
+          </div>
+        </div>
+
+        {/* 目标推移组 (C -> D) */}
+        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4 w-full">
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexC }}
+            />
+            <ArrowRight className="w-6 h-6 text-indigo-400" />
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
+              style={{ backgroundColor: hexUserD }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white shadow-md"
+                  style={{ backgroundColor: hexTargetD }}
+                  title="真理色彩 D"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 ~~~~~
 
 ### 下一步建议
 
-- 确认修改后，主页将以两列网格展示三个训练模块，视觉排版更加均衡。
-- 可以继续启动开发服务器（`npm run dev`）在浏览器中实际预览效果。
+- 检查放大后的色块与底部滑轨在移动端/桌面端下的布局表现是否协调。
+- 如果满意，可以随时进行整体测试或提交。

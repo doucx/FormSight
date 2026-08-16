@@ -97,57 +97,39 @@ export function RelativeColorCanvas({
       {/* 上方对比展示区 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
         {/* 基准推移组 (A -> B) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            1. 基准色彩矢量推移 (A ➔ B)
-          </span>
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
-                style={{ backgroundColor: hexA }}
-              />
-              <span className="text-[10px] font-mono text-slate-400">固有色 A</span>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
-                style={{ backgroundColor: hexB }}
-              />
-              <span className="text-[10px] font-mono text-slate-400">推移色 B</span>
-            </div>
+        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4 w-full">
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexA }}
+            />
+            <ArrowRight className="w-6 h-6 text-indigo-400" />
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexB }}
+            />
           </div>
         </div>
 
         {/* 目标推移组 (C -> D) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col items-center gap-3">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            2. 目标色彩矢量推移 (C ➔ D)
-          </span>
-          <div className="flex items-center justify-center gap-3 w-full">
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
-                style={{ backgroundColor: hexC }}
-              />
-              <span className="text-[10px] font-mono text-slate-400">固有色 C</span>
-            </div>
-            <ArrowRight className="w-5 h-5 text-indigo-500" />
-            <div className="flex flex-col items-center gap-1">
-              <div
-                className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
-                style={{ backgroundColor: hexUserD }}
-              >
-                {showAnswer && (
-                  <div
-                    className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full border-2 border-white shadow-md"
-                    style={{ backgroundColor: hexTargetD }}
-                    title="真理色彩 D"
-                  />
-                )}
-              </div>
-              <span className="text-[10px] font-mono text-indigo-600 font-bold">待调色 D</span>
+        <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 flex flex-col items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-4 w-full">
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexC }}
+            />
+            <ArrowRight className="w-6 h-6 text-indigo-400" />
+            <div
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
+              style={{ backgroundColor: hexUserD }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white shadow-md"
+                  style={{ backgroundColor: hexTargetD }}
+                  title="真理色彩 D"
+                />
+              )}
             </div>
           </div>
         </div>
