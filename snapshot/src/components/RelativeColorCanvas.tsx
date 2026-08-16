@@ -131,7 +131,7 @@ export function RelativeColorCanvas({
           >
             {showAnswer && (
               <div
-                className="absolute bottom-0 left-0 right-0 h-1/2 border-t border-white/40"
+                className="absolute bottom-0 left-0 right-0 h-1/2"
                 style={{ backgroundColor: hexTargetD }}
               />
             )}
