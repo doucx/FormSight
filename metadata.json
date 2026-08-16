@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix(session): 统一 Esc 键退出行为并修复 Hook 初始化与导出问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786881027.1637087, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 优化相对色感在低 Level 下节点 C 的色彩生成分布", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786881579.9212348, "duration_ms": 0}}
