@@ -105,8 +105,7 @@ export function HsvTrackSlider({
 
   const activeVal = hoverVal !== null ? hoverVal : val;
   const actualTargetVal =
-    targetVal ??
-    (label === 'H' ? targetHSV[0] : label === 'S' ? targetHSV[1] : targetHSV[2]);
+    targetVal ?? (label === 'H' ? targetHSV[0] : label === 'S' ? targetHSV[1] : targetHSV[2]);
 
   return (
     <div className="flex items-center gap-3 w-full">

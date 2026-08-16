@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { HsvTrackSlider } from './HsvTrackSlider';
 import {
   type ColorHitResult,
   type ColorQuestionData,
   getToleranceSpan,
   hsvToHex,
 } from '../utils/colorUtils';
+import { HsvTrackSlider } from './HsvTrackSlider';
 
 interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -166,12 +166,7 @@ function SingleDimensionSlider({
             showToleranceBand &&
             hoverVal !== null &&
             (() => {
-              const span = getToleranceSpan(
-                label,
-                hoverVal,
-                targetHSV,
-                question.difficultyLevel,
-              );
+              const span = getToleranceSpan(label, hoverVal, targetHSV, question.difficultyLevel);
               const isWrapMode = label === 'H';
               const leftVal = isWrapMode
                 ? (hoverVal - span.halfSpan + max) % max

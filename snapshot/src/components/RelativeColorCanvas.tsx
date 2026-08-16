@@ -1,11 +1,11 @@
 import { ArrowRight } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { HsvTrackSlider } from './HsvTrackSlider';
 import { hsvToHex } from '../utils/colorUtils';
 import type {
   RelativeColorHitResult,
   RelativeColorQuestionData,
 } from '../utils/relativeColorUtils';
+import { HsvTrackSlider } from './HsvTrackSlider';
 
 interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;

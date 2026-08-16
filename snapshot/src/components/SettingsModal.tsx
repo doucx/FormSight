@@ -62,8 +62,7 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
   ) => {
     setCurrent((prev) => {
       const prevDomainSettings = prev[domain];
-      const updatedPatch =
-        typeof patch === 'function' ? patch(prevDomainSettings) : patch;
+      const updatedPatch = typeof patch === 'function' ? patch(prevDomainSettings) : patch;
       const nextDomainSettings = { ...prevDomainSettings, ...updatedPatch };
       const nextSettings = {
         ...prev,
@@ -306,9 +305,7 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
           {/* 7. 色彩类型专属 (color / relative_color) - 滑块外延吸附感应区 */}
           {(domain === 'color' || domain === 'relative_color') && (
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-slate-700">
-                色感滑块极值吸附外延感应区
-              </div>
+              <div className="text-sm font-semibold text-slate-700">色感滑块极值吸附外延感应区</div>
               <div className="grid grid-cols-4 gap-1.5">
                 {[
                   { label: '关闭 (0px)', value: 0 },
@@ -411,9 +408,7 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
                     <button
                       type="button"
                       key={m.id}
-                      onClick={() =>
-                        updateDomainSettings({ targetingMode: m.id as TargetingMode })
-                      }
+                      onClick={() => updateDomainSettings({ targetingMode: m.id as TargetingMode })}
                       className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                         isActive
                           ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
@@ -427,8 +422,7 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
               </div>
 
               {/* 手动勾选扇区 */}
-              {(domainSettings as StarSettings | ColorSenseSettings).targetingMode ===
-                'manual' && (
+              {(domainSettings as StarSettings | ColorSenseSettings).targetingMode === 'manual' && (
                 <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
                   <div className="text-[11px] font-semibold text-slate-500">
                     选择需要靶向强化的 {domain === 'color' ? '色相' : '角度'} 扇区：
@@ -436,29 +430,27 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
                   <div
                     className={`grid gap-1.5 ${domain === 'color' ? 'grid-cols-3' : 'grid-cols-4'}`}
                   >
-                    {(domain === 'color' ? COLOR_SECTOR_NAMES : SECTOR_NAMES).map(
-                      (name, idx) => {
-                        const selected = (
-                          (domainSettings as StarSettings | ColorSenseSettings)
-                            .manualTargetSectors || []
-                        ).includes(idx);
+                    {(domain === 'color' ? COLOR_SECTOR_NAMES : SECTOR_NAMES).map((name, idx) => {
+                      const selected = (
+                        (domainSettings as StarSettings | ColorSenseSettings).manualTargetSectors ||
+                        []
+                      ).includes(idx);
 
-                        return (
-                          <button
-                            type="button"
-                            key={name}
-                            onClick={() => handleSectorToggle(idx)}
-                            className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
-                              selected
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-sm'
-                                : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
-                            }`}
-                          >
-                            {name}
-                          </button>
-                        );
-                      },
-                    )}
+                      return (
+                        <button
+                          type="button"
+                          key={name}
+                          onClick={() => handleSectorToggle(idx)}
+                          className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
+                            selected
+                              ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-sm'
+                              : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}

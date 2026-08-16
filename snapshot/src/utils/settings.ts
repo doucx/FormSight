@@ -162,9 +162,7 @@ export function loadSettings(): UserSettings {
         enableHoverColorPreview:
           parsed.enableHoverColorPreview ?? DEFAULT_SETTINGS.color.enableHoverColorPreview,
         targetingMode:
-          parsed.colorTargetingMode === 'manual'
-            ? 'manual'
-            : DEFAULT_SETTINGS.color.targetingMode,
+          parsed.colorTargetingMode === 'manual' ? 'manual' : DEFAULT_SETTINGS.color.targetingMode,
         manualTargetSectors: parsed.colorManualTargetSectors || [],
       },
       relative_color: {
@@ -177,8 +175,7 @@ export function loadSettings(): UserSettings {
         adaptiveMode: parsed.adaptiveMode ?? DEFAULT_SETTINGS.relative_color.adaptiveMode,
         targetAccuracy: parsed.targetAccuracy ?? DEFAULT_SETTINGS.relative_color.targetAccuracy,
         blockSize: parsed.blockSize ?? DEFAULT_SETTINGS.relative_color.blockSize,
-        sliderHitMargin:
-          parsed.sliderHitMargin ?? DEFAULT_SETTINGS.relative_color.sliderHitMargin,
+        sliderHitMargin: parsed.sliderHitMargin ?? DEFAULT_SETTINGS.relative_color.sliderHitMargin,
         showToleranceBand:
           parsed.showToleranceBand ?? DEFAULT_SETTINGS.relative_color.showToleranceBand,
         enableHoverColorPreview:
