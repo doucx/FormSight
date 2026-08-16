@@ -80,7 +80,14 @@ export function RelativeColorTrainingView({
         },
       });
     },
-    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+    saveSession: async ({
+      sessionId,
+      totalTrials: t,
+      hitTrials: h,
+      ended,
+      startTimestamp,
+      endLevel,
+    }) => {
       await saveSession({
         id: sessionId,
         domain: 'relative_color',
@@ -98,7 +105,9 @@ export function RelativeColorTrainingView({
   });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };

@@ -96,7 +96,14 @@ export function ColorTrainingView({
         },
       });
     },
-    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+    saveSession: async ({
+      sessionId,
+      totalTrials: t,
+      hitTrials: h,
+      ended,
+      startTimestamp,
+      endLevel,
+    }) => {
       await saveColorSession({
         id: sessionId,
         domain: 'color',
@@ -114,7 +121,9 @@ export function ColorTrainingView({
   });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };

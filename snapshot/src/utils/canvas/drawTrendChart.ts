@@ -33,8 +33,7 @@ export function renderTrendChartCanvas(
 
   const getY = (val: number) =>
     padding.top + (1 - (val - minLevel) / (maxLevel - minLevel || 1)) * chartH;
-  const getX = (idx: number) =>
-    padding.left + (idx / Math.max(1, recentDates.length - 1)) * chartW;
+  const getX = (idx: number) => padding.left + (idx / Math.max(1, recentDates.length - 1)) * chartW;
 
   ctx.strokeStyle = '#E2E8F0';
   ctx.lineWidth = 1;

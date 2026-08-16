@@ -6,10 +6,7 @@ interface RelativeColorSettingsFormProps {
   onChange: (patch: Partial<RelativeColorSettings>) => void;
 }
 
-export function RelativeColorSettingsForm({
-  settings,
-  onChange,
-}: RelativeColorSettingsFormProps) {
+export function RelativeColorSettingsForm({ settings, onChange }: RelativeColorSettingsFormProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">

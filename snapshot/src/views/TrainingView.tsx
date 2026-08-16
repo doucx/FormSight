@@ -2,8 +2,8 @@ import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
 import { useCallback, useRef } from 'preact/hooks';
 import { SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';
-import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { useTrainingSession } from '../hooks/useTrainingSession';
+import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { saveSession, saveTrialRecord } from '../utils/db';
 import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../utils/geometry';
 import type { StarSettings } from '../utils/settings';
@@ -86,7 +86,14 @@ export function TrainingView({
         },
       });
     },
-    saveSession: async ({ sessionId, totalTrials: t, hitTrials: h, ended, startTimestamp, endLevel }) => {
+    saveSession: async ({
+      sessionId,
+      totalTrials: t,
+      hitTrials: h,
+      ended,
+      startTimestamp,
+      endLevel,
+    }) => {
       await saveSession({
         id: sessionId,
         domain: 'star',
@@ -104,7 +111,9 @@ export function TrainingView({
   });
 
   const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   };
