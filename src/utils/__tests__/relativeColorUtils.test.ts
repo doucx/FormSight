@@ -37,4 +37,24 @@ describe('relativeColorUtils with deterministic orthogonal distractors', () => {
     expect(hsv[1]).toBeGreaterThanOrEqual(0);
     expect(hsv[2]).toBeGreaterThanOrEqual(0);
   });
+
+  it('generateRelativeColorQuestion - should generate C closer to A at lower difficulty levels', () => {
+    const qEasy = generateRelativeColorQuestion('VECTOR_SHIFT', 1);
+    const hueDiffEasy = Math.min(
+      Math.abs(qEasy.colorA[0] - qEasy.colorC[0]),
+      360 - Math.abs(qEasy.colorA[0] - qEasy.colorC[0]),
+    );
+    expect(hueDiffEasy).toBeLessThanOrEqual(10.5);
+
+    let maxHueDiffHard = 0;
+    for (let i = 0; i < 20; i++) {
+      const qHard = generateRelativeColorQuestion('VECTOR_SHIFT', 35);
+      const diff = Math.min(
+        Math.abs(qHard.colorA[0] - qHard.colorC[0]),
+        360 - Math.abs(qHard.colorA[0] - qHard.colorC[0]),
+      );
+      if (diff > maxHueDiffHard) maxHueDiffHard = diff;
+    }
+    expect(maxHueDiffHard).toBeGreaterThan(40);
+  });
 });

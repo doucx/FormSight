@@ -134,6 +134,9 @@ export function generateRelativeColorQuestion(
   const tolerance = getTargetDeltaEForLevel(clampedLevel);
   const R = getDistractorDistanceForLevel(clampedLevel);
 
+  // 难度归一化因子 (0.0 ~ 1.0)
+  const t = (clampedLevel - 1) / 34;
+
   let attempts = 0;
   let colorA: [number, number, number] = [0, 0, 0];
   let colorB: [number, number, number] = [0, 0, 0];
@@ -156,11 +159,20 @@ export function generateRelativeColorQuestion(
     const vB = Math.max(10, Math.min(100, vA + (Math.floor(Math.random() * 50) - 25)));
     colorB = [hB, sB, vB];
 
-    // 生成 C (全新的固有色 2)
-    const hC = Math.floor(Math.random() * 360);
-    const sC = Math.floor(Math.random() * 60) + 30;
-    const vC = Math.floor(Math.random() * 60) + 30;
-    colorC = [hC, sC, vC];
+    // 生成 C (根据 level 动态控制与 A 的相似度)
+    // Level 1 时偏置极小 (±10°, ±5%, ±5%)，Level 35 时全色域随机 (±180°, ±40%, ±40%)
+    const maxHueOffset = 10 + t * 170;
+    const maxSatOffset = 5 + t * 35;
+    const maxValOffset = 5 + t * 35;
+
+    const hC_jitter = (Math.random() * 2 - 1) * maxHueOffset;
+    const sC_jitter = (Math.random() * 2 - 1) * maxSatOffset;
+    const vC_jitter = (Math.random() * 2 - 1) * maxValOffset;
+
+    const hC = (hA + hC_jitter + 360) % 360;
+    const sC = Math.max(10, Math.min(100, sA + sC_jitter));
+    const vC = Math.max(10, Math.min(100, vA + vC_jitter));
+    colorC = [Math.round(hC), Math.round(sC), Math.round(vC)];
 
     const labA = hsvToOkLab(...colorA);
     const labB = hsvToOkLab(...colorB);
