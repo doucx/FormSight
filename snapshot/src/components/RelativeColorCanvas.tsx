@@ -46,20 +46,37 @@ export function RelativeColorCanvas({
     onAnswer(activeColor);
   };
 
-  // 键盘响应 (1/2/3/4 选择选项，Space 提交)
+  // 全面兼容主键盘、小键盘与 e.key 的 1~4 / Space 快捷键响应
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (disabled || showAnswer) return;
-      if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
-        const idx = Number.parseInt(e.code.replace('Digit', ''), 10) - 1;
-        if (options && idx < options.length) {
+
+      const numKeyMap: Record<string, number> = {
+        '1': 0,
+        '2': 1,
+        '3': 2,
+        '4': 3,
+        Digit1: 0,
+        Digit2: 1,
+        Digit3: 2,
+        Digit4: 3,
+        Numpad1: 0,
+        Numpad2: 1,
+        Numpad3: 2,
+        Numpad4: 3,
+      };
+
+      if (e.key in numKeyMap || e.code in numKeyMap) {
+        const idx = numKeyMap[e.key] ?? numKeyMap[e.code];
+        if (options && idx >= 0 && idx < options.length) {
           setSelectedIndex(idx);
         }
-      } else if (e.code === 'Space') {
+      } else if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
         onAnswer(activeColor);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAnswer, disabled, activeColor, options, onAnswer]);
