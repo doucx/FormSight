@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "修复这两处构建与 Check 问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786880285.1794524, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M RelativeColorCanvas.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786880294.141209, "duration_ms": 0}}
