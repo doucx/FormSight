@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 在相对色感训练视图中添加 C 节点 HSV 滑块展示与对比", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786883373.7677631, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 只保留分割线", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786883418.2374098, "duration_ms": 0}}

@@ -141,20 +141,8 @@ export function RelativeColorCanvas({
 
       {/* 轨道面板 */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {/* C 节点颜色 (基准 C) */}
+        {/* C 节点颜色 */}
         <div className="space-y-3 pb-3 border-b border-slate-200/60">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-sm"
-                style={{ backgroundColor: hexC }}
-              />
-              C 节点颜色 (基准 C)
-            </span>
-            <span className="font-mono text-[11px] text-slate-400">
-              {cH}° / {cS}% / {cV}%
-            </span>
-          </div>
           <HsvTrackSlider
             label="H"
             gradient={hueGradient}
@@ -205,20 +193,8 @@ export function RelativeColorCanvas({
           />
         </div>
 
-        {/* D 节点颜色 (当前选择) */}
+        {/* D 节点颜色 */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span
-                className="w-2.5 h-2.5 rounded-full border border-slate-300 shadow-sm"
-                style={{ backgroundColor: hexSelectedD }}
-              />
-              D 节点颜色 (当前选择)
-            </span>
-            <span className="font-mono text-[11px] text-slate-400">
-              {userH}° / {userS}% / {userV}%
-            </span>
-          </div>
           <HsvTrackSlider
             label="H"
             gradient={hueGradient}
