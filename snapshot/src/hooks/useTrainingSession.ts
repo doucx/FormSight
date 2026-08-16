@@ -80,40 +80,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  // 计时器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
-      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
-
-  // 快捷键响应 (Space / Escape)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape' || e.key === 'Escape') {
-        e.preventDefault();
-        handleRequestFinish();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    showAnswer,
-    isFinished,
-    sessionHistory,
-    showSummaryModal,
-    totalTrials,
-    hitTrials,
-    handleNextQuestion,
-    handleRequestFinish,
-  ]);
+  // === 业务处理逻辑函数 (定义在 useEffect 之前) ===
 
   const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
     await saveSession({
@@ -218,6 +185,43 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
   };
+
+  // === 副作用监听器 (定义在 handler 之后) ===
+
+  // 计时器
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (showSummaryModal || isFinished) return;
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showSummaryModal, isFinished]);
+
+  // 快捷键响应 (Space / Escape)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        if (showAnswer && !isFinished) {
+          e.preventDefault();
+          handleNextQuestion();
+        }
+      } else if (e.code === 'Escape' || e.key === 'Escape') {
+        e.preventDefault();
+        handleRequestFinish();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    showAnswer,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    totalTrials,
+    hitTrials,
+    handleNextQuestion,
+    handleRequestFinish,
+  ]);
 
   return {
     question,

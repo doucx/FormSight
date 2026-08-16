@@ -1,70 +1,250 @@
-问题的根源在于 `useTrainingSession` hook 中的键盘事件监听逻辑。当在训练过程中按下 `Escape` 键时，原先直接调用了 `handleFinishSession()`（直接保存 session 并退出回到主视图），从而绕过了结算弹窗的判断逻辑。而顶部导航栏的“退出训练 (Esc)”按钮绑定的则是 `handleRequestFinish()`，它会在存在答题记录（`sessionHistory.length > 0`）且结算弹窗未展示时优先弹出 `SessionSummaryModal` 总结弹窗。
+产生此报错的原因是在 `useTrainingSession.ts` 中，`useEffect` Hook 被写在了处理函数（`handleNextQuestion`、`handleRequestFinish` 等）的定义之前。在 JavaScript 中，通过 `const` 声明的函数存在临时死区 (Temporal Dead Zone, TDZ)，当组件初始化执行到 `useEffect` 并计算其依赖项数组 `[..., handleNextQuestion, handleRequestFinish]` 时，这两个函数变量尚未被声明和赋值，从而抛出了 `ReferenceError: Cannot access 'handleNextQuestion' before initialization` 错误。
 
-我将更新 `useTrainingSession.ts` 中 `Escape` 按键事件的处理函数，使其与“退出训练”按钮调用相同的 `handleRequestFinish()` 逻辑，并补充相关依赖。
+我们将调整 `useTrainingSession.ts` 中代码的声明顺序，将所有 Hook 处理函数（`handleNextQuestion`、`handleRequestFinish` 等）提升定义在 `useEffect` 之前，彻底解决该变量未初始化访问的错误。
 
-## [WIP] fix: 修复按 Esc 键退出训练时不弹出结算窗口的问题
+## [WIP] fix: 修复 useTrainingSession 中 handleNextQuestion 变量暂态死区初始化错误
 
 ### 错误分析
 
-在 `src/hooks/useTrainingSession.ts` 中，快捷键监听函数 `handleKeyDown` 在捕获到 `e.code === 'Escape'` 时，直接触发了 `handleFinishSession()`，跳过了结算弹窗的显示判定，直接执行 `onExit()` 退出到 Dashboard 看板。
-而页面顶部的 UI 按钮“退出训练 (Esc)”调用的则是 `handleRequestFinish()`。该函数会检查：
-1. 若已有答题记录且弹窗尚未显示（`sessionHistory.length > 0 && !showSummaryModal`），先保存进度并展示 `SessionSummaryModal` 结算弹窗；
-2. 若无答题记录或结算弹窗已显示，则直接退出回到 Dashboard。
+报错信息：
+`Uncaught (in promise) ReferenceError: Cannot access 'handleNextQuestion' before initialization`
+`at useTrainingSession (useTrainingSession.ts:114:5)`
 
-因此，键盘按 Esc 与点击“退出训练”按钮的行为不一致，造成快捷键退出时无法看到本次训练成果的总结弹窗。
+在 `useTrainingSession.ts` 的函数体内，`useEffect` 监听器最先出现并试图在依赖项数组中访问 `handleNextQuestion` 和 `handleRequestFinish` 变量，而这两个变量在更靠后的行中才通过 `const handleNextQuestion = ...` 声明。当 Hook 函数被调用求值时，JavaScript 引擎在进入 TDZ（临时死区）时抛出了 `ReferenceError` 运行时异常。
 
 ### 用户需求
 
-按下 Esc 键退出的行为应与点击 UI 界面上的“退出训练 (Esc)”按钮完全一致：
-- 在有答题记录时按下 Esc 键，弹出训练结算与成果总结窗口；
-- 再次按下 Esc 键或在无答题记录时按下，退出训练回到 Dashboard。
+修复 Hook 函数组件初始化时的 `ReferenceError` 错误，确保 `useTrainingSession` 在各练习界面能够稳定无错地加载与初始化。
 
 ### 评论
 
-这是一个涉及训练流畅度与 UI/快捷键交互一致性的重要细节修复。统一键盘快捷键与 UI 按钮的交互逻辑符合用户直觉。
+这是一个典型的 JavaScript / TypeScript 函数变量提升与 TDZ 作用域定义问题。将副作用 `useEffect` 的定义统一放置在业务 Handler 函数声明之后即可规避。
 
 ### 目标
 
-1. 修改 `useTrainingSession.ts` 中的 `handleKeyDown`，将 `Escape` 键的处理改为调用 `handleRequestFinish()`。
-2. 补充 `useEffect` 的依赖数组，确保闭包中引用的 `sessionHistory` 和 `showSummaryModal` 状态始终保持最新。
+调整 `src/hooks/useTrainingSession.ts` 中函数与 Hook 的编写顺序：
+1. 先定义 State 与 Ref 状态；
+2. 再定义 `saveCurrentSession`、`handleNextQuestion`、`handleRequestFinish` 等回调处理逻辑；
+3. 最后注册 `useEffect` 副作用监听器。
 
 ### 基本原理
 
-通过将按键事件和按钮点击事件绑定至同一个 `handleRequestFinish` 处理器，消除键盘快捷键与点击按钮之间的行为分歧。
+在函数组件或自定义 Hook 中，先声明所有的内部事件回调函数，再声明引用这些函数的 `useEffect`，可以确保 `useEffect` 求值依赖数组时变量已经被正确赋上了函数实例引用。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-session-esc-handler #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/training-session-initialization #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 useTrainingSession Hook 中的 Esc 键响应逻辑
+#### Acts 1: 重构并修复 useTrainingSession.ts 中函数的声明顺序
 
 ~~~~~act
-patch_file
+write_file
 src/hooks/useTrainingSession.ts
 ~~~~~
 ~~~~~typescript
-  // 快捷键响应 (Space / Escape)
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import type { AdaptiveMode, StepGranularity } from '../utils/settings';
+
+export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
+  domain: string;
+  mode: string;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  autoNext: boolean;
+  autoNextDelay: number;
+  stepGranularity?: StepGranularity;
+  adaptiveMode?: AdaptiveMode;
+  targetAccuracy?: number;
+  blockSize?: number;
+  generateQuestion: (level: number) => TQuestion;
+  evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
+  isHit: (hitResult: THitResult) => boolean;
+  getQuestionLevel: (question: TQuestion) => number;
+  saveTrialRecord: (params: {
+    sessionId: string;
+    question: TQuestion;
+    hitResult: THitResult;
+    responseTimeMs: number;
+    userVal: TAnswerVal;
+  }) => Promise<void>;
+  saveSession: (params: {
+    sessionId: string;
+    totalTrials: number;
+    hitTrials: number;
+    ended: boolean;
+    startTimestamp: number;
+    endLevel: number;
+  }) => Promise<void>;
+  onExit: () => void;
+}
+
+export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
+  domain,
+  mode,
+  sessionType,
+  initialLevel,
+  autoNext,
+  autoNextDelay,
+  stepGranularity = 'standard',
+  adaptiveMode = 'block',
+  targetAccuracy = 0.8,
+  blockSize = 10,
+  generateQuestion,
+  evaluateAnswer,
+  isHit,
+  getQuestionLevel,
+  saveTrialRecord,
+  saveSession,
+  onExit,
+}: UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal>) {
+  const sessionIdRef = useRef<string>(`${domain}_${mode}_session_${Date.now()}`);
+  const startTimeRef = useRef<number>(Date.now());
+  const adaptiveEngineRef = useRef<AdaptiveEngine>(
+    new AdaptiveEngine(
+      initialLevel,
+      stepGranularity === 'fine',
+      sessionType === 'benchmark' ? 'staircase' : adaptiveMode,
+      targetAccuracy,
+      blockSize,
+    ),
+  );
+  const autoNextTimerRef = useRef<number | null>(null);
+
+  const [question, setQuestion] = useState<TQuestion>(() => generateQuestion(initialLevel));
+  const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
+  const [showAnswer, setShowAnswer] = useState<boolean>(false);
+  const [userAnswer, setUserAnswer] = useState<THitResult | null>(null);
+
+  const [totalTrials, setTotalTrials] = useState<number>(0);
+  const [hitTrials, setHitTrials] = useState<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [isFinished, setIsFinished] = useState<boolean>(false);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+
+  // === 业务处理逻辑函数 (定义在 useEffect 之前) ===
+
+  const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
+    await saveSession({
+      sessionId: sessionIdRef.current,
+      totalTrials: trials,
+      hitTrials: hits,
+      ended,
+      startTimestamp: startTimeRef.current,
+      endLevel: adaptiveEngineRef.current.getCurrentLevel(),
+    });
+  };
+
+  const handleNextQuestion = () => {
+    if (isFinished) return;
+    if (autoNextTimerRef.current) {
+      clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = null;
+    }
+
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setShowAnswer(false);
+    setUserAnswer(null);
+    setQuestion(generateQuestion(nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  const handleAnswer = async (userVal: TAnswerVal) => {
+    const responseTimeMs = Date.now() - questionStartTime;
+    const hitResult = evaluateAnswer(userVal, question);
+    const hit = isHit(hitResult);
+
+    setUserAnswer(hitResult);
+    setShowAnswer(true);
+
+    const newTotal = totalTrials + 1;
+    const newHits = hitTrials + (hit ? 1 : 0);
+    setTotalTrials(newTotal);
+    setHitTrials(newHits);
+
+    await saveTrialRecord({
+      sessionId: sessionIdRef.current,
+      question,
+      hitResult,
+      responseTimeMs,
+      userVal,
+    });
+
+    setSessionHistory((prev) => [
+      ...prev,
+      {
+        trialIndex: newTotal,
+        level: getQuestionLevel(question),
+        isHit: hit,
+        responseTimeMs,
+      },
+    ]);
+
+    adaptiveEngineRef.current.recordResult(hit);
+
+    if (sessionType === 'benchmark' && newTotal >= 20) {
+      setIsFinished(true);
+      await saveCurrentSession(newTotal, newHits, true);
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        setShowSummaryModal(true);
+      }, autoNextDelay);
+    } else if (autoNext) {
+      if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+      autoNextTimerRef.current = window.setTimeout(() => {
+        handleNextQuestion();
+      }, autoNextDelay);
+    }
+  };
+
+  const handleRequestFinish = async () => {
+    if (sessionHistory.length > 0 && !showSummaryModal) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      setShowSummaryModal(true);
+    } else {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onExit();
+    }
+  };
+
+  const handleFinishSession = async () => {
+    await saveCurrentSession(totalTrials, hitTrials, true);
+    onExit();
+  };
+
+  const handleRestartSession = () => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateQuestion(nextLevel));
+    setQuestionStartTime(Date.now());
+  };
+
+  // === 副作用监听器 (定义在 handler 之后) ===
+
+  // 计时器
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape') {
-        e.preventDefault();
-        handleFinishSession();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
-~~~~~
-~~~~~typescript
+    const timer = setInterval(() => {
+      if (showSummaryModal || isFinished) return;
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [showSummaryModal, isFinished]);
+
   // 快捷键响应 (Space / Escape)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,9 +270,27 @@ src/hooks/useTrainingSession.ts
     handleNextQuestion,
     handleRequestFinish,
   ]);
+
+  return {
+    question,
+    showAnswer,
+    userAnswer,
+    totalTrials,
+    hitTrials,
+    elapsedSeconds,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    handleAnswer,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  };
+}
 ~~~~~
 
 ### 下一步建议
 
-- 可以在三个练习模块（寻星练习、绝对色感、相对色感）中进入训练，作答几道题后按下键盘上的 `Esc` 键，验证是否能正常触发结算总结弹窗。
-- 在结算弹窗出现后再次按 `Esc` 键，验证是否能顺利返回主界面/看板。
+- 重新进入相对色感、寻星或绝对色感训练界面，检查页面是否能够正常加载与答题。
+- 在作答几题后按下 `Esc` 键，确认能正确弹出训练结算对话框。
