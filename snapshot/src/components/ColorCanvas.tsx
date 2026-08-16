@@ -161,19 +161,26 @@ function SingleDimensionSlider({
             />
           )}
 
-          {!showAnswer &&
-            isTargetActiveMode &&
+          {isTargetActiveMode &&
             showToleranceBand &&
-            hoverVal !== null &&
+            (hoverVal !== null || showAnswer) &&
             (() => {
-              const span = getToleranceSpan(label, hoverVal, targetHSV, question.difficultyLevel);
+              const currentVal = showAnswer
+                ? (userAnswer ? userAnswer.userValue : val)
+                : hoverVal!;
+              const span = getToleranceSpan(
+                label,
+                currentVal,
+                targetHSV,
+                question.difficultyLevel,
+              );
               const isWrapMode = label === 'H';
               const leftVal = isWrapMode
-                ? (hoverVal - span.halfSpan + max) % max
-                : Math.max(0, hoverVal - span.halfSpan);
+                ? (currentVal - span.halfSpan + max) % max
+                : Math.max(0, currentVal - span.halfSpan);
               const rightVal = isWrapMode
-                ? (hoverVal + span.halfSpan + max) % max
-                : Math.min(max, hoverVal + span.halfSpan);
+                ? (currentVal + span.halfSpan + max) % max
+                : Math.min(max, currentVal + span.halfSpan);
 
               return (
                 <>
@@ -204,9 +211,7 @@ function SingleDimensionSlider({
               />
               {userAnswer && (
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
                   style={{ left: getPercent(userAnswer.userValue, max) }}
                 />
               )}

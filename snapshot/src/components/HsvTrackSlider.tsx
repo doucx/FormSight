@@ -148,35 +148,35 @@ export function HsvTrackSlider({
           )}
 
           {/* 动态 ΔE 容错感应指示线 */}
-          {!showAnswer &&
-            showToleranceBand &&
+          {showToleranceBand &&
             (() => {
+              const chosenVal = showAnswer ? (userVal ?? val) : activeVal;
               const currentTuple: [number, number, number] = allUserHSV
                 ? [
-                    label === 'H' ? activeVal : allUserHSV[0],
-                    label === 'S' ? activeVal : allUserHSV[1],
-                    label === 'V' ? activeVal : allUserHSV[2],
+                    label === 'H' ? chosenVal : allUserHSV[0],
+                    label === 'S' ? chosenVal : allUserHSV[1],
+                    label === 'V' ? chosenVal : allUserHSV[2],
                   ]
                 : [
-                    label === 'H' ? activeVal : targetHSV[0],
-                    label === 'S' ? activeVal : targetHSV[1],
-                    label === 'V' ? activeVal : targetHSV[2],
+                    label === 'H' ? chosenVal : targetHSV[0],
+                    label === 'S' ? chosenVal : targetHSV[1],
+                    label === 'V' ? chosenVal : targetHSV[2],
                   ];
 
               const span = getToleranceSpan(
                 label,
-                activeVal,
+                chosenVal,
                 targetHSV,
                 difficultyLevel,
                 currentTuple,
               );
               const isWrapMode = label === 'H';
               const leftVal = isWrapMode
-                ? (activeVal - span.halfSpan + max) % max
-                : Math.max(0, activeVal - span.halfSpan);
+                ? (chosenVal - span.halfSpan + max) % max
+                : Math.max(0, chosenVal - span.halfSpan);
               const rightVal = isWrapMode
-                ? (activeVal + span.halfSpan + max) % max
-                : Math.min(max, activeVal + span.halfSpan);
+                ? (chosenVal + span.halfSpan + max) % max
+                : Math.min(max, chosenVal + span.halfSpan);
 
               return (
                 <>
@@ -209,9 +209,7 @@ export function HsvTrackSlider({
               />
               {userVal !== undefined && (
                 <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
                   style={{ left: getPercent(userVal, max) }}
                 />
               )}
