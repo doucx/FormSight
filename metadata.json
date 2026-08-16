@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(architecture): 模块化拆分大型组件、Canvas 图层与通用训练 Hook", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786856748.249989, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 调整主页相对色感卡片布局为标准网格单列", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786856836.721965, "duration_ms": 0}}

@@ -1,67 +1,56 @@
-## [COMMIT] refactor(architecture): 模块化拆分大型组件、Canvas 图层与通用训练 Hook
+## [WIP] refactor(ui): 调整主页相对色感卡片布局为标准网格单列
+
+### 错误分析
+
+无错误，本次为纯 UI 布局优化。
 
 ### 用户需求
-用户要求对前面完成的所有代码拆分与架构重构创建 Git 提交（Commit）。
+
+主页里，相对色感 (Relative Color Perception) 单独占据了一整行，需要让它调整为与其他模块卡片一致的单列标准大小（不再独占整行）。
 
 ### 评论
-本次重构彻底消除了 `TrainingView` 间的约 75% 重复代码，将复杂的 Canvas 渲染算法从 UI 中剥离，并将过载的 `SettingsModal`、`geometry.ts` 和 `db.ts` 进行了清晰的模块化拆分。所有 19 个单元测试和 TypeScript 编译均 100% 通过。
+
+通过移除 `Home.tsx` 中相对色感卡片上的 `md:col-span-2` 样式类，可以让三个训练模块（寻星练习、绝对色感、相对色感）在大屏幕下整齐地以网格形式并排排列。
 
 ### 目标
-1. 将所有重构后的变更通过 `git_add` 暂存。
-2. 创建高质量的 Conventional Commits 规范提交。
+1. 修改 `src/views/Home.tsx` 中相对色感卡片的 Tailwind CSS 类，移除 `md:col-span-2`。
+2. 运行测试套件确保一切正常。
+
+### 基本原理
+
+主页采用的是 Tailwind 的 `grid-cols-1 md:grid-cols-2` 布局（如果总共有3个卡片，通常会排列为 2 列：第一行放寻星和色感，第二行放相对色感并居左，或者需要适配 3 列。查看 `Home.tsx` 的网格定义发现父容器是 `grid-cols-1 md:grid-cols-2`，因此去掉 `md:col-span-2` 后，相对色感将作为第三个子元素自动排列在第二行的左侧，符合“左下角四分之一/半宽”的网格布局）。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/ui #comp/runtime #scope/core #ai/instruct #task/domain/architecture #task/object/code-splitting #task/action/refactor #task/state/end
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/home-dashboard #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 将所有更改添加到暂存区并创建 Git 提交
+#### Acts 1: 调整相对色感卡片宽度并运行测试
 
 ~~~~~act
-git_add
-src/hooks/useTrainingSession.ts
-src/views/TrainingView.tsx
-src/views/ColorTrainingView.tsx
-src/views/RelativeColorTrainingView.tsx
-src/components/settings/StarSettingsForm.tsx
-src/components/settings/ColorSettingsForm.tsx
-src/components/settings/RelativeColorSettingsForm.tsx
-src/components/SettingsModal.tsx
-src/utils/geometry/pointMath.ts
-src/utils/geometry/gridGenerators.ts
-src/utils/geometry/hitDetection.ts
-src/utils/geometry/questionGenerator.ts
-src/utils/geometry/index.ts
-src/utils/geometry.ts
-src/utils/db/schema.ts
-src/utils/db/queries.ts
-src/utils/db/importExport.ts
-src/utils/db/index.ts
-src/utils/db.ts
-src/utils/canvas/drawHeatmap.ts
-src/utils/canvas/drawCompass.ts
-src/utils/canvas/drawColorRing.ts
-src/utils/canvas/drawTrendChart.ts
-src/components/AnalyticsModal.tsx
-src/components/ColorAnalyticsModal.tsx
-src/components/GlobalStatsModal.tsx
-src/components/SessionSummaryModal.tsx
+patch_file
+src/views/Home.tsx
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~tsx.old
+        {/* 3. 相对色感训练 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('relative-color')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left md:col-span-2"
+        >
 ~~~~~
-~~~~~text
-refactor(architecture): decouple canvas, split modals, and extract training hook
-
-- Extracted reusable `useTrainingSession` hook to eliminate ~75% code duplication across Star, Color, and Relative Color training views.
-- Split monolithic `SettingsModal.tsx` into domain-specific sub-forms under `src/components/settings/`.
-- Modularized `src/utils/geometry.ts` and `src/utils/db.ts` into structured sub-directories with seamless backward-compatible re-exports.
-- Extracted Canvas 2D rendering algorithms (heatmap, compass, hue ring, trend charts) into pure functions under `src/utils/canvas/`.
-- All tests and TypeScript compilation passed successfully.
+~~~~~tsx.new
+        {/* 3. 相对色感训练 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('relative-color')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+        >
 ~~~~~
 
 ### 下一步建议
-重构任务已圆满完成！代码已成功提交，系统架构更加清晰且具备极强的可扩展性。如果有其他新功能需求，可以随时提出。
+
+- 确认修改后，主页将以两列网格展示三个训练模块，视觉排版更加均衡。
+- 可以继续启动开发服务器（`npm run dev`）在浏览器中实际预览效果。
