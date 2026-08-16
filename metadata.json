@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(db): 确保全量数据导出与导入时完整同步用户偏好设置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786858775.7088194, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复相对色感模式下重新开始训练时难度等级重置为 5 的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786862770.045099, "duration_ms": 0}}

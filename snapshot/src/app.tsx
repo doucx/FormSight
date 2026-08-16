@@ -9,10 +9,12 @@ import type { ColorMode } from './utils/colorUtils';
 import {
   type ColorProfileData,
   type TrainingDomain,
+  type UnifiedProfileData,
   type UserProfileData,
   getAllColorProfiles,
   getAllUserProfiles,
   getColorTrainingTimeMs,
+  getProfilesByDomain,
   getStarHoppingTrainingTimeMs,
   getTrainingTimeMs,
 } from './utils/db';
@@ -61,6 +63,9 @@ export function App() {
     V: null,
     ALL: null,
   });
+  const [relativeProfiles, setRelativeProfiles] = useState<
+    Record<string, UnifiedProfileData | null>
+  >({});
   const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
   const [colorTimeMs, setColorTimeMs] = useState<number>(0);
   const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
@@ -75,11 +80,17 @@ export function App() {
   const refreshProfiles = useCallback(async () => {
     const data = await getAllUserProfiles();
     const cData = await getAllColorProfiles();
+    const relList = await getProfilesByDomain('relative_color');
+    const relMap: Record<string, UnifiedProfileData | null> = {};
+    for (const p of relList) {
+      relMap[p.mode] = p;
+    }
     const starMs = await getStarHoppingTrainingTimeMs();
     const colorMs = await getColorTrainingTimeMs();
     const relMs = await getTrainingTimeMs('relative_color');
     setProfiles(data);
     setColorProfiles(cData);
+    setRelativeProfiles(relMap);
     setStarHoppingTimeMs(starMs);
     setColorTimeMs(colorMs);
     setRelativeColorTimeMs(relMs);
@@ -127,6 +138,7 @@ export function App() {
 
   const activeLevel = profiles[activeMode]?.currentLevel || 5;
   const activeColorLevel = colorProfiles[activeColorMode]?.currentLevel || 5;
+  const activeRelativeLevel = relativeProfiles[activeRelativeMode]?.currentLevel || 5;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
@@ -208,7 +220,7 @@ export function App() {
           <RelativeColorTrainingView
             mode={activeRelativeMode}
             sessionType={relativeSessionType}
-            initialLevel={5}
+            initialLevel={activeRelativeLevel}
             settings={settings.relative_color}
             onExit={handleExitTraining}
           />
