@@ -95,7 +95,7 @@ export function RelativeColorDashboard({
 
             <h3 className="text-xl font-bold text-gray-900 mb-2">色彩矢量迁移</h3>
             <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">
-              保持固有色推移矢量 $\vec{v}_{AB}$ 在全场施加统一推移，建立光影相对偏转直觉。
+              保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉。
             </p>
 
             {/* 核心指标 */}

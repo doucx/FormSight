@@ -121,19 +121,21 @@ export function ColorTrainingView({
           ];
 
     // 数据库存盘
-    const record: ColorTrialRecord = {
+    await saveColorTrialRecord({
       id: `crec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       sessionId: sessionIdRef.current,
+      domain: 'color',
       mode,
       timestamp: Date.now(),
       difficultyLevel: question.difficultyLevel,
-      targetHSV: [question.targetH, question.targetS, question.targetV],
-      userHSV: computedUserHSV,
       isHit: hitResult.isHit,
-      errorValue: hitResult.errorValue,
       responseTimeMs,
-    };
-    await saveColorTrialRecord(record);
+      details: {
+        targetHSV: [question.targetH, question.targetS, question.targetV],
+        userHSV: computedUserHSV,
+        errorValue: hitResult.errorValue,
+      },
+    });
 
     setSessionHistory((prev) => [
       ...prev,
@@ -181,6 +183,7 @@ export function ColorTrainingView({
   const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
     const sessionData: ColorSessionData = {
       id: sessionIdRef.current,
+      domain: 'color',
       mode,
       type: sessionType,
       startTimestamp: startTimeRef.current,

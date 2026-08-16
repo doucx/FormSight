@@ -14,7 +14,7 @@ import {
   getColorTrainingTimeMs,
   getStarHoppingTrainingTimeMs,
 } from './utils/db';
-import { getProfilesByDomain, getTrainingTimeMs } from './utils/db';
+import { getTrainingTimeMs } from './utils/db';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';

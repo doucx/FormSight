@@ -147,23 +147,25 @@ export function TrainingView({
     setHitTrials(newHits);
 
     // 1. 存数据库原子记录
-    const record: TrialRecord = {
+    await saveTrialRecord({
       id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       sessionId: sessionIdRef.current,
+      domain: 'star',
       mode,
       timestamp: Date.now(),
       difficultyLevel: question.difficultyLevel,
-      anchorA: [question.anchorA.x, question.anchorA.y],
-      anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
-      targetB: [question.targetB.x, question.targetB.y],
-      userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
-      angleDegree: question.angleDegree,
-      distanceRatio: question.distanceRatio,
       isHit: hitResult.isHit,
-      errorPixelDistance: hitResult.errorDistance,
       responseTimeMs,
-    };
-    await saveTrialRecord(record);
+      details: {
+        anchorA: [question.anchorA.x, question.anchorA.y],
+        anchorC: question.anchorC ? [question.anchorC.x, question.anchorC.y] : undefined,
+        targetB: [question.targetB.x, question.targetB.y],
+        userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
+        angleDegree: question.angleDegree,
+        distanceRatio: question.distanceRatio,
+        errorPixelDistance: hitResult.errorDistance,
+      },
+    });
 
     // 2. 记录做答 Level 历史
     setSessionHistory((prev) => [
@@ -217,6 +219,7 @@ export function TrainingView({
   const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
     const sessionData: SessionData = {
       id: sessionIdRef.current,
+      domain: 'star',
       mode,
       type: sessionType,
       startTimestamp: startTimeRef.current,

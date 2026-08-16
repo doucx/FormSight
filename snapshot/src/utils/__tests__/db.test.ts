@@ -126,6 +126,7 @@ describe('db storage & import/export', () => {
   it('training time calculation - should aggregate valid session durations', async () => {
     await saveSession({
       id: 's1',
+      domain: 'star',
       mode: 'single',
       type: 'training',
       startTimestamp: 1000,

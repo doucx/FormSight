@@ -10,7 +10,7 @@ export type TrainingDomain = 'star' | 'color' | 'relative_color';
 
 export interface UnifiedSessionData {
   id: string;
-  domain: TrainingDomain;
+  domain?: TrainingDomain;
   mode: string;
   type: 'training' | 'benchmark';
   startTimestamp: number;
@@ -24,24 +24,14 @@ export interface UnifiedSessionData {
 export interface UnifiedTrialRecord {
   id: string;
   sessionId: string;
-  domain: TrainingDomain;
+  domain?: TrainingDomain;
   mode: string;
   timestamp: number;
   difficultyLevel: number;
   isHit: boolean;
   responseTimeMs: number;
-  details?: Record<string, any>;
-}
-
-export interface UnifiedProfileData {
-  key: string; // `${domain}:${mode}`
-  domain: TrainingDomain;
-  mode: string;
-  currentLevel: number;
-  bestLevel: number;
-  totalTrainedCards: number;
-  totalHits: number;
-  updatedAt: number;
+  details?: Record<string, unknown>;
+  [key: string]: unknown;
 }
 
 // 兼容别名导出
@@ -83,6 +73,17 @@ interface FormSightDBSchema extends DBSchema {
   };
 }
 
+export interface UnifiedProfileData {
+  key: string;
+  domain: TrainingDomain;
+  mode: string;
+  currentLevel: number;
+  bestLevel: number;
+  totalTrainedCards: number;
+  totalHits: number;
+  updatedAt: number;
+}
+
 const DB_NAME = 'StarHoppingDB';
 const DB_VERSION = 4; // v4: 通用实体架构，合并所有领域表为通用 3 表结构
 
@@ -92,9 +93,9 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion, _newVersion, transaction) {
-        let sessionsStore: any;
-        let recordsStore: any;
-        let profilesStore: any;
+        let sessionsStore: ReturnType<typeof db.createObjectStore>;
+        let recordsStore: ReturnType<typeof db.createObjectStore>;
+        let profilesStore: ReturnType<typeof db.createObjectStore>;
 
         if (!db.objectStoreNames.contains('sessions')) {
           sessionsStore = db.createObjectStore('sessions', { keyPath: 'id' });
@@ -140,9 +141,10 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
 
         // v4 迁移逻辑：平滑无损迁移老版本数据并清理旧专属表
         if (oldVersion < 4) {
-          if (db.objectStoreNames.contains('color_sessions' as any)) {
-            const colorSessionsStore = transaction.objectStore('color_sessions' as any);
-            colorSessionsStore.getAll().then((oldCSessions: any[]) => {
+          const oldStores = Array.from(db.objectStoreNames);
+          if (oldStores.includes('color_sessions' as never)) {
+            const colorSessionsStore = transaction.objectStore('color_sessions' as never);
+            colorSessionsStore.getAll().then((oldCSessions: UnifiedSessionData[]) => {
               for (const cs of oldCSessions) {
                 sessionsStore.put({
                   id: cs.id,
@@ -158,22 +160,22 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
                 });
               }
             });
-            db.deleteObjectStore('color_sessions' as any);
+            db.deleteObjectStore('color_sessions' as never);
           }
 
-          if (db.objectStoreNames.contains('color_records' as any)) {
-            const colorRecordsStore = transaction.objectStore('color_records' as any);
-            colorRecordsStore.getAll().then((oldCRecords: any[]) => {
+          if (oldStores.includes('color_records' as never)) {
+            const colorRecordsStore = transaction.objectStore('color_records' as never);
+            colorRecordsStore.getAll().then((oldCRecords: Record<string, unknown>[]) => {
               for (const cr of oldCRecords) {
                 recordsStore.put({
-                  id: cr.id,
-                  sessionId: cr.sessionId,
+                  id: cr.id as string,
+                  sessionId: cr.sessionId as string,
                   domain: 'color',
-                  mode: cr.mode,
-                  timestamp: cr.timestamp,
-                  difficultyLevel: cr.difficultyLevel,
-                  isHit: cr.isHit,
-                  responseTimeMs: cr.responseTimeMs,
+                  mode: cr.mode as string,
+                  timestamp: cr.timestamp as number,
+                  difficultyLevel: cr.difficultyLevel as number,
+                  isHit: cr.isHit as boolean,
+                  responseTimeMs: cr.responseTimeMs as number,
                   details: {
                     targetHSV: cr.targetHSV,
                     userHSV: cr.userHSV,
@@ -182,26 +184,26 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
                 });
               }
             });
-            db.deleteObjectStore('color_records' as any);
+            db.deleteObjectStore('color_records' as never);
           }
 
-          if (db.objectStoreNames.contains('color_profiles' as any)) {
-            const colorProfilesStore = transaction.objectStore('color_profiles' as any);
-            colorProfilesStore.getAll().then((oldCProfiles: any[]) => {
+          if (oldStores.includes('color_profiles' as never)) {
+            const colorProfilesStore = transaction.objectStore('color_profiles' as never);
+            colorProfilesStore.getAll().then((oldCProfiles: Record<string, unknown>[]) => {
               for (const cp of oldCProfiles) {
                 profilesStore.put({
                   key: `color:${cp.mode}`,
                   domain: 'color',
-                  mode: cp.mode,
-                  currentLevel: cp.currentLevel,
-                  bestLevel: cp.bestLevel,
-                  totalTrainedCards: cp.totalTrainedCards,
-                  totalHits: cp.totalHits,
-                  updatedAt: cp.updatedAt,
+                  mode: cp.mode as string,
+                  currentLevel: cp.currentLevel as number,
+                  bestLevel: cp.bestLevel as number,
+                  totalTrainedCards: cp.totalTrainedCards as number,
+                  totalHits: cp.totalHits as number,
+                  updatedAt: cp.updatedAt as number,
                 });
               }
             });
-            db.deleteObjectStore('color_profiles' as any);
+            db.deleteObjectStore('color_profiles' as never);
           }
         }
       },
@@ -217,7 +219,7 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
 export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
   const db = await getDB();
   const domain = record.domain || 'star';
-  const normalizedRecord = { ...record, domain };
+  const normalizedRecord: UnifiedTrialRecord = { ...record, domain };
   await db.put('records', normalizedRecord);
   await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
 }
@@ -247,13 +249,19 @@ export async function getTrialRecords(
   mode?: string,
 ): Promise<UnifiedTrialRecord[]> {
   const db = await getDB();
+  let rawRecords: UnifiedTrialRecord[] = [];
   if (domain && mode) {
-    return await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
+    rawRecords = await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
+  } else if (domain) {
+    rawRecords = await db.getAllFromIndex('records', 'by-domain', domain);
+  } else {
+    rawRecords = await db.getAll('records');
   }
-  if (domain) {
-    return await db.getAllFromIndex('records', 'by-domain', domain);
-  }
-  return await db.getAll('records');
+
+  return rawRecords.map((r) => ({
+    ...r,
+    ...(r.details || {}),
+  }));
 }
 
 async function updateProfile(
@@ -454,25 +462,14 @@ export async function getAllTrialRecords(mode?: TrainingMode): Promise<UnifiedTr
   return await getTrialRecords('star', mode);
 }
 
-export async function saveColorTrialRecord(record: any): Promise<void> {
+export async function saveColorTrialRecord(record: UnifiedTrialRecord): Promise<void> {
   return await saveTrialRecord({
-    id: record.id,
-    sessionId: record.sessionId,
+    ...record,
     domain: 'color',
-    mode: record.mode,
-    timestamp: record.timestamp,
-    difficultyLevel: record.difficultyLevel,
-    isHit: record.isHit,
-    responseTimeMs: record.responseTimeMs,
-    details: {
-      targetHSV: record.targetHSV,
-      userHSV: record.userHSV,
-      errorValue: record.errorValue,
-    },
   });
 }
 
-export async function saveColorSession(session: any): Promise<void> {
+export async function saveColorSession(session: UnifiedSessionData): Promise<void> {
   return await saveSession({
     ...session,
     domain: 'color',
