@@ -83,6 +83,7 @@ export function App() {
     setStarHoppingTimeMs(starMs);
     setColorTimeMs(colorMs);
     setRelativeColorTimeMs(relMs);
+    setSettings(loadSettings());
   }, []);
 
   useEffect(() => {
