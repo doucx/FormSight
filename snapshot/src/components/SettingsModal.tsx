@@ -78,10 +78,11 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
 
   const handleSectorToggle = (sectorIdx: number) => {
     if (domain !== 'star' && domain !== 'color') return;
-    const currentSectors = domainSettings.manualTargetSectors || [];
+    const starOrColorSettings = domainSettings as StarSettings | ColorSenseSettings;
+    const currentSectors = starOrColorSettings.manualTargetSectors || [];
     const exists = currentSectors.includes(sectorIdx);
     const updated = exists
-      ? currentSectors.filter((s) => s !== sectorIdx)
+      ? currentSectors.filter((s: number) => s !== sectorIdx)
       : [...currentSectors, sectorIdx];
 
     updateDomainSettings({ manualTargetSectors: updated });
