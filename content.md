@@ -1,55 +1,120 @@
-我将为你创建一个描述清晰的 Git Commit，将本次针对界面排版和视觉精简的所有优化提交到代码库。
+好的，没问题！我们将在色彩滑块轨道的揭晓阶段，将“真理标记线”的高度调整为 `h-10`（40px），并将“用户选择标记线”调整为 `h-7`（28px），从而使真理线上下显著超出轨道，形成明确的主次对比与视觉层级。
 
-## [COMMIT] refactor(ui): 优化主页网格布局与相对色感训练界面视觉细节
+以下是本次修改的完整执行计划。
+
+## [WIP] style(ui): 增加色彩滑块轨道揭晓阶段真理线高度以强化视觉对比
 
 ### 用户需求
-
-用户提出创建 Git Commit，以保存本次关于 UI 排版与布局的改进。
+在色彩答题揭晓阶段，真理线（标准答案位置）应当比用户选择的标记线高度更高、更长，从而形成清晰的主次视觉对比，方便用户快速识别偏差。
 
 ### 评论
-
-本次更新包括：
-1. 主页卡片网格布局优化，移除相对色感卡片独占整行的样式，与其他模块统一卡片列宽度。
-2. 精简相对色感看板中的干扰性文本，并放大展示色块，使其更清晰易辨。
-3. 优化答案揭晓时的真理色彩对比展示，改为无缝上下半区分割。
-4. 移除“下一题”底栏不必要的全宽框体，消除多余空白。
+这是一个很棒的 UI/UX 微调。通过引入视觉高度差（`h-10` 对比 `h-7`）和层级调整（真理线处于更高的 `z-20` 图层），可以显著提升答题反馈的直观度与可读性。
 
 ### 目标
-执行 `git_add` 和 `git_commit` 提交所有更改。
+1. 修改 `src/components/ColorCanvas.tsx` 中单维度滑块揭晓阶段真理线与用户线的样式。
+2. 修改 `src/components/HsvTrackSlider.tsx` 中 HSV 综合调制滑块揭晓阶段真理线与用户线的样式。
 
 ### 基本原理
-按照规范，`[COMMIT]` 计划只包含 Git 相关的命令（`git_add` 和 `git_commit`），用于将前面已经修改完成并验证好的改动提交到版本库中。
+将揭晓时的真理线（翡翠绿线）的高度由 `h-8` 提高至 `h-10`，使其明显长于轨道的 28px（`h-7`），突出轨道边界；同时将用户选择线高度设定为 `h-7`，与轨道保持同高，并调整 z-index，让真理线具备更强的视觉权重。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/ui-refinement #task/action/git-commit #task/state/end #task/status/completed
+#intent/tune #flow/ready #priority/medium
+#comp/interfaces #concept/ui #scope/ux
+#ai/instruct
+#task/domain/ui #task/object/slider-truth-line #task/action/style-adjustment
+#task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交变更
+#### Acts 1: 调整 `ColorCanvas.tsx` 中揭晓阶段标记线样式
 
 ~~~~~act
-git_add
-src/views/Home.tsx
-src/views/TrainingView.tsx
-src/views/ColorTrainingView.tsx
-src/views/RelativeColorTrainingView.tsx
-src/components/RelativeColorCanvas.tsx
+patch_file
+src/components/ColorCanvas.tsx
 ~~~~~
+~~~~~tsx.old
+          {showAnswer && isTargetActiveMode && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(val, max) }}
+              />
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                />
+              )}
+            </>
+          )}
+~~~~~
+~~~~~tsx.new
+          {showAnswer && isTargetActiveMode && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
+                style={{ left: getPercent(val, max) }}
+              />
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-10`}
+                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                />
+              )}
+            </>
+          )}
+~~~~~
+
+#### Acts 2: 调整 `HsvTrackSlider.tsx` 中揭晓阶段标记线样式
 
 ~~~~~act
-git_commit
+patch_file
+src/components/HsvTrackSlider.tsx
 ~~~~~
-~~~~~text
-refactor(ui): refine home layout and relative color perception canvas
-
-- Update Home view grid layout so Relative Color module card takes standard single-column width instead of spanning 2 columns.
-- Remove redundant/distracting text labels and indicators in RelativeColorCanvas.
-- Increase color block dimensions in RelativeColorCanvas for enhanced visual clarity.
-- Refine color comparison display upon answer reveal: split target color block directly into seamless top (user) and bottom (truth) halves without white gap.
-- Remove full-width card wrapper from 'Next Question' button bar across all training views to eliminate excessive whitespace.
+~~~~~tsx.old
+          {/* 揭晓答案之后的真理位与提交位 */}
+          {showAnswer && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
+                style={{ left: getPercent(actualTargetVal, max) }}
+              />
+              {userVal !== undefined && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
+                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-20`}
+                  style={{ left: getPercent(userVal, max) }}
+                />
+              )}
+            </>
+          )}
+~~~~~
+~~~~~tsx.new
+          {/* 揭晓答案之后的真理位与提交位 */}
+          {showAnswer && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
+                style={{ left: getPercent(actualTargetVal, max) }}
+              />
+              {userVal !== undefined && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
+                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-10`}
+                  style={{ left: getPercent(userVal, max) }}
+                />
+              )}
+            </>
+          )}
 ~~~~~
 
 ### 下一步建议
-- 所有 UI 改进与提交均已完成。你可以直接启动 `npm run dev` 体验全新的简约排版效果，或运行 `npm test` 确认代码测试通过。
+- 建议运行一次前端构建或测试（如 `npm run check` 或 `npm test`），确认没有打破已有的代码类型和逻辑校验。
