@@ -5,7 +5,7 @@ import type { AdaptiveMode, StepGranularity } from '../utils/settings';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   domain: string;
-  _mode: string;
+  mode: string;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   autoNext: boolean;
@@ -38,7 +38,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
 
 export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   domain,
-  _mode,
+  mode,
   sessionType,
   initialLevel,
   autoNext,
@@ -55,7 +55,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   saveSession,
   onExit,
 }: UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal>) {
-  const sessionIdRef = useRef<string>(`${domain}_session_${Date.now()}`);
+  const sessionIdRef = useRef<string>(`${domain}_${mode}_session_${Date.now()}`);
   const startTimeRef = useRef<number>(Date.now());
   const adaptiveEngineRef = useRef<AdaptiveEngine>(
     new AdaptiveEngine(
@@ -202,7 +202,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setSessionHistory([]);
     setShowAnswer(false);
     setUserAnswer(null);
-    sessionIdRef.current = `${domain}_session_${Date.now()}`;
+    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
