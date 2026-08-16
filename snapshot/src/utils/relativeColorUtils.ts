@@ -115,11 +115,7 @@ export function generateRelativeColorQuestion(
     const labB = hsvToOkLab(...colorB);
     const labC = hsvToOkLab(...colorC);
 
-    const vAB: [number, number, number] = [
-      labB[0] - labA[0],
-      labB[1] - labA[1],
-      labB[2] - labA[2],
-    ];
+    const vAB: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
 
     const targetLabD: [number, number, number] = [
       labC[0] + vAB[0],

@@ -14,9 +14,9 @@ import {
   getColorTrainingTimeMs,
   getStarHoppingTrainingTimeMs,
 } from './utils/db';
-import { type UserSettings, loadSettings } from './utils/settings';
 import { getProfilesByDomain, getTrainingTimeMs } from './utils/db';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
+import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
 import { Dashboard } from './views/Dashboard';
@@ -67,7 +67,9 @@ export function App() {
 
   // 相对色感状态
   const [activeRelativeMode, setActiveRelativeMode] = useState<RelativeColorMode>('VECTOR_SHIFT');
-  const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>('training');
+  const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>(
+    'training',
+  );
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {

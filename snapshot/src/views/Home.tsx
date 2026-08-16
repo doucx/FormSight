@@ -1,4 +1,13 @@
-import { ArrowRight, BarChart2, Clock, Compass, Palette, Shuffle, Sliders, Sparkles } from 'lucide-preact';
+import {
+  ArrowRight,
+  BarChart2,
+  Clock,
+  Compass,
+  Palette,
+  Shuffle,
+  Sliders,
+  Sparkles,
+} from 'lucide-preact';
 import { formatTotalTime } from '../utils/db';
 
 interface HomeProps {
@@ -153,7 +162,8 @@ export function Home({
                 相对色感 (Relative Color Perception)
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed">
-                基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 ($\vec{v}_{AB}$)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。
+                基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 ($\vec{v}_{AB}
+                $)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。
               </p>
             </div>
           </div>

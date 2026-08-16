@@ -1,6 +1,6 @@
-import { Award, ArrowLeft, Play, Sliders, Target, TrendingUp, Shuffle } from 'lucide-preact';
+import { ArrowLeft, Award, Play, Shuffle, Sliders, Target, TrendingUp } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { getProfilesByDomain, getTrialRecords, type UnifiedProfileData } from '../utils/db';
+import { type UnifiedProfileData, getProfilesByDomain, getTrialRecords } from '../utils/db';
 import type { RelativeColorMode } from '../utils/relativeColorUtils';
 
 interface RelativeColorDashboardProps {
@@ -44,7 +44,8 @@ export function RelativeColorDashboard({
 
   const profile = profiles.VECTOR_SHIFT;
   const totalCards = profile?.totalTrainedCards || 0;
-  const accuracy = totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+  const accuracy =
+    totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
   const currentLevel = profile?.currentLevel || 5;
 
   return (

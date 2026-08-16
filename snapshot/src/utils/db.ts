@@ -237,9 +237,7 @@ export async function getProfile(
   return profile || null;
 }
 
-export async function getProfilesByDomain(
-  domain: TrainingDomain,
-): Promise<UnifiedProfileData[]> {
+export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
   const db = await getDB();
   return await db.getAllFromIndex('user_profiles', 'by-domain', domain);
 }
@@ -435,7 +433,9 @@ export async function getUserProfile(mode: TrainingMode): Promise<UnifiedProfile
   return await getProfile('star', mode);
 }
 
-export async function getAllUserProfiles(): Promise<Record<TrainingMode, UnifiedProfileData | null>> {
+export async function getAllUserProfiles(): Promise<
+  Record<TrainingMode, UnifiedProfileData | null>
+> {
   const profiles = await getProfilesByDomain('star');
   const result: Record<TrainingMode, UnifiedProfileData | null> = {
     single: null,
