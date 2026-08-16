@@ -1,235 +1,79 @@
-## [WIP] HSV 滑块改成左右分布
+## [WIP] 将节点 C D 放在节点 A B 的下方
 
 ~~~~~act
 patch_file
 src/components/RelativeColorCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-      {/* 轨道面板 */}
-      <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {/* C 节点颜色 */}
-        <div className="space-y-3 pb-3 border-b border-slate-200/60">
-          <HsvTrackSlider
-            label="H"
-            gradient={hueGradient}
-            val={cH}
-            max={360}
-            unit="°"
-            targetHSV={colorC}
-            difficultyLevel={difficultyLevel}
-            showAnswer={false}
-            targetVal={cH}
-            userVal={cH}
-            allUserHSV={colorC}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={false}
+      {/* 对比展示区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+        {/* 基准推移组 (A -> B) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexA }}
           />
-          <HsvTrackSlider
-            label="S"
-            gradient={cSatGradient}
-            val={cS}
-            max={100}
-            unit="%"
-            targetHSV={colorC}
-            difficultyLevel={difficultyLevel}
-            showAnswer={false}
-            targetVal={cS}
-            userVal={cS}
-            allUserHSV={colorC}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={false}
-          />
-          <HsvTrackSlider
-            label="V"
-            gradient={cValGradient}
-            val={cV}
-            max={100}
-            unit="%"
-            targetHSV={colorC}
-            difficultyLevel={difficultyLevel}
-            showAnswer={false}
-            targetVal={cV}
-            userVal={cV}
-            allUserHSV={colorC}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={false}
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexB }}
           />
         </div>
 
-        {/* D 节点颜色 */}
-        <div className="space-y-3">
-          <HsvTrackSlider
-            label="H"
-            gradient={hueGradient}
-            val={userH}
-            max={360}
-            unit="°"
-            targetHSV={targetD}
-            difficultyLevel={difficultyLevel}
-            showAnswer={showAnswer}
-            targetVal={targetD[0]}
-            userVal={userAnswer?.userD?.[0] ?? userH}
-            isHit={userAnswer?.isHit}
-            onValChange={() => {}}
-            allUserHSV={[userH, userS, userV]}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={showToleranceBand}
+        {/* 目标推移组 (C -> D) */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexC }}
           />
-          <HsvTrackSlider
-            label="S"
-            gradient={satGradient}
-            val={userS}
-            max={100}
-            unit="%"
-            targetHSV={targetD}
-            difficultyLevel={difficultyLevel}
-            showAnswer={showAnswer}
-            targetVal={targetD[1]}
-            userVal={userAnswer?.userD?.[1] ?? userS}
-            isHit={userAnswer?.isHit}
-            onValChange={() => {}}
-            allUserHSV={[userH, userS, userV]}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={showToleranceBand}
-          />
-          <HsvTrackSlider
-            label="V"
-            gradient={valGradient}
-            val={userV}
-            max={100}
-            unit="%"
-            targetHSV={targetD}
-            difficultyLevel={difficultyLevel}
-            showAnswer={showAnswer}
-            targetVal={targetD[2]}
-            userVal={userAnswer?.userD?.[2] ?? userV}
-            isHit={userAnswer?.isHit}
-            onValChange={() => {}}
-            allUserHSV={[userH, userS, userV]}
-            disabled={true}
-            hitMargin={hitMargin}
-            showToleranceBand={showToleranceBand}
-          />
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+            style={{ backgroundColor: hexSelectedD }}
+          >
+            {showAnswer && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1/2 border-t border-white/40"
+                style={{ backgroundColor: hexTargetD }}
+              />
+            )}
+          </div>
         </div>
       </div>
 ~~~~~
 ~~~~~typescript.new
-      {/* 轨道面板 */}
-      <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* 左侧：C 节点颜色 */}
-          <div className="space-y-3 md:pr-4 md:border-r border-slate-200/60">
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={cH}
-              max={360}
-              unit="°"
-              targetHSV={colorC}
-              difficultyLevel={difficultyLevel}
-              showAnswer={false}
-              targetVal={cH}
-              userVal={cH}
-              allUserHSV={colorC}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={false}
-            />
-            <HsvTrackSlider
-              label="S"
-              gradient={cSatGradient}
-              val={cS}
-              max={100}
-              unit="%"
-              targetHSV={colorC}
-              difficultyLevel={difficultyLevel}
-              showAnswer={false}
-              targetVal={cS}
-              userVal={cS}
-              allUserHSV={colorC}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={false}
-            />
-            <HsvTrackSlider
-              label="V"
-              gradient={cValGradient}
-              val={cV}
-              max={100}
-              unit="%"
-              targetHSV={colorC}
-              difficultyLevel={difficultyLevel}
-              showAnswer={false}
-              targetVal={cV}
-              userVal={cV}
-              allUserHSV={colorC}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={false}
-            />
-          </div>
+      {/* 对比展示区 (2x2 网格: 上 A -> B，下 C -> D) */}
+      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-4">
+        {/* 上排: 基准推移组 (A -> B) */}
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexA }}
+          />
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexB }}
+          />
+        </div>
 
-          {/* 右侧：D 节点颜色 */}
-          <div className="space-y-3">
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={userH}
-              max={360}
-              unit="°"
-              targetHSV={targetD}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetD[0]}
-              userVal={userAnswer?.userD?.[0] ?? userH}
-              isHit={userAnswer?.isHit}
-              onValChange={() => {}}
-              allUserHSV={[userH, userS, userV]}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-            />
-            <HsvTrackSlider
-              label="S"
-              gradient={satGradient}
-              val={userS}
-              max={100}
-              unit="%"
-              targetHSV={targetD}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetD[1]}
-              userVal={userAnswer?.userD?.[1] ?? userS}
-              isHit={userAnswer?.isHit}
-              onValChange={() => {}}
-              allUserHSV={[userH, userS, userV]}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-            />
-            <HsvTrackSlider
-              label="V"
-              gradient={valGradient}
-              val={userV}
-              max={100}
-              unit="%"
-              targetHSV={targetD}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetD[2]}
-              userVal={userAnswer?.userD?.[2] ?? userV}
-              isHit={userAnswer?.isHit}
-              onValChange={() => {}}
-              allUserHSV={[userH, userS, userV]}
-              disabled={true}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-            />
+        {/* 下排: 目标推移组 (C -> D) */}
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            style={{ backgroundColor: hexC }}
+          />
+          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <div
+            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+            style={{ backgroundColor: hexSelectedD }}
+          >
+            {showAnswer && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1/2 border-t border-white/40"
+                style={{ backgroundColor: hexTargetD }}
+              />
+            )}
           </div>
         </div>
       </div>

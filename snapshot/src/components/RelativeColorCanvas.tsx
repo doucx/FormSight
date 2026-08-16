@@ -103,10 +103,10 @@ export function RelativeColorCanvas({
 
   return (
     <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      {/* 对比展示区 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-        {/* 基准推移组 (A -> B) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+      {/* 对比展示区 (2x2 网格: 上 A -> B，下 C -> D) */}
+      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-4">
+        {/* 上排: 基准推移组 (A -> B) */}
+        <div className="flex items-center justify-center gap-4">
           <div
             className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexA }}
@@ -118,8 +118,8 @@ export function RelativeColorCanvas({
           />
         </div>
 
-        {/* 目标推移组 (C -> D) */}
-        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-center gap-3">
+        {/* 下排: 目标推移组 (C -> D) */}
+        <div className="flex items-center justify-center gap-4">
           <div
             className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexC }}
