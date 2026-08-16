@@ -225,15 +225,16 @@ export interface ToleranceSpan {
 }
 
 /**
- * 根据数值 val 和 OKLab 容错，计算滑块轨道上的容错数值跨度
+ * 范化容错计算函数：支持直接传入 targetHSV 数组与 difficultyLevel
  */
 export function getToleranceSpan(
   dimension: 'H' | 'S' | 'V',
   val: number,
-  question: ColorQuestionData,
+  targetHSV: [number, number, number],
+  difficultyLevel: number,
   currentHSV?: [number, number, number],
 ): ToleranceSpan {
-  const { targetH, targetS, targetV, difficultyLevel } = question;
+  const [targetH, targetS, targetV] = targetHSV;
   const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
 
   const curH = currentHSV ? currentHSV[0] : dimension === 'H' ? val : targetH;

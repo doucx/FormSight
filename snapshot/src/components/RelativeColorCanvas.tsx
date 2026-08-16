@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
+import { HsvTrackSlider } from './HsvTrackSlider';
 import { hsvToHex } from '../utils/colorUtils';
 import type {
   RelativeColorHitResult,
@@ -12,6 +13,9 @@ interface RelativeColorCanvasProps {
   userAnswer: RelativeColorHitResult | null;
   onAnswer: (userD: [number, number, number]) => void;
   disabled?: boolean;
+  hitMargin?: number;
+  showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
 }
 
 export function RelativeColorCanvas({
@@ -20,18 +24,31 @@ export function RelativeColorCanvas({
   userAnswer,
   onAnswer,
   disabled = false,
+  hitMargin = 12,
+  showToleranceBand = true,
+  enableHoverColorPreview = true,
 }: RelativeColorCanvasProps) {
-  const { colorA, colorB, colorC, targetD } = question;
+  const { colorA, colorB, colorC, targetD, difficultyLevel } = question;
 
   const [userH, setUserH] = useState<number>(colorC[0]);
   const [userS, setUserS] = useState<number>(colorC[1]);
   const [userV, setUserV] = useState<number>(colorC[2]);
+
+  // 悬停与拖拽试探预览状态
+  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
+    H: null,
+    S: null,
+    V: null,
+  });
+  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
 
   // 题目切换时重置 D 为 C 的初始状态
   useEffect(() => {
     setUserH(colorC[0]);
     setUserS(colorC[1]);
     setUserV(colorC[2]);
+    setAllHoverVals({ H: null, S: null, V: null });
+    setDraggingLabel(null);
   }, [colorC]);
 
   const handleSubmit = () => {
@@ -53,7 +70,21 @@ export function RelativeColorCanvas({
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
   const hexC = hsvToHex(...colorC);
-  const hexUserD = hsvToHex(userH, userS, userV);
+
+  const previewH =
+    draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
+      ? (allHoverVals.H ?? userH)
+      : userH;
+  const previewS =
+    draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
+      ? (allHoverVals.S ?? userS)
+      : userS;
+  const previewV =
+    draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
+      ? (allHoverVals.V ?? userV)
+      : userV;
+
+  const hexUserD = hsvToHex(previewH, previewS, previewV);
   const hexTargetD = hsvToHex(...targetD);
 
   const hueGradient =
@@ -142,88 +173,68 @@ export function RelativeColorCanvas({
         </div>
       )}
 
-      {/* 下方 D 颜色调制滑块轨道 */}
+      {/* 下方 D 颜色调制滑块轨道 (使用通用 HsvTrackSlider) */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {/* H 轨 */}
-        <div className="flex items-center gap-3 w-full">
-          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">H</span>
-          <div className="relative flex-1 flex items-center">
-            <div
-              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
-              style={{ background: hueGradient }}
-            />
-            <input
-              type="range"
-              min="0"
-              max="360"
-              value={userH}
-              disabled={disabled || showAnswer}
-              onInput={(e) => setUserH(Number.parseInt((e.target as HTMLInputElement).value, 10))}
-              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
-              style={{ left: `${(userH / 360) * 100}%` }}
-            />
-          </div>
-          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
-            {userH}°
-          </span>
-        </div>
-
-        {/* S 轨 */}
-        <div className="flex items-center gap-3 w-full">
-          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">S</span>
-          <div className="relative flex-1 flex items-center">
-            <div
-              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
-              style={{ background: satGradient }}
-            />
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={userS}
-              disabled={disabled || showAnswer}
-              onInput={(e) => setUserS(Number.parseInt((e.target as HTMLInputElement).value, 10))}
-              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
-              style={{ left: `${userS}%` }}
-            />
-          </div>
-          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
-            {userS}%
-          </span>
-        </div>
-
-        {/* V 轨 */}
-        <div className="flex items-center gap-3 w-full">
-          <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">V</span>
-          <div className="relative flex-1 flex items-center">
-            <div
-              className="w-full h-7 rounded-xl border border-slate-200/80 shadow-inner"
-              style={{ background: valGradient }}
-            />
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={userV}
-              disabled={disabled || showAnswer}
-              onInput={(e) => setUserV(Number.parseInt((e.target as HTMLInputElement).value, 10))}
-              className="absolute inset-0 w-full h-7 opacity-0 cursor-pointer"
-            />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-8 bg-slate-900 pointer-events-none rounded-full shadow-md z-10"
-              style={{ left: `${userV}%` }}
-            />
-          </div>
-          <span className="w-12 text-right font-mono font-bold text-xs text-amber-500">
-            {userV}%
-          </span>
-        </div>
+        <HsvTrackSlider
+          label="H"
+          gradient={hueGradient}
+          val={userH}
+          max={360}
+          unit="°"
+          targetHSV={targetD}
+          difficultyLevel={difficultyLevel}
+          showAnswer={showAnswer}
+          targetVal={targetD[0]}
+          userVal={userAnswer?.userD?.[0] ?? userH}
+          isHit={userAnswer?.isHit}
+          onValChange={setUserH}
+          allUserHSV={[userH, userS, userV]}
+          disabled={disabled}
+          hitMargin={hitMargin}
+          showToleranceBand={showToleranceBand}
+          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, H: hVal }))}
+          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'H' : null)}
+        />
+        <HsvTrackSlider
+          label="S"
+          gradient={satGradient}
+          val={userS}
+          max={100}
+          unit="%"
+          targetHSV={targetD}
+          difficultyLevel={difficultyLevel}
+          showAnswer={showAnswer}
+          targetVal={targetD[1]}
+          userVal={userAnswer?.userD?.[1] ?? userS}
+          isHit={userAnswer?.isHit}
+          onValChange={setUserS}
+          allUserHSV={[userH, userS, userV]}
+          disabled={disabled}
+          hitMargin={hitMargin}
+          showToleranceBand={showToleranceBand}
+          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, S: hVal }))}
+          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'S' : null)}
+        />
+        <HsvTrackSlider
+          label="V"
+          gradient={valGradient}
+          val={userV}
+          max={100}
+          unit="%"
+          targetHSV={targetD}
+          difficultyLevel={difficultyLevel}
+          showAnswer={showAnswer}
+          targetVal={targetD[2]}
+          userVal={userAnswer?.userD?.[2] ?? userV}
+          isHit={userAnswer?.isHit}
+          onValChange={setUserV}
+          allUserHSV={[userH, userS, userV]}
+          disabled={disabled}
+          hitMargin={hitMargin}
+          showToleranceBand={showToleranceBand}
+          onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, V: hVal }))}
+          onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'V' : null)}
+        />
       </div>
 
       {!showAnswer && (

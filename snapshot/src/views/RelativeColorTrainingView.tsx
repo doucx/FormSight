@@ -256,6 +256,9 @@ export function RelativeColorTrainingView({
         userAnswer={userAnswer}
         onAnswer={handleAnswer}
         disabled={isFinished}
+        hitMargin={settings.sliderHitMargin ?? 12}
+        showToleranceBand={settings.showToleranceBand ?? true}
+        enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
       />
 
       {/* 底部控制栏 */}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { HsvTrackSlider } from './HsvTrackSlider';
 import {
   type ColorHitResult,
   type ColorQuestionData,
@@ -101,16 +102,13 @@ function SingleDimensionSlider({
     }
   };
 
-  // Label 渲染逻辑：严格防泄漏
   const renderLabelContent = () => {
     if (showAnswer) {
       return `${val}${unit}`;
     }
     if (!isTargetActiveMode) {
-      // 非活跃固定轨道 (如 V 模式下的 H/S 轨)，已知公开值
       return `${val}${unit}`;
     }
-    // 活跃轨道 (如 H 模式下的 H 轨)
     if (hoverVal !== null) {
       return `${hoverVal}${unit}`;
     }
@@ -118,6 +116,11 @@ function SingleDimensionSlider({
   };
 
   const isInteractive = isTargetActiveMode && !showAnswer && !disabled;
+  const targetHSV: [number, number, number] = [
+    question.targetH,
+    question.targetS,
+    question.targetV,
+  ];
 
   return (
     <div className="flex items-center gap-3 w-full">
@@ -151,7 +154,6 @@ function SingleDimensionSlider({
           className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
           style={{ background: gradient }}
         >
-          {/* 非活跃固定轨道的已知标记线 */}
           {!isTargetActiveMode && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm"
@@ -159,13 +161,17 @@ function SingleDimensionSlider({
             />
           )}
 
-          {/* 活跃轨道悬停时的容错感应线 */}
           {!showAnswer &&
             isTargetActiveMode &&
             showToleranceBand &&
             hoverVal !== null &&
             (() => {
-              const span = getToleranceSpan(label, hoverVal, question);
+              const span = getToleranceSpan(
+                label,
+                hoverVal,
+                targetHSV,
+                question.difficultyLevel,
+              );
               const isWrapMode = label === 'H';
               const leftVal = isWrapMode
                 ? (hoverVal - span.halfSpan + max) % max
@@ -188,7 +194,6 @@ function SingleDimensionSlider({
               );
             })()}
 
-          {/* 活跃轨道的鼠标悬停准心线 */}
           {!showAnswer && isTargetActiveMode && hoverVal !== null && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-85"
@@ -196,7 +201,6 @@ function SingleDimensionSlider({
             />
           )}
 
-          {/* 答案揭晓阶段真理线与提交线 */}
           {showAnswer && isTargetActiveMode && (
             <>
               <div
@@ -216,7 +220,6 @@ function SingleDimensionSlider({
         </div>
       </div>
 
-      {/* 数值 Label */}
       <span
         className={`w-12 text-right font-mono font-bold text-xs ${
           isTargetActiveMode && !showAnswer
@@ -235,224 +238,6 @@ function SingleDimensionSlider({
 }
 
 // ==========================================
-// 子组件 2: 综合拾色模式轨道 (Match / ALL)
-// ==========================================
-interface AllMatchSliderProps {
-  label: 'H' | 'S' | 'V';
-  gradient: string;
-  val: number; // 当前调制设定值 (userH / userS / userV)
-  max: number;
-  unit: string;
-  question: ColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
-  onValChange: (newVal: number) => void;
-  allUserHSV: [number, number, number];
-  disabled: boolean;
-  hitMargin: number;
-  showToleranceBand: boolean;
-  onHoverStateChange: (hoverVal: number | null) => void;
-  onDraggingStateChange: (isDragging: boolean) => void;
-}
-
-function AllMatchSlider({
-  label,
-  gradient,
-  val,
-  max,
-  unit,
-  question,
-  showAnswer,
-  userAnswer,
-  onValChange,
-  allUserHSV,
-  disabled,
-  hitMargin,
-  showToleranceBand,
-  onHoverStateChange,
-  onDraggingStateChange,
-}: AllMatchSliderProps) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const [hoverVal, setHoverVal] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-
-  const calcValFromClientX = (clientX: number): number | null => {
-    if (!trackRef.current) return null;
-    const rect = trackRef.current.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const ratio = clickX / rect.width;
-    return Math.round(ratio * max);
-  };
-
-  const handlePointerDown = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    setIsDragging(true);
-    onDraggingStateChange(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      onValChange(calculated);
-      setHoverVal(calculated);
-      onHoverStateChange(calculated);
-    }
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      if (isDragging) {
-        onValChange(calculated);
-      }
-      setHoverVal(calculated);
-      onHoverStateChange(calculated);
-    }
-  };
-
-  const handlePointerUp = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    if (isDragging) {
-      setIsDragging(false);
-      onDraggingStateChange(false);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
-      const calculated = calcValFromClientX(e.clientX);
-      if (calculated !== null) {
-        onValChange(calculated);
-      }
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isDragging) {
-      setHoverVal(null);
-      onHoverStateChange(null);
-    }
-  };
-
-  const activeVal = hoverVal !== null ? hoverVal : val;
-  const targetVal =
-    label === 'H' ? question.targetH : label === 'S' ? question.targetS : question.targetV;
-
-  return (
-    <div className="flex items-center gap-3 w-full">
-      <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
-
-      <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onMouseLeave={handleMouseLeave}
-        style={
-          hitMargin > 0
-            ? {
-                paddingLeft: `${hitMargin}px`,
-                paddingRight: `${hitMargin}px`,
-                marginLeft: `-${hitMargin}px`,
-                marginRight: `-${hitMargin}px`,
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                marginTop: '-6px',
-                marginBottom: '-6px',
-              }
-            : undefined
-        }
-        className={`relative flex-1 flex items-center select-none touch-none ${
-          !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
-        }`}
-      >
-        <div
-          ref={trackRef}
-          className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
-          style={{ background: gradient }}
-        >
-          {/* 当前设定值标记线 */}
-          {!showAnswer && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
-              style={{ left: getPercent(val, max) }}
-            />
-          )}
-
-          {/* 动态 ΔE 容错感应指示线 */}
-          {!showAnswer &&
-            showToleranceBand &&
-            (() => {
-              const currentTuple: [number, number, number] = [
-                label === 'H' ? activeVal : allUserHSV[0],
-                label === 'S' ? activeVal : allUserHSV[1],
-                label === 'V' ? activeVal : allUserHSV[2],
-              ];
-
-              const span = getToleranceSpan(label, activeVal, question, currentTuple);
-              const isWrapMode = label === 'H';
-              const leftVal = isWrapMode
-                ? (activeVal - span.halfSpan + max) % max
-                : Math.max(0, activeVal - span.halfSpan);
-              const rightVal = isWrapMode
-                ? (activeVal + span.halfSpan + max) % max
-                : Math.min(max, activeVal + span.halfSpan);
-
-              return (
-                <>
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(leftVal / max) * 100}%` }}
-                  />
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(rightVal / max) * 100}%` }}
-                  />
-                </>
-              );
-            })()}
-
-          {/* 鼠标悬停准心线 */}
-          {!showAnswer && hoverVal !== null && hoverVal !== val && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-75"
-              style={{ left: getPercent(hoverVal, max) }}
-            />
-          )}
-
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 bg-emerald-500 border-x border-white shadow-md z-10"
-                style={{ left: getPercent(targetVal, max) }}
-              />
-              {userAnswer && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-8 border-x border-white ${
-                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-20`}
-                  style={{
-                    left: getPercent(
-                      userAnswer.userHSV?.[label === 'H' ? 0 : label === 'S' ? 1 : 2] ?? val,
-                      max,
-                    ),
-                  }}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <span
-        className={`w-12 text-right font-mono font-bold text-xs ${
-          !showAnswer ? 'text-amber-500' : userAnswer?.isHit ? 'text-emerald-600' : 'text-rose-600'
-        }`}
-      >
-        {`${activeVal}${unit}`}
-      </span>
-    </div>
-  );
-}
-
-// ==========================================
 // 主入口组件: ColorCanvas
 // ==========================================
 export function ColorCanvas({
@@ -465,8 +250,9 @@ export function ColorCanvas({
   showToleranceBand = true,
   enableHoverColorPreview = true,
 }: ColorCanvasProps) {
-  const { mode, targetH, targetS, targetV } = question;
+  const { mode, targetH, targetS, targetV, difficultyLevel } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
+  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
 
   // ALL 模式下的本地调制状态
   const [userH, setUserH] = useState<number>(180);
@@ -557,15 +343,18 @@ export function ColorCanvas({
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         {mode === 'ALL' ? (
           <>
-            <AllMatchSlider
+            <HsvTrackSlider
               label="H"
               gradient={hueGradient}
               val={userH}
               max={360}
               unit="°"
-              question={question}
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
               showAnswer={showAnswer}
-              userAnswer={userAnswer}
+              targetVal={targetH}
+              userVal={userAnswer?.userHSV?.[0] ?? userH}
+              isHit={userAnswer?.isHit}
               onValChange={setUserH}
               allUserHSV={[userH, userS, userV]}
               disabled={disabled}
@@ -574,15 +363,18 @@ export function ColorCanvas({
               onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, H: hVal }))}
               onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'H' : null)}
             />
-            <AllMatchSlider
+            <HsvTrackSlider
               label="S"
               gradient={satGradient}
               val={userS}
               max={100}
               unit="%"
-              question={question}
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
               showAnswer={showAnswer}
-              userAnswer={userAnswer}
+              targetVal={targetS}
+              userVal={userAnswer?.userHSV?.[1] ?? userS}
+              isHit={userAnswer?.isHit}
               onValChange={setUserS}
               allUserHSV={[userH, userS, userV]}
               disabled={disabled}
@@ -591,15 +383,18 @@ export function ColorCanvas({
               onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, S: hVal }))}
               onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'S' : null)}
             />
-            <AllMatchSlider
+            <HsvTrackSlider
               label="V"
               gradient={valGradient}
               val={userV}
               max={100}
               unit="%"
-              question={question}
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
               showAnswer={showAnswer}
-              userAnswer={userAnswer}
+              targetVal={targetV}
+              userVal={userAnswer?.userHSV?.[2] ?? userV}
+              isHit={userAnswer?.isHit}
               onValChange={setUserV}
               allUserHSV={[userH, userS, userV]}
               disabled={disabled}
