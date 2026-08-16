@@ -183,12 +183,12 @@ export function TrainingView({
       />
 
       {!settings.autoNext && (
-        <div className="w-full max-w-md bg-white border border-gray-200/80 rounded-2xl p-3 shadow-sm flex items-center justify-end min-h-[56px]">
+        <div className="flex items-center justify-center">
           {isFinished ? (
             <button
               type="button"
               onClick={handleRequestFinish}
-              className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all"
+              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all active:scale-95"
             >
               完成并查看总结
             </button>
@@ -197,9 +197,9 @@ export function TrainingView({
               type="button"
               onClick={handleNextQuestion}
               disabled={!showAnswer}
-              className={`px-4 py-2 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
+              className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
                 showAnswer
-                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-sm active:scale-95'
+                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md active:scale-95'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed'
               }`}
             >
