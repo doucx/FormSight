@@ -1,268 +1,53 @@
-好的，我将生成一个计划，为“全局数据统计”弹窗（`GlobalStatsModal.tsx`）补全相对色感（Relative Color）的练习记录聚合与多维度筛选支持。
+好的，现在我们将本次对 `src/app.tsx`（修复相对色感初始 Level 读取）和 `src/components/GlobalStatsModal.tsx`（添加相对色感全局统计与筛选）的修改作为一个完整的逻辑单元提交到 Git 仓库。
 
-## [WIP] feat: 全局数据统计中添加相对色感模块支持
+## [COMMIT] feat(stats): 修复相对色感层阶继承问题并添加全局统计支持
 
 ### 用户需求
-
-在全局数据统计弹窗（`GlobalStatsModal`）中包含相对色感（`relative_color`）模块的答题轨迹与统计指标，并允许用户在下拉菜单中筛选“相对色感 (全部)”及“色彩矢量迁移 (VECTOR_SHIFT)”。
+用户要求将之前的修改创建为一个干净的 Git 提交。
 
 ### 评论
-
-这是全站数据统计完整性的重要一环。将相对色感与寻星练习、绝对色感记录一同按时间轴统一聚合，能够使用户在全局统计面板中获得完整的全站训练趋势图与打卡热力图。
+本次提交包含了两个核心改进：
+1. 修复了相对色感模式重新开始训练时难度等级重置为 5 的 Bug。
+2. 为全局数据统计弹窗（`GlobalStatsModal`）补全了相对色感模块的数据聚合与多维度筛选支持。
 
 ### 目标
-
-1. 更新 `UnifiedRecord` 接口，允许 `module: 'relative_color'`。
-2. 扩充 `FilterOption` 类型和 `FILTER_LABELS` 映射表，加入 `relative_color_all` 和 `relative_color_VECTOR_SHIFT`。
-3. 在数据加载时调用 `getTrialRecords('relative_color')` 拉取相对色感历史记录并合并排序。
-4. 在筛选过滤条件和下拉 Select 列表中增加相对色感选项组。
+1. 将修改的文件添加至 Git 暂存区。
+2. 执行带有规范化提交信息的 Git 提交。
 
 ### 基本原理
-
-全局统计组件通过 IndexedDB 查询各模块的答题日志，统一转换为 `UnifiedRecord`（包含 `timestamp`、`isHit`、`level`、`module` 和 `subMode`）。补全对 `relative_color` 的拉取和筛选之后，全站三大训练板块的数据将实现 100% 的统计覆盖。
+根据 Quipu 协议，文件系统变更与 Git 提交操作必须严格隔离在独立的 Plan 中执行。当前计划为纯粹的 `[COMMIT]` 计划，仅包含 `git_add` 与 `git_commit` 指令。
 
 ### 标签
-
-#intent/build #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/global-stats-relative-color #task/action/implementation #task/state/begin
+#intent/build #flow/ready #priority/high #comp/ui #concept/state #scope/dx #ai/instruct #task/domain/ui #task/object/git-commit #task/action/integration #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 修改 `src/components/GlobalStatsModal.tsx` 整合相对色感统计项
-
-我们将修改 `GlobalStatsModal.tsx` 文件，导入 `getTrialRecords` 函数，扩展类型与标签，拉取 `relative_color` 数据并更新筛选器。
+#### Acts 1: 将更改暂存并提交
 
 ~~~~~act
-patch_file
+git_add
+src/app.tsx
 src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~typescript.old
-import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
-
-interface GlobalStatsModalProps {
-~~~~~
-~~~~~typescript.new
-import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { getAllColorTrialRecords, getAllTrialRecords, getTrialRecords } from '../utils/db';
-
-interface GlobalStatsModalProps {
 ~~~~~
 
 ~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
+git_commit
 ~~~~~
-~~~~~typescript.old
-interface UnifiedRecord {
-  timestamp: number;
-  isHit: boolean;
-  level: number;
-  module: 'star' | 'color';
-  subMode: string;
-}
+~~~~~text
+feat(stats): Fix relative color level persistence and add global stats support
 
-type FilterOption =
-  | 'all'
-  | 'star_all'
-  | 'star_single'
-  | 'star_double_h'
-  | 'star_double_r'
-  | 'color_all'
-  | 'color_H'
-  | 'color_V'
-  | 'color_S'
-  | 'color_ALL';
+1. Fix Relative Color Level Reset Bug:
+   - Updated src/app.tsx to declare relativeProfiles state and fetch profiles by domain ('relative_color') in refreshProfiles.
+   - Replaced hardcoded initialLevel={5} in RelativeColorTrainingView with activeRelativeLevel queried from database profiles.
 
-const FILTER_LABELS: Record<FilterOption, string> = {
-  all: '全部练习项目',
-  star_all: '寻星练习 (全部模式)',
-  star_single: '寻星 • 单锚点',
-  star_double_h: '寻星 • 水平双锚点',
-  star_double_r: '寻星 • 旋转双锚点',
-  color_all: '色感训练 (全部模式)',
-  color_H: '色感 • 色相 (Hue)',
-  color_V: '色感 • 明度 (Value)',
-  color_S: '色感 • 饱和度 (Sat)',
-  color_ALL: '色感 • 综合拾色 (Match)',
-};
-~~~~~
-~~~~~typescript.new
-interface UnifiedRecord {
-  timestamp: number;
-  isHit: boolean;
-  level: number;
-  module: 'star' | 'color' | 'relative_color';
-  subMode: string;
-}
-
-type FilterOption =
-  | 'all'
-  | 'star_all'
-  | 'star_single'
-  | 'star_double_h'
-  | 'star_double_r'
-  | 'color_all'
-  | 'color_H'
-  | 'color_V'
-  | 'color_S'
-  | 'color_ALL'
-  | 'relative_color_all'
-  | 'relative_color_VECTOR_SHIFT';
-
-const FILTER_LABELS: Record<FilterOption, string> = {
-  all: '全部练习项目',
-  star_all: '寻星练习 (全部模式)',
-  star_single: '寻星 • 单锚点',
-  star_double_h: '寻星 • 水平双锚点',
-  star_double_r: '寻星 • 旋转双锚点',
-  color_all: '色感训练 (全部模式)',
-  color_H: '色感 • 色相 (Hue)',
-  color_V: '色感 • 明度 (Value)',
-  color_S: '色感 • 饱和度 (Sat)',
-  color_ALL: '色感 • 综合拾色 (Match)',
-  relative_color_all: '相对色感 (全部模式)',
-  relative_color_VECTOR_SHIFT: '相对色感 • 色彩矢量迁移',
-};
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~typescript.old
-  // === 1. 数据加载与聚合 ===
-  useEffect(() => {
-    let isMounted = true;
-    const loadData = async () => {
-      setLoading(true);
-      const starData = await getAllTrialRecords();
-      const colorData = await getAllColorTrialRecords();
-
-      const combined: UnifiedRecord[] = [
-        ...starData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'star' as const,
-          subMode: r.mode,
-        })),
-        ...colorData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'color' as const,
-          subMode: r.mode,
-        })),
-      ];
-      combined.sort((a, b) => a.timestamp - b.timestamp);
-~~~~~
-~~~~~typescript.new
-  // === 1. 数据加载与聚合 ===
-  useEffect(() => {
-    let isMounted = true;
-    const loadData = async () => {
-      setLoading(true);
-      const starData = await getAllTrialRecords();
-      const colorData = await getAllColorTrialRecords();
-      const relData = await getTrialRecords('relative_color');
-
-      const combined: UnifiedRecord[] = [
-        ...starData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'star' as const,
-          subMode: r.mode,
-        })),
-        ...colorData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'color' as const,
-          subMode: r.mode,
-        })),
-        ...relData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'relative_color' as const,
-          subMode: r.mode,
-        })),
-      ];
-      combined.sort((a, b) => a.timestamp - b.timestamp);
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~typescript.old
-  // === 2. 筛选过滤处理 ===
-  const filteredRecords = records.filter((r) => {
-    if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'star_all') return r.module === 'star';
-    if (selectedFilter === 'color_all') return r.module === 'color';
-    if (selectedFilter.startsWith('star_')) {
-      return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
-    }
-    if (selectedFilter.startsWith('color_')) {
-      return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
-    }
-    return true;
-  });
-~~~~~
-~~~~~typescript.new
-  // === 2. 筛选过滤处理 ===
-  const filteredRecords = records.filter((r) => {
-    if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'star_all') return r.module === 'star';
-    if (selectedFilter === 'color_all') return r.module === 'color';
-    if (selectedFilter === 'relative_color_all') return r.module === 'relative_color';
-    if (selectedFilter.startsWith('star_')) {
-      return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
-    }
-    if (selectedFilter.startsWith('color_')) {
-      return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
-    }
-    if (selectedFilter.startsWith('relative_color_')) {
-      return r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '');
-    }
-    return true;
-  });
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~typescript.old
-                <optgroup label="色感训练">
-                  <option value="color_all">色感训练 (全部)</option>
-                  <option value="color_H">色相 (Hue)</option>
-                  <option value="color_V">明度 (Value)</option>
-                  <option value="color_S">饱和度 (Saturation)</option>
-                  <option value="color_ALL">综合拾色 (Match)</option>
-                </optgroup>
-              </select>
-~~~~~
-~~~~~typescript.new
-                <optgroup label="色感训练">
-                  <option value="color_all">色感训练 (全部)</option>
-                  <option value="color_H">色相 (Hue)</option>
-                  <option value="color_V">明度 (Value)</option>
-                  <option value="color_S">饱和度 (Saturation)</option>
-                  <option value="color_ALL">综合拾色 (Match)</option>
-                </optgroup>
-                <optgroup label="相对色感">
-                  <option value="relative_color_all">相对色感 (全部)</option>
-                  <option value="relative_color_VECTOR_SHIFT">色彩矢量迁移</option>
-                </optgroup>
-              </select>
+2. Add Relative Color Support to Global Stats:
+   - Updated GlobalStatsModal.tsx to include 'relative_color' in UnifiedRecord and FilterOption.
+   - Fetched relative color trial records using getTrialRecords('relative_color') and integrated them into the unified timeline and heatmap/trend chart aggregation.
+   - Added '相对色感' optgroup and options to the stats filter dropdown.
 ~~~~~
 
 ### 下一步建议
 
-1. **功能验证**：可在主页打开“统计”弹窗，检查下拉筛选菜单中是否出现“相对色感”组，并确认练习数据是否能正确过滤与绘制折线图。
-2. **测试运行**：运行 `npm test` 确保数据层与逻辑层所有自动化测试顺利通过。
+所有核心功能与统计模块已全部完整打通并成功提交。你可以随时运行 `npm run dev` 启动项目体验完整的寻星、绝对色感与相对色感全功能训练系统！
