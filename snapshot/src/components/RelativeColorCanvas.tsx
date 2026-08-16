@@ -120,40 +120,19 @@ export function RelativeColorCanvas({
             />
             <ArrowRight className="w-6 h-6 text-indigo-400" />
             <div
-              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative"
+              className="w-28 h-28 rounded-2xl border-2 border-white shadow-md transition-all duration-75 relative overflow-hidden"
               style={{ backgroundColor: hexUserD }}
             >
               {showAnswer && (
                 <div
-                  className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-2 border-white shadow-md"
+                  className="absolute bottom-0 left-0 right-0 h-1/2"
                   style={{ backgroundColor: hexTargetD }}
-                  title="真理色彩 D"
                 />
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {/* 揭晓答案诊断数据 */}
-      {showAnswer && userAnswer && (
-        <div
-          className={`w-full p-3.5 rounded-2xl border text-xs flex justify-between items-center ${
-            userAnswer.isHit
-              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-              : 'bg-rose-50 text-rose-900 border-rose-200'
-          }`}
-        >
-          <div className="font-bold">
-            {userAnswer.isHit ? '✅ 矢量匹配成功！' : '❌ 矢量偏转较大'}
-          </div>
-          <div className="flex items-center gap-4 font-mono text-[11px]">
-            <span>感知色差 ΔE: {userAnswer.deltaEError}</span>
-            <span>矢量模长差: {userAnswer.magnitudeError}</span>
-            <span>色温偏角: {userAnswer.angleErrorDeg}°</span>
-          </div>
-        </div>
-      )}
 
       {/* 下方 D 颜色调制滑块轨道 (使用通用 HsvTrackSlider) */}
       <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
