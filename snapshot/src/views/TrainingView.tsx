@@ -6,13 +6,13 @@ import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import { type SessionData, saveSession, saveTrialRecord } from '../utils/db';
 import { type QuestionGenerateOptions, generateQuestion } from '../utils/geometry';
-import type { UserSettings } from '../utils/settings';
+import type { StarSettings } from '../utils/settings';
 
 interface TrainingViewProps {
   mode: TrainingMode;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: UserSettings;
+  settings: StarSettings;
   onExit: () => void;
 }
 
@@ -51,11 +51,7 @@ export function TrainingView({
   };
 
   const [question, setQuestion] = useState<QuestionData>(() =>
-    generateQuestion(mode, initialLevel, {
-      targetingMode: settings.targetingMode,
-      targetSectors: settings.manualTargetSectors,
-      gridSize: settings.gridSize,
-    }),
+    generateQuestion(mode, initialLevel, getGenerateOptions()),
   );
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
 
@@ -73,50 +69,14 @@ export function TrainingView({
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
 
-  const lastActivityTimeRef = useRef<number>(Date.now());
-  const accumulatedMsRef = useRef<number>(0);
-  const lastTickTimeRef = useRef<number>(Date.now());
-
-  // 用户活动监听，静默重置闲置计时器
-  useEffect(() => {
-    const handleUserActivity = () => {
-      lastActivityTimeRef.current = Date.now();
-    };
-
-    window.addEventListener('mousemove', handleUserActivity);
-    window.addEventListener('mousedown', handleUserActivity);
-    window.addEventListener('keydown', handleUserActivity);
-    window.addEventListener('touchstart', handleUserActivity);
-
-    return () => {
-      window.removeEventListener('mousemove', handleUserActivity);
-      window.removeEventListener('mousedown', handleUserActivity);
-      window.removeEventListener('keydown', handleUserActivity);
-      window.removeEventListener('touchstart', handleUserActivity);
-    };
-  }, []);
-
   // === 计时器 ===
   useEffect(() => {
-    lastTickTimeRef.current = Date.now();
     const timer = setInterval(() => {
-      // 弹窗弹出或会话完成时，冻结计时
       if (showSummaryModal || isFinished) return;
-
-      const now = Date.now();
-      const delta = now - lastTickTimeRef.current;
-      lastTickTimeRef.current = now;
-
-      const idleLimitMs = (settings.idleTimeout ?? 60) * 1000;
-      const isIdle = idleLimitMs > 0 && now - lastActivityTimeRef.current > idleLimitMs;
-
-      if (!isIdle) {
-        accumulatedMsRef.current += delta;
-        setElapsedSeconds(Math.floor(accumulatedMsRef.current / 1000));
-      }
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
     return () => clearInterval(timer);
-  }, [settings.idleTimeout, showSummaryModal, isFinished]);
+  }, [showSummaryModal, isFinished]);
 
   // === 键盘监听 (Space / Esc) ===
   useEffect(() => {
@@ -181,7 +141,7 @@ export function TrainingView({
     // 3. 调优阶梯难度 Level
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
-    const delay = settings.starAutoNextDelay ?? settings.autoNextDelay;
+    const delay = settings.autoNextDelay;
 
     // 4. 检查基准测试是否完成 (20 题)
     if (sessionType === 'benchmark' && newTotal >= 20) {
@@ -260,8 +220,6 @@ export function TrainingView({
     setUserAnswer(null);
     sessionIdRef.current = `session_${Date.now()}`;
     startTimeRef.current = Date.now();
-    lastActivityTimeRef.current = Date.now();
-    accumulatedMsRef.current = 0;
     setElapsedSeconds(0);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(mode, nextLevel, getGenerateOptions()));

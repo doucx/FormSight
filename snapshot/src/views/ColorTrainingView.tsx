@@ -12,13 +12,13 @@ import {
   generateColorQuestion,
 } from '../utils/colorUtils';
 import { type ColorSessionData, saveColorSession, saveColorTrialRecord } from '../utils/db';
-import type { UserSettings } from '../utils/settings';
+import type { ColorSenseSettings } from '../utils/settings';
 
 interface ColorTrainingViewProps {
   mode: ColorMode;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: UserSettings;
+  settings: ColorSenseSettings;
   onExit: () => void;
 }
 
@@ -41,14 +41,14 @@ export function ColorTrainingView({
     ),
   );
   const autoNextTimerRef = useRef<number | null>(null);
-  const targetSectorsRef = useRef<number[]>(settings.colorManualTargetSectors || []);
+  const targetSectorsRef = useRef<number[]>(settings.manualTargetSectors || []);
 
   const getColorGenerateOptions = (): ColorQuestionGenerateOptions => {
     return {
-      targetingMode: settings.colorTargetingMode,
+      targetingMode: settings.targetingMode,
       targetSectors:
-        settings.colorTargetingMode === 'manual'
-          ? settings.colorManualTargetSectors
+        settings.targetingMode === 'manual'
+          ? settings.manualTargetSectors
           : targetSectorsRef.current,
     };
   };
@@ -144,7 +144,7 @@ export function ColorTrainingView({
 
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
-    const delay = settings.colorAutoNextDelay ?? settings.autoNextDelay;
+    const delay = settings.autoNextDelay;
 
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);
@@ -247,7 +247,7 @@ export function ColorTrainingView({
             {mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色'} |{' '}
             {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
-          {settings.colorTargetingMode === 'manual' && mode === 'H' && (
+          {settings.targetingMode === 'manual' && mode === 'H' && (
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-amber-600" />
               靶向强化训练

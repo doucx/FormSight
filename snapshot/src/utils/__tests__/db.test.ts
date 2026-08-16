@@ -189,7 +189,9 @@ describe('db storage & import/export', () => {
       responseTimeMs: 400,
     });
 
-    const customSettings = { ...DEFAULT_SETTINGS, gridSize: 5, autoNext: false };
+    const customSettings: typeof DEFAULT_SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    customSettings.star.gridSize = 5;
+    customSettings.star.autoNext = false;
     saveSettings(customSettings);
 
     // 2. Export
@@ -203,7 +205,7 @@ describe('db storage & import/export', () => {
     localStorage.clear();
     const recordsEmpty = await getAllTrialRecords();
     expect(recordsEmpty.length).toBe(0);
-    expect(loadSettings().gridSize).toBe(DEFAULT_SETTINGS.gridSize);
+    expect(loadSettings().star.gridSize).toBe(DEFAULT_SETTINGS.star.gridSize);
 
     // 4. Import
     const success = await importAllData(exportedJson);
@@ -218,7 +220,7 @@ describe('db storage & import/export', () => {
     expect(colorProfiles.H?.totalTrainedCards).toBe(1);
 
     const restoredSettings = loadSettings();
-    expect(restoredSettings.gridSize).toBe(5);
-    expect(restoredSettings.autoNext).toBe(false);
+    expect(restoredSettings.star.gridSize).toBe(5);
+    expect(restoredSettings.star.autoNext).toBe(false);
   });
 });

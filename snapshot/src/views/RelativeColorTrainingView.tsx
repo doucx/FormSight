@@ -11,13 +11,13 @@ import {
   checkRelativeColorHit,
   generateRelativeColorQuestion,
 } from '../utils/relativeColorUtils';
-import type { UserSettings } from '../utils/settings';
+import type { RelativeColorSettings } from '../utils/settings';
 
 interface RelativeColorTrainingViewProps {
   mode: RelativeColorMode;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: UserSettings;
+  settings: RelativeColorSettings;
   onExit: () => void;
 }
 
@@ -123,7 +123,7 @@ export function RelativeColorTrainingView({
 
     adaptiveEngineRef.current.recordResult(hitResult.isHit);
 
-    const delay = settings.colorAutoNextDelay ?? settings.autoNextDelay;
+    const delay = settings.autoNextDelay;
 
     if (sessionType === 'benchmark' && newTotal >= 20) {
       setIsFinished(true);

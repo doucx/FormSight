@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构 settings 配置系统为领域隔离的结构化模型", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786855291.8959875, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 改造 SettingsModal 为领域驱动并接入各视图设置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786855543.3228078, "duration_ms": 0}}
