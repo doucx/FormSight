@@ -164,14 +164,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }, [
-    sessionHistory.length,
-    showSummaryModal,
-    saveCurrentSession,
-    totalTrials,
-    hitTrials,
-    onExit,
-  ]);
+  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
 
   async function handleFinishSession() {
     await saveCurrentSession(totalTrials, hitTrials, true);
