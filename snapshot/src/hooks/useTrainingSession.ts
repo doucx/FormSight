@@ -92,19 +92,28 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   // 快捷键响应 (Space / Escape)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === 'Space' || e.key === ' ') {
         if (showAnswer && !isFinished) {
           e.preventDefault();
           handleNextQuestion();
         }
-      } else if (e.code === 'Escape') {
+      } else if (e.code === 'Escape' || e.key === 'Escape') {
         e.preventDefault();
-        handleFinishSession();
+        handleRequestFinish();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished]);
+  }, [
+    showAnswer,
+    isFinished,
+    sessionHistory,
+    showSummaryModal,
+    totalTrials,
+    hitTrials,
+    handleNextQuestion,
+    handleRequestFinish,
+  ]);
 
   const saveCurrentSession = async (trials = totalTrials, hits = hitTrials, ended = false) => {
     await saveSession({
