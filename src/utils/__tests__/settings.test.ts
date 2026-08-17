@@ -1,29 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
 
-const memoryStorage = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = String(value);
-    },
-    clear: () => {
-      store = {};
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-  };
-})();
-
-if (typeof globalThis.localStorage === 'undefined') {
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: memoryStorage,
-    writable: true,
-  });
-}
-
 describe('settings utils with domain isolation', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -32,6 +9,7 @@ describe('settings utils with domain isolation', () => {
   it('loadSettings - should return default settings when localStorage is empty', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(settings.global.soundEnabled).toBe(true);
     expect(settings.star.autoNext).toBe(true);
     expect(settings.color.autoNext).toBe(true);
     expect(settings.relative_color.autoNext).toBe(true);

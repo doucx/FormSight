@@ -6,7 +6,9 @@ import {
   generateBipolarGridPoints,
   generatePolarGridPoints,
   generateQuestion,
+  getDynamicCrosshairMetrics,
   getDynamicDotRadius,
+  getGridMinSpacing,
   rotatePoint,
 } from '../geometry';
 
@@ -67,16 +69,25 @@ describe('geometry utils', () => {
     expect(hitResult.errorDistance).toBeLessThan(0.5);
   });
 
-  it('getDynamicDotRadius - should dynamically calculate dot radius based on grid spacing', () => {
+  it('getDynamicDotRadius & getDynamicCrosshairMetrics - should dynamically scale based on grid spacing', () => {
     const gridDense = [
       { x: 10, y: 10 },
-      { x: 12, y: 10 },
+      { x: 14, y: 10 },
     ];
     const gridSparse = [
       { x: 10, y: 10 },
       { x: 100, y: 100 },
     ];
+    expect(getGridMinSpacing(gridDense)).toBe(4);
     expect(getDynamicDotRadius(gridDense)).toBeLessThan(getDynamicDotRadius(gridSparse));
+
+    const metricsDense = getDynamicCrosshairMetrics(gridDense);
+    const metricsSparse = getDynamicCrosshairMetrics(gridSparse);
+
+    // 密集点阵下的准星尺寸应显著小于稀疏点阵
+    expect(metricsDense.size).toBeLessThan(metricsSparse.size);
+    expect(metricsDense.size).toBeLessThanOrEqual(4); // 4 * 0.42 ≈ 1.68 -> clamp to 3.5
+    expect(metricsDense.lineWidth).toBeLessThanOrEqual(metricsSparse.lineWidth);
   });
 
   it('generateQuestion - should generate valid question data for single, double_h and double_r', () => {

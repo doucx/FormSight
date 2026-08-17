@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
 import type { AdaptiveMode, StepGranularity } from '../utils/settings';
+import { playHitSound, playMissSound } from '../utils/sound';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   domain: string;
@@ -79,6 +80,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+  const streakRef = useRef<number>(0);
 
   const saveCurrentSession = useCallback(
     async (trials = totalTrials, hits = hitTrials, ended = false) => {
@@ -113,6 +115,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       const responseTimeMs = Date.now() - questionStartTime;
       const hitResult = evaluateAnswer(userVal, question);
       const hit = isHit(hitResult);
+
+      if (hit) {
+        streakRef.current += 1;
+        playHitSound(streakRef.current);
+      } else {
+        streakRef.current = 0;
+        playMissSound();
+      }
 
       setUserAnswer(hitResult);
       setShowAnswer(true);
@@ -196,6 +206,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setSessionHistory([]);
     setShowAnswer(false);
     setUserAnswer(null);
+    streakRef.current = 0;
     sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
