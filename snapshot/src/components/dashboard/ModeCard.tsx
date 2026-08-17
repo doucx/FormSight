@@ -1,5 +1,5 @@
 import { Award, Play, Target, TrendingUp } from 'lucide-preact';
-import type { ComponentType } from 'preact';
+import type { ComponentChildren } from 'preact';
 
 export function formatTodayTime(ms: number): string {
   if (ms <= 0) return '0秒';
@@ -15,7 +15,7 @@ export function formatTodayTime(ms: number): string {
 interface ModeCardProps {
   title: string;
   desc: string;
-  icon: ComponentType<any>;
+  icon: (props: { className?: string }) => ComponentChildren;
   todayCount: number;
   todayTimeMs?: number;
   currentLevel: number;

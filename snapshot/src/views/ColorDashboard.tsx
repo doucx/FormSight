@@ -1,5 +1,5 @@
 import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
-import type { ComponentType } from 'preact';
+import type { ComponentChildren } from 'preact';
 import { DashboardShell } from '../components/dashboard/DashboardShell';
 import { ModeCard } from '../components/dashboard/ModeCard';
 import { useTodayStats } from '../hooks/useTodayStats';
@@ -18,7 +18,7 @@ const COLOR_MODES_CONFIG: Array<{
   id: ColorMode;
   title: string;
   desc: string;
-  icon: ComponentType<any>;
+  icon: (props: { className?: string }) => ComponentChildren;
 }> = [
   {
     id: 'H',

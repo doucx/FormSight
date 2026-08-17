@@ -1,124 +1,96 @@
-好的，我已经分析了构建失败的原因并整理了修复方案。我们将针对 TypeScript 类型兼容、未使用变量以及冗余导入进行精准修复。
+好的，Biome 报告了 `noExplicitAny` 规则告警。这是因为使用泛型 `any` 违反了 linter 规则。我们可以将 `icon` 的类型定义为纯函数调用签名 `(props: { className?: string }) => ComponentChildren`，这不仅完全避免了 `any`，还优雅地规避了 Preact `ComponentType` 在 `defaultProps` 上的协变类型冲突。
 
-## [WIP] fix(build): 修复 TypeScript 编译类型错误及未使用的变量导入
+## [WIP] fix(types): 使用强类型函数签名替换 icon 的 explicit any
 
 ### 错误分析
 
-1. **图标类型不兼容及导出缺失**:
-   - `lucide-preact` 未直接暴露 `LucideIcon` 命名类型，且组件 props 类型定义与 Preact 的 `Signalish` 特性在严格模式下存在微小差异，导致 `ComponentType<{ className?: string }>` 校验失败。将其放宽兼容为 `ComponentType<any>` 即可完全兼容。
-2. **未使用变量警告 (`TS6133`)**:
-   - `TrainingShell.tsx`: 传入了 `title` 和 `onExit` 但在渲染时未消费 `title`，且 `onExit` 未被函数体直接引用（退出的实际触发由 session 内的 `handleRequestFinish` 和 `handleFinishSession` 接管）。
-3. **测试文件冗余导入**:
-   - `sound.test.ts` 中无用且未被使用的 `vi` 导入触发了 TS 编译警告。
+1. **`lint/suspicious/noExplicitAny` 触发**:
+   - Biome 默认开启了禁止显式使用 `any` 的规则，`ComponentType<any>` 触发了该 linter 错误。
+2. **根因回顾**:
+   - 此前出现 TS2322 错误的本质是 Preact `ComponentType`/`FunctionComponent` 包含可选的 `defaultProps?: Partial<P>`。`lucide-preact` 组件的 `defaultProps.className` 是 `Signalish` 类型，在协变比较时与普通 `string` 不匹配。
+   - 解决方案是将类型定义为函数调用签名 `(props: { className?: string }) => ComponentChildren`，既保证了函数参数在逆变校验下的严格类型安全，又没有 `defaultProps` 干扰，同时符合 Biome 无 `any` 的规范。
 
 ### 用户需求
 
-1. 将 `ModeCard.tsx`、`Dashboard.tsx`、`ColorDashboard.tsx` 中的图标类型统一调整为泛型组件类型 `ComponentType<any>`。
-2. 在 `TrainingShell.tsx` 中将 `title` 整合至 Header 标识栏中展示，并从函数签名中移除未直接消费的 `onExit` 参数解构。
-3. 移除 `src/utils/__tests__/sound.test.ts` 中未使用的 `vi` 导入。
+消除 `ModeCard.tsx`、`Dashboard.tsx` 和 `ColorDashboard.tsx` 中的 `any` 类型使用，通过 Biome 的代码风格检查与 TypeScript 类型检查。
 
 ### 评论
-这些改动消除了编译时的严格类型报错和未使用符号告警，使代码库可以顺利通过 `tsc && vite build`，同时保证了组件库的兼容性与整洁度。
+使用 `(props: { className?: string }) => ComponentChildren` 是 Preact / React 中传递纯 UI 图标渲染组件的标准最佳实践，兼具类型安全与灵活性。
 
 ### 目标
-1. 精确修改 `ModeCard.tsx`、`ColorDashboard.tsx`、`Dashboard.tsx` 中的图标类型。
-2. 调整 `TrainingShell.tsx`，将 `title` 融入界面徽标提示，并清理未使用的参数。
-3. 清理 `sound.test.ts` 导入。
+1. 在 `ModeCard.tsx` 中使用 `(props: { className?: string }) => ComponentChildren`。
+2. 在 `Dashboard.tsx` 与 `ColorDashboard.tsx` 中同步更新配置数组类型声明。
 
 ### 基本原理
-- 使用 Preact 的 `ComponentType<any>` 作为通用组件类型，适配 Preact 10 与 Lucide 组件的 Props 签名。
-- 在 `TrainingShell` 顶部将 `title` 与 `badge` 共同展示，不仅解决了未使用变量报错，还增强了训练界面所属训练类型的直观度。
+- 导入 Preact 原生 `ComponentChildren` 类型。
+- 采用函数签名 `(props: { className?: string }) => ComponentChildren` 明确约束图标组件接收 `className` 并返回渲染子项，彻底移除 `any`。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/build #concept/executor #scope/dx #ai/instruct #task/domain/build #task/object/typescript-types #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/build #concept/executor #scope/dx #ai/instruct #task/domain/build #task/object/typescript-types #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复图标类型与 Dashboard 组件定义
+#### Acts 1: 替换 `ModeCard.tsx`、`Dashboard.tsx`、`ColorDashboard.tsx` 中的类型定义
 
 ~~~~~act
 patch_file
 src/components/dashboard/ModeCard.tsx
 ~~~~~
 ~~~~~typescript
-interface ModeCardProps {
-  title: string;
-  desc: string;
-  icon: ComponentType<{ className?: string }>;
-  todayCount: number;
-  todayTimeMs?: number;
-  currentLevel: number;
-  accuracy: number;
-  onStartTraining: () => void;
-  onStartBenchmark: () => void;
-}
-~~~~~
-~~~~~typescript
-interface ModeCardProps {
-  title: string;
-  desc: string;
-  icon: ComponentType<any>;
-  todayCount: number;
-  todayTimeMs?: number;
-  currentLevel: number;
-  accuracy: number;
-  onStartTraining: () => void;
-  onStartBenchmark: () => void;
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/views/ColorDashboard.tsx
-~~~~~
-~~~~~typescript
-import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
-import { DashboardShell } from '../components/dashboard/DashboardShell';
-import { ModeCard } from '../components/dashboard/ModeCard';
-import { useTodayStats } from '../hooks/useTodayStats';
-import type { ColorMode } from '../utils/colorUtils';
-import type { ColorProfileData } from '../utils/db';
-
-interface ColorDashboardProps {
-  profiles: Record<ColorMode, ColorProfileData | null>;
-  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
-  onBackToHome: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: () => void;
-}
-
-const COLOR_MODES_CONFIG: Array<{
-  id: ColorMode;
-  title: string;
-  desc: string;
-  icon: typeof RotateCw;
-}> = [
-~~~~~
-~~~~~typescript
-import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
+import { Award, Play, Target, TrendingUp } from 'lucide-preact';
 import type { ComponentType } from 'preact';
-import { DashboardShell } from '../components/dashboard/DashboardShell';
-import { ModeCard } from '../components/dashboard/ModeCard';
-import { useTodayStats } from '../hooks/useTodayStats';
-import type { ColorMode } from '../utils/colorUtils';
-import type { ColorProfileData } from '../utils/db';
 
-interface ColorDashboardProps {
-  profiles: Record<ColorMode, ColorProfileData | null>;
-  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
-  onBackToHome: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics: () => void;
+export function formatTodayTime(ms: number): string {
+  if (ms <= 0) return '0秒';
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}秒`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
 }
 
-const COLOR_MODES_CONFIG: Array<{
-  id: ColorMode;
+interface ModeCardProps {
   title: string;
   desc: string;
   icon: ComponentType<any>;
-}> = [
+  todayCount: number;
+  todayTimeMs?: number;
+  currentLevel: number;
+  accuracy: number;
+  onStartTraining: () => void;
+  onStartBenchmark: () => void;
+}
+~~~~~
+~~~~~typescript
+import { Award, Play, Target, TrendingUp } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
+
+export function formatTodayTime(ms: number): string {
+  if (ms <= 0) return '0秒';
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}秒`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0 ? `${min}分${sec}秒` : `${min}分钟`;
+}
+
+interface ModeCardProps {
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+  todayCount: number;
+  todayTimeMs?: number;
+  currentLevel: number;
+  accuracy: number;
+  onStartTraining: () => void;
+  onStartBenchmark: () => void;
+}
 ~~~~~
 
 ~~~~~act
@@ -127,21 +99,6 @@ src/views/Dashboard.tsx
 ~~~~~
 ~~~~~typescript
 import { Crosshair, RotateCw, Target } from 'lucide-preact';
-import { DashboardShell } from '../components/dashboard/DashboardShell';
-import { ModeCard } from '../components/dashboard/ModeCard';
-import { useTodayStats } from '../hooks/useTodayStats';
-import type { TrainingMode } from '../types';
-import type { UserProfileData } from '../utils/db';
-
-const MODES_CONFIG: Array<{
-  id: TrainingMode;
-  title: string;
-  desc: string;
-  icon: typeof Target;
-}> = [
-~~~~~
-~~~~~typescript
-import { Crosshair, RotateCw, Target } from 'lucide-preact';
 import type { ComponentType } from 'preact';
 import { DashboardShell } from '../components/dashboard/DashboardShell';
 import { ModeCard } from '../components/dashboard/ModeCard';
@@ -156,134 +113,76 @@ const MODES_CONFIG: Array<{
   icon: ComponentType<any>;
 }> = [
 ~~~~~
+~~~~~typescript
+import { Crosshair, RotateCw, Target } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
+import { DashboardShell } from '../components/dashboard/DashboardShell';
+import { ModeCard } from '../components/dashboard/ModeCard';
+import { useTodayStats } from '../hooks/useTodayStats';
+import type { TrainingMode } from '../types';
+import type { UserProfileData } from '../utils/db';
 
-#### Acts 2: 修复 `TrainingShell.tsx` 中的未使用变量
+const MODES_CONFIG: Array<{
+  id: TrainingMode;
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+}> = [
+~~~~~
 
 ~~~~~act
 patch_file
-src/components/training/TrainingShell.tsx
+src/views/ColorDashboard.tsx
 ~~~~~
 ~~~~~typescript
-export function TrainingShell({
-  title,
-  badge,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  onExit,
-  children,
-}: TrainingShellProps) {
-  const {
-    totalTrials,
-    elapsedSeconds,
-    isFinished,
-    isIdle,
-    showAnswer,
-    showSummaryModal,
-    sessionHistory,
-    resumeFromIdle,
-    handleNextQuestion,
-    handleRequestFinish,
-    handleFinishSession,
-    handleRestartSession,
-  } = session;
+import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
+import type { ComponentType } from 'preact';
+import { DashboardShell } from '../components/dashboard/DashboardShell';
+import { ModeCard } from '../components/dashboard/ModeCard';
+import { useTodayStats } from '../hooks/useTodayStats';
+import type { ColorMode } from '../utils/colorUtils';
+import type { ColorProfileData } from '../utils/db';
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+interface ColorDashboardProps {
+  profiles: Record<ColorMode, ColorProfileData | null>;
+  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
+  onBackToHome: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics: () => void;
+}
 
-  return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 统一 Header 状态栏 */}
-      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRequestFinish}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            退出训练 (Esc)
-          </button>
-          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
-          </span>
+const COLOR_MODES_CONFIG: Array<{
+  id: ColorMode;
+  title: string;
+  desc: string;
+  icon: ComponentType<any>;
+}> = [
 ~~~~~
 ~~~~~typescript
-export function TrainingShell({
-  title,
-  badge,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  children,
-}: TrainingShellProps) {
-  const {
-    totalTrials,
-    elapsedSeconds,
-    isFinished,
-    isIdle,
-    showAnswer,
-    showSummaryModal,
-    sessionHistory,
-    resumeFromIdle,
-    handleNextQuestion,
-    handleRequestFinish,
-    handleFinishSession,
-    handleRestartSession,
-  } = session;
+import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
+import { DashboardShell } from '../components/dashboard/DashboardShell';
+import { ModeCard } from '../components/dashboard/ModeCard';
+import { useTodayStats } from '../hooks/useTodayStats';
+import type { ColorMode } from '../utils/colorUtils';
+import type { ColorProfileData } from '../utils/db';
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+interface ColorDashboardProps {
+  profiles: Record<ColorMode, ColorProfileData | null>;
+  onStart: (mode: ColorMode, type: 'training' | 'benchmark') => void;
+  onBackToHome: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics: () => void;
+}
 
-  return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
-      {/* 统一 Header 状态栏 */}
-      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRequestFinish}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            退出训练 (Esc)
-          </button>
-          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {title} · {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
-          </span>
-~~~~~
-
-#### Acts 3: 移除 `sound.test.ts` 中未使用的 `vi` 导入
-
-~~~~~act
-patch_file
-src/utils/__tests__/sound.test.ts
-~~~~~
-~~~~~typescript
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadSettings, saveSettings } from '../settings';
-import { playHitSound, playMissSound } from '../sound';
-~~~~~
-~~~~~typescript
-import { beforeEach, describe, expect, it } from 'vitest';
-import { loadSettings, saveSettings } from '../settings';
-import { playHitSound, playMissSound } from '../sound';
+const COLOR_MODES_CONFIG: Array<{
+  id: ColorMode;
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+}> = [
 ~~~~~
 
 ### 下一步建议
-1. 执行 `npm run build` 和 `npm test` 验证类型检查与单元测试全部通过。
-2. 验证完成后可进行代码提交流程。
+1. 运行 `npm run checkf` 验证代码规范检查通过。
+2. 运行 `npm run build` 验证 TypeScript 编译与构建流程完全通过。
