@@ -20,29 +20,6 @@ import {
 } from '../db';
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
 
-const memoryStorage = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => {
-      store[key] = String(value);
-    },
-    clear: () => {
-      store = {};
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-  };
-})();
-
-if (typeof globalThis.localStorage === 'undefined') {
-  Object.defineProperty(globalThis, 'localStorage', {
-    value: memoryStorage,
-    writable: true,
-  });
-}
-
 describe('db storage & import/export', () => {
   beforeEach(async () => {
     await clearAllData();
