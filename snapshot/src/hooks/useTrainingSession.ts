@@ -248,8 +248,10 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   useEffect(() => {
     if (isFinished || showSummaryModal) return;
 
-    const resetIdleTimer = () => {
-      if (isIdle) return;
+    const handleUserActivity = () => {
+      if (isIdle) {
+        resumeFromIdle();
+      }
       if (idleTimerRef.current) {
         clearTimeout(idleTimerRef.current);
       }
@@ -272,22 +274,22 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
 
     const userActivityEvents = ['pointerdown', 'pointermove', 'keydown', 'touchstart'];
     for (const evt of userActivityEvents) {
-      window.addEventListener(evt, resetIdleTimer, { passive: true });
+      window.addEventListener(evt, handleUserActivity, { passive: true });
     }
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
 
-    resetIdleTimer();
+    handleUserActivity();
 
     return () => {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
       for (const evt of userActivityEvents) {
-        window.removeEventListener(evt, resetIdleTimer);
+        window.removeEventListener(evt, handleUserActivity);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
     };
-  }, [isFinished, showSummaryModal, isIdle, effectiveIdleTimeout, pauseToIdle]);
+  }, [isFinished, showSummaryModal, isIdle, effectiveIdleTimeout, pauseToIdle, resumeFromIdle]);
 
   // === 计时器 ===
   useEffect(() => {

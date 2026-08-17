@@ -1,6 +1,7 @@
 import {
   Clock,
   Download,
+  Eye,
   Sliders,
   ToggleLeft,
   ToggleRight,
@@ -41,6 +42,19 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
       global: {
         ...settings.global,
         idleTimeout: sec,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
+
+  const handleToggleBlurOverlay = () => {
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        showIdleBlurOverlay: !settings.global.showIdleBlurOverlay,
       },
     };
     saveSettings(updated);
@@ -155,7 +169,7 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">闲置休眠保护</div>
-                <div className="text-[11px] text-slate-400">无操作或切出窗口时暂停计时与模糊遮罩</div>
+                <div className="text-[11px] text-slate-400">无操作或切出窗口时自动暂停训练计时</div>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-1">
@@ -179,6 +193,33 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <Eye className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-700">暂停时显示模糊遮罩</div>
+                <div className="text-[11px] text-slate-400">
+                  {settings.global.showIdleBlurOverlay
+                    ? '已开启毛玻璃遮罩提示'
+                    : '已关闭遮罩，切回时无感直接作答'}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleBlurOverlay}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {settings.global.showIdleBlurOverlay ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
           </div>
         </div>
 

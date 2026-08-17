@@ -12,7 +12,7 @@ import {
   generateColorQuestion,
 } from '../utils/colorUtils';
 import { saveColorSession, saveColorTrialRecord } from '../utils/db';
-import type { ColorSenseSettings } from '../utils/settings';
+import { type ColorSenseSettings, loadSettings } from '../utils/settings';
 
 interface ColorTrainingViewProps {
   mode: ColorMode;
@@ -130,6 +130,8 @@ export function ColorTrainingView({
     return `${m}:${s}`;
   };
 
+  const showBlurOverlay = loadSettings().global.showIdleBlurOverlay ?? true;
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -181,14 +183,17 @@ export function ColorTrainingView({
           question={question}
           showAnswer={showAnswer}
           userAnswer={userAnswer}
-          onAnswer={handleAnswer}
-          disabled={isFinished || isIdle}
+          onAnswer={(val) => {
+            if (isIdle) resumeFromIdle();
+            handleAnswer(val);
+          }}
+          disabled={isFinished || (isIdle && showBlurOverlay)}
           hitMargin={settings.sliderHitMargin ?? 12}
           showToleranceBand={settings.showToleranceBand ?? true}
           enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
         />
 
-        {isIdle && (
+        {isIdle && showBlurOverlay && (
           <div
             role="presentation"
             onClick={resumeFromIdle}

@@ -6,7 +6,7 @@ import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
 import { saveSession, saveTrialRecord } from '../utils/db';
 import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../utils/geometry';
-import type { StarSettings } from '../utils/settings';
+import { type StarSettings, loadSettings } from '../utils/settings';
 
 interface TrainingViewProps {
   mode: TrainingMode;
@@ -124,6 +124,8 @@ export function TrainingView({
     ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer }
     : null;
 
+  const showBlurOverlay = loadSettings().global.showIdleBlurOverlay ?? true;
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -177,15 +179,16 @@ export function TrainingView({
           showAnswer={showAnswer}
           userAnswer={canvasUserAnswer}
           onAnswer={(clickPoint) => {
+            if (isIdle) resumeFromIdle();
             const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
             if (hitRes.isWithinRange) {
               handleAnswer({ clickPoint, hitResult: hitRes });
             }
           }}
-          disabled={isFinished || isIdle}
+          disabled={isFinished || (isIdle && showBlurOverlay)}
         />
 
-        {isIdle && (
+        {isIdle && showBlurOverlay && (
           <div
             role="presentation"
             onClick={resumeFromIdle}

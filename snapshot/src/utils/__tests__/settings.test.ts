@@ -10,6 +10,7 @@ describe('settings utils with domain isolation', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
     expect(settings.global.soundEnabled).toBe(true);
+    expect(settings.global.showIdleBlurOverlay).toBe(true);
     expect(settings.star.autoNext).toBe(true);
     expect(settings.color.autoNext).toBe(true);
     expect(settings.relative_color.autoNext).toBe(true);
@@ -19,6 +20,7 @@ describe('settings utils with domain isolation', () => {
 
   it('saveSettings & loadSettings - should persist and retrieve domain-scoped settings', () => {
     const custom = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    custom.global.showIdleBlurOverlay = false;
     custom.star.autoNext = false;
     custom.star.autoNextDelay = 800;
     custom.star.gridSize = 4;
@@ -33,6 +35,7 @@ describe('settings utils with domain isolation', () => {
     saveSettings(custom);
 
     const loaded = loadSettings();
+    expect(loaded.global.showIdleBlurOverlay).toBe(false);
     expect(loaded.star.autoNext).toBe(false);
     expect(loaded.star.autoNextDelay).toBe(800);
     expect(loaded.star.gridSize).toBe(4);

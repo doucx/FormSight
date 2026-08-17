@@ -49,6 +49,7 @@ export interface RelativeColorSettings extends BaseModuleSettings {
 export interface GlobalSettings {
   idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
   soundEnabled: boolean; // 是否启用答题音效反馈
+  showIdleBlurOverlay: boolean; // 闲置或失焦暂停时是否显示模糊遮罩提示
 }
 
 /**
@@ -76,6 +77,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   global: {
     idleTimeout: 60,
     soundEnabled: true,
+    showIdleBlurOverlay: true,
   },
   star: {
     ...DEFAULT_BASE_SETTINGS,
@@ -138,6 +140,8 @@ export function loadSettings(): UserSettings {
       global: {
         idleTimeout: parsed.idleTimeout ?? DEFAULT_SETTINGS.global.idleTimeout,
         soundEnabled: parsed.soundEnabled ?? DEFAULT_SETTINGS.global.soundEnabled,
+        showIdleBlurOverlay:
+          parsed.showIdleBlurOverlay ?? DEFAULT_SETTINGS.global.showIdleBlurOverlay,
       },
       star: {
         autoNext: parsed.autoNext ?? DEFAULT_SETTINGS.star.autoNext,
