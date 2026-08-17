@@ -54,10 +54,10 @@ export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[])
 }
 
 /**
- * 根据点阵间距动态计算渲染圆点的半径
+ * 计算点阵中任意两点间的最小欧氏间距
  */
-export function getDynamicDotRadius(gridPoints: Point[]): number {
-  if (!gridPoints || gridPoints.length < 2) return 3.5;
+export function getGridMinSpacing(gridPoints: Point[]): number {
+  if (!gridPoints || gridPoints.length < 2) return 25;
   let minDist = Number.MAX_VALUE;
   for (let i = 0; i < gridPoints.length; i++) {
     for (let j = i + 1; j < gridPoints.length; j++) {
@@ -67,6 +67,28 @@ export function getDynamicDotRadius(gridPoints: Point[]): number {
       }
     }
   }
-  if (minDist === Number.MAX_VALUE) return 3.5;
+  return minDist === Number.MAX_VALUE ? 25 : minDist;
+}
+
+/**
+ * 根据点阵间距动态计算渲染圆点的半径
+ */
+export function getDynamicDotRadius(gridPoints: Point[]): number {
+  const minDist = getGridMinSpacing(gridPoints);
   return Math.max(1.2, Math.min(3.5, minDist * 0.25));
+}
+
+/**
+ * 根据点阵间距动态计算十字准星的臂长与线宽
+ */
+export function getDynamicCrosshairMetrics(gridPoints: Point[]): {
+  size: number;
+  lineWidth: number;
+} {
+  const minDist = getGridMinSpacing(gridPoints);
+  // 臂长控制在最小点间距的 42% 以内，绝不超过相邻点
+  const size = Math.max(3.5, Math.min(12, minDist * 0.42));
+  const lineWidth = Math.max(1, Math.min(2, minDist * 0.08));
+
+  return { size, lineWidth };
 }

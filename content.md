@@ -1,469 +1,295 @@
-这个建议非常棒！在手眼协调与知觉训练（如 Aim Lab、OSU 等）中，即时的音频听觉反馈能够形成多模态神经正反馈回路，极大地强化训练沉浸感和节奏感。
+在寻星练习高难度（如高 Level 或密集网格点阵）下，点间距可能从原本的 25px+ 骤降至 3.5px~6px 左右。原本固定的 12px 十字准星和 2px 粗线会直接遮挡周围 3~5 个临近网格点，严重影响做答后的空间视觉复盘。
 
-我们将使用原生 **Web Audio API**（基于 `OscillatorNode` + `GainNode` 合成，零外部音频资源依赖，超低延迟），设计如下：
-1. **答对音效 (Hit)**：正弦波高频短促的“叮”声（类似金属击靶的爽快感，80ms 指数衰减），并随着 **Streak 连胜次数** 按等比半音阶动态升高音调（Pitch 上升）。
-2. **答错音效 (Miss)**：低沉、柔和的下行平滑音（200Hz -> 140Hz 柔和三角波），不刺耳但有清晰的边界提示。
-3. **全局控制**：在 `GlobalSettings` 中加入 `soundEnabled`（默认开启），并在全局设置界面中提供实时开关。
+我们将十字准星的尺寸（臂长、线宽）与网格的最小局部间距（$d_{\min}$）进行动态线性映射与比例约束，确保在任何难度下十字准星都不会溢出覆盖邻近干扰点。
 
 ---
 
-## [WIP] feat: 引入基于 Web Audio API 的连击音效反馈系统与全局音频设置
+## [WIP] fix: 动态自适应寻星练习答题反馈准星与指示元素尺寸
+
+### 错误分析
+在原实现中：
+1. **十字准星固定臂长**: `chSize` 固定为 `12px`，`lineWidth` 固定为 `2px`。
+2. **高密集点阵下的视觉污染**: 在 Level 25+ 或 5x5 双极透视网格下，干扰点之间的最小距离常降至 4px~8px，12px 臂长的十字准星会径向覆盖 24px 范围内的多个邻近点，遮蔽了正确的真理点与其周围点的真实相对位置关系。
+3. **连线与误差反馈缺乏动态比例**: 误差虚线的线宽与虚线步长在密集网格下偏粗。
 
 ### 用户需求
-引入轻量化 Web Audio API 音效反馈：
-1. 答对时播放高频短促的“叮”声，连胜次数（Streak）越高，音调（Pitch）越强。
-2. 答错时播放低沉柔和的提示音。
-3. 提供全局声音开关控制。
+让选择正确后的绿色十字准星大小、线宽以及相关指示元素自适应当前网格点间距变化，避免在点间距过小时盖住周围的网格点。
 
 ### 评论
-纯合成的 Web Audio API 不依赖任何外部 mp3/wav 资源，加载零延迟，且可以精确根据答题连击（Streak）动态计算音频振荡频率和音高包络，不仅极大幅度提升答题正向反馈，还不会增加构建包体积。
+精准的视觉反馈是感知训练系统的核心体验。当网格密度随难度动态变化时，所有反馈标记（包含真理点十字、高亮圈、误差指示线）都必须与当前视场空间的分辨率（局部最小点距）保持同构缩放。
 
 ### 目标
-1. 创建 `src/utils/sound.ts` 音频合成模块，实现 `playHitSound(streak)` 与 `playMissSound()`。
-2. 在 `src/utils/settings.ts` 的 `GlobalSettings` 中增加 `soundEnabled` 属性，并兼容持久化与数据迁移。
-3. 在 `src/components/GlobalSettingsModal.tsx` 全局设置弹窗中增加音效开关切换项。
-4. 在 `src/hooks/useTrainingSession.ts` 中维护连胜计数器，并在做答判定时自动触发对应音效。
-5. 补充与更新相关单元测试。
+1. 在 `src/utils/geometry/hitDetection.ts` 中提取并导出通用的 `getGridMinSpacing` 与 `getDynamicCrosshairMetrics` 算子。
+2. 更新 `src/components/StarCanvas.tsx`，将绿色十字准星的臂长 `chSize`、线宽 `lineWidth` 以及误差指示线动态绑定至网格点间距。
+3. 补充完善 `src/utils/__tests__/geometry.test.ts` 相关测试。
 
 ### 基本原理
-1. 通过浏览器的 `AudioContext` 构造振荡器 (`OscillatorNode`) 与增益包络 (`GainNode`)。
-2. 击中时以基频 1046.5Hz (C6) 为底，根据连胜计数 $n$ 按公式 $f = f_0 \times 1.06^{\min(n, 12)}$ 计算音高，形成明亮清脆的上升琶音阶梯。
-3. 闲置或静音时自动拦截，避免产生无意义的音频调度开销。
+定义网格最小间距 $d_{\min} = \min_{i \neq j} \|P_i - P_j\|$：
+- **十字准星臂长 (Crosshair Half-Size)**: $L_{ch} = \text{clamp}(0.45 \times d_{\min}, 3.5\text{px}, 12\text{px})$，确保十字臂长不会触碰甚至跨越最近的相邻点。
+- **十字线宽 (Line Width)**: $W_{ch} = \text{clamp}(0.12 \times d_{\min}, 1.0\text{px}, 2.0\text{px})$。
+- **误差虚线指示**: 虚线步长与线宽按比例动态衰减，保证在密集网格下的锐利与清晰。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #concept/ui #concept/config #scope/ux #ai/instruct #task/domain/ui #task/object/audio-feedback-system #task/action/implementation #task/state/begin
+#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/star-canvas-crosshair #task/action/dynamic-scaling #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 创建轻量化 Web Audio 音效管理器 `src/utils/sound.ts`
+#### Acts 1: 在 `src/utils/geometry/hitDetection.ts` 中增加最小点间距与动态标记几何算子
 
 ~~~~~act
-write_file
-src/utils/sound.ts
+patch_file
+src/utils/geometry/hitDetection.ts
 ~~~~~
 ~~~~~typescript
-import { loadSettings } from './settings';
-
-let audioCtx: AudioContext | null = null;
-
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  if (!audioCtx) {
-    const AudioContextClass =
-      window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (AudioContextClass) {
-      audioCtx = new AudioContextClass();
+/**
+ * 根据点阵间距动态计算渲染圆点的半径
+ */
+export function getDynamicDotRadius(gridPoints: Point[]): number {
+  if (!gridPoints || gridPoints.length < 2) return 3.5;
+  let minDist = Number.MAX_VALUE;
+  for (let i = 0; i < gridPoints.length; i++) {
+    for (let j = i + 1; j < gridPoints.length; j++) {
+      const d = calcDistance(gridPoints[i], gridPoints[j]);
+      if (d > 0 && d < minDist) {
+        minDist = d;
+      }
     }
   }
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().catch(() => {});
-  }
-  return audioCtx;
-}
-
-/**
- * 播放答对音效 (Aim Lab 风格高频短促清脆“叮”声)
- * @param streak 当前连击次数 (0..N)
- */
-export function playHitSound(streak = 0): void {
-  const settings = loadSettings();
-  if (!settings.global.soundEnabled) return;
-
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-
-  // 基频 1046.5Hz (C6)，根据 streak 连胜阶梯按半音等比上扬，上限限制在 ~2200Hz
-  const cappedStreak = Math.min(Math.max(0, streak - 1), 12);
-  const baseFreq = 1046.5;
-  const targetFreq = baseFreq * 1.059463 ** cappedStreak;
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(targetFreq, now);
-  // 轻微的向上频移增强打击感
-  osc.frequency.exponentialRampToValueAtTime(targetFreq * 1.08, now + 0.08);
-
-  // 极速起音，指数衰减
-  gain.gain.setValueAtTime(0.001, now);
-  gain.gain.linearRampToValueAtTime(0.22, now + 0.006);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.1);
-}
-
-/**
- * 播放答错提示音 (柔和低沉的下行平滑提示)
- */
-export function playMissSound(): void {
-  const settings = loadSettings();
-  if (!settings.global.soundEnabled) return;
-
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  const now = ctx.currentTime;
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = 'triangle'; // 三角波柔和不刺耳
-  osc.frequency.setValueAtTime(220, now);
-  osc.frequency.exponentialRampToValueAtTime(140, now + 0.14);
-
-  gain.gain.setValueAtTime(0.001, now);
-  gain.gain.linearRampToValueAtTime(0.18, now + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + 0.16);
-}
-~~~~~
-
-#### Acts 2: 更新 `src/utils/settings.ts` 支持声音配置
-
-~~~~~act
-patch_file
-src/utils/settings.ts
-~~~~~
-~~~~~typescript
-/**
- * 全局通用设置
- */
-export interface GlobalSettings {
-  idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
+  if (minDist === Number.MAX_VALUE) return 3.5;
+  return Math.max(1.2, Math.min(3.5, minDist * 0.25));
 }
 ~~~~~
 ~~~~~typescript
 /**
- * 全局通用设置
+ * 计算点阵中任意两点间的最小欧氏间距
  */
-export interface GlobalSettings {
-  idleTimeout: number; // 闲置自动暂停计时时长 (秒)，0 表示关闭
-  soundEnabled: boolean; // 是否启用答题音效反馈
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/settings.ts
-~~~~~
-~~~~~typescript
-export const DEFAULT_SETTINGS: UserSettings = {
-  global: {
-    idleTimeout: 60,
-  },
-  star: {
-~~~~~
-~~~~~typescript
-export const DEFAULT_SETTINGS: UserSettings = {
-  global: {
-    idleTimeout: 60,
-    soundEnabled: true,
-  },
-  star: {
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/settings.ts
-~~~~~
-~~~~~typescript
-    // === 向下兼容迁移：解析老版本扁平结构 ===
-    const migrated: UserSettings = {
-      global: {
-        idleTimeout: parsed.idleTimeout ?? DEFAULT_SETTINGS.global.idleTimeout,
-      },
-      star: {
-~~~~~
-~~~~~typescript
-    // === 向下兼容迁移：解析老版本扁平结构 ===
-    const migrated: UserSettings = {
-      global: {
-        idleTimeout: parsed.idleTimeout ?? DEFAULT_SETTINGS.global.idleTimeout,
-        soundEnabled: parsed.soundEnabled ?? DEFAULT_SETTINGS.global.soundEnabled,
-      },
-      star: {
-~~~~~
-
-#### Acts 3: 在 `src/hooks/useTrainingSession.ts` 中集成答题音效与连胜计数
-
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import type { AdaptiveMode, StepGranularity } from '../utils/settings';
-~~~~~
-~~~~~typescript
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import type { AdaptiveMode, StepGranularity } from '../utils/settings';
-import { playHitSound, playMissSound } from '../utils/sound';
-~~~~~
-
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript
-  const [totalTrials, setTotalTrials] = useState<number>(0);
-  const [hitTrials, setHitTrials] = useState<number>(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-~~~~~
-~~~~~typescript
-  const [totalTrials, setTotalTrials] = useState<number>(0);
-  const [hitTrials, setHitTrials] = useState<number>(0);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
-  const [isFinished, setIsFinished] = useState<boolean>(false);
-  const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-  const streakRef = useRef<number>(0);
-~~~~~
-
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript
-      const hit = isHit(hitResult);
-
-      setUserAnswer(hitResult);
-      setShowAnswer(true);
-~~~~~
-~~~~~typescript
-      const hit = isHit(hitResult);
-
-      if (hit) {
-        streakRef.current += 1;
-        playHitSound(streakRef.current);
-      } else {
-        streakRef.current = 0;
-        playMissSound();
+export function getGridMinSpacing(gridPoints: Point[]): number {
+  if (!gridPoints || gridPoints.length < 2) return 25;
+  let minDist = Number.MAX_VALUE;
+  for (let i = 0; i < gridPoints.length; i++) {
+    for (let j = i + 1; j < gridPoints.length; j++) {
+      const d = calcDistance(gridPoints[i], gridPoints[j]);
+      if (d > 0 && d < minDist) {
+        minDist = d;
       }
+    }
+  }
+  return minDist === Number.MAX_VALUE ? 25 : minDist;
+}
 
-      setUserAnswer(hitResult);
-      setShowAnswer(true);
+/**
+ * 根据点阵间距动态计算渲染圆点的半径
+ */
+export function getDynamicDotRadius(gridPoints: Point[]): number {
+  const minDist = getGridMinSpacing(gridPoints);
+  return Math.max(1.2, Math.min(3.5, minDist * 0.25));
+}
+
+/**
+ * 根据点阵间距动态计算十字准星的臂长与线宽
+ */
+export function getDynamicCrosshairMetrics(gridPoints: Point[]): {
+  size: number;
+  lineWidth: number;
+} {
+  const minDist = getGridMinSpacing(gridPoints);
+  // 臂长控制在最小点间距的 42% 以内，绝不超过相邻点
+  const size = Math.max(3.5, Math.min(12, minDist * 0.42));
+  const lineWidth = Math.max(1, Math.min(2, minDist * 0.08));
+
+  return { size, lineWidth };
+}
+~~~~~
+
+#### Acts 2: 更新 `src/components/StarCanvas.tsx` 应用动态准星尺寸与误差线适配
+
+~~~~~act
+patch_file
+src/components/StarCanvas.tsx
+~~~~~
+~~~~~typescript
+import {
+  CANVAS_SIZE,
+  checkHit,
+  findNearestGridPoint,
+  getDynamicDotRadius,
+} from '../utils/geometry';
+~~~~~
+~~~~~typescript
+import {
+  CANVAS_SIZE,
+  checkHit,
+  findNearestGridPoint,
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+} from '../utils/geometry';
 ~~~~~
 
 ~~~~~act
 patch_file
-src/hooks/useTrainingSession.ts
+src/components/StarCanvas.tsx
 ~~~~~
 ~~~~~typescript
-  const handleRestartSession = useCallback(() => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [domain, mode, generateQuestion]);
+        // 图层 3: 做答后的视觉反馈 (反馈层)
+        if (showAnswer) {
+          const { x: bx, y: by } = question.targetB;
+
+          // 绘制真理点 B 实体点
+          drawDot(ctx, bx, by, '#000000', dotRadius);
+
+          // 绘制深绿色十字高亮线
+          const chSize = 12;
+          ctx.strokeStyle = '#00AA00';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(bx - chSize, by);
+          ctx.lineTo(bx + chSize, by);
+          ctx.moveTo(bx, by - chSize);
+          ctx.lineTo(bx, by + chSize);
+          ctx.stroke();
+
+          // 如果回答错或有用户点击坐标，绘制误差连线与点击位置
+          if (userAnswer) {
+            const { hitResult } = userAnswer;
+            const chosenPoint = hitResult.nearestGridPoint;
+
+            if (!hitResult.isHit) {
+              // 绘制红色虚线误差指示
+              ctx.strokeStyle = '#FF0000';
+              ctx.lineWidth = 1.5;
+              ctx.setLineDash([4, 4]);
+              ctx.beginPath();
+              ctx.moveTo(chosenPoint.x, chosenPoint.y);
+              ctx.lineTo(bx, by);
+              ctx.stroke();
+              ctx.setLineDash([]); // 恢复实线
+
+              // 用户点击位置标记 (红点 - 锚定在网格点中心)
+              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', dotRadius);
+            }
+          }
+        }
 ~~~~~
 ~~~~~typescript
-  const handleRestartSession = useCallback(() => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    streakRef.current = 0;
-    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [domain, mode, generateQuestion]);
+        // 图层 3: 做答后的视觉反馈 (反馈层)
+        if (showAnswer) {
+          const { x: bx, y: by } = question.targetB;
+          const { size: chSize, lineWidth: chLineWidth } = getDynamicCrosshairMetrics(
+            question.distractorPoints,
+          );
+
+          // 绘制真理点 B 实体点
+          drawDot(ctx, bx, by, '#000000', dotRadius);
+
+          // 绘制深绿色十字高亮线 (尺寸与粗细自适应点间距)
+          ctx.strokeStyle = '#00AA00';
+          ctx.lineWidth = chLineWidth;
+          ctx.beginPath();
+          ctx.moveTo(bx - chSize, by);
+          ctx.lineTo(bx + chSize, by);
+          ctx.moveTo(bx, by - chSize);
+          ctx.lineTo(bx, by + chSize);
+          ctx.stroke();
+
+          // 如果回答错或有用户点击坐标，绘制误差连线与点击位置
+          if (userAnswer) {
+            const { hitResult } = userAnswer;
+            const chosenPoint = hitResult.nearestGridPoint;
+
+            if (!hitResult.isHit) {
+              // 绘制红色虚线误差指示 (线宽与虚线间隔按比例适配)
+              const dashLength = Math.max(2, Math.min(4, chSize * 0.4));
+              ctx.strokeStyle = '#FF0000';
+              ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
+              ctx.setLineDash([dashLength, dashLength]);
+              ctx.beginPath();
+              ctx.moveTo(chosenPoint.x, chosenPoint.y);
+              ctx.lineTo(bx, by);
+              ctx.stroke();
+              ctx.setLineDash([]); // 恢复实线
+
+              // 用户点击位置标记 (红点 - 锚定在网格点中心)
+              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', dotRadius);
+            }
+          }
+        }
 ~~~~~
 
-#### Acts 4: 在全局设置 `src/components/GlobalSettingsModal.tsx` 中加入声音配置选项
+#### Acts 3: 补充完善 `src/utils/__tests__/geometry.test.ts` 动态准星单元测试
 
 ~~~~~act
 patch_file
-src/components/GlobalSettingsModal.tsx
+src/utils/__tests__/geometry.test.ts
 ~~~~~
 ~~~~~typescript
-import { Download, Sliders, Trash2, Upload, X } from 'lucide-preact';
-import { useRef } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db';
+import {
+  calcDistance,
+  checkHit,
+  findNearestGridPoint,
+  generateBipolarGridPoints,
+  generatePolarGridPoints,
+  generateQuestion,
+  getDynamicDotRadius,
+  rotatePoint,
+} from '../geometry';
 ~~~~~
 ~~~~~typescript
-import { Download, Sliders, ToggleLeft, ToggleRight, Trash2, Upload, Volume2, X } from 'lucide-preact';
-import { useRef, useState } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db';
-import { loadSettings, saveSettings } from '../utils/settings';
+import {
+  calcDistance,
+  checkHit,
+  findNearestGridPoint,
+  generateBipolarGridPoints,
+  generatePolarGridPoints,
+  generateQuestion,
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+  getGridMinSpacing,
+  rotatePoint,
+} from '../geometry';
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/GlobalSettingsModal.tsx
+src/utils/__tests__/geometry.test.ts
 ~~~~~
 ~~~~~typescript
-export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsModalProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const handleExport = async () => {
-~~~~~
-~~~~~typescript
-export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsModalProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [settings, setSettings] = useState(loadSettings);
-
-  const handleToggleSound = () => {
-    const updated = {
-      ...settings,
-      global: {
-        ...settings.global,
-        soundEnabled: !settings.global.soundEnabled,
-      },
-    };
-    saveSettings(updated);
-    setSettings(updated);
-    onDataChanged();
-  };
-
-  const handleExport = async () => {
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalSettingsModal.tsx
-~~~~~
-~~~~~typescript
-        {/* 数据管理 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            数据备份与恢复
-          </div>
-~~~~~
-~~~~~typescript
-        {/* 常规偏好 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            系统偏好
-          </div>
-          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Volume2 className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-700">训练音效反馈</div>
-                <div className="text-[11px] text-slate-400">答对清脆升调提示，答错低沉提示</div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleToggleSound}
-              className="text-indigo-600 hover:opacity-80 transition-opacity"
-            >
-              {settings.global.soundEnabled ? (
-                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
-              ) : (
-                <ToggleLeft className="w-8 h-8 text-slate-300" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* 数据管理 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            数据备份与恢复
-          </div>
-~~~~~
-
-#### Acts 5: 更新单元测试 `src/utils/__tests__/settings.test.ts` 并创建 `src/utils/__tests__/sound.test.ts`
-
-~~~~~act
-patch_file
-src/utils/__tests__/settings.test.ts
-~~~~~
-~~~~~typescript
-  it('loadSettings - should return default settings when localStorage is empty', () => {
-    const settings = loadSettings();
-    expect(settings).toEqual(DEFAULT_SETTINGS);
-    expect(settings.star.autoNext).toBe(true);
-    expect(settings.color.autoNext).toBe(true);
-    expect(settings.relative_color.autoNext).toBe(true);
-    expect(settings.star.gridSize).toBe(3);
-    expect(settings.color.showToleranceBand).toBe(true);
+  it('getDynamicDotRadius - should dynamically calculate dot radius based on grid spacing', () => {
+    const gridDense = [
+      { x: 10, y: 10 },
+      { x: 12, y: 10 },
+    ];
+    const gridSparse = [
+      { x: 10, y: 10 },
+      { x: 100, y: 100 },
+    ];
+    expect(getDynamicDotRadius(gridDense)).toBeLessThan(getDynamicDotRadius(gridSparse));
   });
 ~~~~~
 ~~~~~typescript
-  it('loadSettings - should return default settings when localStorage is empty', () => {
-    const settings = loadSettings();
-    expect(settings).toEqual(DEFAULT_SETTINGS);
-    expect(settings.global.soundEnabled).toBe(true);
-    expect(settings.star.autoNext).toBe(true);
-    expect(settings.color.autoNext).toBe(true);
-    expect(settings.relative_color.autoNext).toBe(true);
-    expect(settings.star.gridSize).toBe(3);
-    expect(settings.color.showToleranceBand).toBe(true);
+  it('getDynamicDotRadius & getDynamicCrosshairMetrics - should dynamically scale based on grid spacing', () => {
+    const gridDense = [
+      { x: 10, y: 10 },
+      { x: 14, y: 10 },
+    ];
+    const gridSparse = [
+      { x: 10, y: 10 },
+      { x: 100, y: 100 },
+    ];
+    expect(getGridMinSpacing(gridDense)).toBe(4);
+    expect(getDynamicDotRadius(gridDense)).toBeLessThan(getDynamicDotRadius(gridSparse));
+
+    const metricsDense = getDynamicCrosshairMetrics(gridDense);
+    const metricsSparse = getDynamicCrosshairMetrics(gridSparse);
+
+    // 密集点阵下的准星尺寸应显著小于稀疏点阵
+    expect(metricsDense.size).toBeLessThan(metricsSparse.size);
+    expect(metricsDense.size).toBeLessThanOrEqual(4); // 4 * 0.42 ≈ 1.68 -> clamp to 3.5
+    expect(metricsDense.lineWidth).toBeLessThanOrEqual(metricsSparse.lineWidth);
   });
-~~~~~
-
-~~~~~act
-write_file
-src/utils/__tests__/sound.test.ts
-~~~~~
-~~~~~typescript
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadSettings, saveSettings } from '../settings';
-import { playHitSound, playMissSound } from '../sound';
-
-describe('Web Audio Sound Manager', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-  it('should not throw in non-browser or disabled environments', () => {
-    // 默认启用下调用不抛异常
-    expect(() => playHitSound(1)).not.toThrow();
-    expect(() => playHitSound(5)).not.toThrow();
-    expect(() => playMissSound()).not.toThrow();
-
-    // 禁用声音
-    const settings = loadSettings();
-    settings.global.soundEnabled = false;
-    saveSettings(settings);
-
-    expect(() => playHitSound(1)).not.toThrow();
-    expect(() => playMissSound()).not.toThrow();
-  });
-});
 ~~~~~
 
 ### 下一步建议
-- 可以运行 `npm test` 验证单元测试通过性。
-- 在真实浏览器体验连击时音调连续抬升（C6 -> C7）的 Aim Lab 击靶正反馈手感，如需微调基准频率或包络时长可直接在 `src/utils/sound.ts` 中微调。
+- 可以通过 `npm test` 验证几何与渲染缩放测试的完整性。
+- 在寻星练习的高难度与多网格维数下体验十字准星的视觉通透性，确保其始终在不越界的前提下清晰指示目标。

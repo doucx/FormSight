@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 引入基于 Web Audio API 的连击音效反馈系统与全局音频设置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786974282.008541, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 动态自适应寻星练习答题反馈准星与指示元素尺寸", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786974844.501239, "duration_ms": 0}}

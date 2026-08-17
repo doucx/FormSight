@@ -4,6 +4,7 @@ import {
   CANVAS_SIZE,
   checkHit,
   findNearestGridPoint,
+  getDynamicCrosshairMetrics,
   getDynamicDotRadius,
 } from '../utils/geometry';
 
@@ -82,14 +83,16 @@ export function StarCanvas({
         // 图层 3: 做答后的视觉反馈 (反馈层)
         if (showAnswer) {
           const { x: bx, y: by } = question.targetB;
+          const { size: chSize, lineWidth: chLineWidth } = getDynamicCrosshairMetrics(
+            question.distractorPoints,
+          );
 
           // 绘制真理点 B 实体点
           drawDot(ctx, bx, by, '#000000', dotRadius);
 
-          // 绘制深绿色十字高亮线
-          const chSize = 12;
+          // 绘制深绿色十字高亮线 (尺寸与粗细自适应点间距)
           ctx.strokeStyle = '#00AA00';
-          ctx.lineWidth = 2;
+          ctx.lineWidth = chLineWidth;
           ctx.beginPath();
           ctx.moveTo(bx - chSize, by);
           ctx.lineTo(bx + chSize, by);
@@ -103,10 +106,11 @@ export function StarCanvas({
             const chosenPoint = hitResult.nearestGridPoint;
 
             if (!hitResult.isHit) {
-              // 绘制红色虚线误差指示
+              // 绘制红色虚线误差指示 (线宽与虚线间隔按比例适配)
+              const dashLength = Math.max(2, Math.min(4, chSize * 0.4));
               ctx.strokeStyle = '#FF0000';
-              ctx.lineWidth = 1.5;
-              ctx.setLineDash([4, 4]);
+              ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
+              ctx.setLineDash([dashLength, dashLength]);
               ctx.beginPath();
               ctx.moveTo(chosenPoint.x, chosenPoint.y);
               ctx.lineTo(bx, by);
