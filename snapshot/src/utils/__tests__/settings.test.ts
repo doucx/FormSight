@@ -32,6 +32,7 @@ describe('settings utils with domain isolation', () => {
   it('loadSettings - should return default settings when localStorage is empty', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
+    expect(settings.global.soundEnabled).toBe(true);
     expect(settings.star.autoNext).toBe(true);
     expect(settings.color.autoNext).toBe(true);
     expect(settings.relative_color.autoNext).toBe(true);

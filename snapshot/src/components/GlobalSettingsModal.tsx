@@ -1,6 +1,7 @@
-import { Download, Sliders, Trash2, Upload, X } from 'lucide-preact';
-import { useRef } from 'preact/hooks';
+import { Download, Sliders, ToggleLeft, ToggleRight, Trash2, Upload, Volume2, X } from 'lucide-preact';
+import { useRef, useState } from 'preact/hooks';
 import { clearAllData, exportAllData, importAllData } from '../utils/db';
+import { loadSettings, saveSettings } from '../utils/settings';
 
 interface GlobalSettingsModalProps {
   onClose: () => void;
@@ -9,6 +10,20 @@ interface GlobalSettingsModalProps {
 
 export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsModalProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [settings, setSettings] = useState(loadSettings);
+
+  const handleToggleSound = () => {
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        soundEnabled: !settings.global.soundEnabled,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
 
   const handleExport = async () => {
     const jsonStr = await exportAllData();
@@ -80,6 +95,35 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
           >
             <X className="w-5 h-5" />
           </button>
+        </div>
+
+        {/* 常规偏好 */}
+        <div className="space-y-4">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            系统偏好
+          </div>
+          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <Volume2 className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-700">训练音效反馈</div>
+                <div className="text-[11px] text-slate-400">答对清脆升调提示，答错低沉提示</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleSound}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {settings.global.soundEnabled ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* 数据管理 */}
