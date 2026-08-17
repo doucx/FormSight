@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { AdaptiveEngine } from '../utils/adaptiveEngine';
-import type { AdaptiveMode, StepGranularity } from '../utils/settings';
+import { type AdaptiveMode, type StepGranularity, loadSettings } from '../utils/settings';
 import { playHitSound, playMissSound } from '../utils/sound';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
@@ -15,6 +15,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   adaptiveMode?: AdaptiveMode;
   targetAccuracy?: number;
   blockSize?: number;
+  idleTimeoutSec?: number;
   generateQuestion: (level: number) => TQuestion;
   evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
   isHit: (hitResult: THitResult) => boolean;
@@ -48,6 +49,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   adaptiveMode = 'block',
   targetAccuracy = 0.8,
   blockSize = 10,
+  idleTimeoutSec: optionsIdleTimeout,
   generateQuestion,
   evaluateAnswer,
   isHit,
@@ -80,7 +82,15 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+  const [isIdle, setIsIdle] = useState<boolean>(false);
   const streakRef = useRef<number>(0);
+  const idleStartRef = useRef<number | null>(null);
+  const idleTimerRef = useRef<number | null>(null);
+
+  const effectiveIdleTimeout =
+    typeof optionsIdleTimeout === 'number'
+      ? optionsIdleTimeout
+      : (loadSettings().global.idleTimeout ?? 60);
 
   const saveCurrentSession = useCallback(
     async (trials = totalTrials, hits = hitTrials, ended = false) => {
@@ -198,9 +208,28 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     onExit();
   }, [saveCurrentSession, totalTrials, hitTrials, onExit]);
 
+  const pauseToIdle = useCallback(() => {
+    if (isFinished || showSummaryModal || isIdle) return;
+    idleStartRef.current = Date.now();
+    setIsIdle(true);
+  }, [isFinished, showSummaryModal, isIdle]);
+
+  const resumeFromIdle = useCallback(() => {
+    if (!isIdle) return;
+    if (idleStartRef.current !== null) {
+      const idleDuration = Date.now() - idleStartRef.current;
+      startTimeRef.current += idleDuration;
+      setQuestionStartTime((prev) => prev + idleDuration);
+      idleStartRef.current = null;
+    }
+    setIsIdle(false);
+  }, [isIdle]);
+
   const handleRestartSession = useCallback(() => {
     setShowSummaryModal(false);
     setIsFinished(false);
+    setIsIdle(false);
+    idleStartRef.current = null;
     setTotalTrials(0);
     setHitTrials(0);
     setSessionHistory([]);
@@ -215,18 +244,68 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestionStartTime(Date.now());
   }, [domain, mode, generateQuestion]);
 
+  // === 闲置与失焦监听 ===
+  useEffect(() => {
+    if (isFinished || showSummaryModal) return;
+
+    const resetIdleTimer = () => {
+      if (isIdle) return;
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+      if (effectiveIdleTimeout > 0) {
+        idleTimerRef.current = window.setTimeout(() => {
+          pauseToIdle();
+        }, effectiveIdleTimeout * 1000);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pauseToIdle();
+      }
+    };
+
+    const handleWindowBlur = () => {
+      pauseToIdle();
+    };
+
+    const userActivityEvents = ['pointerdown', 'pointermove', 'keydown', 'touchstart'];
+    for (const evt of userActivityEvents) {
+      window.addEventListener(evt, resetIdleTimer, { passive: true });
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    resetIdleTimer();
+
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      for (const evt of userActivityEvents) {
+        window.removeEventListener(evt, resetIdleTimer);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [isFinished, showSummaryModal, isIdle, effectiveIdleTimeout, pauseToIdle]);
+
   // === 计时器 ===
   useEffect(() => {
     const timer = setInterval(() => {
-      if (showSummaryModal || isFinished) return;
+      if (showSummaryModal || isFinished || isIdle) return;
       setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
     return () => clearInterval(timer);
-  }, [showSummaryModal, isFinished]);
+  }, [showSummaryModal, isFinished, isIdle]);
 
   // === 快捷键响应 (Space / Escape) ===
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isIdle) {
+        e.preventDefault();
+        resumeFromIdle();
+        return;
+      }
       if (e.code === 'Space' || e.key === ' ') {
         if (showAnswer && !isFinished) {
           e.preventDefault();
@@ -239,7 +318,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, isFinished, handleNextQuestion, handleRequestFinish]);
+  }, [isIdle, resumeFromIdle, showAnswer, isFinished, handleNextQuestion, handleRequestFinish]);
 
   return {
     question,
@@ -249,8 +328,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     hitTrials,
     elapsedSeconds,
     isFinished,
+    isIdle,
     sessionHistory,
     showSummaryModal,
+    resumeFromIdle,
+    pauseToIdle,
     handleAnswer,
     handleNextQuestion,
     handleRequestFinish,

@@ -1,4 +1,14 @@
-import { Download, Sliders, ToggleLeft, ToggleRight, Trash2, Upload, Volume2, X } from 'lucide-preact';
+import {
+  Clock,
+  Download,
+  Sliders,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Upload,
+  Volume2,
+  X,
+} from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { clearAllData, exportAllData, importAllData } from '../utils/db';
 import { loadSettings, saveSettings } from '../utils/settings';
@@ -18,6 +28,19 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
       global: {
         ...settings.global,
         soundEnabled: !settings.global.soundEnabled,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
+
+  const handleIdleTimeoutChange = (sec: number) => {
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        idleTimeout: sec,
       },
     };
     saveSettings(updated);
@@ -123,6 +146,39 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
                 <ToggleLeft className="w-8 h-8 text-slate-300" />
               )}
             </button>
+          </div>
+
+          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-700">闲置休眠保护</div>
+                <div className="text-[11px] text-slate-400">无操作或切出窗口时暂停计时与模糊遮罩</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-1.5 pt-1">
+              {[
+                { label: '关闭', value: 0 },
+                { label: '30 秒', value: 30 },
+                { label: '60 秒', value: 60 },
+                { label: '120 秒', value: 120 },
+              ].map((opt) => (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => handleIdleTimeoutChange(opt.value)}
+                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
+                    settings.global.idleTimeout === opt.value
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

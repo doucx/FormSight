@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock, Crosshair, Pause } from 'lucide-preact';
 import { useCallback, useRef } from 'preact/hooks';
 import { SessionSummaryModal } from '../components/SessionSummaryModal';
 import { StarCanvas } from '../components/StarCanvas';
@@ -43,8 +43,10 @@ export function TrainingView({
     totalTrials,
     elapsedSeconds,
     isFinished,
+    isIdle,
     sessionHistory,
     showSummaryModal,
+    resumeFromIdle,
     handleAnswer,
     handleNextQuestion,
     handleRequestFinish,
@@ -169,18 +171,48 @@ export function TrainingView({
         </div>
       </header>
 
-      <StarCanvas
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={canvasUserAnswer}
-        onAnswer={(clickPoint) => {
-          const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
-          if (hitRes.isWithinRange) {
-            handleAnswer({ clickPoint, hitResult: hitRes });
-          }
-        }}
-        disabled={isFinished}
-      />
+      <div className="relative w-full flex justify-center">
+        <StarCanvas
+          question={question}
+          showAnswer={showAnswer}
+          userAnswer={canvasUserAnswer}
+          onAnswer={(clickPoint) => {
+            const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
+            if (hitRes.isWithinRange) {
+              handleAnswer({ clickPoint, hitResult: hitRes });
+            }
+          }}
+          disabled={isFinished || isIdle}
+        />
+
+        {isIdle && (
+          <div
+            role="presentation"
+            onClick={resumeFromIdle}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') resumeFromIdle();
+            }}
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/40 backdrop-blur-md rounded-3xl cursor-pointer select-none animate-in fade-in duration-150"
+          >
+            <div className="p-5 bg-white/95 text-slate-800 rounded-3xl shadow-2xl border border-white/60 flex flex-col items-center gap-2.5 max-w-xs text-center mx-4">
+              <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
+                <Pause className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="text-base font-bold text-slate-800">训练已自动暂停</div>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                检测到闲置或窗口切换，已保护您的心流与统计数据
+              </p>
+              <button
+                type="button"
+                onClick={resumeFromIdle}
+                className="mt-1 w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-95"
+              >
+                点击继续训练 (或按任意键)
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {!settings.autoNext && (
         <div className="flex items-center justify-center">
