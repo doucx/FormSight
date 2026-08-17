@@ -1,4 +1,5 @@
 import { Crosshair, RotateCw, Target } from 'lucide-preact';
+import type { ComponentType } from 'preact';
 import { DashboardShell } from '../components/dashboard/DashboardShell';
 import { ModeCard } from '../components/dashboard/ModeCard';
 import { useTodayStats } from '../hooks/useTodayStats';
@@ -9,7 +10,7 @@ const MODES_CONFIG: Array<{
   id: TrainingMode;
   title: string;
   desc: string;
-  icon: typeof Target;
+  icon: ComponentType<any>;
 }> = [
   {
     id: 'single',

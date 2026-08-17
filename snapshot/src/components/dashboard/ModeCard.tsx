@@ -15,7 +15,7 @@ export function formatTodayTime(ms: number): string {
 interface ModeCardProps {
   title: string;
   desc: string;
-  icon: ComponentType<{ className?: string }>;
+  icon: ComponentType<any>;
   todayCount: number;
   todayTimeMs?: number;
   currentLevel: number;

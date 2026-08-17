@@ -39,7 +39,6 @@ export function TrainingShell({
   isTargeting = false,
   autoNext,
   session,
-  onExit,
   children,
 }: TrainingShellProps) {
   const {
@@ -79,7 +78,7 @@ export function TrainingShell({
             退出训练 (Esc)
           </button>
           <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+            {title} · {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
           </span>
           {isTargeting && (
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
