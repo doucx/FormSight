@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 支持闲置与窗口失焦休眠保护及画布蒙版提示", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786975621.4006782, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 提取通用训练外壳与模式卡片组件以消除样板代码", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1786976199.3843434, "duration_ms": 0}}
