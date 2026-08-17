@@ -2,9 +2,9 @@ import { useEffect, useState } from 'preact/hooks';
 import { type TrainingDomain, getTrialRecords } from '../utils/db';
 
 export function useTodayStats(domain?: TrainingDomain) {
-  const [todayStats, setTodayStats] = useState<
-    Record<string, { count: number; timeMs: number }>
-  >({});
+  const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
+    {},
+  );
 
   useEffect(() => {
     let isMounted = true;

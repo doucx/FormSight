@@ -122,9 +122,7 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
 
         {/* 常规偏好 */}
         <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            系统偏好
-          </div>
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">系统偏好</div>
           <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
@@ -155,7 +153,9 @@ export function GlobalSettingsModal({ onClose, onDataChanged }: GlobalSettingsMo
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">闲置休眠保护</div>
-                <div className="text-[11px] text-slate-400">无操作或切出窗口时暂停计时与模糊遮罩</div>
+                <div className="text-[11px] text-slate-400">
+                  无操作或切出窗口时暂停计时与模糊遮罩
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-1">
