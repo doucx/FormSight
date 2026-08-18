@@ -347,9 +347,16 @@ export function RelativeColorCanvas({
               style={{ backgroundColor: bgRightHex }}
             >
               <div
-                className="w-16 h-16 rounded-xl transition-all"
-                style={{ backgroundColor: showAnswer ? idealRightHex : userRightHex }}
-              />
+                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+                style={{ backgroundColor: userRightHex }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1/2"
+                    style={{ backgroundColor: idealRightHex }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>

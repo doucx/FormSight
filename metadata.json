@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT]", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064581.8456635, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 在相对色感诱导补偿模式揭晓答案时分半对比展示用户颜色与真理颜色", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064750.6420548, "duration_ms": 0}}
