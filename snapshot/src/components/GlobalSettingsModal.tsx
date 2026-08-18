@@ -1,4 +1,13 @@
-import { Clock, Download, Sliders, ToggleLeft, ToggleRight, Trash2, Upload, Volume2 } from 'lucide-preact';
+import {
+  Clock,
+  Download,
+  Sliders,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Upload,
+  Volume2,
+} from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { clearAllData, exportAllData, importAllData } from '../utils/db';
 import { loadSettings, saveSettings } from '../utils/settings';

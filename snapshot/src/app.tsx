@@ -120,9 +120,7 @@ export function App() {
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={
-            starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs
-          }
+          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs}
           starHoppingTimeMs={starHoppingTimeMs}
           colorTimeMs={colorTimeMs}
           relativeColorTimeMs={relativeColorTimeMs}
