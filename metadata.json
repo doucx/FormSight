@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(relative-color): 集成阿尔伯斯同时对比与视错觉对抗训练系列", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787062665.234432, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(relative-color): 移除阿尔伯斯同时对比中心色块的边框与阴影干扰", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787062890.9510026, "duration_ms": 0}}

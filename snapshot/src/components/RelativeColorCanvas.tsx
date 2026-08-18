@@ -209,7 +209,7 @@ export function RelativeColorCanvas({
               style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
             >
               <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60"
+                className="w-16 h-16 rounded-xl"
                 style={{ backgroundColor: hexCenterA }}
               />
             </div>
@@ -256,7 +256,7 @@ export function RelativeColorCanvas({
               style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
             >
               <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60"
+                className="w-16 h-16 rounded-xl"
                 style={{ backgroundColor: hexCenterB }}
               />
             </div>
@@ -334,7 +334,7 @@ export function RelativeColorCanvas({
               style={{ backgroundColor: bgLeftHex }}
             >
               <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60 transition-all"
+                className="w-16 h-16 rounded-xl transition-all"
                 style={{ backgroundColor: centerLeftHex }}
               />
             </div>
@@ -350,7 +350,7 @@ export function RelativeColorCanvas({
               style={{ backgroundColor: bgRightHex }}
             >
               <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60 transition-all"
+                className="w-16 h-16 rounded-xl transition-all"
                 style={{ backgroundColor: showAnswer ? idealRightHex : userRightHex }}
               />
             </div>
