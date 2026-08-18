@@ -75,7 +75,7 @@ let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, _newVersion, transaction) {
+      upgrade(db, _oldVersion, _newVersion, transaction) {
         const sessionsStore = db.objectStoreNames.contains('sessions')
           ? transaction.objectStore('sessions')
           : db.createObjectStore('sessions', { keyPath: 'id' });
@@ -110,73 +110,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
 
         if (!profilesStore.indexNames.contains('by-domain')) {
           profilesStore.createIndex('by-domain', 'domain');
-        }
-
-        if (oldVersion < 4) {
-          const oldStores = Array.from(db.objectStoreNames);
-          if (oldStores.includes('color_sessions' as never)) {
-            const colorSessionsStore = transaction.objectStore('color_sessions' as never);
-            colorSessionsStore.getAll().then((oldCSessions: UnifiedSessionData[]) => {
-              for (const cs of oldCSessions) {
-                sessionsStore.put({
-                  id: cs.id,
-                  domain: 'color',
-                  mode: cs.mode,
-                  type: cs.type,
-                  startTimestamp: cs.startTimestamp,
-                  endTimestamp: cs.endTimestamp,
-                  totalTrials: cs.totalTrials,
-                  hitTrials: cs.hitTrials,
-                  startLevel: cs.startLevel,
-                  endLevel: cs.endLevel,
-                });
-              }
-            });
-            db.deleteObjectStore('color_sessions' as never);
-          }
-
-          if (oldStores.includes('color_records' as never)) {
-            const colorRecordsStore = transaction.objectStore('color_records' as never);
-            colorRecordsStore.getAll().then((oldCRecords: Record<string, unknown>[]) => {
-              for (const cr of oldCRecords) {
-                recordsStore.put({
-                  id: cr.id as string,
-                  sessionId: cr.sessionId as string,
-                  domain: 'color',
-                  mode: cr.mode as string,
-                  timestamp: cr.timestamp as number,
-                  difficultyLevel: cr.difficultyLevel as number,
-                  isHit: cr.isHit as boolean,
-                  responseTimeMs: cr.responseTimeMs as number,
-                  details: {
-                    targetHSV: cr.targetHSV,
-                    userHSV: cr.userHSV,
-                    errorValue: cr.errorValue,
-                  },
-                });
-              }
-            });
-            db.deleteObjectStore('color_records' as never);
-          }
-
-          if (oldStores.includes('color_profiles' as never)) {
-            const colorProfilesStore = transaction.objectStore('color_profiles' as never);
-            colorProfilesStore.getAll().then((oldCProfiles: Record<string, unknown>[]) => {
-              for (const cp of oldCProfiles) {
-                profilesStore.put({
-                  key: `color:${cp.mode}`,
-                  domain: 'color',
-                  mode: cp.mode as string,
-                  currentLevel: cp.currentLevel as number,
-                  bestLevel: cp.bestLevel as number,
-                  totalTrainedCards: cp.totalTrainedCards as number,
-                  totalHits: cp.totalHits as number,
-                  updatedAt: cp.updatedAt as number,
-                });
-              }
-            });
-            db.deleteObjectStore('color_profiles' as never);
-          }
         }
       },
     });

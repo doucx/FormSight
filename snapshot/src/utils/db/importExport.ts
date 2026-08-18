@@ -28,14 +28,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 
     if (data.sessions) {
       for (const s of data.sessions) {
-        const domain = s.domain || 'star';
-        await tx.objectStore('sessions').put({ ...s, domain });
+        await tx.objectStore('sessions').put({ ...s, domain: s.domain || 'star' });
       }
     }
     if (data.records) {
       for (const r of data.records) {
-        const domain = r.domain || 'star';
-        await tx.objectStore('records').put({ ...r, domain });
+        await tx.objectStore('records').put({ ...r, domain: r.domain || 'star' });
       }
     }
     if (data.profiles) {
@@ -43,45 +41,6 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         const domain = p.domain || 'star';
         const key = p.key || `${domain}:${p.mode}`;
         await tx.objectStore('user_profiles').put({ ...p, key, domain });
-      }
-    }
-
-    if (data.color_sessions) {
-      for (const cs of data.color_sessions) {
-        await tx.objectStore('sessions').put({ ...cs, domain: 'color' });
-      }
-    }
-    if (data.color_records) {
-      for (const cr of data.color_records) {
-        await tx.objectStore('records').put({
-          id: cr.id,
-          sessionId: cr.sessionId,
-          domain: 'color',
-          mode: cr.mode,
-          timestamp: cr.timestamp,
-          difficultyLevel: cr.difficultyLevel,
-          isHit: cr.isHit,
-          responseTimeMs: cr.responseTimeMs,
-          details: {
-            targetHSV: cr.targetHSV,
-            userHSV: cr.userHSV,
-            errorValue: cr.errorValue,
-          },
-        });
-      }
-    }
-    if (data.color_profiles) {
-      for (const cp of data.color_profiles) {
-        await tx.objectStore('user_profiles').put({
-          key: `color:${cp.mode}`,
-          domain: 'color',
-          mode: cp.mode,
-          currentLevel: cp.currentLevel,
-          bestLevel: cp.bestLevel,
-          totalTrainedCards: cp.totalTrainedCards,
-          totalHits: cp.totalHits,
-          updatedAt: cp.updatedAt,
-        });
       }
     }
 

@@ -25,15 +25,15 @@ const APP_TO_DOMAIN: Record<Exclude<GlobalApp, 'home'>, TrainingDomain> = {
   'negative-space': 'negative_space',
 };
 
+const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
+
 export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
 
-  // 当前活跃训练参数
   const [activeMode, setActiveMode] = useState<string>('single');
   const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
 
-  // 弹窗状态
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -42,28 +42,24 @@ export function App() {
   const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<'star' | 'color' | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
-  // 聚合时长状态
-  const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
-  const [colorTimeMs, setColorTimeMs] = useState<number>(0);
-  const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
-  const [negativeSpaceTimeMs, setNegativeSpaceTimeMs] = useState<number>(0);
+  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
+    star: 0,
+    color: 0,
+    relative_color: 0,
+    negative_space: 0,
+  });
 
-  // 当前领域的 profiles 缓存 (用于获取当前等级)
   const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
     Record<string, UnifiedProfileData>
   >({});
 
-  // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
-    const starMs = await getTrainingTimeMs('star');
-    const colorMs = await getTrainingTimeMs('color');
-    const relMs = await getTrainingTimeMs('relative_color');
-    const nsMs = await getTrainingTimeMs('negative_space');
+    const timesEntries = await Promise.all(
+      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
+    );
+    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
 
-    setStarHoppingTimeMs(starMs);
-    setColorTimeMs(colorMs);
-    setRelativeColorTimeMs(relMs);
-    setNegativeSpaceTimeMs(nsMs);
+    setDomainTimes(timesMap);
     setSettings(loadSettings());
 
     if (currentApp !== 'home') {
@@ -81,7 +77,6 @@ export function App() {
     refreshProfiles();
   }, [refreshProfiles]);
 
-  // 动态同步 Title
   useEffect(() => {
     if (currentApp === 'home') {
       document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
@@ -103,17 +98,15 @@ export function App() {
     refreshProfiles();
   };
 
+  const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
   const currentLevel = currentDomainProfiles[activeMode]?.currentLevel || 5;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs}
-          starHoppingTimeMs={starHoppingTimeMs}
-          colorTimeMs={colorTimeMs}
-          relativeColorTimeMs={relativeColorTimeMs}
-          negativeSpaceTimeMs={negativeSpaceTimeMs}
+          totalTimeMs={totalTimeMs}
+          domainTimes={domainTimes}
           onNavigate={(app) => {
             setCurrentApp(app);
             setCurrentView('dashboard');

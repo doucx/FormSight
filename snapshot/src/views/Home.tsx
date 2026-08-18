@@ -1,22 +1,10 @@
-import {
-  ArrowRight,
-  BarChart2,
-  Clock,
-  Compass,
-  Maximize2,
-  Palette,
-  Shuffle,
-  Sliders,
-  Sparkles,
-} from 'lucide-preact';
-import { formatTotalTime } from '../utils/db';
+import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
+import { DOMAINS_CONFIG } from '../config/domains';
+import { type TrainingDomain, formatTotalTime } from '../utils/db';
 
 interface HomeProps {
   totalTimeMs: number;
-  starHoppingTimeMs: number;
-  colorTimeMs: number;
-  relativeColorTimeMs: number;
-  negativeSpaceTimeMs: number;
+  domainTimes: Record<TrainingDomain, number>;
   onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space') => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
@@ -24,14 +12,13 @@ interface HomeProps {
 
 export function Home({
   totalTimeMs,
-  starHoppingTimeMs,
-  colorTimeMs,
-  relativeColorTimeMs,
-  negativeSpaceTimeMs,
+  domainTimes,
   onNavigate,
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
+  const domains = Object.values(DOMAINS_CONFIG);
+
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
       {/* 品牌 Header */}
@@ -77,147 +64,45 @@ export function Home({
         </div>
       </div>
 
-      {/* 模块选择区 */}
+      {/* 模块选择区：元数据动态渲染 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* 1. 寻星练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('star-hopping')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                <Compass className="w-8 h-8" />
+        {domains.map((meta) => {
+          const Icon = meta.icon;
+          const timeMs = domainTimes[meta.domain] || 0;
+
+          return (
+            <button
+              key={meta.domain}
+              type="button"
+              onClick={() => onNavigate(meta.appId)}
+              className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <Icon className="w-8 h-8" />
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">{meta.homeTitle}</h2>
+                  <p className="text-xs text-slate-500 leading-relaxed">{meta.homeDesc}</p>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">寻星练习 (Star-Hopping)</h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
-            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
-              <span>累计练习: {formatTotalTime(starHoppingTimeMs)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>进入寻星练习看板</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
-
-        {/* 2. 绝对色感练习 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('color-sense')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                <Palette className="w-8 h-8" />
+              <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+                <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>累计练习: {formatTotalTime(timeMs)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>进入练习看板</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                绝对色感 (Color Recognition)
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation)
-                的分级递进识别，全面建立微小色彩差异感知力。
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
-            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
-              <span>累计练习: {formatTotalTime(colorTimeMs)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>进入绝对色感看板</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
-
-        {/* 3. 相对色感训练 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('relative-color')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform">
-                <Shuffle className="w-8 h-8" />
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                相对色感 (Relative Color Perception)
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector
-                v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
-            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-              <Clock className="w-3.5 h-3.5 text-purple-500" />
-              <span>累计练习: {formatTotalTime(relativeColorTimeMs)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>进入相对色感看板</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
-
-        {/* 4. 正负形空间感知 */}
-        <button
-          type="button"
-          onClick={() => onNavigate('negative-space')}
-          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
-                <Maximize2 className="w-8 h-8" />
-              </div>
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                正负形空间感知 (Negative Space)
-              </h2>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算，打破具象认知偏见，培养专业起形与比例感知力。
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
-            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-              <Clock className="w-3.5 h-3.5 text-emerald-500" />
-              <span>累计练习: {formatTotalTime(negativeSpaceTimeMs)}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span>进入正负形看板</span>
-              <ArrowRight className="w-4 h-4" />
-            </div>
-          </div>
-        </button>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
