@@ -89,37 +89,85 @@ export function getDistractorDistanceForLevel(level: number): number {
 }
 
 /**
- * 带有色域边缘检测与反射的加点辅助函数
+ * 生成 3D 空间中的随机单位向量 (用于旋转轴)
  */
-function applyOffsetWithGamutCheck(
-  baseLab: [number, number, number],
-  directionVector: [number, number, number],
-  distance: number,
+function getRandomAxis(): [number, number, number] {
+  const z = Math.random() * 2 - 1;
+  const phi = Math.random() * 2 * Math.PI;
+  const r = Math.sqrt(1 - z * z);
+  return [r * Math.cos(phi), r * Math.sin(phi), z];
+}
+
+/**
+ * 罗德里格旋转公式：将向量 v 绕单位轴 axis 旋转 theta 角度
+ */
+function rotateVector(
+  v: [number, number, number],
+  axis: [number, number, number],
+  theta: number,
 ): [number, number, number] {
-  // 试探正向偏移
-  const candidateLab1: [number, number, number] = [
-    baseLab[0] + directionVector[0] * distance,
-    baseLab[1] + directionVector[1] * distance,
-    baseLab[2] + directionVector[2] * distance,
+  const [vx, vy, vz] = v;
+  const [kx, ky, kz] = axis;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const dot = kx * vx + ky * vy + kz * vz;
+  const crossX = ky * vz - kz * vy;
+  const crossY = kz * vx - kx * vz;
+  const crossZ = kx * vy - ky * vx;
+
+  return [
+    vx * cosT + crossX * sinT + kx * dot * (1 - cosT),
+    vy * cosT + crossY * sinT + ky * dot * (1 - cosT),
+    vz * cosT + crossZ * sinT + kz * dot * (1 - cosT),
+  ];
+}
+
+/**
+ * 判断 OKLab 坐标是否严格落在 sRGB 可显色域内部 (无截断)
+ */
+export function isOkLabInGamut(lab: [number, number, number]): boolean {
+  const [L, a, b] = lab;
+  if (L < 0 || L > 1) return false;
+
+  const lCbrt = L + 0.3963377774 * a + 0.2158037573 * b;
+  const mCbrt = L - 0.1055613458 * a - 0.0638541728 * b;
+  const sCbrt = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const lCone = lCbrt ** 3;
+  const mCone = mCbrt ** 3;
+  const sCone = sCbrt ** 3;
+
+  const rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  const gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  const bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
+
+  const eps = 1e-4;
+  return (
+    rLin >= -eps &&
+    rLin <= 1 + eps &&
+    gLin >= -eps &&
+    gLin <= 1 + eps &&
+    bLin >= -eps &&
+    bLin <= 1 + eps
+  );
+}
+
+/**
+ * 校验 OKLab 目标点周围在指定 margin 距离内是否拥有充足的 sRGB 色域安全气囊
+ */
+function hasGamutMargin(lab: [number, number, number], margin: number): boolean {
+  const [L, a, b] = lab;
+  const testPoints: [number, number, number][] = [
+    [L, a, b],
+    [L + margin, a, b],
+    [L - margin, a, b],
+    [L, a + margin, b],
+    [L, a - margin, b],
+    [L, a, b + margin],
+    [L, a, b - margin],
   ];
 
-  const hsv1 = okLabToHsv(candidateLab1);
-  const reprojectedLab1 = hsvToOkLab(...hsv1);
-  const actualDist1 = calcDeltaEOk(baseLab, reprojectedLab1);
-
-  // 如果正向偏移转换回 HSV 后未发生严重的色域裁剪 (有效感知距离保留了至少 70%)
-  if (actualDist1 >= distance * 0.7) {
-    return hsv1;
-  }
-
-  // 否则尝试反方向（反弹机制），避免撞墙被裁剪导致颜色重合
-  const candidateLab2: [number, number, number] = [
-    baseLab[0] - directionVector[0] * distance,
-    baseLab[1] - directionVector[1] * distance,
-    baseLab[2] - directionVector[2] * distance,
-  ];
-
-  return okLabToHsv(candidateLab2);
+  return testPoints.every(isOkLabInGamut);
 }
 
 /**
@@ -145,18 +193,18 @@ export function generateRelativeColorQuestion(
   let labTargetD: [number, number, number] = [0, 0, 0];
   let vAB: [number, number, number] = [0, 0, 0];
 
-  while (attempts < 100) {
+  while (attempts < 200) {
     attempts++;
-    // 生成 A (固有色 1)
+    // 生成 A (固有色 1 - 适度收敛饱和度区间以保障 D 具有足够四面体舒展空间)
     const hA = Math.floor(Math.random() * 360);
-    const sA = Math.floor(Math.random() * 60) + 30; // 30..90
-    const vA = Math.floor(Math.random() * 60) + 30; // 30..90
+    const sA = Math.floor(Math.random() * 55) + 25; // 25..80
+    const vA = Math.floor(Math.random() * 55) + 30; // 30..85
     colorA = [hA, sA, vA];
 
     // 生成 B (在 A 基础上有明暗与色相矢量推移)
     const hB = (hA + (Math.floor(Math.random() * 60) - 30) + 360) % 360;
-    const sB = Math.max(10, Math.min(100, sA + (Math.floor(Math.random() * 40) - 20)));
-    const vB = Math.max(10, Math.min(100, vA + (Math.floor(Math.random() * 50) - 25)));
+    const sB = Math.max(15, Math.min(90, sA + (Math.floor(Math.random() * 40) - 20)));
+    const vB = Math.max(20, Math.min(95, vA + (Math.floor(Math.random() * 50) - 25)));
     colorB = [hB, sB, vB];
 
     // 生成 C (根据 level 动态控制与 A 的相似度)
@@ -170,8 +218,8 @@ export function generateRelativeColorQuestion(
     const vC_jitter = (Math.random() * 2 - 1) * maxValOffset;
 
     const hC = (hA + hC_jitter + 360) % 360;
-    const sC = Math.max(10, Math.min(100, sA + sC_jitter));
-    const vC = Math.max(10, Math.min(100, vA + vC_jitter));
+    const sC = Math.max(15, Math.min(90, sA + sC_jitter));
+    const vC = Math.max(20, Math.min(95, vA + vC_jitter));
     colorC = [Math.round(hC), Math.round(sC), Math.round(vC)];
 
     const labA = hsvToOkLab(...colorA);
@@ -186,34 +234,81 @@ export function generateRelativeColorQuestion(
 
     labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
 
-    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.9) {
+    // 方案二核心：检查目标点 D 是否在全方向上具备距离 R 的色域安全气囊
+    if (hasGamutMargin(labTargetD, R * 0.95)) {
       targetD = okLabToHsv(labTargetD);
       break;
     }
   }
 
-  // 计算正交单位向量
-  const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
-  const uV: [number, number, number] = [vAB[0] / vMag, vAB[1] / vMag, vAB[2] / vMag];
-
-  // 1. 矢量方向干扰项 D1 (在推移矢量方向上做绝对距离 R 的偏移)
-  const hsvD1 = applyOffsetWithGamutCheck(labTargetD, uV, R);
-
-  // 2. 明度方向干扰项 D2 (纯 L 轴向量方向上做绝对距离 R 的偏移)
-  const uL: [number, number, number] = [1, 0, 0];
-  const hsvD2 = applyOffsetWithGamutCheck(labTargetD, uL, R);
-
-  // 3. 色相/色偏法向干扰项 D3 (在 a-b 平面上寻找与 vAB 正交的方向向量)
-  let uOrth: [number, number, number] = [0, -uV[2], uV[1]];
-  const uOrthMag = Math.sqrt(uOrth[1] ** 2 + uOrth[2] ** 2);
-  if (uOrthMag < 1e-4) {
-    uOrth = [0, 1, 0];
-  } else {
-    uOrth = [0, uOrth[1] / uOrthMag, uOrth[2] / uOrthMag];
+  // 若极端尝试后仍未打破循环，做平滑回退
+  if (!targetD || (targetD[0] === 0 && targetD[1] === 0 && targetD[2] === 0 && attempts >= 200)) {
+    targetD = okLabToHsv(labTargetD);
   }
-  const hsvD3 = applyOffsetWithGamutCheck(labTargetD, uOrth, R);
 
-  const rawOptions: [number, number, number][] = [targetD, hsvD1, hsvD2, hsvD3];
+  // ====================================================================
+  // 基于正四面体 (Regular Tetrahedron) 生成干扰项
+  // 保证 D 是四个顶点之一，且四个顶点两两间距严格等于 R
+  // ====================================================================
+  const baseV1: [number, number, number] = [1, 0, 0];
+  const baseV2: [number, number, number] = [0.5, Math.sqrt(3) / 2, 0];
+  const baseV3: [number, number, number] = [0.5, Math.sqrt(3) / 6, Math.sqrt(2 / 3)];
+
+  let bestDistractors: [number, number, number][] = [];
+  let bestValidCount = -1;
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const axis = getRandomAxis();
+    const theta = Math.random() * Math.PI * 2;
+
+    const rotV1 = rotateVector(baseV1, axis, theta);
+    const rotV2 = rotateVector(baseV2, axis, theta);
+    const rotV3 = rotateVector(baseV3, axis, theta);
+
+    const lab1: [number, number, number] = [
+      labTargetD[0] + rotV1[0] * R,
+      labTargetD[1] + rotV1[1] * R,
+      labTargetD[2] + rotV1[2] * R,
+    ];
+    const lab2: [number, number, number] = [
+      labTargetD[0] + rotV2[0] * R,
+      labTargetD[1] + rotV2[1] * R,
+      labTargetD[2] + rotV2[2] * R,
+    ];
+    const lab3: [number, number, number] = [
+      labTargetD[0] + rotV3[0] * R,
+      labTargetD[1] + rotV3[1] * R,
+      labTargetD[2] + rotV3[2] * R,
+    ];
+
+    const hsv1 = okLabToHsv(lab1);
+    const hsv2 = okLabToHsv(lab2);
+    const hsv3 = okLabToHsv(lab3);
+
+    const rep1 = hsvToOkLab(...hsv1);
+    const rep2 = hsvToOkLab(...hsv2);
+    const rep3 = hsvToOkLab(...hsv3);
+
+    const dist1 = calcDeltaEOk(labTargetD, rep1);
+    const dist2 = calcDeltaEOk(labTargetD, rep2);
+    const dist3 = calcDeltaEOk(labTargetD, rep3);
+
+    let validCount = 0;
+    if (dist1 >= R * 0.7) validCount++;
+    if (dist2 >= R * 0.7) validCount++;
+    if (dist3 >= R * 0.7) validCount++;
+
+    if (validCount > bestValidCount) {
+      bestValidCount = validCount;
+      bestDistractors = [hsv1, hsv2, hsv3];
+    }
+
+    if (validCount === 3) {
+      break;
+    }
+  }
+
+  const rawOptions: [number, number, number][] = [targetD, ...bestDistractors];
 
   // 打乱选项并记录正确选项索引
   const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
