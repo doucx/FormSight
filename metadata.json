@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor: 重构代码架构以精简体积并消除冗余", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787054668.1255882, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test(settings): 清理已废弃的旧版本配置迁移单测", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787054720.1294534, "duration_ms": 0}}

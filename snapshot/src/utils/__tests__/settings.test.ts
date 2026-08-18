@@ -45,47 +45,25 @@ describe('settings utils with domain isolation', () => {
     expect(loaded.relative_color.autoNextDelay).toBe(1200);
   });
 
-  it('loadSettings - should smoothly migrate legacy flat settings', () => {
-    const legacySettings = {
-      autoNext: false,
-      autoNextDelay: 600,
-      starAutoNextDelay: 400,
-      colorAutoNextDelay: 700,
-      gridSize: 5,
-      sliderHitMargin: 8,
-      showToleranceBand: false,
-      targetingMode: 'manual',
-      manualTargetSectors: [0, 1],
-      colorTargetingMode: 'manual',
-      colorManualTargetSectors: [2, 3],
-      idleTimeout: 30,
+  it('loadSettings - should merge partial settings with default values', () => {
+    const partialSettings = {
+      global: {
+        idleTimeout: 120,
+      },
+      star: {
+        gridSize: 5,
+      },
     };
 
-    localStorage.setItem('star_hopping_user_settings', JSON.stringify(legacySettings));
+    localStorage.setItem('star_hopping_user_settings', JSON.stringify(partialSettings));
 
-    const migrated = loadSettings();
-
-    // 验证 global
-    expect(migrated.global.idleTimeout).toBe(30);
-
-    // 验证 star 领域隔离
-    expect(migrated.star.autoNext).toBe(false);
-    expect(migrated.star.autoNextDelay).toBe(400);
-    expect(migrated.star.gridSize).toBe(5);
-    expect(migrated.star.targetingMode).toBe('manual');
-    expect(migrated.star.manualTargetSectors).toEqual([0, 1]);
-
-    // 验证 color 领域隔离
-    expect(migrated.color.autoNext).toBe(false);
-    expect(migrated.color.autoNextDelay).toBe(700);
-    expect(migrated.color.sliderHitMargin).toBe(8);
-    expect(migrated.color.showToleranceBand).toBe(false);
-    expect(migrated.color.targetingMode).toBe('manual');
-    expect(migrated.color.manualTargetSectors).toEqual([2, 3]);
-
-    // 验证 relative_color 独立填充
-    expect(migrated.relative_color.autoNext).toBe(false);
-    expect(migrated.relative_color.autoNextDelay).toBe(700);
-    expect(migrated.relative_color.sliderHitMargin).toBe(8);
+    const loaded = loadSettings();
+    expect(loaded.global.idleTimeout).toBe(120);
+    expect(loaded.global.soundEnabled).toBe(DEFAULT_SETTINGS.global.soundEnabled);
+    expect(loaded.star.gridSize).toBe(5);
+    expect(loaded.star.autoNext).toBe(DEFAULT_SETTINGS.star.autoNext);
+    expect(loaded.color).toEqual(DEFAULT_SETTINGS.color);
+    expect(loaded.relative_color).toEqual(DEFAULT_SETTINGS.relative_color);
+    expect(loaded.negative_space).toEqual(DEFAULT_SETTINGS.negative_space);
   });
 });
