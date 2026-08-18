@@ -10,7 +10,7 @@ import {
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { getAllColorTrialRecords, getAllTrialRecords, getTrialRecords } from '../utils/db';
+import { getTrialRecords } from '../utils/db';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
@@ -68,8 +68,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
-      const starData = await getAllTrialRecords();
-      const colorData = await getAllColorTrialRecords();
+      const starData = await getTrialRecords('star');
+      const colorData = await getTrialRecords('color');
       const relData = await getTrialRecords('relative_color');
       const nsData = await getTrialRecords('negative_space');
 
