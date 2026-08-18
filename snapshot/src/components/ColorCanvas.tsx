@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
-import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
+import { useTrackPointer } from '../hooks/useTrackPointer';
+import {
+  type ColorHitResult,
+  type ColorQuestionData,
+  getToleranceSpan,
+  hsvToHex,
+} from '../utils/colorUtils';
 import { HsvTrackSlider } from './HsvTrackSlider';
 
 interface ColorCanvasProps {
@@ -13,6 +19,180 @@ interface ColorCanvasProps {
   enableHoverColorPreview?: boolean;
 }
 
+const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
+
+// ==========================================
+// 子组件 1: 单维度练习模式轨道 (H / S / V)
+// ==========================================
+interface SingleDimensionSliderProps {
+  label: 'H' | 'S' | 'V';
+  isTargetActiveMode: boolean;
+  gradient: string;
+  val: number;
+  max: number;
+  unit: string;
+  question: ColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: ColorHitResult | null;
+  onAnswer: (userVal: number) => void;
+  disabled: boolean;
+  hitMargin: number;
+  showToleranceBand: boolean;
+}
+
+function SingleDimensionSlider({
+  label,
+  isTargetActiveMode,
+  gradient,
+  val,
+  max,
+  unit,
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled,
+  hitMargin,
+  showToleranceBand,
+}: SingleDimensionSliderProps) {
+  const isInteractive = isTargetActiveMode && !showAnswer && !disabled;
+
+  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+    max,
+    step: 1,
+    disabled: !isInteractive,
+    onCommit: (calculated) => {
+      setHoverVal(null);
+      onAnswer(calculated);
+    },
+  });
+
+  const renderLabelContent = () => {
+    if (showAnswer || !isTargetActiveMode) {
+      return `${val}${unit}`;
+    }
+    if (hoverVal !== null) {
+      return `${hoverVal}${unit}`;
+    }
+    return '?';
+  };
+
+  const targetHSV: [number, number, number] = [
+    question.targetH,
+    question.targetS,
+    question.targetV,
+  ];
+
+  return (
+    <div className="flex items-center gap-3 w-full">
+      <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
+
+      <div
+        {...pointerProps}
+        style={
+          hitMargin > 0
+            ? {
+                paddingLeft: `${hitMargin}px`,
+                paddingRight: `${hitMargin}px`,
+                marginLeft: `-${hitMargin}px`,
+                marginRight: `-${hitMargin}px`,
+                paddingTop: '6px',
+                paddingBottom: '6px',
+                marginTop: '-6px',
+                marginBottom: '-6px',
+              }
+            : undefined
+        }
+        className={`relative flex-1 flex items-center select-none touch-none ${
+          isInteractive ? 'cursor-none' : 'cursor-default'
+        }`}
+      >
+        <div
+          ref={trackRef}
+          className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
+          style={{ background: gradient }}
+        >
+          {!isTargetActiveMode && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm"
+              style={{ left: getPercent(val, max) }}
+            />
+          )}
+
+          {!showAnswer &&
+            isTargetActiveMode &&
+            showToleranceBand &&
+            hoverVal !== null &&
+            (() => {
+              const span = getToleranceSpan(label, hoverVal, targetHSV, question.difficultyLevel);
+              const isWrapMode = label === 'H';
+              const leftVal = isWrapMode
+                ? (hoverVal - span.halfSpan + max) % max
+                : Math.max(0, hoverVal - span.halfSpan);
+              const rightVal = isWrapMode
+                ? (hoverVal + span.halfSpan + max) % max
+                : Math.min(max, hoverVal + span.halfSpan);
+
+              return (
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                    style={{ left: `${(leftVal / max) * 100}%` }}
+                  />
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
+                    style={{ left: `${(rightVal / max) * 100}%` }}
+                  />
+                </>
+              );
+            })()}
+
+          {!showAnswer && isTargetActiveMode && hoverVal !== null && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-85"
+              style={{ left: getPercent(hoverVal, max) }}
+            />
+          )}
+
+          {showAnswer && isTargetActiveMode && (
+            <>
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
+                style={{ left: getPercent(val, max) }}
+              />
+              {userAnswer && (
+                <div
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
+                    userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                  } shadow-md z-10`}
+                  style={{ left: getPercent(userAnswer.userValue, max) }}
+                />
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      <span
+        className={`w-12 text-right font-mono font-bold text-xs ${
+          isTargetActiveMode && !showAnswer
+            ? 'text-amber-500'
+            : showAnswer && userAnswer?.isHit
+              ? 'text-emerald-600'
+              : showAnswer
+                ? 'text-rose-600'
+                : 'text-slate-700'
+        }`}
+      >
+        {renderLabelContent()}
+      </span>
+    </div>
+  );
+}
+
+// ==========================================
+// 主入口组件: ColorCanvas
+// ==========================================
 export function ColorCanvas({
   question,
   showAnswer,
@@ -180,43 +360,35 @@ export function ColorCanvas({
         ) : (
           <>
             {/* 单维度模式 H 轨 */}
-            <HsvTrackSlider
+            <SingleDimensionSlider
               label="H"
+              isTargetActiveMode={mode === 'H'}
               gradient={hueGradient}
               val={targetH}
               max={360}
               unit="°"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
+              question={question}
               showAnswer={showAnswer}
-              targetVal={targetH}
-              userVal={userAnswer?.userValue}
-              isHit={userAnswer?.isHit}
-              onValChange={(v) => {
-                if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
-              }}
-              disabled={disabled || mode !== 'H'}
+              userAnswer={userAnswer}
+              onAnswer={(v) => onAnswer(v)}
+              disabled={disabled}
               hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand && mode === 'H'}
+              showToleranceBand={showToleranceBand}
             />
 
             {/* 单维度模式 S 轨 */}
             {mode === 'S' && (
-              <HsvTrackSlider
+              <SingleDimensionSlider
                 label="S"
+                isTargetActiveMode={true}
                 gradient={satGradient}
                 val={targetS}
                 max={100}
                 unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
+                question={question}
                 showAnswer={showAnswer}
-                targetVal={targetS}
-                userVal={userAnswer?.userValue}
-                isHit={userAnswer?.isHit}
-                onValChange={(v) => {
-                  if (!showAnswer && !disabled) onAnswer(v);
-                }}
+                userAnswer={userAnswer}
+                onAnswer={(v) => onAnswer(v)}
                 disabled={disabled}
                 hitMargin={hitMargin}
                 showToleranceBand={showToleranceBand}
@@ -225,24 +397,20 @@ export function ColorCanvas({
 
             {/* 单维度模式 V 轨 */}
             {(mode === 'V' || mode === 'S') && (
-              <HsvTrackSlider
+              <SingleDimensionSlider
                 label="V"
+                isTargetActiveMode={mode === 'V'}
                 gradient={valGradient}
                 val={targetV}
                 max={100}
                 unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
+                question={question}
                 showAnswer={showAnswer}
-                targetVal={targetV}
-                userVal={mode === 'V' ? userAnswer?.userValue : targetV}
-                isHit={mode === 'V' ? userAnswer?.isHit : undefined}
-                onValChange={(v) => {
-                  if (mode === 'V' && !showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled || mode !== 'V'}
+                userAnswer={userAnswer}
+                onAnswer={(v) => onAnswer(v)}
+                disabled={disabled}
                 hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand && mode === 'V'}
+                showToleranceBand={showToleranceBand}
               />
             )}
           </>
