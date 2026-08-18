@@ -9,6 +9,7 @@ import {
   saveSettings,
 } from '../utils/settings';
 import { ColorSettingsForm } from './settings/ColorSettingsForm';
+import { NegativeSpaceSettingsForm } from './settings/NegativeSpaceSettingsForm';
 import { RelativeColorSettingsForm } from './settings/RelativeColorSettingsForm';
 import { StarSettingsForm } from './settings/StarSettingsForm';
 
@@ -16,6 +17,7 @@ const DOMAIN_TITLE: Record<TrainingDomain, string> = {
   star: '寻星训练偏好设置',
   color: '绝对色感偏好设置',
   relative_color: '相对色感偏好设置',
+  negative_space: '正负形感知偏好设置',
 };
 
 interface SettingsModalProps {
@@ -30,10 +32,10 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
 
   const updateDomainSettings = (
     patch:
-      | Partial<StarSettings | ColorSenseSettings | RelativeColorSettings>
+      | Partial<StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings>
       | ((
-          prev: StarSettings | ColorSenseSettings | RelativeColorSettings,
-        ) => Partial<StarSettings | ColorSenseSettings | RelativeColorSettings>),
+          prev: StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings,
+        ) => Partial<StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings>),
   ) => {
     setCurrent((prev) => {
       const prevDomainSettings = prev[domain];
@@ -259,6 +261,13 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
           {domain === 'relative_color' && (
             <RelativeColorSettingsForm
               settings={domainSettings as RelativeColorSettings}
+              onChange={(patch) => updateDomainSettings(patch)}
+            />
+          )}
+
+          {domain === 'negative_space' && (
+            <NegativeSpaceSettingsForm
+              settings={domainSettings as NegativeSpaceSettings}
               onChange={(patch) => updateDomainSettings(patch)}
             />
           )}

@@ -44,6 +44,14 @@ export interface RelativeColorSettings extends BaseModuleSettings {
 }
 
 /**
+ * 正负形空间感知 (Negative Space) 专属配置
+ */
+export interface NegativeSpaceSettings extends BaseModuleSettings {
+  sliderHitMargin: number; // 滑块极值吸附感应区外延大小 (px)
+  showToleranceBand: boolean; // 是否在滑块上显示 Δ% 容错区间
+}
+
+/**
  * 全局通用设置
  */
 export interface GlobalSettings {
@@ -59,6 +67,7 @@ export interface UserSettings {
   star: StarSettings;
   color: ColorSenseSettings;
   relative_color: RelativeColorSettings;
+  negative_space: NegativeSpaceSettings;
 }
 
 const SETTINGS_KEY = 'star_hopping_user_settings';
@@ -97,6 +106,11 @@ export const DEFAULT_SETTINGS: UserSettings = {
     showToleranceBand: true,
     enableHoverColorPreview: true,
   },
+  negative_space: {
+    ...DEFAULT_BASE_SETTINGS,
+    sliderHitMargin: 12,
+    showToleranceBand: true,
+  },
 };
 
 /**
@@ -129,6 +143,10 @@ export function loadSettings(): UserSettings {
         relative_color: {
           ...DEFAULT_SETTINGS.relative_color,
           ...(parsed.relative_color || {}),
+        },
+        negative_space: {
+          ...DEFAULT_SETTINGS.negative_space,
+          ...(parsed.negative_space || {}),
         },
       };
     }
@@ -183,6 +201,20 @@ export function loadSettings(): UserSettings {
           parsed.showToleranceBand ?? DEFAULT_SETTINGS.relative_color.showToleranceBand,
         enableHoverColorPreview:
           parsed.enableHoverColorPreview ?? DEFAULT_SETTINGS.relative_color.enableHoverColorPreview,
+      },
+      negative_space: {
+        autoNext: parsed.autoNext ?? DEFAULT_SETTINGS.negative_space.autoNext,
+        autoNextDelay:
+          parsed.negativeSpaceAutoNextDelay ??
+          parsed.autoNextDelay ??
+          DEFAULT_SETTINGS.negative_space.autoNextDelay,
+        stepGranularity: parsed.stepGranularity ?? DEFAULT_SETTINGS.negative_space.stepGranularity,
+        adaptiveMode: parsed.adaptiveMode ?? DEFAULT_SETTINGS.negative_space.adaptiveMode,
+        targetAccuracy: parsed.targetAccuracy ?? DEFAULT_SETTINGS.negative_space.targetAccuracy,
+        blockSize: parsed.blockSize ?? DEFAULT_SETTINGS.negative_space.blockSize,
+        sliderHitMargin: parsed.sliderHitMargin ?? DEFAULT_SETTINGS.negative_space.sliderHitMargin,
+        showToleranceBand:
+          parsed.showToleranceBand ?? DEFAULT_SETTINGS.negative_space.showToleranceBand,
       },
     };
 

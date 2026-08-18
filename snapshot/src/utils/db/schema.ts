@@ -1,6 +1,6 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
-export type TrainingDomain = 'star' | 'color' | 'relative_color';
+export type TrainingDomain = 'star' | 'color' | 'relative_color' | 'negative_space';
 
 export interface UnifiedSessionData {
   id: string;

@@ -3,6 +3,7 @@ import {
   BarChart2,
   Clock,
   Compass,
+  Maximize2,
   Palette,
   Shuffle,
   Sliders,
@@ -15,7 +16,8 @@ interface HomeProps {
   starHoppingTimeMs: number;
   colorTimeMs: number;
   relativeColorTimeMs: number;
-  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color') => void;
+  negativeSpaceTimeMs: number;
+  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space') => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
 }
@@ -25,6 +27,7 @@ export function Home({
   starHoppingTimeMs,
   colorTimeMs,
   relativeColorTimeMs,
+  negativeSpaceTimeMs,
   onNavigate,
   onOpenGlobalSettings,
   onOpenGlobalStats,
@@ -176,6 +179,41 @@ export function Home({
             </div>
             <div className="flex items-center gap-1">
               <span>进入相对色感看板</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
+
+        {/* 4. 正负形空间感知 */}
+        <button
+          type="button"
+          onClick={() => onNavigate('negative-space')}
+          className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+        >
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
+                <Maximize2 className="w-8 h-8" />
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                正负形空间感知 (Negative Space)
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算，打破具象认知偏见，培养专业起形与比例感知力。
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+              <Clock className="w-3.5 h-3.5 text-emerald-500" />
+              <span>累计练习: {formatTotalTime(negativeSpaceTimeMs)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span>进入正负形看板</span>
               <ArrowRight className="w-4 h-4" />
             </div>
           </div>

@@ -20,7 +20,7 @@ interface UnifiedRecord {
   timestamp: number;
   isHit: boolean;
   level: number;
-  module: 'star' | 'color' | 'relative_color';
+  module: 'star' | 'color' | 'relative_color' | 'negative_space';
   subMode: string;
 }
 
@@ -36,7 +36,9 @@ type FilterOption =
   | 'color_S'
   | 'color_ALL'
   | 'relative_color_all'
-  | 'relative_color_VECTOR_SHIFT';
+  | 'relative_color_VECTOR_SHIFT'
+  | 'negative_space_all'
+  | 'negative_space_RATIO_ESTIMATION';
 
 const FILTER_LABELS: Record<FilterOption, string> = {
   all: '全部练习项目',
@@ -51,6 +53,8 @@ const FILTER_LABELS: Record<FilterOption, string> = {
   color_ALL: '色感 • 综合拾色 (Match)',
   relative_color_all: '相对色感 (全部模式)',
   relative_color_VECTOR_SHIFT: '相对色感 • 色彩矢量迁移',
+  negative_space_all: '正负形感知 (全部模式)',
+  negative_space_RATIO_ESTIMATION: '正负形 • 负形占比估算',
 };
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
@@ -67,6 +71,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       const starData = await getAllTrialRecords();
       const colorData = await getAllColorTrialRecords();
       const relData = await getTrialRecords('relative_color');
+      const nsData = await getTrialRecords('negative_space');
 
       const combined: UnifiedRecord[] = [
         ...starData.map((r) => ({
@@ -90,6 +95,13 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           module: 'relative_color' as const,
           subMode: r.mode,
         })),
+        ...nsData.map((r) => ({
+          timestamp: r.timestamp,
+          isHit: r.isHit,
+          level: r.difficultyLevel,
+          module: 'negative_space' as const,
+          subMode: r.mode,
+        })),
       ];
       combined.sort((a, b) => a.timestamp - b.timestamp);
 
@@ -110,6 +122,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (selectedFilter === 'star_all') return r.module === 'star';
     if (selectedFilter === 'color_all') return r.module === 'color';
     if (selectedFilter === 'relative_color_all') return r.module === 'relative_color';
+    if (selectedFilter === 'negative_space_all') return r.module === 'negative_space';
     if (selectedFilter.startsWith('star_')) {
       return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
     }
@@ -119,6 +132,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (selectedFilter.startsWith('relative_color_')) {
       return (
         r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '')
+      );
+    }
+    if (selectedFilter.startsWith('negative_space_')) {
+      return (
+        r.module === 'negative_space' &&
+        r.subMode === selectedFilter.replace('negative_space_', '')
       );
     }
     return true;
@@ -247,6 +266,10 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 <optgroup label="相对色感">
                   <option value="relative_color_all">相对色感 (全部)</option>
                   <option value="relative_color_VECTOR_SHIFT">色彩矢量迁移</option>
+                </optgroup>
+                <optgroup label="正负形感知">
+                  <option value="negative_space_all">正负形感知 (全部)</option>
+                  <option value="negative_space_RATIO_ESTIMATION">负形占比估算</option>
                 </optgroup>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />

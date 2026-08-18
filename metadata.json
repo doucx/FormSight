@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "biome Capture: M relativeColorUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787026516.222904, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 添加负形空间占比评估训练模块", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787050420.483047, "duration_ms": 0}}

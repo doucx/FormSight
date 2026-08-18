@@ -24,11 +24,14 @@ import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
 import { Dashboard } from './views/Dashboard';
 import { Home } from './views/Home';
+import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
+import { NegativeSpaceDashboard } from './views/NegativeSpaceDashboard';
+import { NegativeSpaceTrainingView } from './views/NegativeSpaceTrainingView';
 import { RelativeColorDashboard } from './views/RelativeColorDashboard';
 import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
 import { TrainingView } from './views/TrainingView';
 
-type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color';
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
 
 export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
