@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M RelativeColorCanvas.tsx, M relativeColorUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064498.9905605, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 修复测试中的可选属性类型断言并扩充阿尔伯斯模式用例", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064500.202518, "duration_ms": 0}}
