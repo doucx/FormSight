@@ -3,13 +3,6 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
 import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-  TWO_AFC_CANVAS_SIZE,
-} from '../utils/negativeSpaceUtils';
-
-import {
   findNearestGridPoint,
   getDynamicCrosshairMetrics,
   getDynamicDotRadius,
@@ -369,6 +362,14 @@ export function NegativeSpaceCanvas({
                 width={FITTING_CANVAS_SIZE}
                 height={FITTING_CANVAS_SIZE}
                 onClick={handleFittingClick}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label="右侧定点做答画布"
                 onMouseMove={handleFittingMouseMove}
                 onMouseLeave={() => setFittingHoverPoint(null)}
                 className={`w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm transition-all ${

@@ -1,11 +1,5 @@
 import type { Point } from '../types';
-import {
-  calcDistance,
-  checkHit,
-  findNearestGridPoint,
-  getDynamicCrosshairMetrics,
-  getDynamicDotRadius,
-} from './geometry';
+import { checkHit } from './geometry';
 
 export type NegativeSpaceMode =
   | 'RATIO_ESTIMATION'

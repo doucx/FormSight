@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(negative-space): 实现基于负形反向还原顶点模式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787059205.2271245, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(negative-space): 修复重复导入、未使用的变量及 Canvas a11y 检查项", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787059779.4443407, "duration_ms": 0}}
