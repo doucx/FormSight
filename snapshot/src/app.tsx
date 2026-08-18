@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AnalyticsModal } from './components/AnalyticsModal';
-import { ColorAnalyticsModal } from './components/ColorAnalyticsModal';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
+import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
 import { DOMAINS_CONFIG } from './config/domains';
-import type { TrainingMode } from './types';
-import type { ColorMode } from './utils/colorUtils';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -46,9 +43,7 @@ export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [settingsDomain, setSettingsDomain] = useState<TrainingDomain>('star');
 
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState<boolean>(false);
-  const [isColorAnalyticsOpen, setIsColorAnalyticsOpen] = useState<boolean>(false);
-  const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
+  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<'star' | 'color' | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
   // 聚合时长状态
@@ -148,11 +143,8 @@ export function App() {
                   setIsSettingsOpen(true);
                 }}
                 onOpenAnalytics={() => {
-                  if (domain === 'star') {
-                    setAnalyticsMode('all');
-                    setIsAnalyticsOpen(true);
-                  } else if (domain === 'color') {
-                    setIsColorAnalyticsOpen(true);
+                  if (domain === 'star' || domain === 'color') {
+                    setActiveAnalyticsDomain(domain);
                   }
                 }}
               />
@@ -191,12 +183,11 @@ export function App() {
         />
       )}
 
-      {isAnalyticsOpen && (
-        <AnalyticsModal initialMode={analyticsMode} onClose={() => setIsAnalyticsOpen(false)} />
-      )}
-
-      {isColorAnalyticsOpen && (
-        <ColorAnalyticsModal onClose={() => setIsColorAnalyticsOpen(false)} />
+      {activeAnalyticsDomain && (
+        <WeaknessAnalyticsModal
+          domain={activeAnalyticsDomain}
+          onClose={() => setActiveAnalyticsDomain(null)}
+        />
       )}
     </div>
   );
