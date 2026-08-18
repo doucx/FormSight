@@ -208,18 +208,34 @@ export const relativeColorPlugin: TrainingPlugin<
 export const negativeSpacePlugin: TrainingPlugin<
   NegativeSpaceQuestionData,
   NegativeSpaceHitResult,
-  number | 'A' | 'B',
+  number | 'A' | 'B' | Point,
   NegativeSpaceSettings
 > = {
   domain: 'negative_space',
   title: '正负形感知',
-  getModeBadge: (mode) => (mode === 'AREA_COMPARISON_2AFC' ? '负形面积二分判别' : '负形占比估算'),
+  getModeBadge: (mode) =>
+    mode === 'AREA_COMPARISON_2AFC'
+      ? '负形面积二分判别'
+      : mode === 'NEGATIVE_VERTEX_FITTING'
+        ? '负形边界反切定点'
+        : '负形占比估算',
   generateQuestion: (mode, level) =>
     generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
   evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
   extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'NEGATIVE_VERTEX_FITTING') {
+      return {
+        mode: 'NEGATIVE_VERTEX_FITTING',
+        targetVertexIndex: q.targetVertexIndex,
+        targetPoint: q.targetPoint ? [q.targetPoint.x, q.targetPoint.y] : undefined,
+        userClick: hitResult.nearestGridPoint
+          ? [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y]
+          : undefined,
+        errorPixelDistance: hitResult.errorValue,
+      };
+    }
     if (mode === 'AREA_COMPARISON_2AFC') {
       return {
         mode: 'AREA_COMPARISON_2AFC',

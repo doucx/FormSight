@@ -131,7 +131,7 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
     subTitle: 'Negative Space',
     homeTitle: '正负形空间感知 (Negative Space)',
     homeDesc:
-      '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算，打破具象认知偏见，培养专业起形与比例感知力。',
+      '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破具象认知偏见，培养专业起形与比例感知力。',
     themeColor: 'emerald',
     icon: Maximize2,
     hasWeaknessAnalytics: false,
@@ -147,6 +147,12 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
         title: '负形面积二分判别',
         desc: '快速对比两个形状各异的不规则多边形留白（负形），二选一判别哪侧留白面积更大 (2AFC)。',
         icon: Columns,
+      },
+      {
+        id: 'NEGATIVE_VERTEX_FITTING',
+        title: '负形边界反切定点',
+        desc: '观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。',
+        icon: Crosshair,
       },
     ],
   },
