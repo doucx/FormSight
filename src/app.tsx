@@ -18,17 +18,20 @@ import {
   getStarHoppingTrainingTimeMs,
   getTrainingTimeMs,
 } from './utils/db';
+import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
 import { Dashboard } from './views/Dashboard';
 import { Home } from './views/Home';
+import { NegativeSpaceDashboard } from './views/NegativeSpaceDashboard';
+import { NegativeSpaceTrainingView } from './views/NegativeSpaceTrainingView';
 import { RelativeColorDashboard } from './views/RelativeColorDashboard';
 import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
 import { TrainingView } from './views/TrainingView';
 
-type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color';
+type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
 
 export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
@@ -69,12 +72,23 @@ export function App() {
   const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
   const [colorTimeMs, setColorTimeMs] = useState<number>(0);
   const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
+  const [negativeSpaceTimeMs, setNegativeSpaceTimeMs] = useState<number>(0);
 
   // 相对色感状态
   const [activeRelativeMode, setActiveRelativeMode] = useState<RelativeColorMode>('VECTOR_SHIFT');
   const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>(
     'training',
   );
+
+  // 正负形状态
+  const [activeNegativeSpaceMode, setActiveNegativeSpaceMode] =
+    useState<NegativeSpaceMode>('RATIO_ESTIMATION');
+  const [negativeSpaceSessionType, setNegativeSpaceSessionType] = useState<
+    'training' | 'benchmark'
+  >('training');
+  const [negativeSpaceProfiles, setNegativeSpaceProfiles] = useState<
+    Record<string, UnifiedProfileData | null>
+  >({});
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
@@ -85,15 +99,25 @@ export function App() {
     for (const p of relList) {
       relMap[p.mode] = p;
     }
+    const nsList = await getProfilesByDomain('negative_space');
+    const nsMap: Record<string, UnifiedProfileData | null> = {};
+    for (const p of nsList) {
+      nsMap[p.mode] = p;
+    }
+
     const starMs = await getStarHoppingTrainingTimeMs();
     const colorMs = await getColorTrainingTimeMs();
     const relMs = await getTrainingTimeMs('relative_color');
+    const nsMs = await getTrainingTimeMs('negative_space');
+
     setProfiles(data);
     setColorProfiles(cData);
     setRelativeProfiles(relMap);
+    setNegativeSpaceProfiles(nsMap);
     setStarHoppingTimeMs(starMs);
     setColorTimeMs(colorMs);
     setRelativeColorTimeMs(relMs);
+    setNegativeSpaceTimeMs(nsMs);
     setSettings(loadSettings());
   }, []);
 
@@ -111,6 +135,8 @@ export function App() {
       document.title = '色感训练 (Color Recognition) - FormSight';
     } else if (currentApp === 'relative-color') {
       document.title = '相对色感 (Relative Color) - FormSight';
+    } else if (currentApp === 'negative-space') {
+      document.title = '正负形感知 (Negative Space) - FormSight';
     }
   }, [currentApp]);
 
@@ -139,15 +165,20 @@ export function App() {
   const activeLevel = profiles[activeMode]?.currentLevel || 5;
   const activeColorLevel = colorProfiles[activeColorMode]?.currentLevel || 5;
   const activeRelativeLevel = relativeProfiles[activeRelativeMode]?.currentLevel || 5;
+  const activeNegativeSpaceLevel =
+    negativeSpaceProfiles[activeNegativeSpaceMode]?.currentLevel || 5;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs}
+          totalTimeMs={
+            starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs
+          }
           starHoppingTimeMs={starHoppingTimeMs}
           colorTimeMs={colorTimeMs}
           relativeColorTimeMs={relativeColorTimeMs}
+          negativeSpaceTimeMs={negativeSpaceTimeMs}
           onNavigate={(app) => {
             setCurrentApp(app);
             setCurrentView('dashboard');
@@ -222,6 +253,30 @@ export function App() {
             sessionType={relativeSessionType}
             initialLevel={activeRelativeLevel}
             settings={settings.relative_color}
+            onExit={handleExitTraining}
+          />
+        ))}
+
+      {currentApp === 'negative-space' &&
+        (currentView === 'dashboard' ? (
+          <NegativeSpaceDashboard
+            onStart={(nsMode, type) => {
+              setActiveNegativeSpaceMode(nsMode);
+              setNegativeSpaceSessionType(type);
+              setCurrentView('training');
+            }}
+            onBackToHome={() => setCurrentApp('home')}
+            onOpenSettings={() => {
+              setSettingsDomain('negative_space');
+              setIsSettingsOpen(true);
+            }}
+          />
+        ) : (
+          <NegativeSpaceTrainingView
+            mode={activeNegativeSpaceMode}
+            sessionType={negativeSpaceSessionType}
+            initialLevel={activeNegativeSpaceLevel}
+            settings={settings.negative_space}
             onExit={handleExitTraining}
           />
         ))}
