@@ -19,11 +19,9 @@ import {
 import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
-import { ColorTrainingView } from './views/ColorTrainingView';
+import { TRAINING_PLUGINS } from './config/trainingPlugins';
+import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
-import { NegativeSpaceTrainingView } from './views/NegativeSpaceTrainingView';
-import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
-import { TrainingView } from './views/TrainingView';
 
 type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
 
@@ -161,48 +159,15 @@ export function App() {
             );
           }
 
-          if (domain === 'star') {
-            return (
-              <TrainingView
-                mode={activeMode as TrainingMode}
-                sessionType={sessionType}
-                initialLevel={currentLevel}
-                settings={settings.star}
-                onExit={handleExitTraining}
-              />
-            );
-          }
-
-          if (domain === 'color') {
-            return (
-              <ColorTrainingView
-                mode={activeMode as ColorMode}
-                sessionType={sessionType}
-                initialLevel={currentLevel}
-                settings={settings.color}
-                onExit={handleExitTraining}
-              />
-            );
-          }
-
-          if (domain === 'relative_color') {
-            return (
-              <RelativeColorTrainingView
-                mode={activeMode as RelativeColorMode}
-                sessionType={sessionType}
-                initialLevel={currentLevel}
-                settings={settings.relative_color}
-                onExit={handleExitTraining}
-              />
-            );
-          }
-
+          const plugin = TRAINING_PLUGINS[domain];
           return (
-            <NegativeSpaceTrainingView
-              mode={activeMode as NegativeSpaceMode}
+            <GenericTrainingView
+              key={`${domain}-${activeMode}-${sessionType}`}
+              plugin={plugin}
+              mode={activeMode}
               sessionType={sessionType}
               initialLevel={currentLevel}
-              settings={settings.negative_space}
+              settings={settings[domain]}
               onExit={handleExitTraining}
             />
           );
