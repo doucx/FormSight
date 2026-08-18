@@ -29,7 +29,7 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     expect(q.mode).toBe('VECTOR_SHIFT');
     expect(q.options).toBeDefined();
-    expect(q.options!.length).toBe(4);
+    expect(q.options?.length).toBe(4);
     expect(q.correctIndex).toBeDefined();
     expect(q.correctIndex!).toBeGreaterThanOrEqual(0);
     expect(q.correctIndex!).toBeLessThanOrEqual(3);
@@ -39,7 +39,7 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     expect(q.options).toBeDefined();
     expect(q.correctIndex).toBeDefined();
-    const correctOption = q.options![q.correctIndex!];
+    const correctOption = q.options?.[q.correctIndex!];
     const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
     expect(result.isHit).toBe(true);
   });
