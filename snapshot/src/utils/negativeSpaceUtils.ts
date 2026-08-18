@@ -84,8 +84,12 @@ export function generateRandomPolygon(level: number): Point[] {
   for (const a of angles) {
     const rJitter = 1 + (Math.random() * 2 - 1) * irregularity;
     const r = Math.max(25, Math.min(185, baseRadius * rJitter));
-    const x = Math.round(Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cx + r * Math.cos(a))));
-    const y = Math.round(Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cy + r * Math.sin(a))));
+    const x = Math.round(
+      Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cx + r * Math.cos(a))),
+    );
+    const y = Math.round(
+      Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cy + r * Math.sin(a))),
+    );
     vertices.push({ x, y });
   }
 
@@ -96,7 +100,7 @@ export function generateRandomPolygon(level: number): Point[] {
  * 生成负形空间练习题目
  */
 export function generateNegativeSpaceQuestion(
-  mode: NegativeSpaceMode = 'RATIO_ESTIMATION',
+  mode: NegativeSpaceMode,
   level: number,
 ): NegativeSpaceQuestionData {
   const id = `nsq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

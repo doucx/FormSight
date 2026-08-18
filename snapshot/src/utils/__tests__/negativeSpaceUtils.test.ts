@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  NEGATIVE_SPACE_CANVAS_SIZE,
   calcPolygonArea,
   checkNegativeSpaceHit,
   generateNegativeSpaceQuestion,
   generateRandomPolygon,
   getNegativeSpaceToleranceForLevel,
-  NEGATIVE_SPACE_CANVAS_SIZE,
 } from '../negativeSpaceUtils';
 
 describe('negativeSpaceUtils', () => {
@@ -28,7 +28,12 @@ describe('negativeSpaceUtils', () => {
     expect(calcPolygonArea(triangle)).toBe(2400);
 
     // 顶点少于 3 个应返回 0
-    expect(calcPolygonArea([{ x: 0, y: 0 }, { x: 10, y: 10 }])).toBe(0);
+    expect(
+      calcPolygonArea([
+        { x: 0, y: 0 },
+        { x: 10, y: 10 },
+      ]),
+    ).toBe(0);
   });
 
   it('getNegativeSpaceToleranceForLevel - should provide decreasing tolerance curve', () => {

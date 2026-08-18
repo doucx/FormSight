@@ -154,7 +154,9 @@ export function NegativeSpaceCanvas({
     <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
       {/* 提示文案 */}
       <div className="text-center space-y-1">
-        <div className="text-sm font-bold text-slate-800">估计白色背景（负形）占整幅画面的面积百分比</div>
+        <div className="text-sm font-bold text-slate-800">
+          估计白色背景（负形）占整幅画面的面积百分比
+        </div>
         <div className="text-xs text-slate-400">黑色为正形主体，白色空隙为负形</div>
       </div>
 
@@ -264,9 +266,14 @@ export function NegativeSpaceCanvas({
         {showAnswer && (
           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              真实负形占比: <span className="font-bold text-slate-800 font-mono">{targetNegativeRatio}%</span>
+              真实负形占比:{' '}
+              <span className="font-bold text-slate-800 font-mono">{targetNegativeRatio}%</span>
             </span>
-            <span className={userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+            <span
+              className={
+                userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
+              }
+            >
               误差: {userAnswer?.errorValue}% (容错: ±{tolerance}%)
             </span>
           </div>

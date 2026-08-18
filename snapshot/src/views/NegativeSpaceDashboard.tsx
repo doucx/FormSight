@@ -37,7 +37,8 @@ export function NegativeSpaceDashboard({
 
   const profile = profiles.RATIO_ESTIMATION;
   const totalCards = profile?.totalTrainedCards || 0;
-  const accuracy = totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+  const accuracy =
+    totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
   const currentLevel = profile?.currentLevel || 5;
   const stat = todayStats.RATIO_ESTIMATION || { count: 0, timeMs: 0 };
 

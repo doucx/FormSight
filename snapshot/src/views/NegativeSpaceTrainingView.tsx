@@ -26,11 +26,7 @@ export function NegativeSpaceTrainingView({
   settings,
   onExit,
 }: NegativeSpaceTrainingViewProps) {
-  const session = useTrainingSession<
-    NegativeSpaceQuestionData,
-    NegativeSpaceHitResult,
-    number
-  >({
+  const session = useTrainingSession<NegativeSpaceQuestionData, NegativeSpaceHitResult, number>({
     domain: 'negative_space',
     mode,
     sessionType,

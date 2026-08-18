@@ -136,8 +136,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     }
     if (selectedFilter.startsWith('negative_space_')) {
       return (
-        r.module === 'negative_space' &&
-        r.subMode === selectedFilter.replace('negative_space_', '')
+        r.module === 'negative_space' && r.subMode === selectedFilter.replace('negative_space_', '')
       );
     }
     return true;

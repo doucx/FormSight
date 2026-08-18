@@ -35,7 +35,9 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
       | Partial<StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings>
       | ((
           prev: StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings,
-        ) => Partial<StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings>),
+        ) => Partial<
+          StarSettings | ColorSenseSettings | RelativeColorSettings | NegativeSpaceSettings
+        >),
   ) => {
     setCurrent((prev) => {
       const prevDomainSettings = prev[domain];

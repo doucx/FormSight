@@ -18,13 +18,13 @@ import {
   getStarHoppingTrainingTimeMs,
   getTrainingTimeMs,
 } from './utils/db';
+import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
 import { Dashboard } from './views/Dashboard';
 import { Home } from './views/Home';
-import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import { NegativeSpaceDashboard } from './views/NegativeSpaceDashboard';
 import { NegativeSpaceTrainingView } from './views/NegativeSpaceTrainingView';
 import { RelativeColorDashboard } from './views/RelativeColorDashboard';
