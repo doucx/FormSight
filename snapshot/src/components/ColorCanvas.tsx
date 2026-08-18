@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
+import { useTrackPointer } from '../hooks/useTrackPointer';
 import {
   type ColorHitResult,
   type ColorQuestionData,
@@ -25,9 +26,9 @@ const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
 // ==========================================
 interface SingleDimensionSliderProps {
   label: 'H' | 'S' | 'V';
-  isTargetActiveMode: boolean; // 是否是当前正在寻找/回答的活跃维度
+  isTargetActiveMode: boolean;
   gradient: string;
-  val: number; // 目标值 targetVal
+  val: number;
   max: number;
   unit: string;
   question: ColorQuestionData;
@@ -54,59 +55,20 @@ function SingleDimensionSlider({
   hitMargin,
   showToleranceBand,
 }: SingleDimensionSliderProps) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const [hoverVal, setHoverVal] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const isInteractive = isTargetActiveMode && !showAnswer && !disabled;
 
-  // 计算 ClientX 对应的数值
-  const calcValFromClientX = (clientX: number): number | null => {
-    if (!trackRef.current) return null;
-    const rect = trackRef.current.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const ratio = clickX / rect.width;
-    return Math.round(ratio * max);
-  };
-
-  const handlePointerDown = (e: PointerEvent) => {
-    if (!isTargetActiveMode || disabled || showAnswer) return;
-    setIsDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) setHoverVal(calculated);
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (!isTargetActiveMode || disabled || showAnswer) return;
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) setHoverVal(calculated);
-  };
-
-  const handlePointerUp = (e: PointerEvent) => {
-    if (!isTargetActiveMode || disabled || showAnswer) return;
-    if (isDragging) {
-      setIsDragging(false);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
-      const calculated = calcValFromClientX(e.clientX);
-      if (calculated !== null) {
-        setHoverVal(null);
-        onAnswer(calculated);
-      }
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isDragging) {
+  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+    max,
+    step: 1,
+    disabled: !isInteractive,
+    onCommit: (calculated) => {
       setHoverVal(null);
-    }
-  };
+      onAnswer(calculated);
+    },
+  });
 
   const renderLabelContent = () => {
-    if (showAnswer) {
-      return `${val}${unit}`;
-    }
-    if (!isTargetActiveMode) {
+    if (showAnswer || !isTargetActiveMode) {
       return `${val}${unit}`;
     }
     if (hoverVal !== null) {
@@ -115,7 +77,6 @@ function SingleDimensionSlider({
     return '?';
   };
 
-  const isInteractive = isTargetActiveMode && !showAnswer && !disabled;
   const targetHSV: [number, number, number] = [
     question.targetH,
     question.targetS,
@@ -127,10 +88,7 @@ function SingleDimensionSlider({
       <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
 
       <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onMouseLeave={handleMouseLeave}
+        {...pointerProps}
         style={
           hitMargin > 0
             ? {
