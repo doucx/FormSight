@@ -143,9 +143,12 @@ export function isOkLabInGamut(lab: [number, number, number]): boolean {
 
   const eps = 1e-4;
   return (
-    rLin >= -eps && rLin <= 1 + eps &&
-    gLin >= -eps && gLin <= 1 + eps &&
-    bLin >= -eps && bLin <= 1 + eps
+    rLin >= -eps &&
+    rLin <= 1 + eps &&
+    gLin >= -eps &&
+    gLin <= 1 + eps &&
+    bLin >= -eps &&
+    bLin <= 1 + eps
   );
 }
 
