@@ -192,7 +192,8 @@ export function ColorCanvas({
               targetVal={targetH}
               userVal={userAnswer?.userValue}
               isHit={userAnswer?.isHit}
-              onValChange={(v) => {
+              isInteractiveTarget={mode === 'H'}
+              onCommit={(v) => {
                 if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
               }}
               disabled={disabled || mode !== 'H'}
@@ -214,7 +215,8 @@ export function ColorCanvas({
                 targetVal={targetS}
                 userVal={userAnswer?.userValue}
                 isHit={userAnswer?.isHit}
-                onValChange={(v) => {
+                isInteractiveTarget={true}
+                onCommit={(v) => {
                   if (!showAnswer && !disabled) onAnswer(v);
                 }}
                 disabled={disabled}
@@ -237,7 +239,8 @@ export function ColorCanvas({
                 targetVal={targetV}
                 userVal={mode === 'V' ? userAnswer?.userValue : targetV}
                 isHit={mode === 'V' ? userAnswer?.isHit : undefined}
-                onValChange={(v) => {
+                isInteractiveTarget={mode === 'V'}
+                onCommit={(v) => {
                   if (mode === 'V' && !showAnswer && !disabled) onAnswer(v);
                 }}
                 disabled={disabled || mode !== 'V'}

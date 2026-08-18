@@ -1,4 +1,4 @@
-import { useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 
 export interface UseTrackPointerOptions {
   max: number;
@@ -22,6 +22,18 @@ export function useTrackPointer({
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [hoverVal, setHoverVal] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  // 当 disabled 切换时重置拖拽状态与悬停指示
+  useEffect(() => {
+    if (disabled) {
+      if (isDragging) {
+        setIsDragging(false);
+        onDraggingStateChange?.(false);
+      }
+      setHoverVal(null);
+      onHoverStateChange?.(null);
+    }
+  }, [disabled, isDragging, onDraggingStateChange, onHoverStateChange]);
 
   const calcValFromClientX = (clientX: number): number | null => {
     if (!trackRef.current) return null;
@@ -63,16 +75,19 @@ export function useTrackPointer({
   };
 
   const handlePointerUp = (e: PointerEvent) => {
-    if (disabled) return;
-    if (isDragging) {
+    const wasDragging = isDragging;
+    if (wasDragging) {
       setIsDragging(false);
       onDraggingStateChange?.(false);
       try {
         (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
       } catch {}
-      const calculated = calcValFromClientX(e.clientX);
-      if (calculated !== null) {
-        onValChange?.(calculated);
+    }
+    if (disabled) return;
+    const calculated = calcValFromClientX(e.clientX);
+    if (calculated !== null) {
+      onValChange?.(calculated);
+      if (wasDragging) {
         onCommit?.(calculated);
       }
     }
