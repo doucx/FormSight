@@ -122,6 +122,24 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
         desc: '保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉。',
         icon: Shuffle,
       },
+      {
+        id: 'LIGHTNESS_INDUCTION',
+        title: '明度反差补偿',
+        desc: '在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致。',
+        icon: Sun,
+      },
+      {
+        id: 'HUE_INDUCTION',
+        title: '补色残像调和',
+        desc: '在强色相与饱和度背景下，逆向补偿色彩推移，训练环境光色感知调和力。',
+        icon: Palette,
+      },
+      {
+        id: 'DECONTEXTUAL_2AFC',
+        title: '环境穿透判别',
+        desc: '穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理。',
+        icon: Columns,
+      },
     ],
   },
   negative_space: {
