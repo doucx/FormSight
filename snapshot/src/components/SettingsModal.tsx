@@ -10,10 +10,10 @@ import {
   saveSettings,
 } from '../utils/settings';
 import { ModalShell } from './common/ModalShell';
-import { ColorSettingsForm } from './settings/ColorSettingsForm';
-import { NegativeSpaceSettingsForm } from './settings/NegativeSpaceSettingsForm';
-import { RelativeColorSettingsForm } from './settings/RelativeColorSettingsForm';
-import { StarSettingsForm } from './settings/StarSettingsForm';
+import {
+  DOMAIN_SETTING_SCHEMAS,
+  DynamicDomainSettings,
+} from './settings/DynamicDomainSettings';
 
 const DOMAIN_TITLE: Record<TrainingDomain, string> = {
   star: '寻星训练偏好设置',
@@ -218,31 +218,11 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
           </div>
         </div>
 
-        {/* 渲染特定领域的表单 */}
-        {domain === 'star' && (
-          <StarSettingsForm
-            settings={domainSettings as StarSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-
-        {domain === 'color' && (
-          <ColorSettingsForm
-            settings={domainSettings as ColorSenseSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-
-        {domain === 'relative_color' && (
-          <RelativeColorSettingsForm
-            settings={domainSettings as RelativeColorSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-
-        {domain === 'negative_space' && (
-          <NegativeSpaceSettingsForm
-            settings={domainSettings as NegativeSpaceSettings}
+        {/* 渲染特定领域的表单 (Schema 驱动) */}
+        {DOMAIN_SETTING_SCHEMAS[domain] && (
+          <DynamicDomainSettings
+            schemas={DOMAIN_SETTING_SCHEMAS[domain]}
+            values={domainSettings}
             onChange={(patch) => updateDomainSettings(patch)}
           />
         )}
