@@ -9,11 +9,24 @@ import {
   TWO_AFC_CANVAS_SIZE,
 } from '../utils/negativeSpaceUtils';
 
+import {
+  findNearestGridPoint,
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+} from '../utils/geometry';
+import {
+  FITTING_CANVAS_SIZE,
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+  TWO_AFC_CANVAS_SIZE,
+} from '../utils/negativeSpaceUtils';
+
 interface NegativeSpaceCanvasProps {
   question: NegativeSpaceQuestionData;
   showAnswer: boolean;
   userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (val: number | 'A' | 'B') => void;
+  onAnswer: (val: number | 'A' | 'B' | Point) => void;
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
@@ -57,6 +70,19 @@ function drawPolygonCanvas(
   }
 }
 
+function drawDot(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  radius: number,
+) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 export function NegativeSpaceCanvas({
   question,
   showAnswer,
@@ -67,6 +93,7 @@ export function NegativeSpaceCanvas({
   showToleranceBand = true,
 }: NegativeSpaceCanvasProps) {
   const is2AFC = question.mode === 'AREA_COMPARISON_2AFC';
+  const isFitting = question.mode === 'NEGATIVE_VERTEX_FITTING';
 
   // === 1. 单图滑块模式状态 ===
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -84,12 +111,18 @@ export function NegativeSpaceCanvas({
   const canvasRefB = useRef<HTMLCanvasElement | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // === 3. 定点反切模式专属画布与状态 ===
+  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
+  const rightFittingRef = useRef<HTMLCanvasElement | null>(null);
+  const [fittingHoverPoint, setFittingHoverPoint] = useState<Point | null>(null);
+
   // 切换题目时重置状态
   useEffect(() => {
     if (question.id) {
       setCurrentVal(50.0);
       setHoverVal(null);
       setSelectedChoice(null);
+      setFittingHoverPoint(null);
     }
   }, [question.id, setHoverVal]);
 
@@ -113,6 +146,101 @@ export function NegativeSpaceCanvas({
     }
   }, [is2AFC, question.verticesA, question.verticesB]);
 
+  // 渲染 定点反切 双 Canvas (左侧参考，右侧截断 + 点阵)
+  useEffect(() => {
+    if (!isFitting || !question.vertices) return;
+
+    // 1. 左侧参考 Canvas：绘制完整多边形与负形
+    const leftCanvas = leftFittingRef.current;
+    if (leftCanvas) {
+      drawPolygonCanvas(leftCanvas, question.vertices, FITTING_CANVAS_SIZE);
+    }
+
+    // 2. 右侧交互 Canvas
+    const rightCanvas = rightFittingRef.current;
+    if (rightCanvas) {
+      const ctx = rightCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, FITTING_CANVAS_SIZE, FITTING_CANVAS_SIZE);
+
+        // 绘制截断残缺多边形
+        if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
+          for (let i = 1; i < question.truncatedVertices.length; i++) {
+            ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = '#0F172A';
+          ctx.fill();
+          ctx.strokeStyle = '#1E293B';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        const distractorPoints = question.distractorPoints || [];
+        const dotRadius = getDynamicDotRadius(distractorPoints);
+        const hoverRadius = Math.max(2.5, dotRadius * 1.6);
+
+        // 绘制候选干扰点阵
+        for (const p of distractorPoints) {
+          drawDot(ctx, p.x, p.y, '#888888', dotRadius);
+        }
+
+        // 鼠标悬停高亮点
+        if (!disabled && !showAnswer && fittingHoverPoint) {
+          drawDot(ctx, fittingHoverPoint.x, fittingHoverPoint.y, '#4F46E5', hoverRadius);
+        }
+
+        // 揭晓状态：反馈绘制
+        if (showAnswer && question.targetPoint) {
+          const { x: tx, y: ty } = question.targetPoint;
+          const { size: chSize, lineWidth: chLineWidth } =
+            getDynamicCrosshairMetrics(distractorPoints);
+
+          // 绘制完整多边形真实线框（绿色半透明补全反馈）
+          ctx.beginPath();
+          ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
+          for (let i = 1; i < question.vertices.length; i++) {
+            ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // 绘制真理顶点十字准星
+          ctx.strokeStyle = '#00AA00';
+          ctx.lineWidth = chLineWidth;
+          ctx.beginPath();
+          ctx.moveTo(tx - chSize, ty);
+          ctx.lineTo(tx + chSize, ty);
+          ctx.moveTo(tx, ty - chSize);
+          ctx.lineTo(tx, ty + chSize);
+          ctx.stroke();
+          drawDot(ctx, tx, ty, '#000000', dotRadius);
+
+          // 若答错，绘制红虚线与用户点击位置
+          if (userAnswer?.nearestGridPoint && !userAnswer.isHit) {
+            const chosen = userAnswer.nearestGridPoint;
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(chosen.x, chosen.y);
+            ctx.lineTo(tx, ty);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            drawDot(ctx, chosen.x, chosen.y, '#FF0000', dotRadius);
+          }
+        }
+      }
+    }
+  }, [isFitting, question, showAnswer, userAnswer, fittingHoverPoint, disabled]);
+
   // 处理 2AFC 点击选择
   const handleSelectChoice = useCallback(
     (choice: 'A' | 'B') => {
@@ -122,6 +250,57 @@ export function NegativeSpaceCanvas({
     },
     [disabled, showAnswer, onAnswer],
   );
+
+  // 定点模式鼠标移动与点击
+  const handleFittingMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer || !question.distractorPoints) {
+      if (fittingHoverPoint) setFittingHoverPoint(null);
+      return;
+    }
+
+    const canvas = rightFittingRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = FITTING_CANVAS_SIZE / rect.width;
+    const scaleY = FITTING_CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(
+      { x: clickX, y: clickY },
+      question.distractorPoints,
+    );
+
+    if (isWithinRange) {
+      setFittingHoverPoint(nearestPoint);
+    } else if (fittingHoverPoint) {
+      setFittingHoverPoint(null);
+    }
+  };
+
+  const handleFittingClick = (e: MouseEvent) => {
+    if (disabled || showAnswer || !question.distractorPoints) return;
+
+    const canvas = rightFittingRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = FITTING_CANVAS_SIZE / rect.width;
+    const scaleY = FITTING_CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const clickPoint: Point = { x: clickX, y: clickY };
+    const { isWithinRange } = findNearestGridPoint(clickPoint, question.distractorPoints);
+
+    if (!isWithinRange) return;
+
+    setFittingHoverPoint(null);
+    onAnswer(clickPoint);
+  };
 
   // 键盘快捷键监听
   useEffect(() => {
@@ -136,7 +315,7 @@ export function NegativeSpaceCanvas({
           e.preventDefault();
           handleSelectChoice('B');
         }
-      } else {
+      } else if (!isFitting) {
         if (e.code === 'Space' || e.key === ' ') {
           e.preventDefault();
           onAnswer(currentVal);
@@ -145,7 +324,93 @@ export function NegativeSpaceCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [is2AFC, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice]);
+  }, [is2AFC, isFitting, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice]);
+
+  // =========================================================================
+  // 模式 C：NEGATIVE_VERTEX_FITTING 负形反向还原顶点视图
+  // =========================================================================
+  if (isFitting) {
+    return (
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            <Columns className="w-5 h-5 text-indigo-600" />
+            观察负形留白被挤压的轮廓，点击确定右侧被隐藏的正形顶点
+          </div>
+          <p className="text-xs text-slate-400">
+            左侧为完整剪影参考，右侧正形关键拐角被截断。请对比两侧负形空间形态，在右侧点阵中精准定位顶点。
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
+          {/* 左侧参考 Canvas */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              完整剪影参考
+            </span>
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={leftFittingRef}
+                width={FITTING_CANVAS_SIZE}
+                height={FITTING_CANVAS_SIZE}
+                className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
+              />
+            </div>
+          </div>
+
+          {/* 右侧互动做答 Canvas */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+              交互定点画布 (点击做答)
+            </span>
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={rightFittingRef}
+                width={FITTING_CANVAS_SIZE}
+                height={FITTING_CANVAS_SIZE}
+                onClick={handleFittingClick}
+                onMouseMove={handleFittingMouseMove}
+                onMouseLeave={() => setFittingHoverPoint(null)}
+                className={`w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm transition-all ${
+                  disabled || showAnswer
+                    ? 'cursor-default'
+                    : fittingHoverPoint
+                      ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+                      : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 答案揭晓诊断条 */}
+        {showAnswer && (
+          <div className="w-full max-w-xl bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '精准命中目标顶点！' : '定点定位出现偏差'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (像素误差:{' '}
+                  <strong className="font-mono text-slate-700">{userAnswer?.errorValue}px</strong>)
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // =========================================================================
   // 模式 A：2AFC 负形面积二分判别视图

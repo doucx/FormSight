@@ -1,9 +1,20 @@
 import type { Point } from '../types';
+import {
+  calcDistance,
+  checkHit,
+  findNearestGridPoint,
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+} from './geometry';
 
-export type NegativeSpaceMode = 'RATIO_ESTIMATION' | 'AREA_COMPARISON_2AFC';
+export type NegativeSpaceMode =
+  | 'RATIO_ESTIMATION'
+  | 'AREA_COMPARISON_2AFC'
+  | 'NEGATIVE_VERTEX_FITTING';
 
 export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
 export const TWO_AFC_CANVAS_SIZE = 280;
+export const FITTING_CANVAS_SIZE = 340;
 
 export interface NegativeSpaceQuestionData {
   id: string;
@@ -26,6 +37,13 @@ export interface NegativeSpaceQuestionData {
   negRatioB?: number;
   largerSide?: 'A' | 'B';
   areaDeltaPercent?: number; // 相对面积差异百分比 (例如 12.5%)
+
+  // 负形反切定点模式字段
+  targetVertexIndex?: number;
+  targetPoint?: Point;
+  truncatedVertices?: Point[]; // 右侧截断残缺多边形
+  distractorPoints?: Point[]; // 围绕 targetPoint 的干扰网格点
+  gridDim?: number;
 }
 
 export interface NegativeSpaceHitResult {
@@ -40,6 +58,11 @@ export interface NegativeSpaceHitResult {
   correctChoice?: 'A' | 'B';
   negRatioA?: number;
   negRatioB?: number;
+
+  // 定点模式结果字段
+  clickPoint?: Point;
+  nearestGridPoint?: Point;
+  isWithinRange?: boolean;
 }
 
 /**
@@ -73,21 +96,24 @@ export function getNegativeSpaceToleranceForLevel(level: number): number {
 /**
  * 随机生成不自交的不规则正形多边形
  */
-export function generateRandomPolygon(level: number): Point[] {
+export function generateRandomPolygon(
+  level: number,
+  canvasSize = NEGATIVE_SPACE_CANVAS_SIZE,
+): Point[] {
   const clamped = Math.max(1, Math.min(35, level));
   const t = (clamped - 1) / 34;
 
-  // 顶点数量：Level 1 为 3~4，Level 35 为 7~11
-  const minVerts = 3 + Math.floor(t * 4);
-  const maxVerts = 4 + Math.floor(t * 7);
+  // 顶点数量：Level 1 为 4，Level 35 为 8
+  const minVerts = 4 + Math.floor(t * 2);
+  const maxVerts = 4 + Math.floor(t * 4);
   const vertexCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
 
-  const cx = NEGATIVE_SPACE_CANVAS_SIZE / 2 + (Math.random() - 0.5) * 40;
-  const cy = NEGATIVE_SPACE_CANVAS_SIZE / 2 + (Math.random() - 0.5) * 40;
+  const cx = canvasSize / 2 + (Math.random() - 0.5) * (canvasSize * 0.1);
+  const cy = canvasSize / 2 + (Math.random() - 0.5) * (canvasSize * 0.1);
 
   // 基础半径与扰动率
-  const baseRadius = 80 + Math.random() * 60; // 80..140
-  const irregularity = 0.2 + t * 0.55; // 0.2..0.75 凹凸度
+  const baseRadius = canvasSize * 0.28 + Math.random() * (canvasSize * 0.1);
+  const irregularity = 0.2 + t * 0.45; // 0.2..0.65 凹凸度
 
   // 极角切分并随机抖动
   const angles: number[] = [];
@@ -101,13 +127,9 @@ export function generateRandomPolygon(level: number): Point[] {
   const vertices: Point[] = [];
   for (const a of angles) {
     const rJitter = 1 + (Math.random() * 2 - 1) * irregularity;
-    const r = Math.max(25, Math.min(185, baseRadius * rJitter));
-    const x = Math.round(
-      Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cx + r * Math.cos(a))),
-    );
-    const y = Math.round(
-      Math.max(10, Math.min(NEGATIVE_SPACE_CANVAS_SIZE - 10, cy + r * Math.sin(a))),
-    );
+    const r = Math.max(canvasSize * 0.1, Math.min(canvasSize * 0.42, baseRadius * rJitter));
+    const x = Math.round(Math.max(15, Math.min(canvasSize - 15, cx + r * Math.cos(a))));
+    const y = Math.round(Math.max(15, Math.min(canvasSize - 15, cy + r * Math.sin(a))));
     vertices.push({ x, y });
   }
 
@@ -239,6 +261,75 @@ export function generateNegativeSpaceQuestion(
     };
   }
 
+  if (mode === 'NEGATIVE_VERTEX_FITTING') {
+    const canvasArea = FITTING_CANVAS_SIZE * FITTING_CANVAS_SIZE;
+    const vertices = generateRandomPolygon(clampedLevel, FITTING_CANVAS_SIZE);
+    const n = vertices.length;
+
+    // 选取一个目标关键拐点
+    const targetVertexIndex = Math.floor(Math.random() * n);
+    const targetPoint = vertices[targetVertexIndex];
+
+    const prevIdx = (targetVertexIndex - 1 + n) % n;
+    const nextIdx = (targetVertexIndex + 1) % n;
+    const prevPoint = vertices[prevIdx];
+    const nextPoint = vertices[nextIdx];
+
+    // 计算截断正形多边形（在目标顶点两侧各截去 45% 的线段长度）
+    const cutRatio = 0.45;
+    const cutPrev: Point = {
+      x: Math.round(prevPoint.x + (targetPoint.x - prevPoint.x) * (1 - cutRatio)),
+      y: Math.round(prevPoint.y + (targetPoint.y - prevPoint.y) * (1 - cutRatio)),
+    };
+    const cutNext: Point = {
+      x: Math.round(nextPoint.x + (targetPoint.x - nextPoint.x) * (1 - cutRatio)),
+      y: Math.round(nextPoint.y + (targetPoint.y - nextPoint.y) * (1 - cutRatio)),
+    };
+
+    const truncatedVertices: Point[] = [];
+    for (let i = 0; i < n; i++) {
+      if (i === targetVertexIndex) {
+        truncatedVertices.push(cutPrev);
+        truncatedVertices.push(cutNext);
+      } else {
+        truncatedVertices.push(vertices[i]);
+      }
+    }
+
+    // 围绕 targetPoint 构建局部干扰网格点 (点间距 S 随 Level 从 24px 缩紧至 3.5px)
+    const gridDim = 3;
+    const S_MAX = 24;
+    const S_MIN = 3.5;
+    const t = (clampedLevel - 1) / 34;
+    const S = S_MAX * (S_MIN / S_MAX) ** t;
+
+    const targetRow = Math.floor(Math.random() * gridDim);
+    const targetCol = Math.floor(Math.random() * gridDim);
+    const distractorPoints: Point[] = [];
+
+    for (let r = 0; r < gridDim; r++) {
+      for (let c = 0; c < gridDim; c++) {
+        const x = Math.round((targetPoint.x + (c - targetCol) * S) * 100) / 100;
+        const y = Math.round((targetPoint.y + (r - targetRow) * S) * 100) / 100;
+        distractorPoints.push({ x, y });
+      }
+    }
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      canvasArea,
+      vertices,
+      targetVertexIndex,
+      targetPoint,
+      truncatedVertices,
+      distractorPoints,
+      gridDim,
+      tolerance: S / 2,
+    };
+  }
+
   // 默认 RATIO_ESTIMATION 滑块评估模式
   const tolerance = getNegativeSpaceToleranceForLevel(clampedLevel);
   const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
@@ -273,9 +364,25 @@ export function generateNegativeSpaceQuestion(
  * 答题结果检测与评估
  */
 export function checkNegativeSpaceHit(
-  userAnswer: number | 'A' | 'B',
+  userAnswer: number | 'A' | 'B' | Point,
   question: NegativeSpaceQuestionData,
 ): NegativeSpaceHitResult {
+  if (question.mode === 'NEGATIVE_VERTEX_FITTING') {
+    const clickPoint = userAnswer as Point;
+    const targetPoint = question.targetPoint ?? { x: 0, y: 0 };
+    const distractorPoints = question.distractorPoints ?? [];
+
+    const hitRes = checkHit(clickPoint, targetPoint, distractorPoints);
+    return {
+      isHit: hitRes.isHit,
+      clickPoint,
+      nearestGridPoint: hitRes.nearestGridPoint,
+      errorValue: hitRes.errorDistance,
+      tolerance: question.tolerance,
+      isWithinRange: hitRes.isWithinRange,
+    };
+  }
+
   if (question.mode === 'AREA_COMPARISON_2AFC') {
     const userChoice = userAnswer as 'A' | 'B';
     const isHit = userChoice === question.largerSide;
