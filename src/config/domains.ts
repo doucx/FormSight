@@ -1,4 +1,5 @@
 import {
+  Columns,
   Compass,
   Crosshair,
   Droplet,
@@ -140,6 +141,12 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
         title: '负形占比滑块评估',
         desc: '估计不规则几何多边形外部留白（负形）占整幅画面的面积百分比，强化空间直觉。',
         icon: Maximize2,
+      },
+      {
+        id: 'AREA_COMPARISON_2AFC',
+        title: '负形面积二分判别',
+        desc: '快速对比两个形状各异的不规则多边形留白（负形），二选一判别哪侧留白面积更大 (2AFC)。',
+        icon: Columns,
       },
     ],
   },

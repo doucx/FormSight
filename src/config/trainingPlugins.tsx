@@ -208,24 +208,37 @@ export const relativeColorPlugin: TrainingPlugin<
 export const negativeSpacePlugin: TrainingPlugin<
   NegativeSpaceQuestionData,
   NegativeSpaceHitResult,
-  number,
+  number | 'A' | 'B',
   NegativeSpaceSettings
 > = {
   domain: 'negative_space',
   title: '正负形感知',
-  getModeBadge: () => '负形占比估算',
+  getModeBadge: (mode) => (mode === 'AREA_COMPARISON_2AFC' ? '负形面积二分判别' : '负形占比估算'),
   generateQuestion: (mode, level) =>
     generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
-  evaluateAnswer: (userRatio, q) => checkNegativeSpaceHit(userRatio, q),
+  evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal) => ({
-    targetNegativeRatio: q.targetNegativeRatio,
-    userRatio: userVal,
-    errorValue: hitResult.errorValue,
-    positiveArea: q.positiveArea,
-    negativeArea: q.negativeArea,
-  }),
+  extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'AREA_COMPARISON_2AFC') {
+      return {
+        mode: 'AREA_COMPARISON_2AFC',
+        userChoice: userVal,
+        correctChoice: q.largerSide,
+        negRatioA: q.negRatioA,
+        negRatioB: q.negRatioB,
+        areaDeltaPercent: q.areaDeltaPercent,
+        errorValue: hitResult.errorValue,
+      };
+    }
+    return {
+      targetNegativeRatio: q.targetNegativeRatio,
+      userRatio: userVal,
+      errorValue: hitResult.errorValue,
+      positiveArea: q.positiveArea,
+      negativeArea: q.negativeArea,
+    };
+  },
   renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
     <NegativeSpaceCanvas
       question={question}
