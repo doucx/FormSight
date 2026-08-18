@@ -219,7 +219,7 @@ export function SettingsModal({ domain, settings, onClose, onSave }: SettingsMod
         {DOMAIN_SETTING_SCHEMAS[domain] && (
           <DynamicDomainSettings
             schemas={DOMAIN_SETTING_SCHEMAS[domain]}
-            values={domainSettings}
+            values={domainSettings as unknown as Record<string, unknown>}
             onChange={(patch) => updateDomainSettings(patch)}
           />
         )}
