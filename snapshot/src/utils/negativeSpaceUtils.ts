@@ -189,8 +189,10 @@ export function generateNegativeSpaceQuestion(
     const baseNegRatio = 0.45 + Math.random() * 0.3;
     const halfDelta = delta / 2;
 
-    const negRatioA = largerSide === 'A' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
-    const negRatioB = largerSide === 'B' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
+    const negRatioA =
+      largerSide === 'A' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
+    const negRatioB =
+      largerSide === 'B' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
 
     const clampedRatioA = Math.max(0.2, Math.min(0.88, negRatioA));
     const clampedRatioB = Math.max(0.2, Math.min(0.88, negRatioB));
@@ -217,7 +219,8 @@ export function generateNegativeSpaceQuestion(
     const finalRatioA = Math.round((actualNegA / canvasArea) * 1000) / 10;
     const finalRatioB = Math.round((actualNegB / canvasArea) * 1000) / 10;
     const finalLarger: 'A' | 'B' = actualNegA >= actualNegB ? 'A' : 'B';
-    const actualDeltaPercent = Math.round((Math.abs(actualNegA - actualNegB) / ((actualNegA + actualNegB) / 2)) * 1000) / 10;
+    const actualDeltaPercent =
+      Math.round((Math.abs(actualNegA - actualNegB) / ((actualNegA + actualNegB) / 2)) * 1000) / 10;
 
     return {
       id,

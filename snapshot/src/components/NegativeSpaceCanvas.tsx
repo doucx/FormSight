@@ -10,9 +10,9 @@ import { Check, Columns, Sparkles, X } from 'lucide-preact';
 import type { Point } from '../types';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
-  TWO_AFC_CANVAS_SIZE,
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
+  TWO_AFC_CANVAS_SIZE,
 } from '../utils/negativeSpaceUtils';
 
 interface NegativeSpaceCanvasProps {
@@ -167,7 +167,15 @@ export function NegativeSpaceCanvas({
             判别哪一侧的白色留白 (负形) 面积更大？
           </div>
           <p className="text-xs text-slate-400">
-            按快捷键 <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">1</kbd> 选择 A，按 <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">2</kbd> 选择 B，或直接点击卡片
+            按快捷键{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              1
+            </kbd>{' '}
+            选择 A，按{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              2
+            </kbd>{' '}
+            选择 B，或直接点击卡片
           </p>
         </div>
 
@@ -286,7 +294,9 @@ export function NegativeSpaceCanvas({
             <div className="flex items-center gap-2">
               <div
                 className={`p-1.5 rounded-xl ${
-                  userAnswer?.isHit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
                 }`}
               >
                 {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
@@ -296,7 +306,9 @@ export function NegativeSpaceCanvas({
                   {userAnswer?.isHit ? '瞬时直觉判断正确！' : '直觉判断出现偏差'}
                 </span>
                 <span className="text-slate-400 ml-2">
-                  (留白实际差异率 Δ = <strong className="font-mono text-slate-700">{question.areaDeltaPercent}%</strong>)
+                  (留白实际差异率 Δ ={' '}
+                  <strong className="font-mono text-slate-700">{question.areaDeltaPercent}%</strong>
+                  )
                 </span>
               </div>
             </div>
