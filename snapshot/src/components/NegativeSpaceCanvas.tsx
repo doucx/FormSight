@@ -1,12 +1,6 @@
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { Check, Columns, X } from 'lucide-preact';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/negativeSpaceUtils';
-
-import { Check, Columns, Sparkles, X } from 'lucide-preact';
 import type { Point } from '../types';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
@@ -23,6 +17,44 @@ interface NegativeSpaceCanvasProps {
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
+}
+
+// 辅助绘图函数：在给定 canvas 上绘制多边形正形与白色负形底
+function drawPolygonCanvas(
+  canvas: HTMLCanvasElement | null,
+  vertices: Point[] | undefined,
+  size: number,
+  isHighlighted?: boolean,
+) {
+  if (!canvas || !vertices || vertices.length < 3) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // 清屏绘制纯白底色（白色留白即负形）
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, size, size);
+
+  // 绘制正形多边形
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+  for (let i = 1; i < vertices.length; i++) {
+    ctx.lineTo(vertices[i].x, vertices[i].y);
+  }
+  ctx.closePath();
+
+  ctx.fillStyle = '#0F172A'; // Slate-900 黑色正形
+  ctx.fill();
+
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 高亮加粗外边框反馈
+  if (isHighlighted) {
+    ctx.strokeStyle = '#22C55E';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  }
 }
 
 export function NegativeSpaceCanvas({
@@ -61,44 +93,6 @@ export function NegativeSpaceCanvas({
     }
   }, [question.id, setHoverVal]);
 
-  // 辅助绘图函数：在给定 canvas 上绘制多边形正形与白色负形底
-  const drawPolygonCanvas = (
-    canvas: HTMLCanvasElement | null,
-    vertices: Point[] | undefined,
-    size: number,
-    isHighlighted?: boolean,
-  ) => {
-    if (!canvas || !vertices || vertices.length < 3) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // 清屏绘制纯白底色（白色留白即负形）
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, size, size);
-
-    // 绘制正形多边形
-    ctx.beginPath();
-    ctx.moveTo(vertices[0].x, vertices[0].y);
-    for (let i = 1; i < vertices.length; i++) {
-      ctx.lineTo(vertices[i].x, vertices[i].y);
-    }
-    ctx.closePath();
-
-    ctx.fillStyle = '#0F172A'; // Slate-900 黑色正形
-    ctx.fill();
-
-    ctx.strokeStyle = '#1E293B';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // 高亮加粗外边框反馈
-    if (isHighlighted) {
-      ctx.strokeStyle = '#22C55E';
-      ctx.lineWidth = 3;
-      ctx.stroke();
-    }
-  };
-
   // 渲染单图滑块 Canvas
   useEffect(() => {
     if (!is2AFC && question.vertices) {
@@ -120,11 +114,14 @@ export function NegativeSpaceCanvas({
   }, [is2AFC, question.verticesA, question.verticesB]);
 
   // 处理 2AFC 点击选择
-  const handleSelectChoice = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
+  const handleSelectChoice = useCallback(
+    (choice: 'A' | 'B') => {
+      if (disabled || showAnswer) return;
+      setSelectedChoice(choice);
+      onAnswer(choice);
+    },
+    [disabled, showAnswer, onAnswer],
+  );
 
   // 键盘快捷键监听
   useEffect(() => {
@@ -148,7 +145,7 @@ export function NegativeSpaceCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [is2AFC, disabled, showAnswer, currentVal, onAnswer]);
+  }, [is2AFC, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice]);
 
   // =========================================================================
   // 模式 A：2AFC 负形面积二分判别视图

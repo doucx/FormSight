@@ -66,7 +66,7 @@ describe('negativeSpaceUtils', () => {
     const q = generateNegativeSpaceQuestion('RATIO_ESTIMATION', 10);
     expect(q.mode).toBe('RATIO_ESTIMATION');
     expect(q.canvasArea).toBe(NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE);
-    expect(q.positiveArea + q.negativeArea).toBeCloseTo(q.canvasArea, -1);
+    expect(q.positiveArea! + q.negativeArea!).toBeCloseTo(q.canvasArea, -1);
     expect(q.targetNegativeRatio).toBeGreaterThan(15);
     expect(q.targetNegativeRatio).toBeLessThan(85);
   });
