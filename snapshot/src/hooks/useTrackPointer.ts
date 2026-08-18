@@ -23,17 +23,19 @@ export function useTrackPointer({
   const [hoverVal, setHoverVal] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
-  // 当 disabled 切换时重置拖拽状态与悬停指示
+  // 当 disabled 切换时重置拖拽状态与悬停指示 (增加守护条件防止空状态无限循环触发)
   useEffect(() => {
     if (disabled) {
       if (isDragging) {
         setIsDragging(false);
         onDraggingStateChange?.(false);
       }
-      setHoverVal(null);
-      onHoverStateChange?.(null);
+      if (hoverVal !== null) {
+        setHoverVal(null);
+        onHoverStateChange?.(null);
+      }
     }
-  }, [disabled, isDragging, onDraggingStateChange, onHoverStateChange]);
+  }, [disabled, isDragging, hoverVal, onDraggingStateChange, onHoverStateChange]);
 
   const calcValFromClientX = (clientX: number): number | null => {
     if (!trackRef.current) return null;

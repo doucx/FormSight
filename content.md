@@ -1,469 +1,309 @@
-我已定位问题原因并完成修复方案设计。
+在综合拾色（ALL 模式）下，提交答案后导致网页卡死的根本原因是 **`useTrackPointer` 与 `ColorCanvas` 之间形成了无限级联重新渲染死循环（Infinite Re-render Loop）**。
 
-## [WIP] fix(color): 修复非答题参考轨道在揭晓答案时错误显示作答反馈标线的问题
+我已为你精确定位了原因并准备了修复计划。
+
+## [WIP] fix: 修复综合拾色提交答案后无限重渲染导致的页面卡死问题
 
 ### 错误分析
-1. **参考轨道错误接收了目标维度的作答值**：
-   - 在明度（V）或饱和度（S）练习模式下，色相（H）轨仅作为已知参考条件，用户并未对 H 轨作答。
-   - 但在 `ColorCanvas.tsx` 中，H 轨无条件传入了 `userVal={userAnswer?.userValue}` 和 `isHit={userAnswer?.isHit}`。
-   - 这导致当 V 题答完后，用户在 V 轨选择的值（如 80%）被直接当成了 H 轨的提交值（解析为 80°），同时触发了 H 轨的答案揭晓状态。
-2. **`HsvTrackSlider` 未隔离参考轨的答案状态**：
-   - `HsvTrackSlider` 只要在 `showAnswer === true` 时，如果接收到 `userVal`，就会无差别绘制真理位（绿色）和提交位（红/绿）两条标线。
-   - 对于非作答的纯参考轨，在答题结束揭晓时应保持正常的参考值黑色标线与中性文字颜色。
+
+1. **死循环诱发链路**：
+   - 当用户在综合拾色（ALL 模式）提交答案时，`showAnswer` 状态从 `false` 变为 `true`。
+   - `HsvTrackSlider` 接收到 `showAnswer=true` 后，将 `disabled = disabled || showAnswer`（即 `true`）传入 `useTrackPointer` Hook。
+   - `useTrackPointer` 内的 `useEffect` 监听了 `[disabled, isDragging, onDraggingStateChange, onHoverStateChange]`。当 `disabled === true` 时，该 Hook **无条件执行**了 `onHoverStateChange?.(null)`。
+2. **状态级联与引用失效**：
+   - 在 `ColorCanvas.tsx` 中，`onHoverStateChange` 是直接在 JSX 中以内联箭头函数 `(hVal) => setAllHoverVals(...)` 的形式传入的。
+   - `onHoverStateChange(null)` 触发了 `ColorCanvas` 的 `setAllHoverVals`，导致父组件 `ColorCanvas` 重新渲染。
+   - `ColorCanvas` 重新渲染生成了**全新的匿名函数引用**并下发给 `useTrackPointer`。
+3. **死锁发生**：
+   - `useTrackPointer` 的 `useEffect` 检测到依赖项 `onHoverStateChange` 引用变化，且 `disabled` 依然为 `true`，再次无条件调用 `onHoverStateChange(null)`。
+   - 这导致了同步的无限重渲染死循环，在瞬间耗尽微任务队列并彻底冻结 JavaScript 主线程。
 
 ### 用户需求
-在单维度练习模式（如明度 V 模式、饱和度 S 模式）下，仅有当前正在练习的目标轨道在作答后显示真理位与用户提交位标线，其余作为已知条件的参考轨道（如 H 轨）应始终保持静态参考展示。
+
+修复综合拾色模式提交答案时网页卡死的问题，确保答案揭晓、反馈展示与自动/手动切题流程平滑执行。
 
 ### 评论
-该问题属于单维度复用统一滑块组件时的 Props 传递污染。明确将 `userVal` 与 `isHit` 限制在 `mode === targetMode` 下传递，并在滑块内部严格校验作答数据，能够彻底解决参考轨道的视觉污染。
+
+这是一个典型的 React/Preact Hooks 闭包与内联回调联动导致的级联重渲染 Bug。解决该问题需要进行双重防御：一是修正 `useTrackPointer` 的重置条件（仅在 `hoverVal !== null` 或 `isDragging` 时清理），二是稳定 `ColorCanvas` 传递的回调函数引用并在状态无变化时跳过更新。
 
 ### 目标
-1. 在 `ColorCanvas.tsx` 中对单维度模式下的 H、S、V 轨道的 `userVal` 与 `isHit` 增加条件判断，仅当当前练习模式与轨道对应时才传递。
-2. 在 `HsvTrackSlider.tsx` 中优化 `showAnswer` 渲染条件：只有存在有效 `userVal` 的作答轨道才绘制揭晓指示线，参考轨继续保持静态标线。
+
+1. 修复 `useTrackPointer.ts`：在 `disabled === true` 时仅在状态确实非空时清理 `hoverVal` 并通知回调，防止空状态下重复触发回调。
+2. 优化 `ColorCanvas.tsx`：使用 `useCallback` 稳定各轨道的悬停与拖拽回调函数引用，并在值未变更时避免创建新状态对象。
 
 ### 基本原理
-- **精确按需传参**：只有当前正在训练的维度才具备 `userVal` 与 `isHit`，非训练维度传入 `undefined`。
-- **纯参考轨语义化保持**：若轨道没有 `userVal`，即使整体处于 `showAnswer` 状态，该轨道仍作为只读参考轨渲染基准黑色细线与当前颜色参数。
+
+通过为 `useTrackPointer` 的 `disabled` 重置逻辑增加守护条件（Guard Clauses），截断状态已为 `null` 时的多余通知；同时通过 `useCallback` 与浅比较避免回调函数在父组件渲染时的引用突变，从根本上杜绝死循环链路。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/track-slider #task/action/bug-fix #task/state/continue #task/status/active
+
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/ui #task/object/color-canvas #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修正 `ColorCanvas.tsx` 单维度轨道的作答状态传递
+#### Acts 1: 修复 `useTrackPointer.ts` 中的守护条件
+
+在 `disabled` 为 `true` 时，只有当 `hoverVal` 不为 `null` 或 `isDragging` 为 `true` 时才执行清理与通知，避免无意义的重复通知。
+
+~~~~~act
+patch_file
+src/hooks/useTrackPointer.ts
+~~~~~
+~~~~~typescript.old
+  // 当 disabled 切换时重置拖拽状态与悬停指示
+  useEffect(() => {
+    if (disabled) {
+      if (isDragging) {
+        setIsDragging(false);
+        onDraggingStateChange?.(false);
+      }
+      setHoverVal(null);
+      onHoverStateChange?.(null);
+    }
+  }, [disabled, isDragging, onDraggingStateChange, onHoverStateChange]);
+~~~~~
+~~~~~typescript.new
+  // 当 disabled 切换时重置拖拽状态与悬停指示 (增加守护条件防止空状态无限循环触发)
+  useEffect(() => {
+    if (disabled) {
+      if (isDragging) {
+        setIsDragging(false);
+        onDraggingStateChange?.(false);
+      }
+      if (hoverVal !== null) {
+        setHoverVal(null);
+        onHoverStateChange?.(null);
+      }
+    }
+  }, [disabled, isDragging, hoverVal, onDraggingStateChange, onHoverStateChange]);
+~~~~~
+
+#### Acts 2: 优化 `ColorCanvas.tsx` 中的回调函数引用与状态更新
+
+使用 `useCallback` 稳定 H/S/V 轨道的悬停与拖拽回调函数，避免父组件重新渲染时传递不稳定的内联函数。
 
 ~~~~~act
 patch_file
 src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-            {/* 单维度模式 H 轨 */}
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={targetH}
-              max={360}
-              unit="°"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetH}
-              userVal={userAnswer?.userValue}
-              isHit={userAnswer?.isHit}
-              isInteractiveTarget={mode === 'H'}
-              onCommit={(v) => {
-                if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
-              }}
-              disabled={disabled || mode !== 'H'}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand && mode === 'H'}
-            />
-
-            {/* 单维度模式 S 轨 */}
-            {mode === 'S' && (
-              <HsvTrackSlider
-                label="S"
-                gradient={satGradient}
-                val={targetS}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetS}
-                userVal={userAnswer?.userValue}
-                isHit={userAnswer?.isHit}
-                isInteractiveTarget={true}
-                onCommit={(v) => {
-                  if (!showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
-            )}
-
-            {/* 单维度模式 V 轨 */}
-            {(mode === 'V' || mode === 'S') && (
-              <HsvTrackSlider
-                label="V"
-                gradient={valGradient}
-                val={targetV}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetV}
-                userVal={mode === 'V' ? userAnswer?.userValue : targetV}
-                isHit={mode === 'V' ? userAnswer?.isHit : undefined}
-                isInteractiveTarget={mode === 'V'}
-                onCommit={(v) => {
-                  if (mode === 'V' && !showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled || mode !== 'V'}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand && mode === 'V'}
-              />
-            )}
+import { useEffect, useState } from 'preact/hooks';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
+import { HsvTrackSlider } from './HsvTrackSlider';
 ~~~~~
 ~~~~~typescript.new
-            {/* 单维度模式 H 轨 */}
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={targetH}
-              max={360}
-              unit="°"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetH}
-              userVal={mode === 'H' ? userAnswer?.userValue : undefined}
-              isHit={mode === 'H' ? userAnswer?.isHit : undefined}
-              isInteractiveTarget={mode === 'H'}
-              onCommit={(v) => {
-                if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
-              }}
-              disabled={disabled || mode !== 'H'}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand && mode === 'H'}
-            />
-
-            {/* 单维度模式 S 轨 */}
-            {mode === 'S' && (
-              <HsvTrackSlider
-                label="S"
-                gradient={satGradient}
-                val={targetS}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetS}
-                userVal={mode === 'S' ? userAnswer?.userValue : undefined}
-                isHit={mode === 'S' ? userAnswer?.isHit : undefined}
-                isInteractiveTarget={true}
-                onCommit={(v) => {
-                  if (!showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
-            )}
-
-            {/* 单维度模式 V 轨 */}
-            {(mode === 'V' || mode === 'S') && (
-              <HsvTrackSlider
-                label="V"
-                gradient={valGradient}
-                val={targetV}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetV}
-                userVal={mode === 'V' ? userAnswer?.userValue : undefined}
-                isHit={mode === 'V' ? userAnswer?.isHit : undefined}
-                isInteractiveTarget={mode === 'V'}
-                onCommit={(v) => {
-                  if (mode === 'V' && !showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled || mode !== 'V'}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand && mode === 'V'}
-              />
-            )}
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
+import { HsvTrackSlider } from './HsvTrackSlider';
 ~~~~~
-
-#### Acts 2: 优化 `HsvTrackSlider.tsx` 参考轨在揭晓状态下的表现
 
 ~~~~~act
 patch_file
-src/components/HsvTrackSlider.tsx
+src/components/ColorCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-  const renderLabelText = () => {
-    if (showAnswer) {
-      return `${userVal !== undefined ? userVal : val}${unit}`;
+  // ALL 模式下悬停与拖拽状态 (控制右侧色块预览)
+  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
+    H: null,
+    S: null,
+    V: null,
+  });
+  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
+
+  // 题目切换时重置 ALL 模式状态
+  useEffect(() => {
+    if (mode === 'ALL') {
+      setUserH(180);
+      setUserS(50);
+      setUserV(50);
+      setAllHoverVals({ H: null, S: null, V: null });
+      setDraggingLabel(null);
     }
-    if (isInteractiveTarget) {
-      return hoverVal !== null ? `${hoverVal}${unit}` : '?';
-    }
-    return `${activeVal}${unit}`;
+  }, [mode]);
+
+  const handleSubmitAll = () => {
+    if (disabled || showAnswer) return;
+    onAnswer([userH, userS, userV]);
   };
-
-  return (
-    <div className="flex items-center gap-3 w-full">
-      <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
-
-      <div
-        {...pointerProps}
-        style={
-          hitMargin > 0
-            ? {
-                paddingLeft: `${hitMargin}px`,
-                paddingRight: `${hitMargin}px`,
-                marginLeft: `-${hitMargin}px`,
-                marginRight: `-${hitMargin}px`,
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                marginTop: '-6px',
-                marginBottom: '-6px',
-              }
-            : undefined
-        }
-        className={`relative flex-1 flex items-center select-none touch-none ${
-          !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
-        }`}
-      >
-        <div
-          ref={trackRef}
-          className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
-          style={{ background: gradient }}
-        >
-          {/* 当前设定值标记线：在非目标盲测轨道显示 */}
-          {!showAnswer && !isInteractiveTarget && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
-              style={{ left: getPercent(val, max) }}
-            />
-          )}
-
-          {/* 动态 ΔE 容错感应指示线 */}
-          {!showAnswer &&
-            showToleranceBand &&
-            (hoverVal !== null || !isInteractiveTarget) &&
-            (() => {
-              const currentTuple: [number, number, number] = allUserHSV
-                ? [
-                    label === 'H' ? activeVal : allUserHSV[0],
-                    label === 'S' ? activeVal : allUserHSV[1],
-                    label === 'V' ? activeVal : allUserHSV[2],
-                  ]
-                : [
-                    label === 'H' ? activeVal : targetHSV[0],
-                    label === 'S' ? activeVal : targetHSV[1],
-                    label === 'V' ? activeVal : targetHSV[2],
-                  ];
-
-              const span = getToleranceSpan(
-                label,
-                activeVal,
-                targetHSV,
-                difficultyLevel,
-                currentTuple,
-              );
-              const isWrapMode = label === 'H';
-              const leftVal = isWrapMode
-                ? (activeVal - span.halfSpan + max) % max
-                : Math.max(0, activeVal - span.halfSpan);
-              const rightVal = isWrapMode
-                ? (activeVal + span.halfSpan + max) % max
-                : Math.min(max, activeVal + span.halfSpan);
-
-              return (
-                <>
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(leftVal / max) * 100}%` }}
-                  />
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(rightVal / max) * 100}%` }}
-                  />
-                </>
-              );
-            })()}
-
-          {/* 鼠标悬停准心线 */}
-          {!showAnswer && hoverVal !== null && (isInteractiveTarget || hoverVal !== val) && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-75"
-              style={{ left: getPercent(hoverVal, max) }}
-            />
-          )}
-
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
-                style={{ left: getPercent(actualTargetVal, max) }}
-              />
-              {userVal !== undefined && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-10`}
-                  style={{ left: getPercent(userVal, max) }}
-                />
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      <span
-        className={`w-12 text-right font-mono font-bold text-xs ${
-          isInteractiveTarget && !showAnswer
-            ? 'text-amber-500'
-            : showAnswer && isHit
-              ? 'text-emerald-600'
-              : showAnswer
-                ? 'text-rose-600'
-                : 'text-slate-700'
-        }`}
-      >
-        {renderLabelText()}
-      </span>
-    </div>
-  );
 ~~~~~
 ~~~~~typescript.new
-  const isAnswerRevealed = showAnswer && userVal !== undefined;
+  // ALL 模式下悬停与拖拽状态 (控制右侧色块预览)
+  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
+    H: null,
+    S: null,
+    V: null,
+  });
+  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
 
-  const renderLabelText = () => {
-    if (isAnswerRevealed) {
-      return `${userVal}${unit}`;
-    }
-    if (isInteractiveTarget && !showAnswer) {
-      return hoverVal !== null ? `${hoverVal}${unit}` : '?';
-    }
-    return `${activeVal}${unit}`;
-  };
-
-  return (
-    <div className="flex items-center gap-3 w-full">
-      <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
-
-      <div
-        {...pointerProps}
-        style={
-          hitMargin > 0
-            ? {
-                paddingLeft: `${hitMargin}px`,
-                paddingRight: `${hitMargin}px`,
-                marginLeft: `-${hitMargin}px`,
-                marginRight: `-${hitMargin}px`,
-                paddingTop: '6px',
-                paddingBottom: '6px',
-                marginTop: '-6px',
-                marginBottom: '-6px',
-              }
-            : undefined
-        }
-        className={`relative flex-1 flex items-center select-none touch-none ${
-          !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
-        }`}
-      >
-        <div
-          ref={trackRef}
-          className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
-          style={{ background: gradient }}
-        >
-          {/* 当前设定值标记线：在非目标盲测轨道、或非揭晓状态的参考轨道上显示 */}
-          {(!showAnswer && !isInteractiveTarget) || (showAnswer && userVal === undefined) ? (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
-              style={{ left: getPercent(val, max) }}
-            />
-          ) : null}
-
-          {/* 动态 ΔE 容错感应指示线 */}
-          {!showAnswer &&
-            showToleranceBand &&
-            (hoverVal !== null || !isInteractiveTarget) &&
-            (() => {
-              const currentTuple: [number, number, number] = allUserHSV
-                ? [
-                    label === 'H' ? activeVal : allUserHSV[0],
-                    label === 'S' ? activeVal : allUserHSV[1],
-                    label === 'V' ? activeVal : allUserHSV[2],
-                  ]
-                : [
-                    label === 'H' ? activeVal : targetHSV[0],
-                    label === 'S' ? activeVal : targetHSV[1],
-                    label === 'V' ? activeVal : targetHSV[2],
-                  ];
-
-              const span = getToleranceSpan(
-                label,
-                activeVal,
-                targetHSV,
-                difficultyLevel,
-                currentTuple,
-              );
-              const isWrapMode = label === 'H';
-              const leftVal = isWrapMode
-                ? (activeVal - span.halfSpan + max) % max
-                : Math.max(0, activeVal - span.halfSpan);
-              const rightVal = isWrapMode
-                ? (activeVal + span.halfSpan + max) % max
-                : Math.min(max, activeVal + span.halfSpan);
-
-              return (
-                <>
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(leftVal / max) * 100}%` }}
-                  />
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-20 w-0.5 bg-indigo-500/80 -translate-x-1/2"
-                    style={{ left: `${(rightVal / max) * 100}%` }}
-                  />
-                </>
-              );
-            })()}
-
-          {/* 鼠标悬停准心线 */}
-          {!showAnswer && hoverVal !== null && (isInteractiveTarget || hoverVal !== val) && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-75"
-              style={{ left: getPercent(hoverVal, max) }}
-            />
-          )}
-
-          {/* 揭晓答案之后的真理位与提交位（仅当本轨道有提交值时呈现） */}
-          {isAnswerRevealed && (
-            <>
-              <div
-                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
-                style={{ left: getPercent(actualTargetVal, max) }}
-              />
-              <div
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                  isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                } shadow-md z-10`}
-                style={{ left: getPercent(userVal, max) }}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
-      <span
-        className={`w-12 text-right font-mono font-bold text-xs ${
-          isInteractiveTarget && !showAnswer
-            ? 'text-amber-500'
-            : isAnswerRevealed && isHit
-              ? 'text-emerald-600'
-              : isAnswerRevealed
-                ? 'text-rose-600'
-                : 'text-slate-700'
-        }`}
-      >
-        {renderLabelText()}
-      </span>
-    </div>
+  const handleHoverH = useCallback(
+    (hVal: number | null) =>
+      setAllHoverVals((prev) => (prev.H === hVal ? prev : { ...prev, H: hVal })),
+    [],
   );
+  const handleHoverS = useCallback(
+    (sVal: number | null) =>
+      setAllHoverVals((prev) => (prev.S === sVal ? prev : { ...prev, S: sVal })),
+    [],
+  );
+  const handleHoverV = useCallback(
+    (vVal: number | null) =>
+      setAllHoverVals((prev) => (prev.V === vVal ? prev : { ...prev, V: vVal })),
+    [],
+  );
+
+  const handleDragH = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'H' : null), []);
+  const handleDragS = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'S' : null), []);
+  const handleDragV = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'V' : null), []);
+
+  // 题目切换时重置 ALL 模式状态
+  useEffect(() => {
+    if (mode === 'ALL') {
+      setUserH(180);
+      setUserS(50);
+      setUserV(50);
+      setAllHoverVals({ H: null, S: null, V: null });
+      setDraggingLabel(null);
+    }
+  }, [mode]);
+
+  const handleSubmitAll = () => {
+    if (disabled || showAnswer) return;
+    onAnswer([userH, userS, userV]);
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/components/ColorCanvas.tsx
+~~~~~
+~~~~~typescript.old
+            <HsvTrackSlider
+              label="H"
+              gradient={hueGradient}
+              val={userH}
+              max={360}
+              unit="°"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetH}
+              userVal={userAnswer?.userHSV?.[0] ?? userH}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserH}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, H: hVal }))}
+              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'H' : null)}
+            />
+            <HsvTrackSlider
+              label="S"
+              gradient={satGradient}
+              val={userS}
+              max={100}
+              unit="%"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetS}
+              userVal={userAnswer?.userHSV?.[1] ?? userS}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserS}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, S: hVal }))}
+              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'S' : null)}
+            />
+            <HsvTrackSlider
+              label="V"
+              gradient={valGradient}
+              val={userV}
+              max={100}
+              unit="%"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetV}
+              userVal={userAnswer?.userHSV?.[2] ?? userV}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserV}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, V: hVal }))}
+              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'V' : null)}
+            />
+~~~~~
+~~~~~typescript.new
+            <HsvTrackSlider
+              label="H"
+              gradient={hueGradient}
+              val={userH}
+              max={360}
+              unit="°"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetH}
+              userVal={userAnswer?.userHSV?.[0] ?? userH}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserH}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={handleHoverH}
+              onDraggingStateChange={handleDragH}
+            />
+            <HsvTrackSlider
+              label="S"
+              gradient={satGradient}
+              val={userS}
+              max={100}
+              unit="%"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetS}
+              userVal={userAnswer?.userHSV?.[1] ?? userS}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserS}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={handleHoverS}
+              onDraggingStateChange={handleDragS}
+            />
+            <HsvTrackSlider
+              label="V"
+              gradient={valGradient}
+              val={userV}
+              max={100}
+              unit="%"
+              targetHSV={targetHSV}
+              difficultyLevel={difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={targetV}
+              userVal={userAnswer?.userHSV?.[2] ?? userV}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserV}
+              allUserHSV={[userH, userS, userV]}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+              onHoverStateChange={handleHoverV}
+              onDraggingStateChange={handleDragV}
+            />
 ~~~~~
 
 ### 下一步建议
-1. 运行 `npm run check` 检查代码格式及类型声明。
-2. 进入明度 (V) 模式与饱和度 (S) 模式答题，确认作答后仅有当前正在练习的滑块显示绿色真理线与红/绿提交线，参考滑块（如 H 轨）保持安静的黑色参考线。
+
+1. **综合拾色切题状态重置**：建议检查切题时（`question.id` 发生变动）是否需要重置 `userH, userS, userV` 到默认中心值或上一题位置，避免保留已作答状态。
+2. **测试验证**：在综合拾色模式下分别进行手动按空格切题和开启 `autoNext` 自动切题的连续 5 题测试，确认提交与揭晓逻辑完全顺畅无卡顿。

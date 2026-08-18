@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
 import { HsvTrackSlider } from './HsvTrackSlider';
 
@@ -39,6 +39,26 @@ export function ColorCanvas({
     V: null,
   });
   const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
+
+  const handleHoverH = useCallback(
+    (hVal: number | null) =>
+      setAllHoverVals((prev) => (prev.H === hVal ? prev : { ...prev, H: hVal })),
+    [],
+  );
+  const handleHoverS = useCallback(
+    (sVal: number | null) =>
+      setAllHoverVals((prev) => (prev.S === sVal ? prev : { ...prev, S: sVal })),
+    [],
+  );
+  const handleHoverV = useCallback(
+    (vVal: number | null) =>
+      setAllHoverVals((prev) => (prev.V === vVal ? prev : { ...prev, V: vVal })),
+    [],
+  );
+
+  const handleDragH = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'H' : null), []);
+  const handleDragS = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'S' : null), []);
+  const handleDragV = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'V' : null), []);
 
   // 题目切换时重置 ALL 模式状态
   useEffect(() => {
@@ -133,8 +153,8 @@ export function ColorCanvas({
               disabled={disabled}
               hitMargin={hitMargin}
               showToleranceBand={showToleranceBand}
-              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, H: hVal }))}
-              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'H' : null)}
+              onHoverStateChange={handleHoverH}
+              onDraggingStateChange={handleDragH}
             />
             <HsvTrackSlider
               label="S"
@@ -153,8 +173,8 @@ export function ColorCanvas({
               disabled={disabled}
               hitMargin={hitMargin}
               showToleranceBand={showToleranceBand}
-              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, S: hVal }))}
-              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'S' : null)}
+              onHoverStateChange={handleHoverS}
+              onDraggingStateChange={handleDragS}
             />
             <HsvTrackSlider
               label="V"
@@ -173,8 +193,8 @@ export function ColorCanvas({
               disabled={disabled}
               hitMargin={hitMargin}
               showToleranceBand={showToleranceBand}
-              onHoverStateChange={(hVal) => setAllHoverVals((prev) => ({ ...prev, V: hVal }))}
-              onDraggingStateChange={(isDrag) => setDraggingLabel(isDrag ? 'V' : null)}
+              onHoverStateChange={handleHoverV}
+              onDraggingStateChange={handleDragV}
             />
           </>
         ) : (
