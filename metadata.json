@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(negative-space): 实现正负形空间面积判断训练模块", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787050708.1661055, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 抽象通用看板、模态底座与领域配置注册表", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787053434.2651815, "duration_ms": 0}}
