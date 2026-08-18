@@ -104,7 +104,9 @@ export const starPlugin: TrainingPlugin<
     <StarCanvas
       question={question}
       showAnswer={showAnswer}
-      userAnswer={userAnswer ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer } : null}
+      userAnswer={
+        userAnswer ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer } : null
+      }
       onAnswer={(clickPoint) => {
         const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
         if (hitRes.isWithinRange) {
@@ -177,8 +179,7 @@ export const relativeColorPlugin: TrainingPlugin<
   getModeBadge: () => '色彩矢量迁移',
   generateQuestion: (mode, level) =>
     generateRelativeColorQuestion(mode as RelativeColorMode, level),
-  evaluateAnswer: (userD, q, mode) =>
-    checkRelativeColorHit(mode as RelativeColorMode, userD, q),
+  evaluateAnswer: (userD, q, mode) => checkRelativeColorHit(mode as RelativeColorMode, userD, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
   extractRecordDetails: (q, hitResult, userVal) => ({

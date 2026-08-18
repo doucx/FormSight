@@ -56,7 +56,10 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
 
     const fetchData = async () => {
       if (domain === 'star') {
-        const data = await getTrialRecords('star', selectedStarMode === 'all' ? undefined : selectedStarMode);
+        const data = await getTrialRecords(
+          'star',
+          selectedStarMode === 'all' ? undefined : selectedStarMode,
+        );
         if (isMounted) {
           setStarRecords(data as unknown as TrialRecord[]);
           setLoading(false);

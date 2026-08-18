@@ -10,10 +10,7 @@ import {
   saveSettings,
 } from '../utils/settings';
 import { ModalShell } from './common/ModalShell';
-import {
-  DOMAIN_SETTING_SCHEMAS,
-  DynamicDomainSettings,
-} from './settings/DynamicDomainSettings';
+import { DOMAIN_SETTING_SCHEMAS, DynamicDomainSettings } from './settings/DynamicDomainSettings';
 
 const DOMAIN_TITLE: Record<TrainingDomain, string> = {
   star: '寻星训练偏好设置',

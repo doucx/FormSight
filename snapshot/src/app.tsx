@@ -5,6 +5,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
 import { DOMAINS_CONFIG } from './config/domains';
+import { TRAINING_PLUGINS } from './config/trainingPlugins';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -14,7 +15,6 @@ import {
 import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
-import { TRAINING_PLUGINS } from './config/trainingPlugins';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 
