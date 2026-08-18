@@ -190,8 +190,8 @@ export function ColorCanvas({
               difficultyLevel={difficultyLevel}
               showAnswer={showAnswer}
               targetVal={targetH}
-              userVal={userAnswer?.userValue}
-              isHit={userAnswer?.isHit}
+              userVal={mode === 'H' ? userAnswer?.userValue : undefined}
+              isHit={mode === 'H' ? userAnswer?.isHit : undefined}
               isInteractiveTarget={mode === 'H'}
               onCommit={(v) => {
                 if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
@@ -213,8 +213,8 @@ export function ColorCanvas({
                 difficultyLevel={difficultyLevel}
                 showAnswer={showAnswer}
                 targetVal={targetS}
-                userVal={userAnswer?.userValue}
-                isHit={userAnswer?.isHit}
+                userVal={mode === 'S' ? userAnswer?.userValue : undefined}
+                isHit={mode === 'S' ? userAnswer?.isHit : undefined}
                 isInteractiveTarget={true}
                 onCommit={(v) => {
                   if (!showAnswer && !disabled) onAnswer(v);
@@ -237,7 +237,7 @@ export function ColorCanvas({
                 difficultyLevel={difficultyLevel}
                 showAnswer={showAnswer}
                 targetVal={targetV}
-                userVal={mode === 'V' ? userAnswer?.userValue : targetV}
+                userVal={mode === 'V' ? userAnswer?.userValue : undefined}
                 isHit={mode === 'V' ? userAnswer?.isHit : undefined}
                 isInteractiveTarget={mode === 'V'}
                 onCommit={(v) => {

@@ -62,11 +62,13 @@ export function HsvTrackSlider({
   const actualTargetVal =
     targetVal ?? (label === 'H' ? targetHSV[0] : label === 'S' ? targetHSV[1] : targetHSV[2]);
 
+  const isAnswerRevealed = showAnswer && userVal !== undefined;
+
   const renderLabelText = () => {
-    if (showAnswer) {
-      return `${userVal !== undefined ? userVal : val}${unit}`;
+    if (isAnswerRevealed) {
+      return `${userVal}${unit}`;
     }
-    if (isInteractiveTarget) {
+    if (isInteractiveTarget && !showAnswer) {
       return hoverVal !== null ? `${hoverVal}${unit}` : '?';
     }
     return `${activeVal}${unit}`;
@@ -101,13 +103,13 @@ export function HsvTrackSlider({
           className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
           style={{ background: gradient }}
         >
-          {/* 当前设定值标记线：在非目标盲测轨道显示 */}
-          {!showAnswer && !isInteractiveTarget && (
+          {/* 当前设定值标记线：在非目标盲测轨道、或非揭晓状态的参考轨道上显示 */}
+          {(!showAnswer && !isInteractiveTarget) || (showAnswer && userVal === undefined) ? (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
               style={{ left: getPercent(val, max) }}
             />
-          )}
+          ) : null}
 
           {/* 动态 ΔE 容错感应指示线 */}
           {!showAnswer &&
@@ -163,21 +165,19 @@ export function HsvTrackSlider({
             />
           )}
 
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
+          {/* 揭晓答案之后的真理位与提交位（仅当本轨道有提交值时呈现） */}
+          {isAnswerRevealed && (
             <>
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
                 style={{ left: getPercent(actualTargetVal, max) }}
               />
-              {userVal !== undefined && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-10`}
-                  style={{ left: getPercent(userVal, max) }}
-                />
-              )}
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
+                  isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                } shadow-md z-10`}
+                style={{ left: getPercent(userVal, max) }}
+              />
             </>
           )}
         </div>
@@ -187,9 +187,9 @@ export function HsvTrackSlider({
         className={`w-12 text-right font-mono font-bold text-xs ${
           isInteractiveTarget && !showAnswer
             ? 'text-amber-500'
-            : showAnswer && isHit
+            : isAnswerRevealed && isHit
               ? 'text-emerald-600'
-              : showAnswer
+              : isAnswerRevealed
                 ? 'text-rose-600'
                 : 'text-slate-700'
         }`}
