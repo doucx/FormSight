@@ -4,15 +4,13 @@ import { ColorAnalyticsModal } from './components/ColorAnalyticsModal';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
+import { GenericDashboard } from './components/dashboard/GenericDashboard';
+import { DOMAINS_CONFIG } from './config/domains';
 import type { TrainingMode } from './types';
 import type { ColorMode } from './utils/colorUtils';
 import {
-  type ColorProfileData,
   type TrainingDomain,
   type UnifiedProfileData,
-  type UserProfileData,
-  getAllColorProfiles,
-  getAllUserProfiles,
   getColorTrainingTimeMs,
   getProfilesByDomain,
   getStarHoppingTrainingTimeMs,
@@ -21,30 +19,30 @@ import {
 import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
 import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
-import { ColorDashboard } from './views/ColorDashboard';
 import { ColorTrainingView } from './views/ColorTrainingView';
-import { Dashboard } from './views/Dashboard';
 import { Home } from './views/Home';
-import { NegativeSpaceDashboard } from './views/NegativeSpaceDashboard';
 import { NegativeSpaceTrainingView } from './views/NegativeSpaceTrainingView';
-import { RelativeColorDashboard } from './views/RelativeColorDashboard';
 import { RelativeColorTrainingView } from './views/RelativeColorTrainingView';
 import { TrainingView } from './views/TrainingView';
 
 type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
 
+const APP_TO_DOMAIN: Record<Exclude<GlobalApp, 'home'>, TrainingDomain> = {
+  'star-hopping': 'star',
+  'color-sense': 'color',
+  'relative-color': 'relative_color',
+  'negative-space': 'negative_space',
+};
+
 export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
 
-  // 寻星状态
-  const [activeMode, setActiveMode] = useState<TrainingMode>('single');
+  // 当前活跃训练参数
+  const [activeMode, setActiveMode] = useState<string>('single');
   const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
 
-  // 色感状态
-  const [activeColorMode, setActiveColorMode] = useState<ColorMode>('H');
-  const [colorSessionType, setColorSessionType] = useState<'training' | 'benchmark'>('training');
-
+  // 弹窗状态
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -55,71 +53,40 @@ export function App() {
   const [analyticsMode, setAnalyticsMode] = useState<TrainingMode | 'all'>('all');
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
-  const [profiles, setProfiles] = useState<Record<TrainingMode, UserProfileData | null>>({
-    single: null,
-    double_h: null,
-    double_r: null,
-  });
-  const [colorProfiles, setColorProfiles] = useState<Record<ColorMode, ColorProfileData | null>>({
-    H: null,
-    S: null,
-    V: null,
-    ALL: null,
-  });
-  const [relativeProfiles, setRelativeProfiles] = useState<
-    Record<string, UnifiedProfileData | null>
-  >({});
+  // 聚合时长状态
   const [starHoppingTimeMs, setStarHoppingTimeMs] = useState<number>(0);
   const [colorTimeMs, setColorTimeMs] = useState<number>(0);
   const [relativeColorTimeMs, setRelativeColorTimeMs] = useState<number>(0);
   const [negativeSpaceTimeMs, setNegativeSpaceTimeMs] = useState<number>(0);
 
-  // 相对色感状态
-  const [activeRelativeMode, setActiveRelativeMode] = useState<RelativeColorMode>('VECTOR_SHIFT');
-  const [relativeSessionType, setRelativeSessionType] = useState<'training' | 'benchmark'>(
-    'training',
-  );
-
-  // 正负形状态
-  const [activeNegativeSpaceMode, setActiveNegativeSpaceMode] =
-    useState<NegativeSpaceMode>('RATIO_ESTIMATION');
-  const [negativeSpaceSessionType, setNegativeSpaceSessionType] = useState<
-    'training' | 'benchmark'
-  >('training');
-  const [negativeSpaceProfiles, setNegativeSpaceProfiles] = useState<
-    Record<string, UnifiedProfileData | null>
+  // 当前领域的 profiles 缓存 (用于获取当前等级)
+  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
+    Record<string, UnifiedProfileData>
   >({});
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
-    const data = await getAllUserProfiles();
-    const cData = await getAllColorProfiles();
-    const relList = await getProfilesByDomain('relative_color');
-    const relMap: Record<string, UnifiedProfileData | null> = {};
-    for (const p of relList) {
-      relMap[p.mode] = p;
-    }
-    const nsList = await getProfilesByDomain('negative_space');
-    const nsMap: Record<string, UnifiedProfileData | null> = {};
-    for (const p of nsList) {
-      nsMap[p.mode] = p;
-    }
-
     const starMs = await getStarHoppingTrainingTimeMs();
     const colorMs = await getColorTrainingTimeMs();
     const relMs = await getTrainingTimeMs('relative_color');
     const nsMs = await getTrainingTimeMs('negative_space');
 
-    setProfiles(data);
-    setColorProfiles(cData);
-    setRelativeProfiles(relMap);
-    setNegativeSpaceProfiles(nsMap);
     setStarHoppingTimeMs(starMs);
     setColorTimeMs(colorMs);
     setRelativeColorTimeMs(relMs);
     setNegativeSpaceTimeMs(nsMs);
     setSettings(loadSettings());
-  }, []);
+
+    if (currentApp !== 'home') {
+      const d = APP_TO_DOMAIN[currentApp];
+      const pList = await getProfilesByDomain(d);
+      const pMap: Record<string, UnifiedProfileData> = {};
+      for (const p of pList) {
+        pMap[p.mode] = p;
+      }
+      setCurrentDomainProfiles(pMap);
+    }
+  }, [currentApp]);
 
   useEffect(() => {
     refreshProfiles();
@@ -128,32 +95,17 @@ export function App() {
   // 动态同步 Title
   useEffect(() => {
     if (currentApp === 'home') {
-      document.title = 'FormSight - 造型构图与色彩感知训练系统';
-    } else if (currentApp === 'star-hopping') {
-      document.title = '寻星练习 (Star-Hopping) - FormSight';
-    } else if (currentApp === 'color-sense') {
-      document.title = '色感训练 (Color Recognition) - FormSight';
-    } else if (currentApp === 'relative-color') {
-      document.title = '相对色感 (Relative Color) - FormSight';
-    } else if (currentApp === 'negative-space') {
-      document.title = '正负形感知 (Negative Space) - FormSight';
+      document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
+    } else {
+      const d = APP_TO_DOMAIN[currentApp];
+      const meta = DOMAINS_CONFIG[d];
+      document.title = `${meta.title} (${meta.subTitle}) - FormSight`;
     }
   }, [currentApp]);
 
-  const handleOpenAnalytics = (mode?: TrainingMode) => {
-    setAnalyticsMode(mode || 'all');
-    setIsAnalyticsOpen(true);
-  };
-
-  const handleStartTraining = (mode: TrainingMode, type: 'training' | 'benchmark') => {
+  const handleStartSession = (mode: string, type: 'training' | 'benchmark') => {
     setActiveMode(mode);
     setSessionType(type);
-    setCurrentView('training');
-  };
-
-  const handleStartColorTraining = (mode: ColorMode, type: 'training' | 'benchmark') => {
-    setActiveColorMode(mode);
-    setColorSessionType(type);
     setCurrentView('training');
   };
 
@@ -162,19 +114,13 @@ export function App() {
     refreshProfiles();
   };
 
-  const activeLevel = profiles[activeMode]?.currentLevel || 5;
-  const activeColorLevel = colorProfiles[activeColorMode]?.currentLevel || 5;
-  const activeRelativeLevel = relativeProfiles[activeRelativeMode]?.currentLevel || 5;
-  const activeNegativeSpaceLevel =
-    negativeSpaceProfiles[activeNegativeSpaceMode]?.currentLevel || 5;
+  const currentLevel = currentDomainProfiles[activeMode]?.currentLevel || 5;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {currentApp === 'home' && (
         <Home
-          totalTimeMs={
-            starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs
-          }
+          totalTimeMs={starHoppingTimeMs + colorTimeMs + relativeColorTimeMs + negativeSpaceTimeMs}
           starHoppingTimeMs={starHoppingTimeMs}
           colorTimeMs={colorTimeMs}
           relativeColorTimeMs={relativeColorTimeMs}
@@ -188,98 +134,79 @@ export function App() {
         />
       )}
 
-      {currentApp === 'star-hopping' &&
-        (currentView === 'dashboard' ? (
-          <Dashboard
-            profiles={profiles}
-            onStart={handleStartTraining}
-            onRefreshProfiles={refreshProfiles}
-            onOpenSettings={() => {
-              setSettingsDomain('star');
-              setIsSettingsOpen(true);
-            }}
-            onOpenAnalytics={handleOpenAnalytics}
-            onBackToHome={() => setCurrentApp('home')}
-          />
-        ) : (
-          <TrainingView
-            mode={activeMode}
-            sessionType={sessionType}
-            initialLevel={activeLevel}
-            settings={settings.star}
-            onExit={handleExitTraining}
-          />
-        ))}
+      {currentApp !== 'home' &&
+        (() => {
+          const domain = APP_TO_DOMAIN[currentApp];
+          const meta = DOMAINS_CONFIG[domain];
 
-      {currentApp === 'color-sense' &&
-        (currentView === 'dashboard' ? (
-          <ColorDashboard
-            profiles={colorProfiles}
-            onStart={handleStartColorTraining}
-            onBackToHome={() => setCurrentApp('home')}
-            onOpenSettings={() => {
-              setSettingsDomain('color');
-              setIsSettingsOpen(true);
-            }}
-            onOpenAnalytics={() => setIsColorAnalyticsOpen(true)}
-          />
-        ) : (
-          <ColorTrainingView
-            mode={activeColorMode}
-            sessionType={colorSessionType}
-            initialLevel={activeColorLevel}
-            settings={settings.color}
-            onExit={handleExitTraining}
-          />
-        ))}
+          if (currentView === 'dashboard') {
+            return (
+              <GenericDashboard
+                meta={meta}
+                onStart={handleStartSession}
+                onBackToHome={() => setCurrentApp('home')}
+                onOpenSettings={() => {
+                  setSettingsDomain(domain);
+                  setIsSettingsOpen(true);
+                }}
+                onOpenAnalytics={() => {
+                  if (domain === 'star') {
+                    setAnalyticsMode('all');
+                    setIsAnalyticsOpen(true);
+                  } else if (domain === 'color') {
+                    setIsColorAnalyticsOpen(true);
+                  }
+                }}
+              />
+            );
+          }
 
-      {currentApp === 'relative-color' &&
-        (currentView === 'dashboard' ? (
-          <RelativeColorDashboard
-            onStart={(relMode, type) => {
-              setActiveRelativeMode(relMode);
-              setRelativeSessionType(type);
-              setCurrentView('training');
-            }}
-            onBackToHome={() => setCurrentApp('home')}
-            onOpenSettings={() => {
-              setSettingsDomain('relative_color');
-              setIsSettingsOpen(true);
-            }}
-          />
-        ) : (
-          <RelativeColorTrainingView
-            mode={activeRelativeMode}
-            sessionType={relativeSessionType}
-            initialLevel={activeRelativeLevel}
-            settings={settings.relative_color}
-            onExit={handleExitTraining}
-          />
-        ))}
+          if (domain === 'star') {
+            return (
+              <TrainingView
+                mode={activeMode as TrainingMode}
+                sessionType={sessionType}
+                initialLevel={currentLevel}
+                settings={settings.star}
+                onExit={handleExitTraining}
+              />
+            );
+          }
 
-      {currentApp === 'negative-space' &&
-        (currentView === 'dashboard' ? (
-          <NegativeSpaceDashboard
-            onStart={(nsMode, type) => {
-              setActiveNegativeSpaceMode(nsMode);
-              setNegativeSpaceSessionType(type);
-              setCurrentView('training');
-            }}
-            onBackToHome={() => setCurrentApp('home')}
-            onOpenSettings={() => {
-              setSettingsDomain('negative_space');
-              setIsSettingsOpen(true);
-            }}
-          />
-        ) : (
-          <NegativeSpaceTrainingView
-            mode={activeNegativeSpaceMode}
-            sessionType={negativeSpaceSessionType}
-            initialLevel={activeNegativeSpaceLevel}
-            settings={settings.negative_space}
-            onExit={handleExitTraining}
-          />
-        ))}
+          if (domain === 'color') {
+            return (
+              <ColorTrainingView
+                mode={activeMode as ColorMode}
+                sessionType={sessionType}
+                initialLevel={currentLevel}
+                settings={settings.color}
+                onExit={handleExitTraining}
+              />
+            );
+          }
+
+          if (domain === 'relative_color') {
+            return (
+              <RelativeColorTrainingView
+                mode={activeMode as RelativeColorMode}
+                sessionType={sessionType}
+                initialLevel={currentLevel}
+                settings={settings.relative_color}
+                onExit={handleExitTraining}
+              />
+            );
+          }
+
+          return (
+            <NegativeSpaceTrainingView
+              mode={activeMode as NegativeSpaceMode}
+              sessionType={sessionType}
+              initialLevel={currentLevel}
+              settings={settings.negative_space}
+              onExit={handleExitTraining}
+            />
+          );
+        })()}
 
       {isGlobalSettingsOpen && (
         <GlobalSettingsModal

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { useTrackPointer } from '../hooks/useTrackPointer';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
   type NegativeSpaceHitResult,
@@ -26,20 +27,23 @@ export function NegativeSpaceCanvas({
 }: NegativeSpaceCanvasProps) {
   const { vertices, targetNegativeRatio, tolerance } = question;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const trackRef = useRef<HTMLDivElement | null>(null);
 
   const [currentVal, setCurrentVal] = useState<number>(50.0);
-  const [hoverVal, setHoverVal] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
+
+  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+    max: 100,
+    step: 0.1,
+    disabled: disabled || showAnswer,
+    onValChange: setCurrentVal,
+  });
 
   // 切换题目时重置滑块初始值
   useEffect(() => {
     if (question.id) {
       setCurrentVal(50.0);
       setHoverVal(null);
-      setIsDragging(false);
     }
-  }, [question.id]);
+  }, [question.id, setHoverVal]);
 
   // === Canvas 绘图渲染 ===
   useEffect(() => {
@@ -77,57 +81,6 @@ export function NegativeSpaceCanvas({
       }
     }
   }, [vertices, showAnswer, userAnswer]);
-
-  // 计算 ClientX 对应的百分比
-  const calcValFromClientX = (clientX: number): number | null => {
-    if (!trackRef.current) return null;
-    const rect = trackRef.current.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const ratio = (clickX / rect.width) * 100;
-    return Math.round(ratio * 10) / 10;
-  };
-
-  const handlePointerDown = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    setIsDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      setCurrentVal(calculated);
-      setHoverVal(calculated);
-    }
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      if (isDragging) {
-        setCurrentVal(calculated);
-      }
-      setHoverVal(calculated);
-    }
-  };
-
-  const handlePointerUp = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    if (isDragging) {
-      setIsDragging(false);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
-      const calculated = calcValFromClientX(e.clientX);
-      if (calculated !== null) {
-        setCurrentVal(calculated);
-      }
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isDragging) {
-      setHoverVal(null);
-    }
-  };
 
   const handleSubmit = () => {
     if (disabled || showAnswer) return;
@@ -183,10 +136,7 @@ export function NegativeSpaceCanvas({
           <span className="font-bold font-mono text-slate-400 text-xs">0%</span>
 
           <div
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onMouseLeave={handleMouseLeave}
+            {...pointerProps}
             style={
               hitMargin > 0
                 ? {

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'preact/hooks';
+import { useTrackPointer } from '../hooks/useTrackPointer';
 import { getToleranceSpan } from '../utils/colorUtils';
 
 const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
@@ -44,64 +44,14 @@ export function HsvTrackSlider({
   onHoverStateChange,
   onDraggingStateChange,
 }: HsvTrackSliderProps) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const [hoverVal, setHoverVal] = useState<number | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-
-  const calcValFromClientX = (clientX: number): number | null => {
-    if (!trackRef.current) return null;
-    const rect = trackRef.current.getBoundingClientRect();
-    const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const ratio = clickX / rect.width;
-    return Math.round(ratio * max);
-  };
-
-  const handlePointerDown = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    setIsDragging(true);
-    if (onDraggingStateChange) onDraggingStateChange(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      onValChange(calculated);
-      setHoverVal(calculated);
-      if (onHoverStateChange) onHoverStateChange(calculated);
-    }
-  };
-
-  const handlePointerMove = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    const calculated = calcValFromClientX(e.clientX);
-    if (calculated !== null) {
-      if (isDragging) {
-        onValChange(calculated);
-      }
-      setHoverVal(calculated);
-      if (onHoverStateChange) onHoverStateChange(calculated);
-    }
-  };
-
-  const handlePointerUp = (e: PointerEvent) => {
-    if (disabled || showAnswer) return;
-    if (isDragging) {
-      setIsDragging(false);
-      if (onDraggingStateChange) onDraggingStateChange(false);
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {}
-      const calculated = calcValFromClientX(e.clientX);
-      if (calculated !== null) {
-        onValChange(calculated);
-      }
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isDragging) {
-      setHoverVal(null);
-      if (onHoverStateChange) onHoverStateChange(null);
-    }
-  };
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
+    max,
+    step: 1,
+    disabled: disabled || showAnswer,
+    onValChange,
+    onHoverStateChange,
+    onDraggingStateChange,
+  });
 
   const activeVal = hoverVal !== null ? hoverVal : val;
   const actualTargetVal =
@@ -112,10 +62,7 @@ export function HsvTrackSlider({
       <span className="w-5 font-bold font-mono text-slate-400 text-sm text-center">{label}</span>
 
       <div
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onMouseLeave={handleMouseLeave}
+        {...pointerProps}
         style={
           hitMargin > 0
             ? {
