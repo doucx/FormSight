@@ -9,8 +9,9 @@ import {
   X,
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { DOMAINS_CONFIG } from '../config/domains';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { getTrialRecords } from '../utils/db';
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
@@ -20,47 +21,16 @@ interface UnifiedRecord {
   timestamp: number;
   isHit: boolean;
   level: number;
-  module: 'star' | 'color' | 'relative_color' | 'negative_space';
+  module: TrainingDomain;
   subMode: string;
 }
 
-type FilterOption =
-  | 'all'
-  | 'star_all'
-  | 'star_single'
-  | 'star_double_h'
-  | 'star_double_r'
-  | 'color_all'
-  | 'color_H'
-  | 'color_V'
-  | 'color_S'
-  | 'color_ALL'
-  | 'relative_color_all'
-  | 'relative_color_VECTOR_SHIFT'
-  | 'negative_space_all'
-  | 'negative_space_RATIO_ESTIMATION';
-
-const FILTER_LABELS: Record<FilterOption, string> = {
-  all: '全部练习项目',
-  star_all: '寻星练习 (全部模式)',
-  star_single: '寻星 • 单锚点',
-  star_double_h: '寻星 • 水平双锚点',
-  star_double_r: '寻星 • 旋转双锚点',
-  color_all: '色感训练 (全部模式)',
-  color_H: '色感 • 色相 (Hue)',
-  color_V: '色感 • 明度 (Value)',
-  color_S: '色感 • 饱和度 (Sat)',
-  color_ALL: '色感 • 综合拾色 (Match)',
-  relative_color_all: '相对色感 (全部模式)',
-  relative_color_VECTOR_SHIFT: '相对色感 • 色彩矢量迁移',
-  negative_space_all: '正负形感知 (全部模式)',
-  negative_space_RATIO_ESTIMATION: '正负形 • 负形占比估算',
-};
+const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<UnifiedRecord[]>([]);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('all');
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // === 1. 数据加载与聚合 ===
@@ -68,42 +38,20 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
-      const starData = await getTrialRecords('star');
-      const colorData = await getTrialRecords('color');
-      const relData = await getTrialRecords('relative_color');
-      const nsData = await getTrialRecords('negative_space');
+      const results = await Promise.all(
+        ALL_DOMAINS.map(async (domain) => {
+          const domainRecords = await getTrialRecords(domain);
+          return domainRecords.map((r) => ({
+            timestamp: r.timestamp,
+            isHit: r.isHit,
+            level: r.difficultyLevel,
+            module: domain,
+            subMode: r.mode,
+          }));
+        }),
+      );
 
-      const combined: UnifiedRecord[] = [
-        ...starData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'star' as const,
-          subMode: r.mode,
-        })),
-        ...colorData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'color' as const,
-          subMode: r.mode,
-        })),
-        ...relData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'relative_color' as const,
-          subMode: r.mode,
-        })),
-        ...nsData.map((r) => ({
-          timestamp: r.timestamp,
-          isHit: r.isHit,
-          level: r.difficultyLevel,
-          module: 'negative_space' as const,
-          subMode: r.mode,
-        })),
-      ];
-      combined.sort((a, b) => a.timestamp - b.timestamp);
+      const combined = results.flat().sort((a, b) => a.timestamp - b.timestamp);
 
       if (isMounted) {
         setRecords(combined);
@@ -119,28 +67,26 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   // === 2. 筛选过滤处理 ===
   const filteredRecords = records.filter((r) => {
     if (selectedFilter === 'all') return true;
-    if (selectedFilter === 'star_all') return r.module === 'star';
-    if (selectedFilter === 'color_all') return r.module === 'color';
-    if (selectedFilter === 'relative_color_all') return r.module === 'relative_color';
-    if (selectedFilter === 'negative_space_all') return r.module === 'negative_space';
-    if (selectedFilter.startsWith('star_')) {
-      return r.module === 'star' && r.subMode === selectedFilter.replace('star_', '');
+    if (selectedFilter.endsWith('_all')) {
+      const targetDomain = selectedFilter.replace('_all', '');
+      return r.module === targetDomain;
     }
-    if (selectedFilter.startsWith('color_')) {
-      return r.module === 'color' && r.subMode === selectedFilter.replace('color_', '');
-    }
-    if (selectedFilter.startsWith('relative_color_')) {
-      return (
-        r.module === 'relative_color' && r.subMode === selectedFilter.replace('relative_color_', '')
-      );
-    }
-    if (selectedFilter.startsWith('negative_space_')) {
-      return (
-        r.module === 'negative_space' && r.subMode === selectedFilter.replace('negative_space_', '')
-      );
-    }
-    return true;
+    const [domain, mode] = selectedFilter.split(':');
+    return r.module === domain && r.subMode === mode;
   });
+
+  // 获取当前筛选标签名
+  const getCurrentFilterLabel = () => {
+    if (selectedFilter === 'all') return '全部练习项目';
+    if (selectedFilter.endsWith('_all')) {
+      const d = selectedFilter.replace('_all', '') as TrainingDomain;
+      return `${DOMAINS_CONFIG[d]?.title || d} (全部)`;
+    }
+    const [domain, mode] = selectedFilter.split(':') as [TrainingDomain, string];
+    const meta = DOMAINS_CONFIG[domain];
+    const modeConfig = meta?.modes.find((m) => m.id === mode);
+    return `${meta?.title || domain} • ${modeConfig?.title || mode}`;
+  };
 
   // === 3. 基于筛选结果计算统计指标 ===
   const now = new Date();
@@ -238,38 +184,24 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
           {/* 右侧下拉筛选与关闭 */}
           <div className="flex items-center gap-3">
-            {/* 维度 Select 下拉菜单 */}
             <div className="relative flex items-center">
               <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
               <select
                 value={selectedFilter}
-                onChange={(e) =>
-                  setSelectedFilter((e.target as HTMLSelectElement).value as FilterOption)
-                }
+                onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
                 className="pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm"
               >
                 <option value="all">全部练习项目</option>
-                <optgroup label="寻星练习">
-                  <option value="star_all">寻星练习 (全部)</option>
-                  <option value="star_single">单锚点模式</option>
-                  <option value="star_double_h">水平双锚点</option>
-                  <option value="star_double_r">旋转双锚点</option>
-                </optgroup>
-                <optgroup label="色感训练">
-                  <option value="color_all">色感训练 (全部)</option>
-                  <option value="color_H">色相 (Hue)</option>
-                  <option value="color_V">明度 (Value)</option>
-                  <option value="color_S">饱和度 (Saturation)</option>
-                  <option value="color_ALL">综合拾色 (Match)</option>
-                </optgroup>
-                <optgroup label="相对色感">
-                  <option value="relative_color_all">相对色感 (全部)</option>
-                  <option value="relative_color_VECTOR_SHIFT">色彩矢量迁移</option>
-                </optgroup>
-                <optgroup label="正负形感知">
-                  <option value="negative_space_all">正负形感知 (全部)</option>
-                  <option value="negative_space_RATIO_ESTIMATION">负形占比估算</option>
-                </optgroup>
+                {Object.values(DOMAINS_CONFIG).map((meta) => (
+                  <optgroup key={meta.domain} label={meta.title}>
+                    <option value={`${meta.domain}_all`}>{meta.title} (全部)</option>
+                    {meta.modes.map((m) => (
+                      <option key={`${meta.domain}:${m.id}`} value={`${meta.domain}:${m.id}`}>
+                        {m.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
             </div>
@@ -290,12 +222,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           </div>
         ) : filteredRecords.length === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
-            <Activity className="w-10 h-10 text-slate-300" />【{FILTER_LABELS[selectedFilter]}
+            <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}
             】下暂无训练数据，先去练习几道题吧！
           </div>
         ) : (
           <div className="flex flex-col gap-6">
-            {/* 1. 核心指标卡片群 */}
+            {/* 核心指标卡片群 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
@@ -355,7 +287,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 2. 热力图 */}
+              {/* 热力图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-4">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>近 12 周训练热力图</span>
@@ -380,7 +312,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
               </div>
 
-              {/* 3. 折线图 */}
+              {/* 折线图 */}
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-2">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
                   <span>能力峰值演进轨迹</span>

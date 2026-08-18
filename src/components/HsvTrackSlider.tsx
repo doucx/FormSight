@@ -15,7 +15,9 @@ export interface HsvTrackSliderProps {
   targetVal?: number;
   userVal?: number;
   isHit?: boolean;
-  onValChange: (newVal: number) => void;
+  isInteractiveTarget?: boolean;
+  onValChange?: (newVal: number) => void;
+  onCommit?: (committedVal: number) => void;
   allUserHSV?: [number, number, number];
   disabled?: boolean;
   hitMargin?: number;
@@ -36,7 +38,9 @@ export function HsvTrackSlider({
   targetVal,
   userVal,
   isHit = false,
+  isInteractiveTarget = false,
   onValChange,
+  onCommit,
   allUserHSV,
   disabled = false,
   hitMargin = 12,
@@ -49,6 +53,7 @@ export function HsvTrackSlider({
     step: 1,
     disabled: disabled || showAnswer,
     onValChange,
+    onCommit,
     onHoverStateChange,
     onDraggingStateChange,
   });
@@ -56,6 +61,18 @@ export function HsvTrackSlider({
   const activeVal = hoverVal !== null ? hoverVal : val;
   const actualTargetVal =
     targetVal ?? (label === 'H' ? targetHSV[0] : label === 'S' ? targetHSV[1] : targetHSV[2]);
+
+  const isAnswerRevealed = showAnswer && userVal !== undefined;
+
+  const renderLabelText = () => {
+    if (isAnswerRevealed) {
+      return `${userVal}${unit}`;
+    }
+    if (isInteractiveTarget && !showAnswer) {
+      return hoverVal !== null ? `${hoverVal}${unit}` : '?';
+    }
+    return `${activeVal}${unit}`;
+  };
 
   return (
     <div className="flex items-center gap-3 w-full">
@@ -86,17 +103,18 @@ export function HsvTrackSlider({
           className="relative w-full h-7 rounded-xl border border-slate-200/80 shadow-inner flex items-center"
           style={{ background: gradient }}
         >
-          {/* 当前设定值标记线 */}
-          {!showAnswer && (
+          {/* 当前设定值标记线：在非目标盲测轨道、或非揭晓状态的参考轨道上显示 */}
+          {(!showAnswer && !isInteractiveTarget) || (showAnswer && userVal === undefined) ? (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 pointer-events-none shadow-sm z-20"
               style={{ left: getPercent(val, max) }}
             />
-          )}
+          ) : null}
 
           {/* 动态 ΔE 容错感应指示线 */}
           {!showAnswer &&
             showToleranceBand &&
+            (hoverVal !== null || !isInteractiveTarget) &&
             (() => {
               const currentTuple: [number, number, number] = allUserHSV
                 ? [
@@ -140,28 +158,26 @@ export function HsvTrackSlider({
             })()}
 
           {/* 鼠标悬停准心线 */}
-          {!showAnswer && hoverVal !== null && hoverVal !== val && (
+          {!showAnswer && hoverVal !== null && (isInteractiveTarget || hoverVal !== val) && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-slate-900 shadow-sm pointer-events-none z-30 opacity-75"
               style={{ left: getPercent(hoverVal, max) }}
             />
           )}
 
-          {/* 揭晓答案之后的真理位与提交位 */}
-          {showAnswer && (
+          {/* 揭晓答案之后的真理位与提交位（仅当本轨道有提交值时呈现） */}
+          {isAnswerRevealed && (
             <>
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-10 bg-emerald-500 border-x border-white shadow-md z-20"
                 style={{ left: getPercent(actualTargetVal, max) }}
               />
-              {userVal !== undefined && (
-                <div
-                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
-                    isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                  } shadow-md z-10`}
-                  style={{ left: getPercent(userVal, max) }}
-                />
-              )}
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1 h-7 border-x border-white ${
+                  isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                } shadow-md z-10`}
+                style={{ left: getPercent(userVal, max) }}
+              />
             </>
           )}
         </div>
@@ -169,10 +185,16 @@ export function HsvTrackSlider({
 
       <span
         className={`w-12 text-right font-mono font-bold text-xs ${
-          !showAnswer ? 'text-amber-500' : isHit ? 'text-emerald-600' : 'text-rose-600'
+          isInteractiveTarget && !showAnswer
+            ? 'text-amber-500'
+            : isAnswerRevealed && isHit
+              ? 'text-emerald-600'
+              : isAnswerRevealed
+                ? 'text-rose-600'
+                : 'text-slate-700'
         }`}
       >
-        {`${activeVal}${unit}`}
+        {renderLabelText()}
       </span>
     </div>
   );
