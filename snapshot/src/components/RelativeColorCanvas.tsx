@@ -208,10 +208,7 @@ export function RelativeColorCanvas({
               className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
               style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
             >
-              <div
-                className="w-16 h-16 rounded-xl"
-                style={{ backgroundColor: hexCenterA }}
-              />
+              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
             </div>
           </button>
 
@@ -255,10 +252,7 @@ export function RelativeColorCanvas({
               className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
               style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
             >
-              <div
-                className="w-16 h-16 rounded-xl"
-                style={{ backgroundColor: hexCenterB }}
-              />
+              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
             </div>
           </button>
         </div>
@@ -281,7 +275,10 @@ export function RelativeColorCanvas({
                 </span>
                 <span className="text-slate-400 ml-2">
                   (已统一切换至中性灰背景对比，物理明度差 ΔV ={' '}
-                  <strong className="font-mono text-slate-700">{question.physicalValueDiff}%</strong>)
+                  <strong className="font-mono text-slate-700">
+                    {question.physicalValueDiff}%
+                  </strong>
+                  )
                 </span>
               </div>
             </div>

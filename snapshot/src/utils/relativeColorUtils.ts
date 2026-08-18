@@ -379,8 +379,12 @@ export function generateLightnessInductionQuestion(level: number): RelativeColor
 
   // 左右背景明暗反差
   const isLeftBright = Math.random() < 0.5;
-  const bgLVal = isLeftBright ? Math.floor(Math.random() * 20) + 75 : Math.floor(Math.random() * 20) + 10;
-  const bgRVal = isLeftBright ? Math.floor(Math.random() * 20) + 10 : Math.floor(Math.random() * 20) + 75;
+  const bgLVal = isLeftBright
+    ? Math.floor(Math.random() * 20) + 75
+    : Math.floor(Math.random() * 20) + 10;
+  const bgRVal = isLeftBright
+    ? Math.floor(Math.random() * 20) + 10
+    : Math.floor(Math.random() * 20) + 75;
 
   const baseHue = Math.floor(Math.random() * 360);
   const baseSat = Math.floor(Math.random() * 15); // 近中性灰或微带色相
@@ -473,7 +477,7 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
 
   // 物理明度差异：Level 1 为 18%，Level 35 为 1.5%
   const t = (clampedLevel - 1) / 34;
-  const diffPercent = Math.max(1.5, Math.round((18 * (1.5 / 18) ** t) * 10) / 10);
+  const diffPercent = Math.max(1.5, Math.round(18 * (1.5 / 18) ** t * 10) / 10);
 
   const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
 
@@ -499,8 +503,10 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
   const bgRight: [number, number, number] = [baseHue, baseSat, bgRightVal];
 
   const baseCenterVal = Math.floor(Math.random() * 20) + 40;
-  const valA = largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
-  const valB = largerPhysicalSide === 'B' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+  const valA =
+    largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+  const valB =
+    largerPhysicalSide === 'B' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
 
   const centerColorA: [number, number, number] = [baseHue, baseSat, Math.round(valA)];
   const centerColorB: [number, number, number] = [baseHue, baseSat, Math.round(valB)];
@@ -537,7 +543,6 @@ export function generateRelativeColorQuestion(
       return generateHueInductionQuestion(level);
     case 'DECONTEXTUAL_2AFC':
       return generateDecontextual2AfcQuestion(level);
-    case 'VECTOR_SHIFT':
     default:
       return generateVectorShiftQuestion(level);
   }

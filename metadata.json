@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(relative-color): 解耦 2AFC 模式背景与真理的绑定关系以封堵作弊漏洞", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787063789.9330926, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M RelativeColorCanvas.tsx, M relativeColorUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064498.9905605, "duration_ms": 0}}
