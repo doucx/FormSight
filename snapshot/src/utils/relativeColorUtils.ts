@@ -477,12 +477,20 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
 
   const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
 
-  // 构造视错觉陷阱：物理更亮的一侧放在更亮的背景上（被压暗），物理更暗的一侧放在暗背景上（被提亮）
+  // 随机化陷阱/对照分布：50% 概率为陷阱题（更亮放更亮背景），50% 概率为对照题（更亮放更暗背景）
+  // 彻底解耦背景明暗与目标答案，防止通过选亮背景作弊
+  const isTrapTrial = Math.random() < 0.5;
+  const sideForBrightBg: 'A' | 'B' = isTrapTrial
+    ? largerPhysicalSide
+    : largerPhysicalSide === 'A'
+      ? 'B'
+      : 'A';
+
   const brightBgVal = Math.floor(Math.random() * 15) + 80;
   const darkBgVal = Math.floor(Math.random() * 15) + 10;
 
-  const bgLeftVal = largerPhysicalSide === 'A' ? brightBgVal : darkBgVal;
-  const bgRightVal = largerPhysicalSide === 'B' ? brightBgVal : darkBgVal;
+  const bgLeftVal = sideForBrightBg === 'A' ? brightBgVal : darkBgVal;
+  const bgRightVal = sideForBrightBg === 'B' ? brightBgVal : darkBgVal;
 
   const baseHue = Math.floor(Math.random() * 360);
   const baseSat = Math.floor(Math.random() * 20);
