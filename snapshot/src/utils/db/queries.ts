@@ -1,4 +1,3 @@
-import type { TrainingMode } from '../../types';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -114,80 +113,4 @@ export function formatTotalTime(ms: number): string {
   const minutes = totalMinutes % 60;
 
   return `${days}天${hours}小时${minutes}分钟`;
-}
-
-// 兼容别名导出
-export async function getUserProfile(mode: TrainingMode): Promise<UnifiedProfileData | null> {
-  return await getProfile('star', mode);
-}
-
-export async function getAllUserProfiles(): Promise<
-  Record<TrainingMode, UnifiedProfileData | null>
-> {
-  const profiles = await getProfilesByDomain('star');
-  const result: Record<TrainingMode, UnifiedProfileData | null> = {
-    single: null,
-    double_h: null,
-    double_r: null,
-  };
-  for (const p of profiles) {
-    if (p.mode in result) {
-      result[p.mode as TrainingMode] = p;
-    }
-  }
-  return result;
-}
-
-export async function getAllTrialRecords(mode?: TrainingMode): Promise<UnifiedTrialRecord[]> {
-  return await getTrialRecords('star', mode);
-}
-
-export async function saveColorTrialRecord(record: UnifiedTrialRecord): Promise<void> {
-  return await saveTrialRecord({
-    ...record,
-    domain: 'color',
-  });
-}
-
-export async function saveColorSession(session: UnifiedSessionData): Promise<void> {
-  return await saveSession({
-    ...session,
-    domain: 'color',
-  });
-}
-
-export async function getAllColorProfiles(): Promise<
-  Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null>
-> {
-  const profiles = await getProfilesByDomain('color');
-  const result: Record<'H' | 'S' | 'V' | 'ALL', UnifiedProfileData | null> = {
-    H: null,
-    S: null,
-    V: null,
-    ALL: null,
-  };
-  for (const p of profiles) {
-    if (p.mode in result) {
-      result[p.mode as 'H' | 'S' | 'V' | 'ALL'] = p;
-    }
-  }
-  return result;
-}
-
-export async function getAllColorTrialRecords(
-  mode?: 'H' | 'S' | 'V' | 'ALL',
-): Promise<UnifiedTrialRecord[]> {
-  return await getTrialRecords('color', mode);
-}
-
-export async function getStarHoppingTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs('star');
-}
-
-export async function getColorTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs('color');
-}
-
-export async function getTotalTrainingTimeMs(): Promise<number> {
-  return await getTrainingTimeMs();
 }

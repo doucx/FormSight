@@ -5,7 +5,7 @@ import { renderHueRingCanvas } from '../utils/canvas/drawColorRing';
 import { type SectorStat, renderCompassCanvas } from '../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../utils/canvas/drawHeatmap';
 import { hsvToHex } from '../utils/colorUtils';
-import { type ColorTrialRecord, getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
+import { type UnifiedTrialRecord, getTrialRecords } from '../utils/db';
 
 const STAR_SECTORS = [
   '正东 (0°)',
@@ -44,7 +44,7 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
   const [starTab, setStarTab] = useState<'heatmap' | 'compass'>('heatmap');
 
   const [starRecords, setStarRecords] = useState<TrialRecord[]>([]);
-  const [colorRecords, setColorRecords] = useState<ColorTrialRecord[]>([]);
+  const [colorRecords, setColorRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -56,13 +56,13 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
 
     const fetchData = async () => {
       if (domain === 'star') {
-        const data = await getAllTrialRecords(selectedStarMode === 'all' ? undefined : selectedStarMode);
+        const data = await getTrialRecords('star', selectedStarMode === 'all' ? undefined : selectedStarMode);
         if (isMounted) {
           setStarRecords(data as unknown as TrialRecord[]);
           setLoading(false);
         }
       } else {
-        const data = await getAllColorTrialRecords('H');
+        const data = await getTrialRecords('color', 'H');
         if (isMounted) {
           setColorRecords(data);
           setLoading(false);

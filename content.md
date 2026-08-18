@@ -1,371 +1,337 @@
-我现在为你生成重构实施计划，通过引入 **Schema 驱动的动态设置表单（`DynamicDomainSettings`）**，消除 4 个特定领域的 Form 组件以及重复的扇区切换与控件拼装逻辑。
+我现在为你生成重构实施计划，清理 `src/utils/db/queries.ts` 和 `index.ts` 中的历史兼容别名与冗余函数，统一整个项目的底层数据访问 API。
 
-## [WIP] refactor(settings): 引入 Schema 驱动的动态领域设置表单
+## [WIP] refactor(db): 清理数据层历史冗余别名与收敛统一查询 API
 
 ### 用户需求
-消除 `StarSettingsForm`, `ColorSettingsForm`, `RelativeColorSettingsForm`, `NegativeSpaceSettingsForm` 中的样板代码与重复的事件处理逻辑，通过统一的声明式 Schema 驱动渲染各领域的特定设置。
+移除 `queries.ts` 和 `db/index.ts` 中多余的历史领域专有包装函数（如 `getAllColorTrialRecords`、`getStarHoppingTrainingTimeMs`、`saveColorTrialRecord` 等），将所有消费方统一重构为使用通用的 `getTrialRecords(domain, mode?)`、`getTrainingTimeMs(domain?)` 等标准 API。
 
 ### 评论
-当前 4 个领域表单本质上是在以不同的排列组合使用 `SliderMarginGroup`、`SettingToggleItem`、`TargetingSection` 和按钮组，甚至包含完全相同的 `manualTargetSectors` 数组增删逻辑。通过 Schema 驱动，各领域的专属配置收敛为简短纯粹的静态描述数组，大幅精简组件树和维护成本。
+随着之前 `GenericTrainingView` 和插件化架构的落地，各领域的存取逻辑已经完全泛型化。继续保留历史遗留的 10 余个领域专属 Wrapper 会造成 API 冗余、增加认知负担并在导出模块中留下死代码。彻底收敛后，数据层接口将保持极简与纯净。
 
 ### 目标
-1. 创建 `src/components/settings/DynamicDomainSettings.tsx`，支持 `sliderMargin`、`toggle`、`buttonGroup`、`targeting` 四类声明式字段。
-2. 定义 4 个领域的字段配置常量映射（`DOMAIN_SETTING_SCHEMAS`）。
-3. 重构 `src/components/SettingsModal.tsx` 接入动态表单。
-4. 删除 4 个不再需要的领域特定 Form 文件。
+1. 精简 `src/utils/db/queries.ts`，仅保留核心通用 CRUD 及统计函数。
+2. 精简 `src/utils/db/index.ts`，清理过期类型别名。
+3. 更新 `src/app.tsx`、`src/components/GlobalStatsModal.tsx`、`src/components/WeaknessAnalyticsModal.tsx` 接入统一 API。
 
 ### 基本原理
-将 UI 的声明（字段标题、描述、取值 key、选项）与 UI 的渲染实现分离：
-- 动态解析器负责双向数据绑定和扇区多选切换逻辑；
-- 各领域只需声明其特有的配置项 schema；
-- 扩展新的配置项或新领域设置无需新建 JSX 文件。
+所有训练记录在底层 IndexedDB 中均统一保存在 `records`、`sessions` 和 `user_profiles` 表，并使用 `domain` 与 `mode` 复合索引进行查询。直接使用通用查询函数能够完全覆盖业务需求，无需任何中间包装。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/cli #concept/ui #concept/config #scope/dx #ai/instruct #task/domain/settings #task/object/schema-driven-forms #task/action/refactor #task/state/continue
+#intent/refine #flow/ready #priority/medium #comp/engine #concept/state #scope/api #scope/dx #ai/instruct #task/domain/database #task/object/api-consolidation #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建动态设置表单解析器 `DynamicDomainSettings.tsx`
+#### Acts 1: 重构 `src/utils/db/queries.ts` 消除历史别名
 
-创建支持声明式 Schema 解析渲染的通用表单组件及配置注册表。
+移除所有特定领域的包装函数（`getUserProfile`、`getAllColorTrialRecords` 等），保留纯净的统一查询 API。
 
 ~~~~~act
 write_file
-src/components/settings/DynamicDomainSettings.tsx
+src/utils/db/queries.ts
 ~~~~~
-~~~~~tsx
-import type { ComponentChildren } from 'preact';
-import type { TrainingDomain } from '../../utils/db';
-import type { TargetingMode } from '../../utils/settings';
-import { SettingToggleItem } from './common/SettingToggleItem';
-import { SliderMarginGroup } from './common/SliderMarginGroup';
-import { TargetingSection } from './common/TargetingSection';
+~~~~~ts
+import {
+  type TrainingDomain,
+  type UnifiedProfileData,
+  type UnifiedSessionData,
+  type UnifiedTrialRecord,
+  getDB,
+} from './schema';
 
-export type SettingFieldSchema =
-  | {
-      type: 'sliderMargin';
-      key: string;
-      title?: string;
-    }
-  | {
-      type: 'toggle';
-      key: string;
-      title: string;
-      description?: string;
-    }
-  | {
-      type: 'buttonGroup';
-      key: string;
-      title: string;
-      options: { label: string; value: unknown }[];
-      gridCols?: string;
-    }
-  | {
-      type: 'targeting';
-      modeKey: string;
-      sectorsKey: string;
-      title: string;
-      subTitle: string;
-      sectors: string[];
-      gridCols?: 'grid-cols-3' | 'grid-cols-4';
+export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
+  const db = await getDB();
+  const domain = record.domain || 'star';
+  const normalizedRecord: UnifiedTrialRecord = { ...record, domain };
+  await db.put('records', normalizedRecord);
+  await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
+}
+
+export async function saveSession(session: UnifiedSessionData): Promise<void> {
+  const db = await getDB();
+  const domain = session.domain || 'star';
+  await db.put('sessions', { ...session, domain });
+}
+
+export async function getProfile(
+  domain: TrainingDomain,
+  mode: string,
+): Promise<UnifiedProfileData | null> {
+  const db = await getDB();
+  const profile = await db.get('user_profiles', `${domain}:${mode}`);
+  return profile || null;
+}
+
+export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
+  const db = await getDB();
+  return await db.getAllFromIndex('user_profiles', 'by-domain', domain);
+}
+
+export async function getTrialRecords(
+  domain?: TrainingDomain,
+  mode?: string,
+): Promise<UnifiedTrialRecord[]> {
+  const db = await getDB();
+  let rawRecords: UnifiedTrialRecord[] = [];
+  if (domain && mode) {
+    rawRecords = await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
+  } else if (domain) {
+    rawRecords = await db.getAllFromIndex('records', 'by-domain', domain);
+  } else {
+    rawRecords = await db.getAll('records');
+  }
+
+  return rawRecords.map((r) => ({
+    ...r,
+    ...(r.details || {}),
+  }));
+}
+
+async function updateProfile(
+  domain: TrainingDomain,
+  mode: string,
+  isHit: boolean,
+  currentLevel: number,
+): Promise<void> {
+  const db = await getDB();
+  const key = `${domain}:${mode}`;
+  const existing = await db.get('user_profiles', key);
+
+  if (!existing) {
+    const newProfile: UnifiedProfileData = {
+      key,
+      domain,
+      mode,
+      currentLevel,
+      bestLevel: currentLevel,
+      totalTrainedCards: 1,
+      totalHits: isHit ? 1 : 0,
+      updatedAt: Date.now(),
     };
-
-export const STAR_SECTORS = [
-  '正东(0°)',
-  '东北(45°)',
-  '正北(90°)',
-  '西北(135°)',
-  '正西(180°)',
-  '西南(225°)',
-  '正南(270°)',
-  '东南(315°)',
-];
-
-export const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
-];
-
-export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]> = {
-  star: [
-    {
-      type: 'buttonGroup',
-      key: 'gridSize',
-      title: '干扰点网格大小',
-      options: [
-        { label: '2x2', value: 2 },
-        { label: '3x3', value: 3 },
-        { label: '4x4', value: 4 },
-        { label: '5x5', value: 5 },
-      ],
-      gridCols: 'grid-cols-4',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的角度扇区：',
-      sectors: STAR_SECTORS,
-      gridCols: 'grid-cols-4',
-    },
-  ],
-  color: [
-    {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '色感滑块极值吸附外延感应区',
-    },
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '综合拾色悬停颜色实时联动',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '色相弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的色相扇区：',
-      sectors: COLOR_SECTORS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
-  relative_color: [
-    {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '色感滑块极值吸附外延感应区',
-    },
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '悬停推移色彩联动预览',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-  ],
-  negative_space: [
-    {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '滑块极值吸附外延感应区',
-    },
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 Δ% 动态容错区间',
-    },
-  ],
-};
-
-interface DynamicDomainSettingsProps {
-  schemas: SettingFieldSchema[];
-  values: Record<string, any>;
-  onChange: (patch: Record<string, any>) => void;
+    await db.put('user_profiles', newProfile);
+  } else {
+    existing.totalTrainedCards += 1;
+    if (isHit) existing.totalHits += 1;
+    existing.currentLevel = currentLevel;
+    if (currentLevel > existing.bestLevel) {
+      existing.bestLevel = currentLevel;
+    }
+    existing.updatedAt = Date.now();
+    await db.put('user_profiles', existing);
+  }
 }
 
-export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDomainSettingsProps) {
-  const handleSectorToggle = (sectorsKey: string, sectorIdx: number) => {
-    const currentSectors: number[] = values[sectorsKey] || [];
-    const exists = currentSectors.includes(sectorIdx);
-    const updated = exists
-      ? currentSectors.filter((s) => s !== sectorIdx)
-      : [...currentSectors, sectorIdx];
+export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number> {
+  const db = await getDB();
+  const sessions = domain
+    ? await db.getAllFromIndex('sessions', 'by-domain', domain)
+    : await db.getAll('sessions');
 
-    onChange({ [sectorsKey]: updated });
-  };
+  let totalMs = 0;
+  for (const s of sessions) {
+    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
+      totalMs += s.endTimestamp - s.startTimestamp;
+    }
+  }
+  return totalMs;
+}
 
-  return (
-    <div className="space-y-4">
-      {schemas.map((field) => {
-        if (field.type === 'sliderMargin') {
-          return (
-            <SliderMarginGroup
-              key={field.key}
-              title={field.title}
-              value={values[field.key] ?? 12}
-              onChange={(val) => onChange({ [field.key]: val })}
-            />
-          );
-        }
+export function formatTotalTime(ms: number): string {
+  if (!ms || Number.isNaN(ms) || ms <= 0) {
+    return '0天0小时0分钟';
+  }
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
 
-        if (field.type === 'toggle') {
-          return (
-            <SettingToggleItem
-              key={field.key}
-              title={field.title}
-              description={field.description}
-              checked={Boolean(values[field.key])}
-              onChange={(checked) => onChange({ [field.key]: checked })}
-            />
-          );
-        }
-
-        if (field.type === 'buttonGroup') {
-          const currentVal = values[field.key];
-          return (
-            <div key={field.key} className="space-y-2">
-              <div className="text-sm font-semibold text-slate-700">{field.title}</div>
-              <div className={`grid ${field.gridCols || 'grid-cols-4'} gap-1.5`}>
-                {field.options.map((opt) => (
-                  <button
-                    type="button"
-                    key={String(opt.value)}
-                    onClick={() => onChange({ [field.key]: opt.value })}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                      currentVal === opt.value
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          );
-        }
-
-        if (field.type === 'targeting') {
-          const mode: TargetingMode = values[field.modeKey] || 'off';
-          const selectedSectors: number[] = values[field.sectorsKey] || [];
-
-          return (
-            <TargetingSection
-              key={`${field.modeKey}-${field.sectorsKey}`}
-              title={field.title}
-              subTitle={field.subTitle}
-              mode={mode}
-              onModeChange={(m) => onChange({ [field.modeKey]: m })}
-              sectors={field.sectors}
-              selectedSectors={selectedSectors}
-              onToggleSector={(idx) => handleSectorToggle(field.sectorsKey, idx)}
-              gridCols={field.gridCols}
-            />
-          );
-        }
-
-        return null;
-      })}
-    </div>
-  );
+  return `${days}天${hours}小时${minutes}分钟`;
 }
 ~~~~~
 
-#### Acts 2: 更新 `SettingsModal.tsx` 接入动态表单
+#### Acts 2: 整理 `src/utils/db/index.ts` 类型导出
 
-使用 `DynamicDomainSettings` 统一渲染各领域的专属配置项。
+~~~~~act
+write_file
+src/utils/db/index.ts
+~~~~~
+~~~~~ts
+export * from './schema';
+export * from './queries';
+export * from './importExport';
+
+// 类型别名导出
+import type { UnifiedProfileData, UnifiedSessionData, UnifiedTrialRecord } from './schema';
+export type SessionData = UnifiedSessionData;
+export type UserProfileData = UnifiedProfileData;
+export type TrialRecord = UnifiedTrialRecord;
+~~~~~
+
+#### Acts 3: 更新调用方接入统一 API
+
+更新 `app.tsx`、`GlobalStatsModal.tsx` 和 `WeaknessAnalyticsModal.tsx`。
 
 ~~~~~act
 patch_file
-src/components/SettingsModal.tsx
+src/app.tsx
 ~~~~~
 ~~~~~tsx.old
-import { ColorSettingsForm } from './settings/ColorSettingsForm';
-import { NegativeSpaceSettingsForm } from './settings/NegativeSpaceSettingsForm';
-import { RelativeColorSettingsForm } from './settings/RelativeColorSettingsForm';
-import { StarSettingsForm } from './settings/StarSettingsForm';
+import {
+  type TrainingDomain,
+  type UnifiedProfileData,
+  getColorTrainingTimeMs,
+  getProfilesByDomain,
+  getStarHoppingTrainingTimeMs,
+  getTrainingTimeMs,
+} from './utils/db';
 ~~~~~
 ~~~~~tsx.new
 import {
-  DOMAIN_SETTING_SCHEMAS,
-  DynamicDomainSettings,
-} from './settings/DynamicDomainSettings';
+  type TrainingDomain,
+  type UnifiedProfileData,
+  getProfilesByDomain,
+  getTrainingTimeMs,
+} from './utils/db';
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/SettingsModal.tsx
+src/app.tsx
 ~~~~~
 ~~~~~tsx.old
-        {/* 渲染特定领域的表单 */}
-        {domain === 'star' && (
-          <StarSettingsForm
-            settings={domainSettings as StarSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
+  const refreshProfiles = useCallback(async () => {
+    const starMs = await getStarHoppingTrainingTimeMs();
+    const colorMs = await getColorTrainingTimeMs();
+    const relMs = await getTrainingTimeMs('relative_color');
+    const nsMs = await getTrainingTimeMs('negative_space');
 
-        {domain === 'color' && (
-          <ColorSettingsForm
-            settings={domainSettings as ColorSenseSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-
-        {domain === 'relative_color' && (
-          <RelativeColorSettingsForm
-            settings={domainSettings as RelativeColorSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-
-        {domain === 'negative_space' && (
-          <NegativeSpaceSettingsForm
-            settings={domainSettings as NegativeSpaceSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
+    setNegativeSpaceTimeMs(nsMs);
+    setSettings(loadSettings());
 ~~~~~
 ~~~~~tsx.new
-        {/* 渲染特定领域的表单 (Schema 驱动) */}
-        {DOMAIN_SETTING_SCHEMAS[domain] && (
-          <DynamicDomainSettings
-            schemas={DOMAIN_SETTING_SCHEMAS[domain]}
-            values={domainSettings}
-            onChange={(patch) => updateDomainSettings(patch)}
-          />
-        )}
-~~~~~
+  const refreshProfiles = useCallback(async () => {
+    const starMs = await getTrainingTimeMs('star');
+    const colorMs = await getTrainingTimeMs('color');
+    const relMs = await getTrainingTimeMs('relative_color');
+    const nsMs = await getTrainingTimeMs('negative_space');
 
-#### Acts 3: 删除旧的 4 个领域设置表单文件
-
-~~~~~act
-delete_file
-src/components/settings/StarSettingsForm.tsx
+    setStarHoppingTimeMs(starMs);
+    setColorTimeMs(colorMs);
+    setRelativeColorTimeMs(relMs);
+    setNegativeSpaceTimeMs(nsMs);
+    setSettings(loadSettings());
 ~~~~~
 
 ~~~~~act
-delete_file
-src/components/settings/ColorSettingsForm.tsx
+patch_file
+src/components/GlobalStatsModal.tsx
+~~~~~
+~~~~~tsx.old
+import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
+import { getAllColorTrialRecords, getAllTrialRecords, getTrialRecords } from '../utils/db';
+~~~~~
+~~~~~tsx.new
+import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
+import { getTrialRecords } from '../utils/db';
 ~~~~~
 
 ~~~~~act
-delete_file
-src/components/settings/RelativeColorSettingsForm.tsx
+patch_file
+src/components/GlobalStatsModal.tsx
+~~~~~
+~~~~~tsx.old
+    const loadData = async () => {
+      setLoading(true);
+      const starData = await getAllTrialRecords();
+      const colorData = await getAllColorTrialRecords();
+      const relData = await getTrialRecords('relative_color');
+      const nsData = await getTrialRecords('negative_space');
+~~~~~
+~~~~~tsx.new
+    const loadData = async () => {
+      setLoading(true);
+      const starData = await getTrialRecords('star');
+      const colorData = await getTrialRecords('color');
+      const relData = await getTrialRecords('relative_color');
+      const nsData = await getTrialRecords('negative_space');
 ~~~~~
 
 ~~~~~act
-delete_file
-src/components/settings/NegativeSpaceSettingsForm.tsx
+patch_file
+src/components/WeaknessAnalyticsModal.tsx
+~~~~~
+~~~~~tsx.old
+import { type ColorTrialRecord, getAllColorTrialRecords, getAllTrialRecords } from '../utils/db';
+~~~~~
+~~~~~tsx.new
+import { type UnifiedTrialRecord, getTrialRecords } from '../utils/db';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/WeaknessAnalyticsModal.tsx
+~~~~~
+~~~~~tsx.old
+  const [starRecords, setStarRecords] = useState<TrialRecord[]>([]);
+  const [colorRecords, setColorRecords] = useState<ColorTrialRecord[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // 数据加载
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+
+    const fetchData = async () => {
+      if (domain === 'star') {
+        const data = await getAllTrialRecords(selectedStarMode === 'all' ? undefined : selectedStarMode);
+        if (isMounted) {
+          setStarRecords(data as unknown as TrialRecord[]);
+          setLoading(false);
+        }
+      } else {
+        const data = await getAllColorTrialRecords('H');
+        if (isMounted) {
+          setColorRecords(data);
+          setLoading(false);
+        }
+      }
+    };
+~~~~~
+~~~~~tsx.new
+  const [starRecords, setStarRecords] = useState<TrialRecord[]>([]);
+  const [colorRecords, setColorRecords] = useState<UnifiedTrialRecord[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // 数据加载
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+
+    const fetchData = async () => {
+      if (domain === 'star') {
+        const data = await getTrialRecords('star', selectedStarMode === 'all' ? undefined : selectedStarMode);
+        if (isMounted) {
+          setStarRecords(data as unknown as TrialRecord[]);
+          setLoading(false);
+        }
+      } else {
+        const data = await getTrialRecords('color', 'H');
+        if (isMounted) {
+          setColorRecords(data);
+          setLoading(false);
+        }
+      }
+    };
 ~~~~~
 
 ### 下一步建议
-1. 运行 `npm run check` 验证代码类型与 Lint 规则。
-2. 推进下一阶段重构：**数据层（`queries.ts`）历史别名清理与查询 API 收敛**。
+1. 运行 `npm run check` 及 `npm run test` 确保所有代码通过 Biome 与 TypeScript 检查。
+2. 整个架构精简重构计划已全部完成（通用视图插件化、弱点分析弹窗聚合、Schema 设置表单驱动、统一数据层 API），项目总代码行数已显著减少，架构更加清晰健壮。

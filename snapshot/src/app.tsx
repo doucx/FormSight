@@ -8,9 +8,7 @@ import { DOMAINS_CONFIG } from './config/domains';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
-  getColorTrainingTimeMs,
   getProfilesByDomain,
-  getStarHoppingTrainingTimeMs,
   getTrainingTimeMs,
 } from './utils/db';
 import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
@@ -59,8 +57,8 @@ export function App() {
 
   // 刷新用户能力看板与总时间
   const refreshProfiles = useCallback(async () => {
-    const starMs = await getStarHoppingTrainingTimeMs();
-    const colorMs = await getColorTrainingTimeMs();
+    const starMs = await getTrainingTimeMs('star');
+    const colorMs = await getTrainingTimeMs('color');
     const relMs = await getTrainingTimeMs('relative_color');
     const nsMs = await getTrainingTimeMs('negative_space');
 
