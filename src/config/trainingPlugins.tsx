@@ -171,25 +171,55 @@ export const colorPlugin: TrainingPlugin<
 export const relativeColorPlugin: TrainingPlugin<
   RelativeColorQuestionData,
   RelativeColorHitResult,
-  [number, number, number],
+  [number, number, number] | 'A' | 'B',
   RelativeColorSettings
 > = {
   domain: 'relative_color',
   title: '相对色感',
-  getModeBadge: () => '色彩矢量迁移',
+  getModeBadge: (mode) =>
+    mode === 'LIGHTNESS_INDUCTION'
+      ? '明度反差补偿'
+      : mode === 'HUE_INDUCTION'
+        ? '补色残像调和'
+        : mode === 'DECONTEXTUAL_2AFC'
+          ? '环境穿透判别'
+          : '色彩矢量迁移',
   generateQuestion: (mode, level) =>
     generateRelativeColorQuestion(mode as RelativeColorMode, level),
-  evaluateAnswer: (userD, q, mode) => checkRelativeColorHit(mode as RelativeColorMode, userD, q),
+  evaluateAnswer: (userVal, q, mode) =>
+    checkRelativeColorHit(mode as RelativeColorMode, userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal) => ({
-    colorA: q.colorA,
-    colorB: q.colorB,
-    colorC: q.colorC,
-    targetD: q.targetD,
-    userD: userVal,
-    deltaEError: hitResult.deltaEError,
-  }),
+  extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'DECONTEXTUAL_2AFC') {
+      return {
+        mode,
+        userChoice: userVal,
+        correctChoice: q.largerPhysicalSide,
+        physicalValueDiff: q.physicalValueDiff,
+      };
+    }
+    if (mode === 'LIGHTNESS_INDUCTION' || mode === 'HUE_INDUCTION') {
+      return {
+        mode,
+        bgLeft: q.bgLeft,
+        bgRight: q.bgRight,
+        targetLeftCenter: q.targetLeftCenter,
+        idealRightCenter: q.idealRightCenter,
+        userRightColor: userVal,
+        deltaEError: hitResult.deltaEError,
+      };
+    }
+    return {
+      mode: 'VECTOR_SHIFT',
+      colorA: q.colorA,
+      colorB: q.colorB,
+      colorC: q.colorC,
+      targetD: q.targetD,
+      userD: userVal,
+      deltaEError: hitResult.deltaEError,
+    };
+  },
   renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
     <RelativeColorCanvas
       question={question}

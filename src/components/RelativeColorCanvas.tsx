@@ -1,5 +1,5 @@
-import { ArrowRight } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { ArrowRight, Check, Eye, X } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { hsvToHex } from '../utils/colorUtils';
 import type {
   RelativeColorHitResult,
@@ -11,7 +11,7 @@ interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
   userAnswer: RelativeColorHitResult | null;
-  onAnswer: (userD: [number, number, number]) => void;
+  onAnswer: (userD: [number, number, number] | 'A' | 'B') => void;
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
@@ -27,16 +27,446 @@ export function RelativeColorCanvas({
   hitMargin = 12,
   showToleranceBand = true,
 }: RelativeColorCanvasProps) {
-  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
+  const { mode } = question;
 
+  // === 1. VECTOR_SHIFT 模式状态 ===
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
+  // === 2. 阿尔伯斯诱导补偿模式状态 (调节右侧中心色) ===
+  const [userRightH, setUserRightH] = useState<number>(180);
+  const [userRightS, setUserRightS] = useState<number>(50);
+  const [userRightV, setUserRightV] = useState<number>(50);
+
+  // === 3. DECONTEXTUAL_2AFC 模式状态 ===
+  const [selected2AfcChoice, setSelected2AfcChoice] = useState<'A' | 'B' | null>(null);
+
+  // 题目切换时重置状态
   useEffect(() => {
     if (question.id) {
       setSelectedIndex(0);
-    }
-  }, [question.id]);
+      setSelected2AfcChoice(null);
 
+      if (question.targetLeftCenter) {
+        setUserRightH(question.targetLeftCenter[0]);
+        setUserRightS(question.targetLeftCenter[1]);
+        setUserRightV(question.targetLeftCenter[2]);
+      }
+    }
+  }, [question.id, question.targetLeftCenter]);
+
+  // 2AFC 选择处理
+  const handleSelect2Afc = useCallback(
+    (choice: 'A' | 'B') => {
+      if (disabled || showAnswer) return;
+      setSelected2AfcChoice(choice);
+      onAnswer(choice);
+    },
+    [disabled, showAnswer, onAnswer],
+  );
+
+  // 提交调制结果
+  const handleSubmitInduction = useCallback(() => {
+    if (disabled || showAnswer) return;
+    onAnswer([userRightH, userRightS, userRightV]);
+  }, [disabled, showAnswer, userRightH, userRightS, userRightV, onAnswer]);
+
+  // 键盘快捷键监听
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      if (disabled || showAnswer) return;
+
+      if (mode === 'DECONTEXTUAL_2AFC') {
+        if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
+          e.preventDefault();
+          handleSelect2Afc('A');
+        } else if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
+          e.preventDefault();
+          handleSelect2Afc('B');
+        }
+        return;
+      }
+
+      if (mode === 'VECTOR_SHIFT') {
+        let targetIdx: number | null = null;
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          targetIdx = Number.parseInt(e.key, 10) - 1;
+        } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
+          const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
+          if (num >= 1 && num <= 4) {
+            targetIdx = num - 1;
+          }
+        }
+
+        if (targetIdx !== null && question.options && targetIdx < question.options.length) {
+          e.preventDefault();
+          setSelectedIndex(targetIdx);
+          return;
+        }
+
+        if (e.code === 'Space' || e.key === ' ') {
+          e.preventDefault();
+          const chosenColor = question.options?.[selectedIndex] ?? question.targetD;
+          onAnswer(chosenColor);
+        }
+        return;
+      }
+
+      // 明度/色相对抗模式下的 Space 确认
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        handleSubmitInduction();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    mode,
+    showAnswer,
+    disabled,
+    selectedIndex,
+    question.options,
+    question.targetD,
+    onAnswer,
+    handleSelect2Afc,
+    handleSubmitInduction,
+  ]);
+
+  // =========================================================================
+  // 视图 A：DECONTEXTUAL_2AFC 环境穿透判别
+  // =========================================================================
+  if (mode === 'DECONTEXTUAL_2AFC') {
+    const isAHit = question.largerPhysicalSide === 'A';
+    const isBHit = question.largerPhysicalSide === 'B';
+
+    const hexBgA = hsvToHex(...(question.bgLeft ?? [0, 0, 90]));
+    const hexBgB = hsvToHex(...(question.bgRight ?? [0, 0, 10]));
+    const hexCenterA = hsvToHex(...(question.centerColorA ?? [0, 0, 50]));
+    const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
+
+    return (
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            <Eye className="w-5 h-5 text-indigo-600" />
+            穿透背景视错觉：哪一侧的中心色块【物理明度更高】？
+          </div>
+          <p className="text-xs text-slate-400">
+            按快捷键{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              1
+            </kbd>{' '}
+            选择 A，按{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              2
+            </kbd>{' '}
+            选择 B
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+          {/* 卡片 A */}
+          <button
+            type="button"
+            disabled={disabled || showAnswer}
+            onClick={() => handleSelect2Afc('A')}
+            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+              showAnswer
+                ? isAHit
+                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                  : selected2AfcChoice === 'A'
+                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                    : 'bg-slate-50/60 border-slate-200 opacity-60'
+                : selected2AfcChoice === 'A'
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                  A
+                </span>
+                区域 A (键 1)
+              </span>
+              {showAnswer && (
+                <span
+                  className={`text-xs font-extrabold flex items-center gap-1 ${
+                    isAHit ? 'text-emerald-600' : 'text-slate-400'
+                  }`}
+                >
+                  {isAHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorA?.[2]}%)
+                </span>
+              )}
+            </div>
+
+            {/* 视口展示 */}
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+              style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
+            >
+              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
+            </div>
+          </button>
+
+          {/* 卡片 B */}
+          <button
+            type="button"
+            disabled={disabled || showAnswer}
+            onClick={() => handleSelect2Afc('B')}
+            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+              showAnswer
+                ? isBHit
+                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                  : selected2AfcChoice === 'B'
+                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                    : 'bg-slate-50/60 border-slate-200 opacity-60'
+                : selected2AfcChoice === 'B'
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                  B
+                </span>
+                区域 B (键 2)
+              </span>
+              {showAnswer && (
+                <span
+                  className={`text-xs font-extrabold flex items-center gap-1 ${
+                    isBHit ? 'text-emerald-600' : 'text-slate-400'
+                  }`}
+                >
+                  {isBHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorB?.[2]}%)
+                </span>
+              )}
+            </div>
+
+            {/* 视口展示 */}
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+              style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
+            >
+              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
+            </div>
+          </button>
+        </div>
+
+        {showAnswer && (
+          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '成功穿透背景视错觉！' : '受背景诱导产生了认知偏差'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (已统一切换至中性灰背景对比，物理明度差 ΔV ={' '}
+                  <strong className="font-mono text-slate-700">
+                    {question.physicalValueDiff}%
+                  </strong>
+                  )
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 视图 B：阿尔伯斯诱导补偿模式 (LIGHTNESS_INDUCTION / HUE_INDUCTION)
+  // =========================================================================
+  if (mode === 'LIGHTNESS_INDUCTION' || mode === 'HUE_INDUCTION') {
+    const isLightnessMode = mode === 'LIGHTNESS_INDUCTION';
+
+    const bgLeftHex = hsvToHex(...(question.bgLeft ?? [0, 0, 100]));
+    const bgRightHex = hsvToHex(...(question.bgRight ?? [0, 0, 0]));
+    const centerLeftHex = hsvToHex(...(question.targetLeftCenter ?? [0, 0, 50]));
+
+    const userRightHex = hsvToHex(userRightH, userRightS, userRightV);
+    const idealRightHex = hsvToHex(...(question.idealRightCenter ?? question.targetD));
+
+    const rightSatGradient = `linear-gradient(to right, ${hsvToHex(userRightH, 0, userRightV)}, ${hsvToHex(userRightH, 100, userRightV)})`;
+    const rightValGradient = `linear-gradient(to right, #000000, ${hsvToHex(userRightH, 100, 100)})`;
+    const hueGradient =
+      'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            {isLightnessMode ? '阿尔伯斯明度反差补偿' : '阿尔伯斯补色残像调和'}
+          </div>
+          <p className="text-xs text-slate-400">
+            {isLightnessMode
+              ? '调整右侧中心色块的物理明度，使得左右两块在不同背景下【感知明度看起来完全一致】。'
+              : '调整右侧中心色块的色相与饱和度，反向补偿背景诱导，达成视觉感知色差调和。'}
+          </p>
+        </div>
+
+        {/* 左右双背景对照视口 (带中间安全隔离带) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+          {/* 左侧固定参考 */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              左侧参考 (固定基准)
+            </span>
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgLeftHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all"
+                style={{ backgroundColor: centerLeftHex }}
+              />
+            </div>
+          </div>
+
+          {/* 右侧作答与调制 */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+              右侧作答 (调制以达成感知一致)
+            </span>
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgRightHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+                style={{ backgroundColor: userRightHex }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1/2"
+                    style={{ backgroundColor: idealRightHex }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 调节滑块面板 */}
+        <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          {!isLightnessMode && (
+            <HsvTrackSlider
+              label="H"
+              gradient={hueGradient}
+              val={userRightH}
+              max={360}
+              unit="°"
+              targetHSV={question.targetD}
+              difficultyLevel={question.difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={question.idealRightCenter?.[0] ?? question.targetD[0]}
+              userVal={userRightH}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserRightH}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+            />
+          )}
+
+          {!isLightnessMode && (
+            <HsvTrackSlider
+              label="S"
+              gradient={rightSatGradient}
+              val={userRightS}
+              max={100}
+              unit="%"
+              targetHSV={question.targetD}
+              difficultyLevel={question.difficultyLevel}
+              showAnswer={showAnswer}
+              targetVal={question.idealRightCenter?.[1] ?? question.targetD[1]}
+              userVal={userRightS}
+              isHit={userAnswer?.isHit}
+              onValChange={setUserRightS}
+              disabled={disabled}
+              hitMargin={hitMargin}
+              showToleranceBand={showToleranceBand}
+            />
+          )}
+
+          <HsvTrackSlider
+            label="V"
+            gradient={rightValGradient}
+            val={userRightV}
+            max={100}
+            unit="%"
+            targetHSV={question.targetD}
+            difficultyLevel={question.difficultyLevel}
+            showAnswer={showAnswer}
+            targetVal={question.idealRightCenter?.[2] ?? question.targetD[2]}
+            userVal={userRightV}
+            isHit={userAnswer?.isHit}
+            onValChange={setUserRightV}
+            disabled={disabled}
+            hitMargin={hitMargin}
+            showToleranceBand={showToleranceBand}
+          />
+        </div>
+
+        {/* 答案揭晓诊断 */}
+        {showAnswer && (
+          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '精准补偿环境视错觉！' : '环境补偿偏转出现误差'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (色差 ΔE ={' '}
+                  <strong className="font-mono text-slate-700">{userAnswer?.deltaEError}</strong>)
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 确认提交按钮 */}
+        {!showAnswer && (
+          <button
+            type="button"
+            onClick={handleSubmitInduction}
+            disabled={disabled}
+            className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
+          >
+            确认提交 (Space)
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 视图 C：VECTOR_SHIFT 原有色彩矢量迁移
+  // =========================================================================
+  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
   const activeColor = options?.[selectedIndex] ?? targetD;
   const userH = activeColor[0];
   const userS = activeColor[1];
@@ -46,41 +476,6 @@ export function RelativeColorCanvas({
     if (disabled || showAnswer) return;
     onAnswer(activeColor);
   };
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      if (disabled || showAnswer) return;
-
-      let targetIdx: number | null = null;
-      if (['1', '2', '3', '4'].includes(e.key)) {
-        targetIdx = Number.parseInt(e.key, 10) - 1;
-      } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
-        const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
-        if (num >= 1 && num <= 4) {
-          targetIdx = num - 1;
-        }
-      }
-
-      if (targetIdx !== null && options && targetIdx < options.length) {
-        e.preventDefault();
-        setSelectedIndex(targetIdx);
-        return;
-      }
-
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        const chosenColor = options?.[selectedIndex] ?? targetD;
-        onAnswer(chosenColor);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, disabled, selectedIndex, options, targetD, onAnswer]);
 
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
