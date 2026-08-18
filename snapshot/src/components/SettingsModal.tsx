@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import type { TrainingDomain } from '../utils/db';
 import {
   type ColorSenseSettings,
+  type NegativeSpaceSettings,
   type RelativeColorSettings,
   type StarSettings,
   type UserSettings,

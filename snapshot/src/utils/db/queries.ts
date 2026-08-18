@@ -105,6 +105,9 @@ export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number
 }
 
 export function formatTotalTime(ms: number): string {
+  if (!ms || Number.isNaN(ms) || ms <= 0) {
+    return '0天0小时0分钟';
+  }
   const totalMinutes = Math.floor(ms / (1000 * 60));
   const days = Math.floor(totalMinutes / (60 * 24));
   const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
