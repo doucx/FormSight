@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../utils/colorUtils';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../utils/colorUtils';
 import { HsvTrackSlider } from './HsvTrackSlider';
 
 interface ColorCanvasProps {
