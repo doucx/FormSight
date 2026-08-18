@@ -239,6 +239,7 @@ export const negativeSpacePlugin: TrainingPlugin<
   ),
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
 export const TRAINING_PLUGINS: Record<TrainingDomain, TrainingPlugin<any, any, any, any>> = {
   star: starPlugin,
   color: colorPlugin,

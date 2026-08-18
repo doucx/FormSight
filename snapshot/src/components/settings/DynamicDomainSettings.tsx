@@ -1,4 +1,3 @@
-import type { ComponentChildren } from 'preact';
 import type { TrainingDomain } from '../../utils/db';
 import type { TargetingMode } from '../../utils/settings';
 import { SettingToggleItem } from './common/SettingToggleItem';
@@ -148,13 +147,13 @@ export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]
 
 interface DynamicDomainSettingsProps {
   schemas: SettingFieldSchema[];
-  values: Record<string, any>;
-  onChange: (patch: Record<string, any>) => void;
+  values: Record<string, unknown>;
+  onChange: (patch: Record<string, unknown>) => void;
 }
 
 export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDomainSettingsProps) {
   const handleSectorToggle = (sectorsKey: string, sectorIdx: number) => {
-    const currentSectors: number[] = values[sectorsKey] || [];
+    const currentSectors = (values[sectorsKey] as number[] | undefined) || [];
     const exists = currentSectors.includes(sectorIdx);
     const updated = exists
       ? currentSectors.filter((s) => s !== sectorIdx)
@@ -171,7 +170,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
             <SliderMarginGroup
               key={field.key}
               title={field.title}
-              value={values[field.key] ?? 12}
+              value={(values[field.key] as number | undefined) ?? 12}
               onChange={(val) => onChange({ [field.key]: val })}
             />
           );
@@ -215,8 +214,8 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
         }
 
         if (field.type === 'targeting') {
-          const mode: TargetingMode = values[field.modeKey] || 'off';
-          const selectedSectors: number[] = values[field.sectorsKey] || [];
+          const mode = (values[field.modeKey] as TargetingMode | undefined) || 'off';
+          const selectedSectors = (values[field.sectorsKey] as number[] | undefined) || [];
 
           return (
             <TargetingSection

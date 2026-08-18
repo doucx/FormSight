@@ -12,8 +12,6 @@ import {
   getProfilesByDomain,
   getTrainingTimeMs,
 } from './utils/db';
-import type { NegativeSpaceMode } from './utils/negativeSpaceUtils';
-import type { RelativeColorMode } from './utils/relativeColorUtils';
 import { type UserSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';

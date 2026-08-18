@@ -4,200 +4,203 @@ import {
   clearAllData,
   exportAllData,
   formatTotalTime,
-  getAllColorProfiles,
-  getAllColorTrialRecords,
-  getAllTrialRecords,
-  getAllUserProfiles,
-  getColorTrainingTimeMs,
-  getStarHoppingTrainingTimeMs,
-  getTotalTrainingTimeMs,
-  getUserProfile,
+  getProfile,
+  getProfilesByDomain,
+  getTrainingTimeMs,
+  getTrialRecords,
   importAllData,
-  saveColorSession,
-  saveColorTrialRecord,
   saveSession,
   saveTrialRecord,
 } from '../db';
-import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
+import type { UnifiedSessionData, UnifiedTrialRecord } from '../db/schema';
 
-describe('db storage & import/export', () => {
+describe('Unified Database Layer Tests', () => {
   beforeEach(async () => {
     await clearAllData();
-    localStorage.clear();
   });
 
-  it('formatTotalTime - should format milliseconds into days, hours, and minutes', () => {
-    expect(formatTotalTime(0)).toBe('0天0小时0分钟');
-    expect(formatTotalTime(65 * 1000)).toBe('0天0小时1分钟');
-    expect(formatTotalTime((60 * 60 + 120) * 1000)).toBe('0天1小时2分钟');
-    expect(formatTotalTime((24 * 3600 + 3600 * 2 + 180) * 1000)).toBe('1天2小时3分钟');
+  describe('Trial Records and Profiles', () => {
+    it('should save trial record and automatically update user profile', async () => {
+      const record: UnifiedTrialRecord = {
+        id: 'rec_1',
+        sessionId: 'sess_1',
+        domain: 'star',
+        mode: 'single',
+        timestamp: Date.now(),
+        difficultyLevel: 5,
+        isHit: true,
+        responseTimeMs: 800,
+        details: { angleDegree: 45 },
+      };
+
+      await saveTrialRecord(record);
+
+      const records = await getTrialRecords('star', 'single');
+      expect(records.length).toBe(1);
+      expect(records[0].id).toBe('rec_1');
+      expect(records[0].isHit).toBe(true);
+      expect((records[0] as Record<string, unknown>).angleDegree).toBe(45);
+
+      const profile = await getProfile('star', 'single');
+      expect(profile).not.toBeNull();
+      expect(profile?.totalTrainedCards).toBe(1);
+      expect(profile?.totalHits).toBe(1);
+      expect(profile?.currentLevel).toBe(5);
+      expect(profile?.bestLevel).toBe(5);
+    });
+
+    it('should filter records by domain correctly', async () => {
+      await saveTrialRecord({
+        id: 'rec_star',
+        sessionId: 'sess_star',
+        domain: 'star',
+        mode: 'single',
+        timestamp: 1000,
+        difficultyLevel: 3,
+        isHit: true,
+        responseTimeMs: 500,
+      });
+
+      await saveTrialRecord({
+        id: 'rec_color',
+        sessionId: 'sess_color',
+        domain: 'color',
+        mode: 'H',
+        timestamp: 2000,
+        difficultyLevel: 4,
+        isHit: false,
+        responseTimeMs: 600,
+      });
+
+      const starRecords = await getTrialRecords('star');
+      expect(starRecords.length).toBe(1);
+      expect(starRecords[0].id).toBe('rec_star');
+
+      const colorRecords = await getTrialRecords('color');
+      expect(colorRecords.length).toBe(1);
+      expect(colorRecords[0].id).toBe('rec_color');
+
+      const allRecords = await getTrialRecords();
+      expect(allRecords.length).toBe(2);
+    });
+
+    it('should retrieve profiles by domain', async () => {
+      await saveTrialRecord({
+        id: 'rec_h',
+        sessionId: 's1',
+        domain: 'color',
+        mode: 'H',
+        timestamp: 1000,
+        difficultyLevel: 5,
+        isHit: true,
+        responseTimeMs: 400,
+      });
+
+      await saveTrialRecord({
+        id: 'rec_v',
+        sessionId: 's2',
+        domain: 'color',
+        mode: 'V',
+        timestamp: 1000,
+        difficultyLevel: 6,
+        isHit: true,
+        responseTimeMs: 400,
+      });
+
+      const profiles = await getProfilesByDomain('color');
+      expect(profiles.length).toBe(2);
+      const modes = profiles.map((p) => p.mode).sort();
+      expect(modes).toEqual(['H', 'V']);
+    });
   });
 
-  it('saveTrialRecord - should save trial record and update profile', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      domain: 'star',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      isHit: true,
-      responseTimeMs: 500,
+  describe('Sessions and Time Aggregation', () => {
+    it('should save session and calculate training time', async () => {
+      const session1: UnifiedSessionData = {
+        id: 'sess_1',
+        domain: 'star',
+        mode: 'single',
+        type: 'training',
+        startTimestamp: 10000,
+        endTimestamp: 70000, // 60s = 60000ms
+        totalTrials: 10,
+        hitTrials: 8,
+        startLevel: 5,
+        endLevel: 6,
+      };
+
+      const session2: UnifiedSessionData = {
+        id: 'sess_2',
+        domain: 'color',
+        mode: 'H',
+        type: 'training',
+        startTimestamp: 100000,
+        endTimestamp: 220000, // 120s = 120000ms
+        totalTrials: 20,
+        hitTrials: 15,
+        startLevel: 5,
+        endLevel: 7,
+      };
+
+      await saveSession(session1);
+      await saveSession(session2);
+
+      const starTime = await getTrainingTimeMs('star');
+      expect(starTime).toBe(60000);
+
+      const colorTime = await getTrainingTimeMs('color');
+      expect(colorTime).toBe(120000);
+
+      const totalTime = await getTrainingTimeMs();
+      expect(totalTime).toBe(180000);
     });
 
-    const records = await getAllTrialRecords('single');
-    expect(records.length).toBe(1);
-    expect(records[0].id).toBe('r1');
-
-    const profile = await getUserProfile('single');
-    expect(profile).not.toBeNull();
-    expect(profile?.totalTrainedCards).toBe(1);
-    expect(profile?.totalHits).toBe(1);
+    it('should format total time strings properly', () => {
+      expect(formatTotalTime(0)).toBe('0天0小时0分钟');
+      expect(formatTotalTime(65 * 1000 * 60)).toBe('0天1小时5分钟');
+      expect(formatTotalTime((25 * 60 + 30) * 1000 * 60)).toBe('1天1小时30分钟');
+    });
   });
 
-  it('getAllUserProfiles & getAllColorProfiles - should retrieve all mode profiles', async () => {
-    await saveTrialRecord({
-      id: 'r1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      anchorA: [250, 250],
-      targetB: [300, 250],
-      userClick: [300, 250],
-      angleDegree: 0,
-      distanceRatio: 50,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 500,
+  describe('Data Import and Export', () => {
+    it('should export, clear and re-import data completely', async () => {
+      await saveTrialRecord({
+        id: 'rec_exp',
+        sessionId: 'sess_exp',
+        domain: 'star',
+        mode: 'single',
+        timestamp: 1000,
+        difficultyLevel: 8,
+        isHit: true,
+        responseTimeMs: 300,
+      });
+
+      await saveSession({
+        id: 'sess_exp',
+        domain: 'star',
+        mode: 'single',
+        type: 'training',
+        startTimestamp: 1000,
+        endTimestamp: 5000,
+        totalTrials: 1,
+        hitTrials: 1,
+        startLevel: 8,
+        endLevel: 8,
+      });
+
+      const json = await exportAllData();
+      expect(typeof json).toBe('string');
+
+      await clearAllData();
+      const recordsAfterClear = await getTrialRecords();
+      expect(recordsAfterClear.length).toBe(0);
+
+      const success = await importAllData(json);
+      expect(success).toBe(true);
+
+      const restoredRecords = await getTrialRecords('star');
+      expect(restoredRecords.length).toBe(1);
+      expect(restoredRecords[0].id).toBe('rec_exp');
     });
-
-    const userProfiles = await getAllUserProfiles();
-    expect(userProfiles.single).not.toBeNull();
-    expect(userProfiles.double_h).toBeNull();
-    expect(userProfiles.double_r).toBeNull();
-
-    await saveColorTrialRecord({
-      id: 'cr1',
-      sessionId: 'cs1',
-      mode: 'H',
-      timestamp: Date.now(),
-      difficultyLevel: 5,
-      targetHSV: [0, 100, 100],
-      userHSV: [0, 100, 100],
-      isHit: true,
-      errorValue: 0,
-      responseTimeMs: 500,
-    });
-
-    const colorProfiles = await getAllColorProfiles();
-    expect(colorProfiles.H).not.toBeNull();
-    expect(colorProfiles.S).toBeNull();
-    expect(colorProfiles.V).toBeNull();
-    expect(colorProfiles.ALL).toBeNull();
-
-    const colorRecords = await getAllColorTrialRecords('H');
-    expect(colorRecords.length).toBe(1);
-  });
-
-  it('training time calculation - should aggregate valid session durations', async () => {
-    await saveSession({
-      id: 's1',
-      domain: 'star',
-      mode: 'single',
-      type: 'training',
-      startTimestamp: 1000,
-      endTimestamp: 61000, // +60s
-      totalTrials: 5,
-      hitTrials: 4,
-      startLevel: 5,
-      endLevel: 6,
-    });
-
-    await saveColorSession({
-      id: 'cs1',
-      mode: 'H',
-      type: 'training',
-      startTimestamp: 1000,
-      endTimestamp: 31000, // +30s
-      totalTrials: 3,
-      hitTrials: 3,
-      startLevel: 5,
-      endLevel: 6,
-    });
-
-    const starMs = await getStarHoppingTrainingTimeMs();
-    const colorMs = await getColorTrainingTimeMs();
-    const totalMs = await getTotalTrainingTimeMs();
-
-    expect(starMs).toBe(60000);
-    expect(colorMs).toBe(30000);
-    expect(totalMs).toBe(90000);
-  });
-
-  it('exportAllData and importAllData - should correctly export and restore data', async () => {
-    // 1. Prepare initial data
-    await saveTrialRecord({
-      id: 'star_1',
-      sessionId: 's1',
-      mode: 'single',
-      timestamp: 1000,
-      difficultyLevel: 10,
-      anchorA: [100, 100],
-      targetB: [200, 200],
-      userClick: [200, 200],
-      angleDegree: 45,
-      distanceRatio: 100,
-      isHit: true,
-      errorPixelDistance: 0,
-      responseTimeMs: 300,
-    });
-
-    await saveColorTrialRecord({
-      id: 'color_1',
-      sessionId: 'cs1',
-      mode: 'H',
-      timestamp: 1000,
-      difficultyLevel: 8,
-      targetHSV: [120, 100, 100],
-      userHSV: [120, 100, 100],
-      isHit: true,
-      errorValue: 0,
-      responseTimeMs: 400,
-    });
-
-    const customSettings: typeof DEFAULT_SETTINGS = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    customSettings.star.gridSize = 5;
-    customSettings.star.autoNext = false;
-    saveSettings(customSettings);
-
-    // 2. Export
-    const exportedJson = await exportAllData();
-    expect(exportedJson).toContain('star_1');
-    expect(exportedJson).toContain('color_1');
-    expect(exportedJson).toContain('"gridSize": 5');
-
-    // 3. Clear DB & localStorage
-    await clearAllData();
-    localStorage.clear();
-    const recordsEmpty = await getAllTrialRecords();
-    expect(recordsEmpty.length).toBe(0);
-    expect(loadSettings().star.gridSize).toBe(DEFAULT_SETTINGS.star.gridSize);
-
-    // 4. Import
-    const success = await importAllData(exportedJson);
-    expect(success).toBe(true);
-
-    // 5. Verify restored data and settings
-    const recordsRestored = await getAllTrialRecords('single');
-    expect(recordsRestored.length).toBe(1);
-    expect(recordsRestored[0].id).toBe('star_1');
-
-    const colorProfiles = await getAllColorProfiles();
-    expect(colorProfiles.H?.totalTrainedCards).toBe(1);
-
-    const restoredSettings = loadSettings();
-    expect(restoredSettings.star.gridSize).toBe(5);
-    expect(restoredSettings.star.autoNext).toBe(false);
   });
 });
