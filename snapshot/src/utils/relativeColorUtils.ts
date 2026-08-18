@@ -475,20 +475,21 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
   const t = (clampedLevel - 1) / 34;
   const diffPercent = Math.max(1.5, Math.round((18 * (1.5 / 18) ** t) * 10) / 10);
 
-  const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
-
-  // 构造视错觉陷阱：物理更亮的一侧放在更亮的背景上（被压暗），物理更暗的一侧放在暗背景上（被提亮）
+  // 1. 独立随机决定：哪一侧背景更亮（完全独立于中心色，A 亮与 B 亮各 50% 概率）
+  const isLeftBgBright = Math.random() < 0.5;
   const brightBgVal = Math.floor(Math.random() * 15) + 80;
   const darkBgVal = Math.floor(Math.random() * 15) + 10;
-
-  const bgLeftVal = largerPhysicalSide === 'A' ? brightBgVal : darkBgVal;
-  const bgRightVal = largerPhysicalSide === 'B' ? brightBgVal : darkBgVal;
+  const bgLeftVal = isLeftBgBright ? brightBgVal : darkBgVal;
+  const bgRightVal = isLeftBgBright ? darkBgVal : brightBgVal;
 
   const baseHue = Math.floor(Math.random() * 360);
   const baseSat = Math.floor(Math.random() * 20);
 
   const bgLeft: [number, number, number] = [baseHue, baseSat, bgLeftVal];
   const bgRight: [number, number, number] = [baseHue, baseSat, bgRightVal];
+
+  // 2. 独立随机决定：哪一侧中心色物理上更亮（与背景明暗完全正交）
+  const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
 
   const baseCenterVal = Math.floor(Math.random() * 20) + 40;
   const valA = largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;

@@ -1,235 +1,152 @@
-你的指出非常关键且专业。在色彩心理学和阿尔伯斯同时对比实验中，中心色块必须与背景色直接交界接触。任何白边或外发光阴影都会在视网膜上形成高频反差隔离带，大幅削弱甚至阻断背景的侧抑制诱导效果。
+现在我们对 `generateDecontextual2AfcQuestion` 中的决定性漏洞进行彻底修复，将背景明暗与中心色物理明度解耦为两个完全正交的独立随机维度。
 
-## [WIP] fix(relative-color): 移除阿尔伯斯同时对比中心色块的边框与阴影干扰
+## [WIP] fix(relative-color): 解耦环境穿透判别 2AFC 的背景与物理明度线性共线漏洞
 
 ### 错误分析
-在 `RelativeColorCanvas.tsx` 的阿尔伯斯视错觉组件中，中心色块（Central Swatches）使用了 `border-2 border-white/60` 和 `shadow-md` 样式。
-1. **白边干扰**：白色属于高明度无彩色边缘，会优先对中心色块产生明度侧抑制，破坏了外层背景色对中心色块的诱导作用。
-2. **阴影干扰**：阴影在色块周围产生了暗渐变过渡环，模糊了两种颜色的直接接触边界，导致用户无法体验到纯粹的视错觉对比。
+在 `src/utils/relativeColorUtils.ts` 的 `generateDecontextual2AfcQuestion` 生成逻辑中：
+- 错误地将 `bgLeftVal` 与 `bgRightVal` 的明暗赋值直接与 `largerPhysicalSide === 'A'` 进行了三元表达式硬编码绑定。
+- 这导致在所有题目中，**物理更亮的中心色恒定出现在更亮的背景中**。
+- 用户无需关注中心色，仅凭背景明暗即可实现 100% 正确作答，使视错觉判别训练完全失效。
 
 ### 用户需求
-去除阿尔伯斯同时对比三种模式（`DECONTEXTUAL_2AFC`、`LIGHTNESS_INDUCTION`、`HUE_INDUCTION`）中中央色块外部的白色边框和阴影，保证中心颜色与背景颜色无缝直接贴合。
+修复 `DECONTEXTUAL_2AFC` 题型生成算法，消除“看背景亮度即得正确答案”的漏洞，使背景明暗与中心色块物理明度完全正交独立。
 
 ### 评论
-这是一个极具专业性的视错觉实验优化。去除边框与阴影后，背景对中心色块的 OKLab 诱导力能够 100% 作用于视网膜感受野，完全符合约瑟夫·阿尔伯斯经典色彩实验的标准环境。
+修复后，“仅看背景”的作弊策略期望正确率将降至 50%（纯随机硬币概率）。题目将以各 50% 的概率出现“逆向陷阱题（物理更亮在亮底上被压暗）”与“顺向诱导题（物理更亮在暗底上被提亮）”，真正迫使用户调动对中心色物理明度的穿透识别直觉。
 
 ### 目标
-在 `RelativeColorCanvas.tsx` 中：
-1. 移除 2AFC 模式中卡片 A、B 中央色块的 `border-2 border-white/60` 与 `shadow-md`。
-2. 移除明度补偿与补色残像模式中左侧参考色块与右侧作答色块的 `border-2 border-white/60` 与 `shadow-md`。
+在 `src/utils/relativeColorUtils.ts` 的 `generateDecontextual2AfcQuestion` 函数中：
+1. 独立随机决定左右背景明暗关系（`isLeftBgBright`）。
+2. 独立随机决定左右中心色物理更亮的一侧（`largerPhysicalSide`）。
+3. 确保两者构成完全正交的 2×2 实验矩阵。
 
 ### 基本原理
-直接移除中心色块的 `border-*` 与 `shadow-*` 类名，保留柔和圆角（`rounded-xl`）或直接纯平贴合，使中心色块边缘与背景色直接交界，最大化诱导对比效应。
+解除变量共线后：
+- 当 `isLeftBgBright === true` 且 `largerPhysicalSide === 'A'` 时为逆向错觉陷阱题（A 在亮底看起来显暗，但物理更亮）；
+- 当 `isLeftBgBright === true` 且 `largerPhysicalSide === 'B'` 时为顺向强化题（B 在暗底看起来极亮，物理也更亮）。
+两种情境概率均等，彻底消除单边作弊可能。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/color #task/object/albers-border-cleanup #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/color #task/object/albers-2afc-orthogonality #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 移除 `RelativeColorCanvas.tsx` 中中心色块的边框与阴影
+#### Acts 1: 修复 `src/utils/relativeColorUtils.ts` 中的 2AFC 生成算法
 
 ~~~~~act
 patch_file
-src/components/RelativeColorCanvas.tsx
+src/utils/relativeColorUtils.ts
 ~~~~~
 ~~~~~typescript
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60"
-                style={{ backgroundColor: hexCenterA }}
-              />
-            </div>
-          </button>
+/**
+ * 生成环境穿透判别二选一题目 (DECONTEXTUAL_2AFC)
+ */
+export function generateDecontextual2AfcQuestion(level: number): RelativeColorQuestionData {
+  const id = `adc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
 
-          {/* 卡片 B */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('B')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isBHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'B'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'B'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
-                </span>
-                区域 B (键 2)
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isBHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isBHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorB?.[2]}%)
-                </span>
-              )}
-            </div>
+  // 物理明度差异：Level 1 为 18%，Level 35 为 1.5%
+  const t = (clampedLevel - 1) / 34;
+  const diffPercent = Math.max(1.5, Math.round((18 * (1.5 / 18) ** t) * 10) / 10);
 
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60"
-                style={{ backgroundColor: hexCenterB }}
-              />
-            </div>
+  const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+
+  // 构造视错觉陷阱：物理更亮的一侧放在更亮的背景上（被压暗），物理更暗的一侧放在暗背景上（被提亮）
+  const brightBgVal = Math.floor(Math.random() * 15) + 80;
+  const darkBgVal = Math.floor(Math.random() * 15) + 10;
+
+  const bgLeftVal = largerPhysicalSide === 'A' ? brightBgVal : darkBgVal;
+  const bgRightVal = largerPhysicalSide === 'B' ? brightBgVal : darkBgVal;
+
+  const baseHue = Math.floor(Math.random() * 360);
+  const baseSat = Math.floor(Math.random() * 20);
+
+  const bgLeft: [number, number, number] = [baseHue, baseSat, bgLeftVal];
+  const bgRight: [number, number, number] = [baseHue, baseSat, bgRightVal];
+
+  const baseCenterVal = Math.floor(Math.random() * 20) + 40;
+  const valA = largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+  const valB = largerPhysicalSide === 'B' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+
+  const centerColorA: [number, number, number] = [baseHue, baseSat, Math.round(valA)];
+  const centerColorB: [number, number, number] = [baseHue, baseSat, Math.round(valB)];
+
+  return {
+    id,
+    mode: 'DECONTEXTUAL_2AFC',
+    difficultyLevel: clampedLevel,
+    colorA: bgLeft,
+    colorB: centerColorA,
+    colorC: bgRight,
+    targetD: centerColorB,
+    bgLeft,
+    bgRight,
+    centerColorA,
+    centerColorB,
+    largerPhysicalSide,
+    physicalValueDiff: diffPercent,
+    tolerance: diffPercent,
+  };
+}
 ~~~~~
 ~~~~~typescript
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl"
-                style={{ backgroundColor: hexCenterA }}
-              />
-            </div>
-          </button>
+/**
+ * 生成环境穿透判别二选一题目 (DECONTEXTUAL_2AFC)
+ */
+export function generateDecontextual2AfcQuestion(level: number): RelativeColorQuestionData {
+  const id = `adc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
 
-          {/* 卡片 B */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('B')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isBHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'B'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'B'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
-                </span>
-                区域 B (键 2)
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isBHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isBHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorB?.[2]}%)
-                </span>
-              )}
-            </div>
+  // 物理明度差异：Level 1 为 18%，Level 35 为 1.5%
+  const t = (clampedLevel - 1) / 34;
+  const diffPercent = Math.max(1.5, Math.round((18 * (1.5 / 18) ** t) * 10) / 10);
 
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl"
-                style={{ backgroundColor: hexCenterB }}
-              />
-            </div>
-~~~~~
+  // 1. 独立随机决定：哪一侧背景更亮（完全独立于中心色，A 亮与 B 亮各 50% 概率）
+  const isLeftBgBright = Math.random() < 0.5;
+  const brightBgVal = Math.floor(Math.random() * 15) + 80;
+  const darkBgVal = Math.floor(Math.random() * 15) + 10;
+  const bgLeftVal = isLeftBgBright ? brightBgVal : darkBgVal;
+  const bgRightVal = isLeftBgBright ? darkBgVal : brightBgVal;
 
-~~~~~act
-patch_file
-src/components/RelativeColorCanvas.tsx
-~~~~~
-~~~~~typescript
-        {/* 左右双背景对照视口 (带中间安全隔离带) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-          {/* 左侧固定参考 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              左侧参考 (固定基准)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgLeftHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60 transition-all"
-                style={{ backgroundColor: centerLeftHex }}
-              />
-            </div>
-          </div>
+  const baseHue = Math.floor(Math.random() * 360);
+  const baseSat = Math.floor(Math.random() * 20);
 
-          {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgRightHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl shadow-md border-2 border-white/60 transition-all"
-                style={{ backgroundColor: showAnswer ? idealRightHex : userRightHex }}
-              />
-            </div>
-          </div>
-        </div>
-~~~~~
-~~~~~typescript
-        {/* 左右双背景对照视口 (带中间安全隔离带) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
-          {/* 左侧固定参考 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              左侧参考 (固定基准)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgLeftHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl transition-all"
-                style={{ backgroundColor: centerLeftHex }}
-              />
-            </div>
-          </div>
+  const bgLeft: [number, number, number] = [baseHue, baseSat, bgLeftVal];
+  const bgRight: [number, number, number] = [baseHue, baseSat, bgRightVal];
 
-          {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgRightHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl transition-all"
-                style={{ backgroundColor: showAnswer ? idealRightHex : userRightHex }}
-              />
-            </div>
-          </div>
-        </div>
+  // 2. 独立随机决定：哪一侧中心色物理上更亮（与背景明暗完全正交）
+  const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+
+  const baseCenterVal = Math.floor(Math.random() * 20) + 40;
+  const valA = largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+  const valB = largerPhysicalSide === 'B' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+
+  const centerColorA: [number, number, number] = [baseHue, baseSat, Math.round(valA)];
+  const centerColorB: [number, number, number] = [baseHue, baseSat, Math.round(valB)];
+
+  return {
+    id,
+    mode: 'DECONTEXTUAL_2AFC',
+    difficultyLevel: clampedLevel,
+    colorA: bgLeft,
+    colorB: centerColorA,
+    colorC: bgRight,
+    targetD: centerColorB,
+    bgLeft,
+    bgRight,
+    centerColorA,
+    centerColorB,
+    largerPhysicalSide,
+    physicalValueDiff: diffPercent,
+    tolerance: diffPercent,
+  };
+}
 ~~~~~
 
 ### 下一步建议
-- 可以在浏览器中启动开发环境（`npm run dev`）体验去除边框后的直接色彩交界对比，感受纯正的阿尔伯斯同时对比感知反馈。
-- 如果确认无误，可进行代码提交。
+1. 在本地启动界面进行多轮“环境穿透判别”测试，验证：
+   - 亮背景下既可能出现物理更亮的色块（逆向陷阱题），也可能出现物理更暗的色块（顺向诱导题）。
+   - 用户无法再依靠背景明暗进行单一规则猜测。
+2. 确认各项测试正常后可组织下一步的优化或提交。
