@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M relativeColorUtils.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064550.7398856, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(tests): 消除测试用例中的非空断言以符合 Biome 规则", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064551.4311616, "duration_ms": 0}}

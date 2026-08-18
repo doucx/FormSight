@@ -29,17 +29,27 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     expect(q.mode).toBe('VECTOR_SHIFT');
     expect(q.options).toBeDefined();
-    expect(q.options?.length).toBe(4);
     expect(q.correctIndex).toBeDefined();
-    expect(q.correctIndex!).toBeGreaterThanOrEqual(0);
-    expect(q.correctIndex!).toBeLessThanOrEqual(3);
+
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
+
+    expect(q.options.length).toBe(4);
+    expect(q.correctIndex).toBeGreaterThanOrEqual(0);
+    expect(q.correctIndex).toBeLessThanOrEqual(3);
   });
 
   it('VECTOR_SHIFT - should detect target choice correctly', () => {
     const q = generateRelativeColorQuestion('VECTOR_SHIFT', 5);
     expect(q.options).toBeDefined();
     expect(q.correctIndex).toBeDefined();
-    const correctOption = q.options?.[q.correctIndex!];
+
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
+
+    const correctOption = q.options[q.correctIndex];
     const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
     expect(result.isHit).toBe(true);
   });
@@ -73,8 +83,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.idealRightCenter).toBeDefined();
 
-    // 提交理想补偿值应当判定为 Hit
-    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter!, q);
+    if (!q.idealRightCenter) {
+      throw new Error('idealRightCenter is undefined');
+    }
+
+    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter, q);
     expect(hitRes.isHit).toBe(true);
   });
 
@@ -87,7 +100,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.idealRightCenter).toBeDefined();
 
-    const hitRes = checkRelativeColorHit('HUE_INDUCTION', q.idealRightCenter!, q);
+    if (!q.idealRightCenter) {
+      throw new Error('idealRightCenter is undefined');
+    }
+
+    const hitRes = checkRelativeColorHit('HUE_INDUCTION', q.idealRightCenter, q);
     expect(hitRes.isHit).toBe(true);
   });
 
@@ -98,7 +115,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.largerPhysicalSide).toMatch(/^(A|B)$/);
     expect(q.physicalValueDiff).toBeGreaterThan(0);
 
-    const correctChoice = q.largerPhysicalSide!;
+    if (!q.largerPhysicalSide) {
+      throw new Error('largerPhysicalSide is undefined');
+    }
+
+    const correctChoice = q.largerPhysicalSide;
     const wrongChoice: 'A' | 'B' = correctChoice === 'A' ? 'B' : 'A';
 
     const hitRes = checkRelativeColorHit('DECONTEXTUAL_2AFC', correctChoice, q);
