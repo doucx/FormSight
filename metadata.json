@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M relativeColorUtils.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064581.5409544, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT]", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787064581.8456635, "duration_ms": 0}}
