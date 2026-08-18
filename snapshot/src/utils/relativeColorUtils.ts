@@ -123,6 +123,51 @@ function rotateVector(
 }
 
 /**
+ * 判断 OKLab 坐标是否严格落在 sRGB 可显色域内部 (无截断)
+ */
+export function isOkLabInGamut(lab: [number, number, number]): boolean {
+  const [L, a, b] = lab;
+  if (L < 0 || L > 1) return false;
+
+  const lCbrt = L + 0.3963377774 * a + 0.2158037573 * b;
+  const mCbrt = L - 0.1055613458 * a - 0.0638541728 * b;
+  const sCbrt = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const lCone = lCbrt ** 3;
+  const mCone = mCbrt ** 3;
+  const sCone = sCbrt ** 3;
+
+  const rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  const gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  const bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
+
+  const eps = 1e-4;
+  return (
+    rLin >= -eps && rLin <= 1 + eps &&
+    gLin >= -eps && gLin <= 1 + eps &&
+    bLin >= -eps && bLin <= 1 + eps
+  );
+}
+
+/**
+ * 校验 OKLab 目标点周围在指定 margin 距离内是否拥有充足的 sRGB 色域安全气囊
+ */
+function hasGamutMargin(lab: [number, number, number], margin: number): boolean {
+  const [L, a, b] = lab;
+  const testPoints: [number, number, number][] = [
+    [L, a, b],
+    [L + margin, a, b],
+    [L - margin, a, b],
+    [L, a + margin, b],
+    [L, a - margin, b],
+    [L, a, b + margin],
+    [L, a, b - margin],
+  ];
+
+  return testPoints.every(isOkLabInGamut);
+}
+
+/**
  * 随机生成色彩矢量迁移题目与 4 个满足确定性绝对安全距离的 candidate 干扰选项
  */
 export function generateRelativeColorQuestion(
@@ -145,18 +190,18 @@ export function generateRelativeColorQuestion(
   let labTargetD: [number, number, number] = [0, 0, 0];
   let vAB: [number, number, number] = [0, 0, 0];
 
-  while (attempts < 100) {
+  while (attempts < 200) {
     attempts++;
-    // 生成 A (固有色 1)
+    // 生成 A (固有色 1 - 适度收敛饱和度区间以保障 D 具有足够四面体舒展空间)
     const hA = Math.floor(Math.random() * 360);
-    const sA = Math.floor(Math.random() * 60) + 30; // 30..90
-    const vA = Math.floor(Math.random() * 60) + 30; // 30..90
+    const sA = Math.floor(Math.random() * 55) + 25; // 25..80
+    const vA = Math.floor(Math.random() * 55) + 30; // 30..85
     colorA = [hA, sA, vA];
 
     // 生成 B (在 A 基础上有明暗与色相矢量推移)
     const hB = (hA + (Math.floor(Math.random() * 60) - 30) + 360) % 360;
-    const sB = Math.max(10, Math.min(100, sA + (Math.floor(Math.random() * 40) - 20)));
-    const vB = Math.max(10, Math.min(100, vA + (Math.floor(Math.random() * 50) - 25)));
+    const sB = Math.max(15, Math.min(90, sA + (Math.floor(Math.random() * 40) - 20)));
+    const vB = Math.max(20, Math.min(95, vA + (Math.floor(Math.random() * 50) - 25)));
     colorB = [hB, sB, vB];
 
     // 生成 C (根据 level 动态控制与 A 的相似度)
@@ -170,8 +215,8 @@ export function generateRelativeColorQuestion(
     const vC_jitter = (Math.random() * 2 - 1) * maxValOffset;
 
     const hC = (hA + hC_jitter + 360) % 360;
-    const sC = Math.max(10, Math.min(100, sA + sC_jitter));
-    const vC = Math.max(10, Math.min(100, vA + vC_jitter));
+    const sC = Math.max(15, Math.min(90, sA + sC_jitter));
+    const vC = Math.max(20, Math.min(95, vA + vC_jitter));
     colorC = [Math.round(hC), Math.round(sC), Math.round(vC)];
 
     const labA = hsvToOkLab(...colorA);
@@ -186,10 +231,16 @@ export function generateRelativeColorQuestion(
 
     labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
 
-    if (labTargetD[0] >= 0.1 && labTargetD[0] <= 0.9) {
+    // 方案二核心：检查目标点 D 是否在全方向上具备距离 R 的色域安全气囊
+    if (hasGamutMargin(labTargetD, R * 0.95)) {
       targetD = okLabToHsv(labTargetD);
       break;
     }
+  }
+
+  // 若极端尝试后仍未打破循环，做平滑回退
+  if (!targetD || (targetD[0] === 0 && targetD[1] === 0 && targetD[2] === 0 && attempts >= 200)) {
+    targetD = okLabToHsv(labTargetD);
   }
 
   // ====================================================================
