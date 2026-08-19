@@ -1,15 +1,16 @@
-# FormSight (寻星练习 · Star-Hopping)
+# FormSight
 
 <p align="center">
-  <strong>基于视知觉心理学与极坐标空间建模的自适应视觉与手眼协调强化训练系统</strong>
+  <strong>基于视知觉心理学、OKLab 感知色彩空间与几何拓扑建模的自适应视觉与手眼协调强化训练系统</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Framework-Preact_10-673ab7?style=flat-square&logo=preact" alt="Preact">
   <img src="https://img.shields.io/badge/Language-TypeScript_5-3178c6?style=flat-square&logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Styling-Tailwind_CSS_3-06b6d4?style=flat-square&logo=tailwindcss" alt="Tailwind CSS">
+  <img src="https://img.shields.io/badge/Color_Space-OKLab_/_OKLCH-f59e0b?style=flat-square" alt="OKLab">
   <img src="https://img.shields.io/badge/Build_Tool-Vite_5-646cff?style=flat-square&logo=vite" alt="Vite">
-  <img src="https://img.shields.io/badge/Storage-IndexedDB_(Offline)--First)-success?style=flat-square" alt="IndexedDB">
+  <img src="https://img.shields.io/badge/Storage-IndexedDB_(Offline--First)-success?style=flat-square" alt="IndexedDB">
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
 </p>
 
@@ -17,126 +18,131 @@
 
 ## 📖 项目简介
 
-**FormSight (寻星练习)** 是一款源自天文学目视观测（寻找暗星）及视觉认知心理学的应用工具。
+**FormSight** 是一套面向数字艺术家、设计师及视觉观察者的硬核自适应训练系统。它将现代视知觉认知心理学、心理物理学阶梯测试、均匀感知色彩空间（OKLab）以及二维拓扑几何算法深度融合。
 
-在训练过程中，用户需要在左侧“参考画布”上观察锚点（Anchor）与目标点（Target）的几何位置关系（涵盖距离、角度、正交投影及旋转比例），并在右侧“交互画布”的点阵网格中准确点击定位目标点。
-
-系统通过实时记录每次点击的**像素级位置偏差、极角与响应时间**，配合**心理物理学自适应算法**与**空间偏置诊断模型**，帮助用户精准测定并提升视觉系统的极坐标方位感知、比例估计力及心智旋转（Mental Rotation）能力。
+系统通过实时记录每次作答的**微米/像素级偏差、感知色差 ($\Delta E$)、角度误差及响应时延**，驱动**自适应阶梯与轮次评估算法**，帮助训练者打破具象认知偏见，系统化建立敏锐的色彩推移直觉、空间比例感知力及微小视觉差异辨识力。
 
 ---
 
-## ✨ 核心特性
+## 🧩 四大核心训练维度
 
-- 🎯 **三大几何拓扑训练模式**
-  - **单锚点模式 (Single Anchor)**：极坐标方位与距离感知的基本功训练。
-  - **水平双锚点 (Double Horiz)**：基于线段两端锚点的正交投影与距离比例判定。
-  - **旋转双锚点 (Double Rotated)**：叠加任意旋转角度（15°~150°），训练复杂视角下的心智旋转与空间构图能力。
+### 1. 寻星练习 (Star-Hopping)
+基于极坐标与双极透视网格，通过视线搜寻与盲打定位，训练空间方位、线段比例及心智旋转 (Mental Rotation) 构图直觉。
+- **单锚点模式 (Single Anchor)**：单一中心锚点，评估基本极坐标方位与距离感知力。
+- **水平双锚点 (Horizontal Dual)**：水平线段两端锚点，评估两点比例与正交投影判定力。
+- **旋转双锚点 (Rotated Dual)**：带有倾斜角度的双锚点（15°~150°），评估复杂旋转视角下的几何构图力。
 
-- ⚡ **心理物理学自适应难度引擎**
-  - **经典 3U1D 阶梯算法 (Staircase)**：连续 3 题正确提升难度（网格步长缩小），1 题错误降低难度。
-  - **轮次胜率评估引擎 (Block Master)**：按固定题量（10/15/20 题）评估通关率，动态调整能力阶梯。
-  - **精细步长控制**：支持标准阶梯（5px 梯度）与精细阶梯（1px 逐级递进）。
+### 2. 绝对色感 (Color Recognition)
+拆解 HSV 色彩空间，结合 OKLab 视觉可观测量与感知难度对齐，分级递进识别单维度及复合色彩。
+- **色相 (Hue, H)**：在 360° 色相环上精准判定色相角度。
+- **明度 (Value, V)**：在固定色相下评估素描明暗阶梯 (0%~100%)。
+- **饱和度 (Saturation, S)**：在固定色相与明度下评估色彩纯度鲜艳度 (0%~100%)。
+- **综合拾色 (Match, ALL)**：三轨联动微调，全面逼近真理色彩。
 
-- 🔍 **空间偏置与盲区诊断 (Analytics Engine)**
-  - **中心相对偏差热力散点图**：归一化原点分析，精准诊断视觉系统是否存在系统性偏置（如偏左、偏下等 $\Delta X, \Delta Y$ 偏移）。
-  - **8 方向弱点罗盘**：将 360° 空间切分为 8 个 45° 视角扇区，实时统计各方位的命中率与平均误差。
-  - **弱点靶向强化 (Targeting Mode)**：自动/手动锁定表现最差的角度扇区，加权生成训练题目，精准消除视角盲区。
+### 3. 相对色感 (Relative Color Perception)
+基于 OKLab 空间推移矢量 ($\vec{v}_{AB}$) 与阿尔伯斯 (Josef Albers) 相互作用理论，训练光影与环境对比下的相对色彩感知力。
+- **色彩矢量迁移 (Vector Shift)**：保持固有色推移矢量在全场施加统一推移，建立光影相对偏转直觉。
+- **明度反差补偿 (Lightness Induction)**：在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致。
+- **补色残像调和 (Hue Induction)**：在强饱和度色相背景下，逆向补偿色彩推移，训练环境光色感知调和力。
+- **环境穿透判别 (Decontextual 2AFC)**：穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理。
 
-- 🔒 **离线优先与数据隐私 (Offline-First)**
-  - 基于 IndexedDB 本地数据库存储，不依赖任何后端服务。
-  - 完整记录训练会话、单题细节日志与能力看板，支持 JSON 一键导出与导入。
-
----
-
-## 📐 算法与技术原理
-
-### 1. 几何变换与加权生成 (`geometry.ts`)
-目标点 $B$ 与网格点阵的计算基于二维刚体变换：
-$$P_{rotated} = R(\theta) \cdot (P - P_{center}) + P_{center}$$
-题目生成算法内置加权概率判定，在开启靶向强化时，系统以 $70\%$ 的概率将目标生成在用户的弱点扇区内（带 $\pm 20^\circ$ 随机抖动），其余 $30\%$保持全局随机采样。
-
-### 2. 吸附与判定机制
-用户点击 $P_{click}$ 后，系统通过欧氏距离计算最近的网格点 $P_{grid}$，并基于网格步长 $S_{step}$ 的 $55\%$ 建立有效感应半径：
-$$R_{hit} = 0.55 \times S_{step}$$
-保证在不同难度阶梯下点击判定的精确度与舒适度。
+### 4. 正负形感知 (Negative Space)
+切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破主体偏见，培养专业起形与比例感知力。
+- **负形占比滑块评估 (Ratio Estimation)**：估计不规则几何多边形外部留白占整幅画面的面积百分比。
+- **负形面积二分判别 (Area Comparison 2AFC)**：快速对比两个形态各异的多边形留白，二选一判别哪侧留白面积更大。
+- **负形边界反切定点 (Negative Vertex Fitting)**：观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。
 
 ---
 
-## 🛠️ 技术栈
+## 📐 核心算法与技术原理
 
-- **前端框架**：[Preact](https://preactjs.com/) (替代 React 的超轻量化 JSX 库)
-- **构建工具**：[Vite 5](https://vitejs.dev/)
-- **语言**：TypeScript 5
-- **样式**：[Tailwind CSS 3](https://tailwindcss.com/)
-- **图标**：[Lucide Preact](https://lucide.dev/)
-- **本地存储**：`idb` (IndexedDB Wrapper)
+### 1. OKLab 均匀色彩感知空间 (`oklchUtils.ts`)
+为了解决传统 sRGB / HSV 在人眼感知上的非均匀性（如黄色与蓝色在相同饱和度下的明暗感知不对称），系统将色彩映射至 OKLab 空间计算欧氏色差：
+$$\Delta E_{\text{OK}} = \sqrt{(\Delta L)^2 + (\Delta a)^2 + (\Delta b)^2}$$
+- **自适应容错**：根据当前难度 Level ($1 \sim 35$) 对数平滑插值容错区间：
+  $$\Delta E_{\text{target}}(\text{level}) = \Delta E_{\max} \cdot \left(\frac{\Delta E_{\min}}{\Delta E_{\max}}\right)^{\frac{\text{level} - 1}{34}}$$
+- **动态容错带指示**：实时在滑块上投射基于 $\Delta E$ 的动态容错边界。
 
----
+### 2. 双模心理物理学自适应引擎 (`adaptiveEngine.ts`)
+- **轮次胜率评估算子 (Block Master - 推荐)**：以 10/15/20 题为一个评估轮次，胜率达到目标阈值（如 80%）通关晋级，低于 50% 自动回调降级。
+- **经典 3U1D 阶梯算子 (Staircase)**：连续 3 题正确升 1 级，1 题错误降 1 级。
+- **步幅精细度**：支持标准阶梯（3 级大步幅）与精细阶梯（1 级逐级微调）。
 
-## 📁 项目结构
-
-```text
-FormSight/
-├── src/
-│   ├── components/            # UI 组件
-│   │   ├── AnalyticsModal.tsx  # 弱点分析与热力图 Modal (Canvas 绘制)
-│   │   ├── SettingsModal.tsx   # 偏好与参数配置 Modal
-│   │   └── StarCanvas.tsx      # 核心双 Canvas 交互与视觉反馈渲染
-│   ├── types/                 # TypeScript 类型定义
-│   │   └── index.ts
-│   ├── utils/                 # 工具与核心算法
-│   │   ├── adaptiveEngine.ts  # 自适应难度引擎 (3U1D / Block)
-│   │   ├── db.ts              # IndexedDB 数据库封装
-│   │   ├── geometry.ts        # 几何计算、吸附与题目生成器
-│   │   └── settings.ts        # 本地配置持久化
-│   ├── views/                 # 主页面视图
-│   │   ├── Dashboard.tsx      # 模式选择与能力看板
-│   │   └── TrainingView.tsx   # 训练交互与实时监控 Header
-│   ├── app.tsx                # 应用根组件与路由状态管理
-│   ├── main.tsx               # 入口文件
-│   └── index.css              # Tailwind 指令与全局样式
-├── index.html                 # 页面 HTML 模板
-├── package.json
-├── vite.config.ts
-└── tsconfig.json
-```
+### 3. 多边形负形拓扑与鞋带公式 (`negativeSpaceUtils.ts`)
+利用鞋带公式 (Shoelace Formula) 计算任意不规则非自交多边形面积 $A_{\text{positive}}$，进而得到精确负形面积比例：
+$$A = \frac{1}{2} \left| \sum_{i=0}^{n-1} (x_i y_{i+1} - x_{i+1} y_i) \right|, \quad R_{\text{negative}} = \frac{A_{\text{canvas}} - A_{\text{positive}}}{A_{\text{canvas}}} \times 100\%$$
 
 ---
 
-## 🚀 快速开始
+## 📊 数据洞察与离线分析
 
-### 1. 环境准备
-确保你的本地环境已安装 [Node.js](https://nodejs.org/) (推荐 v18+)。
+### 1. 客户端实时统计看板
+- **弱点罗盘 (Compass)**：8 方向空间方位命中率分布。
+- **色相环盲区诊断 (Hue Ring)**：12 扇区 ($30^\circ$) 色相对比准确率与平均绝对误差诊断。
+- **中心偏置热力图 (Heatmap)**：分析手眼协调与视觉系统的系统性位置偏置 ($\Delta X, \Delta Y$)。
+- **全景数据大盘**：近 12 周练习热力图打卡记录与每日能力峰值演进折线。
 
-### 2. 克隆项目与安装依赖
+### 2. Python 离线分析与 AI 归因工具集 (`analysis/`)
+系统支持一键导出全量 JSON 数据，配合离线分析脚本：
 ```bash
-# 克隆仓库
-git clone https://github.com/doucx/FormSight.git
+# 安装离线分析依赖
+pip install -r analysis/requirements.txt
 
-# 进入项目目录
-cd FormSight
+# 运行多维度统计与随机森林归因分析
+python analysis/analyze_color.py
+```
+- 输出色相 12 扇区详细特征表与特征重要性权重。
+- 自动生成 `ai_analysis_prompt.md`，可直接投喂大语言模型获取个性化视觉盲点强化方案。
 
-# 安装依赖
+---
+
+## ⌨️ 快捷操作指南
+
+| 场景 | 按键 | 功能说明 |
+| :--- | :--- | :--- |
+| **全局 / 训练** | `Esc` | 立即保存训练并打开总结结算 / 退出界面 |
+| **通用做答** | `Space` (空格) | 确认提交当前滑块数值 / 手动切换下一题 |
+| **2AFC 二分判别** | `1` 或 `2` | 快速选择左侧区域 A 或右侧区域 B |
+| **矢量迁移选择** | `1` ~ `4` | 快速切换 4 个候选推移色块 |
+| **休眠保护** | 任意键 / 点击 | 闲置休眠或失焦后一键恢复计时与训练 |
+
+---
+
+## 🛠️ 技术架构
+
+- **前端核心**：[Preact 10](https://preactjs.com/) (极轻量 JSX 运行时)
+- **构建工程**：[Vite 5](https://vitejs.dev/) + TypeScript 5
+- **界面样式**：[Tailwind CSS 3](https://tailwindcss.com/) + [Lucide Preact](https://lucide.dev/)
+- **代码规范**：[Biome](https://biomejs.dev/) (Formatter & Linter)
+- **离线存储**：IndexedDB (`idb` v8.0)
+- **单元测试**：[Vitest](https://vitest.dev/) (配合 `fake-indexeddb`)
+
+---
+
+## 🚀 本地开发与构建
+
+### 1. 安装依赖
+```bash
 npm install
 ```
 
-### 3. 启动开发服务器
+### 2. 启动本地开发服务
 ```bash
 npm run dev
 ```
-打开浏览器访问 `http://localhost:5173` 即可开始体验。
 
-### 4. 构建生产版本
+### 3. 代码检查与格式化
+```bash
+npm run check
+```
+
+### 4. 运行单元测试
+```bash
+npm run test
+```
+
+### 5. 构建生产产物
 ```bash
 npm run build
 ```
-构建产物将存放在 `dist/` 目录中。
-
----
-
-## ⌨️ 快捷键说明
-
-| 快捷键 | 功能 | 说明 |
-| :--- | :--- | :--- |
-| `Space` (空格键) | 下一题 | 当关闭“自动翻页”或答题完毕显示答案后按下 |
-| `Esc` (退出键) | 结算并退出 | 在训练界面中可快速保存并返回主页看板 |
+产物将输出至 `dist/` 目录。
