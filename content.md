@@ -1,80 +1,131 @@
-好的，这个改进非常合理。在显示答案反馈时，保留用户当前调制的颜色在上半部分、真理理想补偿色在下半部分呈现分半对比，能够让用户直观地看到自己的调制结果与理想真理色彩之间的微小偏差，而不会因为直接被替换而丢失对比基准。
+好的，我已为您准备好为 FormSight 项目配置 GitHub Pages 自动化部署的执行计划。
 
-我将生成一个针对 `RelativeColorCanvas.tsx` 的修改计划。
+我们将执行以下两个操作：
+1. 修改 `vite.config.ts`，配置 `base: './'`，确保构建出的静态资源能够使用相对路径在 GitHub Pages 子路径下正常加载。
+2. 创建 `.github/workflows/deploy.yml` 工作流文件，配置监听 `v*` tag 推送事件，并通过官方 GitHub Pages Actions 进行自动构建与部署。
 
-## [WIP] feat: 在相对色感诱导补偿模式揭晓答案时分半对比展示用户颜色与真理颜色
+## [WIP] feat(ci): 添加 GitHub Pages 自动部署工作流并配置 Vite 相对路径
 
 ### 用户需求
-在相对色感的诱导补偿模式（明度反差补偿、补色残像调和等）中，揭晓答案时右侧作答颜色节点不应直接被真理颜色完全取代，而是应在上半部分保留用户调制的颜色，在下半部分呈现理想真理颜色，保持直观的分半对比。
+1. 在 `vite.config.ts` 中配置相对路径 `base: './'`，以适配 GitHub Pages 的子路径部署。
+2. 创建 GitHub Actions 工作流，监听 `v*` 格式的 tag 推送事件（例如 `v0.2.7`），触发自动构建并将 `dist` 产物部署至 GitHub Pages。
 
 ### 评论
-这是一个重要的视觉反馈交互优化。之前在揭晓答案时直接将背景色替换为 `idealRightHex`，导致用户无法肉眼比对“自己刚刚调出的颜色”和“理论真理补偿色”之间的具体差距。改为分半（Split-view）对比后，与 `VECTOR_SHIFT` 模式的视觉反馈语言保持了高度统一，显著提升了训练诊断价值。
+这是一个标准且规范的发布工作流设计。通过 tag 触发部署既能确保发布版本的确定性与可追溯性，又与项目目前的 semantic versioning 风格保持一致；设置相对路径可以避免部署到 `https://<user>.github.io/<repo>/` 时因静态资源绝对路径导致的 404 问题。
 
 ### 目标
-1. 修改 `RelativeColorCanvas.tsx` 中阿尔伯斯诱导补偿视图（`LIGHTNESS_INDUCTION` 与 `HUE_INDUCTION`）的右侧中心色块容器。
-2. 保持色块背景为 `userRightHex`，并添加 `relative overflow-hidden`。
-3. 在 `showAnswer` 为 `true` 时，在节点下半部分渲染绝对定位的真理颜色层（`idealRightHex`）。
+1. 在 `vite.config.ts` 的 `defineConfig` 中添加 `base: './'`。
+2. 新建 `.github/workflows/deploy.yml` 文件，定义基于 Node.js 20、npm ci、npm run build 以及 GitHub Pages 部署 Action 的自动化流水线。
 
 ### 基本原理
-在父级 `div` 保持背景色为 `userRightHex` 的基础上，当 `showAnswer` 触发时，插入一个 `absolute bottom-0 left-0 right-0 h-1/2` 的子 `div` 并填充 `idealRightHex`。结合父级 `overflow-hidden` 与 `rounded-xl`，即可实现平滑、精致且不失真的一半用户色、一半真理色的对比效果。
+- **Vite Base 路径**：默认情况下 Vite 使用绝对路径 `/`，在 GitHub Pages 仓库为子路径时会导致引用错误，配置为 `./` 能生成相对路径引用。
+- **GitHub Pages 官方 Action 套件**：使用 `actions/configure-pages@v5`、`actions/upload-pages-artifact@v3` 和 `actions/deploy-pages@v4`，符合 GitHub 推荐的现代 Pages 部署标准（无需手动维护 `gh-pages` 分支）。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/relative-color-feedback #task/action/refactor #task/state/begin
+#intent/tooling #flow/ready #priority/high #comp/build #concept/executor #scope/dx #ai/instruct #task/domain/ci #task/object/github-pages-workflow #task/action/integration #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 RelativeColorCanvas 中的揭晓对比视图
+#### Acts 1: 配置 Vite 的 base 路径为相对路径
 
-我们将修改右侧作答色块节点，使其在答案揭晓时以分半视图同时呈现用户调制值与真理值。
+我们在 `vite.config.ts` 的配置中添加 `base: './'` 选项。
 
 ~~~~~act
 patch_file
-src/components/RelativeColorCanvas.tsx
+vite.config.ts
 ~~~~~
-~~~~~tsx
-          {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgRightHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl transition-all"
-                style={{ backgroundColor: showAnswer ? idealRightHex : userRightHex }}
-              />
-            </div>
-          </div>
+~~~~~typescript.old
+export default defineConfig({
+  plugins: [preact()],
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+  },
+});
 ~~~~~
-~~~~~tsx
-          {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
-            </span>
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-              style={{ backgroundColor: bgRightHex }}
-            >
-              <div
-                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-                style={{ backgroundColor: userRightHex }}
-              >
-                {showAnswer && (
-                  <div
-                    className="absolute bottom-0 left-0 right-0 h-1/2"
-                    style={{ backgroundColor: idealRightHex }}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
+~~~~~typescript.new
+export default defineConfig({
+  base: './',
+  plugins: [preact()],
+  define: {
+    __APP_VERSION__: JSON.stringify(packageJson.version),
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    setupFiles: ['./src/test/setup.ts'],
+  },
+});
+~~~~~
+
+#### Acts 2: 创建 GitHub Actions Pages 部署工作流
+
+新建 `.github/workflows/deploy.yml` 文件，配置针对 `v*` tag 的自动化构建与发布流程。
+
+~~~~~act
+write_file
+.github/workflows/deploy.yml
+~~~~~
+~~~~~yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 ~~~~~
 
 ### 下一步建议
-- 可以启动开发服务器验证 `明度反差补偿` 和 `补色残像调和` 模式下做答后的分半对比动画与渲染效果。
-- 如确认无误，可继续进行全量测试或创建 Git 提交。
+1. **本地验证构建**：在本地运行 `npm run build` 确保 `dist/` 目录正常生成且产物引用路径均为相对路径。
+2. **启用 Pages 权限**：进入 GitHub 仓库的 **Settings -> Pages**，将 **Build and deployment -> Source** 设置为 **GitHub Actions**。
+3. **推送 Tag 触发发布**：提交本次修改后，通过 `git tag v0.2.7 && git push origin v0.2.7` 触发首次自动化部署。
