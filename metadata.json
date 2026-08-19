@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(core): 重构训练模式架构为扁平卡片注册表与多维标签系统", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787154294.0996165, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787157126.9291992, "duration_ms": 0}}
