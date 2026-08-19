@@ -159,11 +159,16 @@ export function NegativeSpaceCanvas({
     }
   }, [is2AFC, isFitting, is4AFC, matchPhase, question.vertices, question.targetPolygon, showAnswer, userAnswer]);
 
-  // 渲染 4AFC 候选画布
+  // 渲染 4AFC 候选画布 (等比缩放 400 -> 280 坐标)
   useEffect(() => {
     if (is4AFC && (matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
+      const scale = TWO_AFC_CANVAS_SIZE / NEGATIVE_SPACE_CANVAS_SIZE;
       question.optionsPolygons.forEach((poly, idx) => {
-        drawPolygonCanvas(optionRefs[idx].current, poly, TWO_AFC_CANVAS_SIZE);
+        const scaledPoly = poly.map((p) => ({
+          x: Math.round(p.x * scale),
+          y: Math.round(p.y * scale),
+        }));
+        drawPolygonCanvas(optionRefs[idx].current, scaledPoly, TWO_AFC_CANVAS_SIZE);
       });
     }
   }, [is4AFC, matchPhase, showAnswer, question.optionsPolygons]);
@@ -675,7 +680,8 @@ export function NegativeSpaceCanvas({
             />
             <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-indigo-600 h-full transition-all ease-linear"
+                key={`${question.id}-${matchPhase}`}
+                className="bg-indigo-600 h-full"
                 style={{
                   width: '100%',
                   animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
