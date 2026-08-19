@@ -5,7 +5,7 @@ export type NegativeSpaceMode =
   | 'RATIO_ESTIMATION'
   | 'AREA_COMPARISON_2AFC'
   | 'NEGATIVE_VERTEX_FITTING'
-  | 'SHAPE_MATCH_4AFC';
+  | 'SHAPE_MATCH_2AFC';
 
 export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
 export const TWO_AFC_CANVAS_SIZE = 280;
@@ -40,10 +40,11 @@ export interface NegativeSpaceQuestionData {
   distractorPoints?: Point[]; // 围绕 targetPoint 的干扰网格点
   gridDim?: number;
 
-  // 4AFC 记忆匹配模式字段
+  // 记忆匹配 2AFC 模式字段
   targetPolygon?: Point[];
-  optionsPolygons?: Point[][];
-  correctOptionIndex?: number;
+  optionsPolygons?: Point[][]; // [polyA, polyB]
+  correctOptionIndex?: number; // 0 (A) or 1 (B)
+  correctChoice?: 'A' | 'B';
   displayTimeMs?: number;
 }
 
@@ -65,7 +66,7 @@ export interface NegativeSpaceHitResult {
   nearestGridPoint?: Point;
   isWithinRange?: boolean;
 
-  // 4AFC 结果字段
+  // 记忆匹配 2AFC 结果字段
   userChoiceIndex?: number;
   correctOptionIndex?: number;
 }
@@ -358,25 +359,17 @@ export function generateNegativeSpaceQuestion(
     };
   }
 
-  if (mode === 'SHAPE_MATCH_4AFC') {
+  if (mode === 'SHAPE_MATCH_2AFC') {
     const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
     const targetPolygon = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
+    const distractorPolygon = perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
 
-    const distractors = [
-      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
-      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
-      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
-    ];
-
-    const rawOptions = [targetPolygon, ...distractors];
-    const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
-    for (let i = indexedOptions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indexedOptions[i], indexedOptions[j]] = [indexedOptions[j], indexedOptions[i]];
-    }
-
-    const optionsPolygons = indexedOptions.map((o) => o.opt);
-    const correctOptionIndex = indexedOptions.findIndex((o) => o.isTarget);
+    const isTargetA = Math.random() < 0.5;
+    const optionsPolygons = isTargetA
+      ? [targetPolygon, distractorPolygon]
+      : [distractorPolygon, targetPolygon];
+    const correctOptionIndex = isTargetA ? 0 : 1;
+    const correctChoice = isTargetA ? 'A' : 'B';
 
     const t = (clampedLevel - 1) / 34;
     const maxDisplayMs = 2400;
@@ -391,6 +384,7 @@ export function generateNegativeSpaceQuestion(
       targetPolygon,
       optionsPolygons,
       correctOptionIndex,
+      correctChoice,
       displayTimeMs,
       tolerance: 0,
     };
@@ -464,13 +458,26 @@ export function checkNegativeSpaceHit(
     };
   }
 
-  if (question.mode === 'SHAPE_MATCH_4AFC') {
-    const userChoiceIndex = typeof userAnswer === 'number' ? userAnswer : 0;
+  if (question.mode === 'SHAPE_MATCH_2AFC') {
+    let userChoiceIndex: number;
+    if (typeof userAnswer === 'number') {
+      userChoiceIndex = userAnswer;
+    } else if (userAnswer === 'A') {
+      userChoiceIndex = 0;
+    } else if (userAnswer === 'B') {
+      userChoiceIndex = 1;
+    } else {
+      userChoiceIndex = 0;
+    }
+
     const isHit = userChoiceIndex === question.correctOptionIndex;
+    const userChoice = userChoiceIndex === 0 ? 'A' : 'B';
 
     return {
       isHit,
+      userChoice,
       userChoiceIndex,
+      correctChoice: question.correctChoice,
       correctOptionIndex: question.correctOptionIndex,
       errorValue: isHit ? 0 : 1,
       tolerance: 0,

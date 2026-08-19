@@ -174,9 +174,9 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
         icon: Crosshair,
       },
       {
-        id: 'SHAPE_MATCH_4AFC',
+        id: 'SHAPE_MATCH_2AFC',
         title: '负形轮廓记忆匹配',
-        desc: '瞬时记忆负形空隙轮廓，在相似干扰项中快速识别出与之完全一致的形状。',
+        desc: '瞬时记忆负形空隙轮廓，在两张 1:1 等大形状中二选一辨识目标。',
         icon: Sparkles,
       },
     ],

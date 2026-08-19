@@ -248,7 +248,7 @@ export const negativeSpacePlugin: TrainingPlugin<
       ? '负形面积二分判别'
       : mode === 'NEGATIVE_VERTEX_FITTING'
         ? '负形边界反切定点'
-        : mode === 'SHAPE_MATCH_4AFC'
+        : mode === 'SHAPE_MATCH_2AFC'
           ? '负形轮廓记忆匹配'
           : '负形占比估算',
   generateQuestion: (mode, level) =>
@@ -279,11 +279,11 @@ export const negativeSpacePlugin: TrainingPlugin<
         errorValue: hitResult.errorValue,
       };
     }
-    if (mode === 'SHAPE_MATCH_4AFC') {
+    if (mode === 'SHAPE_MATCH_2AFC') {
       return {
-        mode: 'SHAPE_MATCH_4AFC',
-        userChoiceIndex: userVal,
-        correctOptionIndex: q.correctOptionIndex,
+        mode: 'SHAPE_MATCH_2AFC',
+        userChoice: userVal === 0 || userVal === 'A' ? 'A' : 'B',
+        correctChoice: q.correctChoice,
         displayTimeMs: q.displayTimeMs,
         errorValue: hitResult.errorValue,
       };
