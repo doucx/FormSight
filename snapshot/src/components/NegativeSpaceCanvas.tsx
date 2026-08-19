@@ -148,19 +148,32 @@ export function NegativeSpaceCanvas({
         showAnswer && userAnswer?.isHit,
       );
     } else if (is2AfcMatch && matchPhase === 'stimulus' && question.targetPolygon) {
-      drawPolygonCanvas(
-        canvasRef.current,
-        question.targetPolygon,
-        NEGATIVE_SPACE_CANVAS_SIZE,
-      );
+      drawPolygonCanvas(canvasRef.current, question.targetPolygon, NEGATIVE_SPACE_CANVAS_SIZE);
     }
-  }, [is2AFC, isFitting, is2AfcMatch, matchPhase, question.vertices, question.targetPolygon, showAnswer, userAnswer]);
+  }, [
+    is2AFC,
+    isFitting,
+    is2AfcMatch,
+    matchPhase,
+    question.vertices,
+    question.targetPolygon,
+    showAnswer,
+    userAnswer,
+  ]);
 
   // 渲染 记忆匹配 2AFC 候选画布 (1:1 等大 NEGATIVE_SPACE_CANVAS_SIZE 原生渲染)
   useEffect(() => {
     if (is2AfcMatch && (matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
-      drawPolygonCanvas(matchOptionRefA.current, question.optionsPolygons[0], NEGATIVE_SPACE_CANVAS_SIZE);
-      drawPolygonCanvas(matchOptionRefB.current, question.optionsPolygons[1], NEGATIVE_SPACE_CANVAS_SIZE);
+      drawPolygonCanvas(
+        matchOptionRefA.current,
+        question.optionsPolygons[0],
+        NEGATIVE_SPACE_CANVAS_SIZE,
+      );
+      drawPolygonCanvas(
+        matchOptionRefB.current,
+        question.optionsPolygons[1],
+        NEGATIVE_SPACE_CANVAS_SIZE,
+      );
     }
   }, [is2AfcMatch, matchPhase, showAnswer, question.optionsPolygons]);
 
@@ -368,7 +381,18 @@ export function NegativeSpaceCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [is2AFC, isFitting, is2AfcMatch, matchPhase, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice, handleSelectMatchChoice]);
+  }, [
+    is2AFC,
+    isFitting,
+    is2AfcMatch,
+    matchPhase,
+    disabled,
+    showAnswer,
+    currentVal,
+    onAnswer,
+    handleSelectChoice,
+    handleSelectMatchChoice,
+  ]);
 
   // =========================================================================
   // 模式 C：NEGATIVE_VERTEX_FITTING 负形反向还原顶点视图
@@ -644,8 +668,14 @@ export function NegativeSpaceCanvas({
     const isTargetA = question.correctOptionIndex === 0;
     const isTargetB = question.correctOptionIndex === 1;
 
-    const isSelectedA = selectedMatchChoice === 'A' || userAnswer?.userChoice === 'A' || userAnswer?.userChoiceIndex === 0;
-    const isSelectedB = selectedMatchChoice === 'B' || userAnswer?.userChoice === 'B' || userAnswer?.userChoiceIndex === 1;
+    const isSelectedA =
+      selectedMatchChoice === 'A' ||
+      userAnswer?.userChoice === 'A' ||
+      userAnswer?.userChoiceIndex === 0;
+    const isSelectedB =
+      selectedMatchChoice === 'B' ||
+      userAnswer?.userChoice === 'B' ||
+      userAnswer?.userChoiceIndex === 1;
 
     return (
       <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">

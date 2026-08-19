@@ -14,7 +14,8 @@ export default defineConfig({
       manifest: {
         name: 'FormSight - 视觉造型构图与色彩感知强化系统',
         short_name: 'FormSight',
-        description: '基于视知觉心理学、OKLab 感知色彩空间与几何拓扑建模的自适应视觉与手眼协调强化训练系统',
+        description:
+          '基于视知觉心理学、OKLab 感知色彩空间与几何拓扑建模的自适应视觉与手眼协调强化训练系统',
         theme_color: '#4F46E5',
         background_color: '#F8FAFC',
         display: 'standalone',

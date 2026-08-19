@@ -362,7 +362,11 @@ export function generateNegativeSpaceQuestion(
   if (mode === 'SHAPE_MATCH_2AFC') {
     const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
     const targetPolygon = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
-    const distractorPolygon = perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
+    const distractorPolygon = perturbPolygon(
+      targetPolygon,
+      clampedLevel,
+      NEGATIVE_SPACE_CANVAS_SIZE,
+    );
 
     const isTargetA = Math.random() < 0.5;
     const optionsPolygons = isTargetA
