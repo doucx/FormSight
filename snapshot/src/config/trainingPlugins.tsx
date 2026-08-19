@@ -337,6 +337,7 @@ export const CARD_PLUGINS: Record<string, TrainingPlugin<any, any, any, any>> = 
   neg_shape_match_2afc: negativeSpacePlugin,
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
 export function getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined {
   return CARD_PLUGINS[cardId];
 }
