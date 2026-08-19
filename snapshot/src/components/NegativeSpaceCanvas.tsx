@@ -1,4 +1,4 @@
-import { Check, Columns, Eye, Sparkles, X } from 'lucide-preact';
+import { Check, Columns, Sparkles, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
