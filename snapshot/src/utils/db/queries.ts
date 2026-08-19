@@ -1,3 +1,4 @@
+import { resolveLegacyCardId } from '../../config/cards';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -9,7 +10,8 @@ import {
 export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
   const db = await getDB();
   const domain = record.domain || 'star';
-  const normalizedRecord: UnifiedTrialRecord = { ...record, domain };
+  const cardId = record.cardId || resolveLegacyCardId(domain, record.mode);
+  const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
   await db.put('records', normalizedRecord);
   await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
 }
@@ -17,7 +19,8 @@ export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void>
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
   const domain = session.domain || 'star';
-  await db.put('sessions', { ...session, domain });
+  const cardId = session.cardId || resolveLegacyCardId(domain, session.mode);
+  await db.put('sessions', { ...session, domain, cardId });
 }
 
 export async function getProfile(

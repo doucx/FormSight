@@ -1,6 +1,7 @@
 import { TrainingShell } from '../components/training/TrainingShell';
 import type { TrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
+import type { CardDefinition } from '../types/card';
 import { saveSession, saveTrialRecord } from '../utils/db';
 import type { BaseModuleSettings } from '../utils/settings';
 
@@ -10,8 +11,8 @@ interface GenericTrainingViewProps<
   TAnswerVal,
   TSettings extends BaseModuleSettings,
 > {
+  card: CardDefinition;
   plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
-  mode: string;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   settings: TSettings;
@@ -24,15 +25,18 @@ export function GenericTrainingView<
   TAnswerVal,
   TSettings extends BaseModuleSettings,
 >({
+  card,
   plugin,
-  mode,
   sessionType,
   initialLevel,
   settings,
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
+  const domain = card.legacyDomain;
+  const mode = card.legacyMode;
+
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
-    domain: plugin.domain,
+    domain,
     mode,
     sessionType,
     initialLevel,
@@ -50,7 +54,8 @@ export function GenericTrainingView<
       await saveTrialRecord({
         id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         sessionId,
-        domain: plugin.domain,
+        cardId: card.id,
+        domain,
         mode,
         timestamp: Date.now(),
         difficultyLevel: plugin.getQuestionLevel(q),
@@ -69,7 +74,8 @@ export function GenericTrainingView<
     }) => {
       await saveSession({
         id: sessionId,
-        domain: plugin.domain,
+        cardId: card.id,
+        domain,
         mode,
         type: sessionType,
         startTimestamp,
@@ -87,8 +93,8 @@ export function GenericTrainingView<
 
   return (
     <TrainingShell
-      title={plugin.title}
-      badge={plugin.getModeBadge(mode)}
+      title={card.title}
+      badge={card.tags.target[0]}
       sessionType={sessionType}
       currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
       isTargeting={isTargeting}
