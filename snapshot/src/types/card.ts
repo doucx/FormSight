@@ -4,11 +4,7 @@ import type { TrainingDomain } from '../utils/db';
 /**
  * 维度 1：感官目标 / 训练对象 (Sensory Target)
  */
-export type SensoryTargetTag =
-  | 'geometry'
-  | 'color'
-  | 'relative_color'
-  | 'negative_space';
+export type SensoryTargetTag = 'geometry' | 'color' | 'relative_color' | 'negative_space';
 
 /**
  * 维度 2：认知技能 / 核心心理学机制 (Cognitive Skill)
@@ -23,11 +19,7 @@ export type CognitiveSkillTag =
 /**
  * 维度 3：交互范式 / 做答动作 (Interaction Paradigm)
  */
-export type InteractionTag =
-  | 'continuous_slider'
-  | 'point_click'
-  | 'choice_2afc'
-  | 'choice_nafc';
+export type InteractionTag = 'continuous_slider' | 'point_click' | 'choice_2afc' | 'choice_nafc';
 
 export interface CardTags {
   target: SensoryTargetTag[];

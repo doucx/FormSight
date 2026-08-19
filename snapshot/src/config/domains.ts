@@ -1,8 +1,8 @@
 import { Compass, Maximize2, Palette, Shuffle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { CardDefinition } from '../types/card';
-import { getCardsByDomain } from './cards';
 import type { TrainingDomain } from '../utils/db';
+import { getCardsByDomain } from './cards';
 
 export interface DomainMeta {
   domain: TrainingDomain;
