@@ -8,3 +8,12 @@ body {
     "Open Sans", "Helvetica Neue", sans-serif;
   user-select: none;
 }
+
+@keyframes shrinkWidth {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

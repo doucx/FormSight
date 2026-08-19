@@ -7,6 +7,7 @@ import {
   Palette,
   RotateCw,
   Shuffle,
+  Sparkles,
   Sun,
   Target,
 } from 'lucide-preact';
@@ -171,6 +172,12 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
         title: '负形边界反切定点',
         desc: '观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。',
         icon: Crosshair,
+      },
+      {
+        id: 'SHAPE_MATCH_2AFC',
+        title: '负形轮廓记忆匹配',
+        desc: '瞬时记忆负形空隙轮廓，在两张 1:1 等大形状中二选一辨识目标。',
+        icon: Sparkles,
       },
     ],
   },
