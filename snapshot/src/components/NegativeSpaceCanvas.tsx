@@ -1,4 +1,4 @@
-import { Check, Columns, X } from 'lucide-preact';
+import { Check, Columns, Eye, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
@@ -87,6 +87,15 @@ export function NegativeSpaceCanvas({
 }: NegativeSpaceCanvasProps) {
   const is2AFC = question.mode === 'AREA_COMPARISON_2AFC';
   const isFitting = question.mode === 'NEGATIVE_VERTEX_FITTING';
+  const isMatch = question.mode === 'NEGATIVE_SHAPE_MATCH';
+
+  // === 0. 形状一致性模式专属状态 ===
+  const [isMemorizing, setIsMemorizing] = useState<boolean>(true);
+  const [memorizeProgress, setMemorizeProgress] = useState<number>(100);
+  const [selectedOption, setSelectedOption] = useState<number | null>(null);
+
+  const matchTargetRef = useRef<HTMLCanvasElement | null>(null);
+  const matchOptionRefs = useRef<(HTMLCanvasElement | null)[]>([]);
 
   // === 1. 单图滑块模式状态 ===
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -116,8 +125,49 @@ export function NegativeSpaceCanvas({
       setHoverVal(null);
       setSelectedChoice(null);
       setFittingHoverPoint(null);
+      setSelectedOption(null);
+
+      if (isMatch && question.displayDurationMs) {
+        setIsMemorizing(true);
+        setMemorizeProgress(100);
+
+        const duration = question.displayDurationMs;
+        const intervalTime = 20;
+        const startTime = Date.now();
+
+        const timer = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const remaining = Math.max(0, 100 - (elapsed / duration) * 100);
+          setMemorizeProgress(remaining);
+
+          if (elapsed >= duration) {
+            clearInterval(timer);
+            setIsMemorizing(false);
+          }
+        }, intervalTime);
+
+        return () => clearInterval(timer);
+      }
     }
-  }, [question.id, setHoverVal]);
+  }, [question.id, isMatch, question.displayDurationMs, setHoverVal]);
+
+  // 渲染形状一致性画布群
+  useEffect(() => {
+    if (!isMatch) return;
+
+    if (question.targetVertices) {
+      drawPolygonCanvas(matchTargetRef.current, question.targetVertices, 240);
+    }
+
+    if (question.optionsVertices) {
+      for (let i = 0; i < question.optionsVertices.length; i++) {
+        const optionCanvas = matchOptionRefs.current[i];
+        if (optionCanvas) {
+          drawPolygonCanvas(optionCanvas, question.optionsVertices[i], 180);
+        }
+      }
+    }
+  }, [isMatch, question.targetVertices, question.optionsVertices]);
 
   // 渲染单图滑块 Canvas
   useEffect(() => {
@@ -295,10 +345,35 @@ export function NegativeSpaceCanvas({
     onAnswer(clickPoint);
   };
 
+  const handleSelectOption = useCallback(
+    (idx: number) => {
+      if (disabled || showAnswer || isMemorizing) return;
+      setSelectedOption(idx);
+      onAnswer(idx);
+    },
+    [disabled, showAnswer, isMemorizing, onAnswer],
+  );
+
   // 键盘快捷键监听
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (disabled || showAnswer) return;
+
+      if (isMatch) {
+        if (isMemorizing) return;
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          const idx = Number.parseInt(e.key, 10) - 1;
+          handleSelectOption(idx);
+        } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
+          const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
+          if (num >= 1 && num <= 4) {
+            e.preventDefault();
+            handleSelectOption(num - 1);
+          }
+        }
+        return;
+      }
 
       if (is2AFC) {
         if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
@@ -317,7 +392,164 @@ export function NegativeSpaceCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [is2AFC, isFitting, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice]);
+  }, [
+    isMatch,
+    isMemorizing,
+    is2AFC,
+    isFitting,
+    disabled,
+    showAnswer,
+    currentVal,
+    onAnswer,
+    handleSelectChoice,
+    handleSelectOption,
+  ]);
+
+  // =========================================================================
+  // 模式 D：NEGATIVE_SHAPE_MATCH 负形形状一致性记忆与判定视图
+  // =========================================================================
+  if (isMatch) {
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            <Eye className="w-5 h-5 text-indigo-600" />
+            {isMemorizing ? '观察并记忆上方的负形留白轮廓' : '凭记忆选择与刚刚一致的负形形状'}
+          </div>
+          <p className="text-xs text-slate-400">
+            {isMemorizing
+              ? '倒计时结束后图形将被遮挡，请迅速捕捉留白凹凸特征'
+              : '按键盘快捷键 1 ~ 4 或点击卡片提交选择'}
+          </p>
+        </div>
+
+        {/* 目标参考图 & 遮蔽倒计时 */}
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            目标负形轮廓
+          </span>
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner relative overflow-hidden flex items-center justify-center">
+            <canvas
+              ref={matchTargetRef}
+              width={240}
+              height={240}
+              className={`w-[200px] h-[200px] rounded-xl transition-all duration-200 ${
+                !isMemorizing && !showAnswer ? 'blur-md grayscale opacity-10' : ''
+              }`}
+            />
+            {!isMemorizing && !showAnswer && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 font-bold text-slate-500 text-xs bg-slate-100/80 backdrop-blur-sm">
+                <Eye className="w-5 h-5 text-slate-400" />
+                <span>目标已遮蔽 (回忆作答中)</span>
+              </div>
+            )}
+          </div>
+
+          {/* 倒计时进度条 */}
+          {isMemorizing && (
+            <div className="w-48 h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+              <div
+                className="h-full bg-indigo-600 transition-all duration-75"
+                style={{ width: `${memorizeProgress}%` }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* 4 选 1 卡片网格 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full pt-1">
+          {question.optionsVertices?.map((_, idx) => {
+            const isCorrect = idx === question.correctShapeIndex;
+            const isSelected = selectedOption === idx;
+
+            let cardStyle =
+              'border-slate-200 hover:border-indigo-300 hover:shadow-md bg-slate-50 hover:bg-indigo-50/20';
+
+            if (showAnswer) {
+              if (isCorrect) {
+                cardStyle = 'border-emerald-500 bg-emerald-50/50 ring-2 ring-emerald-500/20 shadow-md';
+              } else if (isSelected) {
+                cardStyle = 'border-rose-400 bg-rose-50/50 shadow-sm';
+              } else {
+                cardStyle = 'border-slate-200 bg-slate-50/60 opacity-50';
+              }
+            } else if (isSelected) {
+              cardStyle = 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md';
+            }
+
+            return (
+              <button
+                key={idx}
+                type="button"
+                disabled={isMemorizing || disabled || showAnswer}
+                onClick={() => handleSelectOption(idx)}
+                className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${cardStyle} ${
+                  isMemorizing
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'active:scale-95 cursor-pointer'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full px-1">
+                  <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                    {idx + 1}
+                  </span>
+                  {showAnswer && isCorrect && (
+                    <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-0.5">
+                      <Check className="w-3.5 h-3.5" /> 正确
+                    </span>
+                  )}
+                  {showAnswer && isSelected && !isCorrect && (
+                    <span className="text-[11px] font-bold text-rose-600 flex items-center gap-0.5">
+                      <X className="w-3.5 h-3.5" /> 误选
+                    </span>
+                  )}
+                </div>
+
+                <div className="w-full bg-white p-1.5 rounded-xl border border-slate-200 shadow-inner flex justify-center">
+                  <canvas
+                    ref={(el) => {
+                      matchOptionRefs.current[idx] = el;
+                    }}
+                    width={180}
+                    height={180}
+                    className="w-full aspect-square rounded-lg shadow-sm"
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 答案揭晓诊断条 */}
+        {showAnswer && (
+          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '准确锁定原始负形形态！' : '受干扰项顶点形变诱导'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (干扰项形变幅度: <strong className="font-mono text-slate-700">{question.perturbationPx}px</strong>)
+                </span>
+              </div>
+            </div>
+            <div className="text-xs font-mono font-bold text-slate-600">
+              正确选项: 选项 {(question.correctShapeIndex ?? 0) + 1}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // =========================================================================
   // 模式 C：NEGATIVE_VERTEX_FITTING 负形反向还原顶点视图

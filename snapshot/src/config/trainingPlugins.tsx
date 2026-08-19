@@ -248,13 +248,24 @@ export const negativeSpacePlugin: TrainingPlugin<
       ? '负形面积二分判别'
       : mode === 'NEGATIVE_VERTEX_FITTING'
         ? '负形边界反切定点'
-        : '负形占比估算',
+        : mode === 'NEGATIVE_SHAPE_MATCH'
+          ? '负形形状一致性'
+          : '负形占比估算',
   generateQuestion: (mode, level) =>
     generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
   evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
   extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'NEGATIVE_SHAPE_MATCH') {
+      return {
+        mode: 'NEGATIVE_SHAPE_MATCH',
+        userChoice: userVal,
+        correctChoice: q.correctShapeIndex,
+        perturbationPx: q.perturbationPx,
+        displayDurationMs: q.displayDurationMs,
+      };
+    }
     if (mode === 'NEGATIVE_VERTEX_FITTING') {
       return {
         mode: 'NEGATIVE_VERTEX_FITTING',

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package-lock.json, M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787150380.4980378, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 添加负形形状一致性判定选择题训练模式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787150405.1295583, "duration_ms": 0}}

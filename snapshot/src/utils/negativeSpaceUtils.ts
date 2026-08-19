@@ -4,7 +4,8 @@ import { checkHit } from './geometry';
 export type NegativeSpaceMode =
   | 'RATIO_ESTIMATION'
   | 'AREA_COMPARISON_2AFC'
-  | 'NEGATIVE_VERTEX_FITTING';
+  | 'NEGATIVE_VERTEX_FITTING'
+  | 'NEGATIVE_SHAPE_MATCH';
 
 export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
 export const TWO_AFC_CANVAS_SIZE = 280;
@@ -38,6 +39,13 @@ export interface NegativeSpaceQuestionData {
   truncatedVertices?: Point[]; // 右侧截断残缺多边形
   distractorPoints?: Point[]; // 围绕 targetPoint 的干扰网格点
   gridDim?: number;
+
+  // 负形形状一致性判定模式字段
+  displayDurationMs?: number;
+  targetVertices?: Point[];
+  optionsVertices?: Point[][];
+  correctShapeIndex?: number;
+  perturbationPx?: number;
 }
 
 export interface NegativeSpaceHitResult {
@@ -57,6 +65,10 @@ export interface NegativeSpaceHitResult {
   clickPoint?: Point;
   nearestGridPoint?: Point;
   isWithinRange?: boolean;
+
+  // 形状一致性结果字段
+  selectedIndex?: number;
+  correctIndex?: number;
 }
 
 /**
@@ -128,6 +140,35 @@ export function generateRandomPolygon(
   }
 
   return vertices;
+}
+
+/**
+ * 基于基础多边形生成微小几何扰动的干扰多边形 (NEGATIVE_SHAPE_MATCH)
+ */
+export function generatePerturbedPolygon(
+  baseVertices: Point[],
+  perturbationPx: number,
+  canvasSize = NEGATIVE_SPACE_CANVAS_SIZE,
+): Point[] {
+  const perturbed = baseVertices.map((p) => ({ ...p }));
+  const numToPerturb = Math.random() < 0.6 ? 1 : 2;
+  const chosenIndices = new Set<number>();
+
+  while (chosenIndices.size < Math.min(numToPerturb, perturbed.length)) {
+    chosenIndices.add(Math.floor(Math.random() * perturbed.length));
+  }
+
+  for (const idx of chosenIndices) {
+    const angle = Math.random() * Math.PI * 2;
+    const dx = Math.cos(angle) * perturbationPx;
+    const dy = Math.sin(angle) * perturbationPx;
+    perturbed[idx] = {
+      x: Math.round(Math.max(15, Math.min(canvasSize - 15, perturbed[idx].x + dx))),
+      y: Math.round(Math.max(15, Math.min(canvasSize - 15, perturbed[idx].y + dy))),
+    };
+  }
+
+  return perturbed;
 }
 
 /**
@@ -255,6 +296,50 @@ export function generateNegativeSpaceQuestion(
     };
   }
 
+  if (mode === 'NEGATIVE_SHAPE_MATCH') {
+    const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
+    const targetVertices = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
+
+    // 扰动像素幅度：Level 1 为 28px，Level 35 为 3.5px
+    const t = (clampedLevel - 1) / 34;
+    const perturbationPx = Math.max(3.5, Math.round(28 * (3.5 / 28) ** t * 10) / 10);
+
+    // 展示时长：Level 1 为 2400ms，Level 35 为 800ms
+    const displayDurationMs = Math.round(2400 - t * 1600);
+
+    // 生成 3 个高相似度干扰多边形
+    const distractors: Point[][] = [];
+    for (let i = 0; i < 3; i++) {
+      distractors.push(
+        generatePerturbedPolygon(targetVertices, perturbationPx, NEGATIVE_SPACE_CANVAS_SIZE),
+      );
+    }
+
+    const correctShapeIndex = Math.floor(Math.random() * 4);
+    const optionsVertices: Point[][] = [];
+    let dIdx = 0;
+    for (let i = 0; i < 4; i++) {
+      if (i === correctShapeIndex) {
+        optionsVertices.push(targetVertices);
+      } else {
+        optionsVertices.push(distractors[dIdx++]);
+      }
+    }
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      canvasArea,
+      tolerance: perturbationPx,
+      targetVertices,
+      optionsVertices,
+      correctShapeIndex,
+      displayDurationMs,
+      perturbationPx,
+    };
+  }
+
   if (mode === 'NEGATIVE_VERTEX_FITTING') {
     const canvasArea = FITTING_CANVAS_SIZE * FITTING_CANVAS_SIZE;
     const vertices = generateRandomPolygon(clampedLevel, FITTING_CANVAS_SIZE);
@@ -361,6 +446,19 @@ export function checkNegativeSpaceHit(
   userAnswer: number | 'A' | 'B' | Point,
   question: NegativeSpaceQuestionData,
 ): NegativeSpaceHitResult {
+  if (question.mode === 'NEGATIVE_SHAPE_MATCH') {
+    const selectedIdx = typeof userAnswer === 'number' ? userAnswer : -1;
+    const isHit = selectedIdx === question.correctShapeIndex;
+
+    return {
+      isHit,
+      selectedIndex: selectedIdx,
+      correctIndex: question.correctShapeIndex,
+      errorValue: isHit ? 0 : (question.perturbationPx ?? 0),
+      tolerance: question.tolerance,
+    };
+  }
+
   if (question.mode === 'NEGATIVE_VERTEX_FITTING') {
     const clickPoint = userAnswer as Point;
     const targetPoint = question.targetPoint ?? { x: 0, y: 0 };
