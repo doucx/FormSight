@@ -248,7 +248,9 @@ export const negativeSpacePlugin: TrainingPlugin<
       ? '负形面积二分判别'
       : mode === 'NEGATIVE_VERTEX_FITTING'
         ? '负形边界反切定点'
-        : '负形占比估算',
+        : mode === 'SHAPE_MATCH_4AFC'
+          ? '负形轮廓记忆匹配'
+          : '负形占比估算',
   generateQuestion: (mode, level) =>
     generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
   evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
@@ -274,6 +276,15 @@ export const negativeSpacePlugin: TrainingPlugin<
         negRatioA: q.negRatioA,
         negRatioB: q.negRatioB,
         areaDeltaPercent: q.areaDeltaPercent,
+        errorValue: hitResult.errorValue,
+      };
+    }
+    if (mode === 'SHAPE_MATCH_4AFC') {
+      return {
+        mode: 'SHAPE_MATCH_4AFC',
+        userChoiceIndex: userVal,
+        correctOptionIndex: q.correctOptionIndex,
+        displayTimeMs: q.displayTimeMs,
         errorValue: hitResult.errorValue,
       };
     }

@@ -4,7 +4,8 @@ import { checkHit } from './geometry';
 export type NegativeSpaceMode =
   | 'RATIO_ESTIMATION'
   | 'AREA_COMPARISON_2AFC'
-  | 'NEGATIVE_VERTEX_FITTING';
+  | 'NEGATIVE_VERTEX_FITTING'
+  | 'SHAPE_MATCH_4AFC';
 
 export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
 export const TWO_AFC_CANVAS_SIZE = 280;
@@ -38,6 +39,12 @@ export interface NegativeSpaceQuestionData {
   truncatedVertices?: Point[]; // 右侧截断残缺多边形
   distractorPoints?: Point[]; // 围绕 targetPoint 的干扰网格点
   gridDim?: number;
+
+  // 4AFC 记忆匹配模式字段
+  targetPolygon?: Point[];
+  optionsPolygons?: Point[][];
+  correctOptionIndex?: number;
+  displayTimeMs?: number;
 }
 
 export interface NegativeSpaceHitResult {
@@ -57,6 +64,10 @@ export interface NegativeSpaceHitResult {
   clickPoint?: Point;
   nearestGridPoint?: Point;
   isWithinRange?: boolean;
+
+  // 4AFC 结果字段
+  userChoiceIndex?: number;
+  correctOptionIndex?: number;
 }
 
 /**
@@ -185,7 +196,30 @@ export function scalePolygonToArea(
 }
 
 /**
- * 生成负形空间练习题目 (支持 RATIO_ESTIMATION 与 AREA_COMPARISON_2AFC)
+ * 对多边形顶点施加微小扰动生成高相似干扰项
+ */
+export function perturbPolygon(
+  baseVertices: Point[],
+  level: number,
+  canvasSize = NEGATIVE_SPACE_CANVAS_SIZE,
+): Point[] {
+  const clamped = Math.max(1, Math.min(35, level));
+  const t = (clamped - 1) / 34;
+  const maxPerturb = 36;
+  const minPerturb = 6;
+  const perturbAmount = maxPerturb * (minPerturb / maxPerturb) ** t;
+
+  return baseVertices.map((p) => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * perturbAmount + 2;
+    const x = Math.max(15, Math.min(canvasSize - 15, Math.round(p.x + Math.cos(angle) * dist)));
+    const y = Math.max(15, Math.min(canvasSize - 15, Math.round(p.y + Math.sin(angle) * dist)));
+    return { x, y };
+  });
+}
+
+/**
+ * 生成负形空间练习题目 (支持 RATIO_ESTIMATION, AREA_COMPARISON_2AFC, NEGATIVE_VERTEX_FITTING, SHAPE_MATCH_4AFC)
  */
 export function generateNegativeSpaceQuestion(
   mode: NegativeSpaceMode,
@@ -324,6 +358,44 @@ export function generateNegativeSpaceQuestion(
     };
   }
 
+  if (mode === 'SHAPE_MATCH_4AFC') {
+    const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
+    const targetPolygon = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
+
+    const distractors = [
+      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
+      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
+      perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE),
+    ];
+
+    const rawOptions = [targetPolygon, ...distractors];
+    const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
+    for (let i = indexedOptions.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indexedOptions[i], indexedOptions[j]] = [indexedOptions[j], indexedOptions[i]];
+    }
+
+    const optionsPolygons = indexedOptions.map((o) => o.opt);
+    const correctOptionIndex = indexedOptions.findIndex((o) => o.isTarget);
+
+    const t = (clampedLevel - 1) / 34;
+    const maxDisplayMs = 2400;
+    const minDisplayMs = 450;
+    const displayTimeMs = Math.round(maxDisplayMs * (minDisplayMs / maxDisplayMs) ** t);
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      canvasArea,
+      targetPolygon,
+      optionsPolygons,
+      correctOptionIndex,
+      displayTimeMs,
+      tolerance: 0,
+    };
+  }
+
   // 默认 RATIO_ESTIMATION 滑块评估模式
   const tolerance = getNegativeSpaceToleranceForLevel(clampedLevel);
   const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
@@ -389,6 +461,19 @@ export function checkNegativeSpaceHit(
       negRatioB: question.negRatioB,
       errorValue: isHit ? 0 : (question.areaDeltaPercent ?? 0),
       tolerance: question.tolerance,
+    };
+  }
+
+  if (question.mode === 'SHAPE_MATCH_4AFC') {
+    const userChoiceIndex = typeof userAnswer === 'number' ? userAnswer : 0;
+    const isHit = userChoiceIndex === question.correctOptionIndex;
+
+    return {
+      isHit,
+      userChoiceIndex,
+      correctOptionIndex: question.correctOptionIndex,
+      errorValue: isHit ? 0 : 1,
+      tolerance: 0,
     };
   }
 

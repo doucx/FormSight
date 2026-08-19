@@ -1,4 +1,4 @@
-import { Check, Columns, X } from 'lucide-preact';
+import { Check, Columns, Eye, Sparkles, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
@@ -87,6 +87,7 @@ export function NegativeSpaceCanvas({
 }: NegativeSpaceCanvasProps) {
   const is2AFC = question.mode === 'AREA_COMPARISON_2AFC';
   const isFitting = question.mode === 'NEGATIVE_VERTEX_FITTING';
+  const is4AFC = question.mode === 'SHAPE_MATCH_4AFC';
 
   // === 1. 单图滑块模式状态 ===
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -109,6 +110,15 @@ export function NegativeSpaceCanvas({
   const rightFittingRef = useRef<HTMLCanvasElement | null>(null);
   const [fittingHoverPoint, setFittingHoverPoint] = useState<Point | null>(null);
 
+  // === 4. 4AFC 记忆匹配模式专属画布与状态 ===
+  const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
+  const [selected4AfcIndex, setSelected4AfcIndex] = useState<number | null>(null);
+  const option0Ref = useRef<HTMLCanvasElement | null>(null);
+  const option1Ref = useRef<HTMLCanvasElement | null>(null);
+  const option2Ref = useRef<HTMLCanvasElement | null>(null);
+  const option3Ref = useRef<HTMLCanvasElement | null>(null);
+  const optionRefs = [option0Ref, option1Ref, option2Ref, option3Ref];
+
   // 切换题目时重置状态
   useEffect(() => {
     if (question.id) {
@@ -116,20 +126,47 @@ export function NegativeSpaceCanvas({
       setHoverVal(null);
       setSelectedChoice(null);
       setFittingHoverPoint(null);
+      setMatchPhase('stimulus');
+      setSelected4AfcIndex(null);
     }
   }, [question.id, setHoverVal]);
 
-  // 渲染单图滑块 Canvas
+  // 4AFC 曝光倒计时处理
   useEffect(() => {
-    if (!is2AFC && question.vertices) {
+    if (is4AFC && matchPhase === 'stimulus' && !showAnswer) {
+      const timer = setTimeout(() => {
+        setMatchPhase('recall');
+      }, question.displayTimeMs || 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [is4AFC, matchPhase, question.displayTimeMs, showAnswer]);
+
+  // 渲染单图滑块 Canvas 与 4AFC 刺激图
+  useEffect(() => {
+    if (!is2AFC && !isFitting && !is4AFC && question.vertices) {
       drawPolygonCanvas(
         canvasRef.current,
         question.vertices,
         NEGATIVE_SPACE_CANVAS_SIZE,
         showAnswer && userAnswer?.isHit,
       );
+    } else if (is4AFC && matchPhase === 'stimulus' && question.targetPolygon) {
+      drawPolygonCanvas(
+        canvasRef.current,
+        question.targetPolygon,
+        NEGATIVE_SPACE_CANVAS_SIZE,
+      );
     }
-  }, [is2AFC, question.vertices, showAnswer, userAnswer]);
+  }, [is2AFC, isFitting, is4AFC, matchPhase, question.vertices, question.targetPolygon, showAnswer, userAnswer]);
+
+  // 渲染 4AFC 候选画布
+  useEffect(() => {
+    if (is4AFC && (matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
+      question.optionsPolygons.forEach((poly, idx) => {
+        drawPolygonCanvas(optionRefs[idx].current, poly, TWO_AFC_CANVAS_SIZE);
+      });
+    }
+  }, [is4AFC, matchPhase, showAnswer, question.optionsPolygons]);
 
   // 渲染 2AFC 双 Canvas
   useEffect(() => {
@@ -244,6 +281,16 @@ export function NegativeSpaceCanvas({
     [disabled, showAnswer, onAnswer],
   );
 
+  // 处理 4AFC 点击选择
+  const handleSelect4Afc = useCallback(
+    (index: number) => {
+      if (disabled || showAnswer || matchPhase !== 'recall') return;
+      setSelected4AfcIndex(index);
+      onAnswer(index);
+    },
+    [disabled, showAnswer, matchPhase, onAnswer],
+  );
+
   // 定点模式鼠标移动与点击
   const handleFittingMouseMove = (e: MouseEvent) => {
     if (disabled || showAnswer || !question.distractorPoints) {
@@ -308,7 +355,18 @@ export function NegativeSpaceCanvas({
           e.preventDefault();
           handleSelectChoice('B');
         }
-      } else if (!isFitting) {
+      } else if (is4AFC && matchPhase === 'recall') {
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          handleSelect4Afc(Number.parseInt(e.key, 10) - 1);
+        } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
+          const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
+          if (num >= 1 && num <= 4) {
+            e.preventDefault();
+            handleSelect4Afc(num - 1);
+          }
+        }
+      } else if (!isFitting && !is4AFC) {
         if (e.code === 'Space' || e.key === ' ') {
           e.preventDefault();
           onAnswer(currentVal);
@@ -317,7 +375,7 @@ export function NegativeSpaceCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [is2AFC, isFitting, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice]);
+  }, [is2AFC, isFitting, is4AFC, matchPhase, disabled, showAnswer, currentVal, onAnswer, handleSelectChoice, handleSelect4Afc]);
 
   // =========================================================================
   // 模式 C：NEGATIVE_VERTEX_FITTING 负形反向还原顶点视图
@@ -578,6 +636,129 @@ export function NegativeSpaceCanvas({
 
             <div className="text-xs font-mono font-bold text-slate-600">
               A: {question.negRatioA}% vs B: {question.negRatioB}%
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 模式 D：SHAPE_MATCH_4AFC 负形轮廓记忆匹配视图
+  // =========================================================================
+  if (is4AFC) {
+    const isRevealed = showAnswer;
+
+    return (
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+            {matchPhase === 'stimulus' && !isRevealed
+              ? '观察并瞬时记忆负形空隙轮廓特征'
+              : '匹配回忆：选择与刚才展示完全相同的形状'}
+          </div>
+          <p className="text-xs text-slate-400">
+            {matchPhase === 'stimulus' && !isRevealed
+              ? `曝光记忆倒计时中 (${question.displayTimeMs}ms)`
+              : '按按键 1、2、3、4 或直接点击卡片选择'}
+          </p>
+        </div>
+
+        {matchPhase === 'stimulus' && !isRevealed ? (
+          <div className="bg-slate-50 p-4 rounded-3xl border border-slate-200 shadow-inner flex flex-col items-center gap-3">
+            <canvas
+              ref={canvasRef}
+              width={NEGATIVE_SPACE_CANVAS_SIZE}
+              height={NEGATIVE_SPACE_CANVAS_SIZE}
+              className="w-full max-w-[320px] aspect-square rounded-2xl border border-slate-200 shadow-sm"
+            />
+            <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+              <div
+                className="bg-indigo-600 h-full transition-all ease-linear"
+                style={{
+                  width: '100%',
+                  animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
+                }}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 w-full">
+            {[0, 1, 2, 3].map((idx) => {
+              const isTarget = question.correctOptionIndex === idx;
+              const isSelected = selected4AfcIndex === idx || userAnswer?.userChoiceIndex === idx;
+
+              let cardStyle =
+                'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]';
+
+              if (isRevealed) {
+                if (isTarget) {
+                  cardStyle = 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20';
+                } else if (isSelected) {
+                  cardStyle = 'bg-rose-50/50 border-rose-400 shadow-sm';
+                } else {
+                  cardStyle = 'bg-slate-50/60 border-slate-200 opacity-50';
+                }
+              } else if (isSelected) {
+                cardStyle = 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md';
+              }
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  disabled={disabled || showAnswer}
+                  onClick={() => handleSelect4Afc(idx)}
+                  className={`group relative flex flex-col items-center gap-2.5 p-3.5 rounded-3xl border transition-all duration-200 text-left ${cardStyle}`}
+                >
+                  <div className="flex items-center justify-between w-full px-1">
+                    <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+                      <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                        {idx + 1}
+                      </span>
+                      选项 {idx + 1}
+                    </span>
+                    {isRevealed && isTarget && (
+                      <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-0.5">
+                        <Check className="w-4 h-4" /> 真实目标
+                      </span>
+                    )}
+                  </div>
+                  <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                    <canvas
+                      ref={optionRefs[idx]}
+                      width={TWO_AFC_CANVAS_SIZE}
+                      height={TWO_AFC_CANVAS_SIZE}
+                      className="w-full max-w-[170px] aspect-square rounded-xl shadow-sm"
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {isRevealed && (
+          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '瞬时记忆与形态识别完全正确！' : '记忆形态判断出现偏差'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (正确选项为: 选项 {(question.correctOptionIndex ?? 0) + 1})
+                </span>
+              </div>
             </div>
           </div>
         )}
