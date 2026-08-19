@@ -1,58 +1,62 @@
-这个问题是由于 `src/config/trainingPlugins.tsx` 中的 `getPluginByCardId` 函数返回类型显式标注了 `any`（`TrainingPlugin<any, any, any, any>`），缺少了针对 Biome linter 的忽略注释（`biome-ignore lint/suspicious/noExplicitAny`）。
+好的，我们已经完成了扁平卡片注册表与多维标签系统的架构重构，并修复了全局统计界面的适配问题。现在生成 Git 提交计划。
 
-我将为你生成修复该 Linter 报错的执行计划。
-
-## [WIP] fix: 修复 trainingPlugins 中 getPluginByCardId 的 Biome 规则报错
-
-### 错误分析
-
-在执行 `npm run checkf` 时，Biome 静态代码分析器报告了 4 处 `lint/suspicious/noExplicitAny` 错误：
-- **位置**: `src/config/trainingPlugins.tsx:340`
-- **原因**: `getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined` 显式使用了 `any` 泛型参数，而前面的常量（`TRAINING_PLUGINS` 和 `CARD_PLUGINS`）均已添加 `biome-ignore lint/suspicious/noExplicitAny` 注释，该导出函数遗漏了对应的抑制注释。
+## [COMMIT] refactor(core): 重构训练模式架构为扁平卡片注册表与多维标签系统
 
 ### 用户需求
-
-消除 `npm run checkf` 时 Biome 抛出的 `noExplicitAny` 校验错误，确保代码库 Lint 检查顺利通过。
+将训练架构从传统的 `Domain -> Mode` 树状层级重构为单一事实源的扁平卡片注册中心（Card Registry），并建立感官对象、认知技能、交互范式三维正交标签体系，将变更持久化提交到 Git 仓库。
 
 ### 评论
-
-对于异构插件映射表（Heterogeneous Plugin Map）与派发函数，在 TypeScript 中使用带有明确说明的 `biome-ignore` 压制注释是合理的标准做法，能保证外部使用泛型调度时不受类型断言阻断，同时满足代码规范检查工具的要求。
+本次重构彻底消除了双重状态管理的复杂性，统一了 14 个训练卡片的类型契约与调度流程，同时保持了 IndexedDB 数据与组件交互的完全向后兼容，为后续跨领域能力画像与全能混刷训练打下了坚实基础。
 
 ### 目标
-
-1. 在 `src/config/trainingPlugins.tsx` 中的 `getPluginByCardId` 函数定义上方添加 `biome-ignore lint/suspicious/noExplicitAny` 注释。
-2. 消除 Biome linter 的错误输出。
+1. 暂存所有新增及修改的源文件。
+2. 提交规范的 Conventional Commits 记录。
 
 ### 基本原理
-
-通过在 `getPluginByCardId` 上方添加与前面常量一致的 `// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances` 注释，通知 Biome 允许在该异构插件查询函数中使用 `any` 类型。
+按照系统安全策略，通过独立的 `[COMMIT]` 阶段将经过验证的代码变更原子化提交到 Git 历史。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/build #concept/parser #scope/dx #ai/instruct #task/domain/testing #task/object/linter-check #task/action/bug-fix #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/core #comp/interfaces #concept/state #concept/executor #scope/core #scope/api #ai/instruct #task/domain/architecture #task/object/flat-card-registry #task/action/refactor #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 为 `getPluginByCardId` 添加 Biome 忽略注释
+#### Acts 1: 添加更改并提交
+
+将重构后的文件添加到暂存区并创建 Git 提交。
 
 ~~~~~act
-patch_file
+git_add
+src/types/card.ts
+src/config/cards.ts
 src/config/trainingPlugins.tsx
+src/config/domains.ts
+src/components/dashboard/GenericDashboard.tsx
+src/components/GlobalStatsModal.tsx
+src/utils/db/schema.ts
+src/utils/db/queries.ts
+src/views/GenericTrainingView.tsx
+src/app.tsx
 ~~~~~
-~~~~~typescript.old
-export function getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined {
-  return CARD_PLUGINS[cardId];
-}
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
-export function getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined {
-  return CARD_PLUGINS[cardId];
-}
+~~~~~text
+refactor(core): evolve training hierarchy to flat card registry with orthogonal tag system
+
+- Introduced `CardDefinition` and orthogonal 3D tag system (SensoryTarget, CognitiveSkill, Interaction) in `src/types/card.ts`.
+- Created centralized `ALL_CARDS` registry in `src/config/cards.ts` with helper lookups and backward-compatible ID mapping.
+- Decoupled `CARD_PLUGINS` dispatch in `src/config/trainingPlugins.tsx` to directly support card-level execution.
+- Virtualized domain collections in `src/config/domains.ts` and `GenericDashboard.tsx`.
+- Enhanced database storage layer (`src/utils/db/`) with automatic `cardId` population and dual-compatibility.
+- Streamlined `GenericTrainingView.tsx` and `src/app.tsx` state machine to be driven directly by `cardId`.
+- Fixed `GlobalStatsModal.tsx` filter lookups to adapt to the card registry.
 ~~~~~
+
+---
 
 ### 下一步建议
-
-- 修复后可重新运行 `npm run checkf` 或 `npm run lint` 验证所有检查项是否已通过。
-- 确认无误后可运行 `npm test` 确保各项单测保持绿灯。
+- **标签筛选器 UI**：可以在主页或全部模式列表增加基于 `CognitiveSkill` 或 `Interaction` 的标签快速过滤器，方便针对特定技能（如“视错觉穿透”、“空间方位”）进行组合练习。
+- **全能随机卡片流**：利用扁平卡片注册表 `ALL_CARDS`，开发一个跨领域的“每日挑战 / 随机刷题”功能。
