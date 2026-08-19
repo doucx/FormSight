@@ -4,6 +4,7 @@ export type TrainingDomain = 'star' | 'color' | 'relative_color' | 'negative_spa
 
 export interface UnifiedSessionData {
   id: string;
+  cardId?: string;
   domain?: TrainingDomain;
   mode: string;
   type: 'training' | 'benchmark';
@@ -18,6 +19,7 @@ export interface UnifiedSessionData {
 export interface UnifiedTrialRecord {
   id: string;
   sessionId: string;
+  cardId?: string;
   domain?: TrainingDomain;
   mode: string;
   timestamp: number;

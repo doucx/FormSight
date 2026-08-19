@@ -84,8 +84,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     }
     const [domain, mode] = selectedFilter.split(':') as [TrainingDomain, string];
     const meta = DOMAINS_CONFIG[domain];
-    const modeConfig = meta?.modes.find((m) => m.id === mode);
-    return `${meta?.title || domain} • ${modeConfig?.title || mode}`;
+    const card = meta?.cards.find((c) => c.legacyMode === mode);
+    return `${meta?.title || domain} • ${card?.title || mode}`;
   };
 
   // === 3. 基于筛选结果计算统计指标 ===
@@ -195,9 +195,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 {Object.values(DOMAINS_CONFIG).map((meta) => (
                   <optgroup key={meta.domain} label={meta.title}>
                     <option value={`${meta.domain}_all`}>{meta.title} (全部)</option>
-                    {meta.modes.map((m) => (
-                      <option key={`${meta.domain}:${m.id}`} value={`${meta.domain}:${m.id}`}>
-                        {m.title}
+                    {meta.cards.map((card) => (
+                      <option
+                        key={`${meta.domain}:${card.legacyMode}`}
+                        value={`${meta.domain}:${card.legacyMode}`}
+                      >
+                        {card.title}
                       </option>
                     ))}
                   </optgroup>

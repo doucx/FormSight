@@ -316,3 +316,28 @@ export const TRAINING_PLUGINS: Record<TrainingDomain, TrainingPlugin<any, any, a
   relative_color: relativeColorPlugin,
   negative_space: negativeSpacePlugin,
 };
+
+// 卡片粒度的插件调度表 (直接以 cardId 进行 O(1) 派发)
+// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
+export const CARD_PLUGINS: Record<string, TrainingPlugin<any, any, any, any>> = {
+  star_single: starPlugin,
+  star_double_h: starPlugin,
+  star_double_r: starPlugin,
+  color_hue: colorPlugin,
+  color_val: colorPlugin,
+  color_sat: colorPlugin,
+  color_all: colorPlugin,
+  rel_vector_shift: relativeColorPlugin,
+  rel_lightness_induction: relativeColorPlugin,
+  rel_hue_induction: relativeColorPlugin,
+  rel_decontextual_2afc: relativeColorPlugin,
+  neg_ratio_estimation: negativeSpacePlugin,
+  neg_area_comparison_2afc: negativeSpacePlugin,
+  neg_vertex_fitting: negativeSpacePlugin,
+  neg_shape_match_2afc: negativeSpacePlugin,
+};
+
+// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
+export function getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined {
+  return CARD_PLUGINS[cardId];
+}

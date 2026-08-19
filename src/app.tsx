@@ -4,8 +4,9 @@ import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
+import { getCardById } from './config/cards';
 import { DOMAINS_CONFIG } from './config/domains';
-import { TRAINING_PLUGINS } from './config/trainingPlugins';
+import { CARD_PLUGINS } from './config/trainingPlugins';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -31,7 +32,7 @@ export function App() {
   const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
   const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
 
-  const [activeMode, setActiveMode] = useState<string>('single');
+  const [activeCardId, setActiveCardId] = useState<string>('star_single');
   const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
@@ -87,8 +88,8 @@ export function App() {
     }
   }, [currentApp]);
 
-  const handleStartSession = (mode: string, type: 'training' | 'benchmark') => {
-    setActiveMode(mode);
+  const handleStartSession = (cardId: string, type: 'training' | 'benchmark') => {
+    setActiveCardId(cardId);
     setSessionType(type);
     setCurrentView('training');
   };
@@ -99,7 +100,11 @@ export function App() {
   };
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
-  const currentLevel = currentDomainProfiles[activeMode]?.currentLevel || 5;
+
+  const activeCard = getCardById(activeCardId);
+  const activeLevel = activeCard
+    ? currentDomainProfiles[activeCard.legacyMode]?.currentLevel || 5
+    : 5;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
@@ -140,15 +145,17 @@ export function App() {
             );
           }
 
-          const plugin = TRAINING_PLUGINS[domain];
+          if (!activeCard) return null;
+          const plugin = CARD_PLUGINS[activeCard.id];
+
           return (
             <GenericTrainingView
-              key={`${domain}-${activeMode}-${sessionType}`}
+              key={`${activeCard.id}-${sessionType}`}
+              card={activeCard}
               plugin={plugin}
-              mode={activeMode}
               sessionType={sessionType}
-              initialLevel={currentLevel}
-              settings={settings[domain]}
+              initialLevel={activeLevel}
+              settings={settings[activeCard.settingsKey]}
               onExit={handleExitTraining}
             />
           );

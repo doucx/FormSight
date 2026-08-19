@@ -7,7 +7,7 @@ import { ModeCard } from './ModeCard';
 
 interface GenericDashboardProps {
   meta: DomainMeta;
-  onStart: (mode: string, type: 'training' | 'benchmark') => void;
+  onStart: (cardId: string, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
   onOpenSettings: () => void;
   onOpenAnalytics?: () => void;
@@ -46,26 +46,26 @@ export function GenericDashboard({
       onOpenSettings={onOpenSettings}
       onOpenAnalytics={meta.hasWeaknessAnalytics ? onOpenAnalytics : undefined}
     >
-      {meta.modes.map((config) => {
-        const profile = profiles[config.id];
+      {meta.cards.map((card) => {
+        const profile = profiles[card.legacyMode];
         const totalCards = profile?.totalTrainedCards || 0;
         const accuracy =
           totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
         const currentLevel = profile?.currentLevel || 5;
-        const stat = todayStats[config.id] || { count: 0, timeMs: 0 };
+        const stat = todayStats[card.legacyMode] || { count: 0, timeMs: 0 };
 
         return (
           <ModeCard
-            key={config.id}
-            title={config.title}
-            desc={config.desc}
-            icon={config.icon}
+            key={card.id}
+            title={card.title}
+            desc={card.desc}
+            icon={card.icon}
             todayCount={stat.count}
             todayTimeMs={stat.timeMs}
             currentLevel={currentLevel}
             accuracy={accuracy}
-            onStartTraining={() => onStart(config.id, 'training')}
-            onStartBenchmark={() => onStart(config.id, 'benchmark')}
+            onStartTraining={() => onStart(card.id, 'training')}
+            onStartBenchmark={() => onStart(card.id, 'benchmark')}
           />
         );
       })}
