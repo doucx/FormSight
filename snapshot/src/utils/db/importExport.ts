@@ -1,5 +1,6 @@
+import { resolveLegacyCardId } from '../../config/cards';
 import { loadSettings, saveSettings } from '../settings';
-import { DB_VERSION, getDB } from './schema';
+import { DB_VERSION, type TrainingDomain, getDB } from './schema';
 
 export async function exportAllData(): Promise<string> {
   const db = await getDB();
@@ -9,6 +10,7 @@ export async function exportAllData(): Promise<string> {
   const settings = loadSettings();
 
   const exportObject = {
+    appName: 'FormSight',
     version: DB_VERSION,
     exportAt: new Date().toISOString(),
     sessions,
@@ -28,19 +30,24 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 
     if (data.sessions) {
       for (const s of data.sessions) {
-        await tx.objectStore('sessions').put({ ...s, domain: s.domain || 'star' });
+        const domain = (s.domain || 'star') as TrainingDomain;
+        const cardId = s.cardId || resolveLegacyCardId(domain, s.mode);
+        await tx.objectStore('sessions').put({ ...s, domain, cardId });
       }
     }
     if (data.records) {
       for (const r of data.records) {
-        await tx.objectStore('records').put({ ...r, domain: r.domain || 'star' });
+        const domain = (r.domain || 'star') as TrainingDomain;
+        const cardId = r.cardId || resolveLegacyCardId(domain, r.mode);
+        await tx.objectStore('records').put({ ...r, domain, cardId });
       }
     }
     if (data.profiles) {
       for (const p of data.profiles) {
-        const domain = p.domain || 'star';
-        const key = p.key || `${domain}:${p.mode}`;
-        await tx.objectStore('user_profiles').put({ ...p, key, domain });
+        const domain = (p.domain || 'star') as TrainingDomain;
+        const cardId = p.cardId || resolveLegacyCardId(domain, p.mode);
+        const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
+        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
       }
     }
 

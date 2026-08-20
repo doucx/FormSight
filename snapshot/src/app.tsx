@@ -68,7 +68,7 @@ export function App() {
       const pList = await getProfilesByDomain(d);
       const pMap: Record<string, UnifiedProfileData> = {};
       for (const p of pList) {
-        pMap[p.mode] = p;
+        pMap[p.cardId] = p;
       }
       setCurrentDomainProfiles(pMap);
     }
@@ -103,7 +103,7 @@ export function App() {
 
   const activeCard = getCardById(activeCardId);
   const activeLevel = activeCard
-    ? currentDomainProfiles[activeCard.legacyMode]?.currentLevel || 5
+    ? currentDomainProfiles[activeCard.id]?.currentLevel || 5
     : 5;
 
   return (

@@ -13,7 +13,7 @@ export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void>
   const cardId = record.cardId || resolveLegacyCardId(domain, record.mode);
   const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
   await db.put('records', normalizedRecord);
-  await updateProfile(domain, record.mode, record.isHit, record.difficultyLevel);
+  await updateProfile(cardId, domain, record.mode, record.isHit, record.difficultyLevel);
 }
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
@@ -23,12 +23,15 @@ export async function saveSession(session: UnifiedSessionData): Promise<void> {
   await db.put('sessions', { ...session, domain, cardId });
 }
 
+export async function getProfile(cardId: string): Promise<UnifiedProfileData | null>;
+export async function getProfile(domain: TrainingDomain, mode: string): Promise<UnifiedProfileData | null>;
 export async function getProfile(
-  domain: TrainingDomain,
-  mode: string,
+  first: string | TrainingDomain,
+  second?: string,
 ): Promise<UnifiedProfileData | null> {
   const db = await getDB();
-  const profile = await db.get('user_profiles', `${domain}:${mode}`);
+  const cardId = second ? resolveLegacyCardId(first as TrainingDomain, second) : first;
+  const profile = await db.get('user_profiles', cardId);
   return profile || null;
 }
 
@@ -57,30 +60,39 @@ export async function getTrialRecords(
   }));
 }
 
+export async function getTrialRecordsByCard(cardId: string): Promise<UnifiedTrialRecord[]> {
+  const db = await getDB();
+  const rawRecords = await db.getAllFromIndex('records', 'by-card', cardId);
+  return rawRecords.map((r) => ({
+    ...r,
+    ...(r.details || {}),
+  }));
+}
+
 async function updateProfile(
+  cardId: string,
   domain: TrainingDomain,
   mode: string,
   isHit: boolean,
   currentLevel: number,
 ): Promise<void> {
   const db = await getDB();
-  const key = `${domain}:${mode}`;
-  const existing = await db.get('user_profiles', key);
+  const existing = await db.get('user_profiles', cardId);
 
   if (!existing) {
     const newProfile: UnifiedProfileData = {
-      key,
+      cardId,
       domain,
       mode,
       currentLevel,
       bestLevel: currentLevel,
-      totalTrainedCards: 1,
+      totalTrials: 1,
       totalHits: isHit ? 1 : 0,
       updatedAt: Date.now(),
     };
     await db.put('user_profiles', newProfile);
   } else {
-    existing.totalTrainedCards += 1;
+    existing.totalTrials += 1;
     if (isHit) existing.totalHits += 1;
     existing.currentLevel = currentLevel;
     if (currentLevel > existing.bestLevel) {

@@ -1,3 +1,5 @@
+import { migrateLegacySettings } from './db/migration';
+
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
 export type TargetingMode = 'off' | 'manual';
@@ -49,7 +51,7 @@ export interface UserSettings {
   negative_space: NegativeSpaceSettings;
 }
 
-const SETTINGS_KEY = 'star_hopping_user_settings';
+const SETTINGS_KEY = 'formsight_user_settings';
 
 export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
   autoNext: true,
@@ -94,6 +96,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
 
 export function loadSettings(): UserSettings {
   try {
+    migrateLegacySettings();
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_SETTINGS;
 
