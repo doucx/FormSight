@@ -1,6 +1,6 @@
 import { AlertCircle, Crosshair, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
-import { renderHueRingCanvas } from '../utils/canvas/drawColorRing';
+import { calcSignedHueBias, renderHueBiasChartCanvas } from '../utils/canvas/drawHueBiasChart';
 import type { SectorStat } from '../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../utils/canvas/drawHeatmap';
 import { hsvToHex } from '../utils/colorUtils';
@@ -113,89 +113,94 @@ function createStarAnalyticsPlugin(cardId: string, title: string): CardAnalytics
   };
 }
 
-// 色相分析插件
+// 色相偏差度分析插件
 export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
   cardId: 'color_hue',
-  title: '色相感知弱点分析',
-  subTitle: '洞察你对 OKLab 色彩空间 12 色相扇区的敏感度分布',
+  title: '色相偏差度分析',
+  subTitle: '横轴色相与纵轴偏差分布，揭示系统性偏色倾向',
   fetchRecords: async (id) => getTrialRecordsByCard(id),
   renderVisualizer: (canvas, records) => {
-    const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumError: 0 }));
-    for (const r of records) {
-      const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-      const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-      sectorBuckets[idx].total += 1;
-      if (r.isHit) sectorBuckets[idx].hits += 1;
-      sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
-    }
-    const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-      sectorIdx: i,
-      label: COLOR_SECTORS[i],
-      total: b.total,
-      accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-      avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-    }));
-    renderHueRingCanvas(canvas, sectorStats);
+    renderHueBiasChartCanvas(canvas, records);
   },
   renderDiagnostics: (records) => {
     const totalCount = records.length;
     if (totalCount === 0) return null;
 
-    const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumError: 0 }));
+    let sumSignedBias = 0;
+    const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumBias: 0 }));
     for (const r of records) {
       const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
+      const uHsv = (r.userHSV as [number, number, number]) || tHsv;
+      const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
+      sumSignedBias += bias;
+
       const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
       sectorBuckets[idx].total += 1;
       if (r.isHit) sectorBuckets[idx].hits += 1;
-      sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
+      sectorBuckets[idx].sumBias += bias;
     }
-    const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-      sectorIdx: i,
-      label: COLOR_SECTORS[i],
-      total: b.total,
-      accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-      avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-    }));
-    const validSectors = sectorStats.filter((s) => s.total >= 3);
-    const weakestSector =
+
+    const avgSignedBias = Math.round((sumSignedBias / totalCount) * 10) / 10;
+    const validSectors = sectorBuckets
+      .map((b, i) => ({
+        sectorIdx: i,
+        label: COLOR_SECTORS[i],
+        total: b.total,
+        accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
+        avgBias: b.total > 0 ? Math.round((b.sumBias / b.total) * 10) / 10 : 0,
+      }))
+      .filter((s) => s.total >= 3);
+
+    const maxBiasSector =
       validSectors.length > 0
-        ? validSectors.reduce((prev, curr) => (curr.accuracy < prev.accuracy ? curr : prev))
+        ? validSectors.reduce((prev, curr) =>
+            Math.abs(curr.avgBias) > Math.abs(prev.avgBias) ? curr : prev,
+          )
         : null;
 
     return (
       <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
         <div className="font-bold text-amber-900 flex items-center gap-1">
           <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-          色相盲区诊断
+          系统性偏色倾向诊断
         </div>
-        {weakestSector ? (
-          <div className="space-y-2">
-            <p className="text-slate-700 text-[11px]">
-              你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
-              色相上辨识度最低：
-            </p>
-            <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="w-3 h-3 rounded-full border border-slate-200"
-                  style={{
-                    backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100),
-                  }}
-                />
-                <span className="font-bold text-slate-800">
-                  {weakestSector.label.split(' ')[0]}
+
+        <div className="space-y-1 text-[11px] text-slate-700">
+          <div className="flex justify-between bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm font-mono">
+            <span>全局平均偏转角:</span>
+            <span className={`font-bold ${avgSignedBias > 0 ? 'text-amber-600' : avgSignedBias < 0 ? 'text-indigo-600' : 'text-slate-700'}`}>
+              {avgSignedBias > 0 ? `+${avgSignedBias}° (顺时针)` : avgSignedBias < 0 ? `${avgSignedBias}° (逆时针)` : '0°'}
+            </span>
+          </div>
+
+          {maxBiasSector ? (
+            <div className="mt-2 space-y-1.5">
+              <p className="text-slate-600">
+                最大偏差扇区：<span className="font-bold text-amber-800">{maxBiasSector.label}</span>
+              </p>
+              <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-3 h-3 rounded-full border border-slate-200"
+                    style={{
+                      backgroundColor: hsvToHex(maxBiasSector.sectorIdx * 30 + 15, 100, 100),
+                    }}
+                  />
+                  <span className="font-bold text-slate-800">
+                    {maxBiasSector.label.split(' ')[0]}
+                  </span>
+                </div>
+                <span className="font-black text-amber-700 font-mono text-xs">
+                  平均偏差: {maxBiasSector.avgBias > 0 ? `+${maxBiasSector.avgBias}°` : `${maxBiasSector.avgBias}°`}
                 </span>
               </div>
-              <span className="font-black text-rose-600 text-sm">
-                {weakestSector.accuracy}% 正确率
-              </span>
             </div>
-          </div>
-        ) : (
-          <p className="text-slate-600 text-[11px]">
-            需每个色相扇区完成至少 3 题才能生成弱点诊断。
-          </p>
-        )}
+          ) : (
+            <p className="text-slate-500 text-[10px] mt-1">
+              样本量达到每个扇区至少 3 题后可生成精准扇区偏向诊断。
+            </p>
+          )}
+        </div>
       </div>
     );
   },

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M GenericTrainingView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787206120.5484807, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(analytics): 添加色相偏差度分析图表与弱点诊断", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787206121.5591118, "duration_ms": 0}}
