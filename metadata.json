@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M abstractionUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787220486.3903666, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复细化感知模块 Profile 领域索引脱节导致层阶显示异常的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787220489.443489, "duration_ms": 0}}

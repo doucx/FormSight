@@ -458,6 +458,7 @@ const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c])
 const LEGACY_MAP = new Map<string, CardDefinition>(
   ALL_CARDS.map((c) => [`${c.legacyDomain}:${c.legacyMode}`, c]),
 );
+const MODE_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.legacyMode, c]));
 
 export function getCardById(id: string): CardDefinition | undefined {
   return CARD_MAP.get(id);
@@ -468,10 +469,10 @@ export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
 }
 
 export function resolveLegacyCardId(domain: string, mode: string): string {
-  const card = LEGACY_MAP.get(`${domain}:${mode}`);
+  const card = LEGACY_MAP.get(`${domain}:${mode}`) || MODE_MAP.get(mode);
   return card ? card.id : `${domain}_${mode}`;
 }
 
 export function resolveCardByLegacy(domain: string, mode: string): CardDefinition | undefined {
-  return LEGACY_MAP.get(`${domain}:${mode}`);
+  return LEGACY_MAP.get(`${domain}:${mode}`) || MODE_MAP.get(mode);
 }
