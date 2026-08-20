@@ -14,6 +14,31 @@ export interface BaseModuleSettings {
   [key: string]: unknown;
 }
 
+export interface StarSettings extends BaseModuleSettings {
+  gridSize?: number;
+  targetingMode?: TargetingMode;
+  manualTargetSectors?: number[];
+}
+
+export interface ColorSenseSettings extends BaseModuleSettings {
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
+  targetingMode?: TargetingMode;
+  manualTargetSectors?: number[];
+}
+
+export interface RelativeColorSettings extends BaseModuleSettings {
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
+}
+
+export interface NegativeSpaceSettings extends BaseModuleSettings {
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+}
+
 export interface GlobalSettings {
   idleTimeout: number;
   soundEnabled: boolean;

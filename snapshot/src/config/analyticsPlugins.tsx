@@ -1,7 +1,7 @@
 import { AlertCircle, Crosshair, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { renderHueRingCanvas } from '../utils/canvas/drawColorRing';
-import { type SectorStat, renderCompassCanvas } from '../utils/canvas/drawCompass';
+import type { SectorStat } from '../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../utils/canvas/drawHeatmap';
 import { hsvToHex } from '../utils/colorUtils';
 import { type UnifiedTrialRecord, getTrialRecordsByCard } from '../utils/db';
@@ -19,17 +19,6 @@ export interface CardAnalyticsPlugin<TRecord extends UnifiedTrialRecord = Unifie
     customSummary?: ComponentChildren;
   };
 }
-
-const STAR_SECTORS = [
-  '正东 (0°)',
-  '东北 (45°)',
-  '正北 (90°)',
-  '西北 (135°)',
-  '正西 (180°)',
-  '西南 (225°)',
-  '正南 (270°)',
-  '东南 (315°)',
-];
 
 const COLOR_SECTORS = [
   '红 (0°-30°)',
