@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(settings): 支持实验性卡片占位标记与全局显隐切换", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787216630.1040497, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787216789.5686054, "duration_ms": 0}}
