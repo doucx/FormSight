@@ -48,8 +48,8 @@ export function GenericTrainingView({
   globalSettings,
   onExit,
 }: GenericTrainingViewProps) {
-  const domain = card.legacyDomain;
-  const mode = card.legacyMode;
+  const domain = card.domain;
+  const mode = card.mode;
   const adapter = plugin as unknown as GenericTrainingPluginAdapter;
 
   const session = useTrainingSession<unknown, unknown, unknown>({

@@ -30,8 +30,8 @@ export interface CardTags {
 
 export interface CardDefinition {
   id: string;
-  legacyDomain: TrainingDomain;
-  legacyMode: string;
+  domain: TrainingDomain;
+  mode: string;
   title: string;
   desc: string;
   instruction?: string;

@@ -8,7 +8,6 @@ import {
   ABSTRACTION_THUMB_SIZE,
   type AbstractionHitResult,
   type AbstractionQuestionData,
-  type NotanShape,
   type PaletteTile,
 } from '../utils/abstractionUtils';
 import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
@@ -75,38 +74,6 @@ function drawPolygon(
   strokeColor = '#1E293B',
 ) {
   drawPolygonCanvas({ canvas, vertices, size, fillColor, strokeColor });
-}
-
-// 辅助绘图：绘制 Notan 场景 (旧版矢量兼容)
-function drawNotanScene(
-  canvas: HTMLCanvasElement | null,
-  shapes?: NotanShape[],
-  threshold = 50,
-  size = ABSTRACTION_CANVAS_SIZE,
-) {
-  if (!canvas || !shapes) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  for (const s of shapes) {
-    const isDark = s.baseVal <= threshold;
-    ctx.fillStyle = isDark ? '#0F172A' : '#F8FAFC';
-    ctx.strokeStyle = '#CBD5E1';
-    ctx.lineWidth = 1;
-
-    if (s.type === 'rect' && s.cx && s.cy && s.w && s.h) {
-      ctx.fillRect(s.cx - s.w / 2, s.cy - s.h / 2, s.w, s.h);
-      ctx.strokeRect(s.cx - s.w / 2, s.cy - s.h / 2, s.w, s.h);
-    } else if (s.type === 'circle' && s.cx && s.cy && s.r) {
-      ctx.beginPath();
-      ctx.arc(s.cx, s.cy, s.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    }
-  }
 }
 
 // 辅助绘图：绘制未二值化的连续灰度原图
@@ -325,20 +292,11 @@ export function AbstractionCanvas({
           question.notanFieldDim ?? 120,
           ABSTRACTION_2AFC_SIZE,
         );
-      }
-      // 右侧渲染实时二值截断结果
-      if (question.notanBuffer) {
+        // 右侧渲染实时二值截断结果
         drawNotanNoiseField(
           canvasRefB.current,
           question.notanBuffer,
           question.notanFieldDim ?? 120,
-          showAnswer ? question.idealNotanThreshold : activeVal,
-          ABSTRACTION_2AFC_SIZE,
-        );
-      } else {
-        drawNotanScene(
-          canvasRefB.current,
-          question.notanShapes,
           showAnswer ? question.idealNotanThreshold : activeVal,
           ABSTRACTION_2AFC_SIZE,
         );
@@ -379,15 +337,6 @@ export function AbstractionCanvas({
           question.notanFieldDim ?? 120,
           ABSTRACTION_2AFC_SIZE,
         );
-      } else {
-        drawNotanScene(
-          canvasThumbRef.current,
-          question.promptNotanMask,
-          50,
-          ABSTRACTION_THUMB_SIZE,
-        );
-        drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
-        drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
       }
     } else if (mode === 'TD_PALETTE_2AFC' && question.palettePatternOptions) {
       drawPaletteTiles(

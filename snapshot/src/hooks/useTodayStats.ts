@@ -17,12 +17,12 @@ export function useTodayStats(domain?: TrainingDomain) {
 
       for (const r of records) {
         if (r.timestamp >= startOfToday) {
-          const m = r.mode;
-          if (!stats[m]) {
-            stats[m] = { count: 0, timeMs: 0 };
+          const key = r.cardId || r.mode;
+          if (!stats[key]) {
+            stats[key] = { count: 0, timeMs: 0 };
           }
-          stats[m].count += 1;
-          stats[m].timeMs += (r.responseTimeMs as number) || 0;
+          stats[key].count += 1;
+          stats[key].timeMs += (r.responseTimeMs as number) || 0;
         }
       }
 

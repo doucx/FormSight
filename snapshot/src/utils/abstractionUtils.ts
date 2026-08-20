@@ -18,19 +18,6 @@ export const ABSTRACTION_CANVAS_SIZE = 400;
 export const ABSTRACTION_THUMB_SIZE = 160;
 export const ABSTRACTION_2AFC_SIZE = 260;
 
-// Notan 几何图元定义
-export interface NotanShape {
-  type: 'circle' | 'rect' | 'polygon';
-  points?: Point[];
-  cx?: number;
-  cy?: number;
-  r?: number;
-  w?: number;
-  h?: number;
-  baseVal: number; // 基础明度 (0..100)
-  invertInDistractor?: boolean;
-}
-
 // 色彩马赛克单元
 export interface PaletteTile {
   x: number;
@@ -58,7 +45,6 @@ export interface AbstractionQuestionData {
   correctPolyChoice?: 'A' | 'B';
 
   // 3. NOTAN_THRESHOLD 黑白素描归组字段
-  notanShapes?: NotanShape[];
   notanBuffer?: number[]; // 0..255 灰阶连续场数组
   notanFieldDim?: number; // 灰度场分辨率 (如 120x120)
   idealNotanThreshold?: number; // 0..100 理论最佳二值化阈值
@@ -80,15 +66,11 @@ export interface AbstractionQuestionData {
   hullDetailedB?: Point[];
   correctHullChoice?: 'A' | 'B';
 
-  promptNotanMask?: NotanShape[]; // 题干 Notan (兼容旧版)
   promptNotanBuffer?: number[]; // 题干二值 Notan 剪影场
   notanSceneBufferA?: number[]; // 选项 A 连续灰阶素描场
   notanSceneBufferB?: number[]; // 选项 B 连续灰阶素描场
-  notanSceneA?: NotanShape[];
-  notanSceneB?: NotanShape[];
   correctNotanChoice?: 'A' | 'B';
 
-  promptPaletteBand?: [number, number, number][]; // 兼容
   promptDominantColor?: [number, number, number]; // 题干单基准主色
   palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
   correctPatternIndex?: number; // 0..3
