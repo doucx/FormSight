@@ -388,10 +388,11 @@ export function AbstractionCanvas({
 
         {/* 4 候选拼贴图案网格 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-          {question.palettePatternOptions?.map((_pat, idx) => {
+          {question.palettePatternOptions?.map((pat, idx) => {
             const isSelected = chosenIdx === idx;
             const isTarget = idx === targetIdx;
             const keyLabel = (idx + 1).toString();
+            const patternKey = `td-pattern-card-${question.id}-${pat.map((t) => `${t.x}_${t.y}_${t.hsv.join('_')}`).join('-')}`;
 
             let border = 'border-slate-200/90 hover:border-indigo-300 hover:shadow-md bg-slate-50';
             if (showAnswer) {
@@ -408,7 +409,7 @@ export function AbstractionCanvas({
 
             return (
               <button
-                key={`td-pattern-card-${idx}`}
+                key={patternKey}
                 type="button"
                 disabled={disabled || showAnswer}
                 onClick={() => {
