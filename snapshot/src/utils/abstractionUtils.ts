@@ -552,23 +552,28 @@ export function generateAbstractionQuestion(
 
   // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
   if (mode === 'TD_HULL_2AFC') {
-    const promptHull = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
-      ABSTRACTION_THUMB_SIZE,
-    );
+    // 1. 随 Level 递增顶点数：Level 1 为 4~5 点，Level 35 为 6~9 点
+    const minVerts = 4 + Math.floor(t * 2);
+    const maxVerts = 5 + Math.floor(t * 4);
+    const vertCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
+
+    const promptHull = generateDetailedPolygon(vertCount, ABSTRACTION_THUMB_SIZE);
     const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
 
     const targetBase = promptHull.map((p) => ({
-      x: p.x * scale,
-      y: p.y * scale,
+      x: Math.round(p.x * scale),
+      y: Math.round(p.y * scale),
     }));
 
-    const distractorBase = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
+    // 2. 基于 targetBase 生成高度对抗性干扰项 (大轮廓 85%+ 相似，仅关键转角或局部比例失真)
+    const distractorBase = generateAdversarialDistractorHull(
+      targetBase,
+      clampedLevel,
       ABSTRACTION_2AFC_SIZE,
     );
 
-    const noiseFactor = 0.5 + t * 0.8;
+    // 3. 多尺度分形细化：难度越高，边缘高频噪波与破碎度越强
+    const noiseFactor = 0.45 + t * 0.85;
     const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);
     const distractorDetailed = fractalizePolygon(distractorBase, 2, noiseFactor);
 
