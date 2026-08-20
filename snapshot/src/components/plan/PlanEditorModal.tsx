@@ -402,19 +402,17 @@ export function PlanEditorModal({
                 return (
                   <div
                     key={p.id}
-                    onClick={() => handleSelectPlanFromList(p)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSelectPlanFromList(p);
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 cursor-pointer ${
+                    className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
                       isActive
                         ? 'bg-white border-indigo-500 shadow-sm ring-1 ring-indigo-500/20'
                         : 'bg-white/70 border-slate-200 hover:bg-white hover:border-slate-300'
                     }`}
                   >
-                    <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectPlanFromList(p)}
+                      className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
+                    >
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
                         {p.isBuiltin && (
@@ -427,9 +425,9 @@ export function PlanEditorModal({
                         {stageCount} 个阶段 •{' '}
                         {(p.items || []).reduce((acc, c) => acc + c.targetTrials, 0)} 题
                       </div>
-                    </div>
+                    </button>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         type="button"
                         onClick={(e) => handleToggleFavoriteItem(p.id, e)}
