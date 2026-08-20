@@ -484,8 +484,8 @@ export function generateAbstractionQuestion(
     const totalPixels = fieldDim * fieldDim;
 
     const targetMacroNoise = createNoise2D(Math.random());
-    const distractorMacroNoise = createNoise2D(Math.random() + 100);
-    const microNoise = createNoise2D(Math.random() + 200);
+    const distractorMacroNoise = createNoise2D(Math.random());
+    const microNoise = createNoise2D(Math.random());
 
     // 随机画面基准调性
     const keyType = Math.random();

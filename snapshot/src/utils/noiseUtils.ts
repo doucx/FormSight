@@ -13,7 +13,8 @@ export function createNoise2D(seed = Math.random()): Noise2DFunction {
   const p = new Uint8Array(256);
   for (let i = 0; i < 256; i++) p[i] = i;
 
-  let s = Math.floor(seed * 2147483647);
+  const normalizedSeed = (Math.abs(seed) % 1) || Math.random();
+  let s = Math.floor(normalizedSeed * 2147483647);
   if (s <= 0) s += 2147483646;
 
   for (let i = 255; i > 0; i--) {
