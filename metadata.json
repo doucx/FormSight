@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(abstraction): 重构黑白素描归组为分形双频模型并支持双视口对照", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787218919.5888898, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M abstractionUtils.ts, M noiseUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787218929.384355, "duration_ms": 0}}

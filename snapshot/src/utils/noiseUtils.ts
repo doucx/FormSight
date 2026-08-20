@@ -3,9 +3,7 @@
  * 用于纯过程生成连续灰度场与视知觉噪波
  */
 
-export interface Noise2DFunction {
-  (x: number, y: number): number;
-}
+export type Noise2DFunction = (x: number, y: number) => number;
 
 /**
  * 构造轻量确定性 2D 伪随机梯度噪声

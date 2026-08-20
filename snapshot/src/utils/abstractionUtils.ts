@@ -329,9 +329,11 @@ export function generateAbstractionQuestion(
       for (let x = 0; x < fieldDim; x++) {
         const idx = y * fieldDim + x;
         // 低频宏观大形骨架 (2 Octaves)
-        const macroVal = (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
+        const macroVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
         // 高频微观肌理干扰 (3 Octaves)
-        const microVal = (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+        const microVal =
+          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
         const raw = baseKey + macroVal + microVal;
         const clamped0to100 = Math.max(0, Math.min(100, raw));
