@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(abstraction): 重构 Notan 骨架匹配并增强卡片域迁移与自愈", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787221539.0282595, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(abstraction): 增强折线低模大形与动态势线寻源的高难度感知辨识度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787221926.497924, "duration_ms": 0}}
