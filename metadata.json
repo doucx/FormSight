@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 优化训练计划编排交互、支持新建状态识别与计划库一键重置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787231062.145901, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 优化计划库切换交互，在挑选时保留列表以便连续对比", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787231175.9260938, "duration_ms": 0}}

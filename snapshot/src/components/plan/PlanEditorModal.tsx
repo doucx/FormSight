@@ -67,7 +67,6 @@ export function PlanEditorModal({
     setCurrentPlan({ ...p });
     setPlanNameInput(p.name);
     setIsEditingName(false);
-    setShowPlanManager(false);
   };
 
   const handleNameSave = () => {
@@ -375,14 +374,23 @@ export function PlanEditorModal({
           <div className="p-3.5 bg-slate-100/80 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-700">切换正在编辑的训练计划：</span>
-              <button
-                type="button"
-                onClick={handleCreateNewBlankPlan}
-                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                新建空白计划
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleCreateNewBlankPlan}
+                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  新建空白计划
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowPlanManager(false)}
+                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
+                >
+                  收起
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
