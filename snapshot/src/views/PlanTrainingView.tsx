@@ -126,25 +126,25 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   return (
     <div className="w-full">
       {/* 顶部流水线全局进度与操作栏 */}
-      <div className="max-w-5xl mx-auto mb-4 bg-indigo-950 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between border border-indigo-800/60">
+      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <span className="text-xs font-black bg-indigo-600 px-2.5 py-1 rounded-xl">
+          <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
             阶段 {currentStepIndex + 1} / {validItems.length}
           </span>
-          <span className="text-xs font-bold text-indigo-100">{plan.name}</span>
+          <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-xs text-indigo-200 font-mono font-bold hidden sm:block">
-            目标: {currentStep.targetTrials} 题
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
           </div>
           <button
             type="button"
             onClick={handleSkipCurrentStage}
-            className="px-2.5 py-1 text-[11px] font-bold text-indigo-200 hover:text-white bg-indigo-900 hover:bg-indigo-800 border border-indigo-700/80 rounded-xl transition-all flex items-center gap-1"
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
             title="跳过当前阶段进入下一阶段"
           >
-            <FastForward className="w-3.5 h-3.5" />
+            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
             跳过此阶段
           </button>
         </div>
