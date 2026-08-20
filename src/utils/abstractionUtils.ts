@@ -144,22 +144,27 @@ export function calcPCAOrientation(points: Point[]): number {
 }
 
 /**
- * 生成带方向性的散点流
+ * 生成带方向性与背景各向同性噪点的散点流
  */
-function generateFlowParticles(
+function generateFlowParticlesWithClutter(
   angleDeg: number,
   spreadRatio: number,
+  clutterRatio = 0,
   size = ABSTRACTION_CANVAS_SIZE,
 ): Point[] {
   const rad = (angleDeg * Math.PI) / 180;
-  const count = 40 + Math.floor(Math.random() * 20);
+  const count = 45 + Math.floor(Math.random() * 20);
   const cx = size / 2;
   const cy = size / 2;
   const majorLen = size * 0.38;
   const minorLen = majorLen * spreadRatio;
 
   const points: Point[] = [];
-  for (let i = 0; i < count; i++) {
+  const clutterCount = Math.floor(count * clutterRatio);
+  const flowCount = count - clutterCount;
+
+  // 主流动势粒子
+  for (let i = 0; i < flowCount; i++) {
     const u = (Math.random() * 2 - 1) * majorLen;
     const v = (Math.random() * 2 - 1) * minorLen;
 
@@ -170,7 +175,31 @@ function generateFlowParticles(
       y: Math.max(15, Math.min(size - 15, y)),
     });
   }
+
+  // 背景各向同性杂质噪点 (破除简单外轮廓一眼看穿)
+  for (let i = 0; i < clutterCount; i++) {
+    const r = Math.sqrt(Math.random()) * majorLen * 0.95;
+    const theta = Math.random() * Math.PI * 2;
+    const x = Math.round(cx + r * Math.cos(theta));
+    const y = Math.round(cy + r * Math.sin(theta));
+    points.push({
+      x: Math.max(15, Math.min(size - 15, x)),
+      y: Math.max(15, Math.min(size - 15, y)),
+    });
+  }
+
   return points;
+}
+
+/**
+ * 兼容包装：生成基础方向性散点流
+ */
+function generateFlowParticles(
+  angleDeg: number,
+  spreadRatio: number,
+  size = ABSTRACTION_CANVAS_SIZE,
+): Point[] {
+  return generateFlowParticlesWithClutter(angleDeg, spreadRatio, 0, size);
 }
 
 /**
@@ -214,7 +243,7 @@ function fractalizePolygon(
 }
 
 /**
- * 生成细碎多边形
+ * 生成大模基础多边形
  */
 function generateDetailedPolygon(verticesCount: number, size = ABSTRACTION_CANVAS_SIZE): Point[] {
   const cx = size / 2;
@@ -235,6 +264,59 @@ function generateDetailedPolygon(verticesCount: number, size = ABSTRACTION_CANVA
       y: Math.round(cy + r * Math.sin(a)),
     };
   });
+}
+
+/**
+ * 基于真理大模生成高度竞争性的对抗干扰多边形 (Adversarial Distractor)
+ */
+function generateAdversarialDistractorHull(
+  targetHull: Point[],
+  level: number,
+  size = ABSTRACTION_2AFC_SIZE,
+): Point[] {
+  const t = (Math.max(1, Math.min(35, level)) - 1) / 34;
+  const n = targetHull.length;
+  const distractor: Point[] = targetHull.map((p) => ({ ...p }));
+  const cx = size / 2;
+  const cy = size / 2;
+
+  // 策略 A (Level 低时概率稍高): 随机截断/拉平 1 个关键转折点（过度概括）
+  // 策略 B (Level 高时主要使用): 关键转折点微小突变欺骗（位移量随 Level 缩小，越难察觉）
+  const mutationType = Math.random();
+
+  if (mutationType < 0.35 && n > 4) {
+    const idx = Math.floor(Math.random() * n);
+    const prev = targetHull[(idx - 1 + n) % n];
+    const next = targetHull[(idx + 1) % n];
+    distractor[idx] = {
+      x: Math.round((prev.x + next.x) / 2),
+      y: Math.round((prev.y + next.y) / 2),
+    };
+  } else {
+    // 选取 1~2 个顶点施加微小拓扑欺骗
+    const mutateCount = t > 0.6 && Math.random() < 0.5 ? 2 : 1;
+    const chosenIndices = new Set<number>();
+    while (chosenIndices.size < mutateCount) {
+      chosenIndices.add(Math.floor(Math.random() * n));
+    }
+
+    // 偏移幅度：Level 1 为 40px (较明显)，Level 35 为 14px (需要极其敏锐的大形眼力)
+    const shiftMag = 14 + (1 - t) * 26;
+
+    for (const idx of chosenIndices) {
+      const p = targetHull[idx];
+      // 沿质心向外或法线方向突变
+      const angleFromCenter = Math.atan2(p.y - cy, p.x - cx);
+      const angle = angleFromCenter + (Math.random() - 0.5) * (Math.PI * 0.8);
+
+      distractor[idx] = {
+        x: Math.max(10, Math.min(size - 10, Math.round(p.x + Math.cos(angle) * shiftMag))),
+        y: Math.max(10, Math.min(size - 10, Math.round(p.y + Math.sin(angle) * shiftMag))),
+      };
+    }
+  }
+
+  return distractor;
 }
 
 /**
@@ -269,12 +351,19 @@ export function generateAbstractionQuestion(
 
   // 2. POLYGON_DECIMATION 折线大形 (2AFC)
   if (mode === 'POLYGON_DECIMATION') {
-    // 1. 生成真实的大模基准 (4~6个关键转折点)
-    const vertCount = Math.floor(Math.random() * 3) + 4;
+    // 1. 随 Level 递增顶点数：Level 1 为 4~5 点，Level 35 为 7~9 点
+    const minVerts = 4 + Math.floor(t * 3);
+    const maxVerts = 5 + Math.floor(t * 4);
+    const vertCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
+
     const targetHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    // 2. 生成干扰大模（改变关键转折与体块比例）
-    const distractorHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
+    // 2. 生成高度对抗性的干扰大模 (仅在 1~2 个关键折角或比例上制造真假欺骗)
+    const distractorHull = generateAdversarialDistractorHull(
+      targetHull,
+      clampedLevel,
+      ABSTRACTION_2AFC_SIZE,
+    );
 
     // 3. 基于 targetHull 进行边缘分形细化，生成题干展示的高频细碎多边形
     const scaleToMain = ABSTRACTION_CANVAS_SIZE / ABSTRACTION_2AFC_SIZE;
@@ -283,8 +372,8 @@ export function generateAbstractionQuestion(
       y: Math.round(p.y * scaleToMain),
     }));
 
-    // 难度越高，边缘分形破碎程度越大 (0.4 ~ 1.2)
-    const noiseFactor = 0.4 + t * 0.8;
+    // 难度越高，边缘分形破碎程度与细化递归越深
+    const noiseFactor = 0.4 + t * 0.9;
     const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
 
     const isA = Math.random() < 0.5;
@@ -415,7 +504,11 @@ export function generateAbstractionQuestion(
   // 5. TD_GESTURE_2AFC 自顶向下势线寻源 (2AFC)
   if (mode === 'TD_GESTURE_2AFC') {
     const targetAngle = Math.floor(Math.random() * 180);
-    const distractorAngle = (targetAngle + 35 * (1 - t * 0.7) + 180) % 180;
+
+    // 动态角偏差：Level 1 为 36° (极易区分)，Level 35 逼近 4.0° (精细辨识)
+    const angleDelta = expDecayInterpolate(36.0, 4.0, clampedLevel);
+    const sign = Math.random() < 0.5 ? 1 : -1;
+    const distractorAngle = (targetAngle + sign * angleDelta + 180) % 180;
 
     const rad = (targetAngle * Math.PI) / 180;
     const L = ABSTRACTION_THUMB_SIZE * 0.36;
@@ -426,8 +519,23 @@ export function generateAbstractionQuestion(
       { x: cx + L * Math.cos(rad), y: cy + L * Math.sin(rad) },
     ];
 
-    const partA = generateFlowParticles(targetAngle, 0.25, ABSTRACTION_2AFC_SIZE);
-    const partB = generateFlowParticles(distractorAngle, 0.25, ABSTRACTION_2AFC_SIZE);
+    // 动态粒子散布比：Level 1 为 0.18 (极聚拢)，Level 35 为 0.56 (弥散团，考验整体动势提取)
+    const spreadRatio = 0.18 + t * 0.38;
+    // 背景杂质噪点率：Level 1 为 0%，Level 35 为 28% 各向同性噪点
+    const clutterRatio = t * 0.28;
+
+    const partA = generateFlowParticlesWithClutter(
+      targetAngle,
+      spreadRatio,
+      clutterRatio,
+      ABSTRACTION_2AFC_SIZE,
+    );
+    const partB = generateFlowParticlesWithClutter(
+      distractorAngle,
+      spreadRatio,
+      clutterRatio,
+      ABSTRACTION_2AFC_SIZE,
+    );
 
     const isA = Math.random() < 0.5;
     return {
@@ -444,23 +552,28 @@ export function generateAbstractionQuestion(
 
   // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
   if (mode === 'TD_HULL_2AFC') {
-    const promptHull = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
-      ABSTRACTION_THUMB_SIZE,
-    );
+    // 1. 随 Level 递增顶点数：Level 1 为 4~5 点，Level 35 为 6~9 点
+    const minVerts = 4 + Math.floor(t * 2);
+    const maxVerts = 5 + Math.floor(t * 4);
+    const vertCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
+
+    const promptHull = generateDetailedPolygon(vertCount, ABSTRACTION_THUMB_SIZE);
     const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
 
     const targetBase = promptHull.map((p) => ({
-      x: p.x * scale,
-      y: p.y * scale,
+      x: Math.round(p.x * scale),
+      y: Math.round(p.y * scale),
     }));
 
-    const distractorBase = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
+    // 2. 基于 targetBase 生成高度对抗性干扰项 (大轮廓 85%+ 相似，仅关键转角或局部比例失真)
+    const distractorBase = generateAdversarialDistractorHull(
+      targetBase,
+      clampedLevel,
       ABSTRACTION_2AFC_SIZE,
     );
 
-    const noiseFactor = 0.5 + t * 0.8;
+    // 3. 多尺度分形细化：难度越高，边缘高频噪波与破碎度越强
+    const noiseFactor = 0.45 + t * 0.85;
     const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);
     const distractorDetailed = fractalizePolygon(distractorBase, 2, noiseFactor);
 
