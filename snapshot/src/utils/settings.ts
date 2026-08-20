@@ -49,6 +49,7 @@ export interface GlobalSettings {
   soundEnabled: boolean;
   sliderHitMargin: number;
   showCanvasHints?: boolean;
+  showExperimentalCards?: boolean;
 }
 
 export interface UserSettings {
@@ -73,6 +74,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     soundEnabled: true,
     sliderHitMargin: 12,
     showCanvasHints: true,
+    showExperimentalCards: false,
   },
   cards: {
     star_single: {

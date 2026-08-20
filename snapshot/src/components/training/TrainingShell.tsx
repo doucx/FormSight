@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Clock, Crosshair, HelpCircle } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import type { CardDefinition } from '../../types/card';
@@ -113,6 +113,13 @@ export function TrainingShell({
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-amber-600" />
               靶向强化训练
+            </span>
+          )}
+
+          {card.isExperimental && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
+              实验性模块
             </span>
           )}
         </div>

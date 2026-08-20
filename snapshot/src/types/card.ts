@@ -40,4 +40,5 @@ export interface CardDefinition {
   settingsKey?: string; // 兼容
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
+  isExperimental?: boolean;
 }

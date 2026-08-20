@@ -124,6 +124,7 @@ export const ALL_CARDS: CardDefinition[] = [
     },
     hasWeaknessAnalytics: false,
     settingSchemas: SLIDER_COMMON_SCHEMAS,
+    isExperimental: true,
   },
   {
     id: 'abs_palette_clustering',
@@ -169,6 +170,7 @@ export const ALL_CARDS: CardDefinition[] = [
       interaction: ['choice_2afc'],
     },
     hasWeaknessAnalytics: false,
+    isExperimental: true,
   },
   {
     id: 'abs_td_notan_2afc',
