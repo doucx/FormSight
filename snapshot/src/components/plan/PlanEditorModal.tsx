@@ -70,11 +70,17 @@ export function PlanEditorModal({ initialPlan, onClose, onSave }: PlanEditorModa
   };
 
   const handleSave = () => {
-    onSave(plan);
+    // 过滤掉无效引用的卡片阶段后保存
+    const sanitizedPlan: TrainingPlan = {
+      ...plan,
+      items: plan.items.filter((item) => Boolean(getCardById(item.cardId))),
+    };
+    onSave(sanitizedPlan);
     onClose();
   };
 
-  const totalTrials = plan.items.reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const validPlanItems = plan.items.filter((item) => Boolean(getCardById(item.cardId)));
+  const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
   const availableCards = ALL_CARDS.filter((card) => {

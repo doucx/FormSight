@@ -25,9 +25,12 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
 
-  const currentStep = plan.items[currentStepIndex];
+  // 过滤无效或不存在的卡片，提供安全保障
+  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
+
+  const currentStep = validItems[currentStepIndex];
   const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
-  const nextStep = plan.items[currentStepIndex + 1];
+  const nextStep = validItems[currentStepIndex + 1];
   const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
 
   // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
@@ -68,21 +71,23 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
       setStageResults((prev) => [...prev, stageRes]);
 
-      if (currentStepIndex + 1 < plan.items.length) {
+      if (currentStepIndex + 1 < validItems.length) {
         setIsTransitioning(true);
       } else {
         setShowSummaryModal(true);
       }
     },
-    [currentCard, currentStep, currentStepIndex, plan.items.length],
+    [currentCard, currentStep, currentStepIndex, validItems.length],
   );
 
   const handleProceedNextStage = useCallback(() => {
+    setIsLevelLoaded(false);
     setIsTransitioning(false);
     setCurrentStepIndex((prev) => prev + 1);
   }, []);
 
   const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
     setShowSummaryModal(false);
     setIsTransitioning(false);
     setCurrentStepIndex(0);
@@ -91,7 +96,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     setSessionStartTime(Date.now());
   }, []);
 
-  if (!currentCard || !plan.items || plan.items.length === 0) {
+  if (!currentCard || validItems.length === 0) {
     onExit();
     return null;
   }
@@ -105,7 +110,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
       <div className="max-w-5xl mx-auto mb-4 bg-indigo-900 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <span className="text-xs font-black bg-indigo-600 px-2.5 py-1 rounded-xl">
-            阶段 {currentStepIndex + 1} / {plan.items.length}
+            阶段 {currentStepIndex + 1} / {validItems.length}
           </span>
           <span className="text-xs font-bold text-indigo-100">{plan.name}</span>
         </div>
@@ -115,7 +120,16 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         </div>
       </div>
 
-      {!isLevelLoaded ? (
+      {isTransitioning && nextCard ? (
+        <PlanStepTransitionOverlay
+          completedCard={currentCard}
+          nextCard={nextCard}
+          completedStepIndex={currentStepIndex}
+          totalSteps={validItems.length}
+          onProceed={handleProceedNextStage}
+          onExit={onExit}
+        />
+      ) : !isLevelLoaded ? (
         <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
           正在加载【{currentCard.title}】的生涯能力层阶...
         </div>
@@ -130,17 +144,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           globalSettings={settings.global}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
-          onExit={onExit}
-        />
-      )}
-
-      {isTransitioning && nextCard && (
-        <PlanStepTransitionOverlay
-          completedCard={currentCard}
-          nextCard={nextCard}
-          completedStepIndex={currentStepIndex}
-          totalSteps={plan.items.length}
-          onProceed={handleProceedNextStage}
           onExit={onExit}
         />
       )}

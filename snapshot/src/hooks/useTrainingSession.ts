@@ -170,20 +170,24 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         setIsFinished(true);
         await saveCurrentSession(newTotal, newHits, true);
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          if (onTargetLimitReached) {
-            onTargetLimitReached(updatedHistory);
-          } else {
-            setShowSummaryModal(true);
-          }
-        }, autoNextDelay);
+        if (autoNext) {
+          autoNextTimerRef.current = window.setTimeout(() => {
+            if (onTargetLimitReached) {
+              onTargetLimitReached(updatedHistory);
+            } else {
+              setShowSummaryModal(true);
+            }
+          }, autoNextDelay);
+        }
       } else if (sessionType === 'benchmark' && newTotal >= 20) {
         setIsFinished(true);
         await saveCurrentSession(newTotal, newHits, true);
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          setShowSummaryModal(true);
-        }, autoNextDelay);
+        if (autoNext) {
+          autoNextTimerRef.current = window.setTimeout(() => {
+            setShowSummaryModal(true);
+          }, autoNextDelay);
+        }
       } else if (autoNext) {
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
         autoNextTimerRef.current = window.setTimeout(() => {
@@ -212,6 +216,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   );
 
   const handleRequestFinish = useCallback(async () => {
+    if (targetLimitTrials && totalTrials >= targetLimitTrials && onTargetLimitReached) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onTargetLimitReached(sessionHistory);
+      return;
+    }
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -219,7 +228,16 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
+  }, [
+    targetLimitTrials,
+    totalTrials,
+    hitTrials,
+    onTargetLimitReached,
+    sessionHistory,
+    showSummaryModal,
+    saveCurrentSession,
+    onExit,
+  ]);
 
   const handleFinishSession = useCallback(async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
