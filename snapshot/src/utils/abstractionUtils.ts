@@ -170,7 +170,11 @@ function generateFlowParticles(
 /**
  * 将简单的多边形边缘打碎，生成拥有大量顶点的复杂细碎剪影
  */
-function fractalizePolygon(basePolygon: Point[], detailLevel: number, noiseFactor: number): Point[] {
+function fractalizePolygon(
+  basePolygon: Point[],
+  detailLevel: number,
+  noiseFactor: number,
+): Point[] {
   let currentPoints = [...basePolygon];
 
   for (let iter = 0; iter < detailLevel; iter++) {
@@ -278,9 +282,7 @@ export function generateAbstractionQuestion(
     const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
 
     const isA = Math.random() < 0.5;
-    const simplifiedOptions = isA
-      ? [targetHull, distractorHull]
-      : [distractorHull, targetHull];
+    const simplifiedOptions = isA ? [targetHull, distractorHull] : [distractorHull, targetHull];
 
     return {
       id,
@@ -299,12 +301,8 @@ export function generateAbstractionQuestion(
     const notanShapes: NotanShape[] = [];
 
     const isDarkSubject = Math.random() < 0.5;
-    const subjectBaseVal = isDarkSubject
-      ? 20 + Math.random() * 20
-      : 60 + Math.random() * 20;
-    const bgBaseVal = isDarkSubject
-      ? 60 + Math.random() * 20
-      : 20 + Math.random() * 20;
+    const subjectBaseVal = isDarkSubject ? 20 + Math.random() * 20 : 60 + Math.random() * 20;
+    const bgBaseVal = isDarkSubject ? 60 + Math.random() * 20 : 20 + Math.random() * 20;
 
     const idealNotanThreshold = Math.round((subjectBaseVal + bgBaseVal) / 2);
 

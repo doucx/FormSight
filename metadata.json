@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 用分形细化正向生成法替代折线低模大形中的 RDP 算法", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787217590.4543755, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M abstractionUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787217851.366464, "duration_ms": 0}}
