@@ -1,5 +1,7 @@
 import type { Point } from '../types';
 import { expDecayInterpolate } from './mathUtils';
+import { generateTetrahedralDistractors, hsvToOkLab } from './oklchUtils';
+import { getDistractorDistanceForLevel } from './relativeColorUtils';
 
 export type AbstractionMode =
   | 'GESTURE_AXIS'
@@ -367,13 +369,10 @@ export function generateAbstractionQuestion(
       }
     }
 
-    // 生成 3 个干扰色
-    const distractorDeltaE = 0.12 * (0.018 / 0.12) ** t;
-    const distractors: [number, number, number][] = [
-      [(baseH + 25 + Math.floor(Math.random() * 15)) % 360, baseS, baseV],
-      [(baseH - 25 - Math.floor(Math.random() * 15) + 360) % 360, baseS, baseV],
-      [baseH, Math.max(10, baseS - 35), Math.max(20, baseV - 30)],
-    ];
+    // 使用 OKLab 四面体等距算法生成 3 个感知等距干扰色
+    const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
+    const labDom = hsvToOkLab(...dominantColorHsv);
+    const distractors = generateTetrahedralDistractors(labDom, distractorDeltaE);
 
     const rawOptions = [dominantColorHsv, ...distractors];
     const indexed = rawOptions.map((opt, i) => ({ opt, isTarget: i === 0 }));
@@ -510,13 +509,10 @@ export function generateAbstractionQuestion(
     return tiles;
   };
 
-  // 生成 3 个干扰图案主调 (随 Level 逼近)
-  const distractorDeltaH = 35 * (1 - t * 0.65);
-  const distractorsDom: [number, number, number][] = [
-    [(baseH + distractorDeltaH + 360) % 360, baseS, baseV],
-    [(baseH - distractorDeltaH + 360) % 360, baseS, baseV],
-    [baseH, Math.max(15, baseS - 35), Math.max(20, baseV - 30)],
-  ];
+  // 使用 OKLab 四面体等距算法生成 3 个干扰图案主调 (随 Level 逼近)
+  const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
+  const labDom = hsvToOkLab(...promptDominantColor);
+  const distractorsDom = generateTetrahedralDistractors(labDom, distractorDeltaE);
 
   const rawPatterns: PaletteTile[][] = [
     makePatternTiles(baseH, baseS, baseV),
