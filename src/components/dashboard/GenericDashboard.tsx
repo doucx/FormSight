@@ -29,7 +29,7 @@ export function GenericDashboard({
       if (!isMounted) return;
       const map: Record<string, UnifiedProfileData> = {};
       for (const p of list) {
-        map[p.mode] = p;
+        map[p.cardId] = p;
       }
       setProfiles(map);
     });
@@ -47,12 +47,12 @@ export function GenericDashboard({
       onOpenAnalytics={meta.hasWeaknessAnalytics ? onOpenAnalytics : undefined}
     >
       {meta.cards.map((card) => {
-        const profile = profiles[card.legacyMode];
-        const totalCards = profile?.totalTrainedCards || 0;
+        const profile = profiles[card.id];
+        const totalTrials = profile?.totalTrials || 0;
         const accuracy =
-          totalCards > 0 && profile ? Math.round((profile.totalHits / totalCards) * 100) : 0;
+          totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
         const currentLevel = profile?.currentLevel || 5;
-        const stat = todayStats[card.legacyMode] || { count: 0, timeMs: 0 };
+        const stat = todayStats[card.legacyMode] || todayStats[card.id] || { count: 0, timeMs: 0 };
 
         return (
           <ModeCard

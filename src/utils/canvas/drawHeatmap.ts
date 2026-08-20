@@ -1,17 +1,18 @@
-import type { TrialRecord } from '../../types';
+import type { UnifiedTrialRecord } from '../db';
+import { setupHiDpiCanvas } from './hidpi';
 
 export function renderHeatmapCanvas(
   canvas: HTMLCanvasElement,
-  records: TrialRecord[],
+  records: UnifiedTrialRecord[],
   avgDx: number,
   avgDy: number,
   totalCount: number,
 ) {
-  const ctx = canvas.getContext('2d');
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const cx = width / 2;
   const cy = height / 2;
   const scale = 5;
@@ -43,8 +44,10 @@ export function renderHeatmapCanvas(
   ctx.setLineDash([]);
 
   for (const r of records) {
-    const dx = r.userClick[0] - r.targetB[0];
-    const dy = r.userClick[1] - r.targetB[1];
+    const uClick = (r.userClick as [number, number]) || [0, 0];
+    const tB = (r.targetB as [number, number]) || [0, 0];
+    const dx = uClick[0] - tB[0];
+    const dy = uClick[1] - tB[1];
 
     const px = cx + dx * scale;
     const py = cy + dy * scale;

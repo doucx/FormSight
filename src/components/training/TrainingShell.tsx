@@ -1,5 +1,6 @@
 import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
+import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { SessionSummaryModal } from '../SessionSummaryModal';
 import { IdlePauseOverlay } from '../common/IdlePauseOverlay';
@@ -20,8 +21,7 @@ export interface TrainingSessionHandle {
 }
 
 interface TrainingShellProps {
-  title: string;
-  badge: string;
+  card: CardDefinition;
   sessionType: 'training' | 'benchmark';
   currentLevel: number;
   isTargeting?: boolean;
@@ -32,8 +32,7 @@ interface TrainingShellProps {
 }
 
 export function TrainingShell({
-  title,
-  badge,
+  card,
   sessionType,
   currentLevel,
   isTargeting = false,
@@ -41,6 +40,8 @@ export function TrainingShell({
   session,
   children,
 }: TrainingShellProps) {
+  const { title } = card;
+  const badge = card.tags.target[0];
   const {
     totalTrials,
     elapsedSeconds,
@@ -150,7 +151,7 @@ export function TrainingShell({
       {/* 统一结课总结弹窗 */}
       {showSummaryModal && (
         <SessionSummaryModal
-          mode="single"
+          card={card}
           sessionType={sessionType}
           elapsedSeconds={elapsedSeconds}
           history={sessionHistory}

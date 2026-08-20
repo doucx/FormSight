@@ -1,6 +1,6 @@
 import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
-import type { TrainingMode } from '../types';
+import type { CardDefinition } from '../types/card';
 import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
 export interface SessionHistoryItem {
@@ -11,7 +11,7 @@ export interface SessionHistoryItem {
 }
 
 interface SessionSummaryModalProps {
-  mode: TrainingMode;
+  card: CardDefinition;
   sessionType: 'training' | 'benchmark';
   elapsedSeconds: number;
   history: SessionHistoryItem[];
@@ -19,14 +19,8 @@ interface SessionSummaryModalProps {
   onRestart: () => void;
 }
 
-const MODE_NAMES: Record<TrainingMode, string> = {
-  single: '单锚点模式',
-  double_h: '水平双锚点',
-  double_r: '旋转双锚点',
-};
-
 export function SessionSummaryModal({
-  mode,
+  card,
   sessionType,
   elapsedSeconds,
   history,
@@ -58,7 +52,6 @@ export function SessionSummaryModal({
     return `${m}:${s}`;
   };
 
-  // 绘制 Level 演进折线图
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas && history.length > 0) {
@@ -91,7 +84,7 @@ export function SessionSummaryModal({
             <div>
               <h2 className="text-lg font-bold text-slate-800">训练总结与成果</h2>
               <p className="text-xs text-slate-400">
-                {MODE_NAMES[mode]} • {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+                {card.title} • {sessionType === 'benchmark' ? '20 题基准测试' : '自适应训练'}
               </p>
             </div>
           </div>
@@ -178,7 +171,7 @@ export function SessionSummaryModal({
           />
         </div>
 
-        {/* 底部按钮 */}
+        {/* 底部操作按钮 */}
         <div className="flex gap-3 pt-1">
           <button
             type="button"

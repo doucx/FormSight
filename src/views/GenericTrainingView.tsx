@@ -1,41 +1,56 @@
+import type { ComponentChildren } from 'preact';
 import { TrainingShell } from '../components/training/TrainingShell';
-import type { TrainingPlugin } from '../config/trainingPlugins';
+import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
 import { saveSession, saveTrialRecord } from '../utils/db';
 import type { BaseModuleSettings } from '../utils/settings';
 
-interface GenericTrainingViewProps<
-  TQuestion,
-  THitResult,
-  TAnswerVal,
-  TSettings extends BaseModuleSettings,
-> {
+interface GenericTrainingPluginAdapter {
+  isTargeting?: (mode: string, settings: unknown) => boolean;
+  generateQuestion: (mode: string, level: number, settings: unknown) => unknown;
+  evaluateAnswer: (userVal: unknown, question: unknown, mode: string) => unknown;
+  isHit: (hitResult: unknown) => boolean;
+  getQuestionLevel: (question: unknown) => number;
+  extractRecordDetails: (
+    question: unknown,
+    hitResult: unknown,
+    userVal: unknown,
+    mode: string,
+  ) => Record<string, unknown>;
+  renderCanvas: (props: {
+    question: unknown;
+    showAnswer: boolean;
+    userAnswer: unknown;
+    onAnswer: (val: unknown) => void;
+    disabled: boolean;
+    isIdle: boolean;
+    settings: unknown;
+  }) => ComponentChildren;
+}
+
+export interface GenericTrainingViewProps {
   card: CardDefinition;
-  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
+  plugin: AnyTrainingPlugin;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: TSettings;
+  settings: BaseModuleSettings;
   onExit: () => void;
 }
 
-export function GenericTrainingView<
-  TQuestion,
-  THitResult,
-  TAnswerVal,
-  TSettings extends BaseModuleSettings,
->({
+export function GenericTrainingView({
   card,
   plugin,
   sessionType,
   initialLevel,
   settings,
   onExit,
-}: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
+}: GenericTrainingViewProps) {
   const domain = card.legacyDomain;
   const mode = card.legacyMode;
+  const adapter = plugin as unknown as GenericTrainingPluginAdapter;
 
-  const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
+  const session = useTrainingSession<unknown, unknown, unknown>({
     domain,
     mode,
     sessionType,
@@ -46,10 +61,10 @@ export function GenericTrainingView<
     adaptiveMode: settings.adaptiveMode,
     targetAccuracy: settings.targetAccuracy,
     blockSize: settings.blockSize,
-    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
-    evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
-    isHit: plugin.isHit,
-    getQuestionLevel: plugin.getQuestionLevel,
+    generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
+    evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
+    isHit: adapter.isHit,
+    getQuestionLevel: adapter.getQuestionLevel,
     saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
       await saveTrialRecord({
         id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -58,10 +73,10 @@ export function GenericTrainingView<
         domain,
         mode,
         timestamp: Date.now(),
-        difficultyLevel: plugin.getQuestionLevel(q),
-        isHit: plugin.isHit(hitResult),
+        difficultyLevel: adapter.getQuestionLevel(q),
+        isHit: adapter.isHit(hitResult),
         responseTimeMs,
-        details: plugin.extractRecordDetails(q, hitResult, userVal, mode),
+        details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
       });
     },
     saveSession: async ({
@@ -89,21 +104,20 @@ export function GenericTrainingView<
     onExit,
   });
 
-  const isTargeting = plugin.isTargeting ? plugin.isTargeting(mode, settings) : false;
+  const isTargeting = adapter.isTargeting ? adapter.isTargeting(mode, settings) : false;
 
   return (
     <TrainingShell
-      title={card.title}
-      badge={card.tags.target[0]}
+      card={card}
       sessionType={sessionType}
-      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
+      currentLevel={session.question ? adapter.getQuestionLevel(session.question) : initialLevel}
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>
-        plugin.renderCanvas({
+        adapter.renderCanvas({
           question: session.question,
           showAnswer: session.showAnswer,
           userAnswer: session.userAnswer,

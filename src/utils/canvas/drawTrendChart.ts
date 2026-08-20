@@ -1,14 +1,15 @@
 import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
+import { setupHiDpiCanvas } from './hidpi';
 
 export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,
   dailyData: Record<string, { total: number; maxLevel: number }>,
 ) {
-  const ctx = canvas.getContext('2d');
+  const width = 340;
+  const height = 150;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const padding = { top: 20, right: 20, bottom: 25, left: 30 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -47,7 +48,7 @@ export function renderTrendChartCanvas(
 
   ctx.beginPath();
   ctx.strokeStyle = '#6366F1';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(levels[0]));
   for (let i = 1; i < levels.length; i++) {
@@ -57,7 +58,7 @@ export function renderTrendChartCanvas(
 
   for (let i = 0; i < levels.length; i++) {
     ctx.beginPath();
-    ctx.arc(getX(i), getY(levels[i]), 4, 0, Math.PI * 2);
+    ctx.arc(getX(i), getY(levels[i]), 3.5, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
     ctx.strokeStyle = '#4F46E5';
@@ -80,11 +81,11 @@ export function renderSessionTrendChartCanvas(
   canvas: HTMLCanvasElement,
   history: SessionHistoryItem[],
 ) {
-  const ctx = canvas.getContext('2d');
+  const width = 440;
+  const height = 160;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx || history.length === 0) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const padding = { top: 30, right: 30, bottom: 35, left: 45 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -156,7 +157,7 @@ export function renderSessionTrendChartCanvas(
     const y = getY(h.level);
 
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = h.isHit ? '#22C55E' : '#EF4444';
     ctx.fill();
     ctx.strokeStyle = '#1E293B';

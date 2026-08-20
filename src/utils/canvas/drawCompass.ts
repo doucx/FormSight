@@ -1,3 +1,5 @@
+import { setupHiDpiCanvas } from './hidpi';
+
 export interface SectorStat {
   sectorIdx: number;
   label: string;
@@ -7,11 +9,11 @@ export interface SectorStat {
 }
 
 export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const ctx = canvas.getContext('2d');
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const cx = width / 2;
   const cy = height / 2;
   const outerRadius = Math.min(width, height) / 2 - 30;
