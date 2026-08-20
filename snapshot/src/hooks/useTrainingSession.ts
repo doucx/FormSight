@@ -28,6 +28,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
     hitResult: THitResult;
     responseTimeMs: number;
     userVal: TAnswerVal;
+    currentProfileLevel: number;
   }) => Promise<void>;
   saveSession: (params: {
     sessionId: string;
@@ -146,12 +147,17 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       setTotalTrials(newTotal);
       setHitTrials(newHits);
 
+      // 先执行自适应算子，获取答完该题后的最新能力等级
+      adaptiveEngineRef.current.recordResult(hit);
+      const latestLevel = adaptiveEngineRef.current.getCurrentLevel();
+
       await saveTrialRecord({
         sessionId: sessionIdRef.current,
         question,
         hitResult,
         responseTimeMs,
         userVal,
+        currentProfileLevel: latestLevel,
       });
 
       const nextHistoryItem: SessionHistoryItem = {
@@ -163,8 +169,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
 
       const updatedHistory = [...sessionHistory, nextHistoryItem];
       setSessionHistory(updatedHistory);
-
-      adaptiveEngineRef.current.recordResult(hit);
 
       if (targetLimitTrials && newTotal >= targetLimitTrials) {
         setIsFinished(true);

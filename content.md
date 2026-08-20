@@ -1,230 +1,277 @@
-好的，我将为你生成一个计划：
-1. 移除阶段之间的阻断性弹窗，在达成阶段目标题量后直接静默无缝进入下一阶段。
-2. 拦截中途按下 `Esc` 或点击“退出训练”的操作，若已有做答成果则弹出全局训练流总结页面（`PlanSummaryModal`），让用户查看战果后再离开。
+你的观察非常敏锐！这确实是由于保存时机与参数传递产生的数据同步滞后问题。
 
-## [WIP] feat: 优化计划训练流转：静默无缝切阶段与中途退出结算总结
+### 错误分析
+
+1. **执行顺序问题**：在 `useTrainingSession.ts` 中，`saveTrialRecord` 是在 `adaptiveEngine.recordResult(hit)` 之前执行的。
+2. **等级传参偏差**：`saveTrialRecord` 传入的 `difficultyLevel` 是当前这道题被生成时的静态等级（例如第 10 题生成时的 L5）。
+3. **数据库更新机制**：`saveTrialRecord` 内部会调用 `updateProfile` 将传入的 `record.difficultyLevel` 写入用户的生涯档案 `user_profiles`。在第 10 题答完后，尽管自适应算子已经计算出通关升阶（如升至 L8），但写入数据库的依然是旧的 L5。只有到了第 11 题生成并答题时，第 11 题的难度 L8 才被写入档案。
+4. **中断丢失风险**：如果用户正好在第 10 题做完并升阶后退出，其生涯档案中的等级仍停留在旧等级。
+
+---
+
+## [WIP] fix: 修复自适应升降阶后最新能力等级未即时持久化的问题
+
+### 错误分析
+在 `handleAnswer` 中，`saveTrialRecord` 在自适应引擎计算新等级前被调用，且写入 `user_profiles` 的是当前题目的静态难度等级而非自适应引擎结算后的最新等级，导致升降阶结果滞后至下一题才被存盘。
 
 ### 用户需求
-1. 当一个阶段完成后，不弹出任何阻断性弹窗，直接静默无缝载入并进入下一阶段，保持训练心流。
-2. 在计划训练过程中按下 `Esc` 或点击退出按钮时，不再直接丢弃战果返回主页，而是弹出与计划结束时一致的总结结算页（`PlanSummaryModal`），展示已完成阶段的综合战果与明细。
+当用户做完特定题目触发自适应升降阶（例如轮次评估第 10 题通关升阶，或 3U1D 连续 3 题击中升阶）时，最新的能力等级（`currentLevel` 与 `bestLevel`）必须在当前题目判定的瞬间立即同步持久化到数据库中。
 
 ### 评论
-该改动消除了繁琐的按键确认步骤，让多阶段定制训练流如同流水线般顺畅执行；同时在用户主动中断/提前结束时给予即时的正向成就反馈与数据沉淀，体验更加自然闭环。
+该修复保证了自适应能力评级数据的即时原子性，杜绝了“界面已升阶、刷新或退出后等级未保存”的数据不一致现象。
 
 ### 目标
-1. 在 `src/views/PlanTrainingView.tsx` 中移除 `PlanStepTransitionOverlay` 阻断过渡，当阶段达成目标后直接静默递增 `currentStepIndex` 切换至下一阶段。
-2. 重构退出逻辑：拦截 `onExit`，若用户已累积了阶段成果（`stageResults.length > 0`），则弹出 `PlanSummaryModal` 展示当前全部成果；若为 0 做答状态则直接退出。
+1. 调整 `src/hooks/useTrainingSession.ts` 中的答题结算流程：先执行 `adaptiveEngine.recordResult(hit)` 计算最新等级，再将最新等级透传至保存逻辑。
+2. 更新 `src/views/GenericTrainingView.tsx` 与 `src/utils/db/queries.ts`，区分**单题发生的历史难度**（`record.difficultyLevel`）与**生涯档案最新能力等级**（`profile.currentLevel`），并在每题判定后即时更新档案与 Session。
 
 ### 基本原理
-- **静默流转**：当 `handleStageReached` 被触发且尚未到达最后阶段时，直接将本阶段成绩存入 `stageResults`，并立即设置 `currentStepIndex += 1`，依赖现有的 key 变更实现子组件的平滑自加载。
-- **提前退出结算**：将子阶段组件的退出回调对接至 `handleRequestExit`。当用户触发退出且已有阶段做答数据时，调出 `setShowSummaryModal(true)`，复用现有的大盘正确率、用时与各阶段对比明细展示。
+- 保持 `records` 表中的 `record.difficultyLevel` 忠实记录该题出现时的真实难度。
+- 在 `saveTrialRecord` 回调中额外传入 `currentProfileLevel: adaptiveEngine.getCurrentLevel()`，确保 `updateProfile` 写入的是该题判定完成后自适应引擎产出的最新能力等级。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #scope/ux #ai/instruct #task/domain/plan #task/object/plan-transition-and-exit-summary #task/action/refactor #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/adaptive #task/object/level-persistence #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `PlanTrainingView.tsx` 实现静默切阶段与退出结算
+#### Acts 1: 更新数据库保存接口支持传入最新能力等级
 
-修改 `src/views/PlanTrainingView.tsx`，移除阻断弹窗并实现退出结算拦截。
+修改 `src/utils/db/queries.ts`，让 `saveTrialRecord` 能够接收并更新自适应引擎最新的 `currentProfileLevel`。
 
 ~~~~~act
-write_file
-src/views/PlanTrainingView.tsx
+patch_file
+src/utils/db/queries.ts
 ~~~~~
-~~~~~typescript
-import { FastForward } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
-import { getCardById } from '../config/cards';
-import { CARD_PLUGINS } from '../config/trainingPlugins';
-import type { TrainingPlan } from '../types/plan';
-import { getProfile } from '../utils/db';
-import { type UserSettings, getCardSettings } from '../utils/settings';
-import { GenericTrainingView } from './GenericTrainingView';
+~~~~~typescript.old
+export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
+  const db = await getDB();
+  const domain = record.domain || 'star';
+  const cardId = record.cardId || record.mode;
+  const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
+  await db.put('records', normalizedRecord);
+  await updateProfile(cardId, domain, record.mode, record.isHit, record.difficultyLevel);
+}
+~~~~~
+~~~~~typescript.new
+export async function saveTrialRecord(
+  record: UnifiedTrialRecord,
+  currentProfileLevel?: number,
+): Promise<void> {
+  const db = await getDB();
+  const domain = record.domain || 'star';
+  const cardId = record.cardId || record.mode;
+  const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
+  await db.put('records', normalizedRecord);
+  const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
+  await updateProfile(cardId, domain, record.mode, record.isHit, targetProfileLevel);
+}
+~~~~~
 
-interface PlanTrainingViewProps {
-  plan: TrainingPlan;
-  settings: UserSettings;
+#### Acts 2: 调整 `useTrainingSession.ts` 答题即时结算与等级传递
+
+修改 `src/hooks/useTrainingSession.ts`，在答题时先计算自适应最新状态，再将最新等级同步存盘。
+
+~~~~~act
+patch_file
+src/hooks/useTrainingSession.ts
+~~~~~
+~~~~~typescript.old
+export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
+  domain: string;
+  mode: string;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  autoNext: boolean;
+  autoNextDelay: number;
+  stepGranularity?: StepGranularity;
+  adaptiveMode?: AdaptiveMode;
+  targetAccuracy?: number;
+  blockSize?: number;
+  idleTimeoutSec?: number;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  generateQuestion: (level: number) => TQuestion;
+  evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
+  isHit: (hitResult: THitResult) => boolean;
+  getQuestionLevel: (question: TQuestion) => number;
+  saveTrialRecord: (params: {
+    sessionId: string;
+    question: TQuestion;
+    hitResult: THitResult;
+    responseTimeMs: number;
+    userVal: TAnswerVal;
+  }) => Promise<void>;
+  saveSession: (params: {
+    sessionId: string;
+    totalTrials: number;
+    hitTrials: number;
+    ended: boolean;
+    startTimestamp: number;
+    endLevel: number;
+  }) => Promise<void>;
   onExit: () => void;
 }
+~~~~~
+~~~~~typescript.new
+export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
+  domain: string;
+  mode: string;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  autoNext: boolean;
+  autoNextDelay: number;
+  stepGranularity?: StepGranularity;
+  adaptiveMode?: AdaptiveMode;
+  targetAccuracy?: number;
+  blockSize?: number;
+  idleTimeoutSec?: number;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  generateQuestion: (level: number) => TQuestion;
+  evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
+  isHit: (hitResult: THitResult) => boolean;
+  getQuestionLevel: (question: TQuestion) => number;
+  saveTrialRecord: (params: {
+    sessionId: string;
+    question: TQuestion;
+    hitResult: THitResult;
+    responseTimeMs: number;
+    userVal: TAnswerVal;
+    currentProfileLevel: number;
+  }) => Promise<void>;
+  saveSession: (params: {
+    sessionId: string;
+    totalTrials: number;
+    hitTrials: number;
+    ended: boolean;
+    startTimestamp: number;
+    endLevel: number;
+  }) => Promise<void>;
+  onExit: () => void;
+}
+~~~~~
+~~~~~act
+patch_file
+src/hooks/useTrainingSession.ts
+~~~~~
+~~~~~typescript.old
+      const newTotal = totalTrials + 1;
+      const newHits = hitTrials + (hit ? 1 : 0);
+      setTotalTrials(newTotal);
+      setHitTrials(newHits);
 
-export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewProps) {
-  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
-  const [stageResults, setStageResults] = useState<PlanStageResult[]>([]);
-  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
-  const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
-  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
-  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
-  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
-
-  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
-
-  const currentStep = validItems[currentStepIndex];
-  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
-
-  useEffect(() => {
-    let isMounted = true;
-    if (currentCard) {
-      setIsLevelLoaded(false);
-      getProfile(currentCard.id).then((p) => {
-        if (!isMounted) return;
-        setStageInitialLevel(p?.currentLevel || 5);
-        setIsLevelLoaded(true);
+      await saveTrialRecord({
+        sessionId: sessionIdRef.current,
+        question,
+        hitResult,
+        responseTimeMs,
+        userVal,
       });
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [currentCard, currentStepIndex, planSessionKey]);
 
-  // 总计时器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!showSummaryModal) {
-        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [sessionStartTime, showSummaryModal]);
-
-  // 阶段完成：静默直接进入下一阶段或进入总结
-  const handleStageReached = useCallback(
-    (history: SessionHistoryItem[]) => {
-      if (!currentCard) return;
-
-      const stageRes: PlanStageResult = {
-        card: currentCard,
-        targetTrials: currentStep.targetTrials,
-        history,
+      const nextHistoryItem: SessionHistoryItem = {
+        trialIndex: newTotal,
+        level: getQuestionLevel(question),
+        isHit: hit,
+        responseTimeMs,
       };
 
-      const nextResults = [...stageResults, stageRes];
-      setStageResults(nextResults);
+      const updatedHistory = [...sessionHistory, nextHistoryItem];
+      setSessionHistory(updatedHistory);
 
-      if (currentStepIndex + 1 < validItems.length) {
-        // 静默无缝进入下一个训练阶段
-        setIsLevelLoaded(false);
-        setCurrentStepIndex((prev) => prev + 1);
-      } else {
-        // 全部阶段顺利完成，进入总结
-        setShowSummaryModal(true);
-      }
+      adaptiveEngineRef.current.recordResult(hit);
+
+      if (targetLimitTrials && newTotal >= targetLimitTrials) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+~~~~~
+~~~~~typescript.new
+      const newTotal = totalTrials + 1;
+      const newHits = hitTrials + (hit ? 1 : 0);
+      setTotalTrials(newTotal);
+      setHitTrials(newHits);
+
+      // 先执行自适应算子，获取答完该题后的最新能力等级
+      adaptiveEngineRef.current.recordResult(hit);
+      const latestLevel = adaptiveEngineRef.current.getCurrentLevel();
+
+      await saveTrialRecord({
+        sessionId: sessionIdRef.current,
+        question,
+        hitResult,
+        responseTimeMs,
+        userVal,
+        currentProfileLevel: latestLevel,
+      });
+
+      const nextHistoryItem: SessionHistoryItem = {
+        trialIndex: newTotal,
+        level: getQuestionLevel(question),
+        isHit: hit,
+        responseTimeMs,
+      };
+
+      const updatedHistory = [...sessionHistory, nextHistoryItem];
+      setSessionHistory(updatedHistory);
+
+      if (targetLimitTrials && newTotal >= targetLimitTrials) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+~~~~~
+
+#### Acts 3: 更新 `GenericTrainingView.tsx` 适配新参数
+
+修改 `src/views/GenericTrainingView.tsx`，将 `currentProfileLevel` 传递给持久化层。
+
+~~~~~act
+patch_file
+src/views/GenericTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
+      await saveTrialRecord({
+        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        sessionId,
+        cardId: card.id,
+        domain,
+        mode,
+        timestamp: Date.now(),
+        difficultyLevel: adapter.getQuestionLevel(q),
+        isHit: adapter.isHit(hitResult),
+        responseTimeMs,
+        details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
+      });
     },
-    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
-  );
-
-  // 跳过当前阶段
-  const handleSkipCurrentStage = useCallback(() => {
-    if (!currentCard) return;
-    const skippedRes: PlanStageResult = {
-      card: currentCard,
-      targetTrials: currentStep.targetTrials,
-      history: [],
-    };
-    const nextResults = [...stageResults, skippedRes];
-    setStageResults(nextResults);
-
-    if (currentStepIndex + 1 < validItems.length) {
-      setIsLevelLoaded(false);
-      setCurrentStepIndex((prev) => prev + 1);
-    } else {
-      setShowSummaryModal(true);
-    }
-  }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
-
-  // 拦截退出操作：若已有做答成果则展示结算总结
-  const handleRequestExit = useCallback(() => {
-    if (stageResults.length > 0) {
-      setShowSummaryModal(true);
-    } else {
-      onExit();
-    }
-  }, [stageResults.length, onExit]);
-
-  const handleRestartPlan = useCallback(() => {
-    setIsLevelLoaded(false);
-    setShowSummaryModal(false);
-    setCurrentStepIndex(0);
-    setStageResults([]);
-    setTotalElapsedSeconds(0);
-    setSessionStartTime(Date.now());
-    setPlanSessionKey((prev) => prev + 1);
-  }, []);
-
-  if (!currentCard || validItems.length === 0) {
-    onExit();
-    return null;
-  }
-
-  const plugin = CARD_PLUGINS[currentCard.id];
-  const cardConfig = getCardSettings(settings, currentCard.id);
-
-  return (
-    <div className="w-full">
-      {/* 顶部流水线全局进度与操作栏 */}
-      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
-            阶段 {currentStepIndex + 1} / {validItems.length}
-          </span>
-          <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
-        </div>
-
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
-            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
-          </div>
-          <button
-            type="button"
-            onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            title="跳过当前阶段进入下一阶段"
-          >
-            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
-            跳过此阶段
-          </button>
-        </div>
-      </div>
-
-      {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-          正在加载【{currentCard.title}】的生涯能力层阶...
-        </div>
-      ) : (
-        <GenericTrainingView
-          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
-          card={currentCard}
-          plugin={plugin}
-          sessionType="training"
-          initialLevel={stageInitialLevel}
-          settings={cardConfig}
-          globalSettings={settings.global}
-          targetLimitTrials={currentStep.targetTrials}
-          onTargetLimitReached={handleStageReached}
-          onExit={handleRequestExit}
-        />
-      )}
-
-      {showSummaryModal && (
-        <PlanSummaryModal
-          planName={plan.name}
-          stageResults={stageResults}
-          totalElapsedSeconds={totalElapsedSeconds}
-          onClose={onExit}
-          onRestart={handleRestartPlan}
-        />
-      )}
-    </div>
-  );
-}
+~~~~~
+~~~~~typescript.new
+    saveTrialRecord: async ({
+      sessionId,
+      question: q,
+      hitResult,
+      responseTimeMs,
+      userVal,
+      currentProfileLevel,
+    }) => {
+      await saveTrialRecord(
+        {
+          id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sessionId,
+          cardId: card.id,
+          domain,
+          mode,
+          timestamp: Date.now(),
+          difficultyLevel: adapter.getQuestionLevel(q),
+          isHit: adapter.isHit(hitResult),
+          responseTimeMs,
+          details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
+        },
+        currentProfileLevel,
+      );
+    },
 ~~~~~
 
 ### 下一步建议
-- **实测验证**：
-  1. 开启一个包含多个阶段的训练流（如“晨间热身 50 题”），完成第 1 阶段最后一题后，确认是否直接静默无缝切换进入第 2 阶段，无需额外按空格或点击。
-  2. 在第 2 阶段中途按下 `Esc` 或点击“退出训练”，验证是否会正常弹出总阶段总结卡片（`PlanSummaryModal`），展示第 1 阶段与当前战果。
+- **测试验证**：
+  1. 开启任意自适应训练（默认 10 题/轮评估模式）。
+  2. 连续做完第 10 题并观察升阶后，立即按 `Esc` 退出到主页或直接刷新页面。
+  3. 检查卡片上的“能力层阶 Level”是否已实时更新为第 10 题升阶后的最新等级，确认数据已实时入库。

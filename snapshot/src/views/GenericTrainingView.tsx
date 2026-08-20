@@ -75,19 +75,29 @@ export function GenericTrainingView({
     evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
     isHit: adapter.isHit,
     getQuestionLevel: adapter.getQuestionLevel,
-    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
-      await saveTrialRecord({
-        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        timestamp: Date.now(),
-        difficultyLevel: adapter.getQuestionLevel(q),
-        isHit: adapter.isHit(hitResult),
-        responseTimeMs,
-        details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
-      });
+    saveTrialRecord: async ({
+      sessionId,
+      question: q,
+      hitResult,
+      responseTimeMs,
+      userVal,
+      currentProfileLevel,
+    }) => {
+      await saveTrialRecord(
+        {
+          id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sessionId,
+          cardId: card.id,
+          domain,
+          mode,
+          timestamp: Date.now(),
+          difficultyLevel: adapter.getQuestionLevel(q),
+          isHit: adapter.isHit(hitResult),
+          responseTimeMs,
+          details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
+        },
+        currentProfileLevel,
+      );
     },
     saveSession: async ({
       sessionId,

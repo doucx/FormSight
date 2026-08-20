@@ -7,13 +7,17 @@ import {
   getDB,
 } from './schema';
 
-export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
+export async function saveTrialRecord(
+  record: UnifiedTrialRecord,
+  currentProfileLevel?: number,
+): Promise<void> {
   const db = await getDB();
   const domain = record.domain || 'star';
   const cardId = record.cardId || record.mode;
   const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
   await db.put('records', normalizedRecord);
-  await updateProfile(cardId, domain, record.mode, record.isHit, record.difficultyLevel);
+  const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
+  await updateProfile(cardId, domain, record.mode, record.isHit, targetProfileLevel);
 }
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {

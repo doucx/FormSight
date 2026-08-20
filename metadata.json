@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 优化计划训练流转：静默无缝切阶段与中途退出结算总结", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787231681.6336105, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "错误分析", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787231850.04904, "duration_ms": 0}}
