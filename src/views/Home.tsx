@@ -17,7 +17,15 @@ export function Home({
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
-  const domains = Object.values(DOMAINS_CONFIG);
+  const domainOrder: TrainingDomain[] = [
+    'star',
+    'color',
+    'relative_color',
+    'negative_space',
+    'abstraction',
+    'concretization',
+  ];
+  const domains = domainOrder.map((d) => DOMAINS_CONFIG[d]);
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">

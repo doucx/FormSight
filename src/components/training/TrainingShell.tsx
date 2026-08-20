@@ -1,5 +1,6 @@
-import { ArrowLeft, ChevronRight, Clock, Crosshair } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
 import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { SessionSummaryModal } from '../SessionSummaryModal';
@@ -40,8 +41,10 @@ export function TrainingShell({
   session,
   children,
 }: TrainingShellProps) {
-  const { title } = card;
+  const { title, instruction, desc } = card;
   const badge = card.tags.target[0];
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+
   const {
     totalTrials,
     elapsedSeconds,
@@ -78,13 +81,45 @@ export function TrainingShell({
             <ArrowLeft className="w-3.5 h-3.5" />
             退出训练 (Esc)
           </button>
-          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider">
-            {title} · {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
-          </span>
+          <div className="relative flex items-center">
+            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider flex items-center gap-1.5">
+              {title} · {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
+              {(instruction || desc) && (
+                <button
+                  type="button"
+                  onClick={() => setShowHelpTooltip(!showHelpTooltip)}
+                  onMouseEnter={() => setShowHelpTooltip(true)}
+                  onMouseLeave={() => setShowHelpTooltip(false)}
+                  className="text-indigo-400 hover:text-indigo-700 transition-colors p-0.5 rounded-md"
+                  title="玩法说明"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </span>
+
+            {showHelpTooltip && (instruction || desc) && (
+              <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-slate-900 text-white p-3 rounded-2xl shadow-xl border border-slate-800 text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
+                <div className="font-bold text-indigo-300 mb-1 flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  玩法要领
+                </div>
+                <p className="text-slate-200 text-[11px]">{instruction || desc}</p>
+              </div>
+            )}
+          </div>
+
           {isTargeting && (
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-amber-600" />
               靶向强化训练
+            </span>
+          )}
+
+          {card.isExperimental && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
+              实验性模块
             </span>
           )}
         </div>

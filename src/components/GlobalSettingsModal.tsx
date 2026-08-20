@@ -1,6 +1,8 @@
 import {
   Clock,
   Download,
+  FlaskConical,
+  HelpCircle,
   Sliders,
   ToggleLeft,
   ToggleRight,
@@ -37,6 +39,34 @@ export function GlobalSettingsModal({
       global: {
         ...settings.global,
         soundEnabled: !settings.global.soundEnabled,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
+
+  const handleToggleHints = () => {
+    const current = settings.global.showCanvasHints ?? true;
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        showCanvasHints: !current,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
+
+  const handleToggleExperimental = () => {
+    const current = settings.global.showExperimentalCards ?? false;
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        showExperimentalCards: !current,
       },
     };
     saveSettings(updated);
@@ -132,6 +162,56 @@ export function GlobalSettingsModal({
               className="text-indigo-600 hover:opacity-80 transition-opacity"
             >
               {settings.global.soundEnabled ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                <HelpCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-700">显示任务文字指引</div>
+                <div className="text-[11px] text-slate-400">
+                  在画布上方展示极简提示，关闭进入全沉浸模式
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleHints}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {(settings.global.showCanvasHints ?? true) ? (
+                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              ) : (
+                <ToggleLeft className="w-8 h-8 text-slate-300" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-amber-50 text-amber-600 rounded-xl">
+                <FlaskConical className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-700">显示实验性训练模块</div>
+                <div className="text-[11px] text-slate-400">
+                  开启后展示正在开发与算法演进中的占位卡片
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleToggleExperimental}
+              className="text-indigo-600 hover:opacity-80 transition-opacity"
+            >
+              {(settings.global.showExperimentalCards ?? false) ? (
                 <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
               ) : (
                 <ToggleLeft className="w-8 h-8 text-slate-300" />

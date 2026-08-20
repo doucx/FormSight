@@ -1,4 +1,7 @@
 import type { Point } from '../types';
+import { expDecayInterpolate } from './mathUtils';
+import { generateTetrahedralDistractors, hsvToOkLab } from './oklchUtils';
+import { getDistractorDistanceForLevel } from './relativeColorUtils';
 
 export type AbstractionMode =
   | 'GESTURE_AXIS'
@@ -79,7 +82,10 @@ export interface AbstractionQuestionData {
   notanSceneB?: NotanShape[];
   correctNotanChoice?: 'A' | 'B';
 
-  promptPaletteBand?: [number, number, number][]; // 题干 3 色色谱
+  promptPaletteBand?: [number, number, number][]; // 兼容
+  promptDominantColor?: [number, number, number]; // 题干单基准主色
+  palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
+  correctPatternIndex?: number; // 0..3
   patternA?: PaletteTile[];
   patternB?: PaletteTile[];
   correctPatternChoice?: 'A' | 'B';
@@ -237,9 +243,7 @@ export function generateAbstractionQuestion(
     const spreadRatio = 0.15 + t * 0.5;
     const particles = generateFlowParticles(targetAngleDeg, spreadRatio);
     const realPCA = calcPCAOrientation(particles);
-    const maxTol = 18.0;
-    const minTol = 2.5;
-    const tolerance = Math.round(maxTol * (minTol / maxTol) ** t * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(18.0, 2.5, clampedLevel) * 10) / 10;
 
     return {
       id,
@@ -274,7 +278,16 @@ export function generateAbstractionQuestion(
     distractor[modIdx].y += Math.round((Math.random() * 2 - 1) * perturbDist);
 
     const isA = Math.random() < 0.5;
-    const simplifiedOptions = isA ? [simplified, distractor] : [distractor, simplified];
+    const scaleTo2Afc = ABSTRACTION_2AFC_SIZE / ABSTRACTION_CANVAS_SIZE;
+    const mapTo2Afc = (pts: Point[]) =>
+      pts.map((p) => ({
+        x: Math.round(p.x * scaleTo2Afc),
+        y: Math.round(p.y * scaleTo2Afc),
+      }));
+
+    const simplifiedOptions = isA
+      ? [mapTo2Afc(simplified), mapTo2Afc(distractor)]
+      : [mapTo2Afc(distractor), mapTo2Afc(simplified)];
 
     return {
       id,
@@ -317,9 +330,7 @@ export function generateAbstractionQuestion(
     ];
 
     const idealNotanThreshold = 50.0;
-    const maxTol = 14.0;
-    const minTol = 2.0;
-    const tolerance = Math.round(maxTol * (minTol / maxTol) ** t * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(14.0, 2.0, clampedLevel) * 10) / 10;
 
     return {
       id,
@@ -358,13 +369,10 @@ export function generateAbstractionQuestion(
       }
     }
 
-    // 生成 3 个干扰色
-    const distractorDeltaE = 0.12 * (0.018 / 0.12) ** t;
-    const distractors: [number, number, number][] = [
-      [(baseH + 25 + Math.floor(Math.random() * 15)) % 360, baseS, baseV],
-      [(baseH - 25 - Math.floor(Math.random() * 15) + 360) % 360, baseS, baseV],
-      [baseH, Math.max(10, baseS - 35), Math.max(20, baseV - 30)],
-    ];
+    // 使用 OKLab 四面体等距算法生成 3 个感知等距干扰色
+    const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
+    const labDom = hsvToOkLab(...dominantColorHsv);
+    const distractors = generateTetrahedralDistractors(labDom, distractorDeltaE);
 
     const rawOptions = [dominantColorHsv, ...distractors];
     const indexed = rawOptions.map((opt, i) => ({ opt, isTarget: i === 0 }));
@@ -473,28 +481,27 @@ export function generateAbstractionQuestion(
     };
   }
 
-  // 8. TD_PALETTE_2AFC 自顶向下调性基底归位 (2AFC)
+  // 8. TD_PALETTE_2AFC (4AFC) 自顶向下调性基底归位：主调色群提炼的精确逆向
   const baseH = Math.floor(Math.random() * 360);
-  const promptPaletteBand: [number, number, number][] = [
-    [baseH, 70, 75],
-    [(baseH + 45) % 360, 45, 60],
-    [(baseH + 180) % 360, 80, 85],
-  ];
+  const baseS = Math.floor(Math.random() * 40) + 40;
+  const baseV = Math.floor(Math.random() * 40) + 40;
+  const promptDominantColor: [number, number, number] = [baseH, baseS, baseV];
 
-  const makeTiles = (shiftH: number) => {
+  const makePatternTiles = (domH: number, domS: number, domV: number) => {
     const tiles: PaletteTile[] = [];
-    const size = 3;
-    const tileDim = ABSTRACTION_2AFC_SIZE / size;
-    for (let r = 0; r < size; r++) {
-      for (let c = 0; c < size; c++) {
-        const pickIdx = (r + c) % 3;
-        const color = promptPaletteBand[pickIdx];
+    const gridSize = 3;
+    const tileDim = ABSTRACTION_2AFC_SIZE / gridSize;
+    for (let r = 0; r < gridSize; r++) {
+      for (let c = 0; c < gridSize; c++) {
+        const jitterH = (domH + (Math.floor(Math.random() * 36) - 18) + 360) % 360;
+        const jitterS = Math.max(10, Math.min(100, domS + (Math.floor(Math.random() * 26) - 13)));
+        const jitterV = Math.max(15, Math.min(100, domV + (Math.floor(Math.random() * 26) - 13)));
         tiles.push({
           x: c * tileDim,
           y: r * tileDim,
           w: tileDim,
           h: tileDim,
-          hsv: [(color[0] + shiftH + 360) % 360, color[1], color[2]],
+          hsv: [jitterH, jitterS, jitterV],
           weight: 1,
         });
       }
@@ -502,18 +509,34 @@ export function generateAbstractionQuestion(
     return tiles;
   };
 
-  const patternTarget = makeTiles(0);
-  const patternDistractor = makeTiles(45 * (1 - t * 0.6));
-  const isA = Math.random() < 0.5;
+  // 使用 OKLab 四面体等距算法生成 3 个干扰图案主调 (随 Level 逼近)
+  const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
+  const labDom = hsvToOkLab(...promptDominantColor);
+  const distractorsDom = generateTetrahedralDistractors(labDom, distractorDeltaE);
+
+  const rawPatterns: PaletteTile[][] = [
+    makePatternTiles(baseH, baseS, baseV),
+    makePatternTiles(...distractorsDom[0]),
+    makePatternTiles(...distractorsDom[1]),
+    makePatternTiles(...distractorsDom[2]),
+  ];
+
+  const indexedPatterns = rawPatterns.map((pat, idx) => ({ pat, isTarget: idx === 0 }));
+  for (let i = indexedPatterns.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexedPatterns[i], indexedPatterns[j]] = [indexedPatterns[j], indexedPatterns[i]];
+  }
+
+  const palettePatternOptions = indexedPatterns.map((item) => item.pat);
+  const correctPatternIndex = indexedPatterns.findIndex((item) => item.isTarget);
 
   return {
     id,
     mode,
     difficultyLevel: clampedLevel,
-    promptPaletteBand,
-    patternA: isA ? patternTarget : patternDistractor,
-    patternB: isA ? patternDistractor : patternTarget,
-    correctPatternChoice: isA ? 'A' : 'B',
+    promptDominantColor,
+    palettePatternOptions,
+    correctPatternIndex,
     tolerance: 0,
   };
 }
@@ -582,13 +605,31 @@ export function checkAbstractionHit(
     };
   }
 
+  if (mode === 'TD_PALETTE_2AFC') {
+    const chosenIndex =
+      typeof userAnswer === 'number'
+        ? userAnswer
+        : userAnswer === 'A'
+          ? 0
+          : userAnswer === 'B'
+            ? 1
+            : 0;
+    const isHit = chosenIndex === question.correctPatternIndex;
+    return {
+      isHit,
+      userChoiceIndex: chosenIndex,
+      correctIndex: question.correctPatternIndex,
+      errorValue: isHit ? 0 : 1,
+      tolerance: 0,
+    };
+  }
+
   // 2AFC Top-Down 通用处理
   const choice = userAnswer as 'A' | 'B';
   let correctChoice: 'A' | 'B' = 'A';
   if (mode === 'TD_GESTURE_2AFC') correctChoice = question.correctParticleChoice ?? 'A';
   if (mode === 'TD_HULL_2AFC') correctChoice = question.correctHullChoice ?? 'A';
   if (mode === 'TD_NOTAN_2AFC') correctChoice = question.correctNotanChoice ?? 'A';
-  if (mode === 'TD_PALETTE_2AFC') correctChoice = question.correctPatternChoice ?? 'A';
 
   const isHit = choice === correctChoice;
   return {

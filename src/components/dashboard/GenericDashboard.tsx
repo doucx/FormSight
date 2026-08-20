@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { DomainMeta } from '../../config/domains';
 import { useTodayStats } from '../../hooks/useTodayStats';
 import { type UnifiedProfileData, getProfilesByDomain } from '../../utils/db';
+import { loadSettings } from '../../utils/settings';
 import { DashboardShell } from './DashboardShell';
 import { ModeCard } from './ModeCard';
 
@@ -38,9 +39,12 @@ export function GenericDashboard({
     };
   }, [meta.domain]);
 
+  const showExperimental = loadSettings().global.showExperimentalCards ?? false;
+  const visibleCards = meta.cards.filter((card) => showExperimental || !card.isExperimental);
+
   return (
     <DashboardShell title={meta.title} subTitle={meta.subTitle} onBackToHome={onBackToHome}>
-      {meta.cards.map((card) => {
+      {visibleCards.map((card) => {
         const profile = profiles[card.id];
         const totalTrials = profile?.totalTrials || 0;
         const accuracy =
@@ -59,6 +63,7 @@ export function GenericDashboard({
             currentLevel={currentLevel}
             accuracy={accuracy}
             hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
+            isExperimental={Boolean(card.isExperimental)}
             onStartTraining={() => onStart(card.id, 'training')}
             onStartBenchmark={() => onStart(card.id, 'benchmark')}
             onOpenSettings={() => onOpenCardSettings(card.id)}

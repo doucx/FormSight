@@ -1,4 +1,4 @@
-import { Award, BarChart2, Play, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { Award, BarChart2, FlaskConical, Play, Sliders, Target, TrendingUp } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 
 export function formatTodayTime(ms: number): string {
@@ -21,6 +21,7 @@ interface ModeCardProps {
   currentLevel: number;
   accuracy: number;
   hasAnalytics?: boolean;
+  isExperimental?: boolean;
   onStartTraining: () => void;
   onStartBenchmark: () => void;
   onOpenSettings: () => void;
@@ -36,6 +37,7 @@ export function ModeCard({
   currentLevel,
   accuracy,
   hasAnalytics = false,
+  isExperimental = false,
   onStartTraining,
   onStartBenchmark,
   onOpenSettings,
@@ -86,7 +88,15 @@ export function ModeCard({
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+          {isExperimental && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg">
+              <FlaskConical className="w-3 h-3 text-amber-600" />
+              实验性
+            </span>
+          )}
+        </div>
         <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{desc}</p>
 
         {/* 核心指标 */}

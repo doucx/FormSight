@@ -2,6 +2,7 @@ import { Check, Columns, Sparkles, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
+import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
 import {
   findNearestGridPoint,
   getDynamicCrosshairMetrics,
@@ -23,44 +24,24 @@ interface NegativeSpaceCanvasProps {
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
+  showCanvasHints?: boolean;
 }
 
 // 辅助绘图函数：在给定 canvas 上绘制多边形正形与白色负形底
-function drawPolygonCanvas(
+function renderPolygon(
   canvas: HTMLCanvasElement | null,
   vertices: Point[] | undefined,
   size: number,
   isHighlighted?: boolean,
 ) {
-  if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  // 清屏绘制纯白底色（白色留白即负形）
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  // 绘制正形多边形
-  ctx.beginPath();
-  ctx.moveTo(vertices[0].x, vertices[0].y);
-  for (let i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i].x, vertices[i].y);
-  }
-  ctx.closePath();
-
-  ctx.fillStyle = '#0F172A'; // Slate-900 黑色正形
-  ctx.fill();
-
-  ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // 高亮加粗外边框反馈
-  if (isHighlighted) {
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
+  drawPolygonCanvas({
+    canvas,
+    vertices,
+    size,
+    fillColor: '#0F172A',
+    strokeColor: '#1E293B',
+    isHighlighted,
+  });
 }
 
 function drawDot(
@@ -84,6 +65,7 @@ export function NegativeSpaceCanvas({
   disabled = false,
   hitMargin = 12,
   showToleranceBand = true,
+  showCanvasHints = true,
 }: NegativeSpaceCanvasProps) {
   const is2AFC = question.mode === 'AREA_COMPARISON_2AFC';
   const isFitting = question.mode === 'NEGATIVE_VERTEX_FITTING';
@@ -141,14 +123,14 @@ export function NegativeSpaceCanvas({
   // 渲染单图滑块 Canvas 与 记忆匹配刺激图
   useEffect(() => {
     if (!is2AFC && !isFitting && !is2AfcMatch && question.vertices) {
-      drawPolygonCanvas(
+      renderPolygon(
         canvasRef.current,
         question.vertices,
         NEGATIVE_SPACE_CANVAS_SIZE,
         showAnswer && userAnswer?.isHit,
       );
     } else if (is2AfcMatch && matchPhase === 'stimulus' && question.targetPolygon) {
-      drawPolygonCanvas(canvasRef.current, question.targetPolygon, NEGATIVE_SPACE_CANVAS_SIZE);
+      renderPolygon(canvasRef.current, question.targetPolygon, NEGATIVE_SPACE_CANVAS_SIZE);
     }
   }, [
     is2AFC,
@@ -164,12 +146,12 @@ export function NegativeSpaceCanvas({
   // 渲染 记忆匹配 2AFC 候选画布 (1:1 等大 NEGATIVE_SPACE_CANVAS_SIZE 原生渲染)
   useEffect(() => {
     if (is2AfcMatch && (matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
-      drawPolygonCanvas(
+      renderPolygon(
         matchOptionRefA.current,
         question.optionsPolygons[0],
         NEGATIVE_SPACE_CANVAS_SIZE,
       );
-      drawPolygonCanvas(
+      renderPolygon(
         matchOptionRefB.current,
         question.optionsPolygons[1],
         NEGATIVE_SPACE_CANVAS_SIZE,
@@ -180,8 +162,8 @@ export function NegativeSpaceCanvas({
   // 渲染 2AFC 双 Canvas
   useEffect(() => {
     if (is2AFC) {
-      drawPolygonCanvas(canvasRefA.current, question.verticesA, TWO_AFC_CANVAS_SIZE);
-      drawPolygonCanvas(canvasRefB.current, question.verticesB, TWO_AFC_CANVAS_SIZE);
+      renderPolygon(canvasRefA.current, question.verticesA, TWO_AFC_CANVAS_SIZE);
+      renderPolygon(canvasRefB.current, question.verticesB, TWO_AFC_CANVAS_SIZE);
     }
   }, [is2AFC, question.verticesA, question.verticesB]);
 
@@ -192,7 +174,7 @@ export function NegativeSpaceCanvas({
     // 1. 左侧参考 Canvas：绘制完整多边形与负形
     const leftCanvas = leftFittingRef.current;
     if (leftCanvas) {
-      drawPolygonCanvas(leftCanvas, question.vertices, FITTING_CANVAS_SIZE);
+      renderPolygon(leftCanvas, question.vertices, FITTING_CANVAS_SIZE);
     }
 
     // 2. 右侧交互 Canvas
@@ -399,21 +381,18 @@ export function NegativeSpaceCanvas({
   // =========================================================================
   if (isFitting) {
     return (
-      <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Columns className="w-5 h-5 text-indigo-600" />
-            观察负形留白被挤压的轮廓，点击确定右侧被隐藏的正形顶点
+      <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Columns className="w-3.5 h-3.5 text-indigo-600" />
+            对比左侧负形空间，在右侧点阵中点击定位被截断的顶点
           </div>
-          <p className="text-xs text-slate-400">
-            左侧为完整剪影参考，右侧正形关键拐角被截断。请对比两侧负形空间形态，在右侧点阵中精准定位顶点。
-          </p>
-        </div>
+        )}
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
           {/* 左侧参考 Canvas */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
               完整剪影参考
             </span>
             <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
@@ -427,9 +406,9 @@ export function NegativeSpaceCanvas({
           </div>
 
           {/* 右侧互动做答 Canvas */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
-              交互定点画布 (点击做答)
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+              交互定点画布 (点击定位)
             </span>
             <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
               <canvas
@@ -497,25 +476,13 @@ export function NegativeSpaceCanvas({
     const isBHit = largerSide === 'B';
 
     return (
-      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        {/* 提示文案 */}
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Columns className="w-5 h-5 text-indigo-600" />
-            判别哪一侧的白色留白 (负形) 面积更大？
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Columns className="w-3.5 h-3.5 text-indigo-600" />
+            判别哪一侧的白色留白 (负形) 面积更大
           </div>
-          <p className="text-xs text-slate-400">
-            按快捷键{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              1
-            </kbd>{' '}
-            选择 A，按{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              2
-            </kbd>{' '}
-            选择 B，或直接点击卡片
-          </p>
-        </div>
+        )}
 
         {/* 左右双卡片对比区 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
@@ -539,9 +506,9 @@ export function NegativeSpaceCanvas({
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
                 <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  A
+                  1
                 </span>
-                区域 A (键 1)
+                区域 A
               </span>
 
               {showAnswer && (
@@ -592,9 +559,9 @@ export function NegativeSpaceCanvas({
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
                 <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
+                  2
                 </span>
-                区域 B (键 2)
+                区域 B
               </span>
 
               {showAnswer && (
@@ -678,20 +645,15 @@ export function NegativeSpaceCanvas({
       userAnswer?.userChoiceIndex === 1;
 
     return (
-      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
             {matchPhase === 'stimulus' && !isRevealed
-              ? '观察并瞬时记忆负形轮廓特征'
+              ? `瞬时记忆负形轮廓特征 (${question.displayTimeMs}ms)`
               : '匹配回忆：哪一侧与刚才展示完全相同？'}
           </div>
-          <p className="text-xs text-slate-400">
-            {matchPhase === 'stimulus' && !isRevealed
-              ? `曝光记忆倒计时中 (${question.displayTimeMs}ms)`
-              : '按快捷键 1 选择 A，按 2 选择 B，或直接点击卡片'}
-          </p>
-        </div>
+        )}
 
         {matchPhase === 'stimulus' && !isRevealed ? (
           <div className="bg-slate-50 p-4 rounded-3xl border border-slate-200 shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
@@ -836,14 +798,12 @@ export function NegativeSpaceCanvas({
   const activeVal = hoverVal !== null ? hoverVal : currentVal;
 
   return (
-    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      {/* 提示文案 */}
-      <div className="text-center space-y-1">
-        <div className="text-sm font-bold text-slate-800">
-          估计白色背景（负形）占整幅画面的面积百分比
+    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          估计白色留白 (负形) 占整幅画面的面积百分比
         </div>
-        <div className="text-xs text-slate-400">黑色为正形主体，白色空隙为负形</div>
-      </div>
+      )}
 
       {/* 画布区域 */}
       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">

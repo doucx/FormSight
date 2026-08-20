@@ -6,6 +6,8 @@ import type {
   RelativeColorQuestionData,
 } from '../utils/relativeColorUtils';
 import { HsvTrackSlider } from './HsvTrackSlider';
+import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
+import { Choice2AfcContainer } from './common/Choice2AfcContainer';
 
 interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;
@@ -16,6 +18,7 @@ interface RelativeColorCanvasProps {
   hitMargin?: number;
   showToleranceBand?: boolean;
   enableHoverColorPreview?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function RelativeColorCanvas({
@@ -26,6 +29,7 @@ export function RelativeColorCanvas({
   disabled = false,
   hitMargin = 12,
   showToleranceBand = true,
+  showCanvasHints = true,
 }: RelativeColorCanvasProps) {
   const { mode } = question;
 
@@ -148,141 +152,60 @@ export function RelativeColorCanvas({
     const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
 
     return (
-      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Eye className="w-5 h-5 text-indigo-600" />
-            穿透背景视错觉：哪一侧的中心色块【物理明度更高】？
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Eye className="w-3.5 h-3.5 text-indigo-600" />
+            穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」
           </div>
-          <p className="text-xs text-slate-400">
-            按快捷键{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              1
-            </kbd>{' '}
-            选择 A，按{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              2
-            </kbd>{' '}
-            选择 B
-          </p>
-        </div>
+        )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-          {/* 卡片 A */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('A')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isAHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'A'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'A'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  A
-                </span>
-                区域 A (键 1)
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isAHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isAHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorA?.[2]}%)
-                </span>
-              )}
-            </div>
-
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
-            >
-              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-            </div>
-          </button>
-
-          {/* 卡片 B */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('B')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isBHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'B'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'B'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
-                </span>
-                区域 B (键 2)
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isBHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isBHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorB?.[2]}%)
-                </span>
-              )}
-            </div>
-
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
-            >
-              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-            </div>
-          </button>
-        </div>
+        <Choice2AfcContainer
+          optionA={{
+            key: 'A',
+            title: '区域 A',
+            isCorrect: isAHit,
+            badge: isAHit
+              ? `物理明度更高 (V: ${question.centerColorA?.[2]}%)`
+              : `物理更暗 (V: ${question.centerColorA?.[2]}%)`,
+            content: (
+              <div
+                className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+                style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
+              >
+                <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
+              </div>
+            ),
+          }}
+          optionB={{
+            key: 'B',
+            title: '区域 B',
+            isCorrect: isBHit,
+            badge: isBHit
+              ? `物理明度更高 (V: ${question.centerColorB?.[2]}%)`
+              : `物理更暗 (V: ${question.centerColorB?.[2]}%)`,
+            content: (
+              <div
+                className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+                style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
+              >
+                <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
+              </div>
+            ),
+          }}
+          selectedChoice={selected2AfcChoice}
+          showAnswer={showAnswer}
+          disabled={disabled}
+          onSelect={handleSelect2Afc}
+        />
 
         {showAnswer && (
-          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <div
-                className={`p-1.5 rounded-xl ${
-                  userAnswer?.isHit
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-rose-100 text-rose-700'
-                }`}
-              >
-                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-              </div>
-              <div className="text-xs">
-                <span className="font-bold text-slate-800">
-                  {userAnswer?.isHit ? '成功穿透背景视错觉！' : '受背景诱导产生了认知偏差'}
-                </span>
-                <span className="text-slate-400 ml-2">
-                  (已统一切换至中性灰背景对比，物理明度差 ΔV ={' '}
-                  <strong className="font-mono text-slate-700">
-                    {question.physicalValueDiff}%
-                  </strong>
-                  )
-                </span>
-              </div>
-            </div>
-          </div>
+          <AnswerDiagnosticBar
+            isHit={Boolean(userAnswer?.isHit)}
+            successTitle="成功穿透背景视错觉！"
+            failTitle="受背景诱导产生了认知偏差"
+            subText={`(已统一切换至中性灰背景对比，物理明度差 ΔV = ${question.physicalValueDiff}%)`}
+          />
         )}
       </div>
     );
@@ -307,24 +230,26 @@ export function RelativeColorCanvas({
       'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
 
     return (
-      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            {isLightnessMode ? '阿尔伯斯明度反差补偿' : '阿尔伯斯补色残像调和'}
-          </div>
-          <p className="text-xs text-slate-400">
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            {isLightnessMode ? (
+              <Eye className="w-3.5 h-3.5 text-indigo-600" />
+            ) : (
+              <Eye className="w-3.5 h-3.5 text-purple-600" />
+            )}
             {isLightnessMode
-              ? '调整右侧中心色块的物理明度，使得左右两块在不同背景下【感知明度看起来完全一致】。'
-              : '调整右侧中心色块的色相与饱和度，反向补偿背景诱导，达成视觉感知色差调和。'}
-          </p>
-        </div>
+              ? '调节右侧中心明度，使左右两块视觉感知看起来完全一致'
+              : '调节右侧中心色彩，反向补偿背景诱导达成视觉感知一致'}
+          </div>
+        )}
 
-        {/* 左右双背景对照视口 (带中间安全隔离带) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+        {/* 左右双背景对照视口 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
           {/* 左侧固定参考 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              左侧参考 (固定基准)
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              左侧固定基准
             </span>
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
@@ -338,9 +263,9 @@ export function RelativeColorCanvas({
           </div>
 
           {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
+              右侧调制区 (达成感知一致)
             </span>
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
@@ -497,18 +422,24 @@ export function RelativeColorCanvas({
   const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色
+        </div>
+      )}
+
       {/* 对比展示区 (2x2 网格: 上 A -> B，下 C -> D) */}
-      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-4">
+      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-3">
         {/* 上排: 基准推移组 (A -> B) */}
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexA }}
           />
-          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexB }}
           />
         </div>
@@ -516,12 +447,12 @@ export function RelativeColorCanvas({
         {/* 下排: 目标推移组 (C -> D) */}
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexC }}
           />
-          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
             style={{ backgroundColor: hexSelectedD }}
           >
             {showAnswer && (
