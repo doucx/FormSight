@@ -1,3 +1,4 @@
+import { FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { PlanStepTransitionOverlay } from '../components/plan/PlanStepTransitionOverlay';
@@ -26,7 +27,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
   const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
-  // 过滤无效或不存在的卡片，提供安全保障
   const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
 
   const currentStep = validItems[currentStepIndex];
@@ -34,7 +34,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const nextStep = validItems[currentStepIndex + 1];
   const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
 
-  // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
     let isMounted = true;
     if (currentCard) {
@@ -81,6 +80,24 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     [currentCard, currentStep, currentStepIndex, validItems.length],
   );
 
+  const handleSkipCurrentStage = useCallback(() => {
+    if (!currentCard) return;
+    const skippedRes: PlanStageResult = {
+      card: currentCard,
+      targetTrials: currentStep.targetTrials,
+      history: [],
+    };
+    setStageResults((prev) => [...prev, skippedRes]);
+
+    if (currentStepIndex + 1 < validItems.length) {
+      setIsLevelLoaded(false);
+      setIsTransitioning(false);
+      setCurrentStepIndex((prev) => prev + 1);
+    } else {
+      setShowSummaryModal(true);
+    }
+  }, [currentCard, currentStep, currentStepIndex, validItems.length]);
+
   const handleProceedNextStage = useCallback(() => {
     setIsLevelLoaded(false);
     setIsTransitioning(false);
@@ -108,8 +125,8 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   return (
     <div className="w-full">
-      {/* 顶部流水线全局进度 */}
-      <div className="max-w-5xl mx-auto mb-4 bg-indigo-900 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between">
+      {/* 顶部流水线全局进度与操作栏 */}
+      <div className="max-w-5xl mx-auto mb-4 bg-indigo-950 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between border border-indigo-800/60">
         <div className="flex items-center gap-2.5">
           <span className="text-xs font-black bg-indigo-600 px-2.5 py-1 rounded-xl">
             阶段 {currentStepIndex + 1} / {validItems.length}
@@ -117,8 +134,19 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           <span className="text-xs font-bold text-indigo-100">{plan.name}</span>
         </div>
 
-        <div className="text-xs text-indigo-200 font-mono font-bold">
-          本阶段目标: {currentStep.targetTrials} 题
+        <div className="flex items-center gap-4">
+          <div className="text-xs text-indigo-200 font-mono font-bold hidden sm:block">
+            目标: {currentStep.targetTrials} 题
+          </div>
+          <button
+            type="button"
+            onClick={handleSkipCurrentStage}
+            className="px-2.5 py-1 text-[11px] font-bold text-indigo-200 hover:text-white bg-indigo-900 hover:bg-indigo-800 border border-indigo-700/80 rounded-xl transition-all flex items-center gap-1"
+            title="跳过当前阶段进入下一阶段"
+          >
+            <FastForward className="w-3.5 h-3.5" />
+            跳过此阶段
+          </button>
         </div>
       </div>
 

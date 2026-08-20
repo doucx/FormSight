@@ -1,17 +1,38 @@
-import { ArrowRight, ChevronRight, Clock, Play, Plus, Sliders, Sparkles, Zap } from 'lucide-preact';
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Play,
+  Plus,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-preact';
 import { getCardById } from '../../config/cards';
 import type { TrainingPlan } from '../../types/plan';
 
 interface PlanHeroCardProps {
   plan: TrainingPlan;
+  allPlans?: TrainingPlan[];
   onStartPlan: () => void;
   onOpenEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
 }
 
-export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardProps) {
+export function PlanHeroCard({
+  plan,
+  allPlans = [],
+  onStartPlan,
+  onOpenEditor,
+  onSelectPlan,
+}: PlanHeroCardProps) {
   const hasItems = plan.items && plan.items.length > 0;
-  const totalTrials = plan.items.reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+
+  // 仅列出收藏的计划供主页一键快速切换
+  const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
 
   if (!hasItems) {
     return (
@@ -47,15 +68,33 @@ export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardPr
 
   return (
     <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative overflow-hidden">
-      {/* 顶部标题与快速编辑入口 */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+      {/* 顶部标题与快速切换入口 */}
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200">
             <Zap className="w-5 h-5 fill-current" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              {favoritePlans.length > 1 && onSelectPlan ? (
+                <div className="relative inline-flex items-center">
+                  <select
+                    value={plan.id}
+                    onChange={(e) => onSelectPlan((e.target as HTMLSelectElement).value)}
+                    className="text-lg font-black text-slate-900 tracking-tight bg-transparent pr-6 py-0.5 cursor-pointer appearance-none focus:outline-none hover:text-indigo-600 transition-colors"
+                  >
+                    {favoritePlans.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-0 pointer-events-none" />
+                </div>
+              ) : (
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>
+              )}
+
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
                 {plan.items.length} 个训练阶段
               </span>
@@ -74,7 +113,7 @@ export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardPr
         <button
           type="button"
           onClick={onOpenEditor}
-          className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
           title="调整阶段或题量"
         >
           <Sliders className="w-3.5 h-3.5" />
@@ -110,7 +149,7 @@ export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardPr
       </div>
 
       {/* 底部一键启动大按钮 */}
-      <div className="flex items-center justify-between pt-1">
+      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
         <div className="text-xs text-slate-400 font-medium">
           各阶段自适应难度与答题记录将自动同步至个人生涯档案
         </div>
@@ -118,7 +157,7 @@ export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardPr
         <button
           type="button"
           onClick={onStartPlan}
-          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
+          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 ml-auto"
         >
           <Play className="w-4 h-4 fill-current" />
           开始今日训练流

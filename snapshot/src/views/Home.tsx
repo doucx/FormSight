@@ -8,9 +8,11 @@ interface HomeProps {
   totalTimeMs: number;
   domainTimes: Record<TrainingDomain, number>;
   trainingPlan: TrainingPlan;
+  allPlans?: TrainingPlan[];
   onNavigateDomain: (domain: TrainingDomain) => void;
   onStartPlan: () => void;
   onOpenPlanEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
 }
@@ -19,9 +21,11 @@ export function Home({
   totalTimeMs,
   domainTimes,
   trainingPlan,
+  allPlans = [],
   onNavigateDomain,
   onStartPlan,
   onOpenPlanEditor,
+  onSelectPlan,
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
@@ -81,9 +85,15 @@ export function Home({
       </div>
 
       {/* 计划 Hero 区域 */}
-      <PlanHeroCard plan={trainingPlan} onStartPlan={onStartPlan} onOpenEditor={onOpenPlanEditor} />
+      <PlanHeroCard
+        plan={trainingPlan}
+        allPlans={allPlans}
+        onStartPlan={onStartPlan}
+        onOpenEditor={onOpenPlanEditor}
+        onSelectPlan={onSelectPlan}
+      />
 
-      {/* 模块选择区：元数据动态渲染 */}
+      {/* 模块选择区 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {domains.map((meta) => {
           const Icon = meta.icon;
