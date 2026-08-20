@@ -1,4 +1,3 @@
-import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
 import type { PlanItem, PlanTemplate, TrainingPlan } from '../types/plan';
 
 const PLAN_STORAGE_KEY = 'formsight_custom_training_plan';

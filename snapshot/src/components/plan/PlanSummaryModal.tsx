@@ -1,4 +1,4 @@
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
+import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
 import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 
@@ -42,6 +42,14 @@ export function PlanSummaryModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (
+          e.target === e.currentTarget &&
+          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
+        ) {
+          onClose();
+        }
       }}
     >
       <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">

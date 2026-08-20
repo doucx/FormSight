@@ -6,7 +6,6 @@ import {
   RotateCcw,
   Sliders,
   Trash2,
-  X,
   Zap,
 } from 'lucide-preact';
 import { useState } from 'preact/hooks';

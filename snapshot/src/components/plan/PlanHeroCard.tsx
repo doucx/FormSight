@@ -88,7 +88,6 @@ export function PlanHeroCard({ plan, onStartPlan, onOpenEditor }: PlanHeroCardPr
         {plan.items.map((item, idx) => {
           const card = getCardById(item.cardId);
           if (!card) return null;
-          const meta = DOMAINS_CONFIG[card.domain];
           const Icon = card.icon;
 
           return (

@@ -122,8 +122,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestionStartTime(Date.now());
   }, [isFinished, generateQuestion]);
 
-  const { targetLimitTrials, onTargetLimitReached } = options;
-
   const handleAnswer = useCallback(
     async (userVal: TAnswerVal) => {
       const responseTimeMs = Date.now() - questionStartTime;

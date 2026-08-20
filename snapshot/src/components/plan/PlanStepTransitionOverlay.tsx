@@ -28,13 +28,17 @@ export function PlanStepTransitionOverlay({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onProceed]);
 
-  const CompletedIcon = completedCard.icon;
   const NextIcon = nextCard.icon;
 
   return (
     <div
       role="presentation"
       onClick={onProceed}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
+          onProceed();
+        }
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-pointer select-none"
     >
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/80 p-7 flex flex-col items-center gap-5 text-center my-auto animate-in zoom-in-95">
