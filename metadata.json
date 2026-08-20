@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787227614.3640969, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(db): 彻底清理数据库与配置系统的历史版本迁移冗余", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787227621.5483525, "duration_ms": 0}}
