@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 更新单元测试以适配重命名后的 totalTrials 画像字段", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195331.1443615, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 重构弱点分析为插件化策略并补全全域分析支持", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195510.8516319, "duration_ms": 0}}

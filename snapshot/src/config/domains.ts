@@ -58,7 +58,7 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
       '基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。',
     themeColor: 'purple',
     icon: Shuffle,
-    hasWeaknessAnalytics: false,
+    hasWeaknessAnalytics: true,
     get cards() {
       return getCardsByDomain('relative_color');
     },
@@ -73,7 +73,7 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
       '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破具象认知偏见，培养专业起形与比例感知力。',
     themeColor: 'emerald',
     icon: Maximize2,
-    hasWeaknessAnalytics: false,
+    hasWeaknessAnalytics: true,
     get cards() {
       return getCardsByDomain('negative_space');
     },

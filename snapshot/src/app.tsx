@@ -40,7 +40,7 @@ export function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [settingsDomain, setSettingsDomain] = useState<TrainingDomain>('star');
 
-  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<'star' | 'color' | null>(null);
+  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
@@ -137,9 +137,7 @@ export function App() {
                   setIsSettingsOpen(true);
                 }}
                 onOpenAnalytics={() => {
-                  if (domain === 'star' || domain === 'color') {
-                    setActiveAnalyticsDomain(domain);
-                  }
+                  setActiveAnalyticsDomain(domain);
                 }}
               />
             );

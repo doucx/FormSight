@@ -93,8 +93,7 @@ export function GenericTrainingView<
 
   return (
     <TrainingShell
-      title={card.title}
-      badge={card.tags.target[0]}
+      card={card}
       sessionType={sessionType}
       currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
       isTargeting={isTargeting}
