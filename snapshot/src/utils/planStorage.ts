@@ -43,7 +43,7 @@ export function saveTrainingPlan(plan: TrainingPlan): void {
 
 export function createPlanFromTemplate(template: PlanTemplate): TrainingPlan {
   const items: PlanItem[] = template.items.map((item, idx) => ({
-    id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 5)}`,
+    id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 9)}`,
     cardId: item.cardId,
     targetTrials: item.targetTrials,
   }));

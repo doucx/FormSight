@@ -8,6 +8,7 @@ interface PlanStepTransitionOverlayProps {
   completedStepIndex: number;
   totalSteps: number;
   onProceed: () => void;
+  onExit?: () => void;
 }
 
 export function PlanStepTransitionOverlay({
@@ -16,30 +17,36 @@ export function PlanStepTransitionOverlay({
   completedStepIndex,
   totalSteps,
   onProceed,
+  onExit,
 }: PlanStepTransitionOverlayProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         onProceed();
+      } else if (e.key === 'Escape' || e.code === 'Escape') {
+        e.preventDefault();
+        onExit?.();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onProceed]);
+  }, [onProceed, onExit]);
 
   const NextIcon = nextCard.icon;
 
   return (
     <div
       role="presentation"
-      onClick={onProceed}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onProceed();
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
           onProceed();
         }
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-pointer select-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200 select-none"
     >
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/80 p-7 flex flex-col items-center gap-5 text-center my-auto animate-in zoom-in-95">
         <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
@@ -72,14 +79,25 @@ export function PlanStepTransitionOverlay({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onProceed}
-          className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95"
-        >
-          点击进入下一阶段 (Space)
-          <ArrowRight className="w-4 h-4" />
-        </button>
+        <div className="flex flex-col gap-2 w-full">
+          <button
+            type="button"
+            onClick={onProceed}
+            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+          >
+            点击进入下一阶段 (Space)
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          {onExit && (
+            <button
+              type="button"
+              onClick={onExit}
+              className="w-full py-2 px-3 text-xs font-bold text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all"
+            >
+              结束并退出训练 (Esc)
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

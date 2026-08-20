@@ -20,22 +20,30 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [stageResults, setStageResults] = useState<PlanStageResult[]>([]);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-  const [sessionStartTime] = useState<number>(Date.now());
+  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
   const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
   const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
 
   const currentStep = plan.items[currentStepIndex];
   const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
   const nextStep = plan.items[currentStepIndex + 1];
   const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
 
-  // 加载当前卡片生涯等级
+  // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
+    let isMounted = true;
     if (currentCard) {
+      setIsLevelLoaded(false);
       getProfile(currentCard.id).then((p) => {
+        if (!isMounted) return;
         setStageInitialLevel(p?.currentLevel || 5);
+        setIsLevelLoaded(true);
       });
     }
+    return () => {
+      isMounted = false;
+    };
   }, [currentCard]);
 
   // 总计时器
@@ -79,6 +87,8 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     setIsTransitioning(false);
     setCurrentStepIndex(0);
     setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
   }, []);
 
   if (!currentCard || !plan.items || plan.items.length === 0) {
@@ -105,18 +115,24 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         </div>
       </div>
 
-      <GenericTrainingView
-        key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
-        card={currentCard}
-        plugin={plugin}
-        sessionType="training"
-        initialLevel={stageInitialLevel}
-        settings={cardConfig}
-        globalSettings={settings.global}
-        targetLimitTrials={currentStep.targetTrials}
-        onTargetLimitReached={handleStageReached}
-        onExit={onExit}
-      />
+      {!isLevelLoaded ? (
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+          正在加载【{currentCard.title}】的生涯能力层阶...
+        </div>
+      ) : (
+        <GenericTrainingView
+          key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          onExit={onExit}
+        />
+      )}
 
       {isTransitioning && nextCard && (
         <PlanStepTransitionOverlay
@@ -125,6 +141,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           completedStepIndex={currentStepIndex}
           totalSteps={plan.items.length}
           onProceed={handleProceedNextStage}
+          onExit={onExit}
         />
       )}
 

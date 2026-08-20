@@ -27,7 +27,7 @@ export function PlanEditorModal({ initialPlan, onClose, onSave }: PlanEditorModa
 
   const handleAddItem = (cardId: string) => {
     const newItem: PlanItem = {
-      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
+      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       cardId,
       targetTrials: 20,
     };
@@ -314,9 +314,14 @@ export function PlanEditorModal({ initialPlan, onClose, onSave }: PlanEditorModa
           <button
             type="button"
             onClick={handleSave}
-            className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
+            disabled={plan.items.length === 0}
+            className={`w-full py-2.5 text-xs font-bold rounded-xl transition-all ${
+              plan.items.length === 0
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 active:scale-[0.98]'
+            }`}
           >
-            保存计划
+            保存计划 {plan.items.length === 0 && '(至少包含1个阶段)'}
           </button>
         </div>
       </div>
