@@ -1,464 +1,96 @@
-好的，我们将原本的原生 `<select>` 替换为与全局设计语言高度统一的自定义下拉浮层，并移除卡片外层可能截断弹窗的 `overflow-hidden`。
+根据对代码逻辑与组件生命周期的诊断，训练流在阶段切换时卡死在「正在加载生涯能力层阶...」的原因已明确：
 
-## [WIP] feat: 将训练计划快速切换器重构为无溢出截断的现代自定义下拉菜单
+1. **依赖项过窄导致的死锁**：`PlanTrainingView` 中拉取卡片生涯能力层阶的 `useEffect` 仅依赖了 `[currentCard]`。由于 `currentCard` 是单例对象引用，当训练流中包含相同训练模块或同一卡片时，切换阶段后 `currentCard` 引用未发生改变，导致 `useEffect` 完全不会重新触发，而 `handleStageReached` 提前调用的 `setIsLevelLoaded(false)` 将使界面永久卡死在 loading 占位骨架中。
+2. **异步缺少异常容错兜底**：`getProfile` Promise 调用链缺少 `.catch` 兜底，若在极端网络或 IndexedDB 繁忙异常时发生 Reject，`setIsLevelLoaded(true)` 无法执行。
+
+我将生成一个修复计划，优化依赖项并在异步失败时安全降级至默认难度，彻底杜绝死锁。
+
+## [WIP] fix: 修复训练流阶段切换时能力层阶加载死锁问题
+
+### 错误分析
+
+在 `PlanTrainingView.tsx` 中，能力层阶拉取逻辑存在以下缺陷：
+1. `useEffect` 依赖项仅为 `[currentCard]`，当阶段切换（`currentStepIndex` 自增）但相邻阶段为同一卡片（或 `currentCard` 引用不变）时，`useEffect` 不会重新执行。
+2. 在 `handleStageReached` 和 `handleSkipCurrentStage` 中显式执行了 `setIsLevelLoaded(false)`，导致在上述情况下 `isLevelLoaded` 状态被置为 `false` 后永远无法被置回 `true`，界面陷入永久阻塞状态。
+3. `getProfile` 异步调用缺少 `catch` 容错，未捕获的 Promise 异常也会导致 `isLevelLoaded` 状态悬挂。
 
 ### 用户需求
-1. 将首页 `PlanHeroCard` 中简陋的原生 `<select>` 标签重构为与 FormSight 整体视觉风格一致的自定义下拉菜单（支持毛玻璃、优雅圆角、选中高亮、阶段题量元信息展示等）。
-2. 解决自定义下拉弹层可能被外层卡片容器 `overflow-hidden` 或层级截断（被困住）的问题。
+
+解决在多阶段训练流中，完成当前阶段后无缝切换至下一阶段时可能卡死在「正在加载生涯能力层阶」的问题，确保训练流在任何阶段切换与卡片编排下均能可靠推进。
 
 ### 评论
-原生 `<select>` 控件由操作系统原生渲染，在不同浏览器与平台（macOS/Windows/Linux/iOS/Android）上外观迥异，破坏了现代化应用界面的统一感。重构为自定义交互组件不仅视觉风格更和谐，还能在下拉项中直观展示计划的阶段数和题量元信息。
+
+多阶段自适应训练流是系统的核心链路。确保阶段切换的生命周期健壮性与异步状态确定性，对于维持用户心流体验至关重要。
 
 ### 目标
-1. 在 `PlanHeroCard.tsx` 中实现可控的自定义下拉菜单组件，包含点击展开、选项高亮、选中对勾图标、阶段与题量信息显示。
-2. 添加点击外部自动收起（Click Outside）和按 Esc 键关闭的交互逻辑。
-3. 移除 `PlanHeroCard` 外部容器的 `overflow-hidden` 并配置合适的 `z-index`，确保浮层完全不受卡片边界裁剪。
+
+1. 将 `PlanTrainingView.tsx` 中层阶加载 `useEffect` 依赖项扩展为 `[currentStepIndex, currentCard?.id, planSessionKey]`。
+2. 在 `getProfile` 调用链中增加 `.catch` 与兜底容错，确保不论成功还是失败都能安全进入 `isLevelLoaded = true`。
+3. 优化 `handleStageReached` 和 `handleSkipCurrentStage` 中的状态流转，避免冗余的状态竞争。
 
 ### 基本原理
-1. 通过 `useRef` 与 `useEffect` 挂载全局 `mousedown` 与 `keydown` 事件监听器，当点击浮层外部或按下 Escape 时自动收起下拉菜单。
-2. 移除卡片外层冗余的 `overflow-hidden`，配合浮层的 `absolute` 和 `z-40` 层级，使弹窗脱离卡片流并稳定悬浮于卡片之上，彻底杜绝元素被裁剪被困的问题。
+
+通过将 `currentStepIndex`、`currentCard?.id` 以及会话重置标识 `planSessionKey` 共同作为 `useEffect` 依赖项，确保只要阶段发生位移，Preact 就必定触发新阶段的生涯层阶拉取。配合 Promise 的异常降级保护，保证 `isLevelLoaded` 在任何情况下都能在数十毫秒内顺利置为 `true`，激活下一阶段训练视图。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/plan-dropdown #task/action/implementation #task/state/begin
+
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #scope/ux #ai/instruct #task/domain/training #task/object/plan-transition #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `PlanHeroCard.tsx` 的计划切换选择器
+#### Acts 1: 修复 `PlanTrainingView.tsx` 的层阶加载生命周期与依赖项
+
+我们将完善 `PlanTrainingView.tsx` 的 `useEffect` 依赖项与 Promise 错误兜底处理。
 
 ~~~~~act
 patch_file
-src/components/plan/PlanHeroCard.tsx
+src/views/PlanTrainingView.tsx
 ~~~~~
-~~~~~tsx
-import {
-  ArrowRight,
-  ChevronDown,
-  ChevronRight,
-  Clock,
-  Play,
-  Plus,
-  Sliders,
-  Sparkles,
-  Zap,
-} from 'lucide-preact';
-import { getCardById } from '../../config/cards';
-import type { TrainingPlan } from '../../types/plan';
-
-interface PlanHeroCardProps {
-  plan: TrainingPlan;
-  allPlans?: TrainingPlan[];
-  onStartPlan: () => void;
-  onOpenEditor: () => void;
-  onSelectPlan?: (planId: string) => void;
-}
-
-export function PlanHeroCard({
-  plan,
-  allPlans = [],
-  onStartPlan,
-  onOpenEditor,
-  onSelectPlan,
-}: PlanHeroCardProps) {
-  const hasItems = plan.items && plan.items.length > 0;
-  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
-
-  // 仅列出收藏的计划供主页一键快速切换
-  const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
-
-  if (!hasItems) {
-    return (
-      <div className="w-full bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 border-2 border-dashed border-indigo-200/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
-        <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-indigo-100 text-indigo-600 rounded-2xl">
-            <Sparkles className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-800">今日训练计划</h2>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
-                未设置
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              按需编排多模块定制训练流，一站式贯通寻星、色感、相对推移与空间负形。
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenEditor}
-          className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          定制我的训练流
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative overflow-hidden">
-      {/* 顶部标题与快速切换入口 */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200">
-            <Zap className="w-5 h-5 fill-current" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {favoritePlans.length > 1 && onSelectPlan ? (
-                <div className="relative inline-flex items-center">
-                  <select
-                    value={plan.id}
-                    onChange={(e) => onSelectPlan((e.target as HTMLSelectElement).value)}
-                    className="text-lg font-black text-slate-900 tracking-tight bg-transparent pr-6 py-0.5 cursor-pointer appearance-none focus:outline-none hover:text-indigo-600 transition-colors"
-                  >
-                    {favoritePlans.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-0 pointer-events-none" />
-                </div>
-              ) : (
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>
-              )}
-
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
-                {plan.items.length} 个训练阶段
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
-              <span>合计 {totalTrials} 题</span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-400" />
-                预计约 {estimatedMin} 分钟
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenEditor}
-          className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
-          title="调整阶段或题量"
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          编排计划
-        </button>
-      </div>
-
-      {/* 中部阶段流水线胶囊展示 */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {plan.items.map((item, idx) => {
-          const card = getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-
-          return (
-            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-2xl shadow-inner">
-                <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">
-                  {idx + 1}
-                </div>
-                <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">{card.title}</span>
-                <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
-                  {item.targetTrials}题
-                </span>
-              </div>
-              {idx < plan.items.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 底部一键启动大按钮 */}
-      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-        <div className="text-xs text-slate-400 font-medium">
-          各阶段自适应难度与答题记录将自动同步至个人生涯档案
-        </div>
-
-        <button
-          type="button"
-          onClick={onStartPlan}
-          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 ml-auto"
-        >
-          <Play className="w-4 h-4 fill-current" />
-          开始今日训练流
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-~~~~~
-~~~~~tsx
-import {
-  ArrowRight,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Clock,
-  Play,
-  Plus,
-  Sliders,
-  Sparkles,
-  Zap,
-} from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { getCardById } from '../../config/cards';
-import type { TrainingPlan } from '../../types/plan';
-
-interface PlanHeroCardProps {
-  plan: TrainingPlan;
-  allPlans?: TrainingPlan[];
-  onStartPlan: () => void;
-  onOpenEditor: () => void;
-  onSelectPlan?: (planId: string) => void;
-}
-
-export function PlanHeroCard({
-  plan,
-  allPlans = [],
-  onStartPlan,
-  onOpenEditor,
-  onSelectPlan,
-}: PlanHeroCardProps) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
-
-  const hasItems = plan.items && plan.items.length > 0;
-  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
-
-  // 仅列出收藏的计划供主页一键快速切换
-  const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
-
-  // 点击外部收起下拉菜单与 Escape 键监听
+~~~~~typescript.old
   useEffect(() => {
-    if (!isDropdownOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('keydown', handleKeyDown);
-
+    let isMounted = true;
+    if (currentCard) {
+      setIsLevelLoaded(false);
+      getProfile(currentCard.id).then((p) => {
+        if (!isMounted) return;
+        setStageInitialLevel(p?.currentLevel || 5);
+        setIsLevelLoaded(true);
+      });
+    }
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('keydown', handleKeyDown);
+      isMounted = false;
     };
-  }, [isDropdownOpen]);
-
-  if (!hasItems) {
-    return (
-      <div className="w-full bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 border-2 border-dashed border-indigo-200/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
-        <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-indigo-100 text-indigo-600 rounded-2xl">
-            <Sparkles className="w-6 h-6 animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-800">今日训练计划</h2>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
-                未设置
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              按需编排多模块定制训练流，一站式贯通寻星、色感、相对推移与空间负形。
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenEditor}
-          className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          定制我的训练流
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
-      {/* 顶部标题与快速切换入口 */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200">
-            <Zap className="w-5 h-5 fill-current" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              {favoritePlans.length > 1 && onSelectPlan ? (
-                <div ref={dropdownRef} className="relative inline-block text-left">
-                  <button
-                    type="button"
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="group/btn inline-flex items-center gap-1.5 text-lg font-black text-slate-900 tracking-tight hover:text-indigo-600 transition-colors focus:outline-none"
-                  >
-                    <span>{plan.name}</span>
-                    <div
-                      className={`p-1 rounded-lg bg-slate-100 group-hover/btn:bg-indigo-50 text-slate-500 group-hover/btn:text-indigo-600 transition-all duration-200 ${
-                        isDropdownOpen ? 'rotate-180 bg-indigo-50 text-indigo-600' : ''
-                      }`}
-                    >
-                      <ChevronDown className="w-3.5 h-3.5" />
-                    </div>
-                  </button>
-
-                  {/* 风格统一的自定义下拉浮层 */}
-                  {isDropdownOpen && (
-                    <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
-                        <span>快速切换训练流</span>
-                        <span className="font-mono">{favoritePlans.length} 个可用</span>
-                      </div>
-
-                      <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
-                        {favoritePlans.map((p) => {
-                          const isSelected = p.id === plan.id;
-                          const stageCount = (p.items || []).length;
-                          const pTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
-
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => {
-                                onSelectPlan(p.id);
-                                setIsDropdownOpen(false);
-                              }}
-                              className={`w-full p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2.5 ${
-                                isSelected
-                                  ? 'bg-indigo-50/80 text-indigo-900 font-bold border border-indigo-200/80 shadow-sm'
-                                  : 'text-slate-700 hover:bg-slate-50 border border-transparent'
-                              }`}
-                            >
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs font-bold truncate">{p.name}</span>
-                                  {p.isBuiltin && (
-                                    <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
-                                      官方
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">
-                                  {stageCount} 个阶段 • {pTrials} 题
-                                </div>
-                              </div>
-
-                              {isSelected && (
-                                <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>
-              )}
-
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
-                {plan.items.length} 个训练阶段
-              </span>
-            </div>
-            <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
-              <span>合计 {totalTrials} 题</span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-400" />
-                预计约 {estimatedMin} 分钟
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={onOpenEditor}
-          className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
-          title="调整阶段或题量"
-        >
-          <Sliders className="w-3.5 h-3.5" />
-          编排计划
-        </button>
-      </div>
-
-      {/* 中部阶段流水线胶囊展示 */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-        {plan.items.map((item, idx) => {
-          const card = getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-
-          return (
-            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-2xl shadow-inner">
-                <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">
-                  {idx + 1}
-                </div>
-                <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">{card.title}</span>
-                <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
-                  {item.targetTrials}题
-                </span>
-              </div>
-              {idx < plan.items.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 底部一键启动大按钮 */}
-      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-        <div className="text-xs text-slate-400 font-medium">
-          各阶段自适应难度与答题记录将自动同步至个人生涯档案
-        </div>
-
-        <button
-          type="button"
-          onClick={onStartPlan}
-          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 ml-auto"
-        >
-          <Play className="w-4 h-4 fill-current" />
-          开始今日训练流
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
+  }, [currentCard]);
+~~~~~
+~~~~~typescript.new
+  useEffect(() => {
+    let isMounted = true;
+    if (currentCard) {
+      setIsLevelLoaded(false);
+      getProfile(currentCard.id)
+        .then((p) => {
+          if (!isMounted) return;
+          setStageInitialLevel(p?.currentLevel || 5);
+          setIsLevelLoaded(true);
+        })
+        .catch((err) => {
+          console.error('Failed to load profile for card in plan:', err);
+          if (!isMounted) return;
+          setStageInitialLevel(5);
+          setIsLevelLoaded(true);
+        });
+    } else {
+      setIsLevelLoaded(true);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [currentStepIndex, currentCard?.id, planSessionKey]);
 ~~~~~
 
 ### 下一步建议
 
-1. 在浏览器首页测试点击下拉菜单切换计划，验证毛玻璃下拉弹窗是否平滑展示、无任何裁剪溢出，且点击外部区域或按 Esc 键可顺畅收起。
-2. 运行 `npm run check` 确保符合所有代码风格与 linter 规范。
+- **功能验证**: 启动训练流并完成任意阶段，或点击「跳过此阶段」，验证是否能瞬时无缝切换到下一训练阶段。
+- **阶段重复测试**: 在「定制日常训练流」中编排包含连续两个相同模块（例如连续两个「色相」）的测试训练流，确认能够正常切换并不再卡死。

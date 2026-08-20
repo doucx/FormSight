@@ -34,16 +34,25 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     let isMounted = true;
     if (currentCard) {
       setIsLevelLoaded(false);
-      getProfile(currentCard.id).then((p) => {
-        if (!isMounted) return;
-        setStageInitialLevel(p?.currentLevel || 5);
-        setIsLevelLoaded(true);
-      });
+      getProfile(currentCard.id)
+        .then((p) => {
+          if (!isMounted) return;
+          setStageInitialLevel(p?.currentLevel || 5);
+          setIsLevelLoaded(true);
+        })
+        .catch((err) => {
+          console.error('Failed to load profile for card in plan:', err);
+          if (!isMounted) return;
+          setStageInitialLevel(5);
+          setIsLevelLoaded(true);
+        });
+    } else {
+      setIsLevelLoaded(true);
     }
     return () => {
       isMounted = false;
     };
-  }, [currentCard]);
+  }, [currentStepIndex, currentCard?.id, planSessionKey]);
 
   // 总计时器
   useEffect(() => {
