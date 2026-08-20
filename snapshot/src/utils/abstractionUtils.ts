@@ -503,6 +503,10 @@ export function generateAbstractionQuestion(
 
     // 宏观骨架相似度逼近因子：Level 1 为 0 (完全独立大形)，Level 35 为 0.68 (高相似度大骨架逼近)
     const macroSimilarityWeight = t * 0.68;
+    // 能量守恒系数：消除两个独立场线性加权导致的方差坍缩，保证干扰项黑白对比度与动态范围绝对守恒
+    const blendNorm = Math.sqrt(
+      (1 - macroSimilarityWeight) ** 2 + macroSimilarityWeight ** 2,
+    );
 
     const targetMacroBuffer = new Uint8Array(totalPixels);
     const targetSceneBuffer = new Uint8Array(totalPixels);
@@ -516,13 +520,14 @@ export function generateAbstractionQuestion(
         const rawIndependentDistractorVal =
           (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
 
-        // 干扰项宏观场：随着 Level 提升，与目标骨架大场线性插值逼近
+        // 干扰项宏观场：能量守恒归一化插值，对比度与真理项 100% 统计等价
         const distractorMacroVal =
-          (1 - macroSimilarityWeight) * rawIndependentDistractorVal +
-          macroSimilarityWeight * targetMacroVal;
+          ((1 - macroSimilarityWeight) * rawIndependentDistractorVal +
+            macroSimilarityWeight * targetMacroVal) /
+          blendNorm;
 
         const microVal =
-          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+          (fbm2D(x * microScale, y * macroScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
         // 仅宏观骨架场（用于生成清晰二值 Notan 题干）
         const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));

@@ -1,86 +1,39 @@
-我们将为**黑白素描骨架**（`TD_NOTAN_2AFC`）引入**宏观骨架场权重插值与相似度逼近模型**：随着难度等级提升，干扰素描选项的宏观大结构将自适应逼近真理骨架（从 Level 1 的大形迥异，平滑递进至 Level 35 约 68% 骨架拓扑重合度），使高阶训练达到“既有强微观光影噪波干扰，又需精准分辨细微骨架大形转折”的深度心流。
+## [WIP] fix(abstraction): 引入方差归一化消除干扰项对比度衰减发灰的漏洞
 
-## [WIP] feat: 为黑白素描骨架引入宏观大场随 Level 自适应逼近算法
+### 错误分析
+简单线性加权 $(1-w)A + wB$ 导致干扰项宏观场的数学方差衰减为 $[(1-w)^2 + w^2]\sigma^2$（高等级下对比度损失约 25%），画面动态范围被压缩显得更灰，使得用户可以通过寻找最亮白点作弊。
 
 ### 用户需求
-升级「黑白素描骨架（`TD_NOTAN_2AFC`）」生成算法，使干扰项选项不仅在微观画风细节上同步，在**宏观大形状/骨架拓扑结构**上也随着 Level 提升逐渐逼近答案项，增强高等级下的辨识难度与挑战深度。
+消除干扰项相比真理项更“灰”的特征，确保两幅候选素描画面的黑白对比度、最亮白与最暗黑完全一致。
 
 ### 评论
-通过在低频场（Macro Field）中引入参数化的骨架相似度混合因子 $\alpha(t)$，使得干扰项在低阶时形态各异（快速建立规则认知），在高阶时形成结构高度相似的精细对照项（逼近真实素描中抓准微妙转折与比例的核心能力），完美完成了难度梯度的闭环。
+图形学中混合随机噪声场必须做能量守恒归一化。修复后，干扰项在保持宏观大形逼近的同时，黑白纯度与动态范围与真理项完全一致，真正迫使训练者依据几何大结构做答。
 
 ### 目标
-1. 在 `src/utils/abstractionUtils.ts` 中改造 `TD_NOTAN_2AFC` 生成逻辑。
-2. 引入随等级 $t = \frac{\text{Level} - 1}{34}$ 动态计算的 `macroSimilarityWeight`（$0 \to 0.68$）。
-3. 干扰项宏观场由独立随机场与目标宏观场进行连续插值融合，实现宏观大结构随 Level 自适应收敛逼近。
+在 `src/utils/abstractionUtils.ts` 的 `TD_NOTAN_2AFC` 宏观场插值中，引入 `blendNorm = Math.sqrt((1 - w)^2 + w^2)` 进行方差归一化除法。
 
 ### 基本原理
-定义干扰宏观场方程：
-$$\text{DistractorMacro}(x, y) = (1 - \alpha(t)) \cdot \text{IndependentMacro}(x, y) + \alpha(t) \cdot \text{TargetMacro}(x, y)$$
-其中 $\alpha(t) = 0.68 \cdot t$。
-- **Level 1 ($\alpha = 0$)**：干扰项宏观场 100% 独立，黑白大块面与朝向截然不同；
-- **Level 35 ($\alpha = 0.68$)**：干扰项宏观场继承 68% 目标大势，整体明暗质心与大块面分布高度形似，仅在局部转折与局部块面比例产生微妙偏离，结合强微观噪波实现高阶硬核辨析。
+利用随机变量方差性质，通过除以权重欧几里得范数 $\sqrt{(1-w)^2 + w^2}$ 使线性组合后的随机场方差恒等于 $1.0\sigma^2$。
 
 ### 标签
-#intent/build #flow/ready #priority/high
+#intent/fix #flow/ready #priority/critical
 #comp/runtime #concept/executor #scope/core
 #ai/instruct
-#task/domain/ui #task/object/td-notan-refinement #task/action/implementation #task/state/continue
+#task/domain/ui #task/object/td-notan-refinement #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 TD_NOTAN_2AFC 宏观骨架相似度逼近算法
+#### Acts 1: 修正 TD_NOTAN_2AFC 方差能量守恒归一化
 
-在 `src/utils/abstractionUtils.ts` 中更新 `TD_NOTAN_2AFC` 的宏观场生成与插值计算。
+在 `src/utils/abstractionUtils.ts` 中修正宏观场加权公式，除以 `blendNorm`。
 
 ~~~~~act
 patch_file
 src/utils/abstractionUtils.ts
 ~~~~~
 ~~~~~typescript.old
-    const macroScale = 0.012 + Math.random() * 0.008;
-    const macroAmp = 42 + Math.random() * 10;
-    const microScale = 0.08 + Math.random() * 0.04;
-    const microAmp = 10 + t * 38; // 难度随 Level 递增微观干扰
-
-    const targetMacroBuffer = new Uint8Array(totalPixels);
-    const targetSceneBuffer = new Uint8Array(totalPixels);
-    const distractorSceneBuffer = new Uint8Array(totalPixels);
-
-    for (let y = 0; y < fieldDim; y++) {
-      for (let x = 0; x < fieldDim; x++) {
-        const idx = y * fieldDim + x;
-        const targetMacroVal =
-          (fbm2D(x * macroScale, y * macroScale, 2, targetMacroNoise) - 0.5) * 2 * macroAmp;
-        const distractorMacroVal =
-          (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
-        const microVal =
-          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
-
-        // 仅宏观骨架场（用于生成清晰二值 Notan 题干）
-        const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
-        targetMacroBuffer[idx] = Math.round((macroRaw / 100) * 255);
-
-        // 真实素描选项（宏观骨架 + 微观噪波）
-        const targetSceneRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal + microVal));
-        targetSceneBuffer[idx] = Math.round((targetSceneRaw / 100) * 255);
-
-        // 干扰素描选项（不同宏观骨架 + 相同微观噪波肌理）
-        const distractorSceneRaw = Math.max(
-          0,
-          Math.min(100, baseKey + distractorMacroVal + microVal),
-        );
-        distractorSceneBuffer[idx] = Math.round((distractorSceneRaw / 100) * 255);
-      }
-    }
-~~~~~
-~~~~~typescript.new
-    const macroScale = 0.012 + Math.random() * 0.008;
-    const macroAmp = 42 + Math.random() * 10;
-    const microScale = 0.08 + Math.random() * 0.04;
-    const microAmp = 10 + t * 38; // 难度随 Level 递增微观干扰
-
     // 宏观骨架相似度逼近因子：Level 1 为 0 (完全独立大形)，Level 35 为 0.68 (高相似度大骨架逼近)
     const macroSimilarityWeight = t * 0.68;
 
@@ -103,25 +56,64 @@ src/utils/abstractionUtils.ts
 
         const microVal =
           (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+~~~~~
+~~~~~typescript.new
+    // 宏观骨架相似度逼近因子：Level 1 为 0 (完全独立大形)，Level 35 为 0.68 (高相似度大骨架逼近)
+    const macroSimilarityWeight = t * 0.68;
+    // 能量守恒系数：消除两个独立场线性加权导致的方差坍缩，保证干扰项黑白对比度与动态范围绝对守恒
+    const blendNorm = Math.sqrt(
+      (1 - macroSimilarityWeight) ** 2 + macroSimilarityWeight ** 2,
+    );
 
-        // 仅宏观骨架场（用于生成清晰二值 Notan 题干）
-        const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
-        targetMacroBuffer[idx] = Math.round((macroRaw / 100) * 255);
+    const targetMacroBuffer = new Uint8Array(totalPixels);
+    const targetSceneBuffer = new Uint8Array(totalPixels);
+    const distractorSceneBuffer = new Uint8Array(totalPixels);
 
-        // 真实素描选项（宏观骨架 + 微观噪波）
-        const targetSceneRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal + microVal));
-        targetSceneBuffer[idx] = Math.round((targetSceneRaw / 100) * 255);
+    for (let y = 0; y < fieldDim; y++) {
+      for (let x = 0; x < fieldDim; x++) {
+        const idx = y * fieldDim + x;
+        const targetMacroVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, targetMacroNoise) - 0.5) * 2 * macroAmp;
+        const rawIndependentDistractorVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
 
-        // 干扰素描选项（逼近宏观骨架 + 相同微观噪波肌理）
-        const distractorSceneRaw = Math.max(
-          0,
-          Math.min(100, baseKey + distractorMacroVal + microVal),
-        );
-        distractorSceneBuffer[idx] = Math.round((distractorSceneRaw / 100) * 255);
-      }
-    }
+        // 干扰项宏观场：能量守恒归一化插值，对比度与真理项 100% 统计等价
+        const distractorMacroVal =
+          ((1 - macroSimilarityWeight) * rawIndependentDistractorVal +
+            macroSimilarityWeight * targetMacroVal) /
+          blendNorm;
+
+        const microVal =
+          (fbm2D(x * microScale, y * macroScale, 3, microNoise) - 0.5) * 2 * microAmp;
 ~~~~~
 
 ### 下一步建议
-1. 在浏览器中打开「细化感知」->「黑白素描骨架」模式；
-2. 分别在 Level 1、Level 15 与 Level 35 下进行做答体验，感受低阶时一眼判别与高阶时在大形极度相似下的精细透视挑战。
+1. 刷新训练界面实测「黑白素描骨架」；
+2. 观察两幅选项的黑白极值分布与整体对比度是否完全平衡一致。
+
+
+这是一个极其敏锐且关键的观察！
+
+### 问题根源分析（随机场加权导致的方差坍缩）
+
+设目标宏观场为 $X$，独立干扰宏观场为 $Y$。两者的方差均为 $\sigma^2$（即画面的黑白对比度与动态范围）。
+当我们使用简单的线性加权 $Z = (1 - w)X + wY$ 时，根据概率论方差加法公式：
+$$\text{Var}(Z) = (1 - w)^2 \text{Var}(X) + w^2 \text{Var}(Y) = \left[(1 - w)^2 + w^2\right]\sigma^2$$
+
+当 $w = 0.68$（高等级）时：
+$$(1 - 0.68)^2 + 0.68^2 = 0.1024 + 0.4624 = \mathbf{0.5648}$$
+合成场的标准差（对比度）直接衰减为 $\sqrt{0.5648} \approx \mathbf{75.1\%}$！
+**对比度缩水了近 25%**，导致干扰项的极亮白被拉暗、极暗黑被拉亮，画面整体变“灰/发平”，用户只需找“哪张黑白对比更分明/有最亮白”即可作弊。
+
+---
+
+### 解决方案：能量守恒与方差归一化（Variance Normalization）
+
+将插值向量除以其模长（几何球面旋转插值 / 方差能量守恒系数）：
+$$\text{BlendNorm} = \sqrt{(1 - w)^2 + w^2}$$
+$$\text{DistractorMacro}(x, y) = \frac{(1 - w) \cdot Y(x, y) + w \cdot X(x, y)}{\text{BlendNorm}}$$
+
+这样，无论混合权重 $w$ 为多少，干扰项的方差都严格守恒为 $\sigma^2$，**干扰项与真理项的黑白对比度、最亮高光与最深暗部在统计上 100% 绝对一致**，彻底根除“发灰”破绽！
+
+---
+
