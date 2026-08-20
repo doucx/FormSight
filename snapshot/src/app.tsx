@@ -60,9 +60,7 @@ export function App() {
     );
     const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
 
-    const allProfilesList = await Promise.all(
-      ALL_DOMAINS.map((d) => getProfilesByDomain(d)),
-    );
+    const allProfilesList = await Promise.all(ALL_DOMAINS.map((d) => getProfilesByDomain(d)));
     const pMap: Record<string, UnifiedProfileData> = {};
     for (const list of allProfilesList) {
       for (const p of list) {
