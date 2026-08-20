@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(abstraction): 重构黑白素描归组为纯分形噪声双频模型", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787218674.2357893, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(abstraction): 黑白素描归组支持原图对照与即点即答", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787218797.852548, "duration_ms": 0}}

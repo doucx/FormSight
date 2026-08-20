@@ -109,6 +109,40 @@ function drawNotanScene(
   }
 }
 
+// 辅助绘图：绘制未二值化的连续灰度原图
+function drawRawGrayscaleNoiseField(
+  canvas: HTMLCanvasElement | null,
+  buffer?: number[],
+  dim = 120,
+  size = ABSTRACTION_2AFC_SIZE,
+) {
+  if (!canvas || !buffer) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = dim;
+  offscreen.height = dim;
+  const offCtx = offscreen.getContext('2d');
+  if (!offCtx) return;
+
+  const imgData = offCtx.createImageData(dim, dim);
+  const pixels = imgData.data;
+
+  for (let i = 0; i < buffer.length; i++) {
+    const val = buffer[i];
+    const pIdx = i * 4;
+    pixels[pIdx] = val;
+    pixels[pIdx + 1] = val;
+    pixels[pIdx + 2] = val;
+    pixels[pIdx + 3] = 255;
+  }
+  offCtx.putImageData(imgData, 0, 0);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(offscreen, 0, 0, size, size);
+}
+
 // 辅助绘图：根据连续灰阶场进行动态二值截断渲染
 function drawNotanNoiseField(
   canvas: HTMLCanvasElement | null,
@@ -231,7 +265,7 @@ export function AbstractionCanvas({
     disabled: disabled || showAnswer,
     onValChange: setSliderVal,
     onCommit: (committedVal: number) => {
-      if (mode === 'GESTURE_AXIS' && !disabled && !showAnswer) {
+      if ((mode === 'GESTURE_AXIS' || mode === 'NOTAN_THRESHOLD') && !disabled && !showAnswer) {
         onAnswer(committedVal);
       }
     },
@@ -283,20 +317,30 @@ export function AbstractionCanvas({
         '#4F46E5',
       );
     } else if (mode === 'NOTAN_THRESHOLD') {
+      // 左侧渲染连续灰阶原图
+      if (question.notanBuffer) {
+        drawRawGrayscaleNoiseField(
+          canvasRefA.current,
+          question.notanBuffer,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_2AFC_SIZE,
+        );
+      }
+      // 右侧渲染实时二值截断结果
       if (question.notanBuffer) {
         drawNotanNoiseField(
-          canvasMainRef.current,
+          canvasRefB.current,
           question.notanBuffer,
           question.notanFieldDim ?? 120,
           showAnswer ? question.idealNotanThreshold : activeVal,
-          ABSTRACTION_CANVAS_SIZE,
+          ABSTRACTION_2AFC_SIZE,
         );
       } else {
         drawNotanScene(
-          canvasMainRef.current,
+          canvasRefB.current,
           question.notanShapes,
           showAnswer ? question.idealNotanThreshold : activeVal,
-          ABSTRACTION_CANVAS_SIZE,
+          ABSTRACTION_2AFC_SIZE,
         );
       }
     } else if (mode === 'PALETTE_CLUSTERING') {
@@ -678,19 +722,144 @@ export function AbstractionCanvas({
   }
 
   // =========================================================================
-  // 视图 C：滑块/旋转连续调节视图 (GESTURE_AXIS / NOTAN_THRESHOLD)
+  // 视图 C-1：NOTAN_THRESHOLD 双视口原图与二值对照视图
   // =========================================================================
-  const isGesture = mode === 'GESTURE_AXIS';
-  const unit = isGesture ? '°' : '%';
+  if (mode === 'NOTAN_THRESHOLD') {
+    return (
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Eye className="w-3.5 h-3.5 text-indigo-600" />
+            观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点
+          </div>
+        )}
+
+        {/* 左右双视口：左原图，右二值 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+          {/* 左侧连续灰阶原图 */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              灰阶原图 (Raw Scene)
+            </span>
+            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={canvasRefA}
+                width={ABSTRACTION_2AFC_SIZE}
+                height={ABSTRACTION_2AFC_SIZE}
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+              />
+            </div>
+          </div>
+
+          {/* 右侧实时二值化素描 */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
+              二值显影 (Notan Output)
+            </span>
+            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={canvasRefB}
+                width={ABSTRACTION_2AFC_SIZE}
+                height={ABSTRACTION_2AFC_SIZE}
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 连续滑块控制面板 (即点即答) */}
+        <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+            <span>二值化截断阈值:</span>
+            <span className="font-mono text-base font-black text-indigo-600">
+              {showAnswer ? `${userAnswer?.userValue ?? sliderVal}%` : `${activeVal}%`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 w-full">
+            <span className="font-bold font-mono text-slate-400 text-xs">0%</span>
+
+            <div
+              {...pointerProps}
+              style={
+                hitMargin > 0
+                  ? {
+                      paddingLeft: `${hitMargin}px`,
+                      paddingRight: `${hitMargin}px`,
+                      marginLeft: `-${hitMargin}px`,
+                      marginRight: `-${hitMargin}px`,
+                      paddingTop: '6px',
+                      paddingBottom: '6px',
+                      marginTop: '-6px',
+                      marginBottom: '-6px',
+                    }
+                  : undefined
+              }
+              className={`relative flex-1 flex items-center select-none touch-none ${
+                !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
+              }`}
+            >
+              <div
+                ref={trackRef}
+                className="relative w-full h-7 rounded-xl bg-slate-200 border border-slate-300/80 shadow-inner flex items-center overflow-hidden"
+              >
+                <div
+                  className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
+                  style={{ width: `${activeVal}%` }}
+                />
+
+                {!showAnswer && (
+                  <div
+                    className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
+                    style={{ left: `${activeVal}%` }}
+                  />
+                )}
+
+                {showAnswer && (
+                  <div
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
+                    style={{ left: `${question.idealNotanThreshold ?? 50}%` }}
+                  />
+                )}
+              </div>
+            </div>
+
+            <span className="font-bold font-mono text-slate-400 text-xs">100%</span>
+          </div>
+
+          {showAnswer && (
+            <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-500">
+                最佳素描阈值:{' '}
+                <span className="font-bold text-slate-800 font-mono">
+                  {question.idealNotanThreshold}%
+                </span>
+              </span>
+              <span
+                className={
+                  userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
+                }
+              >
+                误差: {userAnswer?.errorValue}% (容错: ±{question.tolerance}%)
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 视图 C-2：GESTURE_AXIS 势线连续旋转调节视图
+  // =========================================================================
+  const unit = '°';
 
   return (
     <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
       {showCanvasHints && (
         <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
           <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          {isGesture
-            ? '旋转主轴对齐粒子群动态流向 (0°~180°)'
-            : '调节二值化剪切线，达成黑白最平衡的 Notan 状态'}
+          旋转主轴对齐粒子群动态流向 (0°~180°)
         </div>
       )}
 
@@ -705,7 +874,7 @@ export function AbstractionCanvas({
 
       <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-          <span>{isGesture ? '动态势线角度:' : 'Notan 归组阈值:'}</span>
+          <span>动态势线角度:</span>
           <span className="font-mono text-base font-black text-indigo-600">
             {showAnswer ? `${userAnswer?.userValue ?? sliderVal}${unit}` : `${activeVal}${unit}`}
           </span>
@@ -741,7 +910,7 @@ export function AbstractionCanvas({
               <div
                 className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
                 style={{
-                  width: `${(activeVal / (isGesture ? 180 : 100)) * 100}%`,
+                  width: `${(activeVal / 180) * 100}%`,
                 }}
               />
 
@@ -749,7 +918,7 @@ export function AbstractionCanvas({
                 <div
                   className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
                   style={{
-                    left: `${(activeVal / (isGesture ? 180 : 100)) * 100}%`,
+                    left: `${(activeVal / 180) * 100}%`,
                   }}
                 />
               )}
@@ -758,17 +927,14 @@ export function AbstractionCanvas({
                 <div
                   className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
                   style={{
-                    left: `${((question.targetAngleDeg ?? question.idealNotanThreshold ?? 50) / (isGesture ? 180 : 100)) * 100}%`,
+                    left: `${((question.targetAngleDeg ?? 0) / 180) * 100}%`,
                   }}
                 />
               )}
             </div>
           </div>
 
-          <span className="font-bold font-mono text-slate-400 text-xs">
-            {isGesture ? 180 : 100}
-            {unit}
-          </span>
+          <span className="font-bold font-mono text-slate-400 text-xs">180{unit}</span>
         </div>
 
         {showAnswer && (
@@ -776,7 +942,7 @@ export function AbstractionCanvas({
             <span className="text-slate-500">
               绝对真理值:{' '}
               <span className="font-bold text-slate-800 font-mono">
-                {isGesture ? question.targetAngleDeg : question.idealNotanThreshold}
+                {question.targetAngleDeg}
                 {unit}
               </span>
             </span>
@@ -792,19 +958,6 @@ export function AbstractionCanvas({
           </div>
         )}
       </div>
-
-      {!showAnswer && !isGesture && (
-        <button
-          type="button"
-          onClick={() => {
-            if (!disabled && !showAnswer) onAnswer(activeVal);
-          }}
-          disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
-        >
-          确认提交 (Space)
-        </button>
-      )}
     </div>
   );
 }
