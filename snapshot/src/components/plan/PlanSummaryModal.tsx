@@ -93,19 +93,17 @@ export function PlanSummaryModal({
 
         {/* 分阶段明细成果 */}
         <div className="space-y-2.5">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">阶段明细成绩</div>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            阶段明细成绩
+          </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
               const stageHits = stage.history.filter((h) => h.isHit).length;
               const stageAcc =
-                stage.history.length > 0
-                  ? Math.round((stageHits / stage.history.length) * 100)
-                  : 0;
+                stage.history.length > 0 ? Math.round((stageHits / stage.history.length) * 100) : 0;
               const startLvl = stage.history.length > 0 ? stage.history[0].level : 5;
               const endLvl =
-                stage.history.length > 0
-                  ? stage.history[stage.history.length - 1].level
-                  : startLvl;
+                stage.history.length > 0 ? stage.history[stage.history.length - 1].level : startLvl;
               const Icon = stage.card.icon;
 
               return (

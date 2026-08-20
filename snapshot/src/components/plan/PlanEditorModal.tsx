@@ -174,7 +174,9 @@ export function PlanEditorModal({ initialPlan, onClose, onSave }: PlanEditorModa
                       </div>
                       <div>
                         <div className="text-xs font-bold text-slate-800">{card.title}</div>
-                        <div className="text-[10px] text-slate-400">{card.desc.slice(0, 26)}...</div>
+                        <div className="text-[10px] text-slate-400">
+                          {card.desc.slice(0, 26)}...
+                        </div>
                       </div>
                     </div>
 

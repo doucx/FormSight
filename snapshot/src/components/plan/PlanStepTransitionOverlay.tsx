@@ -62,7 +62,9 @@ export function PlanStepTransitionOverlay({
           </div>
           <div>
             <div className="text-xs font-bold text-slate-800">{nextCard.title}</div>
-            <div className="text-[11px] text-slate-400 line-clamp-1">{nextCard.instruction || nextCard.desc}</div>
+            <div className="text-[11px] text-slate-400 line-clamp-1">
+              {nextCard.instruction || nextCard.desc}
+            </div>
           </div>
         </div>
 

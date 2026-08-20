@@ -81,11 +81,7 @@ export function Home({
       </div>
 
       {/* 计划 Hero 区域 */}
-      <PlanHeroCard
-        plan={trainingPlan}
-        onStartPlan={onStartPlan}
-        onOpenEditor={onOpenPlanEditor}
-      />
+      <PlanHeroCard plan={trainingPlan} onStartPlan={onStartPlan} onOpenEditor={onOpenPlanEditor} />
 
       {/* 模块选择区：元数据动态渲染 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

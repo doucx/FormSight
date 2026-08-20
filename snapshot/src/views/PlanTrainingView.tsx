@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { PlanStepTransitionOverlay } from '../components/plan/PlanStepTransitionOverlay';
-import {
-  type PlanStageResult,
-  PlanSummaryModal,
-} from '../components/plan/PlanSummaryModal';
+import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
 import { getCardById } from '../config/cards';
 import { CARD_PLUGINS } from '../config/trainingPlugins';
 import type { TrainingPlan } from '../types/plan';
