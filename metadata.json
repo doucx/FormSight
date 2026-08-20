@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M abstractionUtils.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787217851.366464, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(abstraction): 重构视知觉概括与细化算法并转正实验性卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787217851.74759, "duration_ms": 0}}
