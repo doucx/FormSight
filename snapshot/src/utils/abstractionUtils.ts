@@ -525,7 +525,7 @@ export function generateAbstractionQuestion(
           blendNorm;
 
         const microVal =
-          (fbm2D(x * microScale, y * macroScale, 3, microNoise) - 0.5) * 2 * microAmp;
+          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
         // 仅宏观骨架场（用于生成清晰二值 Notan 题干）
         const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
