@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(plan): 修复定制日常训练流重置难度阶层、计时器累加与交互卡死问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787229253.2389367, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787229545.9275794, "duration_ms": 0}}
