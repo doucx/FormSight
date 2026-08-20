@@ -24,6 +24,7 @@ describe('Unified Database Layer Tests', () => {
       const record: UnifiedTrialRecord = {
         id: 'rec_1',
         sessionId: 'sess_1',
+        cardId: 'star_single',
         domain: 'star',
         mode: 'single',
         timestamp: Date.now(),
@@ -41,7 +42,7 @@ describe('Unified Database Layer Tests', () => {
       expect(records[0].isHit).toBe(true);
       expect((records[0] as Record<string, unknown>).angleDegree).toBe(45);
 
-      const profile = await getProfile('star', 'single');
+      const profile = await getProfile('star_single');
       expect(profile).not.toBeNull();
       expect(profile?.totalTrials).toBe(1);
       expect(profile?.totalHits).toBe(1);
