@@ -17,7 +17,12 @@ import {
   getProfilesByDomain,
   getTrainingTimeMs,
 } from './utils/db';
-import { loadTrainingPlan, saveTrainingPlan } from './utils/planStorage';
+import {
+  loadPlanStorageState,
+  loadTrainingPlan,
+  saveTrainingPlan,
+  setActivePlan,
+} from './utils/planStorage';
 import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
@@ -43,6 +48,7 @@ export function App() {
 
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
+  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
@@ -85,7 +91,9 @@ export function App() {
     setDomainTimes(timesMap);
     setCurrentDomainProfiles(pMap);
     setSettings(loadSettings());
+    const planState = loadPlanStorageState();
     setTrainingPlan(loadTrainingPlan());
+    setAllPlans(planState.plans);
     setProfilesLoaded(true);
   }, []);
 
@@ -107,6 +115,17 @@ export function App() {
     }
   }, [route, trainingPlan.name]);
 
+  const handleSelectPlanOnHome = useCallback(
+    (planId: string) => {
+      const target = setActivePlan(planId);
+      if (target) {
+        setTrainingPlan(target);
+        showToast(`已切换至【${target.name}】`, 'info');
+      }
+    },
+    [showToast],
+  );
+
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
   const activeSettingsCard = activeSettingsCardId ? getCardById(activeSettingsCardId) : null;
@@ -119,9 +138,11 @@ export function App() {
           totalTimeMs={totalTimeMs}
           domainTimes={domainTimes}
           trainingPlan={trainingPlan}
+          allPlans={allPlans}
           onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
           onStartPlan={() => navigate({ type: 'plan-train' })}
           onOpenPlanEditor={() => setIsPlanEditorOpen(true)}
+          onSelectPlan={handleSelectPlanOnHome}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
           onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
         />
@@ -211,9 +232,11 @@ export function App() {
         <PlanEditorModal
           initialPlan={trainingPlan}
           onClose={() => setIsPlanEditorOpen(false)}
+          onPlanListChanged={refreshProfiles}
           onSave={(newPlan) => {
             saveTrainingPlan(newPlan);
             setTrainingPlan(newPlan);
+            refreshProfiles();
             showToast('训练计划已成功更新', 'success');
           }}
         />

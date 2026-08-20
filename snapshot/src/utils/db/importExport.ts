@@ -1,5 +1,10 @@
 import { getCardById } from '../../config/cards';
-import { loadTrainingPlan, saveTrainingPlan } from '../planStorage';
+import {
+  loadPlanStorageState,
+  loadTrainingPlan,
+  savePlanStorageState,
+  saveTrainingPlan,
+} from '../planStorage';
 import { loadSettings, saveSettings } from '../settings';
 import { DB_VERSION, type TrainingDomain, getDB } from './schema';
 
@@ -10,6 +15,7 @@ export async function exportAllData(): Promise<string> {
   const profiles = await db.getAll('user_profiles');
   const settings = loadSettings();
   const trainingPlan = loadTrainingPlan();
+  const planStorageState = loadPlanStorageState();
 
   const exportObject = {
     appName: 'FormSight',
@@ -20,6 +26,7 @@ export async function exportAllData(): Promise<string> {
     profiles,
     settings,
     trainingPlan,
+    planStorageState,
   };
 
   return JSON.stringify(exportObject, null, 2);
@@ -61,7 +68,9 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       saveSettings(data.settings);
     }
 
-    if (data.trainingPlan) {
+    if (data.planStorageState) {
+      savePlanStorageState(data.planStorageState);
+    } else if (data.trainingPlan) {
       saveTrainingPlan(data.trainingPlan);
     }
 

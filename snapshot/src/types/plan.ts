@@ -7,7 +7,10 @@ export interface PlanItem {
 export interface TrainingPlan {
   id: string;
   name: string;
+  description?: string;
   items: PlanItem[];
+  isFavorite?: boolean;
+  isBuiltin?: boolean;
   updatedAt: number;
 }
 
@@ -17,4 +20,9 @@ export interface PlanTemplate {
   description: string;
   badge?: string;
   items: Omit<PlanItem, 'id'>[];
+}
+
+export interface PlanStorageState {
+  activePlanId: string;
+  plans: TrainingPlan[];
 }
