@@ -1,4 +1,5 @@
 import type { TrialRecord } from '../../types';
+import { setupHiDpiCanvas } from './hidpi';
 
 export function renderHeatmapCanvas(
   canvas: HTMLCanvasElement,
@@ -7,11 +8,11 @@ export function renderHeatmapCanvas(
   avgDy: number,
   totalCount: number,
 ) {
-  const ctx = canvas.getContext('2d');
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const cx = width / 2;
   const cy = height / 2;
   const scale = 5;

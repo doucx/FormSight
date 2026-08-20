@@ -1,12 +1,13 @@
 import { hsvToHex } from '../colorUtils';
 import type { SectorStat } from './drawCompass';
+import { setupHiDpiCanvas } from './hidpi';
 
 export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const ctx = canvas.getContext('2d');
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
-  const width = canvas.width;
-  const height = canvas.height;
   const cx = width / 2;
   const cy = height / 2;
   const outerRadius = Math.min(width, height) / 2 - 40;

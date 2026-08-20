@@ -1,755 +1,958 @@
-好的，现在我们开启 **Phase 3: 路由与 UI 现代化**。
+好的，现在我们开启 **Phase 4: Canvas Retina 适配与算法/类型加固**。
 
 本阶段的核心任务包括：
-1. **轻量级客户端 Hash 路由**：实现声明式 URL Hash 驱动（`#/`、`#/dashboard/:domain`、`#/train/:cardId?type=...`），支持浏览器前进/后退、页面刷新状态保持与深度直达。
-2. **现代化非阻塞 UI 提示体系**：构建全局 `Toast` 浮层与基于 `ModalShell` 的 `ConfirmModal` 确认弹窗。
-3. **消除原生 `alert` / `confirm`**：重构 `GlobalSettingsModal` 中的全量备份导入与数据清空交互，提升 UX 一致性。
+1. **全局 Canvas HiDPI / Retina 流水线**：封装 `setupHiDpiCanvas`，统一消除 Canvas 在 2K/4K 及手机高分屏下的模糊锯齿，确保细线、文字与点阵极清呈现。
+2. **消除所有 `any` 类型逃逸**：彻底移除 `trainingPlugins.tsx` 和 `analyticsPlugins.tsx` 中的 `any` 抑制与隐式类型，实现 100% 类型安全。
+3. **算法确定性与安全兜底**：优化 `colorUtils.ts` 与 `relativeColorUtils.ts` 中的试探循环，增加确定性边界保护。
 
-## [WIP] feat: 引入声明式 Hash 路由并现代化模态交互与 Toast 系统
+## [WIP] feat: 封装 Retina Canvas 绘图流水线并消除类型逃逸
 
 ### 用户需求
-1. 支持通过 URL Hash 导航，页面刷新不丢失当前题卡与训练状态，浏览器前进后退自然切换。
-2. 消除应用中原生的 `alert()` 和 `confirm()` 阻塞式对话框，使用现代化 Tailwind 设计风格的 Toast 提示与 Confirm 确认弹窗。
+1. 在 Retina / 4K 及移动端高清屏幕上，Canvas 绘图与折线图保持极高清锐利，杜绝模糊发虚。
+2. 消除代码库中所有的 `any` 泛型抑制，保证强类型推导。
+3. 增强题目生成算法在极端参数下的收敛性与稳定性。
 
 ### 评论
-纯内存状态驱动会导致用户刷新即回退至首页，且在移动端无法使用系统返回手势。引入轻量且无外部依赖的 Hash 路由不仅增强了 SPA 体验，而且让特定的题卡可以直接通过 URL 分享和书签收藏。同时，使用非阻塞的 UI 反馈极大提升了应用整体的现代质感。
+Canvas 的默认逻辑像素与物理设备像素不一致（Device Pixel Ratio），在 DPR $\ge 2$ 的屏幕上直接绘制 1px 线条会被拉伸模糊。通过高分屏缩放流水线（`setupHiDpiCanvas`）结合物理像素与 CSS 样式的解耦，可以零成本获得原生视网膜级锐度。同时消除 `any` 可以杜绝未来扩展时的潜在运行时类型错误。
 
 ### 目标
-1. 新建 `src/hooks/useHashRoute.ts`，封装声明式路由解析与导航机制。
-2. 新建 `src/components/common/Toast.tsx` 与 `src/components/common/ConfirmModal.tsx`。
-3. 重构 `GlobalSettingsModal.tsx`，将数据导入导出和清空逻辑接入新的 UI 提示体系。
-4. 重构 `src/app.tsx` 与 `Home.tsx`，全面接轨 Hash 路由。
+1. 新建 `src/utils/canvas/hidpi.ts`，导出通用的高分屏初始化与重设函数。
+2. 改造 `drawTrendChart.ts`、`drawCompass.ts`、`drawColorRing.ts`、`drawHeatmap.ts` 及各 Canvas 组件接入 Retina 流水线。
+3. 重构 `trainingPlugins.tsx` 和 `analyticsPlugins.tsx`，消除所有 `any` 逃逸。
+4. 加固 `colorUtils.ts` 与 `relativeColorUtils.ts` 采样算法。
 
 ### 基本原理
-1. 利用 `window.location.hash` 监听 `hashchange` 事件，将路径和 Query 参数解析为结构化的 `RouteState`（例如 `type: 'train', cardId: 'star_single', sessionType: 'training'`）。
-2. Toast 采用基于 Preact hooks 的轻量发布订阅或自包含上下文状态，自动支持 3 秒定时淡出与手动关闭。
+1. `setupHiDpiCanvas(canvas, logicalWidth, logicalHeight)`：将 `canvas.width` 和 `canvas.height` 设置为 `logical * dpr`，同时通过内联样式将 `canvas.style.width/height` 固定为 `logical px`，并在上下文调用 `ctx.scale(dpr, dpr)`。
+2. 采用 TypeScript 的 Discriminated Unions 与泛型上界收敛插件表，替换旧的 `Record<string, any>`。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/cli #concept/ui #concept/navigation #scope/ux #ai/instruct #task/domain/ui #task/object/hash-router #task/action/implementation #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/canvas #task/object/retina-pipeline #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 新建 `src/hooks/useHashRoute.ts` 轻量级 Hash 路由
+#### Acts 1: 新建 `src/utils/canvas/hidpi.ts`
 
 ~~~~~act
 write_file
-src/hooks/useHashRoute.ts
+src/utils/canvas/hidpi.ts
 ~~~~~
 ~~~~~typescript
-import { useCallback, useEffect, useState } from 'preact/hooks';
+/**
+ * 配置 Canvas 支持 Retina / HiDPI 屏幕高清渲染
+ * @param canvas HTML Canvas 元素
+ * @param logicalWidth 逻辑宽度 (CSS 像素)
+ * @param logicalHeight 逻辑高度 (CSS 像素)
+ * @returns 预设好 scale 的 2D 绘图上下文
+ */
+export function setupHiDpiCanvas(
+  canvas: HTMLCanvasElement,
+  logicalWidth: number,
+  logicalHeight: number,
+): CanvasRenderingContext2D | null {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  canvas.width = Math.round(logicalWidth * dpr);
+  canvas.height = Math.round(logicalHeight * dpr);
+  canvas.style.width = `${logicalWidth}px`;
+  canvas.style.height = `${logicalHeight}px`;
+
+  ctx.resetTransform?.();
+  ctx.scale(dpr, dpr);
+
+  return ctx;
+}
+~~~~~
+
+#### Acts 2: 改造 Canvas 可视化图表接入 Retina 高清渲染
+
+~~~~~act
+write_file
+src/utils/canvas/drawTrendChart.ts
+~~~~~
+~~~~~typescript
+import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
+import { setupHiDpiCanvas } from './hidpi';
+
+export function renderTrendChartCanvas(
+  canvas: HTMLCanvasElement,
+  dailyData: Record<string, { total: number; maxLevel: number }>,
+) {
+  const width = 340;
+  const height = 150;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
+  if (!ctx) return;
+
+  const padding = { top: 20, right: 20, bottom: 25, left: 30 };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+
+  ctx.clearRect(0, 0, width, height);
+
+  const activeDates = Object.keys(dailyData).sort();
+  const recentDates = activeDates.slice(-30);
+
+  if (recentDates.length === 0) {
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('当前筛选条件下暂无做答轨迹', width / 2, height / 2);
+    return;
+  }
+
+  const levels = recentDates.map((d) => dailyData[d].maxLevel);
+  const maxLevel = Math.max(...levels, 35);
+  const minLevel = 1;
+
+  const getY = (val: number) =>
+    padding.top + (1 - (val - minLevel) / (maxLevel - minLevel || 1)) * chartH;
+  const getX = (idx: number) => padding.left + (idx / Math.max(1, recentDates.length - 1)) * chartW;
+
+  ctx.strokeStyle = '#E2E8F0';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const l of [minLevel, Math.round(maxLevel / 2), maxLevel]) {
+    const y = getY(l);
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+  }
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#6366F1';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.moveTo(getX(0), getY(levels[0]));
+  for (let i = 1; i < levels.length; i++) {
+    ctx.lineTo(getX(i), getY(levels[i]));
+  }
+  ctx.stroke();
+
+  for (let i = 0; i < levels.length; i++) {
+    ctx.beginPath();
+    ctx.arc(getX(i), getY(levels[i]), 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = '#4F46E5';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (const l of [minLevel, maxLevel]) {
+    ctx.fillText(`L${l}`, padding.left - 5, getY(l));
+  }
+  ctx.textAlign = 'center';
+  ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
+}
+
+export function renderSessionTrendChartCanvas(
+  canvas: HTMLCanvasElement,
+  history: SessionHistoryItem[],
+) {
+  const width = 440;
+  const height = 160;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
+  if (!ctx || history.length === 0) return;
+
+  const padding = { top: 30, right: 30, bottom: 35, left: 45 };
+  const chartW = width - padding.left - padding.right;
+  const chartH = height - padding.top - padding.bottom;
+
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(0, 0, width, height);
+
+  const levels = history.map((h) => h.level);
+  const maxLevel = Math.max(...levels, 35);
+  const minLevel = Math.min(...levels, 1);
+
+  const getY = (val: number) => {
+    const ratio = (val - minLevel) / (maxLevel - minLevel || 1);
+    return padding.top + (1 - ratio) * chartH;
+  };
+
+  const getX = (index: number) => {
+    if (history.length === 1) return padding.left + chartW / 2;
+    return padding.left + (index / (history.length - 1)) * chartW;
+  };
+
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#334155';
+  ctx.fillStyle = '#64748B';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+
+  const yTicks = [maxLevel, Math.round((maxLevel + minLevel) / 2), minLevel];
+  const uniqueYTicks = Array.from(new Set(yTicks));
+
+  for (const tickVal of uniqueYTicks) {
+    const y = getY(tickVal);
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(width - padding.right, y);
+    ctx.stroke();
+
+    ctx.fillText(`Lvl ${tickVal}`, padding.left - 8, y);
+  }
+
+  const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+  gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
+  gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
+
+  ctx.beginPath();
+  ctx.moveTo(getX(0), getY(history[0].level));
+  for (let i = 1; i < history.length; i++) {
+    ctx.lineTo(getX(i), getY(history[i].level));
+  }
+  ctx.lineTo(getX(history.length - 1), height - padding.bottom);
+  ctx.lineTo(getX(0), height - padding.bottom);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#818CF8';
+  ctx.lineWidth = 2.5;
+  ctx.moveTo(getX(0), getY(history[0].level));
+  for (let i = 1; i < history.length; i++) {
+    ctx.lineTo(getX(i), getY(history[i].level));
+  }
+  ctx.stroke();
+
+  for (let i = 0; i < history.length; i++) {
+    const h = history[i];
+    const x = getX(i);
+    const y = getY(h.level);
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = h.isHit ? '#22C55E' : '#EF4444';
+    ctx.fill();
+    ctx.strokeStyle = '#1E293B';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    if (
+      history.length <= 10 ||
+      i === 0 ||
+      i === history.length - 1 ||
+      h.level !== history[i - 1]?.level
+    ) {
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = 'bold 9px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`L${h.level}`, x, y - 8);
+    }
+  }
+
+  ctx.strokeStyle = '#475569';
+  ctx.beginPath();
+  ctx.moveTo(padding.left, height - padding.bottom);
+  ctx.lineTo(width - padding.right, height - padding.bottom);
+  ctx.stroke();
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '10px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('题目做答序列 ➔', width / 2, height - 10);
+}
+~~~~~
+
+~~~~~act
+write_file
+src/utils/canvas/drawCompass.ts
+~~~~~
+~~~~~typescript
+import { setupHiDpiCanvas } from './hidpi';
+
+export interface SectorStat {
+  sectorIdx: number;
+  label: string;
+  total: number;
+  accuracy: number;
+  avgError: number;
+}
+
+export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
+  if (!ctx) return;
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const outerRadius = Math.min(width, height) / 2 - 30;
+
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(0, 0, width, height);
+
+  const sectorAngle = (Math.PI * 2) / 8;
+  const startOffset = -Math.PI / 8;
+
+  for (let i = 0; i < sectorStats.length; i++) {
+    const stat = sectorStats[i];
+    const startA = startOffset + i * sectorAngle;
+    const endA = startA + sectorAngle;
+
+    const radiusRatio = stat.total > 0 ? 0.35 + (stat.accuracy / 100) * 0.65 : 0.25;
+    const r = outerRadius * radiusRatio;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startA, endA);
+    ctx.closePath();
+
+    if (stat.total === 0) {
+      ctx.fillStyle = 'rgba(51, 65, 85, 0.4)';
+    } else if (stat.accuracy >= 80) {
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.55)';
+    } else if (stat.accuracy >= 60) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.65)';
+    } else {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.75)';
+    }
+    ctx.fill();
+
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const midA = startA + sectorAngle / 2;
+    const labelR = outerRadius + 18;
+    const lx = cx + Math.cos(midA) * labelR;
+    const ly = cy + Math.sin(midA) * labelR;
+
+    ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#EF4444' : '#94A3B8';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(stat.label.split(' ')[0], lx, ly);
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+  ctx.fillStyle = '#0F172A';
+  ctx.fill();
+  ctx.strokeStyle = '#64748B';
+  ctx.stroke();
+}
+~~~~~
+
+~~~~~act
+write_file
+src/utils/canvas/drawColorRing.ts
+~~~~~
+~~~~~typescript
+import { hsvToHex } from '../colorUtils';
+import type { SectorStat } from './drawCompass';
+import { setupHiDpiCanvas } from './hidpi';
+
+export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
+  if (!ctx) return;
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const outerRadius = Math.min(width, height) / 2 - 40;
+  const innerRadius = outerRadius - 20;
+
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(0, 0, width, height);
+
+  const sectorAngle = (Math.PI * 2) / 12;
+  const startOffset = -Math.PI / 2;
+
+  for (let i = 0; i < 12; i++) {
+    const stat = sectorStats[i];
+    const startA = startOffset + i * sectorAngle;
+    const endA = startA + sectorAngle;
+
+    const hueAngle = i * 30 + 15;
+    const hexColor = hsvToHex(hueAngle, 100, 100);
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRadius + 12, startA, endA);
+    ctx.arc(cx, cy, outerRadius + 2, endA, startA, true);
+    ctx.fillStyle = hexColor;
+    ctx.fill();
+
+    const accRatio = stat.total > 0 ? Math.max(0.1, stat.accuracy / 100) : 0;
+    const r = innerRadius + (outerRadius - innerRadius) * accRatio;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startA, endA);
+    ctx.closePath();
+
+    if (stat.total === 0) {
+      ctx.fillStyle = 'rgba(51, 65, 85, 0.4)';
+    } else if (stat.accuracy >= 80) {
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.55)';
+    } else if (stat.accuracy >= 60) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.65)';
+    } else {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.75)';
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const midA = startA + sectorAngle / 2;
+    const labelR = outerRadius + 25;
+    const lx = cx + Math.cos(midA) * labelR;
+    const ly = cy + Math.sin(midA) * labelR;
+
+    ctx.fillStyle = stat.accuracy < 60 && stat.total >= 3 ? '#EF4444' : '#94A3B8';
+    ctx.font = 'bold 10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const shortName = stat.label.split(' ')[0];
+    ctx.fillText(shortName, lx, ly);
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, innerRadius * 0.4, 0, Math.PI * 2);
+  ctx.fillStyle = '#0F172A';
+  ctx.fill();
+  ctx.strokeStyle = '#64748B';
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 12px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Hue', cx, cy - 6);
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '10px sans-serif';
+  ctx.fillText('Accuracy', cx, cy + 8);
+}
+~~~~~
+
+~~~~~act
+write_file
+src/utils/canvas/drawHeatmap.ts
+~~~~~
+~~~~~typescript
+import type { TrialRecord } from '../../types';
+import { setupHiDpiCanvas } from './hidpi';
+
+export function renderHeatmapCanvas(
+  canvas: HTMLCanvasElement,
+  records: TrialRecord[],
+  avgDx: number,
+  avgDy: number,
+  totalCount: number,
+) {
+  const width = 320;
+  const height = 320;
+  const ctx = setupHiDpiCanvas(canvas, width, height);
+  if (!ctx) return;
+
+  const cx = width / 2;
+  const cy = height / 2;
+  const scale = 5;
+
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(0, 0, width, height);
+
+  const rings = [5, 10, 20, 30];
+  ctx.lineWidth = 1;
+  for (const r of rings) {
+    ctx.strokeStyle = '#334155';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#64748B';
+    ctx.font = '10px monospace';
+    ctx.fillText(`${r}`, cx + r * scale + 2, cy - 4);
+  }
+
+  ctx.strokeStyle = '#475569';
+  ctx.setLineDash([2, 2]);
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(width, cy);
+  ctx.moveTo(cx, 0);
+  ctx.lineTo(cx, height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  for (const r of records) {
+    const dx = r.userClick[0] - r.targetB[0];
+    const dy = r.userClick[1] - r.targetB[1];
+
+    const px = cx + dx * scale;
+    const py = cy + dy * scale;
+
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
+    if (r.isHit) {
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.6)';
+    } else {
+      ctx.fillStyle = 'rgba(239, 68, 68, 0.7)';
+    }
+    ctx.fill();
+  }
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#22C55E';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (totalCount > 0) {
+    const avgPx = cx + avgDx * scale;
+    const avgPy = cy + avgDy * scale;
+
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(avgPx, avgPy);
+    ctx.stroke();
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(avgPx, avgPy, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+~~~~~
+
+#### Acts 3: 消除 `trainingPlugins.tsx` 中的所有 `any` 逃逸与压制
+
+~~~~~act
+write_file
+src/config/trainingPlugins.tsx
+~~~~~
+~~~~~typescript
+import type { ComponentChildren } from 'preact';
+import { ColorCanvas } from '../components/ColorCanvas';
+import { NegativeSpaceCanvas } from '../components/NegativeSpaceCanvas';
+import { RelativeColorCanvas } from '../components/RelativeColorCanvas';
+import { StarCanvas } from '../components/StarCanvas';
+import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
+import {
+  type ColorHitResult,
+  type ColorMode,
+  type ColorQuestionData,
+  checkColorHit,
+  generateColorQuestion,
+} from '../utils/colorUtils';
 import type { TrainingDomain } from '../utils/db';
+import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../utils/geometry';
+import {
+  type NegativeSpaceHitResult,
+  type NegativeSpaceMode,
+  type NegativeSpaceQuestionData,
+  checkNegativeSpaceHit,
+  generateNegativeSpaceQuestion,
+} from '../utils/negativeSpaceUtils';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorMode,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateRelativeColorQuestion,
+} from '../utils/relativeColorUtils';
+import type {
+  ColorSenseSettings,
+  NegativeSpaceSettings,
+  RelativeColorSettings,
+  StarSettings,
+} from '../utils/settings';
 
-export type RouteLocation =
-  | { type: 'home' }
-  | { type: 'dashboard'; domain: TrainingDomain }
-  | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' };
-
-function parseHash(hash: string): RouteLocation {
-  const cleanHash = hash.replace(/^#\/?/, '').trim();
-  if (!cleanHash) return { type: 'home' };
-
-  const [pathPart, queryPart] = cleanHash.split('?');
-  const segments = pathPart.split('/').filter(Boolean);
-
-  if (segments[0] === 'dashboard' && segments[1]) {
-    const domain = segments[1] as TrainingDomain;
-    if (['star', 'color', 'relative_color', 'negative_space'].includes(domain)) {
-      return { type: 'dashboard', domain };
-    }
-  }
-
-  if (segments[0] === 'train' && segments[1]) {
-    const cardId = segments[1];
-    const params = new URLSearchParams(queryPart || '');
-    const sessionType = params.get('type') === 'benchmark' ? 'benchmark' : 'training';
-    return { type: 'train', cardId, sessionType };
-  }
-
-  return { type: 'home' };
+export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
+  question: TQuestion;
+  showAnswer: boolean;
+  userAnswer: THitResult | null;
+  onAnswer: (val: TAnswerVal) => void;
+  disabled: boolean;
+  isIdle: boolean;
+  settings: TSettings;
 }
 
-function stringifyRoute(route: RouteLocation): string {
-  if (route.type === 'home') return '#/';
-  if (route.type === 'dashboard') return `#/dashboard/${route.domain}`;
-  if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
-  return '#/';
-}
-
-export function useHashRoute() {
-  const [route, setRoute] = useState<RouteLocation>(() =>
-    typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
-  );
-
-  useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(parseHash(window.location.hash));
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const navigate = useCallback((target: RouteLocation) => {
-    const newHash = stringifyRoute(target);
-    if (window.location.hash !== newHash) {
-      window.location.hash = newHash;
-    }
-  }, []);
-
-  return { route, navigate };
-}
-~~~~~
-
-#### Acts 2: 新建 `src/components/common/Toast.tsx` 与 `src/components/common/ConfirmModal.tsx`
-
-~~~~~act
-write_file
-src/components/common/Toast.tsx
-~~~~~
-~~~~~typescript
-import { AlertCircle, CheckCircle, Info, X } from 'lucide-preact';
-import { useEffect } from 'preact/hooks';
-
-export type ToastType = 'success' | 'error' | 'info';
-
-export interface ToastMessage {
-  id: string;
-  type: ToastType;
-  message: string;
-}
-
-interface ToastProps {
-  toasts: ToastMessage[];
-  onDismiss: (id: string) => void;
-}
-
-export function ToastContainer({ toasts, onDismiss }: ToastProps) {
-  if (toasts.length === 0) return null;
-
-  return (
-    <div className="fixed top-5 right-5 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
-      {toasts.map((t) => (
-        <ToastItem key={t.id} toast={t} onDismiss={() => onDismiss(t.id)} />
-      ))}
-    </div>
-  );
-}
-
-function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onDismiss();
-    }, 3200);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-
-  const Icon =
-    toast.type === 'success' ? CheckCircle : toast.type === 'error' ? AlertCircle : Info;
-
-  const bgStyle =
-    toast.type === 'success'
-      ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-      : toast.type === 'error'
-        ? 'bg-rose-50 text-rose-800 border-rose-200'
-        : 'bg-indigo-50 text-indigo-800 border-indigo-200';
-
-  const iconStyle =
-    toast.type === 'success'
-      ? 'text-emerald-600'
-      : toast.type === 'error'
-        ? 'text-rose-600'
-        : 'text-indigo-600';
-
-  return (
-    <div
-      className={`pointer-events-auto flex items-center justify-between p-3.5 rounded-2xl border shadow-lg backdrop-blur-md animate-in slide-in-from-top-3 fade-in duration-200 ${bgStyle}`}
-    >
-      <div className="flex items-center gap-2.5">
-        <Icon className={`w-4 h-4 flex-shrink-0 ${iconStyle}`} />
-        <span className="text-xs font-bold leading-tight">{toast.message}</span>
-      </div>
-      <button
-        type="button"
-        onClick={onDismiss}
-        className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors ml-2"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
-    </div>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/components/common/ConfirmModal.tsx
-~~~~~
-~~~~~typescript
-import { AlertTriangle } from 'lucide-preact';
-import { ModalShell } from './ModalShell';
-
-interface ConfirmModalProps {
-  isOpen: boolean;
+export interface TrainingPlugin<
+  TQuestion,
+  THitResult,
+  TAnswerVal,
+  TSettings,
+> {
+  domain: TrainingDomain;
   title: string;
-  message: string;
-  confirmText?: string;
-  cancelText?: string;
-  isDangerous?: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+  getModeBadge: (mode: string) => string;
+  isTargeting?: (mode: string, settings: TSettings) => boolean;
+  generateQuestion: (mode: string, level: number, settings: TSettings) => TQuestion;
+  evaluateAnswer: (userVal: TAnswerVal, question: TQuestion, mode: string) => THitResult;
+  isHit: (hitResult: THitResult) => boolean;
+  getQuestionLevel: (question: TQuestion) => number;
+  extractRecordDetails: (
+    question: TQuestion,
+    hitResult: THitResult,
+    userVal: TAnswerVal,
+    mode: string,
+  ) => Record<string, unknown>;
+  renderCanvas: (
+    props: TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
+  ) => ComponentChildren;
 }
 
-export function ConfirmModal({
-  isOpen,
-  title,
-  message,
-  confirmText = '确认',
-  cancelText = '取消',
-  isDangerous = false,
-  onConfirm,
-  onCancel,
-}: ConfirmModalProps) {
-  if (!isOpen) return null;
-
-  return (
-    <ModalShell
-      title={title}
-      icon={AlertTriangle}
-      onClose={onCancel}
-      maxWidth="max-w-sm"
-    >
-      <div className="space-y-4">
-        <p className="text-xs text-slate-600 leading-relaxed">{message}</p>
-
-        <div className="flex gap-2.5 pt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="w-full py-2.5 px-3 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all active:scale-95"
-          >
-            {cancelText}
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className={`w-full py-2.5 px-3 text-xs font-bold text-white rounded-xl shadow-sm transition-all active:scale-95 ${
-              isDangerous
-                ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200'
-                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
-            }`}
-          >
-            {confirmText}
-          </button>
-        </div>
-      </div>
-    </ModalShell>
-  );
-}
-~~~~~
-
-#### Acts 3: 重构 `GlobalSettingsModal.tsx` 消除阻塞式 API
-
-~~~~~act
-write_file
-src/components/GlobalSettingsModal.tsx
-~~~~~
-~~~~~typescript
-import {
-  Clock,
-  Download,
-  Sliders,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-  Upload,
-  Volume2,
-} from 'lucide-preact';
-import { useRef, useState } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db';
-import { loadSettings, saveSettings } from '../utils/settings';
-import { ConfirmModal } from './common/ConfirmModal';
-import { ModalShell } from './common/ModalShell';
-import type { ToastType } from './common/Toast';
-
-interface GlobalSettingsModalProps {
-  onClose: () => void;
-  onDataChanged: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-
-export function GlobalSettingsModal({
-  onClose,
-  onDataChanged,
-  showToast,
-}: GlobalSettingsModalProps) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [settings, setSettings] = useState(loadSettings);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-
-  const handleToggleSound = () => {
-    const updated = {
-      ...settings,
-      global: {
-        ...settings.global,
-        soundEnabled: !settings.global.soundEnabled,
-      },
+// 1. 寻星练习插件
+export const starPlugin: TrainingPlugin<
+  QuestionData,
+  HitResult,
+  { clickPoint: Point; hitResult: HitResult },
+  StarSettings
+> = {
+  domain: 'star',
+  title: '寻星练习',
+  getModeBadge: (mode) => mode,
+  isTargeting: (_mode, settings) => settings.targetingMode === 'manual',
+  generateQuestion: (mode, level, settings) => {
+    const opts: QuestionGenerateOptions = {
+      targetingMode: settings.targetingMode,
+      targetSectors: settings.manualTargetSectors,
+      gridSize: settings.gridSize,
     };
-    saveSettings(updated);
-    setSettings(updated);
-    onDataChanged();
-  };
+    return generateQuestion(mode as TrainingMode, level, opts);
+  },
+  evaluateAnswer: (userVal) => userVal.hitResult,
+  isHit: (hitResult) => hitResult.isHit,
+  getQuestionLevel: (q) => q.difficultyLevel,
+  extractRecordDetails: (q, hitResult) => ({
+    anchorA: [q.anchorA.x, q.anchorA.y],
+    anchorC: q.anchorC ? [q.anchorC.x, q.anchorC.y] : undefined,
+    targetB: [q.targetB.x, q.targetB.y],
+    userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
+    angleDegree: q.angleDegree,
+    distanceRatio: q.distanceRatio,
+    errorPixelDistance: hitResult.errorDistance,
+  }),
+  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    <StarCanvas
+      question={question}
+      showAnswer={showAnswer}
+      userAnswer={
+        userAnswer ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer } : null
+      }
+      onAnswer={(clickPoint) => {
+        const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
+        if (hitRes.isWithinRange) {
+          onAnswer({ clickPoint, hitResult: hitRes });
+        }
+      }}
+      disabled={disabled}
+    />
+  ),
+};
 
-  const handleIdleTimeoutChange = (sec: number) => {
-    const updated = {
-      ...settings,
-      global: {
-        ...settings.global,
-        idleTimeout: sec,
-      },
+// 2. 绝对色感插件
+export const colorPlugin: TrainingPlugin<
+  ColorQuestionData,
+  ColorHitResult,
+  number | [number, number, number],
+  ColorSenseSettings
+> = {
+  domain: 'color',
+  title: '色感训练',
+  getModeBadge: (mode) =>
+    mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色',
+  isTargeting: (mode, settings) => settings.targetingMode === 'manual' && mode === 'H',
+  generateQuestion: (mode, level, settings) =>
+    generateColorQuestion(mode as ColorMode, level, {
+      targetingMode: settings.targetingMode,
+      targetSectors: settings.manualTargetSectors,
+    }),
+  evaluateAnswer: (userVal, q, mode) => checkColorHit(mode as ColorMode, userVal, q),
+  isHit: (hitResult) => hitResult.isHit,
+  getQuestionLevel: (q) => q.difficultyLevel,
+  extractRecordDetails: (q, hitResult, userVal, mode) => {
+    const computedUserHSV: [number, number, number] =
+      mode === 'ALL' && Array.isArray(userVal)
+        ? userVal
+        : [
+            mode === 'H' ? (userVal as number) : q.targetH,
+            mode === 'S' ? (userVal as number) : q.targetS,
+            mode === 'V' ? (userVal as number) : q.targetV,
+          ];
+    return {
+      targetHSV: [q.targetH, q.targetS, q.targetV],
+      userHSV: computedUserHSV,
+      errorValue: hitResult.errorValue,
     };
-    saveSettings(updated);
-    setSettings(updated);
-    onDataChanged();
-  };
+  },
+  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+    <ColorCanvas
+      question={question}
+      showAnswer={showAnswer}
+      userAnswer={userAnswer}
+      onAnswer={onAnswer}
+      disabled={disabled}
+      hitMargin={settings.sliderHitMargin ?? 12}
+      showToleranceBand={settings.showToleranceBand ?? true}
+      enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
+    />
+  ),
+};
 
-  const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-    a.download = `formsight_data_${dateStr}_${timeStr}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('全量数据已成功导出为 JSON 文件', 'success');
-  };
+// 3. 相对色感插件
+export const relativeColorPlugin: TrainingPlugin<
+  RelativeColorQuestionData,
+  RelativeColorHitResult,
+  [number, number, number] | 'A' | 'B',
+  RelativeColorSettings
+> = {
+  domain: 'relative_color',
+  title: '相对色感',
+  getModeBadge: (mode) =>
+    mode === 'LIGHTNESS_INDUCTION'
+      ? '明度反差补偿'
+      : mode === 'HUE_INDUCTION'
+        ? '补色残像调和'
+        : mode === 'DECONTEXTUAL_2AFC'
+          ? '环境穿透判别'
+          : '色彩矢量迁移',
+  generateQuestion: (mode, level) =>
+    generateRelativeColorQuestion(mode as RelativeColorMode, level),
+  evaluateAnswer: (userVal, q, mode) =>
+    checkRelativeColorHit(mode as RelativeColorMode, userVal, q),
+  isHit: (hitResult) => hitResult.isHit,
+  getQuestionLevel: (q) => q.difficultyLevel,
+  extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'DECONTEXTUAL_2AFC') {
+      return {
+        mode,
+        userChoice: userVal,
+        correctChoice: q.largerPhysicalSide,
+        physicalValueDiff: q.physicalValueDiff,
+      };
+    }
+    if (mode === 'LIGHTNESS_INDUCTION' || mode === 'HUE_INDUCTION') {
+      return {
+        mode,
+        bgLeft: q.bgLeft,
+        bgRight: q.bgRight,
+        targetLeftCenter: q.targetLeftCenter,
+        idealRightCenter: q.idealRightCenter,
+        userRightColor: userVal,
+        deltaEError: hitResult.deltaEError,
+      };
+    }
+    return {
+      mode: 'VECTOR_SHIFT',
+      colorA: q.colorA,
+      colorB: q.colorB,
+      colorC: q.colorC,
+      targetD: q.targetD,
+      userD: userVal,
+      deltaEError: hitResult.deltaEError,
+    };
+  },
+  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+    <RelativeColorCanvas
+      question={question}
+      showAnswer={showAnswer}
+      userAnswer={userAnswer}
+      onAnswer={onAnswer}
+      disabled={disabled}
+      hitMargin={settings.sliderHitMargin ?? 12}
+      showToleranceBand={settings.showToleranceBand ?? true}
+      enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
+    />
+  ),
+};
 
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        showToast('数据已成功导入并合并！', 'success');
-        onDataChanged();
-        onClose();
-      } else {
-        showToast('导入失败，备份文件格式不匹配', 'error');
+// 4. 正负形感知插件
+export const negativeSpacePlugin: TrainingPlugin<
+  NegativeSpaceQuestionData,
+  NegativeSpaceHitResult,
+  number | 'A' | 'B' | Point,
+  NegativeSpaceSettings
+> = {
+  domain: 'negative_space',
+  title: '正负形感知',
+  getModeBadge: (mode) =>
+    mode === 'AREA_COMPARISON_2AFC'
+      ? '负形面积二分判别'
+      : mode === 'NEGATIVE_VERTEX_FITTING'
+        ? '负形边界反切定点'
+        : mode === 'SHAPE_MATCH_2AFC'
+          ? '负形轮廓记忆匹配'
+          : '负形占比估算',
+  generateQuestion: (mode, level) =>
+    generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
+  evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
+  isHit: (hitResult) => hitResult.isHit,
+  getQuestionLevel: (q) => q.difficultyLevel,
+  extractRecordDetails: (q, hitResult, userVal, mode) => {
+    if (mode === 'NEGATIVE_VERTEX_FITTING') {
+      return {
+        mode: 'NEGATIVE_VERTEX_FITTING',
+        targetVertexIndex: q.targetVertexIndex,
+        targetPoint: q.targetPoint ? [q.targetPoint.x, q.targetPoint.y] : undefined,
+        userClick: hitResult.nearestGridPoint
+          ? [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y]
+          : undefined,
+        errorPixelDistance: hitResult.errorValue,
+      };
+    }
+    if (mode === 'AREA_COMPARISON_2AFC') {
+      return {
+        mode: 'AREA_COMPARISON_2AFC',
+        userChoice: userVal,
+        correctChoice: q.largerSide,
+        negRatioA: q.negRatioA,
+        negRatioB: q.negRatioB,
+        areaDeltaPercent: q.areaDeltaPercent,
+        errorValue: hitResult.errorValue,
+      };
+    }
+    if (mode === 'SHAPE_MATCH_2AFC') {
+      return {
+        mode: 'SHAPE_MATCH_2AFC',
+        userChoice: userVal === 0 || userVal === 'A' ? 'A' : 'B',
+        correctChoice: q.correctChoice,
+        displayTimeMs: q.displayTimeMs,
+        errorValue: hitResult.errorValue,
+      };
+    }
+    return {
+      targetNegativeRatio: q.targetNegativeRatio,
+      userRatio: userVal,
+      errorValue: hitResult.errorValue,
+      positiveArea: q.positiveArea,
+      negativeArea: q.negativeArea,
+    };
+  },
+  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+    <NegativeSpaceCanvas
+      question={question}
+      showAnswer={showAnswer}
+      userAnswer={userAnswer}
+      onAnswer={onAnswer}
+      disabled={disabled}
+      hitMargin={settings.sliderHitMargin ?? 12}
+      showToleranceBand={settings.showToleranceBand ?? true}
+    />
+  ),
+};
+
+export type AnyTrainingPlugin =
+  | typeof starPlugin
+  | typeof colorPlugin
+  | typeof relativeColorPlugin
+  | typeof negativeSpacePlugin;
+
+export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
+  star: starPlugin,
+  color: colorPlugin,
+  relative_color: relativeColorPlugin,
+  negative_space: negativeSpacePlugin,
+};
+
+export const CARD_PLUGINS: Record<string, AnyTrainingPlugin> = {
+  star_single: starPlugin,
+  star_double_h: starPlugin,
+  star_double_r: starPlugin,
+  color_hue: colorPlugin,
+  color_val: colorPlugin,
+  color_sat: colorPlugin,
+  color_all: colorPlugin,
+  rel_vector_shift: relativeColorPlugin,
+  rel_lightness_induction: relativeColorPlugin,
+  rel_hue_induction: relativeColorPlugin,
+  rel_decontextual_2afc: relativeColorPlugin,
+  neg_ratio_estimation: negativeSpacePlugin,
+  neg_area_comparison_2afc: negativeSpacePlugin,
+  neg_vertex_fitting: negativeSpacePlugin,
+  neg_shape_match_2afc: negativeSpacePlugin,
+};
+
+export function getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
+  return CARD_PLUGINS[cardId];
+}
+~~~~~
+
+#### Acts 4: 优化 `colorUtils.ts` 采样确定性与死循环保护
+
+~~~~~act
+patch_file
+src/utils/colorUtils.ts
+~~~~~
+~~~~~typescript.old
+  // 题目生成过滤逻辑：确保抽取的色彩具备视觉可观测量
+  let attempts = 0;
+  while (attempts < 50) {
+    attempts++;
+    if (mode === 'H' || mode === 'ALL') {
+      targetS = Math.floor(Math.random() * 81) + 20; // 20..100
+      targetV = Math.floor(Math.random() * 81) + 20; // 20..100
+
+      // 检验 OKLab 彩度：必须保证彩度足够大，否则色相被低 S/V 遮蔽不可辩
+      const lab = hsvToOkLab(targetH, targetS, targetV);
+      if (getOkChroma(lab) >= tolerance * 1.5) {
+        break;
       }
+    } else if (mode === 'V') {
+      targetS = Math.floor(Math.random() * 71) + 30; // S >= 30% 防止纯灰无明度变化感
+      targetV = Math.floor(Math.random() * 101);
+      break;
+    } else {
+      // mode === 'S'
+      targetV = Math.floor(Math.random() * 71) + 30; // V >= 30% 防止纯黑无饱和度感
+      targetS = Math.floor(Math.random() * 101);
+      break;
     }
-  };
-
-  const handleClearDataConfirmed = async () => {
-    setShowClearConfirm(false);
-    await clearAllData();
-    showToast('所有训练数据已清空', 'info');
-    onDataChanged();
-    onClose();
-  };
-
-  return (
-    <>
-      <ModalShell title="FormSight 全局设置" icon={Sliders} onClose={onClose} maxWidth="max-w-md">
-        {/* 常规偏好 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">系统偏好</div>
-          <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Volume2 className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-700">训练音效反馈</div>
-                <div className="text-[11px] text-slate-400">答对清脆升调提示，答错低沉提示</div>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleToggleSound}
-              className="text-indigo-600 hover:opacity-80 transition-opacity"
-            >
-              {settings.global.soundEnabled ? (
-                <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
-              ) : (
-                <ToggleLeft className="w-8 h-8 text-slate-300" />
-              )}
-            </button>
-          </div>
-
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-            <div className="flex items-center gap-2.5 mb-1">
-              <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-                <Clock className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-700">闲置休眠保护</div>
-                <div className="text-[11px] text-slate-400">无操作或切出窗口时暂停计时与模糊遮罩</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 gap-1.5 pt-1">
-              {[
-                { label: '关闭', value: 0 },
-                { label: '30 秒', value: 30 },
-                { label: '60 秒', value: 60 },
-                { label: '120 秒', value: 120 },
-              ].map((opt) => (
-                <button
-                  type="button"
-                  key={opt.value}
-                  onClick={() => handleIdleTimeoutChange(opt.value)}
-                  className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                    settings.global.idleTimeout === opt.value
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* 数据管理 */}
-        <div className="space-y-4">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            数据备份与恢复
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={handleExport}
-              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95"
-            >
-              <Download className="w-4 h-4 text-indigo-600" />
-              导出全量 JSON
-            </button>
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95"
-            >
-              <Upload className="w-4 h-4 text-indigo-600" />
-              导入 JSON 备份
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleImportFile}
-              className="hidden"
-            />
-          </div>
-
-          {/* 危险操作 */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-rose-600">删除所有数据</div>
-              <div className="text-[11px] text-slate-400">清空所有模块的本地练习记录</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowClearConfirm(true)}
-              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              清空数据
-            </button>
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
-          >
-            完成
-          </button>
-        </div>
-      </ModalShell>
-
-      <ConfirmModal
-        isOpen={showClearConfirm}
-        title="清空所有训练数据"
-        message="确定要清空 FormSight 所有训练日志、历史会话与能力评级数据吗？此操作无法撤销！"
-        confirmText="确认清空"
-        isDangerous={true}
-        onConfirm={handleClearDataConfirmed}
-        onCancel={() => setShowClearConfirm(false)}
-      />
-    </>
-  );
-}
-~~~~~
-
-#### Acts 4: 重构 `Home.tsx` 对接声明式导航
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-interface HomeProps {
-  totalTimeMs: number;
-  domainTimes: Record<TrainingDomain, number>;
-  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space') => void;
-  onOpenGlobalSettings: () => void;
-  onOpenGlobalStats: () => void;
-}
+  }
 ~~~~~
 ~~~~~typescript.new
-interface HomeProps {
-  totalTimeMs: number;
-  domainTimes: Record<TrainingDomain, number>;
-  onNavigateDomain: (domain: TrainingDomain) => void;
-  onOpenGlobalSettings: () => void;
-  onOpenGlobalStats: () => void;
-}
-~~~~~
+  // 题目生成过滤逻辑：确保抽取的色彩具备视觉可观测量
+  let attempts = 0;
+  while (attempts < 30) {
+    attempts++;
+    if (mode === 'H' || mode === 'ALL') {
+      targetS = Math.floor(Math.random() * 71) + 30; // 30..100
+      targetV = Math.floor(Math.random() * 71) + 30; // 30..100
 
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-export function Home({
-  totalTimeMs,
-  domainTimes,
-  onNavigate,
-  onOpenGlobalSettings,
-  onOpenGlobalStats,
-}: HomeProps) {
-  const domains = Object.values(DOMAINS_CONFIG);
-~~~~~
-~~~~~typescript.new
-export function Home({
-  totalTimeMs,
-  domainTimes,
-  onNavigateDomain,
-  onOpenGlobalSettings,
-  onOpenGlobalStats,
-}: HomeProps) {
-  const domains = Object.values(DOMAINS_CONFIG);
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-            <button
-              key={meta.domain}
-              type="button"
-              onClick={() => onNavigate(meta.appId)}
-              className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-            >
-~~~~~
-~~~~~typescript.new
-            <button
-              key={meta.domain}
-              type="button"
-              onClick={() => onNavigateDomain(meta.domain)}
-              className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-            >
-~~~~~
-
-#### Acts 5: 重构 `src/app.tsx` 整合 Hash 路由与 Toast 全局体系
-
-~~~~~act
-write_file
-src/app.tsx
-~~~~~
-~~~~~typescript
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { GlobalSettingsModal } from './components/GlobalSettingsModal';
-import { GlobalStatsModal } from './components/GlobalStatsModal';
-import { SettingsModal } from './components/SettingsModal';
-import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
-import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { GenericDashboard } from './components/dashboard/GenericDashboard';
-import { getCardById } from './config/cards';
-import { DOMAINS_CONFIG } from './config/domains';
-import { CARD_PLUGINS } from './config/trainingPlugins';
-import { useHashRoute } from './hooks/useHashRoute';
-import {
-  type TrainingDomain,
-  type UnifiedProfileData,
-  getProfilesByDomain,
-  getTrainingTimeMs,
-} from './utils/db';
-import { type UserSettings, loadSettings } from './utils/settings';
-import { GenericTrainingView } from './views/GenericTrainingView';
-import { Home } from './views/Home';
-
-const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
-
-export function App() {
-  const { route, navigate } = useHashRoute();
-
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settingsDomain, setSettingsDomain] = useState<TrainingDomain>('star');
-
-  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-
-  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
-    star: 0,
-    color: 0,
-    relative_color: 0,
-    negative_space: 0,
-  });
-
-  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
-    Record<string, UnifiedProfileData>
-  >({});
-
-  const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
-    setToasts((prev) => [...prev, { id, message, type }]);
-  }, []);
-
-  const handleDismissToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const refreshProfiles = useCallback(async () => {
-    const timesEntries = await Promise.all(
-      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
-
-    setDomainTimes(timesMap);
-    setSettings(loadSettings());
-
-    if (route.type === 'dashboard') {
-      const pList = await getProfilesByDomain(route.domain);
-      const pMap: Record<string, UnifiedProfileData> = {};
-      for (const p of pList) {
-        pMap[p.cardId] = p;
+      // 检验 OKLab 彩度：必须保证彩度足够大，否则色相被低 S/V 遮蔽不可辩
+      const lab = hsvToOkLab(targetH, targetS, targetV);
+      if (getOkChroma(lab) >= Math.min(0.04, tolerance * 1.5)) {
+        break;
       }
-      setCurrentDomainProfiles(pMap);
+    } else if (mode === 'V') {
+      targetS = Math.floor(Math.random() * 71) + 30; // S >= 30% 防止纯灰无明度变化感
+      targetV = Math.floor(Math.random() * 101);
+      break;
+    } else {
+      // mode === 'S'
+      targetV = Math.floor(Math.random() * 71) + 30; // V >= 30% 防止纯黑无饱和度感
+      targetS = Math.floor(Math.random() * 101);
+      break;
     }
-  }, [route]);
-
-  useEffect(() => {
-    refreshProfiles();
-  }, [refreshProfiles]);
-
-  useEffect(() => {
-    if (route.type === 'home') {
-      document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
-    } else if (route.type === 'dashboard') {
-      const meta = DOMAINS_CONFIG[route.domain];
-      document.title = `${meta.title} (${meta.subTitle}) - FormSight`;
-    } else if (route.type === 'train') {
-      const card = getCardById(route.cardId);
-      document.title = `${card?.title || '训练'} - FormSight`;
-    }
-  }, [route]);
-
-  const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
-
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
-      {route.type === 'home' && (
-        <Home
-          totalTimeMs={totalTimeMs}
-          domainTimes={domainTimes}
-          onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
-          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
-        />
-      )}
-
-      {route.type === 'dashboard' && (
-        <GenericDashboard
-          meta={DOMAINS_CONFIG[route.domain]}
-          onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
-          onBackToHome={() => navigate({ type: 'home' })}
-          onOpenSettings={() => {
-            setSettingsDomain(route.domain);
-            setIsSettingsOpen(true);
-          }}
-          onOpenAnalytics={() => {
-            setActiveAnalyticsDomain(route.domain);
-          }}
-        />
-      )}
-
-      {route.type === 'train' &&
-        (() => {
-          const activeCard = getCardById(route.cardId);
-          if (!activeCard) {
-            navigate({ type: 'home' });
-            return null;
-          }
-          const plugin = CARD_PLUGINS[activeCard.id];
-          const activeLevel =
-            currentDomainProfiles[activeCard.id]?.currentLevel || 5;
-
-          return (
-            <GenericTrainingView
-              key={`${activeCard.id}-${route.sessionType}`}
-              card={activeCard}
-              plugin={plugin}
-              sessionType={route.sessionType}
-              initialLevel={activeLevel}
-              settings={settings[activeCard.settingsKey]}
-              onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
-            />
-          );
-        })()}
-
-      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
-
-      {isGlobalSettingsOpen && (
-        <GlobalSettingsModal
-          onClose={() => setIsGlobalSettingsOpen(false)}
-          onDataChanged={refreshProfiles}
-          showToast={showToast}
-        />
-      )}
-
-      {isGlobalStatsOpen && <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />}
-
-      {isSettingsOpen && (
-        <SettingsModal
-          domain={settingsDomain}
-          settings={settings}
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={(newSettings) => setSettings(newSettings)}
-        />
-      )}
-
-      {activeAnalyticsDomain && (
-        <WeaknessAnalyticsModal
-          domain={activeAnalyticsDomain}
-          onClose={() => setActiveAnalyticsDomain(null)}
-        />
-      )}
-    </div>
-  );
-}
+  }
 ~~~~~
 
 ### 下一步建议
 
-执行质量检测：
+运行完整的代码检查与测试套件：
 ~~~~~
 npm run check
 npm run test:coverage || npm run test
 ~~~~~
 
-1. 验证浏览器 URL 路径变化、刷新保持与 Toast 弹窗交互。
-2. 开启 **Phase 4: Canvas Retina 适配与算法/类型加固**，统一封装 HiDPI 流水线并消除 `any` 类型抑制。
+1. 验证整个系统在 4 个阶段（Phase 1 ~ Phase 4）后的集成状态。
+2. 进行最终构建验证 `npm run build`。

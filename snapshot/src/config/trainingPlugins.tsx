@@ -45,10 +45,10 @@ export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSetting
 }
 
 export interface TrainingPlugin<
-  TQuestion = unknown,
-  THitResult = unknown,
-  TAnswerVal = unknown,
-  TSettings = unknown,
+  TQuestion,
+  THitResult,
+  TAnswerVal,
+  TSettings,
 > {
   domain: TrainingDomain;
   title: string;
@@ -309,17 +309,20 @@ export const negativeSpacePlugin: TrainingPlugin<
   ),
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
-export const TRAINING_PLUGINS: Record<TrainingDomain, TrainingPlugin<any, any, any, any>> = {
+export type AnyTrainingPlugin =
+  | typeof starPlugin
+  | typeof colorPlugin
+  | typeof relativeColorPlugin
+  | typeof negativeSpacePlugin;
+
+export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
   star: starPlugin,
   color: colorPlugin,
   relative_color: relativeColorPlugin,
   negative_space: negativeSpacePlugin,
 };
 
-// 卡片粒度的插件调度表 (直接以 cardId 进行 O(1) 派发)
-// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
-export const CARD_PLUGINS: Record<string, TrainingPlugin<any, any, any, any>> = {
+export const CARD_PLUGINS: Record<string, AnyTrainingPlugin> = {
   star_single: starPlugin,
   star_double_h: starPlugin,
   star_double_r: starPlugin,
@@ -337,7 +340,6 @@ export const CARD_PLUGINS: Record<string, TrainingPlugin<any, any, any, any>> = 
   neg_shape_match_2afc: negativeSpacePlugin,
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Plugin map holds heterogeneous plugin instances
-export function getPluginByCardId(cardId: string): TrainingPlugin<any, any, any, any> | undefined {
+export function getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
   return CARD_PLUGINS[cardId];
 }

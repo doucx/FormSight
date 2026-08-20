@@ -126,15 +126,15 @@ export function generateColorQuestion(
 
   // 题目生成过滤逻辑：确保抽取的色彩具备视觉可观测量
   let attempts = 0;
-  while (attempts < 50) {
+  while (attempts < 30) {
     attempts++;
     if (mode === 'H' || mode === 'ALL') {
-      targetS = Math.floor(Math.random() * 81) + 20; // 20..100
-      targetV = Math.floor(Math.random() * 81) + 20; // 20..100
+      targetS = Math.floor(Math.random() * 71) + 30; // 30..100
+      targetV = Math.floor(Math.random() * 71) + 30; // 30..100
 
       // 检验 OKLab 彩度：必须保证彩度足够大，否则色相被低 S/V 遮蔽不可辩
       const lab = hsvToOkLab(targetH, targetS, targetV);
-      if (getOkChroma(lab) >= tolerance * 1.5) {
+      if (getOkChroma(lab) >= Math.min(0.04, tolerance * 1.5)) {
         break;
       }
     } else if (mode === 'V') {
