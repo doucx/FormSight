@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TypeScript 类型推导与 Biome Lint 校验错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195880.4619315, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 重构 GenericTrainingView 接口消除 any 与联合类型推导错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195945.986475, "duration_ms": 0}}
