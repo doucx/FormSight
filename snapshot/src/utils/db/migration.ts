@@ -104,7 +104,7 @@ export async function migrateLegacyDatabase(
     for (const p of oldProfiles) {
       const cardId = p.cardId || resolveLegacyCardId(p.domain || 'star', p.mode);
       const card = getCardById(cardId);
-      const domain = card ? card.legacyDomain : (p.domain || 'star');
+      const domain = card ? card.legacyDomain : p.domain || 'star';
       const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
       await tx.objectStore('user_profiles').put({
         ...p,
