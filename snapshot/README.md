@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/Color_Space-OKLab_/_OKLCH-f59e0b?style=flat-square" alt="OKLab">
   <img src="https://img.shields.io/badge/Build_Tool-Vite_5-646cff?style=flat-square&logo=vite" alt="Vite">
   <img src="https://img.shields.io/badge/Storage-IndexedDB_(Offline--First)-success?style=flat-square" alt="IndexedDB">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
+  <img src="https://shields.io/badge/license-Apache%202-blue" alt="License">
 </p>
 
 ---
