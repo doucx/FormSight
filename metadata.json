@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复类型定义导出、未使用的声明与设置测试用例", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205353.172842, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M settings.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205684.2505941, "duration_ms": 0}}
