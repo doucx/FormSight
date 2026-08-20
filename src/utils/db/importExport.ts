@@ -1,4 +1,4 @@
-import { resolveLegacyCardId } from '../../config/cards';
+import { getCardById, resolveLegacyCardId } from '../../config/cards';
 import { loadSettings, saveSettings } from '../settings';
 import { DB_VERSION, type TrainingDomain, getDB } from './schema';
 
@@ -44,8 +44,9 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     }
     if (data.profiles) {
       for (const p of data.profiles) {
-        const domain = (p.domain || 'star') as TrainingDomain;
-        const cardId = p.cardId || resolveLegacyCardId(domain, p.mode);
+        const cardId = p.cardId || resolveLegacyCardId(p.domain || 'star', p.mode);
+        const card = getCardById(cardId);
+        const domain = card ? card.legacyDomain : ((p.domain || 'star') as TrainingDomain);
         const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
         await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
       }
