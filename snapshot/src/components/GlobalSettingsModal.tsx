@@ -161,7 +161,9 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">显示任务文字指引</div>
-                <div className="text-[11px] text-slate-400">在画布上方展示极简提示，关闭进入全沉浸模式</div>
+                <div className="text-[11px] text-slate-400">
+                  在画布上方展示极简提示，关闭进入全沉浸模式
+                </div>
               </div>
             </div>
             <button

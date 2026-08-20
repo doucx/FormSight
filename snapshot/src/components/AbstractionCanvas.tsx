@@ -486,9 +486,7 @@ export function AbstractionCanvas({
         {showCanvasHints && (
           <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
             <Columns className="w-3.5 h-3.5 text-indigo-600" />
-            {isPoly
-              ? '选择保留了主要转折大形的精简项'
-              : '判别哪一侧具象细节符合上方骨架'}
+            {isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
           </div>
         )}
 
