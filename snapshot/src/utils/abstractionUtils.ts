@@ -501,6 +501,9 @@ export function generateAbstractionQuestion(
     const microScale = 0.08 + Math.random() * 0.04;
     const microAmp = 10 + t * 38; // 难度随 Level 递增微观干扰
 
+    // 宏观骨架相似度逼近因子：Level 1 为 0 (完全独立大形)，Level 35 为 0.68 (高相似度大骨架逼近)
+    const macroSimilarityWeight = t * 0.68;
+
     const targetMacroBuffer = new Uint8Array(totalPixels);
     const targetSceneBuffer = new Uint8Array(totalPixels);
     const distractorSceneBuffer = new Uint8Array(totalPixels);
@@ -510,8 +513,14 @@ export function generateAbstractionQuestion(
         const idx = y * fieldDim + x;
         const targetMacroVal =
           (fbm2D(x * macroScale, y * macroScale, 2, targetMacroNoise) - 0.5) * 2 * macroAmp;
-        const distractorMacroVal =
+        const rawIndependentDistractorVal =
           (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
+
+        // 干扰项宏观场：随着 Level 提升，与目标骨架大场线性插值逼近
+        const distractorMacroVal =
+          (1 - macroSimilarityWeight) * rawIndependentDistractorVal +
+          macroSimilarityWeight * targetMacroVal;
+
         const microVal =
           (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
@@ -523,7 +532,7 @@ export function generateAbstractionQuestion(
         const targetSceneRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal + microVal));
         targetSceneBuffer[idx] = Math.round((targetSceneRaw / 100) * 255);
 
-        // 干扰素描选项（不同宏观骨架 + 相同微观噪波肌理）
+        // 干扰素描选项（逼近宏观骨架 + 相同微观噪波肌理）
         const distractorSceneRaw = Math.max(
           0,
           Math.min(100, baseKey + distractorMacroVal + microVal),

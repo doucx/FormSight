@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 重构黑白素描骨架 (TD_NOTAN_2AFC) 为连续灰阶噪声场与二值骨架逆向透视", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787219349.829752, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为黑白素描骨架引入宏观大场随 Level 自适应逼近算法", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787219976.0570652, "duration_ms": 0}}
