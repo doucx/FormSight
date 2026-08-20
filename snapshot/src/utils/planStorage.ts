@@ -178,6 +178,16 @@ export function deletePlan(planId: string): PlanStorageState {
   return nextState;
 }
 
+export function resetPlansToDefault(): PlanStorageState {
+  const defaultPlans = getDefaultPlans();
+  const initialState: PlanStorageState = {
+    activePlanId: defaultPlans[0]?.id || EMPTY_TRAINING_PLAN.id,
+    plans: defaultPlans.length > 0 ? defaultPlans : [EMPTY_TRAINING_PLAN],
+  };
+  savePlanStorageState(initialState);
+  return initialState;
+}
+
 export function clonePlan(plan: TrainingPlan): TrainingPlan {
   const newId = `plan_copy_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const cloned: TrainingPlan = {

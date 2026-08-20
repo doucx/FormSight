@@ -1,7 +1,6 @@
 import {
   ArrowDown,
   ArrowUp,
-  Bookmark,
   Check,
   Copy,
   Download,
@@ -10,6 +9,7 @@ import {
   Plus,
   RotateCcw,
   Sliders,
+  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -18,11 +18,9 @@ import {
 import { useRef, useState } from 'preact/hooks';
 import { ALL_CARDS, getCardById } from '../../config/cards';
 import { DOMAINS_CONFIG } from '../../config/domains';
-import { DEFAULT_PLAN_TEMPLATES } from '../../config/planTemplates';
-import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../../types/plan';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
 import {
   clonePlan,
-  createPlanFromTemplate,
   deletePlan,
   exportPlanToJson,
   importPlanFromJson,
@@ -57,6 +55,9 @@ export function PlanEditorModal({
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
 
+  // 判断当前正在编辑的计划是否为新计划（未入库）
+  const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
+
   const showToast = (msg: string) => {
     setToastNotice(msg);
     setTimeout(() => setToastNotice(null), 2500);
@@ -66,13 +67,7 @@ export function PlanEditorModal({
     setCurrentPlan({ ...p });
     setPlanNameInput(p.name);
     setIsEditingName(false);
-  };
-
-  const handleApplyTemplate = (template: PlanTemplate) => {
-    const newPlan = createPlanFromTemplate(template);
-    setCurrentPlan(newPlan);
-    setPlanNameInput(newPlan.name);
-    showToast(`已套用【${template.name}】模板`);
+    setShowPlanManager(false);
   };
 
   const handleNameSave = () => {
@@ -151,7 +146,8 @@ export function PlanEditorModal({
     setPlanNameInput(newBlank.name);
     setIsEditingName(true);
     setIsAddingCard(true);
-    showToast('已新建空白计划，请添加训练阶段');
+    setShowPlanManager(false);
+    showToast('已进入新计划创建模式');
   };
 
   const handleCloneCurrent = () => {
@@ -161,7 +157,7 @@ export function PlanEditorModal({
     setCurrentPlan(cloned);
     setPlanNameInput(cloned.name);
     onPlanListChanged?.();
-    showToast(`已复制为【${cloned.name}】`);
+    showToast(`已复制为新计划【${cloned.name}】`);
   };
 
   const handleToggleFavoriteItem = (planId: string, e: MouseEvent) => {
@@ -214,6 +210,7 @@ export function PlanEditorModal({
           setStorageState(nextState);
           setCurrentPlan(imported);
           setPlanNameInput(imported.name);
+          setShowPlanManager(false);
           onPlanListChanged?.();
           showToast(`成功导入计划【${imported.name}】`);
         } else {
@@ -231,7 +228,6 @@ export function PlanEditorModal({
       updatedAt: Date.now(),
     };
 
-    // 保存当前计划至库并设为激活
     const updatedPlans = storageState.plans.some((p) => p.id === sanitizedPlan.id)
       ? storageState.plans.map((p) => (p.id === sanitizedPlan.id ? sanitizedPlan : p))
       : [sanitizedPlan, ...storageState.plans];
@@ -258,7 +254,7 @@ export function PlanEditorModal({
   return (
     <ModalShell title="定制日常训练流" icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-5">
-        {/* 顶部计划名称编辑与管理切换 */}
+        {/* 顶部计划名称编辑与管理栏 */}
         <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -289,7 +285,7 @@ export function PlanEditorModal({
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
                   <h3 className="text-sm font-black text-slate-800 truncate tracking-tight">
                     {currentPlan.name}
                   </h3>
@@ -301,11 +297,17 @@ export function PlanEditorModal({
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
-                  {currentPlan.isBuiltin && (
+
+                  {isNewPlan ? (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 flex-shrink-0 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      新计划
+                    </span>
+                  ) : currentPlan.isBuiltin ? (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100 flex-shrink-0">
                       官方预设
                     </span>
-                  )}
+                  ) : null}
                 </div>
               )}
             </div>
@@ -329,7 +331,7 @@ export function PlanEditorModal({
                 type="button"
                 onClick={handleCloneCurrent}
                 className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
-                title="复制此计划为副本"
+                title="复制为新副本"
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
@@ -372,7 +374,7 @@ export function PlanEditorModal({
         {showPlanManager && (
           <div className="p-3.5 bg-slate-100/80 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">我的训练计划列表：</span>
+              <span className="text-xs font-bold text-slate-700">切换正在编辑的训练计划：</span>
               <button
                 type="button"
                 onClick={handleCreateNewBlankPlan}
@@ -428,7 +430,7 @@ export function PlanEditorModal({
                             ? 'text-amber-500 hover:bg-amber-50'
                             : 'text-slate-300 hover:text-slate-500'
                         }`}
-                        title={isFav ? '已收藏 (显示在主页)' : '未收藏'}
+                        title={isFav ? '已收藏 (显示在主页快速切换)' : '未收藏'}
                       >
                         <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-500' : ''}`} />
                       </button>
@@ -448,38 +450,6 @@ export function PlanEditorModal({
           </div>
         )}
 
-        {/* 预设模板快捷套用 */}
-        <div className="space-y-2">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span className="flex items-center gap-1.5">
-              <Bookmark className="w-3.5 h-3.5 text-indigo-500" />
-              快捷套用官方科学预设
-            </span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {DEFAULT_PLAN_TEMPLATES.map((tmpl) => (
-              <button
-                type="button"
-                key={tmpl.id}
-                onClick={() => handleApplyTemplate(tmpl)}
-                className="p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-200/80 hover:border-indigo-200 rounded-2xl text-left transition-all group active:scale-[0.98]"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-600">
-                    {tmpl.name}
-                  </span>
-                  {tmpl.badge && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded-md">
-                      {tmpl.badge}
-                    </span>
-                  )}
-                </div>
-                <p className="text-[11px] text-slate-400 line-clamp-1">{tmpl.description}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* 计划阶段列表 */}
         <div className="space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -493,7 +463,7 @@ export function PlanEditorModal({
             <div className="flex items-center gap-2">
               {currentPlan.items.length > 0 && (
                 <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400">批量设为:</span>
+                  <span className="text-[10px] font-bold text-slate-400">批量题量:</span>
                   {[10, 15, 20].map((num) => (
                     <button
                       type="button"
@@ -523,10 +493,10 @@ export function PlanEditorModal({
           {currentPlan.items.length === 0 ? (
             <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
               <Zap className="w-6 h-6 text-slate-300" />
-              <span>当前计划为空，请点击下方「添加训练阶段」或选用上方模板</span>
+              <span>当前计划为空，请点击下方「添加训练阶段」挑选训练模块</span>
             </div>
           ) : (
-            <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
               {currentPlan.items.map((item, idx) => {
                 const card = getCardById(item.cardId);
                 if (!card) return null;
@@ -684,7 +654,7 @@ export function PlanEditorModal({
           </button>
         )}
 
-        {/* 底部保存提交 */}
+        {/* 底部保存提交：根据是否为新计划动态调整文案 */}
         <div className="pt-2 flex gap-3">
           <button
             type="button"
@@ -703,7 +673,8 @@ export function PlanEditorModal({
                 : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 active:scale-[0.98]'
             }`}
           >
-            保存并使用此计划 {currentPlan.items.length === 0 && '(至少包含1个阶段)'}
+            {isNewPlan ? '保存为新计划并使用' : '保存修改并使用此计划'}{' '}
+            {currentPlan.items.length === 0 && '(至少包含1个阶段)'}
           </button>
         </div>
       </div>
