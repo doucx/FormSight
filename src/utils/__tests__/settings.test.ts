@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
+import { DEFAULT_SETTINGS, getCardSettings, loadSettings, saveSettings } from '../settings';
 
-describe('settings utils with domain isolation', () => {
+describe('settings utils with card-scoped isolation', () => {
   beforeEach(() => {
     localStorage.clear();
   });
@@ -10,43 +10,43 @@ describe('settings utils with domain isolation', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
     expect(settings.global.soundEnabled).toBe(true);
-    expect(settings.star.autoNext).toBe(true);
-    expect(settings.color.autoNext).toBe(true);
-    expect(settings.relative_color.autoNext).toBe(true);
-    expect(settings.star.gridSize).toBe(3);
-    expect(settings.color.showToleranceBand).toBe(true);
+    expect(settings.cards.star_single.autoNext).toBe(true);
+    expect(settings.cards.color_hue.autoNext).toBe(true);
+    expect(settings.cards.rel_vector_shift.autoNext).toBe(true);
+    expect(settings.cards.star_single.gridSize).toBe(3);
+    expect(settings.cards.color_hue.showToleranceBand).toBe(true);
   });
 
-  it('saveSettings & loadSettings - should persist and retrieve domain-scoped settings', () => {
+  it('saveSettings & loadSettings - should persist and retrieve card-scoped settings', () => {
     const custom = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
-    custom.star.autoNext = false;
-    custom.star.autoNextDelay = 800;
-    custom.star.gridSize = 4;
+    custom.cards.star_single.autoNext = false;
+    custom.cards.star_single.autoNextDelay = 800;
+    custom.cards.star_single.gridSize = 4;
 
-    custom.color.autoNext = true;
-    custom.color.autoNextDelay = 300;
-    custom.color.sliderHitMargin = 20;
+    custom.cards.color_hue.autoNext = true;
+    custom.cards.color_hue.autoNextDelay = 300;
+    custom.cards.color_hue.sliderHitMargin = 20;
 
-    custom.relative_color.autoNext = false;
-    custom.relative_color.autoNextDelay = 1200;
+    custom.cards.rel_vector_shift.autoNext = false;
+    custom.cards.rel_vector_shift.autoNextDelay = 1200;
 
     saveSettings(custom);
 
     const loaded = loadSettings();
-    expect(loaded.star.autoNext).toBe(false);
-    expect(loaded.star.autoNextDelay).toBe(800);
-    expect(loaded.star.gridSize).toBe(4);
+    expect(loaded.cards.star_single.autoNext).toBe(false);
+    expect(loaded.cards.star_single.autoNextDelay).toBe(800);
+    expect(loaded.cards.star_single.gridSize).toBe(4);
 
-    expect(loaded.color.autoNext).toBe(true);
-    expect(loaded.color.autoNextDelay).toBe(300);
-    expect(loaded.color.sliderHitMargin).toBe(20);
+    expect(loaded.cards.color_hue.autoNext).toBe(true);
+    expect(loaded.cards.color_hue.autoNextDelay).toBe(300);
+    expect(loaded.cards.color_hue.sliderHitMargin).toBe(20);
 
-    expect(loaded.relative_color.autoNext).toBe(false);
-    expect(loaded.relative_color.autoNextDelay).toBe(1200);
+    expect(loaded.cards.rel_vector_shift.autoNext).toBe(false);
+    expect(loaded.cards.rel_vector_shift.autoNextDelay).toBe(1200);
   });
 
-  it('loadSettings - should merge partial settings with default values', () => {
-    const partialSettings = {
+  it('loadSettings - should merge legacy domain settings with default values', () => {
+    const legacyPartialSettings = {
       global: {
         idleTimeout: 120,
       },
@@ -55,15 +55,24 @@ describe('settings utils with domain isolation', () => {
       },
     };
 
-    localStorage.setItem('star_hopping_user_settings', JSON.stringify(partialSettings));
+    localStorage.setItem('formsight_user_settings', JSON.stringify(legacyPartialSettings));
 
     const loaded = loadSettings();
     expect(loaded.global.idleTimeout).toBe(120);
     expect(loaded.global.soundEnabled).toBe(DEFAULT_SETTINGS.global.soundEnabled);
-    expect(loaded.star.gridSize).toBe(5);
-    expect(loaded.star.autoNext).toBe(DEFAULT_SETTINGS.star.autoNext);
-    expect(loaded.color).toEqual(DEFAULT_SETTINGS.color);
-    expect(loaded.relative_color).toEqual(DEFAULT_SETTINGS.relative_color);
-    expect(loaded.negative_space).toEqual(DEFAULT_SETTINGS.negative_space);
+    expect(loaded.cards.star_single.gridSize).toBe(5);
+    expect(loaded.cards.star_single.autoNext).toBe(DEFAULT_SETTINGS.cards.star_single.autoNext);
+    expect(loaded.cards.color_hue).toEqual(DEFAULT_SETTINGS.cards.color_hue);
+    expect(loaded.cards.rel_vector_shift).toEqual(DEFAULT_SETTINGS.cards.rel_vector_shift);
+    expect(loaded.cards.neg_ratio_estimation).toEqual(DEFAULT_SETTINGS.cards.neg_ratio_estimation);
+  });
+
+  it('getCardSettings - should return fallback default settings if card is not found', () => {
+    const settings = loadSettings();
+    const starSingle = getCardSettings(settings, 'star_single');
+    expect(starSingle.autoNext).toBe(true);
+
+    const nonExistent = getCardSettings(settings, 'non_existent_card');
+    expect(nonExistent.autoNext).toBe(true);
   });
 });

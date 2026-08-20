@@ -85,11 +85,6 @@ export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]
   ],
   color: [
     {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '色感滑块极值吸附外延感应区',
-    },
-    {
       type: 'toggle',
       key: 'showToleranceBand',
       title: '显示滑块容错感应区',
@@ -113,11 +108,6 @@ export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]
   ],
   relative_color: [
     {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '色感滑块极值吸附外延感应区',
-    },
-    {
       type: 'toggle',
       key: 'showToleranceBand',
       title: '显示滑块容错感应区',
@@ -131,11 +121,6 @@ export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]
     },
   ],
   negative_space: [
-    {
-      type: 'sliderMargin',
-      key: 'sliderHitMargin',
-      title: '滑块极值吸附外延感应区',
-    },
     {
       type: 'toggle',
       key: 'showToleranceBand',

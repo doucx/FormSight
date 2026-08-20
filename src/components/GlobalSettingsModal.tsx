@@ -14,6 +14,7 @@ import { loadSettings, saveSettings } from '../utils/settings';
 import { ConfirmModal } from './common/ConfirmModal';
 import { ModalShell } from './common/ModalShell';
 import type { ToastType } from './common/Toast';
+import { SliderMarginGroup } from './settings/common/SliderMarginGroup';
 
 interface GlobalSettingsModalProps {
   onClose: () => void;
@@ -49,6 +50,19 @@ export function GlobalSettingsModal({
       global: {
         ...settings.global,
         idleTimeout: sec,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
+
+  const handleSliderHitMarginChange = (margin: number) => {
+    const updated = {
+      ...settings,
+      global: {
+        ...settings.global,
+        sliderHitMargin: margin,
       },
     };
     saveSettings(updated);
@@ -158,6 +172,14 @@ export function GlobalSettingsModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+            <SliderMarginGroup
+              title="滑块极值吸附外延感应区"
+              value={settings.global.sliderHitMargin ?? 12}
+              onChange={handleSliderHitMarginChange}
+            />
           </div>
         </div>
 

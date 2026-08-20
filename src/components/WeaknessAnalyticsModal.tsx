@@ -1,51 +1,49 @@
 import { BarChart2, Info, X } from 'lucide-preact';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { ANALYTICS_PLUGINS } from '../config/analyticsPlugins';
-import type { TrainingDomain, UnifiedTrialRecord } from '../utils/db';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { CARD_ANALYTICS_PLUGINS } from '../config/analyticsPlugins';
+import type { CardDefinition } from '../types/card';
+import type { UnifiedTrialRecord } from '../utils/db';
 
 interface WeaknessAnalyticsModalProps {
-  domain: TrainingDomain;
+  card: CardDefinition;
   onClose: () => void;
 }
 
-export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsModalProps) {
-  const plugin = ANALYTICS_PLUGINS[domain];
-  const [contextState, setContextState] = useState<Record<string, unknown>>({});
+export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
+  const plugin = CARD_ANALYTICS_PLUGINS[card.id];
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const handleUpdateContext = useCallback((patch: Record<string, unknown>) => {
-    setContextState((prev) => ({ ...prev, ...patch }));
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
 
-    plugin.fetchRecords(contextState).then((data) => {
-      if (isMounted) {
-        setRecords(data);
-        setLoading(false);
-      }
-    });
+    if (plugin) {
+      plugin.fetchRecords(card.id).then((data) => {
+        if (isMounted) {
+          setRecords(data);
+          setLoading(false);
+        }
+      });
+    } else {
+      setLoading(false);
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [plugin, contextState]);
+  }, [plugin, card.id]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || !plugin) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    plugin.renderVisualizer(canvas, records, {
-      state: contextState,
-      setState: handleUpdateContext,
-    });
-  }, [plugin, loading, records, contextState, handleUpdateContext]);
+    plugin.renderVisualizer(canvas, records);
+  }, [plugin, loading, records]);
+
+  if (!plugin) return null;
 
   const stats = plugin.getOverallStats
     ? plugin.getOverallStats(records)
@@ -91,12 +89,6 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
           </button>
         </div>
 
-        {/* 插件自定义筛选控制区 */}
-        {plugin.renderControls?.({
-          state: contextState,
-          setState: handleUpdateContext,
-        })}
-
         {/* 内容展示区 */}
         {loading ? (
           <div className="h-72 flex items-center justify-center text-slate-400 text-xs">
@@ -105,7 +97,7 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
         ) : records.length === 0 ? (
           <div className="h-72 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
             <Info className="w-8 h-8 text-slate-300" />
-            暂无当前条件下的练习记录，先去完成几轮练习吧！
+            暂无【{card.title}】的练习记录，先去完成几轮练习吧！
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
@@ -133,10 +125,7 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
               </div>
 
               {/* 插件个性化诊断 */}
-              {plugin.renderDiagnostics(records, {
-                state: contextState,
-                setState: handleUpdateContext,
-              })}
+              {plugin.renderDiagnostics(records)}
             </div>
           </div>
         )}

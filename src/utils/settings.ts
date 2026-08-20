@@ -11,44 +11,43 @@ export interface BaseModuleSettings {
   adaptiveMode: AdaptiveMode;
   targetAccuracy: number;
   blockSize: number;
+  [key: string]: unknown;
 }
 
 export interface StarSettings extends BaseModuleSettings {
-  gridSize: number;
-  targetingMode: TargetingMode;
-  manualTargetSectors: number[];
+  gridSize?: number;
+  targetingMode?: TargetingMode;
+  manualTargetSectors?: number[];
 }
 
 export interface ColorSenseSettings extends BaseModuleSettings {
-  sliderHitMargin: number;
-  showToleranceBand: boolean;
-  enableHoverColorPreview: boolean;
-  targetingMode: TargetingMode;
-  manualTargetSectors: number[];
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
+  targetingMode?: TargetingMode;
+  manualTargetSectors?: number[];
 }
 
 export interface RelativeColorSettings extends BaseModuleSettings {
-  sliderHitMargin: number;
-  showToleranceBand: boolean;
-  enableHoverColorPreview: boolean;
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+  enableHoverColorPreview?: boolean;
 }
 
 export interface NegativeSpaceSettings extends BaseModuleSettings {
-  sliderHitMargin: number;
-  showToleranceBand: boolean;
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
 }
 
 export interface GlobalSettings {
   idleTimeout: number;
   soundEnabled: boolean;
+  sliderHitMargin: number;
 }
 
 export interface UserSettings {
   global: GlobalSettings;
-  star: StarSettings;
-  color: ColorSenseSettings;
-  relative_color: RelativeColorSettings;
-  negative_space: NegativeSpaceSettings;
+  cards: Record<string, BaseModuleSettings>;
 }
 
 const SETTINGS_KEY = 'formsight_user_settings';
@@ -66,31 +65,59 @@ export const DEFAULT_SETTINGS: UserSettings = {
   global: {
     idleTimeout: 60,
     soundEnabled: true,
-  },
-  star: {
-    ...DEFAULT_BASE_SETTINGS,
-    gridSize: 3,
-    targetingMode: 'off',
-    manualTargetSectors: [],
-  },
-  color: {
-    ...DEFAULT_BASE_SETTINGS,
     sliderHitMargin: 12,
-    showToleranceBand: true,
-    enableHoverColorPreview: true,
-    targetingMode: 'off',
-    manualTargetSectors: [],
   },
-  relative_color: {
-    ...DEFAULT_BASE_SETTINGS,
-    sliderHitMargin: 12,
-    showToleranceBand: true,
-    enableHoverColorPreview: true,
-  },
-  negative_space: {
-    ...DEFAULT_BASE_SETTINGS,
-    sliderHitMargin: 12,
-    showToleranceBand: true,
+  cards: {
+    star_single: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_h: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_r: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    color_hue: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+      enableHoverColorPreview: true,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    color_val: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    color_sat: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    color_all: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+      enableHoverColorPreview: true,
+    },
+    rel_vector_shift: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    rel_lightness_induction: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    rel_hue_induction: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    rel_decontextual_2afc: { ...DEFAULT_BASE_SETTINGS },
+    neg_ratio_estimation: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    neg_area_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
+    neg_vertex_fitting: { ...DEFAULT_BASE_SETTINGS },
+    neg_shape_match_2afc: { ...DEFAULT_BASE_SETTINGS },
   },
 };
 
@@ -103,12 +130,52 @@ export function loadSettings(): UserSettings {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return DEFAULT_SETTINGS;
 
+    // 自动兼容并迁移旧版 domain 挂载的配置
+    const cards: Record<string, BaseModuleSettings> = { ...DEFAULT_SETTINGS.cards };
+
+    if (parsed.cards && typeof parsed.cards === 'object') {
+      for (const [cardId, val] of Object.entries(parsed.cards)) {
+        cards[cardId] = {
+          ...(cards[cardId] || DEFAULT_BASE_SETTINGS),
+          ...(val as Record<string, unknown>),
+        };
+      }
+    } else {
+      // 从旧结构（star/color/relative_color/negative_space）迁移到卡片
+      if (parsed.star) {
+        cards.star_single = { ...cards.star_single, ...parsed.star };
+        cards.star_double_h = { ...cards.star_double_h, ...parsed.star };
+        cards.star_double_r = { ...cards.star_double_r, ...parsed.star };
+      }
+      if (parsed.color) {
+        cards.color_hue = { ...cards.color_hue, ...parsed.color };
+        cards.color_val = { ...cards.color_val, ...parsed.color };
+        cards.color_sat = { ...cards.color_sat, ...parsed.color };
+        cards.color_all = { ...cards.color_all, ...parsed.color };
+      }
+      if (parsed.relative_color) {
+        cards.rel_vector_shift = { ...cards.rel_vector_shift, ...parsed.relative_color };
+        cards.rel_lightness_induction = {
+          ...cards.rel_lightness_induction,
+          ...parsed.relative_color,
+        };
+        cards.rel_hue_induction = { ...cards.rel_hue_induction, ...parsed.relative_color };
+        cards.rel_decontextual_2afc = { ...cards.rel_decontextual_2afc, ...parsed.relative_color };
+      }
+      if (parsed.negative_space) {
+        cards.neg_ratio_estimation = { ...cards.neg_ratio_estimation, ...parsed.negative_space };
+        cards.neg_area_comparison_2afc = {
+          ...cards.neg_area_comparison_2afc,
+          ...parsed.negative_space,
+        };
+        cards.neg_vertex_fitting = { ...cards.neg_vertex_fitting, ...parsed.negative_space };
+        cards.neg_shape_match_2afc = { ...cards.neg_shape_match_2afc, ...parsed.negative_space };
+      }
+    }
+
     return {
       global: { ...DEFAULT_SETTINGS.global, ...(parsed.global || {}) },
-      star: { ...DEFAULT_SETTINGS.star, ...(parsed.star || {}) },
-      color: { ...DEFAULT_SETTINGS.color, ...(parsed.color || {}) },
-      relative_color: { ...DEFAULT_SETTINGS.relative_color, ...(parsed.relative_color || {}) },
-      negative_space: { ...DEFAULT_SETTINGS.negative_space, ...(parsed.negative_space || {}) },
+      cards,
     };
   } catch (e) {
     console.error('Failed to load user settings, fallback to default:', e);
@@ -122,4 +189,8 @@ export function saveSettings(settings: UserSettings): void {
   } catch (e) {
     console.error('Failed to save user settings:', e);
   }
+}
+
+export function getCardSettings(settings: UserSettings, cardId: string): BaseModuleSettings {
+  return settings.cards[cardId] || DEFAULT_SETTINGS.cards[cardId] || DEFAULT_BASE_SETTINGS;
 }

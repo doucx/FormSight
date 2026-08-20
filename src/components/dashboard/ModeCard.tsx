@@ -1,4 +1,4 @@
-import { Award, Play, Target, TrendingUp } from 'lucide-preact';
+import { Award, BarChart2, Play, Sliders, Target, TrendingUp } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 
 export function formatTodayTime(ms: number): string {
@@ -20,8 +20,11 @@ interface ModeCardProps {
   todayTimeMs?: number;
   currentLevel: number;
   accuracy: number;
+  hasAnalytics?: boolean;
   onStartTraining: () => void;
   onStartBenchmark: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics?: () => void;
 }
 
 export function ModeCard({
@@ -32,16 +35,44 @@ export function ModeCard({
   todayTimeMs = 0,
   currentLevel,
   accuracy,
+  hasAnalytics = false,
   onStartTraining,
   onStartBenchmark,
+  onOpenSettings,
+  onOpenAnalytics,
 }: ModeCardProps) {
   return (
     <div className="group bg-white border border-gray-200/80 hover:border-indigo-300 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
       <div>
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-            <Icon className="w-6 h-6" />
+          <div className="flex items-center gap-2">
+            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+              <Icon className="w-6 h-6" />
+            </div>
+
+            {/* 卡片级专属操作快捷入口 */}
+            <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+              {hasAnalytics && onOpenAnalytics && (
+                <button
+                  type="button"
+                  onClick={onOpenAnalytics}
+                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                  title={`${title} 弱点分析`}
+                >
+                  <BarChart2 className="w-4 h-4" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                title={`${title} 偏好设置`}
+              >
+                <Sliders className="w-4 h-4" />
+              </button>
+            </div>
           </div>
+
           <div className="text-right">
             <div className="text-[10px] font-semibold text-slate-400">今日刷题</div>
             <div className="text-xs font-bold text-slate-500 font-mono">

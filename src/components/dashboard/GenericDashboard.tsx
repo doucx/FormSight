@@ -9,16 +9,16 @@ interface GenericDashboardProps {
   meta: DomainMeta;
   onStart: (cardId: string, type: 'training' | 'benchmark') => void;
   onBackToHome: () => void;
-  onOpenSettings: () => void;
-  onOpenAnalytics?: () => void;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenCardAnalytics: (cardId: string) => void;
 }
 
 export function GenericDashboard({
   meta,
   onStart,
   onBackToHome,
-  onOpenSettings,
-  onOpenAnalytics,
+  onOpenCardSettings,
+  onOpenCardAnalytics,
 }: GenericDashboardProps) {
   const todayStats = useTodayStats(meta.domain);
   const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData>>({});
@@ -39,13 +39,7 @@ export function GenericDashboard({
   }, [meta.domain]);
 
   return (
-    <DashboardShell
-      title={meta.title}
-      subTitle={meta.subTitle}
-      onBackToHome={onBackToHome}
-      onOpenSettings={onOpenSettings}
-      onOpenAnalytics={meta.hasWeaknessAnalytics ? onOpenAnalytics : undefined}
-    >
+    <DashboardShell title={meta.title} subTitle={meta.subTitle} onBackToHome={onBackToHome}>
       {meta.cards.map((card) => {
         const profile = profiles[card.id];
         const totalTrials = profile?.totalTrials || 0;
@@ -64,8 +58,11 @@ export function GenericDashboard({
             todayTimeMs={stat.timeMs}
             currentLevel={currentLevel}
             accuracy={accuracy}
+            hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
             onStartTraining={() => onStart(card.id, 'training')}
             onStartBenchmark={() => onStart(card.id, 'benchmark')}
+            onOpenSettings={() => onOpenCardSettings(card.id)}
+            onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
           />
         );
       })}
