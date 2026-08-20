@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(domain): 新增概括感知与细化感知双领域及八张核心训练卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787212987.9823182, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(abstraction): 打磨视知觉概括模块的交互与视觉呈现", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787213484.3777194, "duration_ms": 0}}

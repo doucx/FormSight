@@ -274,7 +274,16 @@ export function generateAbstractionQuestion(
     distractor[modIdx].y += Math.round((Math.random() * 2 - 1) * perturbDist);
 
     const isA = Math.random() < 0.5;
-    const simplifiedOptions = isA ? [simplified, distractor] : [distractor, simplified];
+    const scaleTo2Afc = ABSTRACTION_2AFC_SIZE / ABSTRACTION_CANVAS_SIZE;
+    const mapTo2Afc = (pts: Point[]) =>
+      pts.map((p) => ({
+        x: Math.round(p.x * scaleTo2Afc),
+        y: Math.round(p.y * scaleTo2Afc),
+      }));
+
+    const simplifiedOptions = isA
+      ? [mapTo2Afc(simplified), mapTo2Afc(distractor)]
+      : [mapTo2Afc(distractor), mapTo2Afc(simplified)];
 
     return {
       id,

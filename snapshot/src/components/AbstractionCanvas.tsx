@@ -144,6 +144,35 @@ function drawPaletteTiles(
   }
 }
 
+// 辅助绘图：绘制基准骨架势线
+function drawSpinePrompt(
+  canvas: HTMLCanvasElement | null,
+  spine?: Point[],
+  size = ABSTRACTION_THUMB_SIZE,
+) {
+  if (!canvas || !spine || spine.length < 2) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, size, size);
+
+  const [p1, p2] = spine;
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, 4, 0, Math.PI * 2);
+  ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 export function AbstractionCanvas({
   question,
   showAnswer,
@@ -163,13 +192,18 @@ export function AbstractionCanvas({
   const canvasRefB = useRef<HTMLCanvasElement | null>(null);
   const canvasThumbRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-  const [selected4AfcIdx, setSelected4AfcIdx] = useState<number>(0);
+  const [selected4AfcIdx, setSelected4AfcIdx] = useState<number | null>(null);
 
   const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
     max: mode === 'GESTURE_AXIS' ? 180 : 100,
     step: 0.5,
     disabled: disabled || showAnswer,
     onValChange: setSliderVal,
+    onCommit: (committedVal) => {
+      if (mode === 'GESTURE_AXIS' && !disabled && !showAnswer) {
+        onAnswer(committedVal);
+      }
+    },
   });
 
   useEffect(() => {
@@ -177,7 +211,7 @@ export function AbstractionCanvas({
       setSliderVal(mode === 'GESTURE_AXIS' ? 90 : 50);
       setHoverVal(null);
       setSelectedChoice(null);
-      setSelected4AfcIdx(0);
+      setSelected4AfcIdx(null);
     }
   }, [question.id, mode, setHoverVal]);
 
@@ -217,7 +251,7 @@ export function AbstractionCanvas({
     } else if (mode === 'PALETTE_CLUSTERING') {
       drawPaletteTiles(canvasMainRef.current, question.paletteTiles, ABSTRACTION_CANVAS_SIZE);
     } else if (mode === 'TD_GESTURE_2AFC') {
-      drawParticles(canvasThumbRef.current, question.promptSpine, ABSTRACTION_THUMB_SIZE);
+      drawSpinePrompt(canvasThumbRef.current, question.promptSpine, ABSTRACTION_THUMB_SIZE);
       drawParticles(canvasRefA.current, question.particlesA, ABSTRACTION_2AFC_SIZE);
       drawParticles(canvasRefB.current, question.particlesB, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_HULL_2AFC') {
@@ -262,7 +296,7 @@ export function AbstractionCanvas({
       } else if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
         if (mode === 'PALETTE_CLUSTERING') {
-          onAnswer(selected4AfcIdx);
+          if (selected4AfcIdx !== null) onAnswer(selected4AfcIdx);
         } else if (mode === 'GESTURE_AXIS' || mode === 'NOTAN_THRESHOLD') {
           onAnswer(activeVal);
         }
@@ -647,7 +681,7 @@ export function AbstractionCanvas({
         )}
       </div>
 
-      {!showAnswer && (
+      {!showAnswer && !isGesture && (
         <button
           type="button"
           onClick={() => {
