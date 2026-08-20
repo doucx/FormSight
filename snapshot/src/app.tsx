@@ -32,6 +32,7 @@ export function App() {
   const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
     star: 0,
@@ -59,18 +60,21 @@ export function App() {
     );
     const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
 
-    setDomainTimes(timesMap);
-    setSettings(loadSettings());
-
-    if (route.type === 'dashboard') {
-      const pList = await getProfilesByDomain(route.domain);
-      const pMap: Record<string, UnifiedProfileData> = {};
-      for (const p of pList) {
+    const allProfilesList = await Promise.all(
+      ALL_DOMAINS.map((d) => getProfilesByDomain(d)),
+    );
+    const pMap: Record<string, UnifiedProfileData> = {};
+    for (const list of allProfilesList) {
+      for (const p of list) {
         pMap[p.cardId] = p;
       }
-      setCurrentDomainProfiles(pMap);
     }
-  }, [route]);
+
+    setDomainTimes(timesMap);
+    setCurrentDomainProfiles(pMap);
+    setSettings(loadSettings());
+    setProfilesLoaded(true);
+  }, []);
 
   useEffect(() => {
     refreshProfiles();
@@ -119,6 +123,13 @@ export function App() {
 
       {route.type === 'train' &&
         (() => {
+          if (!profilesLoaded) {
+            return (
+              <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold">
+                正在同步能力层阶与训练数据...
+              </div>
+            );
+          }
           const activeCard = getCardById(route.cardId);
           if (!activeCard) {
             navigate({ type: 'home' });

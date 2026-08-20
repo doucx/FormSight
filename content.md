@@ -1,299 +1,194 @@
-好的，我已经彻底分析了上述报错的根本原因：
+这是由于在直接访问或刷新训练路由（`#/train/...`）时，系统尚未从 IndexedDB 异步读取该卡片已保存的能力档案（`user_profiles`），导致视图在首轮挂载时直接使用了兜底的初始难度等级 `5`，且后续数据到位后 `AdaptiveEngine` 实例并未重新以此等级初始化。
 
-1. **Biome Lint 告警 (`noExplicitAny`)**：Biome 禁止在泛型默认值中直接使用 `any`，应使用更安全的类型系统或 `unknown` 适配器。
-2. **TypeScript 编译报错 (`TS2322`)**：`GenericTrainingView` 组件原先的泛型声明使得 JSX 在动态分发联合类型（`AnyTrainingPlugin` 与各模块 `UserSettings`）时无法正确自动收窄，导致 TS 默认推导到首个类型。
+下面是修复此问题的计划与具体修改补丁。
 
-我们将重构 `GenericTrainingView.tsx`，通过明确的 `GenericTrainingViewProps` 和 `unknown` 安全适配器统一接口，彻底消除 `any` 和联合类型推导问题。
-
-## [WIP] fix: 重构 GenericTrainingView 接口消除 any 与联合类型推导错误
+## [WIP] fix(app): 修复页面刷新时训练等级重置为默认值的问题
 
 ### 错误分析
-1. `src/views/GenericTrainingView.tsx` 中原先使用了 `= any` 作为泛型默认参数，违反了 Biome 的 `lint/suspicious/noExplicitAny` 规范。
-2. 在 JSX 组件实例化时，由于 `CARD_PLUGINS` 和 `settings[activeCard.settingsKey]` 是多模块的联合类型，带有泛型参数的组件函数在缺少显式泛型传递时无法兼容异构的插件派发，导致 `TS2322` 报错。
+1. **数据加载时机**: 在 `src/app.tsx` 中，`refreshProfiles` 原先仅在 `route.type === 'dashboard'` 时才从 IndexedDB 查询 `user_profiles` 并填充 `currentDomainProfiles`，在 `route.type === 'train'` 下该字典始终为空对象。
+2. **状态竞态**: 即使路由包含数据加载，页面初次加载时异步读取数据库存在微小延迟。在 profile 就绪前，`GenericTrainingView` 已经用默认等级 `5` 完成了挂载并初始化了 `useTrainingSession` 中的 `AdaptiveEngine`，导致等级被固定在 5。
 
 ### 用户需求
-在不使用 `any` 满足 Biome 严格静态检查的前提下，使 `GenericTrainingView` 完美支持来自 `app.tsx` 的异构模块插件动态派发，通过 `npm run build` 和 `npm run checkf`。
+用户直接刷新特定训练项 URL（如 `http://localhost:5173/#/train/color_hue?type=training`）时，系统应能正确读取该卡片已达到的历史能力层阶（`currentLevel`），从该等级继续训练。
 
 ### 评论
-通过设计一个安全的 `GenericTrainingPluginAdapter`，可以在保留各独立插件内部强类型检查的同时，为通用训练视图提供统一的运行时派发能力，是干净且符合 TypeScript 最佳实践的方案。
+该问题直接影响了训练体验的连贯性和历史进度持久性。统一全局能力层阶数据的预载机制并增加数据就绪等待守卫，可以彻底杜绝初次挂载时的等级回退问题。
 
 ### 目标
-1. 在 `GenericTrainingView.tsx` 中定义 `GenericTrainingPluginAdapter` 与无泛型限制的 `GenericTrainingViewProps`。
-2. 内部使用类型安全的 `unknown` 进行 Session 与 Hook 调度，移除所有 `any`。
+1. 在 `src/app.tsx` 中统一预载所有领域的 profile 数据，确保无论处于何种路由下都能获取到各卡片的当前层阶。
+2. 引入 `profilesLoaded` 状态，在直接进入训练路由且数据库数据就绪后，再挂载 `GenericTrainingView`。
 
 ### 基本原理
-各子模块插件均继承自统一的逻辑结构，但在具体数据形态上各不相同。通用视图层（Generic View）负责的是生命周期与交互框架的通用调度，将其入参声明为统一的 `AnyTrainingPlugin` 和 `BaseModuleSettings`，并在内部采用基于 `unknown` 的适配器，能够彻底解耦组件调用处的泛型推导难题，并规避逆变类型合并导致的联合类型报错。
+通过在 `refreshProfiles` 中并行拉取各模块的 `user_profiles`，将所有卡片的进度同步至全局状态；在训练视图挂载前增加数据就绪守卫，确保 `GenericTrainingView` 在构造 `AdaptiveEngine` 时获得的是来自本地数据库的真实 `currentLevel`。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/build #concept/executor #scope/core #ai/instruct #task/domain/build #task/object/type-and-lint-fixes #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/ux #ai/instruct #task/domain/storage #task/object/user-profile-persistence #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 GenericTrainingView 组件与接口类型
+#### Acts 1: 在 app.tsx 中统一预载能力档案并添加训练就绪守卫
 
-使用 `GenericTrainingPluginAdapter` 替换原泛型定义，完全移除 `any`。
+修改 `src/app.tsx`，在数据加载完成后再挂载训练视图，保证难度等级正确恢复。
 
 ~~~~~act
 patch_file
-src/views/GenericTrainingView.tsx
+src/app.tsx
 ~~~~~
 ~~~~~typescript
-import { TrainingShell } from '../components/training/TrainingShell';
-import type { TrainingPlugin } from '../config/trainingPlugins';
-import { useTrainingSession } from '../hooks/useTrainingSession';
-import type { CardDefinition } from '../types/card';
-import { saveSession, saveTrialRecord } from '../utils/db';
-import type { BaseModuleSettings } from '../utils/settings';
+  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-interface GenericTrainingViewProps<
-  TQuestion = any,
-  THitResult = any,
-  TAnswerVal = any,
-  TSettings extends BaseModuleSettings = any,
-> {
-  card: CardDefinition;
-  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
-  sessionType: 'training' | 'benchmark';
-  initialLevel: number;
-  settings: TSettings;
-  onExit: () => void;
-}
-
-export function GenericTrainingView<
-  TQuestion = any,
-  THitResult = any,
-  TAnswerVal = any,
-  TSettings extends BaseModuleSettings = any,
->({
-  card,
-  plugin,
-  sessionType,
-  initialLevel,
-  settings,
-  onExit,
-}: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
-  const domain = card.legacyDomain;
-  const mode = card.legacyMode;
-
-  const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
-    domain,
-    mode,
-    sessionType,
-    initialLevel,
-    autoNext: settings.autoNext,
-    autoNextDelay: settings.autoNextDelay,
-    stepGranularity: settings.stepGranularity,
-    adaptiveMode: settings.adaptiveMode,
-    targetAccuracy: settings.targetAccuracy,
-    blockSize: settings.blockSize,
-    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
-    evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
-    isHit: plugin.isHit,
-    getQuestionLevel: plugin.getQuestionLevel,
-    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
-      await saveTrialRecord({
-        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        timestamp: Date.now(),
-        difficultyLevel: plugin.getQuestionLevel(q),
-        isHit: plugin.isHit(hitResult),
-        responseTimeMs,
-        details: plugin.extractRecordDetails(q, hitResult, userVal, mode),
-      });
-    },
-    saveSession: async ({
-      sessionId,
-      totalTrials: t,
-      hitTrials: h,
-      ended,
-      startTimestamp,
-      endLevel,
-    }) => {
-      await saveSession({
-        id: sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        type: sessionType,
-        startTimestamp,
-        endTimestamp: ended ? Date.now() : undefined,
-        totalTrials: t,
-        hitTrials: h,
-        startLevel: initialLevel,
-        endLevel,
-      });
-    },
-    onExit,
+  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
+    star: 0,
+    color: 0,
+    relative_color: 0,
+    negative_space: 0,
   });
 
-  const isTargeting = plugin.isTargeting ? plugin.isTargeting(mode, settings) : false;
+  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
+    Record<string, UnifiedProfileData>
+  >({});
 
-  return (
-    <TrainingShell
-      card={card}
-      sessionType={sessionType}
-      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
-      isTargeting={isTargeting}
-      autoNext={settings.autoNext}
-      session={session}
-      onExit={onExit}
-    >
-      {({ disabled, isIdle }) =>
-        plugin.renderCanvas({
-          question: session.question,
-          showAnswer: session.showAnswer,
-          userAnswer: session.userAnswer,
-          onAnswer: session.handleAnswer,
-          disabled,
-          isIdle,
-          settings,
-        })
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const refreshProfiles = useCallback(async () => {
+    const timesEntries = await Promise.all(
+      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
+    );
+    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
+
+    setDomainTimes(timesMap);
+    setSettings(loadSettings());
+
+    if (route.type === 'dashboard') {
+      const pList = await getProfilesByDomain(route.domain);
+      const pMap: Record<string, UnifiedProfileData> = {};
+      for (const p of pList) {
+        pMap[p.cardId] = p;
       }
-    </TrainingShell>
-  );
-}
+      setCurrentDomainProfiles(pMap);
+    }
+  }, [route]);
 ~~~~~
 ~~~~~typescript
-import type { ComponentChildren } from 'preact';
-import { TrainingShell } from '../components/training/TrainingShell';
-import type { AnyTrainingPlugin } from '../config/trainingPlugins';
-import { useTrainingSession } from '../hooks/useTrainingSession';
-import type { CardDefinition } from '../types/card';
-import { saveSession, saveTrialRecord } from '../utils/db';
-import type { BaseModuleSettings } from '../utils/settings';
+  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
-interface GenericTrainingPluginAdapter {
-  isTargeting?: (mode: string, settings: unknown) => boolean;
-  generateQuestion: (mode: string, level: number, settings: unknown) => unknown;
-  evaluateAnswer: (userVal: unknown, question: unknown, mode: string) => unknown;
-  isHit: (hitResult: unknown) => boolean;
-  getQuestionLevel: (question: unknown) => number;
-  extractRecordDetails: (
-    question: unknown,
-    hitResult: unknown,
-    userVal: unknown,
-    mode: string,
-  ) => Record<string, unknown>;
-  renderCanvas: (props: {
-    question: unknown;
-    showAnswer: boolean;
-    userAnswer: unknown;
-    onAnswer: (val: unknown) => void;
-    disabled: boolean;
-    isIdle: boolean;
-    settings: unknown;
-  }) => ComponentChildren;
-}
-
-export interface GenericTrainingViewProps {
-  card: CardDefinition;
-  plugin: AnyTrainingPlugin;
-  sessionType: 'training' | 'benchmark';
-  initialLevel: number;
-  settings: BaseModuleSettings;
-  onExit: () => void;
-}
-
-export function GenericTrainingView({
-  card,
-  plugin,
-  sessionType,
-  initialLevel,
-  settings,
-  onExit,
-}: GenericTrainingViewProps) {
-  const domain = card.legacyDomain;
-  const mode = card.legacyMode;
-  const adapter = plugin as unknown as GenericTrainingPluginAdapter;
-
-  const session = useTrainingSession<unknown, unknown, unknown>({
-    domain,
-    mode,
-    sessionType,
-    initialLevel,
-    autoNext: settings.autoNext,
-    autoNextDelay: settings.autoNextDelay,
-    stepGranularity: settings.stepGranularity,
-    adaptiveMode: settings.adaptiveMode,
-    targetAccuracy: settings.targetAccuracy,
-    blockSize: settings.blockSize,
-    generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
-    evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
-    isHit: adapter.isHit,
-    getQuestionLevel: adapter.getQuestionLevel,
-    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
-      await saveTrialRecord({
-        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        timestamp: Date.now(),
-        difficultyLevel: adapter.getQuestionLevel(q),
-        isHit: adapter.isHit(hitResult),
-        responseTimeMs,
-        details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
-      });
-    },
-    saveSession: async ({
-      sessionId,
-      totalTrials: t,
-      hitTrials: h,
-      ended,
-      startTimestamp,
-      endLevel,
-    }) => {
-      await saveSession({
-        id: sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        type: sessionType,
-        startTimestamp,
-        endTimestamp: ended ? Date.now() : undefined,
-        totalTrials: t,
-        hitTrials: h,
-        startLevel: initialLevel,
-        endLevel,
-      });
-    },
-    onExit,
+  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
+    star: 0,
+    color: 0,
+    relative_color: 0,
+    negative_space: 0,
   });
 
-  const isTargeting = adapter.isTargeting ? adapter.isTargeting(mode, settings) : false;
+  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
+    Record<string, UnifiedProfileData>
+  >({});
 
-  return (
-    <TrainingShell
-      card={card}
-      sessionType={sessionType}
-      currentLevel={session.question ? adapter.getQuestionLevel(session.question) : initialLevel}
-      isTargeting={isTargeting}
-      autoNext={settings.autoNext}
-      session={session}
-      onExit={onExit}
-    >
-      {({ disabled, isIdle }) =>
-        adapter.renderCanvas({
-          question: session.question,
-          showAnswer: session.showAnswer,
-          userAnswer: session.userAnswer,
-          onAnswer: session.handleAnswer,
-          disabled,
-          isIdle,
-          settings,
-        })
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const refreshProfiles = useCallback(async () => {
+    const timesEntries = await Promise.all(
+      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
+    );
+    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
+
+    const allProfilesList = await Promise.all(
+      ALL_DOMAINS.map((d) => getProfilesByDomain(d)),
+    );
+    const pMap: Record<string, UnifiedProfileData> = {};
+    for (const list of allProfilesList) {
+      for (const p of list) {
+        pMap[p.cardId] = p;
       }
-    </TrainingShell>
-  );
-}
+    }
+
+    setDomainTimes(timesMap);
+    setCurrentDomainProfiles(pMap);
+    setSettings(loadSettings());
+    setProfilesLoaded(true);
+  }, []);
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+      {route.type === 'train' &&
+        (() => {
+          const activeCard = getCardById(route.cardId);
+          if (!activeCard) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          const plugin = CARD_PLUGINS[activeCard.id];
+          const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
+
+          return (
+            <GenericTrainingView
+              key={`${activeCard.id}-${route.sessionType}`}
+              card={activeCard}
+              plugin={plugin}
+              sessionType={route.sessionType}
+              initialLevel={activeLevel}
+              settings={settings[activeCard.settingsKey]}
+              onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
+            />
+          );
+        })()}
+~~~~~
+~~~~~typescript
+      {route.type === 'train' &&
+        (() => {
+          if (!profilesLoaded) {
+            return (
+              <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold">
+                正在同步能力层阶与训练数据...
+              </div>
+            );
+          }
+          const activeCard = getCardById(route.cardId);
+          if (!activeCard) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          const plugin = CARD_PLUGINS[activeCard.id];
+          const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
+
+          return (
+            <GenericTrainingView
+              key={`${activeCard.id}-${route.sessionType}`}
+              card={activeCard}
+              plugin={plugin}
+              sessionType={route.sessionType}
+              initialLevel={activeLevel}
+              settings={settings[activeCard.settingsKey]}
+              onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
+            />
+          );
+        })()}
 ~~~~~
 
 ### 下一步建议
-1. 执行本计划以更新 `GenericTrainingView.tsx`。
-2. 运行 `npm run checkf` 检查 Biome 校验。
-3. 运行 `npm run build` 验证 TypeScript 编译与 Vite 打包。
+1. 执行本计划应用修改。
+2. 在浏览器中打开并刷新 `http://localhost:5173/#/train/color_hue?type=training`，验证难度等级（`Level`）是否正确保持为已达到的等级。
