@@ -1,4 +1,4 @@
-import { FastForward } from 'lucide-preact';
+import { ArrowLeft, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
@@ -140,11 +140,23 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     <div className="w-full">
       {/* 顶部流水线全局进度与操作栏 */}
       <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
-            阶段 {currentStepIndex + 1} / {validItems.length}
-          </span>
-          <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestExit}
+            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="结束并查看训练流总结"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练流
+          </button>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
+              阶段 {currentStepIndex + 1} / {validItems.length}
+            </span>
+            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
@@ -178,6 +190,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           globalSettings={settings.global}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
+          showExitButton={false}
           onExit={handleRequestExit}
         />
       )}

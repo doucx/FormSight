@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复训练流阶段切换时能力层阶加载死锁问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787233150.90704, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(plan): 统一训练流退出入口并隐藏单模块退出按钮", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787233419.9850426, "duration_ms": 0}}

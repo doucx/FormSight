@@ -1,96 +1,330 @@
-根据对代码逻辑与组件生命周期的诊断，训练流在阶段切换时卡死在「正在加载生涯能力层阶...」的原因已明确：
+你的需求非常清晰合理。在训练流模式下，单卡片级别的退出容易引发两层分析弹窗竞争（单卡片总结与训练流大盘总结）。
 
-1. **依赖项过窄导致的死锁**：`PlanTrainingView` 中拉取卡片生涯能力层阶的 `useEffect` 仅依赖了 `[currentCard]`。由于 `currentCard` 是单例对象引用，当训练流中包含相同训练模块或同一卡片时，切换阶段后 `currentCard` 引用未发生改变，导致 `useEffect` 完全不会重新触发，而 `handleStageReached` 提前调用的 `setIsLevelLoaded(false)` 将使界面永久卡死在 loading 占位骨架中。
-2. **异步缺少异常容错兜底**：`getProfile` Promise 调用链缺少 `.catch` 兜底，若在极端网络或 IndexedDB 繁忙异常时发生 Reject，`setIsLevelLoaded(true)` 无法执行。
+我将生成一个实现方案：
+1. **隐藏单卡片退出按钮**：为 `TrainingShell` 和 `GenericTrainingView` 增加 `showExitButton` 控制属性，并在 `PlanTrainingView` 中将其置为 `false`，移除内层单卡片的退出按钮；
+2. **在训练流顶部状态栏最左侧新增统一退出入口**：点击直接呼出全局训练流成果大盘总结（`PlanSummaryModal`），让训练流的退出与总结流程更加纯粹、一致。
 
-我将生成一个修复计划，优化依赖项并在异步失败时安全降级至默认难度，彻底杜绝死锁。
-
-## [WIP] fix: 修复训练流阶段切换时能力层阶加载死锁问题
-
-### 错误分析
-
-在 `PlanTrainingView.tsx` 中，能力层阶拉取逻辑存在以下缺陷：
-1. `useEffect` 依赖项仅为 `[currentCard]`，当阶段切换（`currentStepIndex` 自增）但相邻阶段为同一卡片（或 `currentCard` 引用不变）时，`useEffect` 不会重新执行。
-2. 在 `handleStageReached` 和 `handleSkipCurrentStage` 中显式执行了 `setIsLevelLoaded(false)`，导致在上述情况下 `isLevelLoaded` 状态被置为 `false` 后永远无法被置回 `true`，界面陷入永久阻塞状态。
-3. `getProfile` 异步调用缺少 `catch` 容错，未捕获的 Promise 异常也会导致 `isLevelLoaded` 状态悬挂。
+## [WIP] feat(plan): 统一训练流退出入口并隐藏单模块退出按钮
 
 ### 用户需求
 
-解决在多阶段训练流中，完成当前阶段后无缝切换至下一阶段时可能卡死在「正在加载生涯能力层阶」的问题，确保训练流在任何阶段切换与卡片编排下均能可靠推进。
+1. 在训练流模式（`PlanTrainingView`）中隐藏单题模块顶部的「退出训练 (Esc)」按钮，避免在训练流进行时误触发单卡片结算弹窗。
+2. 在训练流顶部的全局进度栏最左侧新增统一的「退出训练」按钮，点击后直接弹出本次训练流的大盘总结分析（或在无做答时安全退出）。
 
 ### 评论
 
-多阶段自适应训练流是系统的核心链路。确保阶段切换的生命周期健壮性与异步状态确定性，对于维持用户心流体验至关重要。
+统一训练流的退出层级能够彻底消除子模块与训练流双层结算弹窗的歧义和遮罩冲突，显著提升多阶段连续训练的沉浸感与交互清晰度。
 
 ### 目标
 
-1. 将 `PlanTrainingView.tsx` 中层阶加载 `useEffect` 依赖项扩展为 `[currentStepIndex, currentCard?.id, planSessionKey]`。
-2. 在 `getProfile` 调用链中增加 `.catch` 与兜底容错，确保不论成功还是失败都能安全进入 `isLevelLoaded = true`。
-3. 优化 `handleStageReached` 和 `handleSkipCurrentStage` 中的状态流转，避免冗余的状态竞争。
+1. 在 `TrainingShell.tsx` 中增加 `showExitButton` 属性（默认为 `true`），支持隐藏左上角退出按钮。
+2. 在 `GenericTrainingView.tsx` 中增加 `showExitButton` 属性并透传至 `TrainingShell`。
+3. 在 `PlanTrainingView.tsx` 中将 `showExitButton` 设为 `false`，并在顶部流水线状态栏的最左侧放置「退出训练流」按钮，触发训练流大盘分析。
 
 ### 基本原理
 
-通过将 `currentStepIndex`、`currentCard?.id` 以及会话重置标识 `planSessionKey` 共同作为 `useEffect` 依赖项，确保只要阶段发生位移，Preact 就必定触发新阶段的生涯层阶拉取。配合 Promise 的异常降级保护，保证 `isLevelLoaded` 在任何情况下都能在数十毫秒内顺利置为 `true`，激活下一阶段训练视图。
+通过自顶向下传递 `showExitButton={false}`，让 `GenericTrainingView` 仅作为纯内容与交互算子运行，将流程控制（跳过阶段、全局退出与结算）统一收拢至 `PlanTrainingView` 顶层栏，保证整个训练流的控制流单一可控。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #scope/ux #ai/instruct #task/domain/training #task/object/plan-transition #task/action/bug-fix #task/state/begin
+#intent/build #flow/ready #priority/medium #comp/ui #concept/navigation #scope/ux #ai/instruct #task/domain/ui #task/object/plan-exit-control #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `PlanTrainingView.tsx` 的层阶加载生命周期与依赖项
+#### Acts 1: 在 `TrainingShell.tsx` 中支持隐藏退出按钮
 
-我们将完善 `PlanTrainingView.tsx` 的 `useEffect` 依赖项与 Promise 错误兜底处理。
+~~~~~act
+patch_file
+src/components/training/TrainingShell.tsx
+~~~~~
+~~~~~typescript.old
+interface TrainingShellProps {
+  card: CardDefinition;
+  sessionType: 'training' | 'benchmark';
+  currentLevel: number;
+  isTargeting?: boolean;
+  autoNext: boolean;
+  session: TrainingSessionHandle;
+  onExit: () => void;
+  children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
+}
+
+export function TrainingShell({
+  card,
+  sessionType,
+  currentLevel,
+  isTargeting = false,
+  autoNext,
+  session,
+  children,
+}: TrainingShellProps) {
+~~~~~
+~~~~~typescript.new
+interface TrainingShellProps {
+  card: CardDefinition;
+  sessionType: 'training' | 'benchmark';
+  currentLevel: number;
+  isTargeting?: boolean;
+  autoNext: boolean;
+  session: TrainingSessionHandle;
+  showExitButton?: boolean;
+  onExit: () => void;
+  children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
+}
+
+export function TrainingShell({
+  card,
+  sessionType,
+  currentLevel,
+  isTargeting = false,
+  autoNext,
+  session,
+  showExitButton = true,
+  children,
+}: TrainingShellProps) {
+~~~~~
+~~~~~act
+patch_file
+src/components/training/TrainingShell.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 统一 Header 状态栏 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestFinish}
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练 (Esc)
+          </button>
+          <div className="relative flex items-center">
+~~~~~
+~~~~~typescript.new
+      {/* 统一 Header 状态栏 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {showExitButton && (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              退出训练 (Esc)
+            </button>
+          )}
+          <div className="relative flex items-center">
+~~~~~
+
+#### Acts 2: 在 `GenericTrainingView.tsx` 中透传 `showExitButton`
+
+~~~~~act
+patch_file
+src/views/GenericTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+export interface GenericTrainingViewProps {
+  card: CardDefinition;
+  plugin: AnyTrainingPlugin;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  settings: BaseModuleSettings;
+  globalSettings?: GlobalSettings;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onExit: () => void;
+}
+
+export function GenericTrainingView({
+  card,
+  plugin,
+  sessionType,
+  initialLevel,
+  settings,
+  globalSettings,
+  targetLimitTrials,
+  onTargetLimitReached,
+  onExit,
+}: GenericTrainingViewProps) {
+~~~~~
+~~~~~typescript.new
+export interface GenericTrainingViewProps {
+  card: CardDefinition;
+  plugin: AnyTrainingPlugin;
+  sessionType: 'training' | 'benchmark';
+  initialLevel: number;
+  settings: BaseModuleSettings;
+  globalSettings?: GlobalSettings;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  showExitButton?: boolean;
+  onExit: () => void;
+}
+
+export function GenericTrainingView({
+  card,
+  plugin,
+  sessionType,
+  initialLevel,
+  settings,
+  globalSettings,
+  targetLimitTrials,
+  onTargetLimitReached,
+  showExitButton = true,
+  onExit,
+}: GenericTrainingViewProps) {
+~~~~~
+~~~~~act
+patch_file
+src/views/GenericTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+  return (
+    <TrainingShell
+      card={card}
+      sessionType={sessionType}
+      currentLevel={session.question ? adapter.getQuestionLevel(session.question) : initialLevel}
+      isTargeting={isTargeting}
+      autoNext={settings.autoNext}
+      session={session}
+      onExit={onExit}
+    >
+~~~~~
+~~~~~typescript.new
+  return (
+    <TrainingShell
+      card={card}
+      sessionType={sessionType}
+      currentLevel={session.question ? adapter.getQuestionLevel(session.question) : initialLevel}
+      isTargeting={isTargeting}
+      autoNext={settings.autoNext}
+      session={session}
+      showExitButton={showExitButton}
+      onExit={onExit}
+    >
+~~~~~
+
+#### Acts 3: 在 `PlanTrainingView.tsx` 顶部导航栏最左侧添加退出按钮并隐藏子模块退出
 
 ~~~~~act
 patch_file
 src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript.old
-  useEffect(() => {
-    let isMounted = true;
-    if (currentCard) {
-      setIsLevelLoaded(false);
-      getProfile(currentCard.id).then((p) => {
-        if (!isMounted) return;
-        setStageInitialLevel(p?.currentLevel || 5);
-        setIsLevelLoaded(true);
-      });
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [currentCard]);
+import { FastForward } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 ~~~~~
 ~~~~~typescript.new
-  useEffect(() => {
-    let isMounted = true;
-    if (currentCard) {
-      setIsLevelLoaded(false);
-      getProfile(currentCard.id)
-        .then((p) => {
-          if (!isMounted) return;
-          setStageInitialLevel(p?.currentLevel || 5);
-          setIsLevelLoaded(true);
-        })
-        .catch((err) => {
-          console.error('Failed to load profile for card in plan:', err);
-          if (!isMounted) return;
-          setStageInitialLevel(5);
-          setIsLevelLoaded(true);
-        });
-    } else {
-      setIsLevelLoaded(true);
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [currentStepIndex, currentCard?.id, planSessionKey]);
+import { ArrowLeft, FastForward } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+~~~~~
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 顶部流水线全局进度与操作栏 */}
+      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
+            阶段 {currentStepIndex + 1} / {validItems.length}
+          </span>
+          <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
+        </div>
+
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
+          </div>
+          <button
+            type="button"
+            onClick={handleSkipCurrentStage}
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="跳过当前阶段进入下一阶段"
+          >
+            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
+            跳过此阶段
+          </button>
+        </div>
+      </div>
+~~~~~
+~~~~~typescript.new
+      {/* 顶部流水线全局进度与操作栏 */}
+      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestExit}
+            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="结束并查看训练流总结"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练流
+          </button>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
+              阶段 {currentStepIndex + 1} / {validItems.length}
+            </span>
+            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
+          </div>
+          <button
+            type="button"
+            onClick={handleSkipCurrentStage}
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="跳过当前阶段进入下一阶段"
+          >
+            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
+            跳过此阶段
+          </button>
+        </div>
+      </div>
+~~~~~
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+        <GenericTrainingView
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          onExit={handleRequestExit}
+        />
+~~~~~
+~~~~~typescript.new
+        <GenericTrainingView
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          showExitButton={false}
+          onExit={handleRequestExit}
+        />
 ~~~~~
 
 ### 下一步建议
 
-- **功能验证**: 启动训练流并完成任意阶段，或点击「跳过此阶段」，验证是否能瞬时无缝切换到下一训练阶段。
-- **阶段重复测试**: 在「定制日常训练流」中编排包含连续两个相同模块（例如连续两个「色相」）的测试训练流，确认能够正常切换并不再卡死。
+- **界面验证**: 进入「今日训练流」界面，观察画布顶部的单题卡片内已不再显示退出按钮；
+- **交互验证**: 练习若干题后，点击最顶部进度栏左侧的「退出训练流」按钮，验证是否直接唤起整场训练流的大盘综合分析弹窗（`PlanSummaryModal`）。
