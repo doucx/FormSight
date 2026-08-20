@@ -128,7 +128,8 @@ export function GenericTrainingView({
           isIdle,
           settings: {
             ...settings,
-            sliderHitMargin: globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number) ?? 12,
+            sliderHitMargin:
+              globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number) ?? 12,
           },
         })
       }
