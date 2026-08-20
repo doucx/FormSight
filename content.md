@@ -1,183 +1,54 @@
-收到，针对分析中确认的几项核心缺陷，我们将按逻辑修复训练计划的生命周期调度、按键冲突以及阶段状态加载时序。
+我将生成一个 Quipu 修复计划，针对分析出的训练计划多阶段切换卡死、键盘快捷键双重监听竞态、以及训练会话状态重置不彻底等问题进行精准修复。
 
-## [WIP] fix: 修复训练计划阶段截断、层阶时序与按键冲突隐患
+## [WIP] fix: 修复训练计划阶段推进卡死与按键状态异常
 
 ### 错误分析
-1. **最后一题诊断栏强制跳过**: `useTrainingSession` 在达到 `targetLimitTrials` 时，无视 `autoNext` 属性直接调用 `setTimeout` 切换阶段，导致关闭自动切题的用户无法查看最后一题的对错与解析。
-2. **多阶段初始难度时序漏洞**: `PlanTrainingView` 切换阶段时未同步重置 `isLevelLoaded`，可能导致短暂沿用上一阶段卡片等级进行初始化的竞态问题。
-3. **按键监听与视图冲突**: `PlanStepTransitionOverlay` 弹出时底层 `GenericTrainingView` 仍在接收 Space/Esc 按键事件，容易产生非预期的并发响应。
-4. **无效卡片容错缺失**: 计划中若存在失效或已被关闭的 `cardId`，会导致数组索引错位或计划启动直接静默闪退。
+
+1. **同模块多阶段切换卡死**：`PlanTrainingView.tsx` 中用于重新异步读取卡片等级的 `useEffect` 依赖项仅为 `[currentCard]`。当训练计划中包含连续同种卡片或同一卡片重复编排时，`currentCard` 引用未发生改变，导致 `useEffect` 不触发，`isLevelLoaded` 状态永远停留在 `false`，界面永久阻断在加载提示。
+2. **快捷键双重监听导致重复提交**：在 `AbstractionCanvas.tsx` 中，外部组件与内部 `Choice2AfcContainer` 均注册了全局 `1`/`2` 键监听，导致在 2AFC 题型下单次按键会触发两次 `onAnswer` 并发调用，出现跳题、双重扣/加分和多次触发音效。
+3. **关闭自动切题时无法按空格结束/推进**：`useTrainingSession.ts` 在 `isFinished === true` 时直接忽略空格键，导致用户无法通过纯键盘流进入总结或下一阶段。
+4. **再练一轮时自适应引擎状态未完全重置**：`useTrainingSession.ts` 的 `handleRestartSession` 未调用 `AdaptiveEngine.setLevel`，遗留了上一轮未完成的做题历史或连胜计数。
+5. **今日数据统计 Key 容错不严**：`useTodayStats.ts` 统计聚合时直接回退到 `r.mode`，与看板使用的标准 `card.id` 存在潜在键名脱节。
 
 ### 用户需求
-修复训练计划（Training Plan）流转中的上述关键 Bug，确保不同切题偏好下的用户体验平滑、阶段间能力等级准确加载、键盘事件隔离，并具备失效卡片过滤机制。
+
+修复训练计划在各种卡片编排与配置下的运行缺陷，确保多阶段无缝流转、快捷键操作幂等且符合预期、会话重置彻底。
 
 ### 评论
-这些修复消除了计划训练主循环中的状态竞态与事件泄露，大幅提升了训练流从启动、过渡到结课的稳定性与鲁棒性。
+
+训练计划（Plan）作为核心串联工作流，对阶段流转和状态复位的确定性要求极高。修复这些边界条件能极大提升训练心流与系统稳健性。
 
 ### 目标
-1. 在 `useTrainingSession` 中增加对 `autoNext` 的严格判断，手动切题模式下通过“完成本阶段”显式提交。
-2. 在 `PlanTrainingView` 中确保阶段切换时同步锁死 `isLevelLoaded`，并在过渡遮罩激活期间彻底卸载/隐藏底层训练视图。
-3. 在 `PlanTrainingView` 与 `PlanEditorModal` 中加入 `validItems` 校验与清洗。
+
+1. 修复 `PlanTrainingView.tsx` 中的等级加载依赖，使其在同卡片连续切换时能正确重新加载并解除遮罩。
+2. 禁用 `AbstractionCanvas.tsx` 中 `Choice2AfcContainer` 的内置按键监听，由画布统一管理全局快捷键，消除双重触发。
+3. 优化 `useTrainingSession.ts` 中的空格键逻辑，在阶段完成时允许按空格进入总结/下一阶段。
+4. 在 `useTrainingSession.ts` 的 `handleRestartSession` 中重置 `AdaptiveEngine` 内部状态。
+5. 强化 `useTodayStats.ts` 聚合逻辑，确保历史记录精准映射到卡片标准 ID。
 
 ### 基本原理
-通过将状态切题与用户意图严格绑定，当 `autoNext` 为 false 时，将阶段完成状态置为 `isFinished`，用户可通过手动点击按钮或按键触发 `handleRequestFinish` -> `onTargetLimitReached`。在过渡状态下进行条件渲染，使 DOM 中同时只存在一个主动按键监听层，避免事件穿透。
+
+1. 通过在 `PlanTrainingView.tsx` 的 `useEffect` 依赖项中追加 `currentStepIndex`，确保即使卡片相同，只要步骤索引变化也会强制触发等级重新读取与状态复位。
+2. 为 `AbstractionCanvas.tsx` 中的 `Choice2AfcContainer` 显式设置 `enableKeyboardShortcuts={false}`，使按键事件收敛于单一监听器。
+3. 在 `useTrainingSession.ts` 的 keydown 处理函数中，当 `showAnswer === true` 且 `isFinished === true` 时，将空格行为路由至 `handleRequestFinish()`。
+4. 在 `handleRestartSession` 中显式调用 `adaptiveEngineRef.current.setLevel(initialLevel)` 清空 `blockHistory` 与 `consecutiveCorrect`。
+5. 引入 `ALL_CARDS` 对今日记录的 `cardId` 与 `mode` 进行规范化对齐。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/testing #task/object/training-plan-lifecycle #task/action/bug-fix #task/state/begin
+
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/runtime #task/object/training-plan-and-session #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `useTrainingSession.ts` 中达到题目上限时的自动切题逻辑
-
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript.old
-      if (targetLimitTrials && newTotal >= targetLimitTrials) {
-        setIsFinished(true);
-        await saveCurrentSession(newTotal, newHits, true);
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          if (onTargetLimitReached) {
-            onTargetLimitReached(updatedHistory);
-          } else {
-            setShowSummaryModal(true);
-          }
-        }, autoNextDelay);
-      } else if (sessionType === 'benchmark' && newTotal >= 20) {
-        setIsFinished(true);
-        await saveCurrentSession(newTotal, newHits, true);
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          setShowSummaryModal(true);
-        }, autoNextDelay);
-      } else if (autoNext) {
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          handleNextQuestion();
-        }, autoNextDelay);
-      }
-    },
-    [
-      questionStartTime,
-      evaluateAnswer,
-      question,
-      isHit,
-      totalTrials,
-      hitTrials,
-      saveTrialRecord,
-      getQuestionLevel,
-      sessionHistory,
-      targetLimitTrials,
-      onTargetLimitReached,
-      sessionType,
-      saveCurrentSession,
-      autoNextDelay,
-      autoNext,
-      handleNextQuestion,
-    ],
-  );
-
-  const handleRequestFinish = useCallback(async () => {
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
-    } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
-    }
-  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
-~~~~~
-~~~~~typescript.new
-      if (targetLimitTrials && newTotal >= targetLimitTrials) {
-        setIsFinished(true);
-        await saveCurrentSession(newTotal, newHits, true);
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        if (autoNext) {
-          autoNextTimerRef.current = window.setTimeout(() => {
-            if (onTargetLimitReached) {
-              onTargetLimitReached(updatedHistory);
-            } else {
-              setShowSummaryModal(true);
-            }
-          }, autoNextDelay);
-        }
-      } else if (sessionType === 'benchmark' && newTotal >= 20) {
-        setIsFinished(true);
-        await saveCurrentSession(newTotal, newHits, true);
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        if (autoNext) {
-          autoNextTimerRef.current = window.setTimeout(() => {
-            setShowSummaryModal(true);
-          }, autoNextDelay);
-        }
-      } else if (autoNext) {
-        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          handleNextQuestion();
-        }, autoNextDelay);
-      }
-    },
-    [
-      questionStartTime,
-      evaluateAnswer,
-      question,
-      isHit,
-      totalTrials,
-      hitTrials,
-      saveTrialRecord,
-      getQuestionLevel,
-      sessionHistory,
-      targetLimitTrials,
-      onTargetLimitReached,
-      sessionType,
-      saveCurrentSession,
-      autoNextDelay,
-      autoNext,
-      handleNextQuestion,
-    ],
-  );
-
-  const handleRequestFinish = useCallback(async () => {
-    if (targetLimitTrials && totalTrials >= targetLimitTrials && onTargetLimitReached) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onTargetLimitReached(sessionHistory);
-      return;
-    }
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
-    } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
-    }
-  }, [
-    targetLimitTrials,
-    totalTrials,
-    hitTrials,
-    onTargetLimitReached,
-    sessionHistory,
-    showSummaryModal,
-    saveCurrentSession,
-    onExit,
-  ]);
-~~~~~
-
-#### Acts 2: 优化 `PlanTrainingView.tsx` 阶段切换状态、按键隔离与卡片容错
+#### Acts 1: 修复 `PlanTrainingView.tsx` 中的阶段监听依赖
 
 ~~~~~act
 patch_file
 src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript.old
-  const currentStep = plan.items[currentStepIndex];
-  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
-  const nextStep = plan.items[currentStepIndex + 1];
-  const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
-
   // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
     let isMounted = true;
@@ -193,127 +64,8 @@ src/views/PlanTrainingView.tsx
       isMounted = false;
     };
   }, [currentCard]);
-
-  // 总计时器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!showSummaryModal) {
-        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [sessionStartTime, showSummaryModal]);
-
-  const handleStageReached = useCallback(
-    (history: SessionHistoryItem[]) => {
-      if (!currentCard) return;
-
-      const stageRes: PlanStageResult = {
-        card: currentCard,
-        targetTrials: currentStep.targetTrials,
-        history,
-      };
-
-      setStageResults((prev) => [...prev, stageRes]);
-
-      if (currentStepIndex + 1 < plan.items.length) {
-        setIsTransitioning(true);
-      } else {
-        setShowSummaryModal(true);
-      }
-    },
-    [currentCard, currentStep, currentStepIndex, plan.items.length],
-  );
-
-  const handleProceedNextStage = useCallback(() => {
-    setIsTransitioning(false);
-    setCurrentStepIndex((prev) => prev + 1);
-  }, []);
-
-  const handleRestartPlan = useCallback(() => {
-    setShowSummaryModal(false);
-    setIsTransitioning(false);
-    setCurrentStepIndex(0);
-    setStageResults([]);
-    setTotalElapsedSeconds(0);
-    setSessionStartTime(Date.now());
-  }, []);
-
-  if (!currentCard || !plan.items || plan.items.length === 0) {
-    onExit();
-    return null;
-  }
-
-  const plugin = CARD_PLUGINS[currentCard.id];
-  const cardConfig = getCardSettings(settings, currentCard.id);
-
-  return (
-    <div className="w-full">
-      {/* 顶部流水线全局进度 */}
-      <div className="max-w-5xl mx-auto mb-4 bg-indigo-900 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-black bg-indigo-600 px-2.5 py-1 rounded-xl">
-            阶段 {currentStepIndex + 1} / {plan.items.length}
-          </span>
-          <span className="text-xs font-bold text-indigo-100">{plan.name}</span>
-        </div>
-
-        <div className="text-xs text-indigo-200 font-mono font-bold">
-          本阶段目标: {currentStep.targetTrials} 题
-        </div>
-      </div>
-
-      {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-          正在加载【{currentCard.title}】的生涯能力层阶...
-        </div>
-      ) : (
-        <GenericTrainingView
-          key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
-          card={currentCard}
-          plugin={plugin}
-          sessionType="training"
-          initialLevel={stageInitialLevel}
-          settings={cardConfig}
-          globalSettings={settings.global}
-          targetLimitTrials={currentStep.targetTrials}
-          onTargetLimitReached={handleStageReached}
-          onExit={onExit}
-        />
-      )}
-
-      {isTransitioning && nextCard && (
-        <PlanStepTransitionOverlay
-          completedCard={currentCard}
-          nextCard={nextCard}
-          completedStepIndex={currentStepIndex}
-          totalSteps={plan.items.length}
-          onProceed={handleProceedNextStage}
-          onExit={onExit}
-        />
-      )}
-
-      {showSummaryModal && (
-        <PlanSummaryModal
-          planName={plan.name}
-          stageResults={stageResults}
-          totalElapsedSeconds={totalElapsedSeconds}
-          onClose={onExit}
-          onRestart={handleRestartPlan}
-        />
-      )}
-    </div>
-  );
 ~~~~~
 ~~~~~typescript.new
-  // 过滤无效或不存在的卡片，提供安全保障
-  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
-
-  const currentStep = validItems[currentStepIndex];
-  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
-  const nextStep = validItems[currentStepIndex + 1];
-  const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
-
   // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
     let isMounted = true;
@@ -328,151 +80,238 @@ src/views/PlanTrainingView.tsx
     return () => {
       isMounted = false;
     };
-  }, [currentCard]);
-
-  // 总计时器
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (!showSummaryModal) {
-        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [sessionStartTime, showSummaryModal]);
-
-  const handleStageReached = useCallback(
-    (history: SessionHistoryItem[]) => {
-      if (!currentCard) return;
-
-      const stageRes: PlanStageResult = {
-        card: currentCard,
-        targetTrials: currentStep.targetTrials,
-        history,
-      };
-
-      setStageResults((prev) => [...prev, stageRes]);
-
-      if (currentStepIndex + 1 < validItems.length) {
-        setIsTransitioning(true);
-      } else {
-        setShowSummaryModal(true);
-      }
-    },
-    [currentCard, currentStep, currentStepIndex, validItems.length],
-  );
-
-  const handleProceedNextStage = useCallback(() => {
-    setIsLevelLoaded(false);
-    setIsTransitioning(false);
-    setCurrentStepIndex((prev) => prev + 1);
-  }, []);
-
-  const handleRestartPlan = useCallback(() => {
-    setIsLevelLoaded(false);
-    setShowSummaryModal(false);
-    setIsTransitioning(false);
-    setCurrentStepIndex(0);
-    setStageResults([]);
-    setTotalElapsedSeconds(0);
-    setSessionStartTime(Date.now());
-  }, []);
-
-  if (!currentCard || validItems.length === 0) {
-    onExit();
-    return null;
-  }
-
-  const plugin = CARD_PLUGINS[currentCard.id];
-  const cardConfig = getCardSettings(settings, currentCard.id);
-
-  return (
-    <div className="w-full">
-      {/* 顶部流水线全局进度 */}
-      <div className="max-w-5xl mx-auto mb-4 bg-indigo-900 text-white px-5 py-3 rounded-2xl shadow-md flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs font-black bg-indigo-600 px-2.5 py-1 rounded-xl">
-            阶段 {currentStepIndex + 1} / {validItems.length}
-          </span>
-          <span className="text-xs font-bold text-indigo-100">{plan.name}</span>
-        </div>
-
-        <div className="text-xs text-indigo-200 font-mono font-bold">
-          本阶段目标: {currentStep.targetTrials} 题
-        </div>
-      </div>
-
-      {isTransitioning && nextCard ? (
-        <PlanStepTransitionOverlay
-          completedCard={currentCard}
-          nextCard={nextCard}
-          completedStepIndex={currentStepIndex}
-          totalSteps={validItems.length}
-          onProceed={handleProceedNextStage}
-          onExit={onExit}
-        />
-      ) : !isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-          正在加载【{currentCard.title}】的生涯能力层阶...
-        </div>
-      ) : (
-        <GenericTrainingView
-          key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
-          card={currentCard}
-          plugin={plugin}
-          sessionType="training"
-          initialLevel={stageInitialLevel}
-          settings={cardConfig}
-          globalSettings={settings.global}
-          targetLimitTrials={currentStep.targetTrials}
-          onTargetLimitReached={handleStageReached}
-          onExit={onExit}
-        />
-      )}
-
-      {showSummaryModal && (
-        <PlanSummaryModal
-          planName={plan.name}
-          stageResults={stageResults}
-          totalElapsedSeconds={totalElapsedSeconds}
-          onClose={onExit}
-          onRestart={handleRestartPlan}
-        />
-      )}
-    </div>
-  );
+  }, [currentCard, currentStepIndex]);
 ~~~~~
 
-#### Acts 3: 优化 `PlanEditorModal.tsx` 中无效卡片过滤保护
+#### Acts 2: 修复 `AbstractionCanvas.tsx` 中 2AFC 容器的快捷键冲突
 
 ~~~~~act
 patch_file
-src/components/plan/PlanEditorModal.tsx
+src/components/AbstractionCanvas.tsx
 ~~~~~
 ~~~~~typescript.old
-  const handleSave = () => {
-    onSave(plan);
-    onClose();
-  };
-
-  const totalTrials = plan.items.reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+        {/* 双卡片候选区 */}
+        <Choice2AfcContainer
+          optionA={{
+            key: 'A',
+            title: '区域 A (键 1)',
+            isCorrect: isTargetA,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefA}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          optionB={{
+            key: 'B',
+            title: '区域 B (键 2)',
+            isCorrect: isTargetB,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefB}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          selectedChoice={selectedChoice}
+          showAnswer={showAnswer}
+          disabled={disabled}
+          onSelect={handleSelectChoice}
+        />
 ~~~~~
 ~~~~~typescript.new
-  const handleSave = () => {
-    // 过滤掉无效引用的卡片阶段后保存
-    const sanitizedPlan: TrainingPlan = {
-      ...plan,
-      items: plan.items.filter((item) => Boolean(getCardById(item.cardId))),
-    };
-    onSave(sanitizedPlan);
-    onClose();
-  };
+        {/* 双卡片候选区 */}
+        <Choice2AfcContainer
+          optionA={{
+            key: 'A',
+            title: '区域 A (键 1)',
+            isCorrect: isTargetA,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefA}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          optionB={{
+            key: 'B',
+            title: '区域 B (键 2)',
+            isCorrect: isTargetB,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefB}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          selectedChoice={selectedChoice}
+          showAnswer={showAnswer}
+          disabled={disabled}
+          enableKeyboardShortcuts={false}
+          onSelect={handleSelectChoice}
+        />
+~~~~~
 
-  const validPlanItems = plan.items.filter((item) => Boolean(getCardById(item.cardId)));
-  const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+#### Acts 3: 优化 `useTrainingSession.ts` 快捷键推进与重置逻辑
+
+~~~~~act
+patch_file
+src/hooks/useTrainingSession.ts
+~~~~~
+~~~~~typescript.old
+  const handleRestartSession = useCallback(() => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setIsIdle(false);
+    idleStartRef.current = null;
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    streakRef.current = 0;
+    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateQuestion(nextLevel));
+    setQuestionStartTime(Date.now());
+  }, [domain, mode, generateQuestion]);
+~~~~~
+~~~~~typescript.new
+  const handleRestartSession = useCallback(() => {
+    setShowSummaryModal(false);
+    setIsFinished(false);
+    setIsIdle(false);
+    idleStartRef.current = null;
+    setTotalTrials(0);
+    setHitTrials(0);
+    setSessionHistory([]);
+    setShowAnswer(false);
+    setUserAnswer(null);
+    streakRef.current = 0;
+    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(0);
+    adaptiveEngineRef.current.setLevel(initialLevel);
+    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
+    setQuestion(generateQuestion(nextLevel));
+    setQuestionStartTime(Date.now());
+  }, [domain, mode, initialLevel, generateQuestion]);
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useTrainingSession.ts
+~~~~~
+~~~~~typescript.old
+      if (e.code === 'Space' || e.key === ' ') {
+        if (showAnswer && !isFinished) {
+          e.preventDefault();
+          handleNextQuestion();
+        }
+      } else if (e.code === 'Escape' || e.key === 'Escape') {
+~~~~~
+~~~~~typescript.new
+      if (e.code === 'Space' || e.key === ' ') {
+        if (showAnswer) {
+          e.preventDefault();
+          if (!isFinished) {
+            handleNextQuestion();
+          } else {
+            handleRequestFinish();
+          }
+        }
+      } else if (e.code === 'Escape' || e.key === 'Escape') {
+~~~~~
+
+#### Acts 4: 强化 `useTodayStats.ts` 统计聚合键名对齐
+
+~~~~~act
+patch_file
+src/hooks/useTodayStats.ts
+~~~~~
+~~~~~typescript.old
+import { useEffect, useState } from 'preact/hooks';
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
+
+export function useTodayStats(domain?: TrainingDomain) {
+  const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
+    {},
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      const records = await getTrialRecords(domain);
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      const stats: Record<string, { count: number; timeMs: number }> = {};
+
+      for (const r of records) {
+        if (r.timestamp >= startOfToday) {
+          const key = r.cardId || r.mode;
+          if (!stats[key]) {
+            stats[key] = { count: 0, timeMs: 0 };
+          }
+          stats[key].count += 1;
+          stats[key].timeMs += (r.responseTimeMs as number) || 0;
+        }
+      }
+~~~~~
+~~~~~typescript.new
+import { useEffect, useState } from 'preact/hooks';
+import { ALL_CARDS } from '../config/cards';
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
+
+export function useTodayStats(domain?: TrainingDomain) {
+  const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
+    {},
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      const records = await getTrialRecords(domain);
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+      const stats: Record<string, { count: number; timeMs: number }> = {};
+
+      for (const r of records) {
+        if (r.timestamp >= startOfToday) {
+          const matchedCard = ALL_CARDS.find(
+            (c) => c.id === r.cardId || (c.domain === r.domain && c.mode === r.mode),
+          );
+          const key = matchedCard ? matchedCard.id : r.cardId || r.mode;
+          if (!stats[key]) {
+            stats[key] = { count: 0, timeMs: 0 };
+          }
+          stats[key].count += 1;
+          stats[key].timeMs += (r.responseTimeMs as number) || 0;
+        }
+      }
 ~~~~~
 
 ### 下一步建议
-1. **运行项目验证**: 启动本地环境或执行单元测试，验证计划阶段切题、过渡弹窗以及手动答题下的状态结算。
-2. **测试用例补充**: 针对 `useTrainingSession` 的 `targetLimitTrials` 与 `autoNext: false` 联动行为编写测试用例，确保无回归。
+
+- 运行测试套件验证修改：执行 `npm test` 确认各模块与自适应测试通过。
+- 视网膜屏幕高清优化：若需进一步增强视觉体验，可将 `drawPolygonCanvas` 的渲染上下文全面升级接入 `setupHiDpiCanvas`。

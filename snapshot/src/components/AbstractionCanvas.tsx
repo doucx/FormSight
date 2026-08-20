@@ -617,6 +617,7 @@ export function AbstractionCanvas({
           selectedChoice={selectedChoice}
           showAnswer={showAnswer}
           disabled={disabled}
+          enableKeyboardShortcuts={false}
           onSelect={handleSelectChoice}
         />
 

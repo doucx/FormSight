@@ -47,7 +47,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return () => {
       isMounted = false;
     };
-  }, [currentCard]);
+  }, [currentCard, currentStepIndex]);
 
   // 总计时器
   useEffect(() => {

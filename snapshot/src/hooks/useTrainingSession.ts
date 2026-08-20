@@ -275,10 +275,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
+    adaptiveEngineRef.current.setLevel(initialLevel);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }, [domain, mode, generateQuestion]);
+  }, [domain, mode, initialLevel, generateQuestion]);
 
   // === 闲置与失焦监听 ===
   useEffect(() => {
@@ -343,9 +344,13 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         return;
       }
       if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer && !isFinished) {
+        if (showAnswer) {
           e.preventDefault();
-          handleNextQuestion();
+          if (!isFinished) {
+            handleNextQuestion();
+          } else {
+            handleRequestFinish();
+          }
         }
       } else if (e.code === 'Escape' || e.key === 'Escape') {
         e.preventDefault();

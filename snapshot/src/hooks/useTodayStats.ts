@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { ALL_CARDS } from '../config/cards';
 import { type TrainingDomain, getTrialRecords } from '../utils/db';
 
 export function useTodayStats(domain?: TrainingDomain) {
@@ -17,7 +18,10 @@ export function useTodayStats(domain?: TrainingDomain) {
 
       for (const r of records) {
         if (r.timestamp >= startOfToday) {
-          const key = r.cardId || r.mode;
+          const matchedCard = ALL_CARDS.find(
+            (c) => c.id === r.cardId || (c.domain === r.domain && c.mode === r.mode),
+          );
+          const key = matchedCard ? matchedCard.id : r.cardId || r.mode;
           if (!stats[key]) {
             stats[key] = { count: 0, timeMs: 0 };
           }
