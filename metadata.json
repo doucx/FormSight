@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(abstraction): 增强几何大模寻形的对抗性干扰与几何复杂度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787222119.3891819, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(abstraction): 重构折线低模大形与势线/大模逆向寻形的高难度对抗算法", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787222249.4648774, "duration_ms": 0}}
