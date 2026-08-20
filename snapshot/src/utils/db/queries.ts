@@ -24,7 +24,10 @@ export async function saveSession(session: UnifiedSessionData): Promise<void> {
 }
 
 export async function getProfile(cardId: string): Promise<UnifiedProfileData | null>;
-export async function getProfile(domain: TrainingDomain, mode: string): Promise<UnifiedProfileData | null>;
+export async function getProfile(
+  domain: TrainingDomain,
+  mode: string,
+): Promise<UnifiedProfileData | null>;
 export async function getProfile(
   first: string | TrainingDomain,
   second?: string,

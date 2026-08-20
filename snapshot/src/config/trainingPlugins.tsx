@@ -44,12 +44,7 @@ export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSetting
   settings: TSettings;
 }
 
-export interface TrainingPlugin<
-  TQuestion,
-  THitResult,
-  TAnswerVal,
-  TSettings,
-> {
+export interface TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings> {
   domain: TrainingDomain;
   title: string;
   getModeBadge: (mode: string) => string;

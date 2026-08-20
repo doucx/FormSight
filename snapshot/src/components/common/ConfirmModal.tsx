@@ -25,12 +25,7 @@ export function ConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <ModalShell
-      title={title}
-      icon={AlertTriangle}
-      onClose={onCancel}
-      maxWidth="max-w-sm"
-    >
+    <ModalShell title={title} icon={AlertTriangle} onClose={onCancel} maxWidth="max-w-sm">
       <div className="space-y-4">
         <p className="text-xs text-slate-600 leading-relaxed">{message}</p>
 

@@ -125,8 +125,7 @@ export function App() {
             return null;
           }
           const plugin = CARD_PLUGINS[activeCard.id];
-          const activeLevel =
-            currentDomainProfiles[activeCard.id]?.currentLevel || 5;
+          const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
 
           return (
             <GenericTrainingView

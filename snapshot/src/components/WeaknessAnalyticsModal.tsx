@@ -92,11 +92,10 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
         </div>
 
         {/* 插件自定义筛选控制区 */}
-        {plugin.renderControls &&
-          plugin.renderControls({
-            state: contextState,
-            setState: handleUpdateContext,
-          })}
+        {plugin.renderControls?.({
+          state: contextState,
+          setState: handleUpdateContext,
+        })}
 
         {/* 内容展示区 */}
         {loading ? (

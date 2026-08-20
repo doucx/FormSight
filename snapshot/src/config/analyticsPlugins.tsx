@@ -1,4 +1,14 @@
-import { AlertCircle, CheckCircle, Columns, Compass, Crosshair, Eye, Sparkles, Sun, Target } from 'lucide-preact';
+import {
+  AlertCircle,
+  CheckCircle,
+  Columns,
+  Compass,
+  Crosshair,
+  Eye,
+  Sparkles,
+  Sun,
+  Target,
+} from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { renderHueRingCanvas } from '../utils/canvas/drawColorRing';
 import { type SectorStat, renderCompassCanvas } from '../utils/canvas/drawCompass';
@@ -17,9 +27,17 @@ export interface WeaknessAnalyticsPlugin<TRecord extends UnifiedTrialRecord = Un
   subTitle: string;
   fetchRecords: (contextState: Record<string, unknown>) => Promise<TRecord[]>;
   renderControls?: (ctx: AnalyticsPluginContext) => ComponentChildren;
-  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[], ctx: AnalyticsPluginContext) => void;
+  renderVisualizer: (
+    canvas: HTMLCanvasElement,
+    records: TRecord[],
+    ctx: AnalyticsPluginContext,
+  ) => void;
   renderDiagnostics: (records: TRecord[], ctx: AnalyticsPluginContext) => ComponentChildren;
-  getOverallStats?: (records: TRecord[]) => { accuracy: number; total: number; customSummary?: ComponentChildren };
+  getOverallStats?: (records: TRecord[]) => {
+    accuracy: number;
+    total: number;
+    customSummary?: ComponentChildren;
+  };
 }
 
 const STAR_SECTORS = [
@@ -183,11 +201,15 @@ export const starAnalyticsPlugin: WeaknessAnalyticsPlugin = {
           <div className="pt-1 space-y-1 font-mono text-slate-700">
             <div className="flex justify-between">
               <span>平均 X 轴偏移:</span>
-              <span className="font-bold">{avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}</span>
+              <span className="font-bold">
+                {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span>平均 Y 轴偏移:</span>
-              <span className="font-bold">{avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}</span>
+              <span className="font-bold">
+                {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}
+              </span>
             </div>
             <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
               <span>平均像素误差:</span>
@@ -228,11 +250,14 @@ export const starAnalyticsPlugin: WeaknessAnalyticsPlugin = {
         {weakestSector ? (
           <div className="space-y-2">
             <p className="text-slate-700 text-[11px]">
-              你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 方向上正确率最低：
+              你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
+              方向上正确率最低：
             </p>
             <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
               <span className="font-bold text-slate-800">{weakestSector.label}</span>
-              <span className="font-black text-rose-600 text-sm">{weakestSector.accuracy}% 正确率</span>
+              <span className="font-black text-rose-600 text-sm">
+                {weakestSector.accuracy}% 正确率
+              </span>
             </div>
           </div>
         ) : (
@@ -309,7 +334,8 @@ export const colorAnalyticsPlugin: WeaknessAnalyticsPlugin = {
         {weakestSector ? (
           <div className="space-y-2">
             <p className="text-slate-700 text-[11px]">
-              你在 <span className="font-bold text-amber-700">{weakestSector.label}</span> 色相上辨识度最低：
+              你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
+              色相上辨识度最低：
             </p>
             <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
               <div className="flex items-center gap-1.5">
@@ -319,13 +345,19 @@ export const colorAnalyticsPlugin: WeaknessAnalyticsPlugin = {
                     backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100),
                   }}
                 />
-                <span className="font-bold text-slate-800">{weakestSector.label.split(' ')[0]}</span>
+                <span className="font-bold text-slate-800">
+                  {weakestSector.label.split(' ')[0]}
+                </span>
               </div>
-              <span className="font-black text-rose-600 text-sm">{weakestSector.accuracy}% 正确率</span>
+              <span className="font-black text-rose-600 text-sm">
+                {weakestSector.accuracy}% 正确率
+              </span>
             </div>
           </div>
         ) : (
-          <p className="text-slate-600 text-[11px]">需每个色相扇区完成至少 3 题才能生成弱点诊断。</p>
+          <p className="text-slate-600 text-[11px]">
+            需每个色相扇区完成至少 3 题才能生成弱点诊断。
+          </p>
         )}
       </div>
     );
@@ -440,9 +472,10 @@ export const relativeColorAnalyticsPlugin: WeaknessAnalyticsPlugin = {
     });
 
     const activeStats = stats.filter((s) => s.total >= 2);
-    const weakest = activeStats.length > 0
-      ? activeStats.reduce((prev, curr) => (curr.acc < prev.acc ? curr : prev))
-      : null;
+    const weakest =
+      activeStats.length > 0
+        ? activeStats.reduce((prev, curr) => (curr.acc < prev.acc ? curr : prev))
+        : null;
 
     return (
       <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
@@ -453,7 +486,8 @@ export const relativeColorAnalyticsPlugin: WeaknessAnalyticsPlugin = {
         {weakest ? (
           <div className="space-y-1 text-[11px] text-slate-700">
             <p>
-              你在 <span className="font-bold text-indigo-700">{weakest.label}</span> 子项上表现相对薄弱 ({weakest.acc}%)。
+              你在 <span className="font-bold text-indigo-700">{weakest.label}</span>{' '}
+              子项上表现相对薄弱 ({weakest.acc}%)。
             </p>
             <p className="text-slate-500">
               建议通过“环境穿透判别”训练大脑剥离背景明度欺骗，强化在强光与阴影下的纯粹固有色识别。

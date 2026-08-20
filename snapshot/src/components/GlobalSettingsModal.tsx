@@ -132,7 +132,9 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">闲置休眠保护</div>
-                <div className="text-[11px] text-slate-400">无操作或切出窗口时暂停计时与模糊遮罩</div>
+                <div className="text-[11px] text-slate-400">
+                  无操作或切出窗口时暂停计时与模糊遮罩
+                </div>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-1">

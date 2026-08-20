@@ -34,8 +34,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
     return () => clearTimeout(timer);
   }, [onDismiss]);
 
-  const Icon =
-    toast.type === 'success' ? CheckCircle : toast.type === 'error' ? AlertCircle : Info;
+  const Icon = toast.type === 'success' ? CheckCircle : toast.type === 'error' ? AlertCircle : Info;
 
   const bgStyle =
     toast.type === 'success'

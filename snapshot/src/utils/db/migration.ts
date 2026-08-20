@@ -1,11 +1,11 @@
 import { openDB } from 'idb';
 import { resolveLegacyCardId } from '../../config/cards';
-import {
-  type FormSightDBSchema,
-  type TrainingDomain,
-  type UnifiedProfileData,
-  type UnifiedSessionData,
-  type UnifiedTrialRecord,
+import type {
+  FormSightDBSchema,
+  TrainingDomain,
+  UnifiedProfileData,
+  UnifiedSessionData,
+  UnifiedTrialRecord,
 } from './schema';
 
 const LEGACY_DB_NAME = 'StarHoppingDB';
@@ -31,7 +31,9 @@ export function migrateLegacySettings(): void {
 /**
  * 检测并迁移旧版 IndexedDB (StarHoppingDB -> FormSightDB)
  */
-export async function migrateLegacyDatabase(newDb: import('idb').IDBPDatabase<FormSightDBSchema>): Promise<void> {
+export async function migrateLegacyDatabase(
+  newDb: import('idb').IDBPDatabase<FormSightDBSchema>,
+): Promise<void> {
   if (typeof indexedDB === 'undefined') return;
 
   try {
@@ -57,10 +59,16 @@ export async function migrateLegacyDatabase(newDb: import('idb').IDBPDatabase<Fo
       return;
     }
 
-    const oldSessions = (await legacyDb.getAll('sessions')) as unknown as (UnifiedSessionData & { domain?: TrainingDomain })[];
-    const oldRecords = (await legacyDb.getAll('records')) as unknown as (UnifiedTrialRecord & { domain?: TrainingDomain })[];
+    const oldSessions = (await legacyDb.getAll('sessions')) as unknown as (UnifiedSessionData & {
+      domain?: TrainingDomain;
+    })[];
+    const oldRecords = (await legacyDb.getAll('records')) as unknown as (UnifiedTrialRecord & {
+      domain?: TrainingDomain;
+    })[];
     const oldProfiles = sessionStoreNames.contains('user_profiles')
-      ? ((await legacyDb.getAll('user_profiles')) as unknown as (UnifiedProfileData & { totalTrainedCards?: number })[])
+      ? ((await legacyDb.getAll('user_profiles')) as unknown as (UnifiedProfileData & {
+          totalTrainedCards?: number;
+        })[])
       : [];
 
     legacyDb.close();
