@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 增加视知觉概括能力训练模块与八张核心卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787212429.8583915, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(config): 修复 domains.ts 中重复的 star 配置语法错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787212498.8237815, "duration_ms": 0}}

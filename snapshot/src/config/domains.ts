@@ -6,7 +6,12 @@ import { getCardsByDomain } from './cards';
 
 export interface DomainMeta {
   domain: TrainingDomain;
-  appId: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space' | 'visual-abstraction';
+  appId:
+    | 'star-hopping'
+    | 'color-sense'
+    | 'relative-color'
+    | 'negative-space'
+    | 'visual-abstraction';
   title: string;
   subTitle: string;
   homeTitle: string;
@@ -34,20 +39,6 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
     },
   },
   star: {
-    domain: 'star',
-    appId: 'star-hopping',
-    title: '寻星练习',
-    subTitle: 'Star-Hopping',
-    homeTitle: '寻星练习 (Star-Hopping)',
-    homeDesc:
-      '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
-    themeColor: 'indigo',
-    icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return getCardsByDomain('star');
-    },
-  },
     domain: 'star',
     appId: 'star-hopping',
     title: '寻星练习',
