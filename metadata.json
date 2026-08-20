@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "biome Capture: M migration.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787221514.1329925, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(abstraction): 重构 Notan 骨架匹配并增强卡片域迁移与自愈", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787221539.0282595, "duration_ms": 0}}
