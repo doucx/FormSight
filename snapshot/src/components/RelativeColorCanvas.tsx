@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Eye, X } from 'lucide-preact';
+import { ArrowRight, Eye } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { hsvToHex } from '../utils/colorUtils';
 import type {
@@ -6,6 +6,8 @@ import type {
   RelativeColorQuestionData,
 } from '../utils/relativeColorUtils';
 import { HsvTrackSlider } from './HsvTrackSlider';
+import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
+import { Choice2AfcContainer } from './common/Choice2AfcContainer';
 
 interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;
@@ -158,122 +160,52 @@ export function RelativeColorCanvas({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-          {/* 卡片 A */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('A')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isAHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'A'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'A'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  1
-                </span>
-                区域 A
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isAHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isAHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorA?.[2]}%)
-                </span>
-              )}
-            </div>
-
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
-            >
-              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-            </div>
-          </button>
-
-          {/* 卡片 B */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelect2Afc('B')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isBHit
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selected2AfcChoice === 'B'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selected2AfcChoice === 'B'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  2
-                </span>
-                区域 B
-              </span>
-              {showAnswer && (
-                <span
-                  className={`text-xs font-extrabold flex items-center gap-1 ${
-                    isBHit ? 'text-emerald-600' : 'text-slate-400'
-                  }`}
-                >
-                  {isBHit ? '物理明度更高' : '物理更暗'} (V: {question.centerColorB?.[2]}%)
-                </span>
-              )}
-            </div>
-
-            {/* 视口展示 */}
-            <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-              style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
-            >
-              <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-            </div>
-          </button>
-        </div>
+        <Choice2AfcContainer
+          optionA={{
+            key: 'A',
+            title: '区域 A',
+            isCorrect: isAHit,
+            badge: isAHit
+              ? `物理明度更高 (V: ${question.centerColorA?.[2]}%)`
+              : `物理更暗 (V: ${question.centerColorA?.[2]}%)`,
+            content: (
+              <div
+                className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+                style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
+              >
+                <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
+              </div>
+            ),
+          }}
+          optionB={{
+            key: 'B',
+            title: '区域 B',
+            isCorrect: isBHit,
+            badge: isBHit
+              ? `物理明度更高 (V: ${question.centerColorB?.[2]}%)`
+              : `物理更暗 (V: ${question.centerColorB?.[2]}%)`,
+            content: (
+              <div
+                className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+                style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
+              >
+                <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
+              </div>
+            ),
+          }}
+          selectedChoice={selected2AfcChoice}
+          showAnswer={showAnswer}
+          disabled={disabled}
+          onSelect={handleSelect2Afc}
+        />
 
         {showAnswer && (
-          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <div
-                className={`p-1.5 rounded-xl ${
-                  userAnswer?.isHit
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-rose-100 text-rose-700'
-                }`}
-              >
-                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-              </div>
-              <div className="text-xs">
-                <span className="font-bold text-slate-800">
-                  {userAnswer?.isHit ? '成功穿透背景视错觉！' : '受背景诱导产生了认知偏差'}
-                </span>
-                <span className="text-slate-400 ml-2">
-                  (已统一切换至中性灰背景对比，物理明度差 ΔV ={' '}
-                  <strong className="font-mono text-slate-700">
-                    {question.physicalValueDiff}%
-                  </strong>
-                  )
-                </span>
-              </div>
-            </div>
-          </div>
+          <AnswerDiagnosticBar
+            isHit={Boolean(userAnswer?.isHit)}
+            successTitle="成功穿透背景视错觉！"
+            failTitle="受背景诱导产生了认知偏差"
+            subText={`(已统一切换至中性灰背景对比，物理明度差 ΔV = ${question.physicalValueDiff}%)`}
+          />
         )}
       </div>
     );

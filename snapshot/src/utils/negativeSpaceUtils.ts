@@ -1,5 +1,6 @@
 import type { Point } from '../types';
 import { checkHit } from './geometry';
+import { expDecayInterpolate } from './mathUtils';
 
 export type NegativeSpaceMode =
   | 'RATIO_ESTIMATION'
@@ -92,11 +93,7 @@ export function calcPolygonArea(vertices: Point[]): number {
  * Level 1: ±10.0%, Level 35: ±1.2%
  */
 export function getNegativeSpaceToleranceForLevel(level: number): number {
-  const clamped = Math.max(1, Math.min(35, level));
-  const t = (clamped - 1) / 34; // 0..1
-  const maxTol = 10.0;
-  const minTol = 1.2;
-  return Math.round(maxTol * (minTol / maxTol) ** t * 10) / 10;
+  return Math.round(expDecayInterpolate(10.0, 1.2, level) * 10) / 10;
 }
 
 /**
@@ -147,11 +144,7 @@ export function generateRandomPolygon(
  * Level 1: delta = 0.35 (35%), Level 35: delta = 0.02 (2%)
  */
 export function get2AfcdeltaForLevel(level: number): number {
-  const clamped = Math.max(1, Math.min(35, level));
-  const t = (clamped - 1) / 34; // 0..1
-  const maxDelta = 0.35;
-  const minDelta = 0.02;
-  return maxDelta * (minDelta / maxDelta) ** t;
+  return expDecayInterpolate(0.35, 0.02, level);
 }
 
 /**

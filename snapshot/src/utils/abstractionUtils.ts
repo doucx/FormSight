@@ -1,4 +1,5 @@
 import type { Point } from '../types';
+import { expDecayInterpolate } from './mathUtils';
 
 export type AbstractionMode =
   | 'GESTURE_AXIS'
@@ -240,9 +241,7 @@ export function generateAbstractionQuestion(
     const spreadRatio = 0.15 + t * 0.5;
     const particles = generateFlowParticles(targetAngleDeg, spreadRatio);
     const realPCA = calcPCAOrientation(particles);
-    const maxTol = 18.0;
-    const minTol = 2.5;
-    const tolerance = Math.round(maxTol * (minTol / maxTol) ** t * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(18.0, 2.5, clampedLevel) * 10) / 10;
 
     return {
       id,
@@ -329,9 +328,7 @@ export function generateAbstractionQuestion(
     ];
 
     const idealNotanThreshold = 50.0;
-    const maxTol = 14.0;
-    const minTol = 2.0;
-    const tolerance = Math.round(maxTol * (minTol / maxTol) ** t * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(14.0, 2.0, clampedLevel) * 10) / 10;
 
     return {
       id,

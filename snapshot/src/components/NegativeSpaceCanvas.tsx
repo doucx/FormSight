@@ -1,7 +1,7 @@
-import { Check, Columns, Sparkles, X } from 'lucide-preact';
+import { Columns, Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
+import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
 import {
   findNearestGridPoint,
   getDynamicCrosshairMetrics,
@@ -14,6 +14,9 @@ import {
   type NegativeSpaceQuestionData,
   TWO_AFC_CANVAS_SIZE,
 } from '../utils/negativeSpaceUtils';
+import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
+import { Choice2AfcContainer } from './common/Choice2AfcContainer';
+import { ContinuousTrackPanel } from './common/ContinuousTrackPanel';
 
 interface NegativeSpaceCanvasProps {
   question: NegativeSpaceQuestionData;
@@ -27,41 +30,20 @@ interface NegativeSpaceCanvasProps {
 }
 
 // 辅助绘图函数：在给定 canvas 上绘制多边形正形与白色负形底
-function drawPolygonCanvas(
+function renderPolygon(
   canvas: HTMLCanvasElement | null,
   vertices: Point[] | undefined,
   size: number,
   isHighlighted?: boolean,
 ) {
-  if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  // 清屏绘制纯白底色（白色留白即负形）
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  // 绘制正形多边形
-  ctx.beginPath();
-  ctx.moveTo(vertices[0].x, vertices[0].y);
-  for (let i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i].x, vertices[i].y);
-  }
-  ctx.closePath();
-
-  ctx.fillStyle = '#0F172A'; // Slate-900 黑色正形
-  ctx.fill();
-
-  ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // 高亮加粗外边框反馈
-  if (isHighlighted) {
-    ctx.strokeStyle = '#22C55E';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-  }
+  drawPolygonCanvas({
+    canvas,
+    vertices,
+    size,
+    fillColor: '#0F172A',
+    strokeColor: '#1E293B',
+    isHighlighted,
+  });
 }
 
 function drawDot(
@@ -143,14 +125,14 @@ export function NegativeSpaceCanvas({
   // 渲染单图滑块 Canvas 与 记忆匹配刺激图
   useEffect(() => {
     if (!is2AFC && !isFitting && !is2AfcMatch && question.vertices) {
-      drawPolygonCanvas(
+      renderPolygon(
         canvasRef.current,
         question.vertices,
         NEGATIVE_SPACE_CANVAS_SIZE,
         showAnswer && userAnswer?.isHit,
       );
     } else if (is2AfcMatch && matchPhase === 'stimulus' && question.targetPolygon) {
-      drawPolygonCanvas(canvasRef.current, question.targetPolygon, NEGATIVE_SPACE_CANVAS_SIZE);
+      renderPolygon(canvasRef.current, question.targetPolygon, NEGATIVE_SPACE_CANVAS_SIZE);
     }
   }, [
     is2AFC,
@@ -166,12 +148,12 @@ export function NegativeSpaceCanvas({
   // 渲染 记忆匹配 2AFC 候选画布 (1:1 等大 NEGATIVE_SPACE_CANVAS_SIZE 原生渲染)
   useEffect(() => {
     if (is2AfcMatch && (matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
-      drawPolygonCanvas(
+      renderPolygon(
         matchOptionRefA.current,
         question.optionsPolygons[0],
         NEGATIVE_SPACE_CANVAS_SIZE,
       );
-      drawPolygonCanvas(
+      renderPolygon(
         matchOptionRefB.current,
         question.optionsPolygons[1],
         NEGATIVE_SPACE_CANVAS_SIZE,
@@ -182,8 +164,8 @@ export function NegativeSpaceCanvas({
   // 渲染 2AFC 双 Canvas
   useEffect(() => {
     if (is2AFC) {
-      drawPolygonCanvas(canvasRefA.current, question.verticesA, TWO_AFC_CANVAS_SIZE);
-      drawPolygonCanvas(canvasRefB.current, question.verticesB, TWO_AFC_CANVAS_SIZE);
+      renderPolygon(canvasRefA.current, question.verticesA, TWO_AFC_CANVAS_SIZE);
+      renderPolygon(canvasRefB.current, question.verticesB, TWO_AFC_CANVAS_SIZE);
     }
   }, [is2AFC, question.verticesA, question.verticesB]);
 
@@ -194,7 +176,7 @@ export function NegativeSpaceCanvas({
     // 1. 左侧参考 Canvas：绘制完整多边形与负形
     const leftCanvas = leftFittingRef.current;
     if (leftCanvas) {
-      drawPolygonCanvas(leftCanvas, question.vertices, FITTING_CANVAS_SIZE);
+      renderPolygon(leftCanvas, question.vertices, FITTING_CANVAS_SIZE);
     }
 
     // 2. 右侧交互 Canvas

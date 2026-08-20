@@ -1,6 +1,5 @@
-import { Check, Columns, Eye, Sparkles, X } from 'lucide-preact';
+import { Check, Columns, Eye, Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
 import {
   ABSTRACTION_2AFC_SIZE,
@@ -11,7 +10,11 @@ import {
   type NotanShape,
   type PaletteTile,
 } from '../utils/abstractionUtils';
+import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
 import { hsvToHex } from '../utils/colorUtils';
+import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
+import { Choice2AfcContainer } from './common/Choice2AfcContainer';
+import { ContinuousTrackPanel } from './common/ContinuousTrackPanel';
 
 interface AbstractionCanvasProps {
   question: AbstractionQuestionData;
@@ -71,25 +74,7 @@ function drawPolygon(
   fillColor = '#0F172A',
   strokeColor = '#1E293B',
 ) {
-  if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  ctx.beginPath();
-  ctx.moveTo(vertices[0].x, vertices[0].y);
-  for (let i = 1; i < vertices.length; i++) {
-    ctx.lineTo(vertices[i].x, vertices[i].y);
-  }
-  ctx.closePath();
-
-  ctx.fillStyle = fillColor;
-  ctx.fill();
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  drawPolygonCanvas({ canvas, vertices, size, fillColor, strokeColor });
 }
 
 // 辅助绘图：绘制 Notan 场景
@@ -521,115 +506,51 @@ export function AbstractionCanvas({
         )}
 
         {/* 双卡片候选区 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-          {/* 卡片 A */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelectChoice('A')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isTargetA
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selectedChoice === 'A'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selectedChoice === 'A'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  A
-                </span>
-                区域 A (键 1)
-              </span>
-              {showAnswer && isTargetA && (
-                <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  真实匹配
-                </span>
-              )}
-            </div>
-
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefA}
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          </button>
-
-          {/* 卡片 B */}
-          <button
-            type="button"
-            disabled={disabled || showAnswer}
-            onClick={() => handleSelectChoice('B')}
-            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
-              showAnswer
-                ? isTargetB
-                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                  : selectedChoice === 'B'
-                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
-                    : 'bg-slate-50/60 border-slate-200 opacity-60'
-                : selectedChoice === 'B'
-                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
-                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
-                </span>
-                区域 B (键 2)
-              </span>
-              {showAnswer && isTargetB && (
-                <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
-                  <Check className="w-4 h-4 text-emerald-600" />
-                  真实匹配
-                </span>
-              )}
-            </div>
-
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefB}
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          </button>
-        </div>
+        <Choice2AfcContainer
+          optionA={{
+            key: 'A',
+            title: '区域 A (键 1)',
+            isCorrect: isTargetA,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefA}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          optionB={{
+            key: 'B',
+            title: '区域 B (键 2)',
+            isCorrect: isTargetB,
+            content: (
+              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+                <canvas
+                  ref={canvasRefB}
+                  width={ABSTRACTION_2AFC_SIZE}
+                  height={ABSTRACTION_2AFC_SIZE}
+                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+                />
+              </div>
+            ),
+          }}
+          selectedChoice={selectedChoice}
+          showAnswer={showAnswer}
+          disabled={disabled}
+          onSelect={handleSelectChoice}
+        />
 
         {/* 答案揭晓诊断 */}
         {showAnswer && (
-          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
-            <div className="flex items-center gap-2">
-              <div
-                className={`p-1.5 rounded-xl ${
-                  userAnswer?.isHit
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-rose-100 text-rose-700'
-                }`}
-              >
-                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-              </div>
-              <div className="text-xs">
-                <span className="font-bold text-slate-800">
-                  {userAnswer?.isHit ? '瞬时结构透视识别完全正确！' : '结构透视判断出现偏差'}
-                </span>
-                <span className="text-slate-400 ml-2">
-                  (正确匹配为: 区域 {userAnswer?.correctChoice ?? (isTargetA ? 'A' : 'B')})
-                </span>
-              </div>
-            </div>
-          </div>
+          <AnswerDiagnosticBar
+            isHit={Boolean(userAnswer?.isHit)}
+            successTitle="瞬时结构透视识别完全正确！"
+            failTitle="结构透视判断出现偏差"
+            subText={`(正确匹配为: 区域 ${userAnswer?.correctChoice ?? (isTargetA ? 'A' : 'B')})`}
+          />
         )}
       </div>
     );

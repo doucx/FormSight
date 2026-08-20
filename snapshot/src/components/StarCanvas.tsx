@@ -1,12 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
-import {
-  CANVAS_SIZE,
-  checkHit,
-  findNearestGridPoint,
-  getDynamicCrosshairMetrics,
-  getDynamicDotRadius,
-} from '../utils/geometry';
+import { drawDot, renderInteractivePointGrid } from '../utils/canvas/drawPointGrid';
+import { CANVAS_SIZE, checkHit, findNearestGridPoint, getDynamicDotRadius } from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
@@ -59,86 +54,21 @@ export function StarCanvas({
     if (rightCanvas) {
       const ctx = rightCanvas.getContext('2d');
       if (ctx) {
-        // 清屏与背景
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        // 图层 1: 极坐标/双极透视干扰点阵 (底层)
-        const gridPoints = question.distractorPoints;
-        for (const p of gridPoints) {
-          drawDot(ctx, p.x, p.y, '#888888', dotRadius);
-        }
-
-        // 图层 1.5: 鼠标悬停高亮网格点
-        if (!disabled && !showAnswer && hoverPoint) {
-          drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
-        }
-
-        // 图层 2: 锚点 (顶层)
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
-        if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
-        }
-
-        // 图层 3: 做答后的视觉反馈 (反馈层)
-        if (showAnswer) {
-          const { x: bx, y: by } = question.targetB;
-          const { size: chSize, lineWidth: chLineWidth } = getDynamicCrosshairMetrics(
-            question.distractorPoints,
-          );
-
-          // 绘制真理点 B 实体点
-          drawDot(ctx, bx, by, '#000000', dotRadius);
-
-          // 绘制深绿色十字高亮线 (尺寸与粗细自适应点间距)
-          ctx.strokeStyle = '#00AA00';
-          ctx.lineWidth = chLineWidth;
-          ctx.beginPath();
-          ctx.moveTo(bx - chSize, by);
-          ctx.lineTo(bx + chSize, by);
-          ctx.moveTo(bx, by - chSize);
-          ctx.lineTo(bx, by + chSize);
-          ctx.stroke();
-
-          // 如果回答错或有用户点击坐标，绘制误差连线与点击位置
-          if (userAnswer) {
-            const { hitResult } = userAnswer;
-            const chosenPoint = hitResult.nearestGridPoint;
-
-            if (!hitResult.isHit) {
-              // 绘制红色虚线误差指示 (线宽与虚线间隔按比例适配)
-              const dashLength = Math.max(2, Math.min(4, chSize * 0.4));
-              ctx.strokeStyle = '#FF0000';
-              ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
-              ctx.setLineDash([dashLength, dashLength]);
-              ctx.beginPath();
-              ctx.moveTo(chosenPoint.x, chosenPoint.y);
-              ctx.lineTo(bx, by);
-              ctx.stroke();
-              ctx.setLineDash([]); // 恢复实线
-
-              // 用户点击位置标记 (红点 - 锚定在网格点中心)
-              drawDot(ctx, chosenPoint.x, chosenPoint.y, '#FF0000', dotRadius);
-            }
-          }
-        }
+        renderInteractivePointGrid({
+          ctx,
+          canvasSize: CANVAS_SIZE,
+          gridPoints: question.distractorPoints,
+          targetPoint: question.targetB,
+          userNearestPoint: userAnswer?.hitResult.nearestGridPoint,
+          hoverPoint,
+          anchors: [question.anchorA, question.anchorC],
+          showAnswer,
+          isHit: userAnswer?.hitResult.isHit,
+          disabled,
+        });
       }
     }
   }, [question, showAnswer, userAnswer, hoverPoint, disabled]);
-
-  // 辅助函数：绘制圆点
-  function drawDot(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    color: string,
-    radius: number,
-  ) {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, radius, 0, Math.PI * 2);
-    ctx.fill();
-  }
 
   // === 交互事件：鼠标移动计算悬停高亮点 ===
   const handleRightCanvasMouseMove = (e: MouseEvent) => {
