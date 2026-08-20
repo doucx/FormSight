@@ -6,16 +6,13 @@ import { setupHiDpiCanvas } from './hidpi';
  * 正值表示用户偏大/顺时针，负值表示用户偏小/逆时针
  */
 export function calcSignedHueBias(targetHue: number, userHue: number): number {
-  return (((userHue - targetHue + 540) % 360) - 180);
+  return ((userHue - targetHue + 540) % 360) - 180;
 }
 
 /**
  * 绘制色相偏差度散点与趋势分析图 (横轴: 色相 0°~360°, 纵轴: 偏差度 °)
  */
-export function renderHueBiasChartCanvas(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
+export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: UnifiedTrialRecord[]) {
   const width = 320;
   const height = 320;
   const ctx = setupHiDpiCanvas(canvas, width, height);
@@ -48,11 +45,16 @@ export function renderHueBiasChartCanvas(
   }
 
   const getX = (hue: number) => padding.left + (hue / 360) * chartW;
-  const getY = (bias: number) =>
-    padding.top + chartH / 2 - (bias / maxBiasRange) * (chartH / 2);
+  const getY = (bias: number) => padding.top + chartH / 2 - (bias / maxBiasRange) * (chartH / 2);
 
   // 1. 绘制网格线与 Y 轴参考刻度
-  const yTicks = [maxBiasRange, Math.round(maxBiasRange / 2), 0, -Math.round(maxBiasRange / 2), -maxBiasRange];
+  const yTicks = [
+    maxBiasRange,
+    Math.round(maxBiasRange / 2),
+    0,
+    -Math.round(maxBiasRange / 2),
+    -maxBiasRange,
+  ];
   ctx.lineWidth = 1;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';

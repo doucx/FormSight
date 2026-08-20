@@ -142,7 +142,11 @@ function createStarAnalyticsPlugin(cardId: string, title: string): CardAnalytics
         subTitle: '洞察你在 8 个极坐标视角扇区上的定位准确率分布',
         icon: Compass,
         renderVisualizer: (canvas, records) => {
-          const sectorBuckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0, sumDist: 0 }));
+          const sectorBuckets = Array.from({ length: 8 }, () => ({
+            total: 0,
+            hits: 0,
+            sumDist: 0,
+          }));
           for (const r of records) {
             const angle = Number(r.angleDegree ?? 0);
             const normAngle = ((angle % 360) + 360) % 360;
@@ -197,7 +201,8 @@ function createStarAnalyticsPlugin(cardId: string, title: string): CardAnalytics
               {weakest ? (
                 <div className="space-y-1.5 text-[11px] text-slate-700">
                   <p>
-                    你在 <span className="font-bold text-indigo-800">{weakest.label}</span> 方位上命中率最低：
+                    你在 <span className="font-bold text-indigo-800">{weakest.label}</span>{' '}
+                    方位上命中率最低：
                   </p>
                   <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-indigo-100 font-mono">
                     <span>{weakest.label}</span>
@@ -303,7 +308,8 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               {maxBiasSector ? (
                 <div className="mt-2 space-y-1.5">
                   <p className="text-slate-600">
-                    最大偏差扇区：<span className="font-bold text-amber-800">{maxBiasSector.label}</span>
+                    最大偏差扇区：
+                    <span className="font-bold text-amber-800">{maxBiasSector.label}</span>
                   </p>
                   <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
                     <div className="flex items-center gap-1.5">
@@ -318,7 +324,10 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                       </span>
                     </div>
                     <span className="font-black text-amber-700 font-mono text-xs">
-                      平均偏差: {maxBiasSector.avgBias > 0 ? `+${maxBiasSector.avgBias}°` : `${maxBiasSector.avgBias}°`}
+                      平均偏差:{' '}
+                      {maxBiasSector.avgBias > 0
+                        ? `+${maxBiasSector.avgBias}°`
+                        : `${maxBiasSector.avgBias}°`}
                     </span>
                   </div>
                 </div>
@@ -357,7 +366,11 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
       subTitle: '洞察你对 OKLab 色彩空间 12 色相扇区的敏感度与正确率分布',
       icon: PieChart,
       renderVisualizer: (canvas, records) => {
-        const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumError: 0 }));
+        const sectorBuckets = Array.from({ length: 12 }, () => ({
+          total: 0,
+          hits: 0,
+          sumError: 0,
+        }));
         for (const r of records) {
           const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
           const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
@@ -378,7 +391,11 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
-        const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumError: 0 }));
+        const sectorBuckets = Array.from({ length: 12 }, () => ({
+          total: 0,
+          hits: 0,
+          sumError: 0,
+        }));
         for (const r of records) {
           const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
           const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
