@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { TrainingDomain } from '../utils/db';
 
 export type RouteLocation =
@@ -51,18 +51,47 @@ export function useHashRoute() {
     typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
   );
 
+  const scrollPositionsRef = useRef<Record<string, number>>({});
+  const currentHashRef = useRef<string>(
+    typeof window !== 'undefined' ? window.location.hash || '#/' : '#/',
+  );
+
   useEffect(() => {
-    const handleHashChange = () => {
-      setRoute(parseHash(window.location.hash));
+    const handleScroll = () => {
+      const currentKey = currentHashRef.current || '#/';
+      scrollPositionsRef.current[currentKey] = window.scrollY;
     };
 
+    const handleHashChange = () => {
+      const prevHash = currentHashRef.current || '#/';
+      scrollPositionsRef.current[prevHash] = window.scrollY;
+
+      const newHash = window.location.hash || '#/';
+      currentHashRef.current = newHash;
+      setRoute(parseHash(newHash));
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const targetY = scrollPositionsRef.current[newHash] ?? 0;
+          window.scrollTo(0, targetY);
+        });
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   const navigate = useCallback((target: RouteLocation) => {
     const newHash = stringifyRoute(target);
     if (window.location.hash !== newHash) {
+      const prevHash = currentHashRef.current || '#/';
+      scrollPositionsRef.current[prevHash] = window.scrollY;
       window.location.hash = newHash;
     }
   }, []);
