@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787216789.5686054, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(training): 提炼复用 Canvas 组件并新增画布提示与实验模块配置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787216789.9263775, "duration_ms": 0}}
