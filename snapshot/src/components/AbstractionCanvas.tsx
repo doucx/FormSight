@@ -77,7 +77,7 @@ function drawPolygon(
   drawPolygonCanvas({ canvas, vertices, size, fillColor, strokeColor });
 }
 
-// 辅助绘图：绘制 Notan 场景
+// 辅助绘图：绘制 Notan 场景 (旧版矢量兼容)
 function drawNotanScene(
   canvas: HTMLCanvasElement | null,
   shapes?: NotanShape[],
@@ -107,6 +107,45 @@ function drawNotanScene(
       ctx.stroke();
     }
   }
+}
+
+// 辅助绘图：根据连续灰阶场进行动态二值截断渲染
+function drawNotanNoiseField(
+  canvas: HTMLCanvasElement | null,
+  buffer?: number[],
+  dim = 120,
+  thresholdPercent = 50,
+  size = ABSTRACTION_CANVAS_SIZE,
+) {
+  if (!canvas || !buffer) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const thresholdByte = Math.round((thresholdPercent / 100) * 255);
+
+  // 利用离屏 Canvas 进行近邻插值缩放，保持素描颗粒感与极速渲染
+  const offscreen = document.createElement('canvas');
+  offscreen.width = dim;
+  offscreen.height = dim;
+  const offCtx = offscreen.getContext('2d');
+  if (!offCtx) return;
+
+  const imgData = offCtx.createImageData(dim, dim);
+  const pixels = imgData.data;
+
+  for (let i = 0; i < buffer.length; i++) {
+    const isDark = buffer[i] <= thresholdByte;
+    const color = isDark ? 15 : 248; // #0F172A vs #F8FAFC
+    const pIdx = i * 4;
+    pixels[pIdx] = color;
+    pixels[pIdx + 1] = color === 15 ? 23 : 250;
+    pixels[pIdx + 2] = color === 15 ? 42 : 252;
+    pixels[pIdx + 3] = 255;
+  }
+  offCtx.putImageData(imgData, 0, 0);
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(offscreen, 0, 0, size, size);
 }
 
 // 辅助绘图：绘制色彩拼贴图案
@@ -200,7 +239,16 @@ export function AbstractionCanvas({
 
   useEffect(() => {
     if (question.id) {
-      setSliderVal(mode === 'GESTURE_AXIS' ? 90 : 50);
+      // 避免默认值固定在 50 导致空格盲通过，随机生成初始离散探索位置
+      const initialVal =
+        mode === 'GESTURE_AXIS'
+          ? 90
+          : mode === 'NOTAN_THRESHOLD'
+            ? Math.random() < 0.5
+              ? Math.floor(Math.random() * 25) + 10
+              : Math.floor(Math.random() * 25) + 65
+            : 50;
+      setSliderVal(initialVal);
       setHoverVal(null);
       setSelectedChoice(null);
       setSelected4AfcIdx(null);
@@ -235,12 +283,22 @@ export function AbstractionCanvas({
         '#4F46E5',
       );
     } else if (mode === 'NOTAN_THRESHOLD') {
-      drawNotanScene(
-        canvasMainRef.current,
-        question.notanShapes,
-        activeVal,
-        ABSTRACTION_CANVAS_SIZE,
-      );
+      if (question.notanBuffer) {
+        drawNotanNoiseField(
+          canvasMainRef.current,
+          question.notanBuffer,
+          question.notanFieldDim ?? 120,
+          showAnswer ? question.idealNotanThreshold : activeVal,
+          ABSTRACTION_CANVAS_SIZE,
+        );
+      } else {
+        drawNotanScene(
+          canvasMainRef.current,
+          question.notanShapes,
+          showAnswer ? question.idealNotanThreshold : activeVal,
+          ABSTRACTION_CANVAS_SIZE,
+        );
+      }
     } else if (mode === 'PALETTE_CLUSTERING') {
       drawPaletteTiles(canvasMainRef.current, question.paletteTiles, ABSTRACTION_CANVAS_SIZE);
     } else if (mode === 'TD_GESTURE_2AFC') {
