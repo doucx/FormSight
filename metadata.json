@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(test): 更新 settings 单测以匹配清理后的非 legacy 配置结构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787227588.527459, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787227614.3640969, "duration_ms": 0}}
