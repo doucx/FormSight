@@ -47,7 +47,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         const cardId = p.cardId || resolveLegacyCardId(p.domain || 'star', p.mode);
         const card = getCardById(cardId);
         const domain = card ? card.legacyDomain : ((p.domain || 'star') as TrainingDomain);
-        const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
+        const totalTrials = p.totalTrials ?? 0;
         await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
       }
     }

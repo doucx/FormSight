@@ -37,7 +37,6 @@ export interface CardDefinition {
   instruction?: string;
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
-  settingsKey?: string; // 兼容
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
   isExperimental?: boolean;
