@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(plan): 实现多训练计划编排管理与沉浸式日常训练流系统", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787232050.5251782, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M PlanEditorModal.tsx, M PlanTrainingView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787232098.9613564, "duration_ms": 0}}
