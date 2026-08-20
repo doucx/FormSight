@@ -21,6 +21,7 @@ interface AbstractionCanvasProps {
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
+  showCanvasHints?: boolean;
 }
 
 // 辅助绘图：绘制散点流
@@ -180,6 +181,7 @@ export function AbstractionCanvas({
   onAnswer,
   disabled = false,
   hitMargin = 12,
+  showCanvasHints = true,
 }: AbstractionCanvasProps) {
   const { mode } = question;
 
@@ -365,32 +367,21 @@ export function AbstractionCanvas({
     ];
 
     return (
-      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Sparkles className="w-5 h-5 text-indigo-600" />
-            观察上方基准主调色，在下方 4 个复杂画面中选出以此为基调的拼贴图案
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            观察上方基准主色，选出以此为基调的拼贴画面
           </div>
-          <p className="text-xs text-slate-400">
-            按快捷键{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              1
-            </kbd>{' '}
-            ~{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              4
-            </kbd>{' '}
-            或直接点击卡片
-          </p>
-        </div>
+        )}
 
         {/* 顶部单色基准展示 */}
-        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-            提炼出的基准主调色 (Prompt)
+        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            基准主调色
           </span>
           <div
-            className="w-20 h-20 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"
+            className="w-16 h-16 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"
             style={{ backgroundColor: promptHex }}
           />
         </div>
@@ -491,52 +482,41 @@ export function AbstractionCanvas({
     const isTargetB = !isTargetA;
 
     return (
-      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Columns className="w-5 h-5 text-indigo-600" />
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Columns className="w-3.5 h-3.5 text-indigo-600" />
             {isPoly
-              ? '观察左侧细碎多边形，选择右侧保留了主要转折大形的概括项'
-              : '观察上方提炼的本质基准，快速判别哪一侧具象细节符合该骨架'}
+              ? '选择保留了主要转折大形的精简项'
+              : '判别哪一侧具象细节符合上方骨架'}
           </div>
-          <p className="text-xs text-slate-400">
-            按快捷键{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              1
-            </kbd>{' '}
-            选择 A，按{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              2
-            </kbd>{' '}
-            选择 B
-          </p>
-        </div>
+        )}
 
         {/* 顶部题干或基准展示 */}
         {!isPoly && (
-          <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              提炼出的概括基准 (Prompt)
+          <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              概括基准 (Prompt)
             </span>
             <canvas
               ref={canvasThumbRef}
               width={ABSTRACTION_THUMB_SIZE}
               height={ABSTRACTION_THUMB_SIZE}
-              className="w-28 h-28 rounded-xl border border-slate-200 shadow-sm"
+              className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
             />
           </div>
         )}
 
         {isPoly && (
-          <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              细碎多边形原图
+          <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              多边形原图
             </span>
             <canvas
               ref={canvasMainRef}
               width={ABSTRACTION_CANVAS_SIZE}
               height={ABSTRACTION_CANVAS_SIZE}
-              className="w-48 h-48 rounded-xl border border-slate-200 shadow-sm"
+              className="w-40 h-40 rounded-xl border border-slate-200 shadow-sm"
             />
           </div>
         )}
@@ -661,14 +641,13 @@ export function AbstractionCanvas({
   // =========================================================================
   if (mode === 'PALETTE_CLUSTERING') {
     return (
-      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-sm font-bold text-slate-800 flex items-center justify-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            在下方 4 个候选项中，选出最能代表整幅画面主调的加权主色
+      <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            选出最能代表全局主调的加权主色
           </div>
-          <div className="text-xs text-slate-400">穿透细碎微小混色，提炼全局面积加权调性</div>
-        </div>
+        )}
 
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
           <canvas
@@ -727,18 +706,15 @@ export function AbstractionCanvas({
   const unit = isGesture ? '°' : '%';
 
   return (
-    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="text-center space-y-1">
-        <div className="text-sm font-bold text-slate-800 flex items-center justify-center gap-1.5">
-          <Eye className="w-4 h-4 text-indigo-600" />
+    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          <Eye className="w-3.5 h-3.5 text-indigo-600" />
           {isGesture
-            ? '旋转调节绿色主轴，对齐粒子群的主动态流向 (0°~180°)'
-            : '拖动滑块调节二值化剪切线，达成黑白咬合最平衡的 Notan 状态'}
+            ? '旋转主轴对齐粒子群动态流向 (0°~180°)'
+            : '调节二值化剪切线，达成黑白最平衡的 Notan 状态'}
         </div>
-        <div className="text-xs text-slate-400">
-          {isGesture ? '基于 PCA 统计第一主成分真理线' : '基于黑白块面骨架二值化分割'}
-        </div>
-      </div>
+      )}
 
       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
         <canvas

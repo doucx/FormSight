@@ -16,6 +16,7 @@ interface RelativeColorCanvasProps {
   hitMargin?: number;
   showToleranceBand?: boolean;
   enableHoverColorPreview?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function RelativeColorCanvas({
@@ -26,6 +27,7 @@ export function RelativeColorCanvas({
   disabled = false,
   hitMargin = 12,
   showToleranceBand = true,
+  showCanvasHints = true,
 }: RelativeColorCanvasProps) {
   const { mode } = question;
 
@@ -148,24 +150,13 @@ export function RelativeColorCanvas({
     const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
 
     return (
-      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            <Eye className="w-5 h-5 text-indigo-600" />
-            穿透背景视错觉：哪一侧的中心色块【物理明度更高】？
+      <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            <Eye className="w-3.5 h-3.5 text-indigo-600" />
+            穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」
           </div>
-          <p className="text-xs text-slate-400">
-            按快捷键{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              1
-            </kbd>{' '}
-            选择 A，按{' '}
-            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
-              2
-            </kbd>{' '}
-            选择 B
-          </p>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
           {/* 卡片 A */}
@@ -188,9 +179,9 @@ export function RelativeColorCanvas({
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
                 <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  A
+                  1
                 </span>
-                区域 A (键 1)
+                区域 A
               </span>
               {showAnswer && (
                 <span
@@ -232,9 +223,9 @@ export function RelativeColorCanvas({
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
                 <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                  B
+                  2
                 </span>
-                区域 B (键 2)
+                区域 B
               </span>
               {showAnswer && (
                 <span
@@ -307,24 +298,26 @@ export function RelativeColorCanvas({
       'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
 
     return (
-      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-        <div className="text-center space-y-1">
-          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
-            {isLightnessMode ? '阿尔伯斯明度反差补偿' : '阿尔伯斯补色残像调和'}
-          </div>
-          <p className="text-xs text-slate-400">
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+        {showCanvasHints && (
+          <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+            {isLightnessMode ? (
+              <Eye className="w-3.5 h-3.5 text-indigo-600" />
+            ) : (
+              <Eye className="w-3.5 h-3.5 text-purple-600" />
+            )}
             {isLightnessMode
-              ? '调整右侧中心色块的物理明度，使得左右两块在不同背景下【感知明度看起来完全一致】。'
-              : '调整右侧中心色块的色相与饱和度，反向补偿背景诱导，达成视觉感知色差调和。'}
-          </p>
-        </div>
+              ? '调节右侧中心明度，使左右两块视觉感知看起来完全一致'
+              : '调节右侧中心色彩，反向补偿背景诱导达成视觉感知一致'}
+          </div>
+        )}
 
-        {/* 左右双背景对照视口 (带中间安全隔离带) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full">
+        {/* 左右双背景对照视口 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
           {/* 左侧固定参考 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-              左侧参考 (固定基准)
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              左侧固定基准
             </span>
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
@@ -338,9 +331,9 @@ export function RelativeColorCanvas({
           </div>
 
           {/* 右侧作答与调制 */}
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-              右侧作答 (调制以达成感知一致)
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
+              右侧调制区 (达成感知一致)
             </span>
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
@@ -497,18 +490,24 @@ export function RelativeColorCanvas({
   const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色
+        </div>
+      )}
+
       {/* 对比展示区 (2x2 网格: 上 A -> B，下 C -> D) */}
-      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-4">
+      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-3">
         {/* 上排: 基准推移组 (A -> B) */}
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexA }}
           />
-          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexB }}
           />
         </div>
@@ -516,12 +515,12 @@ export function RelativeColorCanvas({
         {/* 下排: 目标推移组 (C -> D) */}
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexC }}
           />
-          <ArrowRight className="w-5 h-5 text-indigo-400" />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-24 h-24 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
             style={{ backgroundColor: hexSelectedD }}
           >
             {showAnswer && (

@@ -34,6 +34,7 @@ export interface CardDefinition {
   legacyMode: string;
   title: string;
   desc: string;
+  instruction?: string;
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
   settingsKey?: string; // 兼容

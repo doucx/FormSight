@@ -48,6 +48,7 @@ export interface GlobalSettings {
   idleTimeout: number;
   soundEnabled: boolean;
   sliderHitMargin: number;
+  showCanvasHints?: boolean;
 }
 
 export interface UserSettings {
@@ -71,6 +72,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     idleTimeout: 60,
     soundEnabled: true,
     sliderHitMargin: 12,
+    showCanvasHints: true,
   },
   cards: {
     star_single: {

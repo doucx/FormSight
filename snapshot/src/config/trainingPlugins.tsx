@@ -234,6 +234,7 @@ export const relativeColorPlugin: TrainingPlugin<
       hitMargin={settings.sliderHitMargin ?? 12}
       showToleranceBand={settings.showToleranceBand ?? true}
       enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
+      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
     />
   ),
 };
@@ -309,6 +310,7 @@ export const negativeSpacePlugin: TrainingPlugin<
       disabled={disabled}
       hitMargin={settings.sliderHitMargin ?? 12}
       showToleranceBand={settings.showToleranceBand ?? true}
+      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
     />
   ),
 };
@@ -353,6 +355,7 @@ export const abstractionPlugin: TrainingPlugin<
       disabled={disabled}
       hitMargin={(settings.sliderHitMargin as number) ?? 12}
       showToleranceBand={(settings.showToleranceBand as boolean) ?? true}
+      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
     />
   ),
 };
