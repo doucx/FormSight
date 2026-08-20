@@ -1,335 +1,63 @@
-## [WIP] fix: 修复细化感知模块 Profile 领域索引脱节导致层阶显示异常的问题
+你的分析切中要害。`createNoise2D` 中 `perm[X + perm[Y]]` 的单侧嵌套哈希破坏了空间旋转各向同性（Rotational Isotropy），导致沿 Y 轴的插值曲率和梯度分布出现不对称的纵向条带伪像。
+
+我将生成一个计划，将置换表索引修正为标准的 Ken Perlin 双重置换查找 `perm[perm[X] + Y]`，以恢复 2D 噪声场的完全各向同性与有机斑块分布。
+
+## [WIP] fix: 修复 2D 梯度噪声置换哈希不对称导致的垂直拉伸伪像
 
 ### 错误分析
-- **现象**：细化感知看板（`concretization`）下的 4 个模块在完成训练后，看板卡片的能力层阶与正确率仍为默认初始状态（Level 5，正确率 0%），而今日刷题数正常。
-- **根因**：
-  1. `updateProfile` 在更新已有 Profile 时未校准 `domain` 字段，导致旧数据 `domain` 仍为 `abstraction`。
-  2. `getProfilesByDomain` 仅依赖 `by-domain` 索引查询，当历史 Profile 的 domain 字段有偏差时无法命中。
-  3. `resolveLegacyCardId` 仅按 `${domain}:${mode}` 精确匹配，当传入历史 domain 时无法根据唯一的 `legacyMode` 进行容错回退。
+在 `src/utils/noiseUtils.ts` 的 `createNoise2D` 实现中，四角网格顶点的梯度向量索引采用了 `perm[X + perm[Y]]`、`perm[X + 1 + perm[Y]]` 等非对称哈希。由于 $X$ 坐标未经过置换表的非线性离散映射，而 $Y$ 坐标经过了置换映射，导致 $X$ 轴与 $Y$ 轴在空间统计特征上失去了旋转对称性与自相关各向同性，在生成 Notan 灰度场和连续纹理时表现为明显的垂直条纹和竖向拉伸瑕疵。
 
 ### 用户需求
-修复“几何大模寻形”、“黑白素描骨架”、“调性基底归位”等模块在完成练习后能力层阶和正确率无法正常在看板展示的问题，并确保历史数据的平滑自愈与兼容。
+修正 2D 梯度噪声生成器中的网格顶点哈希算法，消除垂直条带化与方向性畸变，使 Notan 灰度场与噪声颗粒呈现均匀各向同性的自然有机分布。
 
 ### 评论
-该修复强化了 IndexedDB 中 Profile 数据与当前卡片体系的映射一致性，并在查询、写入与数据迁移三层建立自愈机制，彻底杜绝多领域拆分时的历史数据索引脱节。
+该修复对于基于 FBM 过程生成的视知觉训练模块（如 Notan 素描归组、骨架寻源）至关重要。各向同性的底噪能确保生成的素描剪影形态真实、均匀，避免产生误导学员的非自然方向性视觉线索。
 
 ### 目标
-1. 增强 `resolveLegacyCardId` 和 `resolveCardByLegacy`，支持按全局唯一 `legacyMode` 进行兜底匹配。
-2. 在 `updateProfile` 中强制使用卡片的规范 `legacyDomain` 更新 `existing.domain`。
-3. 增强 `getProfilesByDomain`，在索引查询基础上增加按卡片 ID 兜底检索并自动自愈修正不一致的 `domain`。
-4. 在数据迁移与初始化阶段增加自愈校验，自动修复本地 IndexedDB 中的历史数据。
+1. 修改 `src/utils/noiseUtils.ts` 中的 `createNoise2D` 函数。
+2. 将四角梯度的查找逻辑更新为标准 Perlin 噪声的双重置换哈希 `perm[perm[X] + Y]`。
 
 ### 基本原理
-1. 通过 `MODE_MAP` 构建以全局唯一的 `legacyMode` 为键的备用索引，无论输入哪种历史领域标识均能唯一定位到正确的 `CardDefinition`。
-2. 在 `getProfilesByDomain` 和 `updateProfile` 中以 `card.legacyDomain` 为唯一真理来源（Single Source of Truth），实现历史数据无感知自动自愈。
+利用长度为 512 的 `perm` 表（前 256 元素的双倍展开），`perm[X]` 与 `perm[X + 1]` 会将 X 轴坐标进行伪随机哈希，随后加上 Y 轴坐标 `Y` 或 `Y + 1`，最大索引值为 $255 + 256 = 511 < 512$，无需额外的模运算即可安全读取。此举使 X 与 Y 在哈希深度上完全等价对称，彻底恢复旋转各向同性。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/engine #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/user-profiles #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/medium #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/algorithm #task/object/noise-generator #task/action/bug-fix #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 增强 `src/config/cards.ts` 的 legacyMode 容错映射机制
+#### Acts 1: 修复 2D 梯度噪声置换哈希逻辑
+
+我们将 `src/utils/noiseUtils.ts` 中 `createNoise2D` 的四角梯度索引修正为各向同性的双重置换。
 
 ~~~~~act
 patch_file
-src/config/cards.ts
+src/utils/noiseUtils.ts
 ~~~~~
-~~~~~typescript.old
-const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c]));
-const LEGACY_MAP = new Map<string, CardDefinition>(
-  ALL_CARDS.map((c) => [`${c.legacyDomain}:${c.legacyMode}`, c]),
-);
+~~~~~typescript
+    const u = fade(xf);
+    const v = fade(yf);
 
-export function getCardById(id: string): CardDefinition | undefined {
-  return CARD_MAP.get(id);
-}
+    const g00 = grad[perm[X + perm[Y]] % 8];
+    const g10 = grad[perm[X + 1 + perm[Y]] % 8];
+    const g01 = grad[perm[X + perm[Y + 1]] % 8];
+    const g11 = grad[perm[X + 1 + perm[Y + 1]] % 8];
 
-export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-  return ALL_CARDS.filter((c) => c.legacyDomain === domain);
-}
+    const n00 = g00[0] * xf + g00[1] * yf;
+~~~~~
+~~~~~typescript
+    const u = fade(xf);
+    const v = fade(yf);
 
-export function resolveLegacyCardId(domain: string, mode: string): string {
-  const card = LEGACY_MAP.get(`${domain}:${mode}`);
-  return card ? card.id : `${domain}_${mode}`;
-}
+    const g00 = grad[perm[perm[X] + Y] % 8];
+    const g10 = grad[perm[perm[X + 1] + Y] % 8];
+    const g01 = grad[perm[perm[X] + Y + 1] % 8];
+    const g11 = grad[perm[perm[X + 1] + Y + 1] % 8];
 
-export function resolveCardByLegacy(domain: string, mode: string): CardDefinition | undefined {
-  return LEGACY_MAP.get(`${domain}:${mode}`);
-}
-~~~~~
-~~~~~typescript.new
-const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c]));
-const LEGACY_MAP = new Map<string, CardDefinition>(
-  ALL_CARDS.map((c) => [`${c.legacyDomain}:${c.legacyMode}`, c]),
-);
-const MODE_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.legacyMode, c]));
-
-export function getCardById(id: string): CardDefinition | undefined {
-  return CARD_MAP.get(id);
-}
-
-export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-  return ALL_CARDS.filter((c) => c.legacyDomain === domain);
-}
-
-export function resolveLegacyCardId(domain: string, mode: string): string {
-  const card = LEGACY_MAP.get(`${domain}:${mode}`) || MODE_MAP.get(mode);
-  return card ? card.id : `${domain}_${mode}`;
-}
-
-export function resolveCardByLegacy(domain: string, mode: string): CardDefinition | undefined {
-  return LEGACY_MAP.get(`${domain}:${mode}`) || MODE_MAP.get(mode);
-}
-~~~~~
-
-#### Acts 2: 修复 `src/utils/db/queries.ts` 中的 Profile 写入与查询自愈逻辑
-
-~~~~~act
-patch_file
-src/utils/db/queries.ts
-~~~~~
-~~~~~typescript.old
-import { resolveLegacyCardId } from '../../config/cards';
-import {
-  type TrainingDomain,
-  type UnifiedProfileData,
-  type UnifiedSessionData,
-  type UnifiedTrialRecord,
-  getDB,
-} from './schema';
-~~~~~
-~~~~~typescript.new
-import { getCardById, getCardsByDomain, resolveLegacyCardId } from '../../config/cards';
-import {
-  type TrainingDomain,
-  type UnifiedProfileData,
-  type UnifiedSessionData,
-  type UnifiedTrialRecord,
-  getDB,
-} from './schema';
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/db/queries.ts
-~~~~~
-~~~~~typescript.old
-export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
-  const db = await getDB();
-  return await db.getAllFromIndex('user_profiles', 'by-domain', domain);
-}
-~~~~~
-~~~~~typescript.new
-export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
-  const db = await getDB();
-  const domainCards = getCardsByDomain(domain);
-  const indexProfiles = await db.getAllFromIndex('user_profiles', 'by-domain', domain);
-  const map = new Map<string, UnifiedProfileData>();
-
-  for (const p of indexProfiles) {
-    map.set(p.cardId, p);
-  }
-
-  // 兜底补齐因历史 domain 迁移未匹配索引的 Profile 并自愈写入
-  for (const card of domainCards) {
-    if (!map.has(card.id)) {
-      const p = await db.get('user_profiles', card.id);
-      if (p) {
-        if (p.domain !== domain) {
-          p.domain = domain;
-          await db.put('user_profiles', p);
-        }
-        map.set(p.cardId, p);
-      }
-    }
-  }
-
-  return Array.from(map.values());
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/db/queries.ts
-~~~~~
-~~~~~typescript.old
-async function updateProfile(
-  cardId: string,
-  domain: TrainingDomain,
-  mode: string,
-  isHit: boolean,
-  currentLevel: number,
-): Promise<void> {
-  const db = await getDB();
-  const existing = await db.get('user_profiles', cardId);
-
-  if (!existing) {
-    const newProfile: UnifiedProfileData = {
-      cardId,
-      domain,
-      mode,
-      currentLevel,
-      bestLevel: currentLevel,
-      totalTrials: 1,
-      totalHits: isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await db.put('user_profiles', newProfile);
-  } else {
-    existing.totalTrials += 1;
-    if (isHit) existing.totalHits += 1;
-    existing.currentLevel = currentLevel;
-    if (currentLevel > existing.bestLevel) {
-      existing.bestLevel = currentLevel;
-    }
-    existing.updatedAt = Date.now();
-    await db.put('user_profiles', existing);
-  }
-}
-~~~~~
-~~~~~typescript.new
-async function updateProfile(
-  cardId: string,
-  domain: TrainingDomain,
-  mode: string,
-  isHit: boolean,
-  currentLevel: number,
-): Promise<void> {
-  const db = await getDB();
-  const card = getCardById(cardId);
-  const canonicalDomain = card ? card.legacyDomain : domain;
-  const existing = await db.get('user_profiles', cardId);
-
-  if (!existing) {
-    const newProfile: UnifiedProfileData = {
-      cardId,
-      domain: canonicalDomain,
-      mode,
-      currentLevel,
-      bestLevel: currentLevel,
-      totalTrials: 1,
-      totalHits: isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await db.put('user_profiles', newProfile);
-  } else {
-    existing.domain = canonicalDomain;
-    existing.mode = mode;
-    existing.totalTrials += 1;
-    if (isHit) existing.totalHits += 1;
-    existing.currentLevel = currentLevel;
-    if (currentLevel > existing.bestLevel) {
-      existing.bestLevel = currentLevel;
-    }
-    existing.updatedAt = Date.now();
-    await db.put('user_profiles', existing);
-  }
-}
-~~~~~
-
-#### Acts 3: 优化 `src/utils/db/migration.ts` 与 `src/utils/db/importExport.ts` 导入导出及迁移逻辑
-
-~~~~~act
-patch_file
-src/utils/db/importExport.ts
-~~~~~
-~~~~~typescript.old
-import { resolveLegacyCardId } from '../../config/cards';
-import { loadSettings, saveSettings } from '../settings';
-import { DB_VERSION, type TrainingDomain, getDB } from './schema';
-~~~~~
-~~~~~typescript.new
-import { getCardById, resolveLegacyCardId } from '../../config/cards';
-import { loadSettings, saveSettings } from '../settings';
-import { DB_VERSION, type TrainingDomain, getDB } from './schema';
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/db/importExport.ts
-~~~~~
-~~~~~typescript.old
-    if (data.profiles) {
-      for (const p of data.profiles) {
-        const domain = (p.domain || 'star') as TrainingDomain;
-        const cardId = p.cardId || resolveLegacyCardId(domain, p.mode);
-        const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
-        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
-      }
-    }
-~~~~~
-~~~~~typescript.new
-    if (data.profiles) {
-      for (const p of data.profiles) {
-        const cardId = p.cardId || resolveLegacyCardId(p.domain || 'star', p.mode);
-        const card = getCardById(cardId);
-        const domain = card ? card.legacyDomain : ((p.domain || 'star') as TrainingDomain);
-        const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
-        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
-      }
-    }
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/db/migration.ts
-~~~~~
-~~~~~typescript.old
-import { openDB } from 'idb';
-import { resolveLegacyCardId } from '../../config/cards';
-import type {
-  FormSightDBSchema,
-  TrainingDomain,
-  UnifiedProfileData,
-  UnifiedSessionData,
-  UnifiedTrialRecord,
-} from './schema';
-~~~~~
-~~~~~typescript.new
-import { openDB } from 'idb';
-import { getCardById, resolveLegacyCardId } from '../../config/cards';
-import type {
-  FormSightDBSchema,
-  TrainingDomain,
-  UnifiedProfileData,
-  UnifiedSessionData,
-  UnifiedTrialRecord,
-} from './schema';
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/db/migration.ts
-~~~~~
-~~~~~typescript.old
-    for (const p of oldProfiles) {
-      const domain = p.domain || 'star';
-      const cardId = p.cardId || resolveLegacyCardId(domain, p.mode);
-      const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
-      await tx.objectStore('user_profiles').put({
-        ...p,
-        cardId,
-        domain,
-        totalTrials,
-      });
-    }
-~~~~~
-~~~~~typescript.new
-    for (const p of oldProfiles) {
-      const cardId = p.cardId || resolveLegacyCardId(p.domain || 'star', p.mode);
-      const card = getCardById(cardId);
-      const domain = card ? card.legacyDomain : (p.domain || 'star');
-      const totalTrials = p.totalTrials ?? p.totalTrainedCards ?? 0;
-      await tx.objectStore('user_profiles').put({
-        ...p,
-        cardId,
-        domain,
-        totalTrials,
-      });
-    }
+    const n00 = g00[0] * xf + g00[1] * yf;
 ~~~~~
 
 ### 下一步建议
-- 可以启动开发服务器验证细化感知看板（`#/dashboard/concretization`），确认“动态势线寻源”、“几何大模寻形”、“黑白素描骨架”、“调性基底归位”在刷新或练习后正确展示当前层阶与正确率。
+1. 启动本地开发服务验证：进入 `NOTAN_THRESHOLD`（黑白素描归组）或 `TD_NOTAN_2AFC`（黑白素描骨架）模式，观察生成的二值剪影与灰度图是否已恢复为自然的各向同性斑块形态。
+2. 运行自动化测试与代码检查（`npm run check` 或 `npm test`），确保所有相关模块通过回归验证。

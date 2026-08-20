@@ -48,10 +48,10 @@ export function createNoise2D(seed = Math.random()): Noise2DFunction {
     const u = fade(xf);
     const v = fade(yf);
 
-    const g00 = grad[perm[X + perm[Y]] % 8];
-    const g10 = grad[perm[X + 1 + perm[Y]] % 8];
-    const g01 = grad[perm[X + perm[Y + 1]] % 8];
-    const g11 = grad[perm[X + 1 + perm[Y + 1]] % 8];
+    const g00 = grad[perm[perm[X] + Y] % 8];
+    const g10 = grad[perm[perm[X + 1] + Y] % 8];
+    const g01 = grad[perm[perm[X] + Y + 1] % 8];
+    const g11 = grad[perm[perm[X + 1] + Y + 1] % 8];
 
     const n00 = g00[0] * xf + g00[1] * yf;
     const n10 = g10[0] * (xf - 1) + g10[1] * yf;
