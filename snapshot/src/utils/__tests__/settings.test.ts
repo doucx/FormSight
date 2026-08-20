@@ -45,17 +45,19 @@ describe('settings utils with card-scoped isolation', () => {
     expect(loaded.cards.rel_vector_shift.autoNextDelay).toBe(1200);
   });
 
-  it('loadSettings - should merge legacy domain settings with default values', () => {
-    const legacyPartialSettings = {
+  it('loadSettings - should merge partial card settings with default values', () => {
+    const partialSettings = {
       global: {
         idleTimeout: 120,
       },
-      star: {
-        gridSize: 5,
+      cards: {
+        star_single: {
+          gridSize: 5,
+        },
       },
     };
 
-    localStorage.setItem('formsight_user_settings', JSON.stringify(legacyPartialSettings));
+    localStorage.setItem('formsight_user_settings', JSON.stringify(partialSettings));
 
     const loaded = loadSettings();
     expect(loaded.global.idleTimeout).toBe(120);
