@@ -1,5 +1,6 @@
 import type { Point } from '../types';
 import { expDecayInterpolate } from './mathUtils';
+import { calculateOtsuThreshold, createNoise2D, fbm2D } from './noiseUtils';
 import { generateTetrahedralDistractors, hsvToOkLab } from './oklchUtils';
 import { getDistractorDistanceForLevel } from './relativeColorUtils';
 
@@ -58,6 +59,8 @@ export interface AbstractionQuestionData {
 
   // 3. NOTAN_THRESHOLD 黑白素描归组字段
   notanShapes?: NotanShape[];
+  notanBuffer?: number[]; // 0..255 灰阶连续场数组
+  notanFieldDim?: number; // 灰度场分辨率 (如 120x120)
   idealNotanThreshold?: number; // 0..100 理论最佳二值化阈值
 
   // 4. PALETTE_CLUSTERING 调色板主调字段
@@ -296,49 +299,60 @@ export function generateAbstractionQuestion(
     };
   }
 
-  // 3. NOTAN_THRESHOLD 黑白素描二值归组
+  // 3. NOTAN_THRESHOLD 黑白素描二值归组 (多尺度 FBM 双频模型)
   if (mode === 'NOTAN_THRESHOLD') {
-    const notanShapes: NotanShape[] = [];
+    const fieldDim = 120; // 120x120 场分辨率，兼顾极致生成速度与高清插值
+    const buffer = new Uint8Array(fieldDim * fieldDim);
 
-    const isDarkSubject = Math.random() < 0.5;
-    const subjectBaseVal = isDarkSubject ? 20 + Math.random() * 20 : 60 + Math.random() * 20;
-    const bgBaseVal = isDarkSubject ? 60 + Math.random() * 20 : 20 + Math.random() * 20;
+    const macroNoise = createNoise2D(Math.random());
+    const microNoise = createNoise2D(Math.random());
 
-    const idealNotanThreshold = Math.round((subjectBaseVal + bgBaseVal) / 2);
+    // 1. 随机生成画面的基准调性 (高调 High-Key / 低调 Low-Key / 中调 Mid-Key)
+    // 使得理论阈值均匀离散在 20 ~ 80 宽幅区间
+    const keyType = Math.random();
+    const baseKey =
+      keyType < 0.35
+        ? 22 + Math.random() * 14 // 低调暗夜 (22~36)
+        : keyType < 0.7
+          ? 64 + Math.random() * 14 // 高调明亮 (64~78)
+          : 44 + Math.random() * 12; // 中调 (44~56)
 
-    // 1. 生成杂乱背景块
-    for (let i = 0; i < 40; i++) {
-      notanShapes.push({
-        type: Math.random() > 0.5 ? 'rect' : 'circle',
-        cx: Math.random() * ABSTRACTION_CANVAS_SIZE,
-        cy: Math.random() * ABSTRACTION_CANVAS_SIZE,
-        w: 40 + Math.random() * 80,
-        h: 40 + Math.random() * 80,
-        r: 20 + Math.random() * 40,
-        baseVal: Math.max(0, Math.min(100, bgBaseVal + (Math.random() * 30 - 15))),
-      });
+    // 2. 宏观场尺度 (超低频，形成 2~3 块宏观有机黑白大势)
+    const macroScale = 0.012 + Math.random() * 0.008;
+    const macroAmp = 42 + Math.random() * 10;
+
+    // 3. 微观高频噪波扰动强度随 Level 递增
+    const microScale = 0.08 + Math.random() * 0.04;
+    const microAmp = 10 + t * 38; // Level 1 几乎无噪波，Level 35 强噪波干扰
+
+    for (let y = 0; y < fieldDim; y++) {
+      for (let x = 0; x < fieldDim; x++) {
+        const idx = y * fieldDim + x;
+        // 低频宏观大形骨架 (2 Octaves)
+        const macroVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
+        // 高频微观肌理干扰 (3 Octaves)
+        const microVal =
+          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+
+        const raw = baseKey + macroVal + microVal;
+        const clamped0to100 = Math.max(0, Math.min(100, raw));
+        buffer[idx] = Math.round((clamped0to100 / 100) * 255);
+      }
     }
 
-    // 2. 生成明确的前景主体图元组
-    const subjectCx = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
-    const subjectCy = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
-    for (let i = 0; i < 15; i++) {
-      notanShapes.push({
-        type: 'circle',
-        cx: subjectCx + (Math.random() * 100 - 50),
-        cy: subjectCy + (Math.random() * 100 - 50),
-        r: 30 + Math.random() * 40,
-        baseVal: Math.max(0, Math.min(100, subjectBaseVal + (Math.random() * 20 - 10))),
-      });
-    }
+    // 4. 大津法自动寻找最大类间方差的最佳截断分割点
+    const otsuByte = calculateOtsuThreshold(buffer);
+    const idealNotanThreshold = Math.round((otsuByte / 255) * 100);
 
-    const tolerance = Math.round(expDecayInterpolate(15.0, 3.0, clampedLevel) * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(10.0, 2.0, clampedLevel) * 10) / 10;
 
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      notanShapes,
+      notanBuffer: Array.from(buffer),
+      notanFieldDim: fieldDim,
       idealNotanThreshold,
       tolerance,
     };
