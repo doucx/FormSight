@@ -52,6 +52,8 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   targetAccuracy = 0.8,
   blockSize = 10,
   idleTimeoutSec: optionsIdleTimeout,
+  targetLimitTrials,
+  onTargetLimitReached,
   generateQuestion,
   evaluateAnswer,
   isHit,

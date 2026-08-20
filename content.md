@@ -1,323 +1,117 @@
-修复了 `npm run build` 中的 6 处 TypeScript 编译报错以及 `npm run checkf` 中的 2 处 Biome a11y 无障碍键盘事件约束错误。
+修复了 `useTrainingSession.ts` 中函数入参解构遗漏 `targetLimitTrials` 和 `onTargetLimitReached` 导致的变量未定义错误，以及 `PlanHeroCard.tsx` 中遗留的未读导入。
 
-## [WIP] fix: 修复 TypeScript 编译未定义变量与 Biome a11y 检查错误
+## [WIP] fix: 补全 useTrainingSession 参数解构并清理未读导入
 
 ### 错误分析
 
-1. **TypeScript 编译报错 (6 处)**:
-   - `src/hooks/useTrainingSession.ts`: 在函数签名中已解构参数，但函数体内多余地执行了 `const { targetLimitTrials, onTargetLimitReached } = options;`，导致未定义标识符 `options` 编译失败。
-   - `src/components/plan/PlanEditorModal.tsx`: 导入了未使用的图标 `X`。
-   - `src/components/plan/PlanHeroCard.tsx`: 声明了解析变量 `meta` 但未使用。
-   - `src/components/plan/PlanStepTransitionOverlay.tsx`: 声明了 `CompletedIcon` 但未使用。
-   - `src/components/plan/PlanSummaryModal.tsx`: 导入了未使用的图标 `Zap`。
-   - `src/utils/planStorage.ts`: 导入了未使用的 `DEFAULT_PLAN_TEMPLATES`。
+1. `src/hooks/useTrainingSession.ts`:
+   - `UseTrainingSessionOptions` 接口中定义了 `targetLimitTrials` 和 `onTargetLimitReached`，但在 `useTrainingSession` 函数参数解构时遗漏了解构这两个属性。
+   - 这导致内部 `handleAnswer` 函数及依赖项无法访问这两个变量，在运行时报 `ReferenceError: targetLimitTrials is not defined`，并在编译时报 `TS2304: Cannot find name 'targetLimitTrials'`。
 
-2. **Biome a11y 检查错误 (2 处)**:
-   - `src/components/plan/PlanSummaryModal.tsx` 与 `src/components/plan/PlanStepTransitionOverlay.tsx`: 带有 `onClick` 的模态背景遮罩元素缺少配套的 `onKeyDown` 键盘导航事件绑定，触发了 `lint/a11y/useKeyWithClickEvents` 规则。
+2. `src/components/plan/PlanHeroCard.tsx`:
+   - 移除了卡片循环内部未使用的 `meta` 变量后，文件顶部的 `import { DOMAINS_CONFIG } from '../../config/domains';` 变为未读导入，触发 `TS6133`。
 
 ### 用户需求
 
-解决工程构建 (`npm run build`) 和代码格式化/代码检查 (`npm run checkf`) 中出现的所有类型与 linter 错误，使代码库恢复可构建、无警告的健康状态。
+彻底消除 `useTrainingSession` 运行时的未定义变量错误和编译/Linter 检查中的所有未读依赖与导入。
 
 ### 评论
 
-这是一批典型的重构与新模块开发后的未清理变量及 a11y 补充问题。通过清理未读导入/变量、删除错误的重复解构，并为模态框遮罩层补齐键盘响应逻辑，可以确保构建通过且增强无障碍体验。
+在直接对函数形参进行对象解构的模式下，所有需要使用的选项都必须在形参声明中显式解构。补齐解构后，`targetLimitTrials` 和 `onTargetLimitReached` 将在 Hook 作用域内正常可用，计划流训练（PlanTrainingView）的分阶段限题结算逻辑即可顺畅执行。
 
 ### 目标
 
-1. 移除各文件中未使用的导入与未使用的局部变量。
-2. 修复 `useTrainingSession.ts` 中对不存在的 `options` 变量的引用。
-3. 在 `PlanSummaryModal.tsx` 与 `PlanStepTransitionOverlay.tsx` 中为遮罩层元素补充 `onKeyDown` 键盘事件处理。
+1. 在 `useTrainingSession` 的入参解构中显式添加 `targetLimitTrials` 与 `onTargetLimitReached`。
+2. 从 `PlanHeroCard.tsx` 中移除无用的 `DOMAINS_CONFIG` 导入。
 
 ### 基本原理
 
-通过精确的上下文 `patch_file` 替换，消除无用引用与语法错误，并为弹窗增加标准的键盘 `Escape` / `Enter` / `Space` 交互响应。
+通过向 `useTrainingSession` 解构参数列表注入字段，使 `targetLimitTrials` 和 `onTargetLimitReached` 成为合法的局部变量，同时满足 `useCallback` 的依赖检查和 TypeScript 编译要求。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #scope/core #scope/dx #ai/instruct #task/domain/build #task/object/type-and-lint-errors #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #scope/core #scope/dx #ai/instruct #task/domain/build #task/object/training-session-params #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `useTrainingSession.ts` 与 `planStorage.ts`
+#### Acts 1: 在 `useTrainingSession` 中补全参数解构
 
-移除多余的 `options` 解构及未使用的模板导入。
+在 Hook 的入参对象中解构 `targetLimitTrials` 和 `onTargetLimitReached`。
 
 ~~~~~act
 patch_file
 src/hooks/useTrainingSession.ts
 ~~~~~
 ~~~~~typescript.old
-    setShowAnswer(false);
-    setUserAnswer(null);
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [isFinished, generateQuestion]);
-
-  const { targetLimitTrials, onTargetLimitReached } = options;
-
-  const handleAnswer = useCallback(
-    async (userVal: TAnswerVal) => {
+export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
+  domain,
+  mode,
+  sessionType,
+  initialLevel,
+  autoNext,
+  autoNextDelay,
+  stepGranularity = 'standard',
+  adaptiveMode = 'block',
+  targetAccuracy = 0.8,
+  blockSize = 10,
+  idleTimeoutSec: optionsIdleTimeout,
+  generateQuestion,
+  evaluateAnswer,
+  isHit,
+  getQuestionLevel,
+  saveTrialRecord,
+  saveSession,
+  onExit,
+}: UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal>) {
 ~~~~~
 ~~~~~typescript.new
-    setShowAnswer(false);
-    setUserAnswer(null);
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [isFinished, generateQuestion]);
-
-  const handleAnswer = useCallback(
-    async (userVal: TAnswerVal) => {
+export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
+  domain,
+  mode,
+  sessionType,
+  initialLevel,
+  autoNext,
+  autoNextDelay,
+  stepGranularity = 'standard',
+  adaptiveMode = 'block',
+  targetAccuracy = 0.8,
+  blockSize = 10,
+  idleTimeoutSec: optionsIdleTimeout,
+  targetLimitTrials,
+  onTargetLimitReached,
+  generateQuestion,
+  evaluateAnswer,
+  isHit,
+  getQuestionLevel,
+  saveTrialRecord,
+  saveSession,
+  onExit,
+}: UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal>) {
 ~~~~~
 
-~~~~~act
-patch_file
-src/utils/planStorage.ts
-~~~~~
-~~~~~typescript.old
-import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
-import type { PlanItem, PlanTemplate, TrainingPlan } from '../types/plan';
+#### Acts 2: 清理 `PlanHeroCard.tsx` 中的未读导入
 
-const PLAN_STORAGE_KEY = 'formsight_custom_training_plan';
-~~~~~
-~~~~~typescript.new
-import type { PlanItem, PlanTemplate, TrainingPlan } from '../types/plan';
-
-const PLAN_STORAGE_KEY = 'formsight_custom_training_plan';
-~~~~~
-
-#### Acts 2: 修复组件中的未使用变量与未读导入
-
-移除 `PlanEditorModal.tsx`、`PlanHeroCard.tsx`、`PlanStepTransitionOverlay.tsx`、`PlanSummaryModal.tsx` 中的冗余定义。
-
-~~~~~act
-patch_file
-src/components/plan/PlanEditorModal.tsx
-~~~~~
-~~~~~typescript.old
-import {
-  ArrowDown,
-  ArrowUp,
-  Bookmark,
-  Plus,
-  RotateCcw,
-  Sliders,
-  Trash2,
-  X,
-  Zap,
-} from 'lucide-preact';
-import { useState } from 'preact/hooks';
-~~~~~
-~~~~~typescript.new
-import {
-  ArrowDown,
-  ArrowUp,
-  Bookmark,
-  Plus,
-  RotateCcw,
-  Sliders,
-  Trash2,
-  Zap,
-} from 'lucide-preact';
-import { useState } from 'preact/hooks';
-~~~~~
+移除不再被使用的 `DOMAINS_CONFIG`。
 
 ~~~~~act
 patch_file
 src/components/plan/PlanHeroCard.tsx
 ~~~~~
 ~~~~~typescript.old
-        {plan.items.map((item, idx) => {
-          const card = getCardById(item.cardId);
-          if (!card) return null;
-          const meta = DOMAINS_CONFIG[card.domain];
-          const Icon = card.icon;
-
-          return (
+import { ArrowRight, ChevronRight, Clock, Play, Plus, Sliders, Sparkles, Zap } from 'lucide-preact';
+import { getCardById } from '../../config/cards';
+import { DOMAINS_CONFIG } from '../../config/domains';
+import type { TrainingPlan } from '../../types/plan';
 ~~~~~
 ~~~~~typescript.new
-        {plan.items.map((item, idx) => {
-          const card = getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-
-          return (
-~~~~~
-
-#### Acts 3: 修复 Biome a11y 约束及剩余类型错误
-
-移除未使用的 `CompletedIcon` 和 `Zap`，并补全遮罩层的 `onKeyDown` 键盘无障碍事件处理。
-
-~~~~~act
-patch_file
-src/components/plan/PlanStepTransitionOverlay.tsx
-~~~~~
-~~~~~typescript.old
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        onProceed();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onProceed]);
-
-  const CompletedIcon = completedCard.icon;
-  const NextIcon = nextCard.icon;
-
-  return (
-    <div
-      role="presentation"
-      onClick={onProceed}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-pointer select-none"
-    >
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/80 p-7 flex flex-col items-center gap-5 text-center my-auto animate-in zoom-in-95">
-~~~~~
-~~~~~typescript.new
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.key === ' ' || e.key === 'Enter') {
-        e.preventDefault();
-        onProceed();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onProceed]);
-
-  const NextIcon = nextCard.icon;
-
-  return (
-    <div
-      role="presentation"
-      onClick={onProceed}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.code === 'Space') {
-          onProceed();
-        }
-      }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 backdrop-blur-md p-4 animate-in fade-in duration-200 cursor-pointer select-none"
-    >
-      <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl border border-white/80 p-7 flex flex-col items-center gap-5 text-center my-auto animate-in zoom-in-95">
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/PlanSummaryModal.tsx
-~~~~~
-~~~~~typescript.old
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-
-export interface PlanStageResult {
-  card: CardDefinition;
-  targetTrials: number;
-  history: SessionHistoryItem[];
-}
-
-interface PlanSummaryModalProps {
-  planName: string;
-  stageResults: PlanStageResult[];
-  totalElapsedSeconds: number;
-  onClose: () => void;
-  onRestart: () => void;
-}
-
-export function PlanSummaryModal({
-  planName,
-  stageResults,
-  totalElapsedSeconds,
-  onClose,
-  onRestart,
-}: PlanSummaryModalProps) {
-  const allHistory = stageResults.flatMap((s) => s.history);
-  const totalTrials = allHistory.length;
-  const hitCount = allHistory.filter((h) => h.isHit).length;
-  const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
-~~~~~
-~~~~~typescript.new
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-
-export interface PlanStageResult {
-  card: CardDefinition;
-  targetTrials: number;
-  history: SessionHistoryItem[];
-}
-
-interface PlanSummaryModalProps {
-  planName: string;
-  stageResults: PlanStageResult[];
-  totalElapsedSeconds: number;
-  onClose: () => void;
-  onRestart: () => void;
-}
-
-export function PlanSummaryModal({
-  planName,
-  stageResults,
-  totalElapsedSeconds,
-  onClose,
-  onRestart,
-}: PlanSummaryModalProps) {
-  const allHistory = stageResults.flatMap((s) => s.history);
-  const totalTrials = allHistory.length;
-  const hitCount = allHistory.filter((h) => h.isHit).length;
-  const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (
-          e.target === e.currentTarget &&
-          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
-        ) {
-          onClose();
-        }
-      }}
-    >
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
+import { ArrowRight, ChevronRight, Clock, Play, Plus, Sliders, Sparkles, Zap } from 'lucide-preact';
+import { getCardById } from '../../config/cards';
+import type { TrainingPlan } from '../../types/plan';
 ~~~~~
 
 ### 下一步建议
 
-1. 运行 `npm run check` 或 `npm run checkf` 验证代码规范及 a11y 检查是否完全通过。
-2. 运行 `npm run build` 确保 TypeScript 类型检查及 Vite 打包通过。
-3. 验证通过后，可生成 `[COMMIT]` 计划提交本次变更。
+1. 运行 `npm run checkf` 与 `npm run build`，确认已无任何 Linter 或 TS 报错。
+2. 运行 `npm run test` 确保现有单元测试通过。

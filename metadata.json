@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TypeScript 编译未定义变量与 Biome a11y 检查错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787228955.7633083, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 补全 useTrainingSession 参数解构并清理未读导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787229038.4147983, "duration_ms": 0}}

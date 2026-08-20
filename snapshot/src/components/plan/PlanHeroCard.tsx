@@ -1,6 +1,5 @@
 import { ArrowRight, ChevronRight, Clock, Play, Plus, Sliders, Sparkles, Zap } from 'lucide-preact';
 import { getCardById } from '../../config/cards';
-import { DOMAINS_CONFIG } from '../../config/domains';
 import type { TrainingPlan } from '../../types/plan';
 
 interface PlanHeroCardProps {
