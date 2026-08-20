@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787228110.8390265, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现自定义训练计划流与主页日课入口", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787228739.3399258, "duration_ms": 0}}

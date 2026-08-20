@@ -4,7 +4,8 @@ import type { TrainingDomain } from '../utils/db';
 export type RouteLocation =
   | { type: 'home' }
   | { type: 'dashboard'; domain: TrainingDomain }
-  | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' };
+  | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
+  | { type: 'plan-train' };
 
 function parseHash(hash: string): RouteLocation {
   const cleanHash = hash.replace(/^#\/?/, '').trim();
@@ -12,6 +13,10 @@ function parseHash(hash: string): RouteLocation {
 
   const [pathPart, queryPart] = cleanHash.split('?');
   const segments = pathPart.split('/').filter(Boolean);
+
+  if (segments[0] === 'plan-train') {
+    return { type: 'plan-train' };
+  }
 
   if (segments[0] === 'dashboard' && segments[1]) {
     const domain = segments[1] as TrainingDomain;
@@ -41,6 +46,7 @@ function parseHash(hash: string): RouteLocation {
 
 function stringifyRoute(route: RouteLocation): string {
   if (route.type === 'home') return '#/';
+  if (route.type === 'plan-train') return '#/plan-train';
   if (route.type === 'dashboard') return `#/dashboard/${route.domain}`;
   if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
   return '#/';

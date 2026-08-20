@@ -16,6 +16,8 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   targetAccuracy?: number;
   blockSize?: number;
   idleTimeoutSec?: number;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   generateQuestion: (level: number) => TQuestion;
   evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
   isHit: (hitResult: THitResult) => boolean;
@@ -120,6 +122,8 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestionStartTime(Date.now());
   }, [isFinished, generateQuestion]);
 
+  const { targetLimitTrials, onTargetLimitReached } = options;
+
   const handleAnswer = useCallback(
     async (userVal: TAnswerVal) => {
       const responseTimeMs = Date.now() - questionStartTime;
@@ -150,19 +154,30 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         userVal,
       });
 
-      setSessionHistory((prev) => [
-        ...prev,
-        {
-          trialIndex: newTotal,
-          level: getQuestionLevel(question),
-          isHit: hit,
-          responseTimeMs,
-        },
-      ]);
+      const nextHistoryItem: SessionHistoryItem = {
+        trialIndex: newTotal,
+        level: getQuestionLevel(question),
+        isHit: hit,
+        responseTimeMs,
+      };
+
+      const updatedHistory = [...sessionHistory, nextHistoryItem];
+      setSessionHistory(updatedHistory);
 
       adaptiveEngineRef.current.recordResult(hit);
 
-      if (sessionType === 'benchmark' && newTotal >= 20) {
+      if (targetLimitTrials && newTotal >= targetLimitTrials) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        autoNextTimerRef.current = window.setTimeout(() => {
+          if (onTargetLimitReached) {
+            onTargetLimitReached(updatedHistory);
+          } else {
+            setShowSummaryModal(true);
+          }
+        }, autoNextDelay);
+      } else if (sessionType === 'benchmark' && newTotal >= 20) {
         setIsFinished(true);
         await saveCurrentSession(newTotal, newHits, true);
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
@@ -185,6 +200,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       hitTrials,
       saveTrialRecord,
       getQuestionLevel,
+      sessionHistory,
+      targetLimitTrials,
+      onTargetLimitReached,
       sessionType,
       saveCurrentSession,
       autoNextDelay,

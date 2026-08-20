@@ -29,6 +29,8 @@ interface GenericTrainingPluginAdapter {
   }) => ComponentChildren;
 }
 
+import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+
 export interface GenericTrainingViewProps {
   card: CardDefinition;
   plugin: AnyTrainingPlugin;
@@ -36,6 +38,8 @@ export interface GenericTrainingViewProps {
   initialLevel: number;
   settings: BaseModuleSettings;
   globalSettings?: GlobalSettings;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   onExit: () => void;
 }
 
@@ -46,6 +50,8 @@ export function GenericTrainingView({
   initialLevel,
   settings,
   globalSettings,
+  targetLimitTrials,
+  onTargetLimitReached,
   onExit,
 }: GenericTrainingViewProps) {
   const domain = card.domain;
@@ -63,6 +69,8 @@ export function GenericTrainingView({
     adaptiveMode: settings.adaptiveMode,
     targetAccuracy: settings.targetAccuracy,
     blockSize: settings.blockSize,
+    targetLimitTrials,
+    onTargetLimitReached,
     generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
     evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
     isHit: adapter.isHit,
