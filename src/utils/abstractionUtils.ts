@@ -138,40 +138,6 @@ export function calcPCAOrientation(points: Point[]): number {
 }
 
 /**
- * 经典 Ramer-Douglas-Peucker (RDP) 多边形顶点精简算法
- */
-function perpendicularDistance(p: Point, p1: Point, p2: Point): number {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len === 0) return Math.hypot(p.x - p1.x, p.y - p1.y);
-  return Math.abs(dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x) / len;
-}
-
-export function rdpSimplify(points: Point[], epsilon: number): Point[] {
-  if (points.length <= 3) return points;
-
-  let dmax = 0;
-  let index = 0;
-  const end = points.length - 1;
-
-  for (let i = 1; i < end; i++) {
-    const d = perpendicularDistance(points[i], points[0], points[end]);
-    if (d > dmax) {
-      index = i;
-      dmax = d;
-    }
-  }
-
-  if (dmax > epsilon) {
-    const recResults1 = rdpSimplify(points.slice(0, index + 1), epsilon);
-    const recResults2 = rdpSimplify(points.slice(index), epsilon);
-    return recResults1.slice(0, -1).concat(recResults2);
-  }
-  return [points[0], points[end]];
-}
-
-/**
  * 生成带方向性的散点流
  */
 function generateFlowParticles(
@@ -199,6 +165,46 @@ function generateFlowParticles(
     });
   }
   return points;
+}
+
+/**
+ * 将简单的多边形边缘打碎，生成拥有大量顶点的复杂细碎剪影
+ */
+function fractalizePolygon(
+  basePolygon: Point[],
+  detailLevel: number,
+  noiseFactor: number,
+): Point[] {
+  let currentPoints = [...basePolygon];
+
+  for (let iter = 0; iter < detailLevel; iter++) {
+    const nextPoints: Point[] = [];
+    for (let i = 0; i < currentPoints.length; i++) {
+      const p1 = currentPoints[i];
+      const p2 = currentPoints[(i + 1) % currentPoints.length];
+
+      nextPoints.push(p1);
+
+      const midX = (p1.x + p2.x) / 2;
+      const midY = (p1.y + p2.y) / 2;
+
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len === 0) continue;
+
+      const nx = -dy / len;
+      const ny = dx / len;
+
+      const displacement = (Math.random() * 2 - 1) * noiseFactor * (len * 0.3);
+      nextPoints.push({
+        x: Math.round(midX + nx * displacement),
+        y: Math.round(midY + ny * displacement),
+      });
+    }
+    currentPoints = nextPoints;
+  }
+  return currentPoints;
 }
 
 /**
@@ -257,37 +263,26 @@ export function generateAbstractionQuestion(
 
   // 2. POLYGON_DECIMATION 折线大形 (2AFC)
   if (mode === 'POLYGON_DECIMATION') {
-    const vertCount = 18 + Math.floor(t * 12);
-    const detailedPolygon = generateDetailedPolygon(vertCount);
+    // 1. 生成真实的大模基准 (4~6个关键转折点)
+    const vertCount = Math.floor(Math.random() * 3) + 4;
+    const targetHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    // 计算标准 RDP 简化 (目标保留 4~6 顶点)
-    let eps = 25;
-    let simplified = rdpSimplify(detailedPolygon, eps);
-    let attempts = 0;
-    while ((simplified.length < 4 || simplified.length > 7) && attempts < 15) {
-      attempts++;
-      eps = simplified.length < 4 ? eps * 0.75 : eps * 1.35;
-      simplified = rdpSimplify(detailedPolygon, eps);
-    }
+    // 2. 生成干扰大模（改变关键转折与体块比例）
+    const distractorHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    // 生成干扰项：随机微调/丢失一个关键大顶点
-    const distractor = simplified.map((p) => ({ ...p }));
-    const modIdx = Math.floor(Math.random() * distractor.length);
-    const perturbDist = 35 * (1 - t * 0.6); // 随 Level 变小
-    distractor[modIdx].x += Math.round((Math.random() * 2 - 1) * perturbDist);
-    distractor[modIdx].y += Math.round((Math.random() * 2 - 1) * perturbDist);
+    // 3. 基于 targetHull 进行边缘分形细化，生成题干展示的高频细碎多边形
+    const scaleToMain = ABSTRACTION_CANVAS_SIZE / ABSTRACTION_2AFC_SIZE;
+    const baseForDetailed = targetHull.map((p) => ({
+      x: Math.round(p.x * scaleToMain),
+      y: Math.round(p.y * scaleToMain),
+    }));
+
+    // 难度越高，边缘分形破碎程度越大 (0.4 ~ 1.2)
+    const noiseFactor = 0.4 + t * 0.8;
+    const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
 
     const isA = Math.random() < 0.5;
-    const scaleTo2Afc = ABSTRACTION_2AFC_SIZE / ABSTRACTION_CANVAS_SIZE;
-    const mapTo2Afc = (pts: Point[]) =>
-      pts.map((p) => ({
-        x: Math.round(p.x * scaleTo2Afc),
-        y: Math.round(p.y * scaleTo2Afc),
-      }));
-
-    const simplifiedOptions = isA
-      ? [mapTo2Afc(simplified), mapTo2Afc(distractor)]
-      : [mapTo2Afc(distractor), mapTo2Afc(simplified)];
+    const simplifiedOptions = isA ? [targetHull, distractorHull] : [distractorHull, targetHull];
 
     return {
       id,
@@ -303,34 +298,41 @@ export function generateAbstractionQuestion(
 
   // 3. NOTAN_THRESHOLD 黑白素描二值归组
   if (mode === 'NOTAN_THRESHOLD') {
-    const notanShapes: NotanShape[] = [
-      {
-        type: 'rect',
-        cx: 200,
-        cy: 200,
-        w: 360,
-        h: 360,
-        baseVal: Math.floor(Math.random() * 20) + 75,
-      },
-      {
-        type: 'circle',
-        cx: 160 + Math.random() * 80,
-        cy: 160 + Math.random() * 80,
-        r: 60 + Math.random() * 40,
-        baseVal: Math.floor(Math.random() * 20) + 20,
-      },
-      {
-        type: 'rect',
-        cx: 140 + Math.random() * 120,
-        cy: 220 + Math.random() * 60,
-        w: 120 + Math.random() * 60,
-        h: 80 + Math.random() * 40,
-        baseVal: Math.floor(Math.random() * 30) + 40,
-      },
-    ];
+    const notanShapes: NotanShape[] = [];
 
-    const idealNotanThreshold = 50.0;
-    const tolerance = Math.round(expDecayInterpolate(14.0, 2.0, clampedLevel) * 10) / 10;
+    const isDarkSubject = Math.random() < 0.5;
+    const subjectBaseVal = isDarkSubject ? 20 + Math.random() * 20 : 60 + Math.random() * 20;
+    const bgBaseVal = isDarkSubject ? 60 + Math.random() * 20 : 20 + Math.random() * 20;
+
+    const idealNotanThreshold = Math.round((subjectBaseVal + bgBaseVal) / 2);
+
+    // 1. 生成杂乱背景块
+    for (let i = 0; i < 40; i++) {
+      notanShapes.push({
+        type: Math.random() > 0.5 ? 'rect' : 'circle',
+        cx: Math.random() * ABSTRACTION_CANVAS_SIZE,
+        cy: Math.random() * ABSTRACTION_CANVAS_SIZE,
+        w: 40 + Math.random() * 80,
+        h: 40 + Math.random() * 80,
+        r: 20 + Math.random() * 40,
+        baseVal: Math.max(0, Math.min(100, bgBaseVal + (Math.random() * 30 - 15))),
+      });
+    }
+
+    // 2. 生成明确的前景主体图元组
+    const subjectCx = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
+    const subjectCy = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
+    for (let i = 0; i < 15; i++) {
+      notanShapes.push({
+        type: 'circle',
+        cx: subjectCx + (Math.random() * 100 - 50),
+        cy: subjectCy + (Math.random() * 100 - 50),
+        r: 30 + Math.random() * 40,
+        baseVal: Math.max(0, Math.min(100, subjectBaseVal + (Math.random() * 20 - 10))),
+      });
+    }
+
+    const tolerance = Math.round(expDecayInterpolate(15.0, 3.0, clampedLevel) * 10) / 10;
 
     return {
       id,
@@ -425,14 +427,26 @@ export function generateAbstractionQuestion(
 
   // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
   if (mode === 'TD_HULL_2AFC') {
-    const promptHull = generateDetailedPolygon(5, ABSTRACTION_THUMB_SIZE);
+    const promptHull = generateDetailedPolygon(
+      Math.floor(Math.random() * 2) + 4,
+      ABSTRACTION_THUMB_SIZE,
+    );
     const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
-    const targetDetailed = promptHull.map((p) => ({
-      x: p.x * scale + (Math.random() * 10 - 5),
-      y: p.y * scale + (Math.random() * 10 - 5),
+
+    const targetBase = promptHull.map((p) => ({
+      x: p.x * scale,
+      y: p.y * scale,
     }));
 
-    const distractorDetailed = generateDetailedPolygon(5, ABSTRACTION_2AFC_SIZE);
+    const distractorBase = generateDetailedPolygon(
+      Math.floor(Math.random() * 2) + 4,
+      ABSTRACTION_2AFC_SIZE,
+    );
+
+    const noiseFactor = 0.5 + t * 0.8;
+    const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);
+    const distractorDetailed = fractalizePolygon(distractorBase, 2, noiseFactor);
+
     const isA = Math.random() < 0.5;
 
     return {
