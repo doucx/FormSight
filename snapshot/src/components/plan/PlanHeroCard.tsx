@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Check,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -9,6 +10,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { getCardById } from '../../config/cards';
 import type { TrainingPlan } from '../../types/plan';
 
