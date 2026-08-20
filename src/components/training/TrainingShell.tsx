@@ -28,6 +28,7 @@ interface TrainingShellProps {
   isTargeting?: boolean;
   autoNext: boolean;
   session: TrainingSessionHandle;
+  showExitButton?: boolean;
   onExit: () => void;
   children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
 }
@@ -39,6 +40,7 @@ export function TrainingShell({
   isTargeting = false,
   autoNext,
   session,
+  showExitButton = true,
   children,
 }: TrainingShellProps) {
   const { title, instruction, desc } = card;
@@ -73,14 +75,16 @@ export function TrainingShell({
       {/* 统一 Header 状态栏 */}
       <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRequestFinish}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            退出训练 (Esc)
-          </button>
+          {showExitButton && (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              退出训练 (Esc)
+            </button>
+          )}
           <div className="relative flex items-center">
             <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider flex items-center gap-1.5">
               {title} · {badge} | {sessionType === 'benchmark' ? '基准测试' : '自适应训练'}
