@@ -135,7 +135,10 @@ export function PlanHeroCard({
                         {favoritePlans.map((p) => {
                           const isSelected = p.id === plan.id;
                           const stageCount = (p.items || []).length;
-                          const pTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
+                          const pTrials = (p.items || []).reduce(
+                            (acc, c) => acc + c.targetTrials,
+                            0,
+                          );
 
                           return (
                             <button
