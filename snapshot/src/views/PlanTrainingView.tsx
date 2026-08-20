@@ -1,7 +1,6 @@
 import { FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { PlanStepTransitionOverlay } from '../components/plan/PlanStepTransitionOverlay';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
 import { getCardById } from '../config/cards';
 import { CARD_PLUGINS } from '../config/trainingPlugins';
@@ -19,7 +18,6 @@ interface PlanTrainingViewProps {
 export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [stageResults, setStageResults] = useState<PlanStageResult[]>([]);
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
   const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
   const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
@@ -31,8 +29,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   const currentStep = validItems[currentStepIndex];
   const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
-  const nextStep = validItems[currentStepIndex + 1];
-  const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -59,6 +55,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return () => clearInterval(timer);
   }, [sessionStartTime, showSummaryModal]);
 
+  // 阶段完成：静默直接进入下一阶段或进入总结
   const handleStageReached = useCallback(
     (history: SessionHistoryItem[]) => {
       if (!currentCard) return;
@@ -69,17 +66,22 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         history,
       };
 
-      setStageResults((prev) => [...prev, stageRes]);
+      const nextResults = [...stageResults, stageRes];
+      setStageResults(nextResults);
 
       if (currentStepIndex + 1 < validItems.length) {
-        setIsTransitioning(true);
+        // 静默无缝进入下一个训练阶段
+        setIsLevelLoaded(false);
+        setCurrentStepIndex((prev) => prev + 1);
       } else {
+        // 全部阶段顺利完成，进入总结
         setShowSummaryModal(true);
       }
     },
-    [currentCard, currentStep, currentStepIndex, validItems.length],
+    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
   );
 
+  // 跳过当前阶段
   const handleSkipCurrentStage = useCallback(() => {
     if (!currentCard) return;
     const skippedRes: PlanStageResult = {
@@ -87,27 +89,29 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
       targetTrials: currentStep.targetTrials,
       history: [],
     };
-    setStageResults((prev) => [...prev, skippedRes]);
+    const nextResults = [...stageResults, skippedRes];
+    setStageResults(nextResults);
 
     if (currentStepIndex + 1 < validItems.length) {
       setIsLevelLoaded(false);
-      setIsTransitioning(false);
       setCurrentStepIndex((prev) => prev + 1);
     } else {
       setShowSummaryModal(true);
     }
-  }, [currentCard, currentStep, currentStepIndex, validItems.length]);
+  }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
 
-  const handleProceedNextStage = useCallback(() => {
-    setIsLevelLoaded(false);
-    setIsTransitioning(false);
-    setCurrentStepIndex((prev) => prev + 1);
-  }, []);
+  // 拦截退出操作：若已有做答成果则展示结算总结
+  const handleRequestExit = useCallback(() => {
+    if (stageResults.length > 0) {
+      setShowSummaryModal(true);
+    } else {
+      onExit();
+    }
+  }, [stageResults.length, onExit]);
 
   const handleRestartPlan = useCallback(() => {
     setIsLevelLoaded(false);
     setShowSummaryModal(false);
-    setIsTransitioning(false);
     setCurrentStepIndex(0);
     setStageResults([]);
     setTotalElapsedSeconds(0);
@@ -150,16 +154,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         </div>
       </div>
 
-      {isTransitioning && nextCard ? (
-        <PlanStepTransitionOverlay
-          completedCard={currentCard}
-          nextCard={nextCard}
-          completedStepIndex={currentStepIndex}
-          totalSteps={validItems.length}
-          onProceed={handleProceedNextStage}
-          onExit={onExit}
-        />
-      ) : !isLevelLoaded ? (
+      {!isLevelLoaded ? (
         <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
           正在加载【{currentCard.title}】的生涯能力层阶...
         </div>
@@ -174,7 +169,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           globalSettings={settings.global}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
-          onExit={onExit}
+          onExit={handleRequestExit}
         />
       )}
 
