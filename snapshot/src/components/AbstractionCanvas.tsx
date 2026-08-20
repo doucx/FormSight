@@ -360,9 +360,35 @@ export function AbstractionCanvas({
       drawPolygon(canvasRefA.current, question.hullDetailedA, ABSTRACTION_2AFC_SIZE);
       drawPolygon(canvasRefB.current, question.hullDetailedB, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_NOTAN_2AFC') {
-      drawNotanScene(canvasThumbRef.current, question.promptNotanMask, 50, ABSTRACTION_THUMB_SIZE);
-      drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
-      drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
+      if (question.promptNotanBuffer && question.notanSceneBufferA && question.notanSceneBufferB) {
+        drawRawGrayscaleNoiseField(
+          canvasThumbRef.current,
+          question.promptNotanBuffer,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_THUMB_SIZE,
+        );
+        drawRawGrayscaleNoiseField(
+          canvasRefA.current,
+          question.notanSceneBufferA,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_2AFC_SIZE,
+        );
+        drawRawGrayscaleNoiseField(
+          canvasRefB.current,
+          question.notanSceneBufferB,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_2AFC_SIZE,
+        );
+      } else {
+        drawNotanScene(
+          canvasThumbRef.current,
+          question.promptNotanMask,
+          50,
+          ABSTRACTION_THUMB_SIZE,
+        );
+        drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
+        drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
+      }
     } else if (mode === 'TD_PALETTE_2AFC' && question.palettePatternOptions) {
       drawPaletteTiles(
         patternCanvasRef0.current,

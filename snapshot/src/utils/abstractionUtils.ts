@@ -80,7 +80,10 @@ export interface AbstractionQuestionData {
   hullDetailedB?: Point[];
   correctHullChoice?: 'A' | 'B';
 
-  promptNotanMask?: NotanShape[]; // 题干 Notan
+  promptNotanMask?: NotanShape[]; // 题干 Notan (兼容旧版)
+  promptNotanBuffer?: number[]; // 题干二值 Notan 剪影场
+  notanSceneBufferA?: number[]; // 选项 A 连续灰阶素描场
+  notanSceneBufferB?: number[]; // 选项 B 连续灰阶素描场
   notanSceneA?: NotanShape[];
   notanSceneB?: NotanShape[];
   correctNotanChoice?: 'A' | 'B';
@@ -475,35 +478,80 @@ export function generateAbstractionQuestion(
     };
   }
 
-  // 7. TD_NOTAN_2AFC 自顶向下素描骨架匹配 (2AFC)
+  // 7. TD_NOTAN_2AFC 自顶向下素描骨架匹配 (2AFC 多尺度连续灰阶场与二值逆向透视)
   if (mode === 'TD_NOTAN_2AFC') {
-    const promptNotanMask: NotanShape[] = [
-      { type: 'rect', cx: 80, cy: 80, w: 140, h: 140, baseVal: 85 },
-      { type: 'circle', cx: 70, cy: 70, r: 35, baseVal: 20 },
-      { type: 'rect', cx: 100, cy: 100, w: 50, h: 40, baseVal: 30 },
-    ];
+    const fieldDim = 120;
+    const totalPixels = fieldDim * fieldDim;
 
-    const notanSceneA: NotanShape[] = [
-      { type: 'rect', cx: 130, cy: 130, w: 230, h: 230, baseVal: 85 },
-      { type: 'circle', cx: 110, cy: 110, r: 55, baseVal: 20 },
-      { type: 'rect', cx: 160, cy: 160, w: 80, h: 65, baseVal: 30 },
-    ];
+    const targetMacroNoise = createNoise2D(Math.random());
+    const distractorMacroNoise = createNoise2D(Math.random() + 100);
+    const microNoise = createNoise2D(Math.random() + 200);
 
-    // 干扰项颠倒阴影
-    const notanSceneB: NotanShape[] = [
-      { type: 'rect', cx: 130, cy: 130, w: 230, h: 230, baseVal: 20 },
-      { type: 'circle', cx: 110, cy: 110, r: 55, baseVal: 85 },
-      { type: 'rect', cx: 160, cy: 160, w: 80, h: 65, baseVal: 70 },
-    ];
+    // 随机画面基准调性
+    const keyType = Math.random();
+    const baseKey =
+      keyType < 0.35
+        ? 24 + Math.random() * 12
+        : keyType < 0.7
+          ? 64 + Math.random() * 12
+          : 45 + Math.random() * 10;
+
+    const macroScale = 0.012 + Math.random() * 0.008;
+    const macroAmp = 42 + Math.random() * 10;
+    const microScale = 0.08 + Math.random() * 0.04;
+    const microAmp = 10 + t * 38; // 难度随 Level 递增微观干扰
+
+    const targetMacroBuffer = new Uint8Array(totalPixels);
+    const targetSceneBuffer = new Uint8Array(totalPixels);
+    const distractorSceneBuffer = new Uint8Array(totalPixels);
+
+    for (let y = 0; y < fieldDim; y++) {
+      for (let x = 0; x < fieldDim; x++) {
+        const idx = y * fieldDim + x;
+        const targetMacroVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, targetMacroNoise) - 0.5) * 2 * macroAmp;
+        const distractorMacroVal =
+          (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
+        const microVal =
+          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+
+        // 仅宏观骨架场（用于生成清晰二值 Notan 题干）
+        const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
+        targetMacroBuffer[idx] = Math.round((macroRaw / 100) * 255);
+
+        // 真实素描选项（宏观骨架 + 微观噪波）
+        const targetSceneRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal + microVal));
+        targetSceneBuffer[idx] = Math.round((targetSceneRaw / 100) * 255);
+
+        // 干扰素描选项（不同宏观骨架 + 相同微观噪波肌理）
+        const distractorSceneRaw = Math.max(
+          0,
+          Math.min(100, baseKey + distractorMacroVal + microVal),
+        );
+        distractorSceneBuffer[idx] = Math.round((distractorSceneRaw / 100) * 255);
+      }
+    }
+
+    // 计算 targetMacroBuffer 的 Otsu 最佳二值截断分割，生成清晰二值 Notan 剪影 Prompt
+    const otsuByte = calculateOtsuThreshold(targetMacroBuffer);
+    const promptBuffer = new Uint8Array(totalPixels);
+    for (let i = 0; i < totalPixels; i++) {
+      promptBuffer[i] = targetMacroBuffer[i] <= otsuByte ? 15 : 248; // #0F172A (暗) vs #F8FAFC (亮)
+    }
 
     const isA = Math.random() < 0.5;
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      promptNotanMask,
-      notanSceneA: isA ? notanSceneA : notanSceneB,
-      notanSceneB: isA ? notanSceneB : notanSceneA,
+      promptNotanBuffer: Array.from(promptBuffer),
+      notanSceneBufferA: isA
+        ? Array.from(targetSceneBuffer)
+        : Array.from(distractorSceneBuffer),
+      notanSceneBufferB: isA
+        ? Array.from(distractorSceneBuffer)
+        : Array.from(targetSceneBuffer),
+      notanFieldDim: fieldDim,
       correctNotanChoice: isA ? 'A' : 'B',
       tolerance: 0,
     };
