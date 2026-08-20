@@ -138,40 +138,6 @@ export function calcPCAOrientation(points: Point[]): number {
 }
 
 /**
- * 经典 Ramer-Douglas-Peucker (RDP) 多边形顶点精简算法
- */
-function perpendicularDistance(p: Point, p1: Point, p2: Point): number {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  if (len === 0) return Math.hypot(p.x - p1.x, p.y - p1.y);
-  return Math.abs(dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x) / len;
-}
-
-export function rdpSimplify(points: Point[], epsilon: number): Point[] {
-  if (points.length <= 3) return points;
-
-  let dmax = 0;
-  let index = 0;
-  const end = points.length - 1;
-
-  for (let i = 1; i < end; i++) {
-    const d = perpendicularDistance(points[i], points[0], points[end]);
-    if (d > dmax) {
-      index = i;
-      dmax = d;
-    }
-  }
-
-  if (dmax > epsilon) {
-    const recResults1 = rdpSimplify(points.slice(0, index + 1), epsilon);
-    const recResults2 = rdpSimplify(points.slice(index), epsilon);
-    return recResults1.slice(0, -1).concat(recResults2);
-  }
-  return [points[0], points[end]];
-}
-
-/**
  * 生成带方向性的散点流
  */
 function generateFlowParticles(
@@ -293,37 +259,28 @@ export function generateAbstractionQuestion(
 
   // 2. POLYGON_DECIMATION 折线大形 (2AFC)
   if (mode === 'POLYGON_DECIMATION') {
-    const vertCount = 18 + Math.floor(t * 12);
-    const detailedPolygon = generateDetailedPolygon(vertCount);
+    // 1. 生成真实的大模基准 (4~6个关键转折点)
+    const vertCount = Math.floor(Math.random() * 3) + 4;
+    const targetHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    // 计算标准 RDP 简化 (目标保留 4~6 顶点)
-    let eps = 25;
-    let simplified = rdpSimplify(detailedPolygon, eps);
-    let attempts = 0;
-    while ((simplified.length < 4 || simplified.length > 7) && attempts < 15) {
-      attempts++;
-      eps = simplified.length < 4 ? eps * 0.75 : eps * 1.35;
-      simplified = rdpSimplify(detailedPolygon, eps);
-    }
+    // 2. 生成干扰大模（改变关键转折与体块比例）
+    const distractorHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    // 生成干扰项：随机微调/丢失一个关键大顶点
-    const distractor = simplified.map((p) => ({ ...p }));
-    const modIdx = Math.floor(Math.random() * distractor.length);
-    const perturbDist = 35 * (1 - t * 0.6); // 随 Level 变小
-    distractor[modIdx].x += Math.round((Math.random() * 2 - 1) * perturbDist);
-    distractor[modIdx].y += Math.round((Math.random() * 2 - 1) * perturbDist);
+    // 3. 基于 targetHull 进行边缘分形细化，生成题干展示的高频细碎多边形
+    const scaleToMain = ABSTRACTION_CANVAS_SIZE / ABSTRACTION_2AFC_SIZE;
+    const baseForDetailed = targetHull.map((p) => ({
+      x: Math.round(p.x * scaleToMain),
+      y: Math.round(p.y * scaleToMain),
+    }));
+
+    // 难度越高，边缘分形破碎程度越大 (0.4 ~ 1.2)
+    const noiseFactor = 0.4 + t * 0.8;
+    const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
 
     const isA = Math.random() < 0.5;
-    const scaleTo2Afc = ABSTRACTION_2AFC_SIZE / ABSTRACTION_CANVAS_SIZE;
-    const mapTo2Afc = (pts: Point[]) =>
-      pts.map((p) => ({
-        x: Math.round(p.x * scaleTo2Afc),
-        y: Math.round(p.y * scaleTo2Afc),
-      }));
-
     const simplifiedOptions = isA
-      ? [mapTo2Afc(simplified), mapTo2Afc(distractor)]
-      : [mapTo2Afc(distractor), mapTo2Afc(simplified)];
+      ? [targetHull, distractorHull]
+      : [distractorHull, targetHull];
 
     return {
       id,

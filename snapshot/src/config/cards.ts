@@ -99,7 +99,7 @@ export const ALL_CARDS: CardDefinition[] = [
     legacyDomain: 'abstraction',
     legacyMode: 'POLYGON_DECIMATION',
     title: '折线低模大形',
-    desc: '从细碎繁复轮廓中识别 RDP 算法精简出的最优关键折线大形框架。',
+    desc: '从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。',
     instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
     icon: Maximize2,
     tags: {

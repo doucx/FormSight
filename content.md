@@ -1,33 +1,32 @@
-好的，我将为你生成修改计划，重构「黑白素描归组」与「几何大模寻形」的生成与判别算法，并将其从实验性状态正式转正。
+好的，我将为你生成完整的 Quipu 计划，将「折线低模大形（`POLYGON_DECIMATION`）」彻底重构为正向分形生成算法，并移除遗留的 RDP 代码。
 
-## [WIP] feat: 完善黑白素描归组与几何大模寻形算法并转正
+## [WIP] refactor: 用分形细化正向生成法替代折线低模大形中的 RDP 算法
 
 ### 用户需求
-将 `abs_notan_threshold`（黑白素描归组）与 `abs_td_hull_2afc`（几何大模寻形）两个实验性模块的核心生成与判断算法进行完善，使其具备真正的视觉认知训练价值，并移除实验性标志转为正式训练卡片。
+将「折线低模大形（`POLYGON_DECIMATION`）」的生成逻辑从原有的 RDP 暴力抽稀点算法改为由简至繁的分形细化正向生成法，使题目既具备严密的几何依凭，又符合绘画与视知觉认知的层次逻辑。
 
 ### 评论
-当前这两个模块在代码中只是简易占位实现：素描归组的目标阈值硬编码为 50，且缺少复杂场景；大模寻形仅做了简单顶点微移，缺乏真正的复杂细碎边缘提取。完善算法后，能真正提升系统在视知觉抽象与具象细化方面的训练专业度。
+RDP 算法属于纯地理轨迹压缩算法，容易产生不自然的锐角和非艺术性折线，且其在生成时需要通过 while 循环反复暴力调参以限制顶点数。改为正向分形生成后，题目天然保证了低模大形与高模细化图形的从属关系，且与 `TD_HULL_2AFC` 形成了完美的正反双向知觉训练体系。
 
 ### 目标
-1. 在 `src/utils/abstractionUtils.ts` 中实现多边形边缘法向细碎化算法（`fractalizePolygon`）。
-2. 重构 `NOTAN_THRESHOLD` 题目生成逻辑：生成多层次前景主体与背景杂乱噪斑，并动态计算二值化最佳切分阈值。
-3. 重构 `TD_HULL_2AFC` 题目生成逻辑：生成骨架大模与高细节破碎剪影，实现具有挑战性的 2AFC 大形寻源。
-4. 在 `src/config/cards.ts` 中移除这两个卡片的 `isExperimental: true` 标记。
+1. 在 `src/utils/abstractionUtils.ts` 中移除不再使用的 `perpendicularDistance` 与 `rdpSimplify` 函数。
+2. 重写 `generateAbstractionQuestion` 中 `POLYGON_DECIMATION` 分支，改为“生成基准大模 $\rightarrow$ 生成干扰大模 $\rightarrow$ 对基准大模施加分形边缘细化生成题干原图”。
+3. 在 `src/config/cards.ts` 中微调卡片描述，去除对 RDP 的技术提及。
 
 ### 基本原理
-1. **Notan 分离阈值**：通过让前景主体明度聚集在一个区间，背景聚集在另一区间并施加高斯/随机扰动，二者的中位数即为最佳视觉切分阈值。
-2. **多边形分形细化**：通过在多边形每条线段间递归插入带有法向扰动的分形中点，将简单凸多边形转化为具有碎形特性的复杂有机剪影，迫使大脑启动顶层知觉过滤机制。
+1. **正向层次构建（Forward Hierarchy）**：采用先确定 4~6 顶点的大形结构（作为 Ground Truth 正确答案），再在此大形基础上利用 `fractalizePolygon` 迭代生成高频边缘噪波作为题干展示图。
+2. **认知对称性**：使 `POLYGON_DECIMATION`（自底向上抽象概括）与 `TD_HULL_2AFC`（自顶向下具象细化）复用同套分形生成算子，分别训练提取与匹配两种镜像知觉能力。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #concept/executor #scope/core #ai/instruct #task/domain/abstraction #task/object/experimental-cards #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/executor #scope/core #ai/instruct #task/domain/abstraction #task/object/polygon-decimation #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 `abstractionUtils.ts` 中的算法实现
+#### Acts 1: 重构 `src/utils/abstractionUtils.ts` 中的大形生成逻辑
 
-在 `src/utils/abstractionUtils.ts` 中添加多边形分形细碎化函数 `fractalizePolygon`，并重写 `NOTAN_THRESHOLD` 与 `TD_HULL_2AFC` 的题目生成逻辑。
+移除废弃的 RDP 算法，并将 `POLYGON_DECIMATION` 改造为正向分形生成。
 
 ~~~~~act
 patch_file
@@ -35,89 +34,47 @@ src/utils/abstractionUtils.ts
 ~~~~~
 ~~~~~typescript.old
 /**
- * 生成细碎多边形
+ * 经典 Ramer-Douglas-Peucker (RDP) 多边形顶点精简算法
  */
-function generateDetailedPolygon(verticesCount: number, size = ABSTRACTION_CANVAS_SIZE): Point[] {
-  const cx = size / 2;
-  const cy = size / 2;
-  const baseR = size * 0.32;
-  const angles: number[] = [];
-  const step = (Math.PI * 2) / verticesCount;
-
-  for (let i = 0; i < verticesCount; i++) {
-    angles.push(i * step + (Math.random() - 0.5) * step * 0.65);
-  }
-  angles.sort((a, b) => a - b);
-
-  return angles.map((a) => {
-    const r = baseR * (0.65 + Math.random() * 0.65);
-    return {
-      x: Math.round(cx + r * Math.cos(a)),
-      y: Math.round(cy + r * Math.sin(a)),
-    };
-  });
+function perpendicularDistance(p: Point, p1: Point, p2: Point): number {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  if (len === 0) return Math.hypot(p.x - p1.x, p.y - p1.y);
+  return Math.abs(dy * p.x - dx * p.y + p2.x * p1.y - p2.y * p1.x) / len;
 }
+
+export function rdpSimplify(points: Point[], epsilon: number): Point[] {
+  if (points.length <= 3) return points;
+
+  let dmax = 0;
+  let index = 0;
+  const end = points.length - 1;
+
+  for (let i = 1; i < end; i++) {
+    const d = perpendicularDistance(points[i], points[0], points[end]);
+    if (d > dmax) {
+      index = i;
+      dmax = d;
+    }
+  }
+
+  if (dmax > epsilon) {
+    const recResults1 = rdpSimplify(points.slice(0, index + 1), epsilon);
+    const recResults2 = rdpSimplify(points.slice(index), epsilon);
+    return recResults1.slice(0, -1).concat(recResults2);
+  }
+  return [points[0], points[end]];
+}
+
+/**
+ * 生成带方向性的散点流
+ */
 ~~~~~
 ~~~~~typescript.new
 /**
- * 将简单的多边形边缘打碎，生成拥有大量顶点的复杂细碎剪影
+ * 生成带方向性的散点流
  */
-function fractalizePolygon(basePolygon: Point[], detailLevel: number, noiseFactor: number): Point[] {
-  let currentPoints = [...basePolygon];
-
-  for (let iter = 0; iter < detailLevel; iter++) {
-    const nextPoints: Point[] = [];
-    for (let i = 0; i < currentPoints.length; i++) {
-      const p1 = currentPoints[i];
-      const p2 = currentPoints[(i + 1) % currentPoints.length];
-
-      nextPoints.push(p1);
-
-      const midX = (p1.x + p2.x) / 2;
-      const midY = (p1.y + p2.y) / 2;
-
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len === 0) continue;
-
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      const displacement = (Math.random() * 2 - 1) * noiseFactor * (len * 0.3);
-      nextPoints.push({
-        x: Math.round(midX + nx * displacement),
-        y: Math.round(midY + ny * displacement),
-      });
-    }
-    currentPoints = nextPoints;
-  }
-  return currentPoints;
-}
-
-/**
- * 生成细碎多边形
- */
-function generateDetailedPolygon(verticesCount: number, size = ABSTRACTION_CANVAS_SIZE): Point[] {
-  const cx = size / 2;
-  const cy = size / 2;
-  const baseR = size * 0.32;
-  const angles: number[] = [];
-  const step = (Math.PI * 2) / verticesCount;
-
-  for (let i = 0; i < verticesCount; i++) {
-    angles.push(i * step + (Math.random() - 0.5) * step * 0.65);
-  }
-  angles.sort((a, b) => a - b);
-
-  return angles.map((a) => {
-    const r = baseR * (0.65 + Math.random() * 0.65);
-    return {
-      x: Math.round(cx + r * Math.cos(a)),
-      y: Math.round(cy + r * Math.sin(a)),
-    };
-  });
-}
 ~~~~~
 
 ~~~~~act
@@ -125,171 +82,94 @@ patch_file
 src/utils/abstractionUtils.ts
 ~~~~~
 ~~~~~typescript.old
-  // 3. NOTAN_THRESHOLD 黑白素描二值归组
-  if (mode === 'NOTAN_THRESHOLD') {
-    const notanShapes: NotanShape[] = [
-      {
-        type: 'rect',
-        cx: 200,
-        cy: 200,
-        w: 360,
-        h: 360,
-        baseVal: Math.floor(Math.random() * 20) + 75,
-      },
-      {
-        type: 'circle',
-        cx: 160 + Math.random() * 80,
-        cy: 160 + Math.random() * 80,
-        r: 60 + Math.random() * 40,
-        baseVal: Math.floor(Math.random() * 20) + 20,
-      },
-      {
-        type: 'rect',
-        cx: 140 + Math.random() * 120,
-        cy: 220 + Math.random() * 60,
-        w: 120 + Math.random() * 60,
-        h: 80 + Math.random() * 40,
-        baseVal: Math.floor(Math.random() * 30) + 40,
-      },
-    ];
+  // 2. POLYGON_DECIMATION 折线大形 (2AFC)
+  if (mode === 'POLYGON_DECIMATION') {
+    const vertCount = 18 + Math.floor(t * 12);
+    const detailedPolygon = generateDetailedPolygon(vertCount);
 
-    const idealNotanThreshold = 50.0;
-    const tolerance = Math.round(expDecayInterpolate(14.0, 2.0, clampedLevel) * 10) / 10;
-
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      notanShapes,
-      idealNotanThreshold,
-      tolerance,
-    };
-  }
-~~~~~
-~~~~~typescript.new
-  // 3. NOTAN_THRESHOLD 黑白素描二值归组
-  if (mode === 'NOTAN_THRESHOLD') {
-    const notanShapes: NotanShape[] = [];
-
-    const isDarkSubject = Math.random() < 0.5;
-    const subjectBaseVal = isDarkSubject
-      ? 20 + Math.random() * 20
-      : 60 + Math.random() * 20;
-    const bgBaseVal = isDarkSubject
-      ? 60 + Math.random() * 20
-      : 20 + Math.random() * 20;
-
-    const idealNotanThreshold = Math.round((subjectBaseVal + bgBaseVal) / 2);
-
-    // 1. 生成杂乱背景块
-    for (let i = 0; i < 40; i++) {
-      notanShapes.push({
-        type: Math.random() > 0.5 ? 'rect' : 'circle',
-        cx: Math.random() * ABSTRACTION_CANVAS_SIZE,
-        cy: Math.random() * ABSTRACTION_CANVAS_SIZE,
-        w: 40 + Math.random() * 80,
-        h: 40 + Math.random() * 80,
-        r: 20 + Math.random() * 40,
-        baseVal: Math.max(0, Math.min(100, bgBaseVal + (Math.random() * 30 - 15))),
-      });
+    // 计算标准 RDP 简化 (目标保留 4~6 顶点)
+    let eps = 25;
+    let simplified = rdpSimplify(detailedPolygon, eps);
+    let attempts = 0;
+    while ((simplified.length < 4 || simplified.length > 7) && attempts < 15) {
+      attempts++;
+      eps = simplified.length < 4 ? eps * 0.75 : eps * 1.35;
+      simplified = rdpSimplify(detailedPolygon, eps);
     }
 
-    // 2. 生成明确的前景主体图元组
-    const subjectCx = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
-    const subjectCy = ABSTRACTION_CANVAS_SIZE / 2 + (Math.random() * 60 - 30);
-    for (let i = 0; i < 15; i++) {
-      notanShapes.push({
-        type: 'circle',
-        cx: subjectCx + (Math.random() * 100 - 50),
-        cy: subjectCy + (Math.random() * 100 - 50),
-        r: 30 + Math.random() * 40,
-        baseVal: Math.max(0, Math.min(100, subjectBaseVal + (Math.random() * 20 - 10))),
-      });
-    }
+    // 生成干扰项：随机微调/丢失一个关键大顶点
+    const distractor = simplified.map((p) => ({ ...p }));
+    const modIdx = Math.floor(Math.random() * distractor.length);
+    const perturbDist = 35 * (1 - t * 0.6); // 随 Level 变小
+    distractor[modIdx].x += Math.round((Math.random() * 2 - 1) * perturbDist);
+    distractor[modIdx].y += Math.round((Math.random() * 2 - 1) * perturbDist);
 
-    const tolerance = Math.round(expDecayInterpolate(15.0, 3.0, clampedLevel) * 10) / 10;
-
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      notanShapes,
-      idealNotanThreshold,
-      tolerance,
-    };
-  }
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/abstractionUtils.ts
-~~~~~
-~~~~~typescript.old
-  // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
-  if (mode === 'TD_HULL_2AFC') {
-    const promptHull = generateDetailedPolygon(5, ABSTRACTION_THUMB_SIZE);
-    const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
-    const targetDetailed = promptHull.map((p) => ({
-      x: p.x * scale + (Math.random() * 10 - 5),
-      y: p.y * scale + (Math.random() * 10 - 5),
-    }));
-
-    const distractorDetailed = generateDetailedPolygon(5, ABSTRACTION_2AFC_SIZE);
     const isA = Math.random() < 0.5;
+    const scaleTo2Afc = ABSTRACTION_2AFC_SIZE / ABSTRACTION_CANVAS_SIZE;
+    const mapTo2Afc = (pts: Point[]) =>
+      pts.map((p) => ({
+        x: Math.round(p.x * scaleTo2Afc),
+        y: Math.round(p.y * scaleTo2Afc),
+      }));
+
+    const simplifiedOptions = isA
+      ? [mapTo2Afc(simplified), mapTo2Afc(distractor)]
+      : [mapTo2Afc(distractor), mapTo2Afc(simplified)];
 
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      promptHull,
-      hullDetailedA: isA ? targetDetailed : distractorDetailed,
-      hullDetailedB: isA ? distractorDetailed : targetDetailed,
-      correctHullChoice: isA ? 'A' : 'B',
+      detailedPolygon,
+      simplifiedOptions,
+      correctPolyIndex: isA ? 0 : 1,
+      correctPolyChoice: isA ? 'A' : 'B',
       tolerance: 0,
     };
   }
 ~~~~~
 ~~~~~typescript.new
-  // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
-  if (mode === 'TD_HULL_2AFC') {
-    const promptHull = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
-      ABSTRACTION_THUMB_SIZE,
-    );
-    const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
+  // 2. POLYGON_DECIMATION 折线大形 (2AFC)
+  if (mode === 'POLYGON_DECIMATION') {
+    // 1. 生成真实的大模基准 (4~6个关键转折点)
+    const vertCount = Math.floor(Math.random() * 3) + 4;
+    const targetHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
 
-    const targetBase = promptHull.map((p) => ({
-      x: p.x * scale,
-      y: p.y * scale,
+    // 2. 生成干扰大模（改变关键转折与体块比例）
+    const distractorHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
+
+    // 3. 基于 targetHull 进行边缘分形细化，生成题干展示的高频细碎多边形
+    const scaleToMain = ABSTRACTION_CANVAS_SIZE / ABSTRACTION_2AFC_SIZE;
+    const baseForDetailed = targetHull.map((p) => ({
+      x: Math.round(p.x * scaleToMain),
+      y: Math.round(p.y * scaleToMain),
     }));
 
-    const distractorBase = generateDetailedPolygon(
-      Math.floor(Math.random() * 2) + 4,
-      ABSTRACTION_2AFC_SIZE,
-    );
-
-    const noiseFactor = 0.5 + t * 0.8;
-    const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);
-    const distractorDetailed = fractalizePolygon(distractorBase, 2, noiseFactor);
+    // 难度越高，边缘分形破碎程度越大 (0.4 ~ 1.2)
+    const noiseFactor = 0.4 + t * 0.8;
+    const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
 
     const isA = Math.random() < 0.5;
+    const simplifiedOptions = isA
+      ? [targetHull, distractorHull]
+      : [distractorHull, targetHull];
 
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      promptHull,
-      hullDetailedA: isA ? targetDetailed : distractorDetailed,
-      hullDetailedB: isA ? distractorDetailed : targetDetailed,
-      correctHullChoice: isA ? 'A' : 'B',
+      detailedPolygon,
+      simplifiedOptions,
+      correctPolyIndex: isA ? 0 : 1,
+      correctPolyChoice: isA ? 'A' : 'B',
       tolerance: 0,
     };
   }
 ~~~~~
 
-#### Acts 2: 在 `cards.ts` 中移除实验性标记
+#### Acts 2: 更新 `src/config/cards.ts` 中的卡片文案
 
-移除 `abs_notan_threshold` 和 `abs_td_hull_2afc` 的 `isExperimental: true` 标记。
+修改卡片描述，去除对 RDP 的技术实现细节提及。
 
 ~~~~~act
 patch_file
@@ -297,75 +177,32 @@ src/config/cards.ts
 ~~~~~
 ~~~~~typescript.old
   {
-    id: 'abs_notan_threshold',
+    id: 'abs_polygon_decimation',
     legacyDomain: 'abstraction',
-    legacyMode: 'NOTAN_THRESHOLD',
-    title: '黑白素描归组',
-    desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
-    instruction: '调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态',
-    icon: Sun,
+    legacyMode: 'POLYGON_DECIMATION',
+    title: '折线低模大形',
+    desc: '从细碎繁复轮廓中识别 RDP 算法精简出的最优关键折线大形框架。',
+    instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
+    icon: Maximize2,
     tags: {
       target: ['abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-    isExperimental: true,
-  },
-~~~~~
-~~~~~typescript.new
-  {
-    id: 'abs_notan_threshold',
-    legacyDomain: 'abstraction',
-    legacyMode: 'NOTAN_THRESHOLD',
-    title: '黑白素描归组',
-    desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
-    instruction: '调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态',
-    icon: Sun,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-~~~~~
-
-~~~~~act
-patch_file
-src/config/cards.ts
-~~~~~
-~~~~~typescript.old
-  {
-    id: 'abs_td_hull_2afc',
-    legacyDomain: 'concretization',
-    legacyMode: 'TD_HULL_2AFC',
-    title: '几何大模寻形',
-    desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
-    instruction: '观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形',
-    icon: Columns,
-    tags: {
-      target: ['concretization'],
       skill: ['abstraction', 'proportion'],
       interaction: ['choice_2afc'],
     },
     hasWeaknessAnalytics: false,
-    isExperimental: true,
   },
 ~~~~~
 ~~~~~typescript.new
   {
-    id: 'abs_td_hull_2afc',
-    legacyDomain: 'concretization',
-    legacyMode: 'TD_HULL_2AFC',
-    title: '几何大模寻形',
-    desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
-    instruction: '观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形',
-    icon: Columns,
+    id: 'abs_polygon_decimation',
+    legacyDomain: 'abstraction',
+    legacyMode: 'POLYGON_DECIMATION',
+    title: '折线低模大形',
+    desc: '从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。',
+    instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
+    icon: Maximize2,
     tags: {
-      target: ['concretization'],
+      target: ['abstraction'],
       skill: ['abstraction', 'proportion'],
       interaction: ['choice_2afc'],
     },
@@ -374,5 +211,5 @@ src/config/cards.ts
 ~~~~~
 
 ### 下一步建议
-1. 启动项目运行 `pnpm dev` 或 `npm run dev` 并在浏览器中体验「黑白素描归组」与「几何大模寻形」的训练流程。
-2. 验证 Biome 语法与格式化检查：运行 `npm run check` 确保代码符合规范。
+1. 启动项目运行 `npm run dev`，在「概括感知 -> 折线低模大形」模块中进行实机测试，体验细碎多边形与低模骨架的匹配手感。
+2. 运行 `npm run check` 确保代码格式和类型通过 Biome 规范校验。
