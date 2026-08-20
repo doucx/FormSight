@@ -41,9 +41,24 @@ export const DEFAULT_SETTINGS: UserSettings = {
     soundEnabled: true,
   },
   cards: {
-    star_single: { ...DEFAULT_BASE_SETTINGS, gridSize: 3, targetingMode: 'off', manualTargetSectors: [] },
-    star_double_h: { ...DEFAULT_BASE_SETTINGS, gridSize: 3, targetingMode: 'off', manualTargetSectors: [] },
-    star_double_r: { ...DEFAULT_BASE_SETTINGS, gridSize: 3, targetingMode: 'off', manualTargetSectors: [] },
+    star_single: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_h: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_r: {
+      ...DEFAULT_BASE_SETTINGS,
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
     color_hue: {
       ...DEFAULT_BASE_SETTINGS,
       sliderHitMargin: 12,
@@ -61,10 +76,18 @@ export const DEFAULT_SETTINGS: UserSettings = {
       enableHoverColorPreview: true,
     },
     rel_vector_shift: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    rel_lightness_induction: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    rel_lightness_induction: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
     rel_hue_induction: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
     rel_decontextual_2afc: { ...DEFAULT_BASE_SETTINGS },
-    neg_ratio_estimation: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    neg_ratio_estimation: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
     neg_area_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
     neg_vertex_fitting: { ...DEFAULT_BASE_SETTINGS },
     neg_shape_match_2afc: { ...DEFAULT_BASE_SETTINGS },
@@ -85,7 +108,10 @@ export function loadSettings(): UserSettings {
 
     if (parsed.cards && typeof parsed.cards === 'object') {
       for (const [cardId, val] of Object.entries(parsed.cards)) {
-        cards[cardId] = { ...(cards[cardId] || DEFAULT_BASE_SETTINGS), ...(val as Record<string, unknown>) };
+        cards[cardId] = {
+          ...(cards[cardId] || DEFAULT_BASE_SETTINGS),
+          ...(val as Record<string, unknown>),
+        };
       }
     } else {
       // 从旧结构（star/color/relative_color/negative_space）迁移到卡片
@@ -102,13 +128,19 @@ export function loadSettings(): UserSettings {
       }
       if (parsed.relative_color) {
         cards.rel_vector_shift = { ...cards.rel_vector_shift, ...parsed.relative_color };
-        cards.rel_lightness_induction = { ...cards.rel_lightness_induction, ...parsed.relative_color };
+        cards.rel_lightness_induction = {
+          ...cards.rel_lightness_induction,
+          ...parsed.relative_color,
+        };
         cards.rel_hue_induction = { ...cards.rel_hue_induction, ...parsed.relative_color };
         cards.rel_decontextual_2afc = { ...cards.rel_decontextual_2afc, ...parsed.relative_color };
       }
       if (parsed.negative_space) {
         cards.neg_ratio_estimation = { ...cards.neg_ratio_estimation, ...parsed.negative_space };
-        cards.neg_area_comparison_2afc = { ...cards.neg_area_comparison_2afc, ...parsed.negative_space };
+        cards.neg_area_comparison_2afc = {
+          ...cards.neg_area_comparison_2afc,
+          ...parsed.negative_space,
+        };
         cards.neg_vertex_fitting = { ...cards.neg_vertex_fitting, ...parsed.negative_space };
         cards.neg_shape_match_2afc = { ...cards.neg_shape_match_2afc, ...parsed.negative_space };
       }

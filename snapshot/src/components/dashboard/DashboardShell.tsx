@@ -8,12 +8,7 @@ interface DashboardShellProps {
   children: ComponentChildren;
 }
 
-export function DashboardShell({
-  title,
-  subTitle,
-  onBackToHome,
-  children,
-}: DashboardShellProps) {
+export function DashboardShell({ title, subTitle, onBackToHome, children }: DashboardShellProps) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
       {/* Header */}

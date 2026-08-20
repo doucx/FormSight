@@ -39,11 +39,7 @@ export function GenericDashboard({
   }, [meta.domain]);
 
   return (
-    <DashboardShell
-      title={meta.title}
-      subTitle={meta.subTitle}
-      onBackToHome={onBackToHome}
-    >
+    <DashboardShell title={meta.title} subTitle={meta.subTitle} onBackToHome={onBackToHome}>
       {meta.cards.map((card) => {
         const profile = profiles[card.id];
         const totalTrials = profile?.totalTrials || 0;

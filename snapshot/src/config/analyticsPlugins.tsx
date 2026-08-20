@@ -271,8 +271,7 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
     const avgRatioErr =
       totalCount > 0
         ? Math.round(
-            (records.reduce((acc, c) => acc + Number(c.errorValue || 0), 0) / totalCount) *
-              10,
+            (records.reduce((acc, c) => acc + Number(c.errorValue || 0), 0) / totalCount) * 10,
           ) / 10
         : 0;
 

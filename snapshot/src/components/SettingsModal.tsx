@@ -41,7 +41,12 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
   };
 
   return (
-    <ModalShell title={`${card.title} 偏好设置`} icon={Sliders} onClose={onClose} maxWidth="max-w-md">
+    <ModalShell
+      title={`${card.title} 偏好设置`}
+      icon={Sliders}
+      onClose={onClose}
+      maxWidth="max-w-md"
+    >
       <div className="space-y-5">
         {/* 通用配置：自动翻页开关 */}
         <div className="flex items-center justify-between">

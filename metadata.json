@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205198.4180355, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M app.tsx, M SettingsModal.tsx, M WeaknessAnalyticsModal.tsx ... and 7 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205349.808686, "duration_ms": 0}}
