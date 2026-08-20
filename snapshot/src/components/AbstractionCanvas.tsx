@@ -1,5 +1,6 @@
-import { Check, Columns, Eye, Sparkles } from 'lucide-preact';
+import { Check, Columns, Eye, Sparkles, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
 import {
   ABSTRACTION_2AFC_SIZE,
@@ -14,7 +15,6 @@ import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
 import { hsvToHex } from '../utils/colorUtils';
 import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
 import { Choice2AfcContainer } from './common/Choice2AfcContainer';
-import { ContinuousTrackPanel } from './common/ContinuousTrackPanel';
 
 interface AbstractionCanvasProps {
   question: AbstractionQuestionData;
@@ -191,7 +191,7 @@ export function AbstractionCanvas({
     step: 0.5,
     disabled: disabled || showAnswer,
     onValChange: setSliderVal,
-    onCommit: (committedVal) => {
+    onCommit: (committedVal: number) => {
       if (mode === 'GESTURE_AXIS' && !disabled && !showAnswer) {
         onAnswer(committedVal);
       }

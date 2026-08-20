@@ -1,5 +1,6 @@
-import { Columns, Sparkles } from 'lucide-preact';
+import { Check, Columns, Sparkles, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useTrackPointer } from '../hooks/useTrackPointer';
 import type { Point } from '../types';
 import { drawPolygonCanvas } from '../utils/canvas/drawPolygon';
 import {
@@ -14,9 +15,6 @@ import {
   type NegativeSpaceQuestionData,
   TWO_AFC_CANVAS_SIZE,
 } from '../utils/negativeSpaceUtils';
-import { AnswerDiagnosticBar } from './common/AnswerDiagnosticBar';
-import { Choice2AfcContainer } from './common/Choice2AfcContainer';
-import { ContinuousTrackPanel } from './common/ContinuousTrackPanel';
 
 interface NegativeSpaceCanvasProps {
   question: NegativeSpaceQuestionData;

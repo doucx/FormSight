@@ -30,7 +30,6 @@ export function StarCanvas({
   // === 绘图主逻辑 ===
   useEffect(() => {
     const dotRadius = getDynamicDotRadius(question.distractorPoints);
-    const hoverRadius = Math.max(2.5, dotRadius * 1.6);
 
     // 1. 渲染左侧参考图 (Reference Canvas)
     const leftCanvas = leftCanvasRef.current;

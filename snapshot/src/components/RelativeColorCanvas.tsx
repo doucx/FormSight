@@ -1,4 +1,4 @@
-import { ArrowRight, Eye } from 'lucide-preact';
+import { ArrowRight, Check, Eye, X } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { hsvToHex } from '../utils/colorUtils';
 import type {
