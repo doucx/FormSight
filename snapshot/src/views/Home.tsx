@@ -5,7 +5,7 @@ import { type TrainingDomain, formatTotalTime } from '../utils/db';
 interface HomeProps {
   totalTimeMs: number;
   domainTimes: Record<TrainingDomain, number>;
-  onNavigate: (app: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space') => void;
+  onNavigateDomain: (domain: TrainingDomain) => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
 }
@@ -13,7 +13,7 @@ interface HomeProps {
 export function Home({
   totalTimeMs,
   domainTimes,
-  onNavigate,
+  onNavigateDomain,
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
@@ -74,7 +74,7 @@ export function Home({
             <button
               key={meta.domain}
               type="button"
-              onClick={() => onNavigate(meta.appId)}
+              onClick={() => onNavigateDomain(meta.domain)}
               className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
             >
               <div className="space-y-4">

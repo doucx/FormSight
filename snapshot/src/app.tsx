@@ -3,10 +3,12 @@ import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
+import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
 import { getCardById } from './config/cards';
 import { DOMAINS_CONFIG } from './config/domains';
 import { CARD_PLUGINS } from './config/trainingPlugins';
+import { useHashRoute } from './hooks/useHashRoute';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -17,23 +19,10 @@ import { type UserSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 
-type GlobalApp = 'home' | 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
-
-const APP_TO_DOMAIN: Record<Exclude<GlobalApp, 'home'>, TrainingDomain> = {
-  'star-hopping': 'star',
-  'color-sense': 'color',
-  'relative-color': 'relative_color',
-  'negative-space': 'negative_space',
-};
-
 const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
 
 export function App() {
-  const [currentApp, setCurrentApp] = useState<GlobalApp>('home');
-  const [currentView, setCurrentView] = useState<'dashboard' | 'training'>('dashboard');
-
-  const [activeCardId, setActiveCardId] = useState<string>('star_single');
-  const [sessionType, setSessionType] = useState<'training' | 'benchmark'>('training');
+  const { route, navigate } = useHashRoute();
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
@@ -42,6 +31,7 @@ export function App() {
 
   const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
     star: 0,
@@ -54,6 +44,15 @@ export function App() {
     Record<string, UnifiedProfileData>
   >({});
 
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   const refreshProfiles = useCallback(async () => {
     const timesEntries = await Promise.all(
       ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
@@ -63,106 +62,92 @@ export function App() {
     setDomainTimes(timesMap);
     setSettings(loadSettings());
 
-    if (currentApp !== 'home') {
-      const d = APP_TO_DOMAIN[currentApp];
-      const pList = await getProfilesByDomain(d);
+    if (route.type === 'dashboard') {
+      const pList = await getProfilesByDomain(route.domain);
       const pMap: Record<string, UnifiedProfileData> = {};
       for (const p of pList) {
         pMap[p.cardId] = p;
       }
       setCurrentDomainProfiles(pMap);
     }
-  }, [currentApp]);
+  }, [route]);
 
   useEffect(() => {
     refreshProfiles();
   }, [refreshProfiles]);
 
   useEffect(() => {
-    if (currentApp === 'home') {
+    if (route.type === 'home') {
       document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
-    } else {
-      const d = APP_TO_DOMAIN[currentApp];
-      const meta = DOMAINS_CONFIG[d];
+    } else if (route.type === 'dashboard') {
+      const meta = DOMAINS_CONFIG[route.domain];
       document.title = `${meta.title} (${meta.subTitle}) - FormSight`;
+    } else if (route.type === 'train') {
+      const card = getCardById(route.cardId);
+      document.title = `${card?.title || '训练'} - FormSight`;
     }
-  }, [currentApp]);
-
-  const handleStartSession = (cardId: string, type: 'training' | 'benchmark') => {
-    setActiveCardId(cardId);
-    setSessionType(type);
-    setCurrentView('training');
-  };
-
-  const handleExitTraining = () => {
-    setCurrentView('dashboard');
-    refreshProfiles();
-  };
+  }, [route]);
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
-  const activeCard = getCardById(activeCardId);
-  const activeLevel = activeCard
-    ? currentDomainProfiles[activeCard.id]?.currentLevel || 5
-    : 5;
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
-      {currentApp === 'home' && (
+      {route.type === 'home' && (
         <Home
           totalTimeMs={totalTimeMs}
           domainTimes={domainTimes}
-          onNavigate={(app) => {
-            setCurrentApp(app);
-            setCurrentView('dashboard');
-          }}
+          onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
           onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
         />
       )}
 
-      {currentApp !== 'home' &&
+      {route.type === 'dashboard' && (
+        <GenericDashboard
+          meta={DOMAINS_CONFIG[route.domain]}
+          onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+          onBackToHome={() => navigate({ type: 'home' })}
+          onOpenSettings={() => {
+            setSettingsDomain(route.domain);
+            setIsSettingsOpen(true);
+          }}
+          onOpenAnalytics={() => {
+            setActiveAnalyticsDomain(route.domain);
+          }}
+        />
+      )}
+
+      {route.type === 'train' &&
         (() => {
-          const domain = APP_TO_DOMAIN[currentApp];
-          const meta = DOMAINS_CONFIG[domain];
-
-          if (currentView === 'dashboard') {
-            return (
-              <GenericDashboard
-                meta={meta}
-                onStart={handleStartSession}
-                onBackToHome={() => setCurrentApp('home')}
-                onOpenSettings={() => {
-                  setSettingsDomain(domain);
-                  setIsSettingsOpen(true);
-                }}
-                onOpenAnalytics={() => {
-                  setActiveAnalyticsDomain(domain);
-                }}
-              />
-            );
+          const activeCard = getCardById(route.cardId);
+          if (!activeCard) {
+            navigate({ type: 'home' });
+            return null;
           }
-
-          if (!activeCard) return null;
           const plugin = CARD_PLUGINS[activeCard.id];
+          const activeLevel =
+            currentDomainProfiles[activeCard.id]?.currentLevel || 5;
 
           return (
             <GenericTrainingView
-              key={`${activeCard.id}-${sessionType}`}
+              key={`${activeCard.id}-${route.sessionType}`}
               card={activeCard}
               plugin={plugin}
-              sessionType={sessionType}
+              sessionType={route.sessionType}
               initialLevel={activeLevel}
               settings={settings[activeCard.settingsKey]}
-              onExit={handleExitTraining}
+              onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
             />
           );
         })()}
+
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
 
       {isGlobalSettingsOpen && (
         <GlobalSettingsModal
           onClose={() => setIsGlobalSettingsOpen(false)}
           onDataChanged={refreshProfiles}
+          showToast={showToast}
         />
       )}
 
