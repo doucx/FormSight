@@ -1,4 +1,4 @@
-import { getCardById, getCardsByDomain, resolveLegacyCardId } from '../../config/cards';
+import { getCardById, resolveLegacyCardId } from '../../config/cards';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
