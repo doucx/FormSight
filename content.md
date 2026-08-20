@@ -1,71 +1,62 @@
-我将生成一个 Quipu 修复计划，针对分析出的训练计划多阶段切换卡死、键盘快捷键双重监听竞态、以及训练会话状态重置不彻底等问题进行精准修复。
+好的，我将生成修复该问题的执行计划，为 `PlanTrainingView` 增加 `planSessionKey` 轮次状态，彻底解决在单阶段或索引未变化时重新训练引起的加载状态死锁。
 
-## [WIP] fix: 修复训练计划阶段推进卡死与按键状态异常
+## [WIP] fix(plan): 修复再练一遍训练计划时卡在加载生涯等级的问题
 
 ### 错误分析
 
-1. **同模块多阶段切换卡死**：`PlanTrainingView.tsx` 中用于重新异步读取卡片等级的 `useEffect` 依赖项仅为 `[currentCard]`。当训练计划中包含连续同种卡片或同一卡片重复编排时，`currentCard` 引用未发生改变，导致 `useEffect` 不触发，`isLevelLoaded` 状态永远停留在 `false`，界面永久阻断在加载提示。
-2. **快捷键双重监听导致重复提交**：在 `AbstractionCanvas.tsx` 中，外部组件与内部 `Choice2AfcContainer` 均注册了全局 `1`/`2` 键监听，导致在 2AFC 题型下单次按键会触发两次 `onAnswer` 并发调用，出现跳题、双重扣/加分和多次触发音效。
-3. **关闭自动切题时无法按空格结束/推进**：`useTrainingSession.ts` 在 `isFinished === true` 时直接忽略空格键，导致用户无法通过纯键盘流进入总结或下一阶段。
-4. **再练一轮时自适应引擎状态未完全重置**：`useTrainingSession.ts` 的 `handleRestartSession` 未调用 `AdaptiveEngine.setLevel`，遗留了上一轮未完成的做题历史或连胜计数。
-5. **今日数据统计 Key 容错不严**：`useTodayStats.ts` 统计聚合时直接回退到 `r.mode`，与看板使用的标准 `card.id` 存在潜在键名脱节。
+在 `PlanTrainingView` 中，用户完成训练流并在总结弹窗点击“再练一遍此计划”时，会调用 `handleRestartPlan`：
+1. `handleRestartPlan` 将 `isLevelLoaded` 置为 `false`，并将 `currentStepIndex` 重置为 `0`。
+2. 当训练计划只有一个阶段（或重置前索引即为 0）时，`currentStepIndex` 和 `currentCard` 并没有发生值或引用的变化。
+3. 导致以 `[currentCard, currentStepIndex]` 为依赖项的 `useEffect` 不会被触发，`getProfile` 无法执行，`isLevelLoaded` 永远停留在 `false`，从而导致界面永久阻塞在“正在加载【...】的生涯能力层阶...”提示。
 
 ### 用户需求
 
-修复训练计划在各种卡片编排与配置下的运行缺陷，确保多阶段无缝流转、快捷键操作幂等且符合预期、会话重置彻底。
+修复在训练计划完成并点击“再练一遍此计划”时出现的无限加载状态死锁，确保能平滑无缝重新开始训练流。
 
 ### 评论
 
-训练计划（Plan）作为核心串联工作流，对阶段流转和状态复位的确定性要求极高。修复这些边界条件能极大提升训练心流与系统稳健性。
+这是一个典型的 React/Preact 依赖状态未变更引起的异步加载死锁问题。通过显式引入轮次版本号（`planSessionKey`），可以优雅且确定性地解耦“阶段索引”与“全新开始”的生命周期触发。
 
 ### 目标
 
-1. 修复 `PlanTrainingView.tsx` 中的等级加载依赖，使其在同卡片连续切换时能正确重新加载并解除遮罩。
-2. 禁用 `AbstractionCanvas.tsx` 中 `Choice2AfcContainer` 的内置按键监听，由画布统一管理全局快捷键，消除双重触发。
-3. 优化 `useTrainingSession.ts` 中的空格键逻辑，在阶段完成时允许按空格进入总结/下一阶段。
-4. 在 `useTrainingSession.ts` 的 `handleRestartSession` 中重置 `AdaptiveEngine` 内部状态。
-5. 强化 `useTodayStats.ts` 聚合逻辑，确保历史记录精准映射到卡片标准 ID。
+1. 在 `PlanTrainingView` 中引入 `planSessionKey` 轮次计数器。
+2. 将 `planSessionKey` 纳入等级拉取 `useEffect` 的依赖数组。
+3. 在 `handleRestartPlan` 中递增 `planSessionKey`，确保每次重新开始均能重新拉取等级并置 `isLevelLoaded` 为 `true`。
+4. 将 `planSessionKey` 同步注入至 `GenericTrainingView` 的 `key` 中，确保实例状态干净重置。
 
 ### 基本原理
 
-1. 通过在 `PlanTrainingView.tsx` 的 `useEffect` 依赖项中追加 `currentStepIndex`，确保即使卡片相同，只要步骤索引变化也会强制触发等级重新读取与状态复位。
-2. 为 `AbstractionCanvas.tsx` 中的 `Choice2AfcContainer` 显式设置 `enableKeyboardShortcuts={false}`，使按键事件收敛于单一监听器。
-3. 在 `useTrainingSession.ts` 的 keydown 处理函数中，当 `showAnswer === true` 且 `isFinished === true` 时，将空格行为路由至 `handleRequestFinish()`。
-4. 在 `handleRestartSession` 中显式调用 `adaptiveEngineRef.current.setLevel(initialLevel)` 清空 `blockHistory` 与 `consecutiveCorrect`。
-5. 引入 `ALL_CARDS` 对今日记录的 `cardId` 与 `mode` 进行规范化对齐。
+通过为训练流每一次的重新开始赋予唯一的版本序列号，打破对 `currentStepIndex` 变化的单一依赖，确保无论当前阶段索引为何值，重新开始都可以确定性触发 `useEffect` 生命周期。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/runtime #task/object/training-plan-and-session #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/ui #task/object/plan-training-view #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `PlanTrainingView.tsx` 中的阶段监听依赖
+#### Acts 1: 更新 `PlanTrainingView.tsx`
+
+修改 `src/views/PlanTrainingView.tsx`，引入 `planSessionKey` 并修复生命周期依赖。
 
 ~~~~~act
 patch_file
 src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript.old
-  // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
-  useEffect(() => {
-    let isMounted = true;
-    if (currentCard) {
-      setIsLevelLoaded(false);
-      getProfile(currentCard.id).then((p) => {
-        if (!isMounted) return;
-        setStageInitialLevel(p?.currentLevel || 5);
-        setIsLevelLoaded(true);
-      });
-    }
-    return () => {
-      isMounted = false;
-    };
-  }, [currentCard]);
-~~~~~
-~~~~~typescript.new
+  const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
+  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+
+  // 过滤无效或不存在的卡片，提供安全保障
+  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
+
+  const currentStep = validItems[currentStepIndex];
+  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
+  const nextStep = validItems[currentStepIndex + 1];
+  const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
+
   // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
     let isMounted = true;
@@ -82,236 +73,103 @@ src/views/PlanTrainingView.tsx
     };
   }, [currentCard, currentStepIndex]);
 ~~~~~
-
-#### Acts 2: 修复 `AbstractionCanvas.tsx` 中 2AFC 容器的快捷键冲突
-
-~~~~~act
-patch_file
-src/components/AbstractionCanvas.tsx
-~~~~~
-~~~~~typescript.old
-        {/* 双卡片候选区 */}
-        <Choice2AfcContainer
-          optionA={{
-            key: 'A',
-            title: '区域 A (键 1)',
-            isCorrect: isTargetA,
-            content: (
-              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-                <canvas
-                  ref={canvasRefA}
-                  width={ABSTRACTION_2AFC_SIZE}
-                  height={ABSTRACTION_2AFC_SIZE}
-                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-                />
-              </div>
-            ),
-          }}
-          optionB={{
-            key: 'B',
-            title: '区域 B (键 2)',
-            isCorrect: isTargetB,
-            content: (
-              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-                <canvas
-                  ref={canvasRefB}
-                  width={ABSTRACTION_2AFC_SIZE}
-                  height={ABSTRACTION_2AFC_SIZE}
-                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-                />
-              </div>
-            ),
-          }}
-          selectedChoice={selectedChoice}
-          showAnswer={showAnswer}
-          disabled={disabled}
-          onSelect={handleSelectChoice}
-        />
-~~~~~
 ~~~~~typescript.new
-        {/* 双卡片候选区 */}
-        <Choice2AfcContainer
-          optionA={{
-            key: 'A',
-            title: '区域 A (键 1)',
-            isCorrect: isTargetA,
-            content: (
-              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-                <canvas
-                  ref={canvasRefA}
-                  width={ABSTRACTION_2AFC_SIZE}
-                  height={ABSTRACTION_2AFC_SIZE}
-                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-                />
-              </div>
-            ),
-          }}
-          optionB={{
-            key: 'B',
-            title: '区域 B (键 2)',
-            isCorrect: isTargetB,
-            content: (
-              <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-                <canvas
-                  ref={canvasRefB}
-                  width={ABSTRACTION_2AFC_SIZE}
-                  height={ABSTRACTION_2AFC_SIZE}
-                  className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-                />
-              </div>
-            ),
-          }}
-          selectedChoice={selectedChoice}
-          showAnswer={showAnswer}
-          disabled={disabled}
-          enableKeyboardShortcuts={false}
-          onSelect={handleSelectChoice}
-        />
-~~~~~
+  const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
+  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
-#### Acts 3: 优化 `useTrainingSession.ts` 快捷键推进与重置逻辑
+  // 过滤无效或不存在的卡片，提供安全保障
+  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
 
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript.old
-  const handleRestartSession = useCallback(() => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setIsIdle(false);
-    idleStartRef.current = null;
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    streakRef.current = 0;
-    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [domain, mode, generateQuestion]);
-~~~~~
-~~~~~typescript.new
-  const handleRestartSession = useCallback(() => {
-    setShowSummaryModal(false);
-    setIsFinished(false);
-    setIsIdle(false);
-    idleStartRef.current = null;
-    setTotalTrials(0);
-    setHitTrials(0);
-    setSessionHistory([]);
-    setShowAnswer(false);
-    setUserAnswer(null);
-    streakRef.current = 0;
-    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
-    startTimeRef.current = Date.now();
-    setElapsedSeconds(0);
-    adaptiveEngineRef.current.setLevel(initialLevel);
-    const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
-    setQuestion(generateQuestion(nextLevel));
-    setQuestionStartTime(Date.now());
-  }, [domain, mode, initialLevel, generateQuestion]);
-~~~~~
+  const currentStep = validItems[currentStepIndex];
+  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
+  const nextStep = validItems[currentStepIndex + 1];
+  const nextCard = nextStep ? getCardById(nextStep.cardId) : null;
 
-~~~~~act
-patch_file
-src/hooks/useTrainingSession.ts
-~~~~~
-~~~~~typescript.old
-      if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer && !isFinished) {
-          e.preventDefault();
-          handleNextQuestion();
-        }
-      } else if (e.code === 'Escape' || e.key === 'Escape') {
-~~~~~
-~~~~~typescript.new
-      if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer) {
-          e.preventDefault();
-          if (!isFinished) {
-            handleNextQuestion();
-          } else {
-            handleRequestFinish();
-          }
-        }
-      } else if (e.code === 'Escape' || e.key === 'Escape') {
-~~~~~
-
-#### Acts 4: 强化 `useTodayStats.ts` 统计聚合键名对齐
-
-~~~~~act
-patch_file
-src/hooks/useTodayStats.ts
-~~~~~
-~~~~~typescript.old
-import { useEffect, useState } from 'preact/hooks';
-import { type TrainingDomain, getTrialRecords } from '../utils/db';
-
-export function useTodayStats(domain?: TrainingDomain) {
-  const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
-    {},
-  );
-
+  // 严格加载当前卡片的生涯真实等级后再允许渲染训练器
   useEffect(() => {
     let isMounted = true;
-    const fetchStats = async () => {
-      const records = await getTrialRecords(domain);
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    if (currentCard) {
+      setIsLevelLoaded(false);
+      getProfile(currentCard.id).then((p) => {
+        if (!isMounted) return;
+        setStageInitialLevel(p?.currentLevel || 5);
+        setIsLevelLoaded(true);
+      });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [currentCard, currentStepIndex, planSessionKey]);
+~~~~~
 
-      const stats: Record<string, { count: number; timeMs: number }> = {};
-
-      for (const r of records) {
-        if (r.timestamp >= startOfToday) {
-          const key = r.cardId || r.mode;
-          if (!stats[key]) {
-            stats[key] = { count: 0, timeMs: 0 };
-          }
-          stats[key].count += 1;
-          stats[key].timeMs += (r.responseTimeMs as number) || 0;
-        }
-      }
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+  const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
+    setShowSummaryModal(false);
+    setIsTransitioning(false);
+    setCurrentStepIndex(0);
+    setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
+  }, []);
 ~~~~~
 ~~~~~typescript.new
-import { useEffect, useState } from 'preact/hooks';
-import { ALL_CARDS } from '../config/cards';
-import { type TrainingDomain, getTrialRecords } from '../utils/db';
+  const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
+    setShowSummaryModal(false);
+    setIsTransitioning(false);
+    setCurrentStepIndex(0);
+    setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
+    setPlanSessionKey((prev) => prev + 1);
+  }, []);
+~~~~~
 
-export function useTodayStats(domain?: TrainingDomain) {
-  const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
-    {},
-  );
-
-  useEffect(() => {
-    let isMounted = true;
-    const fetchStats = async () => {
-      const records = await getTrialRecords(domain);
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-
-      const stats: Record<string, { count: number; timeMs: number }> = {};
-
-      for (const r of records) {
-        if (r.timestamp >= startOfToday) {
-          const matchedCard = ALL_CARDS.find(
-            (c) => c.id === r.cardId || (c.domain === r.domain && c.mode === r.mode),
-          );
-          const key = matchedCard ? matchedCard.id : r.cardId || r.mode;
-          if (!stats[key]) {
-            stats[key] = { count: 0, timeMs: 0 };
-          }
-          stats[key].count += 1;
-          stats[key].timeMs += (r.responseTimeMs as number) || 0;
-        }
-      }
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+      ) : (
+        <GenericTrainingView
+          key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          onExit={onExit}
+        />
+      )}
+~~~~~
+~~~~~typescript.new
+      ) : (
+        <GenericTrainingView
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          onExit={onExit}
+        />
+      )}
 ~~~~~
 
 ### 下一步建议
 
-- 运行测试套件验证修改：执行 `npm test` 确认各模块与自适应测试通过。
-- 视网膜屏幕高清优化：若需进一步增强视觉体验，可将 `drawPolygonCanvas` 的渲染上下文全面升级接入 `setupHiDpiCanvas`。
+1. 执行 `npm run test` 或 `npm run dev` 验证训练流重新开始的功能是否工作正常。
+2. 验证完成单阶段计划与多阶段计划后，点击“再练一遍此计划”均能瞬时进入第一阶段题目。

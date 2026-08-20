@@ -24,6 +24,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
   const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
   // 过滤无效或不存在的卡片，提供安全保障
   const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
@@ -47,7 +48,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return () => {
       isMounted = false;
     };
-  }, [currentCard, currentStepIndex]);
+  }, [currentCard, currentStepIndex, planSessionKey]);
 
   // 总计时器
   useEffect(() => {
@@ -94,6 +95,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     setStageResults([]);
     setTotalElapsedSeconds(0);
     setSessionStartTime(Date.now());
+    setPlanSessionKey((prev) => prev + 1);
   }, []);
 
   if (!currentCard || validItems.length === 0) {
@@ -135,7 +137,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         </div>
       ) : (
         <GenericTrainingView
-          key={`plan-stage-${currentStepIndex}-${currentCard.id}`}
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
           card={currentCard}
           plugin={plugin}
           sessionType="training"
