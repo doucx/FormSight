@@ -141,6 +141,7 @@ export function App() {
               sessionType={route.sessionType}
               initialLevel={activeLevel}
               settings={getCardSettings(settings, activeCard.id)}
+              globalSettings={settings.global}
               onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
             />
           );

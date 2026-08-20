@@ -42,6 +42,7 @@ export interface NegativeSpaceSettings extends BaseModuleSettings {
 export interface GlobalSettings {
   idleTimeout: number;
   soundEnabled: boolean;
+  sliderHitMargin: number;
 }
 
 export interface UserSettings {
@@ -64,6 +65,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   global: {
     idleTimeout: 60,
     soundEnabled: true,
+    sliderHitMargin: 12,
   },
   cards: {
     star_single: {

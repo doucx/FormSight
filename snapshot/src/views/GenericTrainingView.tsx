@@ -4,7 +4,7 @@ import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
 import { saveSession, saveTrialRecord } from '../utils/db';
-import type { BaseModuleSettings } from '../utils/settings';
+import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
 
 interface GenericTrainingPluginAdapter {
   isTargeting?: (mode: string, settings: unknown) => boolean;
@@ -35,6 +35,7 @@ export interface GenericTrainingViewProps {
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   settings: BaseModuleSettings;
+  globalSettings?: GlobalSettings;
   onExit: () => void;
 }
 
@@ -44,6 +45,7 @@ export function GenericTrainingView({
   sessionType,
   initialLevel,
   settings,
+  globalSettings,
   onExit,
 }: GenericTrainingViewProps) {
   const domain = card.legacyDomain;
@@ -124,7 +126,10 @@ export function GenericTrainingView({
           onAnswer: session.handleAnswer,
           disabled,
           isIdle,
-          settings,
+          settings: {
+            ...settings,
+            sliderHitMargin: globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number) ?? 12,
+          },
         })
       }
     </TrainingShell>

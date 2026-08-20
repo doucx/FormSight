@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M settings.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205684.2505941, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将滑块极值吸附外延感应区提升至全局设置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787205688.331579, "duration_ms": 0}}
