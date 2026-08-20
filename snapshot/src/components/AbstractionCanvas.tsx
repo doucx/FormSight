@@ -232,12 +232,7 @@ export function AbstractionCanvas({
       drawPolygon(canvasRefA.current, question.hullDetailedA, ABSTRACTION_2AFC_SIZE);
       drawPolygon(canvasRefB.current, question.hullDetailedB, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_NOTAN_2AFC') {
-      drawNotanScene(
-        canvasThumbRef.current,
-        question.promptNotanMask,
-        50,
-        ABSTRACTION_THUMB_SIZE,
-      );
+      drawNotanScene(canvasThumbRef.current, question.promptNotanMask, 50, ABSTRACTION_THUMB_SIZE);
       drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
       drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_PALETTE_2AFC') {
@@ -276,15 +271,7 @@ export function AbstractionCanvas({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    disabled,
-    showAnswer,
-    mode,
-    activeVal,
-    selected4AfcIdx,
-    handleSelectChoice,
-    onAnswer,
-  ]);
+  }, [disabled, showAnswer, mode, activeVal, selected4AfcIdx, handleSelectChoice, onAnswer]);
 
   // =========================================================================
   // 视图 A：Top-Down 2AFC 逆向匹配系列
@@ -575,9 +562,7 @@ export function AbstractionCanvas({
         <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
           <span>{isGesture ? '动态势线角度:' : 'Notan 归组阈值:'}</span>
           <span className="font-mono text-base font-black text-indigo-600">
-            {showAnswer
-              ? `${userAnswer?.userValue ?? sliderVal}${unit}`
-              : `${activeVal}${unit}`}
+            {showAnswer ? `${userAnswer?.userValue ?? sliderVal}${unit}` : `${activeVal}${unit}`}
           </span>
         </div>
 
