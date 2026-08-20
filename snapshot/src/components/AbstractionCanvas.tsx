@@ -275,10 +275,26 @@ export function AbstractionCanvas({
       drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
       drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_PALETTE_2AFC' && question.palettePatternOptions) {
-      drawPaletteTiles(patternCanvasRef0.current, question.palettePatternOptions[0], ABSTRACTION_2AFC_SIZE);
-      drawPaletteTiles(patternCanvasRef1.current, question.palettePatternOptions[1], ABSTRACTION_2AFC_SIZE);
-      drawPaletteTiles(patternCanvasRef2.current, question.palettePatternOptions[2], ABSTRACTION_2AFC_SIZE);
-      drawPaletteTiles(patternCanvasRef3.current, question.palettePatternOptions[3], ABSTRACTION_2AFC_SIZE);
+      drawPaletteTiles(
+        patternCanvasRef0.current,
+        question.palettePatternOptions[0],
+        ABSTRACTION_2AFC_SIZE,
+      );
+      drawPaletteTiles(
+        patternCanvasRef1.current,
+        question.palettePatternOptions[1],
+        ABSTRACTION_2AFC_SIZE,
+      );
+      drawPaletteTiles(
+        patternCanvasRef2.current,
+        question.palettePatternOptions[2],
+        ABSTRACTION_2AFC_SIZE,
+      );
+      drawPaletteTiles(
+        patternCanvasRef3.current,
+        question.palettePatternOptions[3],
+        ABSTRACTION_2AFC_SIZE,
+      );
     }
   }, [mode, question, activeVal, showAnswer]);
 
@@ -356,7 +372,15 @@ export function AbstractionCanvas({
             观察上方基准主调色，在下方 4 个复杂画面中选出以此为基调的拼贴图案
           </div>
           <p className="text-xs text-slate-400">
-            按快捷键 <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">1</kbd> ~ <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">4</kbd> 或直接点击卡片
+            按快捷键{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              1
+            </kbd>{' '}
+            ~{' '}
+            <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">
+              4
+            </kbd>{' '}
+            或直接点击卡片
           </p>
         </div>
 
@@ -444,9 +468,7 @@ export function AbstractionCanvas({
                 <span className="font-bold text-slate-800">
                   {userAnswer?.isHit ? '调性基底寻源匹配完全正确！' : '色彩调性感知出现偏差'}
                 </span>
-                <span className="text-slate-400 ml-2">
-                  (正确匹配为: 画面 {targetIdx + 1})
-                </span>
+                <span className="text-slate-400 ml-2">(正确匹配为: 画面 {targetIdx + 1})</span>
               </div>
             </div>
           </div>
