@@ -15,7 +15,7 @@ import {
   getProfilesByDomain,
   getTrainingTimeMs,
 } from './utils/db';
-import { type UserSettings, loadSettings } from './utils/settings';
+import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 
@@ -26,10 +26,9 @@ export function App() {
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [settingsDomain, setSettingsDomain] = useState<TrainingDomain>('star');
+  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
+  const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
-  const [activeAnalyticsDomain, setActiveAnalyticsDomain] = useState<TrainingDomain | null>(null);
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
@@ -92,6 +91,9 @@ export function App() {
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
+  const activeSettingsCard = activeSettingsCardId ? getCardById(activeSettingsCardId) : null;
+  const activeAnalyticsCard = activeAnalyticsCardId ? getCardById(activeAnalyticsCardId) : null;
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
       {route.type === 'home' && (
@@ -109,13 +111,8 @@ export function App() {
           meta={DOMAINS_CONFIG[route.domain]}
           onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
           onBackToHome={() => navigate({ type: 'home' })}
-          onOpenSettings={() => {
-            setSettingsDomain(route.domain);
-            setIsSettingsOpen(true);
-          }}
-          onOpenAnalytics={() => {
-            setActiveAnalyticsDomain(route.domain);
-          }}
+          onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+          onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
         />
       )}
 
@@ -143,7 +140,7 @@ export function App() {
               plugin={plugin}
               sessionType={route.sessionType}
               initialLevel={activeLevel}
-              settings={settings[activeCard.settingsKey]}
+              settings={getCardSettings(settings, activeCard.id)}
               onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
             />
           );
@@ -161,19 +158,19 @@ export function App() {
 
       {isGlobalStatsOpen && <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />}
 
-      {isSettingsOpen && (
+      {activeSettingsCard && (
         <SettingsModal
-          domain={settingsDomain}
+          card={activeSettingsCard}
           settings={settings}
-          onClose={() => setIsSettingsOpen(false)}
+          onClose={() => setActiveSettingsCardId(null)}
           onSave={(newSettings) => setSettings(newSettings)}
         />
       )}
 
-      {activeAnalyticsDomain && (
+      {activeAnalyticsCard && (
         <WeaknessAnalyticsModal
-          domain={activeAnalyticsDomain}
-          onClose={() => setActiveAnalyticsDomain(null)}
+          card={activeAnalyticsCard}
+          onClose={() => setActiveAnalyticsCardId(null)}
         />
       )}
     </div>

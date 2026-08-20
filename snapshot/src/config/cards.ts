@@ -10,8 +10,74 @@ import {
   Sun,
   Target,
 } from 'lucide-preact';
+import {
+  COLOR_SECTORS,
+  STAR_SECTORS,
+  type SettingFieldSchema,
+} from '../components/settings/DynamicDomainSettings';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
+
+const STAR_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'buttonGroup',
+    key: 'gridSize',
+    title: '干扰点网格大小',
+    options: [
+      { label: '2x2', value: 2 },
+      { label: '3x3', value: 3 },
+      { label: '4x4', value: 4 },
+      { label: '5x5', value: 5 },
+    ],
+    gridCols: 'grid-cols-4',
+  },
+  {
+    type: 'targeting',
+    modeKey: 'targetingMode',
+    sectorsKey: 'manualTargetSectors',
+    title: '弱点专项靶向强化',
+    subTitle: '选择需要靶向强化的角度扇区：',
+    sectors: STAR_SECTORS,
+    gridCols: 'grid-cols-4',
+  },
+];
+
+const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'sliderMargin',
+    key: 'sliderHitMargin',
+    title: '滑块极值吸附外延感应区',
+  },
+  {
+    type: 'toggle',
+    key: 'showToleranceBand',
+    title: '显示滑块容错感应区',
+    description: '在悬停光标两侧实时显示动态容错区间',
+  },
+];
+
+const HUE_SCHEMAS: SettingFieldSchema[] = [
+  ...SLIDER_COMMON_SCHEMAS,
+  {
+    type: 'targeting',
+    modeKey: 'targetingMode',
+    sectorsKey: 'manualTargetSectors',
+    title: '色相弱点专项靶向强化',
+    subTitle: '选择需要靶向强化的色相扇区：',
+    sectors: COLOR_SECTORS,
+    gridCols: 'grid-cols-3',
+  },
+];
+
+const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
+  ...SLIDER_COMMON_SCHEMAS,
+  {
+    type: 'toggle',
+    key: 'enableHoverColorPreview',
+    title: '综合拾色悬停颜色实时联动',
+    description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
+  },
+];
 
 export const ALL_CARDS: CardDefinition[] = [
   // ==========================================
@@ -29,7 +95,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['spatial_orientation', 'proportion'],
       interaction: ['point_click'],
     },
-    settingsKey: 'star',
+    hasWeaknessAnalytics: true,
+    settingSchemas: STAR_SCHEMAS,
   },
   {
     id: 'star_double_h',
@@ -43,7 +110,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['spatial_orientation', 'proportion'],
       interaction: ['point_click'],
     },
-    settingsKey: 'star',
+    hasWeaknessAnalytics: true,
+    settingSchemas: STAR_SCHEMAS,
   },
   {
     id: 'star_double_r',
@@ -57,7 +125,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['spatial_orientation', 'proportion'],
       interaction: ['point_click'],
     },
-    settingsKey: 'star',
+    hasWeaknessAnalytics: true,
+    settingSchemas: STAR_SCHEMAS,
   },
 
   // ==========================================
@@ -75,7 +144,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['color_fidelity'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'color',
+    hasWeaknessAnalytics: true,
+    settingSchemas: HUE_SCHEMAS,
   },
   {
     id: 'color_val',
@@ -89,7 +159,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['color_fidelity'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'color_sat',
@@ -103,7 +174,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['color_fidelity'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'color_all',
@@ -117,7 +189,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['color_fidelity'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: COLOR_ALL_SCHEMAS,
   },
 
   // ==========================================
@@ -135,7 +208,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['illusion_invariance', 'color_fidelity'],
       interaction: ['choice_nafc'],
     },
-    settingsKey: 'relative_color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'rel_lightness_induction',
@@ -149,7 +223,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['illusion_invariance'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'relative_color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'rel_hue_induction',
@@ -163,7 +238,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['illusion_invariance'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'relative_color',
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'rel_decontextual_2afc',
@@ -177,7 +253,7 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['illusion_invariance'],
       interaction: ['choice_2afc'],
     },
-    settingsKey: 'relative_color',
+    hasWeaknessAnalytics: false,
   },
 
   // ==========================================
@@ -195,7 +271,8 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['proportion'],
       interaction: ['continuous_slider'],
     },
-    settingsKey: 'negative_space',
+    hasWeaknessAnalytics: true,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
   },
   {
     id: 'neg_area_comparison_2afc',
@@ -209,7 +286,7 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['proportion', 'spatial_orientation'],
       interaction: ['choice_2afc'],
     },
-    settingsKey: 'negative_space',
+    hasWeaknessAnalytics: false,
   },
   {
     id: 'neg_vertex_fitting',
@@ -223,7 +300,7 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['spatial_orientation', 'proportion'],
       interaction: ['point_click'],
     },
-    settingsKey: 'negative_space',
+    hasWeaknessAnalytics: false,
   },
   {
     id: 'neg_shape_match_2afc',
@@ -237,7 +314,7 @@ export const ALL_CARDS: CardDefinition[] = [
       skill: ['visual_memory', 'spatial_orientation'],
       interaction: ['choice_2afc'],
     },
-    settingsKey: 'negative_space',
+    hasWeaknessAnalytics: false,
   },
 ];
 
