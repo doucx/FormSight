@@ -118,21 +118,32 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   ctx.fillText('270°', getX(270), barY + barH + 4);
   ctx.fillText('360°', getX(360), barY + barH + 4);
 
-  // 4. 绘制做答记录散点
-  for (const pt of pointData) {
+  // 4. 自适应透明度与半径绘制做答记录散点 (样本量自适应下调 Alpha)
+  const totalCount = pointData.length;
+  const dotAlpha = totalCount > 500 ? 0.2 : totalCount > 150 ? 0.45 : 0.75;
+  const dotRadius = totalCount > 500 ? 2.5 : 3.5;
+
+  // 限制最大绘制散点数为最近 800 个，兼顾极端数据下的渲染流畅度
+  const renderPoints = totalCount > 800 ? pointData.slice(-800) : pointData;
+
+  for (const pt of renderPoints) {
     const px = getX(pt.targetH);
     const py = getY(pt.bias);
 
     ctx.beginPath();
-    ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = pt.isHit ? 'rgba(34, 197, 94, 0.75)' : 'rgba(239, 68, 68, 0.75)';
+    ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
+    ctx.fillStyle = pt.isHit
+      ? `rgba(34, 197, 94, ${dotAlpha})`
+      : `rgba(239, 68, 68, ${dotAlpha * 1.1})`;
     ctx.fill();
-    ctx.strokeStyle = pt.isHit ? '#15803D' : '#991B1B';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    if (totalCount <= 150) {
+      ctx.strokeStyle = pt.isHit ? '#15803D' : '#991B1B';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
   }
 
-  // 5. 计算 12 个色相扇区的平均偏差并绘制趋势平滑线
+  // 5. 计算 12 个色相扇区的平均偏差并绘制趋势平滑线 (使用全部样本计算统计均值)
   const sectorSums = Array.from({ length: 12 }, () => ({ sumBias: 0, count: 0 }));
   for (const pt of pointData) {
     const sIdx = Math.max(0, Math.min(11, Math.floor(pt.targetH / 30)));
@@ -151,7 +162,8 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   if (trendPoints.length >= 2) {
     ctx.strokeStyle = '#F59E0B';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
     ctx.beginPath();
     ctx.moveTo(trendPoints[0].x, trendPoints[0].y);
     for (let i = 1; i < trendPoints.length; i++) {

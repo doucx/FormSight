@@ -56,9 +56,11 @@ export function renderTrendChartCanvas(
   }
   ctx.stroke();
 
+  // 动态控制圆点尺寸
+  const pointRadius = recentDates.length > 20 ? 2.5 : 3.5;
   for (let i = 0; i < levels.length; i++) {
     ctx.beginPath();
-    ctx.arc(getX(i), getY(levels[i]), 3.5, 0, Math.PI * 2);
+    ctx.arc(getX(i), getY(levels[i]), pointRadius, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
     ctx.strokeStyle = '#4F46E5';
@@ -93,6 +95,7 @@ export function renderSessionTrendChartCanvas(
   ctx.fillStyle = '#1E293B';
   ctx.fillRect(0, 0, width, height);
 
+  const totalPoints = history.length;
   const levels = history.map((h) => h.level);
   const maxLevel = Math.max(...levels, 35);
   const minLevel = Math.min(...levels, 1);
@@ -103,10 +106,11 @@ export function renderSessionTrendChartCanvas(
   };
 
   const getX = (index: number) => {
-    if (history.length === 1) return padding.left + chartW / 2;
-    return padding.left + (index / (history.length - 1)) * chartW;
+    if (totalPoints === 1) return padding.left + chartW / 2;
+    return padding.left + (index / (totalPoints - 1)) * chartW;
   };
 
+  // 背景刻度线
   ctx.lineWidth = 1;
   ctx.strokeStyle = '#334155';
   ctx.fillStyle = '#64748B';
@@ -127,53 +131,133 @@ export function renderSessionTrendChartCanvas(
     ctx.fillText(`Lvl ${tickVal}`, padding.left - 8, y);
   }
 
+  // 面积渐变背景
   const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
   gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
   gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
 
   ctx.beginPath();
   ctx.moveTo(getX(0), getY(history[0].level));
-  for (let i = 1; i < history.length; i++) {
+  for (let i = 1; i < totalPoints; i++) {
     ctx.lineTo(getX(i), getY(history[i].level));
   }
-  ctx.lineTo(getX(history.length - 1), height - padding.bottom);
+  ctx.lineTo(getX(totalPoints - 1), height - padding.bottom);
   ctx.lineTo(getX(0), height - padding.bottom);
   ctx.closePath();
   ctx.fillStyle = gradient;
   ctx.fill();
 
+  // 主折线
   ctx.beginPath();
   ctx.strokeStyle = '#818CF8';
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = totalPoints > 100 ? 1.8 : 2.5;
+  ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(history[0].level));
-  for (let i = 1; i < history.length; i++) {
+  for (let i = 1; i < totalPoints; i++) {
     ctx.lineTo(getX(i), getY(history[i].level));
   }
   ctx.stroke();
 
-  for (let i = 0; i < history.length; i++) {
-    const h = history[i];
-    const x = getX(i);
-    const y = getY(h.level);
+  // 自适应 LOD 与文字防碰撞策略
+  const isCrowded = totalPoints > 35;
+  const isSuperCrowded = totalPoints > 80;
 
-    ctx.beginPath();
-    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = h.isHit ? '#22C55E' : '#EF4444';
-    ctx.fill();
-    ctx.strokeStyle = '#1E293B';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+  // 寻找极值点与关键转折点
+  let highestIndex = 0;
+  let highestLevel = levels[0];
+  for (let i = 1; i < totalPoints; i++) {
+    if (levels[i] > highestLevel) {
+      highestLevel = levels[i];
+      highestIndex = i;
+    }
+  }
 
-    if (
-      history.length <= 10 ||
-      i === 0 ||
-      i === history.length - 1 ||
-      h.level !== history[i - 1]?.level
-    ) {
-      ctx.fillStyle = '#CBD5E1';
-      ctx.font = 'bold 9px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText(`L${h.level}`, x, y - 8);
+  // 1. 绘制数据圆点
+  if (!isSuperCrowded) {
+    const dotRadius = isCrowded ? 2 : 3.5;
+    for (let i = 0; i < totalPoints; i++) {
+      const h = history[i];
+      const x = getX(i);
+      const y = getY(h.level);
+
+      ctx.beginPath();
+      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+      ctx.fillStyle = h.isHit ? '#22C55E' : '#EF4444';
+      ctx.fill();
+      if (!isCrowded) {
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+    }
+  } else {
+    // 超大样本量 (80~200+)：仅在起止点与最高点绘制光标圆环
+    const keyIndices = Array.from(new Set([0, highestIndex, totalPoints - 1]));
+    for (const idx of keyIndices) {
+      const h = history[idx];
+      const x = getX(idx);
+      const y = getY(h.level);
+
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = idx === highestIndex ? '#F59E0B' : h.isHit ? '#22C55E' : '#EF4444';
+      ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
+  // 2. 文字 Label 自适应防碰撞绘制
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = 'bold 9px sans-serif';
+  ctx.textAlign = 'center';
+
+  if (!isCrowded) {
+    // 点数较少：显示变化点
+    for (let i = 0; i < totalPoints; i++) {
+      const h = history[i];
+      if (
+        totalPoints <= 10 ||
+        i === 0 ||
+        i === totalPoints - 1 ||
+        h.level !== history[i - 1]?.level
+      ) {
+        ctx.fillText(`L${h.level}`, getX(i), getY(h.level) - 8);
+      }
+    }
+  } else if (!isSuperCrowded) {
+    // 35 ~ 80 题：限制相邻 Label 的 X 轴最小间距 >= 30px
+    let lastLabeledX = -999;
+    for (let i = 0; i < totalPoints; i++) {
+      const h = history[i];
+      const x = getX(i);
+      const isKey = i === 0 || i === totalPoints - 1 || i === highestIndex;
+      const isLevelChanged = i > 0 && h.level !== history[i - 1]?.level;
+
+      if ((isKey || isLevelChanged) && x - lastLabeledX >= 30) {
+        ctx.fillText(`L${h.level}`, x, getY(h.level) - 8);
+        lastLabeledX = x;
+      }
+    }
+  } else {
+    // 80 ~ 200+ 题：仅精确标注起点、终点和最高难度点，杜绝任何文字拥挤
+    const labelSet = [
+      { idx: 0, text: `起点 L${levels[0]}` },
+      { idx: highestIndex, text: `峰值 L${highestLevel}` },
+      { idx: totalPoints - 1, text: `终点 L${levels[totalPoints - 1]}` },
+    ];
+
+    // 按索引排序去重并绘制
+    const uniqueLabels = labelSet
+      .filter((item, pos, self) => self.findIndex((t) => t.idx === item.idx) === pos)
+      .sort((a, b) => a.idx - b.idx);
+
+    for (const item of uniqueLabels) {
+      const x = getX(item.idx);
+      const y = getY(levels[item.idx]);
+      ctx.fillStyle = item.idx === highestIndex ? '#FDE68A' : '#CBD5E1';
+      ctx.fillText(item.text, x, y - 9);
     }
   }
 
