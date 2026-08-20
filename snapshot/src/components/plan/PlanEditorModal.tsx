@@ -1,13 +1,4 @@
-import {
-  ArrowDown,
-  ArrowUp,
-  Bookmark,
-  Plus,
-  RotateCcw,
-  Sliders,
-  Trash2,
-  Zap,
-} from 'lucide-preact';
+import { ArrowDown, ArrowUp, Bookmark, Plus, RotateCcw, Sliders, Trash2, Zap } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { ALL_CARDS, getCardById } from '../../config/cards';
 import { DOMAINS_CONFIG } from '../../config/domains';
