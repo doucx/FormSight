@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { HitResult, Point, QuestionData } from '../types';
 import { drawDot, renderInteractivePointGrid } from '../utils/canvas/drawPointGrid';
-import { CANVAS_SIZE, checkHit, findNearestGridPoint, getDynamicDotRadius } from '../utils/geometry';
+import {
+  CANVAS_SIZE,
+  checkHit,
+  findNearestGridPoint,
+  getDynamicDotRadius,
+} from '../utils/geometry';
 
 interface StarCanvasProps {
   question: QuestionData;
