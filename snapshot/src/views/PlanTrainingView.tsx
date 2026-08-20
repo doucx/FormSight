@@ -32,6 +32,9 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   useEffect(() => {
     let isMounted = true;
+    const stepIdx = currentStepIndex;
+    const sessionKey = planSessionKey;
+
     if (currentCard) {
       setIsLevelLoaded(false);
       getProfile(currentCard.id)
@@ -41,7 +44,10 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           setIsLevelLoaded(true);
         })
         .catch((err) => {
-          console.error('Failed to load profile for card in plan:', err);
+          console.error(
+            `Failed to load profile for card ${currentCard.id} at step ${stepIdx} (session ${sessionKey}):`,
+            err,
+          );
           if (!isMounted) return;
           setStageInitialLevel(5);
           setIsLevelLoaded(true);
@@ -52,7 +58,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return () => {
       isMounted = false;
     };
-  }, [currentStepIndex, currentCard?.id, planSessionKey]);
+  }, [currentCard, currentStepIndex, planSessionKey]);
 
   // 总计时器
   useEffect(() => {
