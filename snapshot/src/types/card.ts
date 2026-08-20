@@ -7,7 +7,8 @@ export type SensoryTargetTag =
   | 'color'
   | 'relative_color'
   | 'negative_space'
-  | 'abstraction';
+  | 'abstraction'
+  | 'concretization';
 
 export type CognitiveSkillTag =
   | 'spatial_orientation'

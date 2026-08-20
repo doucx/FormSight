@@ -365,6 +365,7 @@ export type AnyTrainingPlugin =
 
 export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
   abstraction: abstractionPlugin,
+  concretization: abstractionPlugin,
   star: starPlugin,
   color: colorPlugin,
   relative_color: relativeColorPlugin,

@@ -138,13 +138,13 @@ export const ALL_CARDS: CardDefinition[] = [
   },
   {
     id: 'abs_td_gesture_2afc',
-    legacyDomain: 'abstraction',
+    legacyDomain: 'concretization',
     legacyMode: 'TD_GESTURE_2AFC',
     title: '动态势线寻源',
     desc: '给定抽象势线骨架，在两幅复杂点阵中透视判别谁长在该动势中 (2AFC)。',
     icon: Shuffle,
     tags: {
-      target: ['abstraction'],
+      target: ['concretization'],
       skill: ['abstraction', 'gesture_flow'],
       interaction: ['choice_2afc'],
     },
@@ -152,13 +152,13 @@ export const ALL_CARDS: CardDefinition[] = [
   },
   {
     id: 'abs_td_hull_2afc',
-    legacyDomain: 'abstraction',
+    legacyDomain: 'concretization',
     legacyMode: 'TD_HULL_2AFC',
     title: '几何大模寻形',
     desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
     icon: Columns,
     tags: {
-      target: ['abstraction'],
+      target: ['concretization'],
       skill: ['abstraction', 'proportion'],
       interaction: ['choice_2afc'],
     },
@@ -166,13 +166,13 @@ export const ALL_CARDS: CardDefinition[] = [
   },
   {
     id: 'abs_td_notan_2afc',
-    legacyDomain: 'abstraction',
+    legacyDomain: 'concretization',
     legacyMode: 'TD_NOTAN_2AFC',
     title: '黑白素描骨架',
     desc: '给定二值 Notan 剪影，透视辨识哪幅丰富灰阶素描拥有该黑白大结构 (2AFC)。',
     icon: Droplet,
     tags: {
-      target: ['abstraction'],
+      target: ['concretization'],
       skill: ['abstraction', 'notan_grouping'],
       interaction: ['choice_2afc'],
     },
@@ -180,13 +180,13 @@ export const ALL_CARDS: CardDefinition[] = [
   },
   {
     id: 'abs_td_palette_2afc',
-    legacyDomain: 'abstraction',
+    legacyDomain: 'concretization',
     legacyMode: 'TD_PALETTE_2AFC',
     title: '调性基底归位',
     desc: '给定 3 阶基调色谱条，在两张复杂混色拼贴图案中二选一归位 (2AFC)。',
     icon: Sparkles,
     tags: {
-      target: ['abstraction'],
+      target: ['concretization'],
       skill: ['abstraction', 'color_fidelity'],
       interaction: ['choice_2afc'],
     },

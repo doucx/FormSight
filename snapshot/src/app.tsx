@@ -21,6 +21,7 @@ import { Home } from './views/Home';
 
 const ALL_DOMAINS: TrainingDomain[] = [
   'abstraction',
+  'concretization',
   'star',
   'color',
   'relative_color',
@@ -41,6 +42,7 @@ export function App() {
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
     abstraction: 0,
+    concretization: 0,
     star: 0,
     color: 0,
     relative_color: 0,

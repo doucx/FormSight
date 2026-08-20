@@ -1,4 +1,4 @@
-import { Compass, Eye, Maximize2, Palette, Shuffle } from 'lucide-preact';
+import { Compass, Eye, Layers, Maximize2, Palette, Shuffle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
@@ -11,7 +11,8 @@ export interface DomainMeta {
     | 'color-sense'
     | 'relative-color'
     | 'negative-space'
-    | 'visual-abstraction';
+    | 'visual-abstraction'
+    | 'visual-refinement';
   title: string;
   subTitle: string;
   homeTitle: string;
@@ -26,16 +27,31 @@ export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
   abstraction: {
     domain: 'abstraction',
     appId: 'visual-abstraction',
-    title: '视知觉概括',
+    title: '概括感知',
     subTitle: 'Visual Abstraction',
-    homeTitle: '视知觉概括 (Visual Abstraction)',
+    homeTitle: '概括感知 (Visual Abstraction)',
     homeDesc:
-      '过滤视觉噪点，双向训练动态势线提取、极简几何大形、素描黑白灰大关系与调性基底的本质提炼与透视匹配能力。',
+      '自底向上过滤繁琐细节，训练对动态势线、极简低模折线、素描黑白块面与加权主调的本质提炼能力。',
     themeColor: 'indigo',
     icon: Eye,
     hasWeaknessAnalytics: false,
     get cards() {
       return getCardsByDomain('abstraction');
+    },
+  },
+  concretization: {
+    domain: 'concretization',
+    appId: 'visual-refinement',
+    title: '细化感知',
+    subTitle: 'Visual Refinement',
+    homeTitle: '细化感知 (Visual Refinement)',
+    homeDesc:
+      '自顶向下透视具象细节，训练基于势线骨架、几何大形、Notan 构图与调性基底在丰富画面中寻源辨识的能力。',
+    themeColor: 'purple',
+    icon: Layers,
+    hasWeaknessAnalytics: false,
+    get cards() {
+      return getCardsByDomain('concretization');
     },
   },
   star: {
