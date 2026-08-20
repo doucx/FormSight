@@ -91,7 +91,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     }
     const [domain, mode] = selectedFilter.split(':') as [TrainingDomain, string];
     const meta = DOMAINS_CONFIG[domain];
-    const card = meta?.cards.find((c) => c.legacyMode === mode);
+    const card = meta?.cards.find((c) => c.mode === mode);
     return `${meta?.title || domain} • ${card?.title || mode}`;
   };
 
@@ -204,8 +204,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                     <option value={`${meta.domain}_all`}>{meta.title} (全部)</option>
                     {meta.cards.map((card) => (
                       <option
-                        key={`${meta.domain}:${card.legacyMode}`}
-                        value={`${meta.domain}:${card.legacyMode}`}
+                        key={`${meta.domain}:${card.mode}`}
+                        value={`${meta.domain}:${card.mode}`}
                       >
                         {card.title}
                       </option>

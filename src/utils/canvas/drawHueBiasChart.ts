@@ -102,9 +102,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   ctx.fillStyle = barGradient;
   ctx.beginPath();
-  ctx.roundRect
-    ? ctx.roundRect(padding.left, barY, chartW, barH, 4)
-    : ctx.fillRect(padding.left, barY, chartW, barH);
+  ctx.roundRect(padding.left, barY, chartW, barH, 4);
   ctx.fill();
 
   // 底部 X 轴标签

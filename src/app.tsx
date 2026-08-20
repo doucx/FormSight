@@ -151,7 +151,7 @@ export function App() {
               initialLevel={activeLevel}
               settings={getCardSettings(settings, activeCard.id)}
               globalSettings={settings.global}
-              onExit={() => navigate({ type: 'dashboard', domain: activeCard.legacyDomain })}
+              onExit={() => navigate({ type: 'dashboard', domain: activeCard.domain })}
             />
           );
         })()}

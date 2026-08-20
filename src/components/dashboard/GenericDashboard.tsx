@@ -50,7 +50,7 @@ export function GenericDashboard({
         const accuracy =
           totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
         const currentLevel = profile?.currentLevel || 5;
-        const stat = todayStats[card.legacyMode] || todayStats[card.id] || { count: 0, timeMs: 0 };
+        const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
 
         return (
           <ModeCard

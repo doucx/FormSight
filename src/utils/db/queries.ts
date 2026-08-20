@@ -1,4 +1,4 @@
-import { getCardById, resolveLegacyCardId } from '../../config/cards';
+import { getCardById } from '../../config/cards';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -10,7 +10,7 @@ import {
 export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void> {
   const db = await getDB();
   const domain = record.domain || 'star';
-  const cardId = record.cardId || resolveLegacyCardId(domain, record.mode);
+  const cardId = record.cardId || record.mode;
   const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
   await db.put('records', normalizedRecord);
   await updateProfile(cardId, domain, record.mode, record.isHit, record.difficultyLevel);
@@ -19,21 +19,12 @@ export async function saveTrialRecord(record: UnifiedTrialRecord): Promise<void>
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
   const domain = session.domain || 'star';
-  const cardId = session.cardId || resolveLegacyCardId(domain, session.mode);
+  const cardId = session.cardId || session.mode;
   await db.put('sessions', { ...session, domain, cardId });
 }
 
-export async function getProfile(cardId: string): Promise<UnifiedProfileData | null>;
-export async function getProfile(
-  domain: TrainingDomain,
-  mode: string,
-): Promise<UnifiedProfileData | null>;
-export async function getProfile(
-  first: string | TrainingDomain,
-  second?: string,
-): Promise<UnifiedProfileData | null> {
+export async function getProfile(cardId: string): Promise<UnifiedProfileData | null> {
   const db = await getDB();
-  const cardId = second ? resolveLegacyCardId(first as TrainingDomain, second) : first;
   const profile = await db.get('user_profiles', cardId);
   return profile || null;
 }
@@ -81,7 +72,7 @@ async function updateProfile(
 ): Promise<void> {
   const db = await getDB();
   const card = getCardById(cardId);
-  const canonicalDomain = card ? card.legacyDomain : domain;
+  const canonicalDomain = card ? card.domain : domain;
   const existing = await db.get('user_profiles', cardId);
 
   if (!existing) {
