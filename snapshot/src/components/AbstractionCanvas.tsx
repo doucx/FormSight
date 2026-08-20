@@ -151,7 +151,6 @@ export function AbstractionCanvas({
   onAnswer,
   disabled = false,
   hitMargin = 12,
-  showToleranceBand = true,
 }: AbstractionCanvasProps) {
   const { mode } = question;
 
@@ -319,7 +318,7 @@ export function AbstractionCanvas({
               <div className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
                 {question.promptPaletteBand.map((c, i) => (
                   <div
-                    key={i}
+                    key={`prompt-band-${i}-${c.join('-')}`}
                     className="w-12 h-12 rounded-lg border border-slate-300 shadow-inner"
                     style={{ backgroundColor: hsvToHex(...c) }}
                   />
@@ -508,7 +507,7 @@ export function AbstractionCanvas({
 
             return (
               <button
-                key={idx}
+                key={`palette-option-${idx}-${hex}`}
                 type="button"
                 disabled={disabled || showAnswer}
                 onClick={() => {

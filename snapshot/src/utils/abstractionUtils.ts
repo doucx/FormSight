@@ -1,6 +1,4 @@
 import type { Point } from '../types';
-import { hsvToHex } from './colorUtils';
-import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
 export type AbstractionMode =
   | 'GESTURE_AXIS'

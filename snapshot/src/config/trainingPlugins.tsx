@@ -36,6 +36,7 @@ import {
   generateRelativeColorQuestion,
 } from '../utils/relativeColorUtils';
 import type {
+  BaseModuleSettings,
   ColorSenseSettings,
   NegativeSpaceSettings,
   RelativeColorSettings,
@@ -338,7 +339,7 @@ export const abstractionPlugin: TrainingPlugin<
   evaluateAnswer: (userVal, q) => checkAbstractionHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal, mode) => ({
+  extractRecordDetails: (_q, hitResult, userVal, mode) => ({
     mode,
     userAnswer: userVal,
     errorValue: hitResult.errorValue,
