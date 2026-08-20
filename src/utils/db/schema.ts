@@ -1,5 +1,4 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
-import { migrateLegacyDatabase } from './migration';
 
 export type TrainingDomain =
   | 'star'
@@ -86,57 +85,51 @@ let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
 export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
-    dbPromise = (async () => {
-      const db = await openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-        upgrade(database, _oldVersion, _newVersion, transaction) {
-          const sessionsStore = database.objectStoreNames.contains('sessions')
-            ? transaction.objectStore('sessions')
-            : database.createObjectStore('sessions', { keyPath: 'id' });
+    dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
+      upgrade(database, _oldVersion, _newVersion, transaction) {
+        const sessionsStore = database.objectStoreNames.contains('sessions')
+          ? transaction.objectStore('sessions')
+          : database.createObjectStore('sessions', { keyPath: 'id' });
 
-          if (!sessionsStore.indexNames.contains('by-card')) {
-            sessionsStore.createIndex('by-card', 'cardId');
-          }
-          if (!sessionsStore.indexNames.contains('by-domain')) {
-            sessionsStore.createIndex('by-domain', 'domain');
-          }
-          if (!sessionsStore.indexNames.contains('by-domain-mode')) {
-            sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-          }
+        if (!sessionsStore.indexNames.contains('by-card')) {
+          sessionsStore.createIndex('by-card', 'cardId');
+        }
+        if (!sessionsStore.indexNames.contains('by-domain')) {
+          sessionsStore.createIndex('by-domain', 'domain');
+        }
+        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
+          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
+        }
 
-          const recordsStore = database.objectStoreNames.contains('records')
-            ? transaction.objectStore('records')
-            : database.createObjectStore('records', { keyPath: 'id' });
+        const recordsStore = database.objectStoreNames.contains('records')
+          ? transaction.objectStore('records')
+          : database.createObjectStore('records', { keyPath: 'id' });
 
-          if (!recordsStore.indexNames.contains('by-card')) {
-            recordsStore.createIndex('by-card', 'cardId');
-          }
-          if (!recordsStore.indexNames.contains('by-session')) {
-            recordsStore.createIndex('by-session', 'sessionId');
-          }
-          if (!recordsStore.indexNames.contains('by-domain')) {
-            recordsStore.createIndex('by-domain', 'domain');
-          }
-          if (!recordsStore.indexNames.contains('by-domain-mode')) {
-            recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-          }
-          if (!recordsStore.indexNames.contains('by-mode')) {
-            recordsStore.createIndex('by-mode', 'mode');
-          }
+        if (!recordsStore.indexNames.contains('by-card')) {
+          recordsStore.createIndex('by-card', 'cardId');
+        }
+        if (!recordsStore.indexNames.contains('by-session')) {
+          recordsStore.createIndex('by-session', 'sessionId');
+        }
+        if (!recordsStore.indexNames.contains('by-domain')) {
+          recordsStore.createIndex('by-domain', 'domain');
+        }
+        if (!recordsStore.indexNames.contains('by-domain-mode')) {
+          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
+        }
+        if (!recordsStore.indexNames.contains('by-mode')) {
+          recordsStore.createIndex('by-mode', 'mode');
+        }
 
-          const profilesStore = database.objectStoreNames.contains('user_profiles')
-            ? transaction.objectStore('user_profiles')
-            : database.createObjectStore('user_profiles', { keyPath: 'cardId' });
+        const profilesStore = database.objectStoreNames.contains('user_profiles')
+          ? transaction.objectStore('user_profiles')
+          : database.createObjectStore('user_profiles', { keyPath: 'cardId' });
 
-          if (!profilesStore.indexNames.contains('by-domain')) {
-            profilesStore.createIndex('by-domain', 'domain');
-          }
-        },
-      });
-
-      // 异步执行旧数据无感迁移
-      await migrateLegacyDatabase(db);
-      return db;
-    })();
+        if (!profilesStore.indexNames.contains('by-domain')) {
+          profilesStore.createIndex('by-domain', 'domain');
+        }
+      },
+    });
   }
   return dbPromise;
 }

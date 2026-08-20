@@ -1,4 +1,4 @@
-import { getCardById, getCardsByDomain, resolveLegacyCardId } from '../../config/cards';
+import { getCardById, resolveLegacyCardId } from '../../config/cards';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -40,29 +40,7 @@ export async function getProfile(
 
 export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
   const db = await getDB();
-  const domainCards = getCardsByDomain(domain);
-  const indexProfiles = await db.getAllFromIndex('user_profiles', 'by-domain', domain);
-  const map = new Map<string, UnifiedProfileData>();
-
-  for (const p of indexProfiles) {
-    map.set(p.cardId, p);
-  }
-
-  // 兜底补齐因历史 domain 迁移未匹配索引的 Profile 并自愈写入
-  for (const card of domainCards) {
-    if (!map.has(card.id)) {
-      const p = await db.get('user_profiles', card.id);
-      if (p) {
-        if (p.domain !== domain) {
-          p.domain = domain;
-          await db.put('user_profiles', p);
-        }
-        map.set(p.cardId, p);
-      }
-    }
-  }
-
-  return Array.from(map.values());
+  return db.getAllFromIndex('user_profiles', 'by-domain', domain);
 }
 
 export async function getTrialRecords(
