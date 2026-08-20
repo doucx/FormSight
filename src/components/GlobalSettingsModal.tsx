@@ -3,6 +3,7 @@ import {
   Download,
   FlaskConical,
   HelpCircle,
+  RotateCcw,
   Sliders,
   ToggleLeft,
   ToggleRight,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { clearAllData, exportAllData, importAllData } from '../utils/db';
+import { resetPlansToDefault } from '../utils/planStorage';
 import { loadSettings, saveSettings } from '../utils/settings';
 import { ConfirmModal } from './common/ConfirmModal';
 import { ModalShell } from './common/ModalShell';
@@ -32,6 +34,7 @@ export function GlobalSettingsModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [settings, setSettings] = useState(loadSettings);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
 
   const handleToggleSound = () => {
     const updated = {
@@ -138,6 +141,13 @@ export function GlobalSettingsModal({
     showToast('所有训练数据已清空', 'info');
     onDataChanged();
     onClose();
+  };
+
+  const handleResetPlansConfirmed = () => {
+    setShowResetPlansConfirm(false);
+    resetPlansToDefault();
+    showToast('所有训练计划已恢复为官方预设推荐', 'success');
+    onDataChanged();
   };
 
   return (
@@ -294,20 +304,37 @@ export function GlobalSettingsModal({
             />
           </div>
 
-          {/* 危险操作 */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-rose-600">删除所有数据</div>
-              <div className="text-[11px] text-slate-400">清空所有模块的本地练习记录</div>
+          {/* 计划库重置与危险操作 */}
+          <div className="pt-3 border-t border-slate-100 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs font-bold text-slate-700">恢复官方训练计划</div>
+                <div className="text-[11px] text-slate-400">清空自定义计划，恢复官方预设</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowResetPlansConfirm(true)}
+                className="py-2 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                重置计划
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowClearConfirm(true)}
-              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              清空数据
-            </button>
+
+            <div className="flex items-center justify-between pt-1">
+              <div>
+                <div className="text-xs font-bold text-rose-600">删除所有数据</div>
+                <div className="text-[11px] text-slate-400">清空所有模块的本地练习记录</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(true)}
+                className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                清空数据
+              </button>
+            </div>
           </div>
         </div>
 
@@ -321,6 +348,16 @@ export function GlobalSettingsModal({
           </button>
         </div>
       </ModalShell>
+
+      <ConfirmModal
+        isOpen={showResetPlansConfirm}
+        title="恢复初始训练计划"
+        message="确定要清除所有自定义计划并恢复官方默认推荐训练流吗？此操作不会影响您的历史答题数据与能力层阶。"
+        confirmText="确认重置"
+        isDangerous={false}
+        onConfirm={handleResetPlansConfirmed}
+        onCancel={() => setShowResetPlansConfirm(false)}
+      />
 
       <ConfirmModal
         isOpen={showClearConfirm}

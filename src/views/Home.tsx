@@ -1,11 +1,18 @@
 import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
+import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { DOMAINS_CONFIG } from '../config/domains';
+import type { TrainingPlan } from '../types/plan';
 import { type TrainingDomain, formatTotalTime } from '../utils/db';
 
 interface HomeProps {
   totalTimeMs: number;
   domainTimes: Record<TrainingDomain, number>;
+  trainingPlan: TrainingPlan;
+  allPlans?: TrainingPlan[];
   onNavigateDomain: (domain: TrainingDomain) => void;
+  onStartPlan: () => void;
+  onOpenPlanEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
   onOpenGlobalSettings: () => void;
   onOpenGlobalStats: () => void;
 }
@@ -13,7 +20,12 @@ interface HomeProps {
 export function Home({
   totalTimeMs,
   domainTimes,
+  trainingPlan,
+  allPlans = [],
   onNavigateDomain,
+  onStartPlan,
+  onOpenPlanEditor,
+  onSelectPlan,
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
@@ -28,7 +40,7 @@ export function Home({
   const domains = domainOrder.map((d) => DOMAINS_CONFIG[d]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-10">
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-8">
       {/* 品牌 Header */}
       <div className="flex items-center justify-between bg-white border border-slate-200/80 px-8 py-6 rounded-3xl shadow-sm">
         <div className="flex items-center gap-4">
@@ -72,7 +84,16 @@ export function Home({
         </div>
       </div>
 
-      {/* 模块选择区：元数据动态渲染 */}
+      {/* 计划 Hero 区域 */}
+      <PlanHeroCard
+        plan={trainingPlan}
+        allPlans={allPlans}
+        onStartPlan={onStartPlan}
+        onOpenEditor={onOpenPlanEditor}
+        onSelectPlan={onSelectPlan}
+      />
+
+      {/* 模块选择区 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {domains.map((meta) => {
           const Icon = meta.icon;

@@ -5,19 +5,28 @@ import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
+import { PlanEditorModal } from './components/plan/PlanEditorModal';
 import { getCardById } from './config/cards';
 import { DOMAINS_CONFIG } from './config/domains';
 import { CARD_PLUGINS } from './config/trainingPlugins';
 import { useHashRoute } from './hooks/useHashRoute';
+import type { TrainingPlan } from './types/plan';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
   getProfilesByDomain,
   getTrainingTimeMs,
 } from './utils/db';
+import {
+  loadPlanStorageState,
+  loadTrainingPlan,
+  saveTrainingPlan,
+  setActivePlan,
+} from './utils/planStorage';
 import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
+import { PlanTrainingView } from './views/PlanTrainingView';
 
 const ALL_DOMAINS: TrainingDomain[] = [
   'abstraction',
@@ -33,10 +42,13 @@ export function App() {
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
+  const [isPlanEditorOpen, setIsPlanEditorOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
   const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
+  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
@@ -79,6 +91,9 @@ export function App() {
     setDomainTimes(timesMap);
     setCurrentDomainProfiles(pMap);
     setSettings(loadSettings());
+    const planState = loadPlanStorageState();
+    setTrainingPlan(loadTrainingPlan());
+    setAllPlans(planState.plans);
     setProfilesLoaded(true);
   }, []);
 
@@ -89,6 +104,8 @@ export function App() {
   useEffect(() => {
     if (route.type === 'home') {
       document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
+    } else if (route.type === 'plan-train') {
+      document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
     } else if (route.type === 'dashboard') {
       const meta = DOMAINS_CONFIG[route.domain];
       document.title = `${meta.title} (${meta.subTitle}) - FormSight`;
@@ -96,7 +113,18 @@ export function App() {
       const card = getCardById(route.cardId);
       document.title = `${card?.title || '训练'} - FormSight`;
     }
-  }, [route]);
+  }, [route, trainingPlan.name]);
+
+  const handleSelectPlanOnHome = useCallback(
+    (planId: string) => {
+      const target = setActivePlan(planId);
+      if (target) {
+        setTrainingPlan(target);
+        showToast(`已切换至【${target.name}】`, 'info');
+      }
+    },
+    [showToast],
+  );
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
@@ -109,9 +137,25 @@ export function App() {
         <Home
           totalTimeMs={totalTimeMs}
           domainTimes={domainTimes}
+          trainingPlan={trainingPlan}
+          allPlans={allPlans}
           onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
+          onStartPlan={() => navigate({ type: 'plan-train' })}
+          onOpenPlanEditor={() => setIsPlanEditorOpen(true)}
+          onSelectPlan={handleSelectPlanOnHome}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
           onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
+        />
+      )}
+
+      {route.type === 'plan-train' && (
+        <PlanTrainingView
+          plan={trainingPlan}
+          settings={settings}
+          onExit={() => {
+            refreshProfiles();
+            navigate({ type: 'home' });
+          }}
         />
       )}
 
@@ -181,6 +225,20 @@ export function App() {
         <WeaknessAnalyticsModal
           card={activeAnalyticsCard}
           onClose={() => setActiveAnalyticsCardId(null)}
+        />
+      )}
+
+      {isPlanEditorOpen && (
+        <PlanEditorModal
+          initialPlan={trainingPlan}
+          onClose={() => setIsPlanEditorOpen(false)}
+          onPlanListChanged={refreshProfiles}
+          onSave={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            setTrainingPlan(newPlan);
+            refreshProfiles();
+            showToast('训练计划已成功更新', 'success');
+          }}
         />
       )}
     </div>

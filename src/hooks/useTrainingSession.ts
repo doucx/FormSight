@@ -16,6 +16,8 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   targetAccuracy?: number;
   blockSize?: number;
   idleTimeoutSec?: number;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   generateQuestion: (level: number) => TQuestion;
   evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
   isHit: (hitResult: THitResult) => boolean;
@@ -26,6 +28,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
     hitResult: THitResult;
     responseTimeMs: number;
     userVal: TAnswerVal;
+    currentProfileLevel: number;
   }) => Promise<void>;
   saveSession: (params: {
     sessionId: string;
@@ -50,6 +53,8 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   targetAccuracy = 0.8,
   blockSize = 10,
   idleTimeoutSec: optionsIdleTimeout,
+  targetLimitTrials,
+  onTargetLimitReached,
   generateQuestion,
   evaluateAnswer,
   isHit,
@@ -142,33 +147,51 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       setTotalTrials(newTotal);
       setHitTrials(newHits);
 
+      // 先执行自适应算子，获取答完该题后的最新能力等级
+      adaptiveEngineRef.current.recordResult(hit);
+      const latestLevel = adaptiveEngineRef.current.getCurrentLevel();
+
       await saveTrialRecord({
         sessionId: sessionIdRef.current,
         question,
         hitResult,
         responseTimeMs,
         userVal,
+        currentProfileLevel: latestLevel,
       });
 
-      setSessionHistory((prev) => [
-        ...prev,
-        {
-          trialIndex: newTotal,
-          level: getQuestionLevel(question),
-          isHit: hit,
-          responseTimeMs,
-        },
-      ]);
+      const nextHistoryItem: SessionHistoryItem = {
+        trialIndex: newTotal,
+        level: getQuestionLevel(question),
+        isHit: hit,
+        responseTimeMs,
+      };
 
-      adaptiveEngineRef.current.recordResult(hit);
+      const updatedHistory = [...sessionHistory, nextHistoryItem];
+      setSessionHistory(updatedHistory);
 
-      if (sessionType === 'benchmark' && newTotal >= 20) {
+      if (targetLimitTrials && newTotal >= targetLimitTrials) {
         setIsFinished(true);
         await saveCurrentSession(newTotal, newHits, true);
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
-        autoNextTimerRef.current = window.setTimeout(() => {
-          setShowSummaryModal(true);
-        }, autoNextDelay);
+        if (autoNext) {
+          autoNextTimerRef.current = window.setTimeout(() => {
+            if (onTargetLimitReached) {
+              onTargetLimitReached(updatedHistory);
+            } else {
+              setShowSummaryModal(true);
+            }
+          }, autoNextDelay);
+        }
+      } else if (sessionType === 'benchmark' && newTotal >= 20) {
+        setIsFinished(true);
+        await saveCurrentSession(newTotal, newHits, true);
+        if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
+        if (autoNext) {
+          autoNextTimerRef.current = window.setTimeout(() => {
+            setShowSummaryModal(true);
+          }, autoNextDelay);
+        }
       } else if (autoNext) {
         if (autoNextTimerRef.current) clearTimeout(autoNextTimerRef.current);
         autoNextTimerRef.current = window.setTimeout(() => {
@@ -185,6 +208,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       hitTrials,
       saveTrialRecord,
       getQuestionLevel,
+      sessionHistory,
+      targetLimitTrials,
+      onTargetLimitReached,
       sessionType,
       saveCurrentSession,
       autoNextDelay,
@@ -194,6 +220,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   );
 
   const handleRequestFinish = useCallback(async () => {
+    if (targetLimitTrials && totalTrials >= targetLimitTrials && onTargetLimitReached) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onTargetLimitReached(sessionHistory);
+      return;
+    }
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -201,7 +232,16 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       await saveCurrentSession(totalTrials, hitTrials, true);
       onExit();
     }
-  }, [sessionHistory.length, showSummaryModal, saveCurrentSession, totalTrials, hitTrials, onExit]);
+  }, [
+    targetLimitTrials,
+    totalTrials,
+    hitTrials,
+    onTargetLimitReached,
+    sessionHistory,
+    showSummaryModal,
+    saveCurrentSession,
+    onExit,
+  ]);
 
   const handleFinishSession = useCallback(async () => {
     await saveCurrentSession(totalTrials, hitTrials, true);
@@ -239,10 +279,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
+    adaptiveEngineRef.current.setLevel(initialLevel);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }, [domain, mode, generateQuestion]);
+  }, [domain, mode, initialLevel, generateQuestion]);
 
   // === 闲置与失焦监听 ===
   useEffect(() => {
@@ -307,9 +348,13 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         return;
       }
       if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer && !isFinished) {
+        if (showAnswer) {
           e.preventDefault();
-          handleNextQuestion();
+          if (!isFinished) {
+            handleNextQuestion();
+          } else {
+            handleRequestFinish();
+          }
         }
       } else if (e.code === 'Escape' || e.key === 'Escape') {
         e.preventDefault();

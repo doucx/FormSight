@@ -29,6 +29,8 @@ interface GenericTrainingPluginAdapter {
   }) => ComponentChildren;
 }
 
+import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+
 export interface GenericTrainingViewProps {
   card: CardDefinition;
   plugin: AnyTrainingPlugin;
@@ -36,6 +38,8 @@ export interface GenericTrainingViewProps {
   initialLevel: number;
   settings: BaseModuleSettings;
   globalSettings?: GlobalSettings;
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   onExit: () => void;
 }
 
@@ -46,6 +50,8 @@ export function GenericTrainingView({
   initialLevel,
   settings,
   globalSettings,
+  targetLimitTrials,
+  onTargetLimitReached,
   onExit,
 }: GenericTrainingViewProps) {
   const domain = card.domain;
@@ -63,23 +69,35 @@ export function GenericTrainingView({
     adaptiveMode: settings.adaptiveMode,
     targetAccuracy: settings.targetAccuracy,
     blockSize: settings.blockSize,
+    targetLimitTrials,
+    onTargetLimitReached,
     generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
     evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
     isHit: adapter.isHit,
     getQuestionLevel: adapter.getQuestionLevel,
-    saveTrialRecord: async ({ sessionId, question: q, hitResult, responseTimeMs, userVal }) => {
-      await saveTrialRecord({
-        id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        sessionId,
-        cardId: card.id,
-        domain,
-        mode,
-        timestamp: Date.now(),
-        difficultyLevel: adapter.getQuestionLevel(q),
-        isHit: adapter.isHit(hitResult),
-        responseTimeMs,
-        details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
-      });
+    saveTrialRecord: async ({
+      sessionId,
+      question: q,
+      hitResult,
+      responseTimeMs,
+      userVal,
+      currentProfileLevel,
+    }) => {
+      await saveTrialRecord(
+        {
+          id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          sessionId,
+          cardId: card.id,
+          domain,
+          mode,
+          timestamp: Date.now(),
+          difficultyLevel: adapter.getQuestionLevel(q),
+          isHit: adapter.isHit(hitResult),
+          responseTimeMs,
+          details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
+        },
+        currentProfileLevel,
+      );
     },
     saveSession: async ({
       sessionId,
