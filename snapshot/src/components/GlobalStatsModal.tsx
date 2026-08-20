@@ -25,7 +25,13 @@ interface UnifiedRecord {
   subMode: string;
 }
 
-const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
+const ALL_DOMAINS: TrainingDomain[] = [
+  'abstraction',
+  'star',
+  'color',
+  'relative_color',
+  'negative_space',
+];
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);

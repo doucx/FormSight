@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "biome Capture: M drawHeatmap.ts, M drawHueBiasChart.ts, M drawTrendChart.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787207402.623323, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 增加视知觉概括能力训练模块与八张核心卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787212429.8583915, "duration_ms": 0}}

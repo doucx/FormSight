@@ -15,7 +15,7 @@ function parseHash(hash: string): RouteLocation {
 
   if (segments[0] === 'dashboard' && segments[1]) {
     const domain = segments[1] as TrainingDomain;
-    if (['star', 'color', 'relative_color', 'negative_space'].includes(domain)) {
+    if (['abstraction', 'star', 'color', 'relative_color', 'negative_space'].includes(domain)) {
       return { type: 'dashboard', domain };
     }
   }

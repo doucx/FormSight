@@ -39,6 +39,11 @@ export interface NegativeSpaceSettings extends BaseModuleSettings {
   showToleranceBand?: boolean;
 }
 
+export interface AbstractionSettings extends BaseModuleSettings {
+  sliderHitMargin?: number;
+  showToleranceBand?: boolean;
+}
+
 export interface GlobalSettings {
   idleTimeout: number;
   soundEnabled: boolean;
@@ -118,6 +123,14 @@ export const DEFAULT_SETTINGS: UserSettings = {
     neg_area_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
     neg_vertex_fitting: { ...DEFAULT_BASE_SETTINGS },
     neg_shape_match_2afc: { ...DEFAULT_BASE_SETTINGS },
+    abs_gesture_axis: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    abs_polygon_decimation: { ...DEFAULT_BASE_SETTINGS },
+    abs_notan_threshold: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
+    abs_palette_clustering: { ...DEFAULT_BASE_SETTINGS },
+    abs_td_gesture_2afc: { ...DEFAULT_BASE_SETTINGS },
+    abs_td_hull_2afc: { ...DEFAULT_BASE_SETTINGS },
+    abs_td_notan_2afc: { ...DEFAULT_BASE_SETTINGS },
+    abs_td_palette_2afc: { ...DEFAULT_BASE_SETTINGS },
   },
 };
 

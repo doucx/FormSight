@@ -1,4 +1,4 @@
-import { Compass, Maximize2, Palette, Shuffle } from 'lucide-preact';
+import { Compass, Eye, Maximize2, Palette, Shuffle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
@@ -6,7 +6,7 @@ import { getCardsByDomain } from './cards';
 
 export interface DomainMeta {
   domain: TrainingDomain;
-  appId: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space';
+  appId: 'star-hopping' | 'color-sense' | 'relative-color' | 'negative-space' | 'visual-abstraction';
   title: string;
   subTitle: string;
   homeTitle: string;
@@ -18,7 +18,36 @@ export interface DomainMeta {
 }
 
 export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
+  abstraction: {
+    domain: 'abstraction',
+    appId: 'visual-abstraction',
+    title: '视知觉概括',
+    subTitle: 'Visual Abstraction',
+    homeTitle: '视知觉概括 (Visual Abstraction)',
+    homeDesc:
+      '过滤视觉噪点，双向训练动态势线提取、极简几何大形、素描黑白灰大关系与调性基底的本质提炼与透视匹配能力。',
+    themeColor: 'indigo',
+    icon: Eye,
+    hasWeaknessAnalytics: false,
+    get cards() {
+      return getCardsByDomain('abstraction');
+    },
+  },
   star: {
+    domain: 'star',
+    appId: 'star-hopping',
+    title: '寻星练习',
+    subTitle: 'Star-Hopping',
+    homeTitle: '寻星练习 (Star-Hopping)',
+    homeDesc:
+      '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
+    themeColor: 'indigo',
+    icon: Compass,
+    hasWeaknessAnalytics: true,
+    get cards() {
+      return getCardsByDomain('star');
+    },
+  },
     domain: 'star',
     appId: 'star-hopping',
     title: '寻星练习',

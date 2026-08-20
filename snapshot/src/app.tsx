@@ -19,7 +19,13 @@ import { type UserSettings, getCardSettings, loadSettings } from './utils/settin
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 
-const ALL_DOMAINS: TrainingDomain[] = ['star', 'color', 'relative_color', 'negative_space'];
+const ALL_DOMAINS: TrainingDomain[] = [
+  'abstraction',
+  'star',
+  'color',
+  'relative_color',
+  'negative_space',
+];
 
 export function App() {
   const { route, navigate } = useHashRoute();
@@ -34,6 +40,7 @@ export function App() {
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
+    abstraction: 0,
     star: 0,
     color: 0,
     relative_color: 0,

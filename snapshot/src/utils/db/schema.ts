@@ -1,7 +1,7 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 import { migrateLegacyDatabase } from './migration';
 
-export type TrainingDomain = 'star' | 'color' | 'relative_color' | 'negative_space';
+export type TrainingDomain = 'star' | 'color' | 'relative_color' | 'negative_space' | 'abstraction';
 
 export interface UnifiedSessionData {
   id: string;
