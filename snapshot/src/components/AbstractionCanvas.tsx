@@ -187,12 +187,17 @@ export function AbstractionCanvas({
   const [sliderVal, setSliderVal] = useState<number>(0);
   const canvasMainRef = useRef<HTMLCanvasElement | null>(null);
 
-  // 2. 2AFC 状态
+  // 2. 2AFC / 4AFC 状态
   const canvasRefA = useRef<HTMLCanvasElement | null>(null);
   const canvasRefB = useRef<HTMLCanvasElement | null>(null);
   const canvasThumbRef = useRef<HTMLCanvasElement | null>(null);
+  const patternCanvasRef0 = useRef<HTMLCanvasElement | null>(null);
+  const patternCanvasRef1 = useRef<HTMLCanvasElement | null>(null);
+  const patternCanvasRef2 = useRef<HTMLCanvasElement | null>(null);
+  const patternCanvasRef3 = useRef<HTMLCanvasElement | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
   const [selected4AfcIdx, setSelected4AfcIdx] = useState<number | null>(null);
+  const [selectedTdPatternIdx, setSelectedTdPatternIdx] = useState<number | null>(null);
 
   const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
     max: mode === 'GESTURE_AXIS' ? 180 : 100,
@@ -212,6 +217,7 @@ export function AbstractionCanvas({
       setHoverVal(null);
       setSelectedChoice(null);
       setSelected4AfcIdx(null);
+      setSelectedTdPatternIdx(null);
     }
   }, [question.id, mode, setHoverVal]);
 
@@ -268,9 +274,11 @@ export function AbstractionCanvas({
       drawNotanScene(canvasThumbRef.current, question.promptNotanMask, 50, ABSTRACTION_THUMB_SIZE);
       drawNotanScene(canvasRefA.current, question.notanSceneA, 50, ABSTRACTION_2AFC_SIZE);
       drawNotanScene(canvasRefB.current, question.notanSceneB, 50, ABSTRACTION_2AFC_SIZE);
-    } else if (mode === 'TD_PALETTE_2AFC') {
-      drawPaletteTiles(canvasRefA.current, question.patternA, ABSTRACTION_2AFC_SIZE);
-      drawPaletteTiles(canvasRefB.current, question.patternB, ABSTRACTION_2AFC_SIZE);
+    } else if (mode === 'TD_PALETTE_2AFC' && question.palettePatternOptions) {
+      drawPaletteTiles(patternCanvasRef0.current, question.palettePatternOptions[0], ABSTRACTION_2AFC_SIZE);
+      drawPaletteTiles(patternCanvasRef1.current, question.palettePatternOptions[1], ABSTRACTION_2AFC_SIZE);
+      drawPaletteTiles(patternCanvasRef2.current, question.palettePatternOptions[2], ABSTRACTION_2AFC_SIZE);
+      drawPaletteTiles(patternCanvasRef3.current, question.palettePatternOptions[3], ABSTRACTION_2AFC_SIZE);
     }
   }, [mode, question, activeVal, showAnswer]);
 
@@ -287,6 +295,24 @@ export function AbstractionCanvas({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (disabled || showAnswer) return;
+      if (mode === 'TD_PALETTE_2AFC') {
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          const idx = Number.parseInt(e.key, 10) - 1;
+          setSelectedTdPatternIdx(idx);
+          onAnswer(idx);
+        }
+        return;
+      }
+      if (mode === 'PALETTE_CLUSTERING') {
+        if (['1', '2', '3', '4'].includes(e.key)) {
+          e.preventDefault();
+          const idx = Number.parseInt(e.key, 10) - 1;
+          setSelected4AfcIdx(idx);
+          onAnswer(idx);
+          return;
+        }
+      }
       if (e.key === '1' || e.code === 'Digit1') {
         e.preventDefault();
         handleSelectChoice('A');
@@ -307,7 +333,130 @@ export function AbstractionCanvas({
   }, [disabled, showAnswer, mode, activeVal, selected4AfcIdx, handleSelectChoice, onAnswer]);
 
   // =========================================================================
-  // 视图 A：Top-Down 2AFC 逆向匹配系列
+  // 视图 A-1：TD_PALETTE_2AFC (4AFC) 调性基底归位视图
+  // =========================================================================
+  if (mode === 'TD_PALETTE_2AFC') {
+    const promptHex = question.promptDominantColor
+      ? hsvToHex(...question.promptDominantColor)
+      : '#6366F1';
+    const targetIdx = question.correctPatternIndex ?? 0;
+    const chosenIdx = userAnswer?.userChoiceIndex ?? selectedTdPatternIdx;
+    const patternCanvasRefs = [
+      patternCanvasRef0,
+      patternCanvasRef1,
+      patternCanvasRef2,
+      patternCanvasRef3,
+    ];
+
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+        <div className="text-center space-y-1">
+          <div className="text-base font-black text-slate-800 flex items-center justify-center gap-2">
+            <Sparkles className="w-5 h-5 text-indigo-600" />
+            观察上方基准主调色，在下方 4 个复杂画面中选出以此为基调的拼贴图案
+          </div>
+          <p className="text-xs text-slate-400">
+            按快捷键 <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">1</kbd> ~ <kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-700">4</kbd> 或直接点击卡片
+          </p>
+        </div>
+
+        {/* 顶部单色基准展示 */}
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 shadow-inner">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            提炼出的基准主调色 (Prompt)
+          </span>
+          <div
+            className="w-20 h-20 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"
+            style={{ backgroundColor: promptHex }}
+          />
+        </div>
+
+        {/* 4 候选拼贴图案网格 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+          {question.palettePatternOptions?.map((_pat, idx) => {
+            const isSelected = chosenIdx === idx;
+            const isTarget = idx === targetIdx;
+            const keyLabel = (idx + 1).toString();
+
+            let border = 'border-slate-200/90 hover:border-indigo-300 hover:shadow-md bg-slate-50';
+            if (showAnswer) {
+              if (isTarget) {
+                border = 'bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
+              } else if (isSelected) {
+                border = 'bg-rose-50/50 border-rose-400 shadow-sm';
+              } else {
+                border = 'bg-slate-50/60 border-slate-200 opacity-50';
+              }
+            } else if (isSelected) {
+              border = 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md';
+            }
+
+            return (
+              <button
+                key={`td-pattern-card-${idx}`}
+                type="button"
+                disabled={disabled || showAnswer}
+                onClick={() => {
+                  setSelectedTdPatternIdx(idx);
+                  onAnswer(idx);
+                }}
+                className={`group flex flex-col items-center gap-2.5 p-3 rounded-2xl border transition-all duration-200 text-left active:scale-[0.98] ${border}`}
+              >
+                <div className="flex items-center justify-between w-full px-1">
+                  <span className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+                    <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                      {keyLabel}
+                    </span>
+                    画面 {keyLabel}
+                  </span>
+                  {showAnswer && isTarget && (
+                    <Check className="w-4 h-4 text-emerald-600 font-extrabold" />
+                  )}
+                </div>
+
+                <div className="w-full aspect-square bg-white p-1 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
+                  <canvas
+                    ref={patternCanvasRefs[idx]}
+                    width={ABSTRACTION_2AFC_SIZE}
+                    height={ABSTRACTION_2AFC_SIZE}
+                    className="w-full aspect-square rounded-lg shadow-sm"
+                  />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 答案揭晓诊断条 */}
+        {showAnswer && (
+          <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+            <div className="flex items-center gap-2">
+              <div
+                className={`p-1.5 rounded-xl ${
+                  userAnswer?.isHit
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+              </div>
+              <div className="text-xs">
+                <span className="font-bold text-slate-800">
+                  {userAnswer?.isHit ? '调性基底寻源匹配完全正确！' : '色彩调性感知出现偏差'}
+                </span>
+                <span className="text-slate-400 ml-2">
+                  (正确匹配为: 画面 {targetIdx + 1})
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 视图 A-2：Top-Down 2AFC 逆向匹配系列 (GESTURE / HULL / NOTAN)
   // =========================================================================
   if (mode.startsWith('TD_') || mode === 'POLYGON_DECIMATION') {
     const isPoly = mode === 'POLYGON_DECIMATION';
@@ -316,8 +465,7 @@ export function AbstractionCanvas({
       : userAnswer?.correctChoice === 'A' ||
         question.correctParticleChoice === 'A' ||
         question.correctHullChoice === 'A' ||
-        question.correctNotanChoice === 'A' ||
-        question.correctPatternChoice === 'A';
+        question.correctNotanChoice === 'A';
     const isTargetB = !isTargetA;
 
     return (
@@ -348,24 +496,12 @@ export function AbstractionCanvas({
             <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
               提炼出的概括基准 (Prompt)
             </span>
-            {mode === 'TD_PALETTE_2AFC' && question.promptPaletteBand ? (
-              <div className="flex items-center gap-2 p-2 bg-white rounded-xl border border-slate-200 shadow-sm">
-                {question.promptPaletteBand.map((c, i) => (
-                  <div
-                    key={`prompt-band-${i}-${c.join('-')}`}
-                    className="w-12 h-12 rounded-lg border border-slate-300 shadow-inner"
-                    style={{ backgroundColor: hsvToHex(...c) }}
-                  />
-                ))}
-              </div>
-            ) : (
-              <canvas
-                ref={canvasThumbRef}
-                width={ABSTRACTION_THUMB_SIZE}
-                height={ABSTRACTION_THUMB_SIZE}
-                className="w-28 h-28 rounded-xl border border-slate-200 shadow-sm"
-              />
-            )}
+            <canvas
+              ref={canvasThumbRef}
+              width={ABSTRACTION_THUMB_SIZE}
+              height={ABSTRACTION_THUMB_SIZE}
+              className="w-28 h-28 rounded-xl border border-slate-200 shadow-sm"
+            />
           </div>
         )}
 
