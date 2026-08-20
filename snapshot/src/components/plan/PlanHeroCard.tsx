@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  Check,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -9,6 +10,7 @@ import {
   Sparkles,
   Zap,
 } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { getCardById } from '../../config/cards';
 import type { TrainingPlan } from '../../types/plan';
 
@@ -27,12 +29,40 @@ export function PlanHeroCard({
   onOpenEditor,
   onSelectPlan,
 }: PlanHeroCardProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
   const hasItems = plan.items && plan.items.length > 0;
   const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
   // 仅列出收藏的计划供主页一键快速切换
   const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
+
+  // 点击外部收起下拉菜单与 Escape 键监听
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
 
   if (!hasItems) {
     return (
@@ -67,7 +97,7 @@ export function PlanHeroCard({
   }
 
   return (
-    <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative overflow-hidden">
+    <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
       {/* 顶部标题与快速切换入口 */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -77,19 +107,73 @@ export function PlanHeroCard({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               {favoritePlans.length > 1 && onSelectPlan ? (
-                <div className="relative inline-flex items-center">
-                  <select
-                    value={plan.id}
-                    onChange={(e) => onSelectPlan((e.target as HTMLSelectElement).value)}
-                    className="text-lg font-black text-slate-900 tracking-tight bg-transparent pr-6 py-0.5 cursor-pointer appearance-none focus:outline-none hover:text-indigo-600 transition-colors"
+                <div ref={dropdownRef} className="relative inline-block text-left">
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="group/btn inline-flex items-center gap-1.5 text-lg font-black text-slate-900 tracking-tight hover:text-indigo-600 transition-colors focus:outline-none"
                   >
-                    {favoritePlans.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-0 pointer-events-none" />
+                    <span>{plan.name}</span>
+                    <div
+                      className={`p-1 rounded-lg bg-slate-100 group-hover/btn:bg-indigo-50 text-slate-500 group-hover/btn:text-indigo-600 transition-all duration-200 ${
+                        isDropdownOpen ? 'rotate-180 bg-indigo-50 text-indigo-600' : ''
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </button>
+
+                  {/* 风格统一的自定义下拉浮层 */}
+                  {isDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
+                        <span>快速切换训练流</span>
+                        <span className="font-mono">{favoritePlans.length} 个可用</span>
+                      </div>
+
+                      <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
+                        {favoritePlans.map((p) => {
+                          const isSelected = p.id === plan.id;
+                          const stageCount = (p.items || []).length;
+                          const pTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
+
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                onSelectPlan(p.id);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2.5 ${
+                                isSelected
+                                  ? 'bg-indigo-50/80 text-indigo-900 font-bold border border-indigo-200/80 shadow-sm'
+                                  : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold truncate">{p.name}</span>
+                                  {p.isBuiltin && (
+                                    <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
+                                      官方
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  {stageCount} 个阶段 • {pTrials} 题
+                                </div>
+                              </div>
+
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>

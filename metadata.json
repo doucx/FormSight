@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Biome 检查中的 Hook 冗余依赖与非语义化按钮元素错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787232099.5590923, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将训练计划快速切换器重构为无溢出截断的现代自定义下拉菜单", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787232412.8089545, "duration_ms": 0}}
