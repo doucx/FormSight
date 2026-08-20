@@ -43,7 +43,7 @@ describe('Unified Database Layer Tests', () => {
 
       const profile = await getProfile('star', 'single');
       expect(profile).not.toBeNull();
-      expect(profile?.totalTrainedCards).toBe(1);
+      expect(profile?.totalTrials).toBe(1);
       expect(profile?.totalHits).toBe(1);
       expect(profile?.currentLevel).toBe(5);
       expect(profile?.bestLevel).toBe(5);

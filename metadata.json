@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构底层存储体系并建立自动平滑迁移机制", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195269.6070547, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 更新单元测试以适配重命名后的 totalTrials 画像字段", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787195331.1443615, "duration_ms": 0}}
