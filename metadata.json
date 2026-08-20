@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] perf(canvas): 优化海量数据下图表自适应分级渲染与密度分箱", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787206642.5551598, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M drawHeatmap.ts, M drawHueBiasChart.ts, M drawTrendChart.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787207402.623323, "duration_ms": 0}}
