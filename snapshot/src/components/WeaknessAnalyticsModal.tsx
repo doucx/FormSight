@@ -1,5 +1,5 @@
 import { BarChart2, Info, X } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { ANALYTICS_PLUGINS } from '../config/analyticsPlugins';
 import type { TrainingDomain, UnifiedTrialRecord } from '../utils/db';
 
@@ -16,9 +16,9 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const handleUpdateContext = (patch: Record<string, unknown>) => {
+  const handleUpdateContext = useCallback((patch: Record<string, unknown>) => {
     setContextState((prev) => ({ ...prev, ...patch }));
-  };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -45,7 +45,7 @@ export function WeaknessAnalyticsModal({ domain, onClose }: WeaknessAnalyticsMod
       state: contextState,
       setState: handleUpdateContext,
     });
-  }, [plugin, loading, records, contextState]);
+  }, [plugin, loading, records, contextState, handleUpdateContext]);
 
   const stats = plugin.getOverallStats
     ? plugin.getOverallStats(records)

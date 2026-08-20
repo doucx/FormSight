@@ -6,10 +6,10 @@ import { saveSession, saveTrialRecord } from '../utils/db';
 import type { BaseModuleSettings } from '../utils/settings';
 
 interface GenericTrainingViewProps<
-  TQuestion,
-  THitResult,
-  TAnswerVal,
-  TSettings extends BaseModuleSettings,
+  TQuestion = any,
+  THitResult = any,
+  TAnswerVal = any,
+  TSettings extends BaseModuleSettings = any,
 > {
   card: CardDefinition;
   plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
@@ -20,10 +20,10 @@ interface GenericTrainingViewProps<
 }
 
 export function GenericTrainingView<
-  TQuestion,
-  THitResult,
-  TAnswerVal,
-  TSettings extends BaseModuleSettings,
+  TQuestion = any,
+  THitResult = any,
+  TAnswerVal = any,
+  TSettings extends BaseModuleSettings = any,
 >({
   card,
   plugin,

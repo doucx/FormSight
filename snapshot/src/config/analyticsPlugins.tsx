@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  CheckCircle,
   Columns,
   Compass,
   Crosshair,
@@ -149,7 +148,7 @@ export const starAnalyticsPlugin: WeaknessAnalyticsPlugin = {
     const avgDy = totalCount > 0 ? Math.round((sumDy / totalCount) * 10) / 10 : 0;
 
     if (starTab === 'heatmap') {
-      renderHeatmapCanvas(canvas, records as any, avgDx, avgDy, totalCount);
+      renderHeatmapCanvas(canvas, records, avgDx, avgDy, totalCount);
     } else {
       const sectorBuckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0, sumError: 0 }));
       for (const r of records) {
