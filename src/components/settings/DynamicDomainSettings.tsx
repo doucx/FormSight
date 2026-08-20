@@ -60,6 +60,8 @@ export const COLOR_SECTORS = [
 ];
 
 export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]> = {
+  abstraction: [],
+  concretization: [],
   star: [
     {
       type: 'buttonGroup',

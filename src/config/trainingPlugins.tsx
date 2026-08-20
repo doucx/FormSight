@@ -1,9 +1,17 @@
 import type { ComponentChildren } from 'preact';
+import { AbstractionCanvas } from '../components/AbstractionCanvas';
 import { ColorCanvas } from '../components/ColorCanvas';
 import { NegativeSpaceCanvas } from '../components/NegativeSpaceCanvas';
 import { RelativeColorCanvas } from '../components/RelativeColorCanvas';
 import { StarCanvas } from '../components/StarCanvas';
 import type { HitResult, Point, QuestionData, TrainingMode } from '../types';
+import {
+  type AbstractionHitResult,
+  type AbstractionMode,
+  type AbstractionQuestionData,
+  checkAbstractionHit,
+  generateAbstractionQuestion,
+} from '../utils/abstractionUtils';
 import {
   type ColorHitResult,
   type ColorMode,
@@ -28,6 +36,7 @@ import {
   generateRelativeColorQuestion,
 } from '../utils/relativeColorUtils';
 import type {
+  BaseModuleSettings,
   ColorSenseSettings,
   NegativeSpaceSettings,
   RelativeColorSettings,
@@ -304,13 +313,60 @@ export const negativeSpacePlugin: TrainingPlugin<
   ),
 };
 
+// 5. 视知觉概括插件
+export const abstractionPlugin: TrainingPlugin<
+  AbstractionQuestionData,
+  AbstractionHitResult,
+  number | 'A' | 'B',
+  BaseModuleSettings
+> = {
+  domain: 'abstraction',
+  title: '视知觉概括',
+  getModeBadge: (mode) => {
+    const map: Record<string, string> = {
+      GESTURE_AXIS: '动态势线提取',
+      POLYGON_DECIMATION: '折线低模大形',
+      NOTAN_THRESHOLD: '黑白素描归组',
+      PALETTE_CLUSTERING: '主调色群提炼',
+      TD_GESTURE_2AFC: '动态势线寻源',
+      TD_HULL_2AFC: '几何大模寻形',
+      TD_NOTAN_2AFC: '黑白素描骨架',
+      TD_PALETTE_2AFC: '调性基底归位',
+    };
+    return map[mode] || mode;
+  },
+  generateQuestion: (mode, level) => generateAbstractionQuestion(mode as AbstractionMode, level),
+  evaluateAnswer: (userVal, q) => checkAbstractionHit(userVal, q),
+  isHit: (hitResult) => hitResult.isHit,
+  getQuestionLevel: (q) => q.difficultyLevel,
+  extractRecordDetails: (_q, hitResult, userVal, mode) => ({
+    mode,
+    userAnswer: userVal,
+    errorValue: hitResult.errorValue,
+  }),
+  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+    <AbstractionCanvas
+      question={question}
+      showAnswer={showAnswer}
+      userAnswer={userAnswer}
+      onAnswer={onAnswer}
+      disabled={disabled}
+      hitMargin={(settings.sliderHitMargin as number) ?? 12}
+      showToleranceBand={(settings.showToleranceBand as boolean) ?? true}
+    />
+  ),
+};
+
 export type AnyTrainingPlugin =
   | typeof starPlugin
   | typeof colorPlugin
   | typeof relativeColorPlugin
-  | typeof negativeSpacePlugin;
+  | typeof negativeSpacePlugin
+  | typeof abstractionPlugin;
 
 export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
+  abstraction: abstractionPlugin,
+  concretization: abstractionPlugin,
   star: starPlugin,
   color: colorPlugin,
   relative_color: relativeColorPlugin,
@@ -333,6 +389,14 @@ export const CARD_PLUGINS: Record<string, AnyTrainingPlugin> = {
   neg_area_comparison_2afc: negativeSpacePlugin,
   neg_vertex_fitting: negativeSpacePlugin,
   neg_shape_match_2afc: negativeSpacePlugin,
+  abs_gesture_axis: abstractionPlugin,
+  abs_polygon_decimation: abstractionPlugin,
+  abs_notan_threshold: abstractionPlugin,
+  abs_palette_clustering: abstractionPlugin,
+  abs_td_gesture_2afc: abstractionPlugin,
+  abs_td_hull_2afc: abstractionPlugin,
+  abs_td_notan_2afc: abstractionPlugin,
+  abs_td_palette_2afc: abstractionPlugin,
 };
 
 export function getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {

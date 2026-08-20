@@ -76,6 +76,124 @@ const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
 
 export const ALL_CARDS: CardDefinition[] = [
   // ==========================================
+  // 0. 视知觉概括系列 (Visual Abstraction)
+  // ==========================================
+  {
+    id: 'abs_gesture_axis',
+    legacyDomain: 'abstraction',
+    legacyMode: 'GESTURE_AXIS',
+    title: '动态势线提取',
+    desc: '从离散散点流向中提取第一主成分 PCA 势线角度，建立画面主导动势感知力。',
+    icon: RotateCw,
+    tags: {
+      target: ['abstraction'],
+      skill: ['abstraction', 'gesture_flow'],
+      interaction: ['continuous_slider'],
+    },
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
+  },
+  {
+    id: 'abs_polygon_decimation',
+    legacyDomain: 'abstraction',
+    legacyMode: 'POLYGON_DECIMATION',
+    title: '折线低模大形',
+    desc: '从细碎繁复轮廓中识别 RDP 算法精简出的最优关键折线大形框架。',
+    icon: Maximize2,
+    tags: {
+      target: ['abstraction'],
+      skill: ['abstraction', 'proportion'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'abs_notan_threshold',
+    legacyDomain: 'abstraction',
+    legacyMode: 'NOTAN_THRESHOLD',
+    title: '黑白素描归组',
+    desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
+    icon: Sun,
+    tags: {
+      target: ['abstraction'],
+      skill: ['abstraction', 'notan_grouping'],
+      interaction: ['continuous_slider'],
+    },
+    hasWeaknessAnalytics: false,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
+  },
+  {
+    id: 'abs_palette_clustering',
+    legacyDomain: 'abstraction',
+    legacyMode: 'PALETTE_CLUSTERING',
+    title: '主调色群提炼',
+    desc: '穿透多色拼贴马赛克的混色噪点，四选一提炼出面积加权下的加权质心主色。',
+    icon: Palette,
+    tags: {
+      target: ['abstraction'],
+      skill: ['abstraction', 'color_fidelity'],
+      interaction: ['choice_nafc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'abs_td_gesture_2afc',
+    legacyDomain: 'concretization',
+    legacyMode: 'TD_GESTURE_2AFC',
+    title: '动态势线寻源',
+    desc: '给定抽象势线骨架，在两幅复杂点阵中透视判别谁长在该动势中 (2AFC)。',
+    icon: Shuffle,
+    tags: {
+      target: ['concretization'],
+      skill: ['abstraction', 'gesture_flow'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'abs_td_hull_2afc',
+    legacyDomain: 'concretization',
+    legacyMode: 'TD_HULL_2AFC',
+    title: '几何大模寻形',
+    desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
+    icon: Columns,
+    tags: {
+      target: ['concretization'],
+      skill: ['abstraction', 'proportion'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'abs_td_notan_2afc',
+    legacyDomain: 'concretization',
+    legacyMode: 'TD_NOTAN_2AFC',
+    title: '黑白素描骨架',
+    desc: '给定二值 Notan 剪影，透视辨识哪幅丰富灰阶素描拥有该黑白大结构 (2AFC)。',
+    icon: Droplet,
+    tags: {
+      target: ['concretization'],
+      skill: ['abstraction', 'notan_grouping'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'abs_td_palette_2afc',
+    legacyDomain: 'concretization',
+    legacyMode: 'TD_PALETTE_2AFC',
+    title: '调性基底归位',
+    desc: '给定 3 阶基调色谱条，在两张复杂混色拼贴图案中二选一归位 (2AFC)。',
+    icon: Sparkles,
+    tags: {
+      target: ['concretization'],
+      skill: ['abstraction', 'color_fidelity'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+
+  // ==========================================
   // 1. 寻星练习系列 (Star-Hopping)
   // ==========================================
   {
