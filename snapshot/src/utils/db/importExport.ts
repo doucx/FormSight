@@ -8,7 +8,14 @@ import {
   saveTrainingPlan,
 } from '../planStorage';
 import { DEFAULT_SETTINGS, type UserSettings, loadSettings, saveSettings } from '../settings';
-import { DB_VERSION, type TrainingDomain, type UnifiedProfileData, type UnifiedSessionData, type UnifiedTrialRecord, getDB } from './schema';
+import {
+  DB_VERSION,
+  type TrainingDomain,
+  type UnifiedProfileData,
+  type UnifiedSessionData,
+  type UnifiedTrialRecord,
+  getDB,
+} from './schema';
 
 export interface FormSightExportBundle {
   appName: string;

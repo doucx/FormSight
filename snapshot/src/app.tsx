@@ -9,11 +9,7 @@ import { PlanEditorModal } from './components/plan/PlanEditorModal';
 import { registry } from './core/registry';
 import { useHashRoute } from './hooks/useHashRoute';
 import type { TrainingPlan } from './types/plan';
-import {
-  type TrainingDomain,
-  type UnifiedProfileData,
-  repository,
-} from './utils/db/index';
+import { type TrainingDomain, type UnifiedProfileData, repository } from './utils/db/index';
 import {
   loadPlanStorageState,
   loadTrainingPlan,

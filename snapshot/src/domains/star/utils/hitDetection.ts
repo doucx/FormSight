@@ -3,10 +3,7 @@ import {
   getDynamicDotRadius,
   getGridMinSpacing,
 } from '../../../core/canvas/drawPointGrid';
-import {
-  evaluatePointGridHit,
-  findNearestPointInGrid,
-} from '../../../core/geometry/pointGrid';
+import { evaluatePointGridHit, findNearestPointInGrid } from '../../../core/geometry/pointGrid';
 import type { HitResult, Point } from '../../../types';
 
 export { getGridMinSpacing, getDynamicDotRadius, getDynamicCrosshairMetrics };

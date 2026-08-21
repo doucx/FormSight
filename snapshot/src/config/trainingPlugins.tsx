@@ -47,27 +47,57 @@ export interface TrainingPlugin<
 }
 
 // 判别联合类型 (Discriminated Unions) 描述全系统受支持的垂直领域插件
-export type StarPlugin = TrainingPlugin<unknown, unknown, { clickPoint: Point; hitResult: unknown }, StarSettings> & {
+export type StarPlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  { clickPoint: Point; hitResult: unknown },
+  StarSettings
+> & {
   domain: 'star';
 };
 
-export type ColorPlugin = TrainingPlugin<unknown, unknown, number | [number, number, number], ColorSenseSettings> & {
+export type ColorPlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  number | [number, number, number],
+  ColorSenseSettings
+> & {
   domain: 'color';
 };
 
-export type RelativeColorPlugin = TrainingPlugin<unknown, unknown, [number, number, number] | 'A' | 'B', RelativeColorSettings> & {
+export type RelativeColorPlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  [number, number, number] | 'A' | 'B',
+  RelativeColorSettings
+> & {
   domain: 'relative_color';
 };
 
-export type NegativeSpacePlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B' | Point, NegativeSpaceSettings> & {
+export type NegativeSpacePlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  number | 'A' | 'B' | Point,
+  NegativeSpaceSettings
+> & {
   domain: 'negative_space';
 };
 
-export type AbstractionPlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B', AbstractionSettings> & {
+export type AbstractionPlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  number | 'A' | 'B',
+  AbstractionSettings
+> & {
   domain: 'abstraction' | 'concretization';
 };
 
-export type AnglePlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B', BaseModuleSettings> & {
+export type AnglePlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  number | 'A' | 'B',
+  BaseModuleSettings
+> & {
   domain: 'angle';
 };
 

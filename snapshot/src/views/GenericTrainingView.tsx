@@ -133,9 +133,13 @@ export function GenericTrainingView<
           settings: {
             ...settings,
             sliderHitMargin:
-              globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number | undefined) ?? 12,
+              globalSettings?.sliderHitMargin ??
+              (settings.sliderHitMargin as number | undefined) ??
+              12,
             showCanvasHints:
-              globalSettings?.showCanvasHints ?? (settings.showCanvasHints as boolean | undefined) ?? true,
+              globalSettings?.showCanvasHints ??
+              (settings.showCanvasHints as boolean | undefined) ??
+              true,
           },
         })
       }
