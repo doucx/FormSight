@@ -1,4 +1,4 @@
-import { ALL_CARDS } from '../config/cards';
+import { registry } from '../core/registry';
 
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
@@ -68,15 +68,16 @@ export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
   blockSize: 10,
 };
 
-// 动态根据卡片定义构建初始默认配置
+// 动态根据注册表中的卡片定义构建初始默认配置
 function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
   const cards: Record<string, BaseModuleSettings> = {};
+  const allCards = registry.getAllCards();
 
-  for (const card of ALL_CARDS) {
+  for (const card of allCards) {
     const cardConfig: BaseModuleSettings = { ...DEFAULT_BASE_SETTINGS };
 
-    // 如果卡片包含滑块交互或相关设置 schema，配置默认容错与外延感应
-    if (card.tags.interaction.includes('continuous_slider')) {
+    // 如果卡片包含滑块交互，配置默认容错与外延感应
+    if (card.tags?.interaction?.includes('continuous_slider')) {
       cardConfig.sliderHitMargin = 12;
       cardConfig.showToleranceBand = true;
     }
