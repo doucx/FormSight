@@ -22,6 +22,7 @@ function parseHash(hash: string): RouteLocation {
     const domain = segments[1] as TrainingDomain;
     if (
       [
+        'angle',
         'abstraction',
         'concretization',
         'star',

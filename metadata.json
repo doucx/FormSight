@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313816.0494637, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(angle): 在主页、路由、全局统计与动态设置中接入角度感知领域", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313888.4176166, "duration_ms": 0}}

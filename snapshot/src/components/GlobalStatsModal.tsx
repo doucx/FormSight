@@ -26,6 +26,7 @@ interface UnifiedRecord {
 }
 
 const ALL_DOMAINS: TrainingDomain[] = [
+  'angle',
   'abstraction',
   'concretization',
   'star',
