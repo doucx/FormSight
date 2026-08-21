@@ -1,4 +1,3 @@
-import type { ComponentChildren } from 'preact';
 import type { CardAnalyticsPlugin } from '../config/analyticsPlugins';
 import type { DomainMeta } from '../config/domains';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
@@ -18,3 +17,8 @@ export interface DomainManifest {
   analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
   defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
 }
+
+/**
+ * 向后兼容的 DomainPlugin 别名
+ */
+export type DomainPlugin = DomainManifest;
