@@ -28,18 +28,11 @@ import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 import { PlanTrainingView } from './views/PlanTrainingView';
 
-const ALL_DOMAINS: TrainingDomain[] = [
-  'angle',
-  'abstraction',
-  'concretization',
-  'star',
-  'color',
-  'relative_color',
-  'negative_space',
-];
+import { registry } from './config/registry';
 
 export function App() {
   const { route, navigate } = useHashRoute();
+  const allDomains = registry.getAllDomains();
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
@@ -53,14 +46,10 @@ export function App() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
-  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
-    angle: 0,
-    abstraction: 0,
-    concretization: 0,
-    star: 0,
-    color: 0,
-    relative_color: 0,
-    negative_space: 0,
+  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>(() => {
+    const init: Record<string, number> = {};
+    for (const d of allDomains) init[d] = 0;
+    return init as Record<TrainingDomain, number>;
   });
 
   const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
@@ -77,12 +66,13 @@ export function App() {
   }, []);
 
   const refreshProfiles = useCallback(async () => {
+    const domains = registry.getAllDomains();
     const timesEntries = await Promise.all(
-      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
+      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
     );
     const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
 
-    const allProfilesList = await Promise.all(ALL_DOMAINS.map((d) => getProfilesByDomain(d)));
+    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
     const pMap: Record<string, UnifiedProfileData> = {};
     for (const list of allProfilesList) {
       for (const p of list) {

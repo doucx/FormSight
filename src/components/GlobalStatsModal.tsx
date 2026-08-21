@@ -25,15 +25,7 @@ interface UnifiedRecord {
   subMode: string;
 }
 
-const ALL_DOMAINS: TrainingDomain[] = [
-  'angle',
-  'abstraction',
-  'concretization',
-  'star',
-  'color',
-  'relative_color',
-  'negative_space',
-];
+import { registry } from '../config/registry';
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);
@@ -46,8 +38,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
+      const domains = registry.getAllDomains();
       const results = await Promise.all(
-        ALL_DOMAINS.map(async (domain) => {
+        domains.map(async (domain) => {
           const domainRecords = await getTrialRecords(domain);
           return domainRecords.map((r) => ({
             timestamp: r.timestamp,

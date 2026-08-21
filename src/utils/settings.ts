@@ -1,3 +1,5 @@
+import { ALL_CARDS } from '../config/cards';
+
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
 export type TargetingMode = 'off' | 'manual';
@@ -66,6 +68,37 @@ export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
   blockSize: 10,
 };
 
+// 动态根据卡片定义构建初始默认配置
+function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
+  const cards: Record<string, BaseModuleSettings> = {};
+
+  for (const card of ALL_CARDS) {
+    const cardConfig: BaseModuleSettings = { ...DEFAULT_BASE_SETTINGS };
+
+    // 如果卡片包含滑块交互或相关设置 schema，配置默认容错与外延感应
+    if (card.tags.interaction.includes('continuous_slider')) {
+      cardConfig.sliderHitMargin = 12;
+      cardConfig.showToleranceBand = true;
+    }
+
+    if (card.domain === 'star') {
+      cardConfig.gridSize = 3;
+      cardConfig.targetingMode = 'off';
+      cardConfig.manualTargetSectors = [];
+    } else if (card.id === 'color_hue') {
+      cardConfig.enableHoverColorPreview = true;
+      cardConfig.targetingMode = 'off';
+      cardConfig.manualTargetSectors = [];
+    } else if (card.id === 'color_all') {
+      cardConfig.enableHoverColorPreview = true;
+    }
+
+    cards[card.id] = cardConfig;
+  }
+
+  return cards;
+}
+
 export const DEFAULT_SETTINGS: UserSettings = {
   global: {
     idleTimeout: 60,
@@ -74,73 +107,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     showCanvasHints: true,
     showExperimentalCards: false,
   },
-  cards: {
-    angle_estimation: {
-      ...DEFAULT_BASE_SETTINGS,
-      sliderHitMargin: 12,
-      showToleranceBand: true,
-    },
-    angle_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
-    angle_parallel_2afc: { ...DEFAULT_BASE_SETTINGS },
-    star_single: {
-      ...DEFAULT_BASE_SETTINGS,
-      gridSize: 3,
-      targetingMode: 'off',
-      manualTargetSectors: [],
-    },
-    star_double_h: {
-      ...DEFAULT_BASE_SETTINGS,
-      gridSize: 3,
-      targetingMode: 'off',
-      manualTargetSectors: [],
-    },
-    star_double_r: {
-      ...DEFAULT_BASE_SETTINGS,
-      gridSize: 3,
-      targetingMode: 'off',
-      manualTargetSectors: [],
-    },
-    color_hue: {
-      ...DEFAULT_BASE_SETTINGS,
-      sliderHitMargin: 12,
-      showToleranceBand: true,
-      enableHoverColorPreview: true,
-      targetingMode: 'off',
-      manualTargetSectors: [],
-    },
-    color_val: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    color_sat: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    color_all: {
-      ...DEFAULT_BASE_SETTINGS,
-      sliderHitMargin: 12,
-      showToleranceBand: true,
-      enableHoverColorPreview: true,
-    },
-    rel_vector_shift: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    rel_lightness_induction: {
-      ...DEFAULT_BASE_SETTINGS,
-      sliderHitMargin: 12,
-      showToleranceBand: true,
-    },
-    rel_hue_induction: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    rel_decontextual_2afc: { ...DEFAULT_BASE_SETTINGS },
-    neg_ratio_estimation: {
-      ...DEFAULT_BASE_SETTINGS,
-      sliderHitMargin: 12,
-      showToleranceBand: true,
-    },
-    neg_area_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
-    neg_vertex_fitting: { ...DEFAULT_BASE_SETTINGS },
-    neg_shape_match_2afc: { ...DEFAULT_BASE_SETTINGS },
-    abs_gesture_axis: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    abs_polygon_decimation: { ...DEFAULT_BASE_SETTINGS },
-    abs_notan_threshold: { ...DEFAULT_BASE_SETTINGS, sliderHitMargin: 12, showToleranceBand: true },
-    abs_palette_clustering: { ...DEFAULT_BASE_SETTINGS },
-    abs_td_gesture_2afc: { ...DEFAULT_BASE_SETTINGS },
-    abs_td_hull_2afc: { ...DEFAULT_BASE_SETTINGS },
-    abs_td_notan_2afc: { ...DEFAULT_BASE_SETTINGS },
-    abs_td_palette_2afc: { ...DEFAULT_BASE_SETTINGS },
-  },
+  cards: buildDefaultCardSettings(),
 };
 
 export function loadSettings(): UserSettings {
@@ -151,7 +118,8 @@ export function loadSettings(): UserSettings {
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return DEFAULT_SETTINGS;
 
-    const cards: Record<string, BaseModuleSettings> = { ...DEFAULT_SETTINGS.cards };
+    const defaultCards = buildDefaultCardSettings();
+    const cards: Record<string, BaseModuleSettings> = { ...defaultCards };
 
     if (parsed.cards && typeof parsed.cards === 'object') {
       for (const [cardId, val] of Object.entries(parsed.cards)) {
