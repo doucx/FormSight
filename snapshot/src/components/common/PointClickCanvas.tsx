@@ -34,10 +34,6 @@ export function PointClickCanvas({
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
   useEffect(() => {
-    setHoverPoint(null);
-  }, []);
-
-  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
