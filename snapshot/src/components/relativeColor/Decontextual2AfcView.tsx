@@ -16,7 +16,6 @@ interface Decontextual2AfcViewProps {
 export function Decontextual2AfcView({
   question,
   showAnswer,
-  userAnswer,
   selectedChoice,
   onSelectChoice,
   disabled = false,

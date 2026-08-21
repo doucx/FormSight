@@ -19,7 +19,6 @@ interface AreaComparison2AfcViewProps {
 export function AreaComparison2AfcView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

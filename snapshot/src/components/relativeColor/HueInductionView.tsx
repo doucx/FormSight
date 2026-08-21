@@ -15,7 +15,6 @@ interface HueInductionViewProps {
 export function HueInductionView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
