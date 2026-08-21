@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
-import { getCardById } from '../../../config/cards';
+import { registry } from '../../../core/registry';
 import type { TrainingPlan } from '../../../types/plan';
 
 interface PlanStageListProps {
@@ -73,7 +73,7 @@ export function PlanStageList({
       ) : (
         <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
           {currentPlan.items.map((item, idx) => {
-            const card = getCardById(item.cardId);
+            const card = registry.getCardById(item.cardId);
             if (!card) return null;
             const Icon = card.icon;
 

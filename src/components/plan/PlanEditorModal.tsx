@@ -1,6 +1,6 @@
 import { Check, Copy, Download, Edit3, Layers, Sliders, Sparkles, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
-import { ALL_CARDS, getCardById } from '../../config/cards';
+import { registry } from '../../core/registry';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
 import {
   clonePlan,
@@ -208,7 +208,7 @@ export function PlanEditorModal({
     const sanitizedPlan: TrainingPlan = {
       ...currentPlan,
       name: planNameInput.trim() || currentPlan.name,
-      items: currentPlan.items.filter((item) => Boolean(getCardById(item.cardId))),
+      items: currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId))),
       updatedAt: Date.now(),
     };
 
@@ -226,11 +226,13 @@ export function PlanEditorModal({
     onClose();
   };
 
-  const validPlanItems = currentPlan.items.filter((item) => Boolean(getCardById(item.cardId)));
+  const validPlanItems = currentPlan.items.filter((item) =>
+    Boolean(registry.getCardById(item.cardId)),
+  );
   const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
-  const availableCards = ALL_CARDS.filter((card) => {
+  const availableCards = registry.getAllCards().filter((card) => {
     if (selectedDomainFilter === 'all') return true;
     return card.domain === selectedDomainFilter;
   });
@@ -238,7 +240,6 @@ export function PlanEditorModal({
   return (
     <ModalShell title="定制日常训练流" icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-5">
-        {/* 顶部计划名称编辑与管理栏 */}
         <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -354,7 +355,6 @@ export function PlanEditorModal({
           )}
         </div>
 
-        {/* 计划库抽屉管理 */}
         {showPlanManager && (
           <PlanLibraryDrawer
             storageState={storageState}
@@ -367,7 +367,6 @@ export function PlanEditorModal({
           />
         )}
 
-        {/* 计划阶段列表 */}
         <PlanStageList
           currentPlan={currentPlan}
           totalTrials={totalTrials}
@@ -380,7 +379,6 @@ export function PlanEditorModal({
           onRemoveItem={handleRemoveItem}
         />
 
-        {/* 添加卡片选择器展开面板 */}
         <CardPickerPanel
           isAddingCard={isAddingCard}
           selectedDomainFilter={selectedDomainFilter}
@@ -390,7 +388,6 @@ export function PlanEditorModal({
           onAddItem={handleAddItem}
         />
 
-        {/* 底部保存提交 */}
         <div className="pt-2 flex gap-3">
           <button
             type="button"

@@ -6,9 +6,7 @@ import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { GenericDashboard } from './components/dashboard/GenericDashboard';
 import { PlanEditorModal } from './components/plan/PlanEditorModal';
-import { getCardById } from './config/cards';
-import { DOMAINS_CONFIG } from './config/domains';
-import { CARD_PLUGINS } from './config/trainingPlugins';
+import { registry } from './core/registry';
 import { useHashRoute } from './hooks/useHashRoute';
 import type { TrainingPlan } from './types/plan';
 import {
@@ -27,8 +25,6 @@ import { type UserSettings, getCardSettings, loadSettings } from './utils/settin
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
 import { PlanTrainingView } from './views/PlanTrainingView';
-
-import { registry } from './config/registry';
 
 export function App() {
   const { route, navigate } = useHashRoute();
@@ -99,10 +95,10 @@ export function App() {
     } else if (route.type === 'plan-train') {
       document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
     } else if (route.type === 'dashboard') {
-      const meta = DOMAINS_CONFIG[route.domain];
-      document.title = `${meta.title} (${meta.subTitle}) - FormSight`;
+      const meta = registry.getDomainMeta(route.domain);
+      document.title = `${meta?.title || '训练'} (${meta?.subTitle || ''}) - FormSight`;
     } else if (route.type === 'train') {
-      const card = getCardById(route.cardId);
+      const card = registry.getCardById(route.cardId);
       document.title = `${card?.title || '训练'} - FormSight`;
     }
   }, [route, trainingPlan.name]);
@@ -120,8 +116,12 @@ export function App() {
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
-  const activeSettingsCard = activeSettingsCardId ? getCardById(activeSettingsCardId) : null;
-  const activeAnalyticsCard = activeAnalyticsCardId ? getCardById(activeAnalyticsCardId) : null;
+  const activeSettingsCard = activeSettingsCardId
+    ? registry.getCardById(activeSettingsCardId)
+    : null;
+  const activeAnalyticsCard = activeAnalyticsCardId
+    ? registry.getCardById(activeAnalyticsCardId)
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
@@ -151,15 +151,23 @@ export function App() {
         />
       )}
 
-      {route.type === 'dashboard' && (
-        <GenericDashboard
-          meta={DOMAINS_CONFIG[route.domain]}
-          onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
-          onBackToHome={() => navigate({ type: 'home' })}
-          onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-          onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
-        />
-      )}
+      {route.type === 'dashboard' &&
+        (() => {
+          const meta = registry.getDomainMeta(route.domain);
+          if (!meta) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          return (
+            <GenericDashboard
+              meta={meta}
+              onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+              onBackToHome={() => navigate({ type: 'home' })}
+              onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+              onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
+            />
+          );
+        })()}
 
       {route.type === 'train' &&
         (() => {
@@ -170,12 +178,16 @@ export function App() {
               </div>
             );
           }
-          const activeCard = getCardById(route.cardId);
+          const activeCard = registry.getCardById(route.cardId);
           if (!activeCard) {
             navigate({ type: 'home' });
             return null;
           }
-          const plugin = CARD_PLUGINS[activeCard.id];
+          const plugin = registry.getPluginByCardId(activeCard.id);
+          if (!plugin) {
+            navigate({ type: 'home' });
+            return null;
+          }
           const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
 
           return (

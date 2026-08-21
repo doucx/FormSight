@@ -11,7 +11,7 @@ import {
   Zap,
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { getCardById } from '../../config/cards';
+import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 
 interface PlanHeroCardProps {
@@ -36,10 +36,8 @@ export function PlanHeroCard({
   const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
-  // 仅列出收藏的计划供主页一键快速切换
   const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
 
-  // 点击外部收起下拉菜单与 Escape 键监听
   useEffect(() => {
     if (!isDropdownOpen) return;
 
@@ -98,7 +96,6 @@ export function PlanHeroCard({
 
   return (
     <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
-      {/* 顶部标题与快速切换入口 */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200">
@@ -123,7 +120,6 @@ export function PlanHeroCard({
                     </div>
                   </button>
 
-                  {/* 风格统一的自定义下拉浮层 */}
                   {isDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
                       <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
@@ -208,10 +204,9 @@ export function PlanHeroCard({
         </button>
       </div>
 
-      {/* 中部阶段流水线胶囊展示 */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {plan.items.map((item, idx) => {
-          const card = getCardById(item.cardId);
+          const card = registry.getCardById(item.cardId);
           if (!card) return null;
           const Icon = card.icon;
 
@@ -235,7 +230,6 @@ export function PlanHeroCard({
         })}
       </div>
 
-      {/* 底部一键启动大按钮 */}
       <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
         <div className="text-xs text-slate-400 font-medium">
           各阶段自适应难度与答题记录将自动同步至个人生涯档案
