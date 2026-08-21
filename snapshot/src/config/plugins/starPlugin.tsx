@@ -20,7 +20,7 @@ export const starPlugin: TrainingPlugin<
       targetSectors: settings.manualTargetSectors,
       gridSize: settings.gridSize,
     };
-    return generateQuestion(mode as any, level, opts);
+    return generateQuestion(mode as 'single' | 'double_h' | 'double_r', level, opts);
   },
   evaluateAnswer: (userVal) => userVal.hitResult,
   isHit: (hitResult) => hitResult.isHit,
