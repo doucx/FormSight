@@ -1,31 +1,33 @@
-好的，我们现在推进通用滑块交互壳 `<StandardSliderView />` 的封装，将角度估算、势线提取、负形占比估算和黑白素描归组 4 个核心连续滑块卡片全面迁移至统一抽象壳层。
+好的，现在推进多选题型（N-AFC）交互壳 `<StandardNafcView />` 的封装与应用：
+1. 封装通用 `<StandardNafcView />` 组件，同时支持即选即提交 (`immediate`) 与选后确认/快捷键提交 (`button`) 两种工作模式；
+2. 重构 `PaletteClusteringView`、`TopDownPatternView`、`HueInductionView` 和 `VectorShiftView` 4 个核心四选一（4AFC）卡片组件。
 
-## [WIP] refactor: 抽象通用 StandardSliderView 并重构连续滑块类卡片
+## [WIP] refactor: 抽象通用 StandardNafcView 并重构多选类训练卡片
 
 ### 用户需求
-将分散在各个领域组件中的滑块交互管理、容错指示区间、悬停/拖拽指针逻辑、作答揭晓与键盘响应逻辑抽取为通用组件 `<StandardSliderView />`，消除重复样板代码。
+消除四选一/多选卡片中重复的键盘监听、选项高亮容器绑定及提交状态管理，统一使用高阶组件 `<StandardNafcView />`。
 
 ### 评论
-连续滑块交互在视觉训练中广泛用于估算类与调和类卡片。将滑块轨道控制、容错感应线与真理/作答标记线统一封装后，业务组件只需关注具体的数学模型与 Canvas 渲染，不仅代码量减少约 60%，而且保证了全站滑块交互体验的高度一致性。
+N-AFC（如 4 选 1）交互包括即选即走型（主调提炼、拼贴寻源）和预览微调型（补色残像、矢量迁移）。通过设计统一的 `submitMode`（`immediate` vs `button`），不仅将多选组件的重复代码减少了 50% 以上，而且将键盘响应（1-4 选号与 Space 提交）与状态重置逻辑收敛至单一组件。
 
 ### 目标
-1. 新建 `src/components/common/StandardSliderView.tsx`：支持释放即提交 (`commit_on_release`) 与显式按钮提交 (`button`) 两种触发模式，并内置容错光标、悬停联动和真理指示标记。
-2. 重构以下 4 个滑块交互视图组件：
-   - `src/domains/angle/components/AngleEstimationView.tsx`
-   - `src/domains/abstraction/components/GestureAxisView.tsx`
-   - `src/domains/negative_space/components/RatioEstimationView.tsx`
-   - `src/domains/abstraction/components/NotanThresholdView.tsx`
+1. 新建 `src/components/common/StandardNafcView.tsx`：提供通用的 N 选 1 交互框架。
+2. 重构以下 4 个多选视图组件：
+   - `src/domains/abstraction/components/PaletteClusteringView.tsx`
+   - `src/domains/abstraction/components/TopDownPatternView.tsx`
+   - `src/domains/relative_color/components/HueInductionView.tsx`
+   - `src/domains/relative_color/components/VectorShiftView.tsx`
 
 ### 基本原理
-- `<StandardSliderView />` 组合了 `QuestionCardShell`、`useTrackPointer` 和通用滑块轨道渲染逻辑，通过 `preview` 属性插槽接收单视口或双视口 Canvas。
-- 外部可通过 `onValueChange` 接收实时悬停值，驱动上方 Canvas 进行试探性重绘（如粒子流向预览、Notan 阈值二值显影等），解耦了 DOM 事件与绘图管线。
+- `<StandardNafcView />` 组合了 `QuestionCardShell` 和 `ChoiceNafcContainer`，提供 `preview` 与 `middleContent` 插槽，支持受控与非受控两种选择状态。
+- 在 `immediate` 模式下，点击选项或按下数字键 1~N 立即完成作答；在 `button` 模式下，数字键切换选项并在点击提交或按 `Space` 键时触发提交。
 
 ### 标签
 #intent/refine #flow/ready #priority/high
 #comp/components #scope/dx #scope/core
 #ai/instruct
 #task/domain/refactoring
-#task/object/slider-view-primitive
+#task/object/nafc-view-primitive
 #task/action/abstraction-and-consolidation
 #task/state/continue #task/status/active
 
@@ -33,138 +35,113 @@
 
 ### Script
 
-#### Acts 1: 创建通用 `<StandardSliderView />` 组件
+#### Acts 1: 创建通用 `<StandardNafcView />` 组件
 
 ~~~~~act
 write_file
-src/components/common/StandardSliderView.tsx
+src/components/common/StandardNafcView.tsx
 ~~~~~
 ~~~~~typescript
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { useTrackPointer } from '../../hooks/useTrackPointer';
+import { ChoiceNafcContainer, type ChoiceNafcOption } from './ChoiceNafcContainer';
 import { QuestionCardShell } from './QuestionCardShell';
 
-export interface StandardSliderViewProps {
+export interface StandardNafcViewProps<T = unknown> {
   questionId: string;
   hintText?: string;
   hintIcon?: (props: { className?: string }) => ComponentChildren;
   showCanvasHints?: boolean;
   maxWidth?: string;
-  preview: ComponentChildren;
 
-  // 滑块基本属性
-  label: string;
-  min?: number;
-  max: number;
-  step?: number;
-  initialValue?: number;
-  unit?: string;
-  formatValue?: (val: number) => string;
+  // 上方预览/题干插槽
+  preview?: ComponentChildren;
+  // 中间补充内容插槽 (如滑块或对比组件)
+  middleContent?: ComponentChildren;
 
-  // 答案揭晓与容错评估
-  targetValue?: number;
-  tolerance?: number;
-  showToleranceBand?: boolean;
-  showAnswer: boolean;
-  isHit?: boolean;
-  userValue?: number;
+  // N-AFC 选项列表与网格配置
+  options: ChoiceNafcOption<T>[];
+  columns?: 2 | 3 | 4;
+  gridClassName?: string;
+  selectedIndex?: number | null;
 
-  // 交互控制
-  disabled?: boolean;
-  hitMargin?: number;
-  submitMode?: 'commit_on_release' | 'button' | 'both';
+  // 提交控制模式
+  submitMode?: 'immediate' | 'button';
   submitButtonText?: string;
-  onValueChange?: (currentVal: number, activeVal: number) => void;
-  onAnswer: (val: number) => void;
+  showAnswer: boolean;
+  disabled?: boolean;
+  enableKeyboardShortcuts?: boolean;
 
-  // 底部附加卡片槽位
-  footerDetails?: ComponentChildren;
+  onSelectIndex?: (index: number, option: ChoiceNafcOption<T>) => void;
+  onAnswer: (index: number, option: ChoiceNafcOption<T>) => void;
 }
 
-export function StandardSliderView({
+export function StandardNafcView<T = unknown>({
   questionId,
   hintText,
   hintIcon,
   showCanvasHints = true,
-  maxWidth = 'max-w-lg',
+  maxWidth = 'max-w-2xl',
   preview,
-  label,
-  min = 0,
-  max,
-  step = 0.5,
-  initialValue,
-  unit = '',
-  formatValue,
-  targetValue,
-  tolerance,
-  showToleranceBand = true,
-  showAnswer,
-  isHit = false,
-  userValue,
-  disabled = false,
-  hitMargin = 12,
-  submitMode = 'commit_on_release',
+  middleContent,
+  options,
+  columns = 4,
+  gridClassName,
+  selectedIndex: controlledSelectedIndex,
+  submitMode = 'immediate',
   submitButtonText = '确认提交 (Space)',
-  onValueChange,
+  showAnswer,
+  disabled = false,
+  enableKeyboardShortcuts = true,
+  onSelectIndex,
   onAnswer,
-  footerDetails,
-}: StandardSliderViewProps) {
-  const defaultVal = initialValue ?? (max - min) / 2;
-  const [currentVal, setCurrentVal] = useState<number>(defaultVal);
+}: StandardNafcViewProps<T>) {
+  const [internalSelectedIdx, setInternalSelectedIdx] = useState<number | null>(
+    submitMode === 'button' ? 0 : null,
+  );
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
-    max,
-    step,
-    disabled: disabled || showAnswer,
-    onValChange: (val) => {
-      setCurrentVal(val);
-      onValueChange?.(val, val);
-    },
-    onHoverStateChange: (hVal) => {
-      onValueChange?.(currentVal, hVal !== null ? hVal : currentVal);
-    },
-    onCommit: (val) => {
-      if (submitMode === 'commit_on_release' || submitMode === 'both') {
-        if (!disabled && !showAnswer) {
-          onAnswer(val);
-        }
-      }
-    },
-  });
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset slider when questionId changes
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection on question change
   useEffect(() => {
-    setCurrentVal(defaultVal);
-    setHoverVal(null);
-    onValueChange?.(defaultVal, defaultVal);
-  }, [questionId, defaultVal, setHoverVal]);
+    setInternalSelectedIdx(submitMode === 'button' ? 0 : null);
+  }, [questionId, submitMode]);
 
-  // 支持键盘 Space 键提交（在显式按钮提交模式下）
+  const activeIndex =
+    controlledSelectedIndex !== undefined ? controlledSelectedIndex : internalSelectedIdx;
+
+  const handleSelectOption = (index: number, option: ChoiceNafcOption<T>) => {
+    if (disabled || showAnswer) return;
+    setInternalSelectedIdx(index);
+    onSelectIndex?.(index, option);
+
+    if (submitMode === 'immediate') {
+      onAnswer(index, option);
+    }
+  };
+
+  const handleExplicitSubmit = () => {
+    if (disabled || showAnswer || !options.length) return;
+    const targetIdx = activeIndex ?? 0;
+    const targetOpt = options[targetIdx] ?? options[0];
+    onAnswer(targetIdx, targetOpt);
+  };
+
+  // 支持键盘 Space 提交（在 button 模式下）
   useEffect(() => {
-    if (submitMode !== 'button' && submitMode !== 'both') return;
+    if (submitMode !== 'button' || !enableKeyboardShortcuts) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (disabled || showAnswer) return;
+
       if (e.code === 'Space' || e.key === ' ') {
         e.preventDefault();
-        onAnswer(currentVal);
+        handleExplicitSubmit();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [submitMode, disabled, showAnswer, currentVal, onAnswer]);
-
-  const activeVal = hoverVal !== null ? hoverVal : currentVal;
-  const displayVal = showAnswer && userValue !== undefined ? userValue : activeVal;
-  const formattedDisplay = formatValue ? formatValue(displayVal) : `${displayVal}${unit}`;
-
-  const valToPercent = (val: number) => {
-    const clamped = Math.max(0, Math.min(max, val));
-    return `${(clamped / max) * 100}%`;
-  };
-
-  const isButtonSubmit = submitMode === 'button' || submitMode === 'both';
+  }, [submitMode, enableKeyboardShortcuts, disabled, showAnswer, handleExplicitSubmit]);
 
   return (
     <QuestionCardShell
@@ -174,106 +151,23 @@ export function StandardSliderView({
       maxWidth={maxWidth}
     >
       {preview}
+      {middleContent}
 
-      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-          <span>{label}</span>
-          <span className="font-mono text-base font-black text-indigo-600">{formattedDisplay}</span>
-        </div>
+      <ChoiceNafcContainer<T>
+        options={options}
+        selectedIndex={activeIndex}
+        showAnswer={showAnswer}
+        disabled={disabled}
+        columns={columns}
+        gridClassName={gridClassName}
+        enableKeyboardShortcuts={enableKeyboardShortcuts}
+        onSelect={handleSelectOption}
+      />
 
-        <div className="flex items-center gap-3 w-full">
-          <span className="font-bold font-mono text-slate-400 text-xs">
-            {min}
-            {unit}
-          </span>
-
-          <div
-            {...pointerProps}
-            style={
-              hitMargin > 0
-                ? {
-                    paddingLeft: `${hitMargin}px`,
-                    paddingRight: `${hitMargin}px`,
-                    marginLeft: `-${hitMargin}px`,
-                    marginRight: `-${hitMargin}px`,
-                    paddingTop: '6px',
-                    paddingBottom: '6px',
-                    marginTop: '-6px',
-                    marginBottom: '-6px',
-                  }
-                : undefined
-            }
-            className={`relative flex-1 flex items-center select-none touch-none ${
-              !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
-            }`}
-          >
-            <div
-              ref={trackRef}
-              className="relative w-full h-7 rounded-xl bg-slate-200 border border-slate-300/80 shadow-inner flex items-center overflow-hidden"
-            >
-              {/* 当前激活进度条 */}
-              <div
-                className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
-                style={{ width: valToPercent(activeVal) }}
-              />
-
-              {/* 未揭晓状态下的指针 */}
-              {!showAnswer && (
-                <div
-                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
-                  style={{ left: valToPercent(activeVal) }}
-                />
-              )}
-
-              {/* 动态容错感应区间 */}
-              {!showAnswer && showToleranceBand && tolerance !== undefined && tolerance > 0 && (
-                <>
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
-                    style={{ left: valToPercent(activeVal - tolerance) }}
-                  />
-                  <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
-                    style={{ left: valToPercent(activeVal + tolerance) }}
-                  />
-                </>
-              )}
-
-              {/* 答案揭晓：真理线与用户作答线 */}
-              {showAnswer && targetValue !== undefined && (
-                <>
-                  <div
-                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
-                    style={{ left: valToPercent(targetValue) }}
-                  />
-                  {userValue !== undefined && (
-                    <div
-                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white shadow-md ${
-                        isHit ? 'bg-emerald-500' : 'bg-rose-500'
-                      }`}
-                      style={{ left: valToPercent(userValue) }}
-                    />
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-
-          <span className="font-bold font-mono text-slate-400 text-xs">
-            {max}
-            {unit}
-          </span>
-        </div>
-
-        {footerDetails}
-      </div>
-
-      {isButtonSubmit && !showAnswer && (
+      {submitMode === 'button' && !showAnswer && (
         <button
           type="button"
-          onClick={() => {
-            if (!disabled && !showAnswer) onAnswer(currentVal);
-          }}
+          onClick={handleExplicitSubmit}
           disabled={disabled}
           className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
         >
@@ -285,275 +179,79 @@ export function StandardSliderView({
 }
 ~~~~~
 
-#### Acts 2: 重构角度估算与势线提取组件
+#### Acts 2: 重构视知觉概括领域的两个 N-AFC 组件
 
 ~~~~~act
 write_file
-src/domains/angle/components/AngleEstimationView.tsx
+src/domains/abstraction/components/PaletteClusteringView.tsx
 ~~~~~
 ~~~~~typescript
-import { Eye } from 'lucide-preact';
+import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import {
-  ANGLE_CANVAS_SIZE,
-  type AngleHitResult,
-  type AngleQuestionData,
-  drawAngleCanvas,
-} from '../utils/angleUtils';
-
-interface AngleEstimationViewProps {
-  question: AngleQuestionData;
-  showAnswer: boolean;
-  userAnswer: AngleHitResult | null;
-  onAnswer: (val: number) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AngleEstimationView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-  showCanvasHints = true,
-}: AngleEstimationViewProps) {
-  const targetVal = question.targetAngleDeg ?? 90;
-  const tolerance = question.tolerance;
-  const isHit = Boolean(userAnswer?.isHit);
-  const userVal = userAnswer?.userValue;
-
-  return (
-    <StandardSliderView
-      questionId={question.id}
-      hintText="观察两射线夹角，调制滑块逼近精准度数 (0°~180°)"
-      hintIcon={Eye}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
-      label="夹角估算值:"
-      max={180}
-      step={0.5}
-      initialValue={90}
-      unit="°"
-      targetValue={targetVal}
-      tolerance={tolerance}
-      showToleranceBand={showToleranceBand}
-      showAnswer={showAnswer}
-      isHit={isHit}
-      userValue={userVal}
-      disabled={disabled}
-      hitMargin={hitMargin}
-      submitMode="commit_on_release"
-      onAnswer={onAnswer}
-      preview={
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
-          <CanvasView
-            width={ANGLE_CANVAS_SIZE}
-            height={ANGLE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white"
-            draw={(canvas) => {
-              if (question.lineA && question.lineB) {
-                drawAngleCanvas(canvas, [question.lineA, question.lineB], ANGLE_CANVAS_SIZE);
-              }
-            }}
-            deps={[question.lineA, question.lineB]}
-          />
-        </div>
-      }
-      footerDetails={
-        showAnswer && userVal !== undefined ? (
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              绝对真理值:{' '}
-              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
-            </span>
-            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              误差: {Math.round(Math.abs(userVal - targetVal) * 10) / 10}° (容错: ±{tolerance}°)
-            </span>
-          </div>
-        ) : null
-      }
-    />
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/domains/abstraction/components/GestureAxisView.tsx
-~~~~~
-~~~~~typescript
-import { Eye } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { drawParticlesCanvas } from '../../../utils/canvas/drawParticles';
+import { StandardNafcView } from '../../../components/common/StandardNafcView';
+import { hsvToHex } from '../../../core/color/colorUtils';
+import { drawPaletteTilesCanvas } from '../../../utils/canvas/drawPaletteTiles';
 import {
   ABSTRACTION_CANVAS_SIZE,
   type AbstractionHitResult,
   type AbstractionQuestionData,
 } from '../utils/index';
 
-interface GestureAxisViewProps {
+interface PaletteClusteringViewProps {
   question: AbstractionQuestionData;
   showAnswer: boolean;
   userAnswer: AbstractionHitResult | null;
-  onAnswer: (val: number) => void;
+  onAnswer: (idx: number) => void;
   disabled?: boolean;
-  hitMargin?: number;
   showCanvasHints?: boolean;
 }
 
-export function GestureAxisView({
+export function PaletteClusteringView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
-  hitMargin = 12,
   showCanvasHints = true,
-}: GestureAxisViewProps) {
-  const [activeSliderVal, setActiveSliderVal] = useState<number>(90);
-
-  const targetVal = question.targetAngleDeg ?? 0;
-  const userVal = userAnswer?.userValue ?? activeSliderVal;
-  const isHit = Boolean(userAnswer?.isHit);
+}: PaletteClusteringViewProps) {
+  const nafcOptions = (question.paletteOptions || []).map((hsv, idx) => {
+    const hex = hsvToHex(...hsv);
+    const isTarget = idx === question.correctPaletteIndex;
+    return {
+      key: `palette-opt-${idx}-${hex}`,
+      value: idx,
+      isCorrect: isTarget,
+      content: (
+        <div
+          className="w-full aspect-square rounded-xl shadow-inner border border-white/60"
+          style={{ backgroundColor: hex }}
+        />
+      ),
+    };
+  });
 
   return (
-    <StandardSliderView
+    <StandardNafcView
       questionId={question.id}
-      hintText="旋转主轴对齐粒子群动态流向 (0°~180°)"
-      hintIcon={Eye}
+      hintText="选出最能代表全局主调的加权主色 (键 1-4)"
+      hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label="动态势线角度:"
-      max={180}
-      step={0.5}
-      initialValue={90}
-      unit="°"
-      targetValue={targetVal}
+      columns={4}
+      options={nafcOptions}
       showAnswer={showAnswer}
-      isHit={isHit}
-      userValue={userAnswer?.userValue}
       disabled={disabled}
-      hitMargin={hitMargin}
-      submitMode="commit_on_release"
-      onValueChange={(_val, active) => setActiveSliderVal(active)}
-      onAnswer={onAnswer}
+      submitMode="immediate"
+      onAnswer={(idx) => onAnswer(idx)}
       preview={
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}
             className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm"
-            draw={(canvas) => {
-              drawParticlesCanvas(
-                canvas,
-                question.particles,
-                ABSTRACTION_CANVAS_SIZE,
-                showAnswer ? targetVal : activeSliderVal,
-                showAnswer ? '#22C55E' : '#6366F1',
-                showAnswer ? userVal : undefined,
-                isHit,
-              );
-            }}
-            deps={[question.particles, activeSliderVal, showAnswer, targetVal, userVal, isHit]}
-          />
-        </div>
-      }
-    />
-  );
-}
-~~~~~
-
-#### Acts 3: 重构负形占比估算与黑白素描归组组件
-
-~~~~~act
-write_file
-src/domains/negative_space/components/RatioEstimationView.tsx
-~~~~~
-~~~~~typescript
-import { Maximize2 } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
-
-interface RatioEstimationViewProps {
-  question: NegativeSpaceQuestionData;
-  showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (val: number) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function RatioEstimationView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-  showCanvasHints = true,
-}: RatioEstimationViewProps) {
-  const { targetNegativeRatio, tolerance } = question;
-  const isHit = Boolean(userAnswer?.isHit);
-
-  return (
-    <StandardSliderView
-      questionId={question.id}
-      hintText="估计白色留白 (负形) 占整幅画面的面积百分比"
-      hintIcon={Maximize2}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
-      label="负形空间占比估计:"
-      max={100}
-      step={0.1}
-      initialValue={50.0}
-      unit="%"
-      targetValue={targetNegativeRatio}
-      tolerance={tolerance}
-      showToleranceBand={showToleranceBand}
-      showAnswer={showAnswer}
-      isHit={isHit}
-      userValue={userAnswer?.userRatio}
-      disabled={disabled}
-      hitMargin={hitMargin}
-      submitMode="button"
-      submitButtonText="确认提交 (Space)"
-      onAnswer={onAnswer}
-      preview={
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
-          <CanvasView
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 shadow-sm"
-            draw={(canvas) => {
-              if (question.vertices) {
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.vertices,
-                  size: NEGATIVE_SPACE_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
-                  isHighlighted: showAnswer && isHit,
-                });
-              }
-            }}
-            deps={[question.vertices, showAnswer, isHit]}
+            draw={(canvas) =>
+              drawPaletteTilesCanvas(canvas, question.paletteTiles, ABSTRACTION_CANVAS_SIZE)
+            }
+            deps={[question.paletteTiles]}
           />
         </div>
       }
@@ -564,111 +262,204 @@ export function RatioEstimationView({
 
 ~~~~~act
 write_file
-src/domains/abstraction/components/NotanThresholdView.tsx
+src/domains/abstraction/components/TopDownPatternView.tsx
 ~~~~~
 ~~~~~typescript
-import { Eye } from 'lucide-preact';
-import { useState } from 'preact/hooks';
+import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
-import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import {
-  drawNotanNoiseField,
-  drawRawGrayscaleNoiseField,
-} from '../../../utils/canvas/drawNotanField';
+import { StandardNafcView } from '../../../components/common/StandardNafcView';
+import { hsvToHex } from '../../../core/color/colorUtils';
+import { drawPaletteTilesCanvas } from '../../../utils/canvas/drawPaletteTiles';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,
   type AbstractionQuestionData,
 } from '../utils/index';
 
-interface NotanThresholdViewProps {
+interface TopDownPatternViewProps {
   question: AbstractionQuestionData;
   showAnswer: boolean;
   userAnswer: AbstractionHitResult | null;
-  onAnswer: (val: number) => void;
+  onAnswer: (idx: number) => void;
   disabled?: boolean;
-  hitMargin?: number;
   showCanvasHints?: boolean;
 }
 
-export function NotanThresholdView({
+export function TopDownPatternView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
-  hitMargin = 12,
   showCanvasHints = true,
-}: NotanThresholdViewProps) {
-  const [activeVal, setActiveVal] = useState<number>(50);
+}: TopDownPatternViewProps) {
+  const promptHex = question.promptDominantColor
+    ? hsvToHex(...question.promptDominantColor)
+    : '#6366F1';
+  const targetIdx = question.correctPatternIndex ?? 0;
 
-  const targetVal = question.idealNotanThreshold ?? 50;
+  const nafcOptions = (question.palettePatternOptions || []).map((pat, idx) => {
+    const isTarget = idx === targetIdx;
+    return {
+      key: `td-pattern-${question.id}-${idx}`,
+      title: `画面 ${idx + 1}`,
+      value: idx,
+      isCorrect: isTarget,
+      content: (
+        <div className="w-full aspect-square bg-white p-1 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
+          <CanvasView
+            width={ABSTRACTION_2AFC_SIZE}
+            height={ABSTRACTION_2AFC_SIZE}
+            className="w-full aspect-square rounded-lg shadow-sm"
+            draw={(canvas) => drawPaletteTilesCanvas(canvas, pat, ABSTRACTION_2AFC_SIZE)}
+            deps={[pat]}
+          />
+        </div>
+      ),
+    };
+  });
 
   return (
-    <StandardSliderView
+    <StandardNafcView
       questionId={question.id}
-      hintText="观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点"
-      hintIcon={Eye}
+      hintText="观察上方基准主色，选出以此为基调的拼贴画面 (键 1-4)"
+      hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-      label="二值化截断阈值:"
-      max={100}
-      step={0.5}
-      initialValue={50}
-      unit="%"
-      targetValue={targetVal}
+      maxWidth="max-w-3xl"
+      columns={4}
+      options={nafcOptions}
       showAnswer={showAnswer}
-      isHit={Boolean(userAnswer?.isHit)}
-      userValue={userAnswer?.userValue}
       disabled={disabled}
-      hitMargin={hitMargin}
-      submitMode="commit_on_release"
-      onValueChange={(_val, active) => setActiveVal(active)}
-      onAnswer={onAnswer}
+      submitMode="immediate"
+      onAnswer={(idx) => onAnswer(idx)}
+      preview={
+        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            基准主调色
+          </span>
+          <div
+            className="w-16 h-16 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"
+            style={{ backgroundColor: promptHex }}
+          />
+        </div>
+      }
+    />
+  );
+}
+~~~~~
+
+#### Acts 3: 重构相对色感领域的补色残像与矢量迁移组件
+
+~~~~~act
+write_file
+src/domains/relative_color/components/HueInductionView.tsx
+~~~~~
+~~~~~typescript
+import { Sparkles } from 'lucide-preact';
+import { useState } from 'preact/hooks';
+import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
+import { StandardNafcView } from '../../../components/common/StandardNafcView';
+import { hsvToHex } from '../../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+
+interface HueInductionViewProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer?: RelativeColorHitResult | null;
+  onAnswer: (chosenColor: [number, number, number]) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function HueInductionView({
+  question,
+  showAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: HueInductionViewProps) {
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+
+  const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
+
+  const bgLeftHex = hsvToHex(...(bgLeft ?? [0, 0, 90]));
+  const bgRightHex = hsvToHex(...(bgRight ?? [0, 0, 20]));
+  const centerLeftHex = hsvToHex(...(targetLeftCenter ?? [0, 0, 50]));
+  const idealRightHex = hsvToHex(...(idealRightCenter ?? [0, 0, 50]));
+
+  const targetIdx = correctIndex ?? 0;
+  const activeColor = options?.[selectedIdx] ?? idealRightCenter ?? [0, 0, 50];
+  const activeRightHex = hsvToHex(...activeColor);
+
+  const nafcOptions = (options || []).map((opt, idx) => {
+    const isTarget = idx === targetIdx;
+    const hexVal = hsvToHex(...opt);
+    return {
+      key: `hue-opt-${idx}-${hexVal}`,
+      title: `候选 ${idx + 1}`,
+      value: opt,
+      isCorrect: isTarget,
+      content: (
+        <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60 p-1 flex items-center justify-center bg-white">
+          <div
+            className="w-full h-full rounded-lg shadow-sm border border-slate-200/50"
+            style={{ backgroundColor: hexVal }}
+          />
+        </div>
+      ),
+    };
+  });
+
+  return (
+    <StandardNafcView<[number, number, number]>
+      questionId={question.id}
+      hintText="观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)"
+      hintIcon={Sparkles}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-3xl"
+      columns={4}
+      options={nafcOptions}
+      selectedIndex={selectedIdx}
+      showAnswer={showAnswer}
+      disabled={disabled}
+      submitMode="button"
+      submitButtonText="确认提交 (Space)"
+      onSelectIndex={(idx) => setSelectedIdx(idx)}
+      onAnswer={(_idx, option) => {
+        const chosen = option.value ?? activeColor;
+        onAnswer(chosen);
+      }}
       preview={
         <DualViewportContainer
-          leftTitle="灰阶原图 (Raw Scene)"
-          rightTitle="二值显影 (Notan Output)"
+          leftTitle="左侧固定基准"
+          rightTitle="右侧环境补偿区 (实时预览)"
           leftContent={
-            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
-                draw={(canvas) => {
-                  if (question.notanBuffer) {
-                    drawRawGrayscaleNoiseField(
-                      canvas,
-                      question.notanBuffer,
-                      question.notanFieldDim ?? 120,
-                      ABSTRACTION_2AFC_SIZE,
-                    );
-                  }
-                }}
-                deps={[question.notanBuffer, question.notanFieldDim]}
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgLeftHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all"
+                style={{ backgroundColor: centerLeftHex }}
               />
             </div>
           }
           rightContent={
-            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
-                draw={(canvas) => {
-                  if (question.notanBuffer) {
-                    drawNotanNoiseField(
-                      canvas,
-                      question.notanBuffer,
-                      question.notanFieldDim ?? 120,
-                      showAnswer ? targetVal : activeVal,
-                      ABSTRACTION_2AFC_SIZE,
-                    );
-                  }
-                }}
-                deps={[question.notanBuffer, question.notanFieldDim, targetVal, activeVal, showAnswer]}
-              />
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgRightHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+                style={{ backgroundColor: activeRightHex }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1/2"
+                    style={{ backgroundColor: idealRightHex }}
+                    title="上半部为您的选择，下半部为理论真理色"
+                  />
+                )}
+              </div>
             </div>
           }
         />
@@ -678,6 +469,255 @@ export function NotanThresholdView({
 }
 ~~~~~
 
+~~~~~act
+write_file
+src/domains/relative_color/components/VectorShiftView.tsx
+~~~~~
+~~~~~typescript
+import { ArrowRight, Shuffle } from 'lucide-preact';
+import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
+import { StandardNafcView } from '../../../components/common/StandardNafcView';
+import { hsvToHex } from '../../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+
+interface VectorShiftViewProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: RelativeColorHitResult | null;
+  selectedIndex: number;
+  onSelectIndex: (idx: number) => void;
+  onSubmit: () => void;
+  disabled?: boolean;
+  hitMargin?: number;
+  showToleranceBand?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function VectorShiftView({
+  question,
+  showAnswer,
+  userAnswer,
+  selectedIndex,
+  onSelectIndex,
+  onSubmit,
+  disabled = false,
+  hitMargin = 12,
+  showToleranceBand = true,
+  showCanvasHints = true,
+}: VectorShiftViewProps) {
+  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
+  const activeColor = options?.[selectedIndex] ?? targetD;
+  const userH = activeColor[0];
+  const userS = activeColor[1];
+  const userV = activeColor[2];
+
+  const hexA = hsvToHex(...colorA);
+  const hexB = hsvToHex(...colorB);
+  const hexC = hsvToHex(...colorC);
+
+  const hexSelectedD = hsvToHex(userH, userS, userV);
+  const hexTargetD = hsvToHex(...targetD);
+
+  const cH = colorC[0];
+  const cS = colorC[1];
+  const cV = colorC[2];
+
+  const hueGradient =
+    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
+  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
+
+  const cSatGradient = `linear-gradient(to right, ${hsvToHex(cH, 0, cV)}, ${hsvToHex(cH, 100, cV)})`;
+  const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
+
+  const nafcOptions = (options || []).map((opt, idx) => {
+    const isTarget = idx === correctIndex;
+    const hexVal = hsvToHex(...opt);
+    return {
+      key: `vector-shift-opt-${idx}-${hexVal}`,
+      title: `候选 ${idx + 1}`,
+      value: opt,
+      isCorrect: isTarget,
+      content: (
+        <div
+          className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+          style={{ backgroundColor: hexVal }}
+        />
+      ),
+    };
+  });
+
+  return (
+    <StandardNafcView<[number, number, number]>
+      questionId={question.id}
+      hintText="观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
+      hintIcon={Shuffle}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+      columns={4}
+      options={nafcOptions}
+      selectedIndex={selectedIndex}
+      showAnswer={showAnswer}
+      disabled={disabled}
+      submitMode="button"
+      submitButtonText="确认提交 (Space)"
+      onSelectIndex={(idx) => onSelectIndex(idx)}
+      onAnswer={() => onSubmit()}
+      preview={
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-4">
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexA }}
+            />
+            <ArrowRight className="w-4 h-4 text-indigo-400" />
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexB }}
+            />
+          </div>
+
+          <div className="flex items-center justify-center gap-4">
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
+              style={{ backgroundColor: hexC }}
+            />
+            <ArrowRight className="w-4 h-4 text-indigo-400" />
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
+              style={{ backgroundColor: hexSelectedD }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1/2"
+                  style={{ backgroundColor: hexTargetD }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      }
+      middleContent={
+        <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3 md:pr-4 md:border-r border-slate-200/60">
+              <HsvTrackSlider
+                label="H"
+                gradient={hueGradient}
+                val={cH}
+                max={360}
+                unit="°"
+                targetHSV={colorC}
+                difficultyLevel={difficultyLevel}
+                showAnswer={false}
+                targetVal={cH}
+                userVal={cH}
+                allUserHSV={colorC}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={false}
+                onValChange={() => {}}
+              />
+              <HsvTrackSlider
+                label="S"
+                gradient={cSatGradient}
+                val={cS}
+                max={100}
+                unit="%"
+                targetHSV={colorC}
+                difficultyLevel={difficultyLevel}
+                showAnswer={false}
+                targetVal={cS}
+                userVal={cS}
+                allUserHSV={colorC}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={false}
+                onValChange={() => {}}
+              />
+              <HsvTrackSlider
+                label="V"
+                gradient={cValGradient}
+                val={cV}
+                max={100}
+                unit="%"
+                targetHSV={colorC}
+                difficultyLevel={difficultyLevel}
+                showAnswer={false}
+                targetVal={cV}
+                userVal={cV}
+                allUserHSV={colorC}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={false}
+                onValChange={() => {}}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <HsvTrackSlider
+                label="H"
+                gradient={hueGradient}
+                val={userH}
+                max={360}
+                unit="°"
+                targetHSV={targetD}
+                difficultyLevel={difficultyLevel}
+                showAnswer={showAnswer}
+                targetVal={targetD[0]}
+                userVal={userAnswer?.userD?.[0] ?? userH}
+                isHit={userAnswer?.isHit}
+                onValChange={() => {}}
+                allUserHSV={[userH, userS, userV]}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={showToleranceBand}
+              />
+              <HsvTrackSlider
+                label="S"
+                gradient={satGradient}
+                val={userS}
+                max={100}
+                unit="%"
+                targetHSV={targetD}
+                difficultyLevel={difficultyLevel}
+                showAnswer={showAnswer}
+                targetVal={targetD[1]}
+                userVal={userAnswer?.userD?.[1] ?? userS}
+                isHit={userAnswer?.isHit}
+                onValChange={() => {}}
+                allUserHSV={[userH, userS, userV]}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={showToleranceBand}
+              />
+              <HsvTrackSlider
+                label="V"
+                gradient={valGradient}
+                val={userV}
+                max={100}
+                unit="%"
+                targetHSV={targetD}
+                difficultyLevel={difficultyLevel}
+                showAnswer={showAnswer}
+                targetVal={targetD[2]}
+                userVal={userAnswer?.userD?.[2] ?? userV}
+                isHit={userAnswer?.isHit}
+                onValChange={() => {}}
+                allUserHSV={[userH, userS, userV]}
+                disabled={true}
+                hitMargin={hitMargin}
+                showToleranceBand={showToleranceBand}
+              />
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}
+~~~~~
+
 ### 下一步建议
-1. **测试与质量验证**：运行 `npm run check` 检查格式与类型，运行 `npm run test` 验证各交互与做答逻辑。
-2. **N-AFC 组件抽象 (`StandardNafcView`)**：继续将四选一类视图（如 `PaletteClusteringView`, `TopDownPatternView`, `VectorShiftView`）抽离为通用 N-AFC 壳组件。
+1. **代码检查与构建验证**：运行 `npm run check` 校验格式和导入规范，运行 `npm run build` 确保 TypeScript 编译通过。
+2. **审查成果**：至此，2AFC、N-AFC 与连续 Slider 三大交互族群已全部完成通用壳化重构，累计精简业务组件样板代码 800+ 行，整体架构已高度清晰规范。

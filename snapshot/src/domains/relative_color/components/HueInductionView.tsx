@@ -1,8 +1,7 @@
 import { Sparkles } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { ChoiceNafcContainer } from '../../../components/common/ChoiceNafcContainer';
+import { useState } from 'preact/hooks';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
@@ -31,36 +30,9 @@ export function HueInductionView({
   const centerLeftHex = hsvToHex(...(targetLeftCenter ?? [0, 0, 50]));
   const idealRightHex = hsvToHex(...(idealRightCenter ?? [0, 0, 50]));
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
-  useEffect(() => {
-    setSelectedIdx(0);
-  }, [question.id]);
-
   const targetIdx = correctIndex ?? 0;
   const activeColor = options?.[selectedIdx] ?? idealRightCenter ?? [0, 0, 50];
   const activeRightHex = hsvToHex(...activeColor);
-
-  const handleSubmit = useCallback(() => {
-    if (disabled || showAnswer || !options) return;
-    const chosen = options[selectedIdx] ?? idealRightCenter ?? [0, 0, 50];
-    onAnswer(chosen);
-  }, [disabled, showAnswer, options, selectedIdx, idealRightCenter, onAnswer]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (disabled || showAnswer || !options) return;
-
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        handleSubmit();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, showAnswer, options, handleSubmit]);
 
   const nafcOptions = (options || []).map((opt, idx) => {
     const isTarget = idx === targetIdx;
@@ -82,66 +54,60 @@ export function HueInductionView({
   });
 
   return (
-    <QuestionCardShell
+    <StandardNafcView<[number, number, number]>
+      questionId={question.id}
       hintText="观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)"
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
-    >
-      <DualViewportContainer
-        leftTitle="左侧固定基准"
-        rightTitle="右侧环境补偿区 (实时预览)"
-        leftContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-            style={{ backgroundColor: bgLeftHex }}
-          >
+      columns={4}
+      options={nafcOptions}
+      selectedIndex={selectedIdx}
+      showAnswer={showAnswer}
+      disabled={disabled}
+      submitMode="button"
+      submitButtonText="确认提交 (Space)"
+      onSelectIndex={(idx) => setSelectedIdx(idx)}
+      onAnswer={(_idx, option) => {
+        const chosen = option.value ?? activeColor;
+        onAnswer(chosen);
+      }}
+      preview={
+        <DualViewportContainer
+          leftTitle="左侧固定基准"
+          rightTitle="右侧环境补偿区 (实时预览)"
+          leftContent={
             <div
-              className="w-16 h-16 rounded-xl transition-all"
-              style={{ backgroundColor: centerLeftHex }}
-            />
-          </div>
-        }
-        rightContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
-            style={{ backgroundColor: bgRightHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-              style={{ backgroundColor: activeRightHex }}
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgLeftHex }}
             >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: idealRightHex }}
-                  title="上半部为您的选择，下半部为理论真理色"
-                />
-              )}
+              <div
+                className="w-16 h-16 rounded-xl transition-all"
+                style={{ backgroundColor: centerLeftHex }}
+              />
             </div>
-          </div>
-        }
-      />
-
-      <ChoiceNafcContainer
-        options={nafcOptions}
-        selectedIndex={selectedIdx}
-        showAnswer={showAnswer}
-        disabled={disabled}
-        columns={4}
-        onSelect={(idx) => setSelectedIdx(idx)}
-      />
-
-      {!showAnswer && (
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
-        >
-          确认提交 (Space)
-        </button>
-      )}
-    </QuestionCardShell>
+          }
+          rightContent={
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+              style={{ backgroundColor: bgRightHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+                style={{ backgroundColor: activeRightHex }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1/2"
+                    style={{ backgroundColor: idealRightHex }}
+                    title="上半部为您的选择，下半部为理论真理色"
+                  />
+                )}
+              </div>
+            </div>
+          }
+        />
+      }
+    />
   );
 }
