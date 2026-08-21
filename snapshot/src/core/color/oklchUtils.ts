@@ -226,6 +226,17 @@ function rotateVector(
 }
 
 /**
+ * 根据难度等级 (Level 1..35) 计算干扰项的绝对 OKLab 距离 Radius R
+ */
+export function getDistractorDistanceForLevel(level: number): number {
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34;
+  const maxR = 0.14;
+  const minR = 0.015;
+  return maxR * (minR / maxR) ** t;
+}
+
+/**
  * 在 OKLab 色彩空间中以 targetLab 为基准生成 3 个正四面体等距分布的干扰色 (HSV 格式)
  * @param targetLab 基准目标色的 OKLab 坐标
  * @param R 目标感知色差半径 (ΔE)

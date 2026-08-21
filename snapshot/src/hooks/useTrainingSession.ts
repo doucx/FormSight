@@ -21,7 +21,6 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   generateQuestion: (level: number) => TQuestion;
   evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
   isHit: (hitResult: THitResult) => boolean;
-  getQuestionLevel: (question: TQuestion) => number;
   saveTrialRecord: (params: {
     sessionId: string;
     question: TQuestion;
@@ -58,7 +57,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   generateQuestion,
   evaluateAnswer,
   isHit,
-  getQuestionLevel: _getQuestionLevel,
   saveTrialRecord,
   saveSession,
   onExit,

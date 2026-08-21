@@ -1,11 +1,13 @@
 import {
   generateTetrahedralDistractors,
+  getDistractorDistanceForLevel,
   getTargetDeltaEForLevel,
   hasGamutMargin,
   hsvToOkLab,
   okLabToHsv,
 } from '../../../core/color/oklchUtils';
-import { calcCompensatedRightColor, getDistractorDistanceForLevel } from './inductionMath';
+import { createShuffledChoices } from '../../../core/math/mathUtils';
+import { calcCompensatedRightColor } from './inductionMath';
 import type { RelativeColorMode, RelativeColorQuestionData } from './types';
 
 /**
@@ -71,15 +73,7 @@ export function generateVectorShiftQuestion(level: number): RelativeColorQuestio
   }
 
   const bestDistractors = generateTetrahedralDistractors(labTargetD, R);
-  const rawOptions: [number, number, number][] = [targetD, ...bestDistractors];
-  const indexedOptions = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
-  for (let i = indexedOptions.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indexedOptions[i], indexedOptions[j]] = [indexedOptions[j], indexedOptions[i]];
-  }
-
-  const options = indexedOptions.map((o) => o.opt);
-  const correctIndex = indexedOptions.findIndex((o) => o.isTarget);
+  const { options, correctIndex } = createShuffledChoices(targetD, bestDistractors);
 
   return {
     id,
@@ -176,15 +170,7 @@ export function generateHueInductionQuestion(level: number): RelativeColorQuesti
 
   // 利用正四面体算法生成 3 个等距对抗干扰色
   const distractors = generateTetrahedralDistractors(idealLabR, distractorDeltaE);
-  const rawOptions: [number, number, number][] = [idealRightCenter, ...distractors];
-  const indexed = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
-  for (let i = indexed.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
-  }
-
-  const options = indexed.map((item) => item.opt);
-  const correctIndex = indexed.findIndex((item) => item.isTarget);
+  const { options, correctIndex } = createShuffledChoices(idealRightCenter, distractors);
 
   return {
     id,

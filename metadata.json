@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TypeScript 编译构建错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322632.3015306, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 复用洗牌算法并清理死代码与反向依赖层级", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322810.4013276, "duration_ms": 0}}

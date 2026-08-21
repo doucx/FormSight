@@ -12,7 +12,6 @@ import {
 interface ShapeMemory2AfcViewProps {
   question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
   onAnswer: (choice: 0 | 1) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -21,7 +20,6 @@ interface ShapeMemory2AfcViewProps {
 export function ShapeMemory2AfcView({
   question,
   showAnswer,
-  userAnswer: _userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

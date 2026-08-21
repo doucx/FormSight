@@ -59,7 +59,6 @@ export function NegativeSpaceCanvas({
       <ShapeMemory2AfcView
         question={question}
         showAnswer={showAnswer}
-        userAnswer={userAnswer}
         onAnswer={(choiceIdx) => onAnswer(choiceIdx)}
         disabled={disabled}
         showCanvasHints={showCanvasHints}
