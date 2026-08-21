@@ -2,10 +2,11 @@ import { getCardById } from '../../config/cards';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
+  resetPlansToDefault,
   savePlanStorageState,
   saveTrainingPlan,
 } from '../planStorage';
-import { loadSettings, saveSettings } from '../settings';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
 import { DB_VERSION, type TrainingDomain, getDB } from './schema';
 
 export async function exportAllData(): Promise<string> {
@@ -88,4 +89,7 @@ export async function clearAllData(): Promise<void> {
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
   await tx.done;
+
+  resetPlansToDefault();
+  saveSettings(DEFAULT_SETTINGS);
 }
