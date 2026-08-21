@@ -1,8 +1,8 @@
 import { Columns, Palette, Shuffle, Sun } from 'lucide-preact';
 import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { relativeColorPlugin } from '../../config/plugins/relativeColorPlugin';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import { relativeColorPlugin } from './plugin';
 
 export const relativeColorCards: CardDefinition[] = [
   {

@@ -1,9 +1,9 @@
 import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
 import { CARD_ANALYTICS_PLUGINS } from '../../config/analyticsPlugins';
 import { STAR_SCHEMAS } from '../../config/cards';
-import { starPlugin } from '../../config/plugins/starPlugin';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import { starPlugin } from './plugin';
 
 export const starCards: CardDefinition[] = [
   {

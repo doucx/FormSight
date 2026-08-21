@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 迁移各领域专属算法与 View 组件至垂直切片目录", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787319396.5022733, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 全面收敛各领域专属算法、Canvas 视图与插件至 Domain 包", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787319609.1987438, "duration_ms": 0}}

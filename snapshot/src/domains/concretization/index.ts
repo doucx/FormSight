@@ -1,7 +1,7 @@
 import { Columns, Droplet, Layers, Shuffle, Sparkles } from 'lucide-preact';
-import { abstractionPlugin } from '../../config/plugins/abstractionPlugin';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import { abstractionPlugin } from '../abstraction/plugin';
 
 export const concretizationCards: CardDefinition[] = [
   {
@@ -68,17 +68,20 @@ export const concretizationCards: CardDefinition[] = [
 
 export const concretizationDomain: DomainManifest = {
   domain: 'concretization',
-  appId: 'visual-refinement',
-  title: '细化感知',
-  subTitle: 'Visual Refinement',
-  homeTitle: '细化感知 (Visual Refinement)',
-  homeDesc:
-    '自顶向下透视具象细节，训练基于势线骨架、几何大形、Notan 构图与调性基底在丰富画面中寻源辨识的能力。',
-  themeColor: 'purple',
-  icon: Layers,
-  hasWeaknessAnalytics: false,
-  get cards() {
-    return concretizationCards;
+  meta: {
+    domain: 'concretization',
+    appId: 'visual-refinement',
+    title: '细化感知',
+    subTitle: 'Visual Refinement',
+    homeTitle: '细化感知 (Visual Refinement)',
+    homeDesc:
+      '自顶向下透视具象细节，训练基于势线骨架、几何大形、Notan 构图与调性基底在丰富画面中寻源辨识的能力。',
+    themeColor: 'purple',
+    icon: Layers,
+    hasWeaknessAnalytics: false,
+    get cards() {
+      return concretizationCards;
+    },
   },
   cards: concretizationCards,
   trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
