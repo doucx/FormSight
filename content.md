@@ -1,1345 +1,677 @@
-好的，我们现在启动重构流程。首先对优先级最高（P0）的两个巨石文件 `abstractionUtils.ts` (689 行) 和 `AbstractionCanvas.tsx` (626 行) 进行模块化解耦与拆分。
+好的，我们继续推进 P1 阶段任务：对正负形感知模块（`negativeSpaceUtils.ts` 和 `NegativeSpaceCanvas.tsx`）进行彻底的解耦与拆分。
 
-## [WIP] refactor(abstraction): 解耦视知觉概括算法与 Canvas 视图组件
+## [WIP] refactor(negative-space): 模块化拆修正负形几何算法与多视图组件
 
 ### 用户需求
-将代码库中职责过重、代码量庞大的 `src/utils/abstractionUtils.ts` 和 `src/components/AbstractionCanvas.tsx` 拆分为职责明确的高内聚小模块，提升系统可读性、可维护性与测试便利度。
+将正负形感知模块中承担了过多职责的 `src/utils/negativeSpaceUtils.ts`（几何算法、多边形生成、4类题型工厂、碰撞判定）与 `src/components/NegativeSpaceCanvas.tsx`（4种复杂交互界面）拆分为独立子模块，提升系统清晰度与扩展性。
 
 ### 评论
-视知觉概括 (Visual Abstraction) 模块包含了 8 种截然不同的生成算法与 4 类不同的交互界面。将单体大文件拆分为分层的领域子模块（数学计算、算法生成、题型判定、独立视图组件），同时保留原入口的重导出以保障向后兼容性，是降低复杂度与促进代码健康度的关键重构。
+正负形感知模块涵盖了连续滑块估算、2AFC 留白面积二选一、基于点阵拾取的反切定点、以及带时序曝光倒计时的轮廓记忆匹配。将这些不同的几何计算与多模态交互界面分离，不仅消除了单个文件维护 4 套独立事件循环的耦合，还极大方便了后续对各题型算法的独立调优与单测。
 
 ### 目标
-1. 将底层的 Canvas 绘图函数抽离至 `src/utils/canvas/` 工具库。
-2. 将 `src/utils/abstractionUtils.ts` 拆分到 `src/utils/abstraction/` 目录中，分为 `types`、`pca`、`polygon`、`notan`、`palette`、`questionGenerator` 与 `hitDetection`。
-3. 将 `src/components/AbstractionCanvas.tsx` 拆分到 `src/components/abstraction/` 目录中，各题型视图（势线、大模、Notan、拼贴色群、调性基底）拆分为独立组件。
-4. 在原文件路径保留 re-export，保证外部引用无缝衔接。
+1. 将 `src/utils/negativeSpaceUtils.ts` 拆分至 `src/utils/negativeSpace/` 目录中（包含 `types.ts`、`polygonMath.ts`、`questionGenerator.ts`、`hitDetection.ts` 和 `index.ts`）。
+2. 将 `src/components/NegativeSpaceCanvas.tsx` 拆分至 `src/components/negativeSpace/` 目录中，各题型提取为独立的子视图组件（`RatioEstimationView`、`AreaComparison2AfcView`、`VertexFittingView`、`ShapeMemory2AfcView`）。
+3. 原文件保留向后兼容的代理导出，保证现有系统调用不受影响。
 
 ### 基本原理
-- **领域职责隔离**：几何运算、多尺度噪声/Otsu 分割、OKLab 色彩采样与 UI 渲染解耦。
-- **视图组件原子化**：每个视知觉题型拥有独立的事件处理与 UI 布局，消除单文件内长达数百行的 `if-else` 分支。
-- **平滑兼容**：通过 `src/utils/abstractionUtils.ts` 与 `src/components/AbstractionCanvas.tsx` 的转发，不破坏现有外部引用。
+- **数学与业务分层**：鞋带公式、多边形质心缩放与微扰属于纯几何数学层；题目生成与判定属于业务编排层。
+- **状态域隔离**：时序倒计时动画（记忆匹配）、点阵鼠标追踪（定点反切）、连续滑块拖拽与 2AFC 快捷键互不干扰。
+- **无缝过渡**：根入口组件作为路由分发层，保证接口规范完全统一。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/runtime #scope/core #scope/dx #ai/delegate #task/domain/abstraction #task/object/modular-refactoring #task/action/refactor #task/state/begin #task/status/active
+#intent/refine #flow/ready #priority/high #comp/runtime #scope/core #scope/dx #ai/delegate #task/domain/negative_space #task/object/modular-refactoring #task/action/refactor #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 抽取 Canvas 通用绘图工具函数
-
-我们将 `drawParticles`、`drawSpinePrompt`、`drawNotanField`、`drawPaletteTiles` 等基础绘图逻辑提取到 `src/utils/canvas/` 中。
+#### Acts 1: 拆分 `src/utils/negativeSpace/` 几何算法与生成器模块
 
 ~~~~~act
 write_file
-src/utils/canvas/drawParticles.ts
+src/utils/negativeSpace/types.ts
 ~~~~~
 ~~~~~typescript
 import type { Point } from '../../types';
 
-export function drawParticlesCanvas(
-  canvas: HTMLCanvasElement | null,
-  particles?: Point[],
-  size = 400,
-  axisAngle?: number,
-  axisColor = '#22C55E',
-) {
-  if (!canvas || !particles) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+export type NegativeSpaceMode =
+  | 'RATIO_ESTIMATION'
+  | 'AREA_COMPARISON_2AFC'
+  | 'NEGATIVE_VERTEX_FITTING'
+  | 'SHAPE_MATCH_2AFC';
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
+export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
+export const TWO_AFC_CANVAS_SIZE = 280;
+export const FITTING_CANVAS_SIZE = 340;
 
-  // 绘制散点
-  for (const p of particles) {
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
-    ctx.fill();
-  }
-
-  // 绘制指示势线
-  if (axisAngle !== undefined) {
-    const rad = (axisAngle * Math.PI) / 180;
-    const cx = size / 2;
-    const cy = size / 2;
-    const L = size * 0.44;
-
-    ctx.strokeStyle = axisColor;
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(cx - L * Math.cos(rad), cy - L * Math.sin(rad));
-    ctx.lineTo(cx + L * Math.cos(rad), cy + L * Math.sin(rad));
-    ctx.stroke();
-  }
-}
-
-export function drawSpinePromptCanvas(
-  canvas: HTMLCanvasElement | null,
-  spine?: Point[],
-  size = 160,
-) {
-  if (!canvas || !spine || spine.length < 2) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  const [p1, p2] = spine;
-  ctx.strokeStyle = '#4F46E5';
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.moveTo(p1.x, p1.y);
-  ctx.lineTo(p2.x, p2.y);
-  ctx.stroke();
-
-  ctx.fillStyle = '#4F46E5';
-  ctx.beginPath();
-  ctx.arc(p1.x, p1.y, 4, 0, Math.PI * 2);
-  ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);
-  ctx.fill();
-}
-~~~~~
-
-~~~~~act
-write_file
-src/utils/canvas/drawNotanField.ts
-~~~~~
-~~~~~typescript
-export function drawRawGrayscaleNoiseField(
-  canvas: HTMLCanvasElement | null,
-  buffer?: number[],
-  dim = 120,
-  size = 260,
-) {
-  if (!canvas || !buffer) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const offscreen = document.createElement('canvas');
-  offscreen.width = dim;
-  offscreen.height = dim;
-  const offCtx = offscreen.getContext('2d');
-  if (!offCtx) return;
-
-  const imgData = offCtx.createImageData(dim, dim);
-  const pixels = imgData.data;
-
-  for (let i = 0; i < buffer.length; i++) {
-    const val = buffer[i];
-    const pIdx = i * 4;
-    pixels[pIdx] = val;
-    pixels[pIdx + 1] = val;
-    pixels[pIdx + 2] = val;
-    pixels[pIdx + 3] = 255;
-  }
-  offCtx.putImageData(imgData, 0, 0);
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(offscreen, 0, 0, size, size);
-}
-
-export function drawNotanNoiseField(
-  canvas: HTMLCanvasElement | null,
-  buffer?: number[],
-  dim = 120,
-  thresholdPercent = 50,
-  size = 400,
-) {
-  if (!canvas || !buffer) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const thresholdByte = Math.round((thresholdPercent / 100) * 255);
-
-  const offscreen = document.createElement('canvas');
-  offscreen.width = dim;
-  offscreen.height = dim;
-  const offCtx = offscreen.getContext('2d');
-  if (!offCtx) return;
-
-  const imgData = offCtx.createImageData(dim, dim);
-  const pixels = imgData.data;
-
-  for (let i = 0; i < buffer.length; i++) {
-    const isDark = buffer[i] <= thresholdByte;
-    const color = isDark ? 15 : 248;
-    const pIdx = i * 4;
-    pixels[pIdx] = color;
-    pixels[pIdx + 1] = color === 15 ? 23 : 250;
-    pixels[pIdx + 2] = color === 15 ? 42 : 252;
-    pixels[pIdx + 3] = 255;
-  }
-  offCtx.putImageData(imgData, 0, 0);
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(offscreen, 0, 0, size, size);
-}
-~~~~~
-
-~~~~~act
-write_file
-src/utils/canvas/drawPaletteTiles.ts
-~~~~~
-~~~~~typescript
-import { hsvToHex } from '../colorUtils';
-
-export interface PaletteTile {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  hsv: [number, number, number];
-  weight: number;
-}
-
-export function drawPaletteTilesCanvas(
-  canvas: HTMLCanvasElement | null,
-  tiles?: PaletteTile[],
-  size = 400,
-) {
-  if (!canvas || !tiles) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
-
-  for (const t of tiles) {
-    ctx.fillStyle = hsvToHex(...t.hsv);
-    ctx.fillRect(t.x, t.y, t.w, t.h);
-    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-    ctx.strokeRect(t.x, t.y, t.w, t.h);
-  }
-}
-~~~~~
-
-#### Acts 2: 拆分 `src/utils/abstraction/` 核心算法模块
-
-~~~~~act
-write_file
-src/utils/abstraction/types.ts
-~~~~~
-~~~~~typescript
-import type { Point } from '../../types';
-import type { PaletteTile } from '../canvas/drawPaletteTiles';
-
-export type { PaletteTile };
-
-export type AbstractionMode =
-  | 'GESTURE_AXIS'
-  | 'POLYGON_DECIMATION'
-  | 'NOTAN_THRESHOLD'
-  | 'PALETTE_CLUSTERING'
-  | 'TD_GESTURE_2AFC'
-  | 'TD_HULL_2AFC'
-  | 'TD_NOTAN_2AFC'
-  | 'TD_PALETTE_2AFC';
-
-export const ABSTRACTION_CANVAS_SIZE = 400;
-export const ABSTRACTION_THUMB_SIZE = 160;
-export const ABSTRACTION_2AFC_SIZE = 260;
-
-export interface AbstractionQuestionData {
+export interface NegativeSpaceQuestionData {
   id: string;
-  mode: AbstractionMode;
+  mode: NegativeSpaceMode;
   difficultyLevel: number;
+
+  // 单图滑块估算模式字段
+  vertices?: Point[];
+  canvasArea: number;
+  positiveArea?: number;
+  negativeArea?: number;
+  targetNegativeRatio?: number;
   tolerance: number;
 
-  // 1. GESTURE_AXIS 势线字段
-  particles?: Point[];
-  targetAngleDeg?: number; // 0..180 角度
+  // 2AFC 二分判别模式字段
+  verticesA?: Point[];
+  verticesB?: Point[];
+  negAreaA?: number;
+  negAreaB?: number;
+  negRatioA?: number;
+  negRatioB?: number;
+  largerSide?: 'A' | 'B';
+  areaDeltaPercent?: number;
 
-  // 2. POLYGON_DECIMATION 折线大形字段
-  detailedPolygon?: Point[];
-  simplifiedOptions?: Point[][]; // [polyA, polyB]
-  correctPolyIndex?: number;
-  correctPolyChoice?: 'A' | 'B';
+  // 负形反切定点模式字段
+  targetVertexIndex?: number;
+  targetPoint?: Point;
+  truncatedVertices?: Point[];
+  distractorPoints?: Point[];
+  gridDim?: number;
 
-  // 3. NOTAN_THRESHOLD 黑白素描归组字段
-  notanBuffer?: number[]; // 0..255 灰阶连续场数组
-  notanFieldDim?: number; // 灰度场分辨率 (如 120x120)
-  idealNotanThreshold?: number; // 0..100 理论最佳二值化阈值
-
-  // 4. PALETTE_CLUSTERING 调色板主调字段
-  paletteTiles?: PaletteTile[];
-  dominantColorHsv?: [number, number, number];
-  paletteOptions?: [number, number, number][]; // 4 个候选颜色
-  correctPaletteIndex?: number;
-
-  // 5. Top-Down 2AFC 通用题干与候选项
-  promptSpine?: Point[]; // 题干势线
-  particlesA?: Point[];
-  particlesB?: Point[];
-  correctParticleChoice?: 'A' | 'B';
-
-  promptHull?: Point[]; // 题干大模外壳
-  hullDetailedA?: Point[];
-  hullDetailedB?: Point[];
-  correctHullChoice?: 'A' | 'B';
-
-  promptNotanBuffer?: number[]; // 题干二值 Notan 剪影场
-  notanSceneBufferA?: number[]; // 选项 A 连续灰阶素描场
-  notanSceneBufferB?: number[]; // 选项 B 连续灰阶素描场
-  correctNotanChoice?: 'A' | 'B';
-
-  promptDominantColor?: [number, number, number]; // 题干单基准主色
-  palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
-  correctPatternIndex?: number; // 0..3
-  patternA?: PaletteTile[];
-  patternB?: PaletteTile[];
-  correctPatternChoice?: 'A' | 'B';
+  // 记忆匹配 2AFC 模式字段
+  targetPolygon?: Point[];
+  optionsPolygons?: Point[][];
+  correctOptionIndex?: number;
+  correctChoice?: 'A' | 'B';
+  displayTimeMs?: number;
 }
 
-export interface AbstractionHitResult {
+export interface NegativeSpaceHitResult {
   isHit: boolean;
-  userValue?: number;
-  targetValue?: number;
+  userRatio?: number;
+  targetRatio?: number;
   errorValue: number;
   tolerance: number;
+
+  // 2AFC 结果字段
   userChoice?: 'A' | 'B';
   correctChoice?: 'A' | 'B';
+  negRatioA?: number;
+  negRatioB?: number;
+
+  // 定点模式结果字段
+  clickPoint?: Point;
+  nearestGridPoint?: Point;
+  isWithinRange?: boolean;
+
+  // 记忆匹配 2AFC 结果字段
   userChoiceIndex?: number;
-  correctIndex?: number;
+  correctOptionIndex?: number;
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/utils/abstraction/pca.ts
+src/utils/negativeSpace/polygonMath.ts
 ~~~~~
 ~~~~~typescript
 import type { Point } from '../../types';
-import { ABSTRACTION_CANVAS_SIZE } from './types';
+import { expDecayInterpolate } from '../mathUtils';
+import { NEGATIVE_SPACE_CANVAS_SIZE, TWO_AFC_CANVAS_SIZE } from './types';
 
 /**
- * 计算点集的 PCA 第一主成分角度 (0..180°)
+ * 经典鞋带公式 (Shoelace Formula) 计算简单多边形面积
  */
-export function calcPCAOrientation(points: Point[]): number {
-  const n = points.length;
-  if (n < 2) return 0;
+export function calcPolygonArea(vertices: Point[]): number {
+  const n = vertices.length;
+  if (n < 3) return 0;
 
-  let sumX = 0;
-  let sumY = 0;
-  for (const p of points) {
-    sumX += p.x;
-    sumY += p.y;
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    area += vertices[i].x * vertices[j].y;
+    area -= vertices[j].x * vertices[i].y;
   }
-  const cx = sumX / n;
-  const cy = sumY / n;
-
-  let covXX = 0;
-  let covYY = 0;
-  let covXY = 0;
-  for (const p of points) {
-    const dx = p.x - cx;
-    const dy = p.y - cy;
-    covXX += dx * dx;
-    covYY += dy * dy;
-    covXY += dx * dy;
-  }
-
-  // 求解 2x2 协方差矩阵的最大特征向量方向
-  const theta = 0.5 * Math.atan2(2 * covXY, covXX - covYY);
-  let deg = (theta * 180) / Math.PI;
-  deg = ((deg % 180) + 180) % 180;
-  return Math.round(deg * 10) / 10;
+  return Math.abs(area) / 2;
 }
 
 /**
- * 生成带方向性与背景各向同性噪点的散点流
+ * 根据 Level (1..35) 计算允许的占比容错阈值 (百分比 Δ%)
  */
-export function generateFlowParticlesWithClutter(
-  angleDeg: number,
-  spreadRatio: number,
-  clutterRatio = 0,
-  size = ABSTRACTION_CANVAS_SIZE,
-): Point[] {
-  const rad = (angleDeg * Math.PI) / 180;
-  const count = 45 + Math.floor(Math.random() * 20);
-  const cx = size / 2;
-  const cy = size / 2;
-  const majorLen = size * 0.38;
-  const minorLen = majorLen * spreadRatio;
-
-  const points: Point[] = [];
-  const clutterCount = Math.floor(count * clutterRatio);
-  const flowCount = count - clutterCount;
-
-  // 主流动势粒子
-  for (let i = 0; i < flowCount; i++) {
-    const u = (Math.random() * 2 - 1) * majorLen;
-    const v = (Math.random() * 2 - 1) * minorLen;
-
-    const x = Math.round(cx + u * Math.cos(rad) - v * Math.sin(rad));
-    const y = Math.round(cy + u * Math.sin(rad) + v * Math.cos(rad));
-    points.push({
-      x: Math.max(15, Math.min(size - 15, x)),
-      y: Math.max(15, Math.min(size - 15, y)),
-    });
-  }
-
-  // 背景各向同性杂质噪点 (破除简单外轮廓一眼看穿)
-  for (let i = 0; i < clutterCount; i++) {
-    const r = Math.sqrt(Math.random()) * majorLen * 0.95;
-    const theta = Math.random() * Math.PI * 2;
-    const x = Math.round(cx + r * Math.cos(theta));
-    const y = Math.round(cy + r * Math.sin(theta));
-    points.push({
-      x: Math.max(15, Math.min(size - 15, x)),
-      y: Math.max(15, Math.min(size - 15, y)),
-    });
-  }
-
-  return points;
-}
-
-export function generateFlowParticles(
-  angleDeg: number,
-  spreadRatio: number,
-  size = ABSTRACTION_CANVAS_SIZE,
-): Point[] {
-  return generateFlowParticlesWithClutter(angleDeg, spreadRatio, 0, size);
-}
-~~~~~
-
-~~~~~act
-write_file
-src/utils/abstraction/polygon.ts
-~~~~~
-~~~~~typescript
-import type { Point } from '../../types';
-import { ABSTRACTION_2AFC_SIZE, ABSTRACTION_CANVAS_SIZE } from './types';
-
-/**
- * 将简单的多边形边缘打碎，生成拥有大量顶点的复杂细碎剪影
- */
-export function fractalizePolygon(
-  basePolygon: Point[],
-  detailLevel: number,
-  noiseFactor: number,
-): Point[] {
-  let currentPoints = [...basePolygon];
-
-  for (let iter = 0; iter < detailLevel; iter++) {
-    const nextPoints: Point[] = [];
-    for (let i = 0; i < currentPoints.length; i++) {
-      const p1 = currentPoints[i];
-      const p2 = currentPoints[(i + 1) % currentPoints.length];
-
-      nextPoints.push(p1);
-
-      const midX = (p1.x + p2.x) / 2;
-      const midY = (p1.y + p2.y) / 2;
-
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const len = Math.sqrt(dx * dx + dy * dy);
-      if (len === 0) continue;
-
-      const nx = -dy / len;
-      const ny = dx / len;
-
-      const displacement = (Math.random() * 2 - 1) * noiseFactor * (len * 0.3);
-      nextPoints.push({
-        x: Math.round(midX + nx * displacement),
-        y: Math.round(midY + ny * displacement),
-      });
-    }
-    currentPoints = nextPoints;
-  }
-  return currentPoints;
+export function getNegativeSpaceToleranceForLevel(level: number): number {
+  return Math.round(expDecayInterpolate(10.0, 1.2, level) * 10) / 10;
 }
 
 /**
- * 生成大模基础多边形
+ * 根据 Level (1..35) 计算 2AFC 负形面积相对差异率 delta
  */
-export function generateDetailedPolygon(
-  verticesCount: number,
-  size = ABSTRACTION_CANVAS_SIZE,
+export function get2AfcdeltaForLevel(level: number): number {
+  return expDecayInterpolate(0.35, 0.02, level);
+}
+
+/**
+ * 计算多边形质心
+ */
+export function calcPolygonCentroid(vertices: Point[]): Point {
+  let cx = 0;
+  let cy = 0;
+  for (const p of vertices) {
+    cx += p.x;
+    cy += p.y;
+  }
+  return { x: cx / vertices.length, y: cy / vertices.length };
+}
+
+/**
+ * 随机生成不自交的不规则正形多边形
+ */
+export function generateRandomPolygon(
+  level: number,
+  canvasSize = NEGATIVE_SPACE_CANVAS_SIZE,
 ): Point[] {
-  const cx = size / 2;
-  const cy = size / 2;
-  const baseR = size * 0.32;
+  const clamped = Math.max(1, Math.min(35, level));
+  const t = (clamped - 1) / 34;
+
+  const minVerts = 4 + Math.floor(t * 2);
+  const maxVerts = 4 + Math.floor(t * 4);
+  const vertexCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
+
+  const cx = canvasSize / 2 + (Math.random() - 0.5) * (canvasSize * 0.1);
+  const cy = canvasSize / 2 + (Math.random() - 0.5) * (canvasSize * 0.1);
+
+  const baseRadius = canvasSize * 0.28 + Math.random() * (canvasSize * 0.1);
+  const irregularity = 0.2 + t * 0.45;
+
   const angles: number[] = [];
-  const step = (Math.PI * 2) / verticesCount;
-
-  for (let i = 0; i < verticesCount; i++) {
-    angles.push(i * step + (Math.random() - 0.5) * step * 0.65);
+  const angleStep = (Math.PI * 2) / vertexCount;
+  for (let i = 0; i < vertexCount; i++) {
+    const rawA = i * angleStep + (Math.random() - 0.5) * angleStep * 0.7;
+    angles.push((rawA + Math.PI * 2) % (Math.PI * 2));
   }
   angles.sort((a, b) => a - b);
 
-  return angles.map((a) => {
-    const r = baseR * (0.65 + Math.random() * 0.65);
+  const vertices: Point[] = [];
+  for (const a of angles) {
+    const rJitter = 1 + (Math.random() * 2 - 1) * irregularity;
+    const r = Math.max(canvasSize * 0.1, Math.min(canvasSize * 0.42, baseRadius * rJitter));
+    const x = Math.round(Math.max(15, Math.min(canvasSize - 15, cx + r * Math.cos(a))));
+    const y = Math.round(Math.max(15, Math.min(canvasSize - 15, cy + r * Math.sin(a))));
+    vertices.push({ x, y });
+  }
+
+  return vertices;
+}
+
+/**
+ * 将任意多边形围绕质心缩放，使其面积精准等于 targetArea
+ */
+export function scalePolygonToArea(
+  vertices: Point[],
+  targetArea: number,
+  canvasSize = TWO_AFC_CANVAS_SIZE,
+): Point[] {
+  const currentArea = calcPolygonArea(vertices);
+  if (currentArea <= 0) return vertices;
+
+  const k = Math.sqrt(targetArea / currentArea);
+  const centroid = calcPolygonCentroid(vertices);
+  const canvasCenter = canvasSize / 2;
+
+  return vertices.map((p) => {
+    const scaledX = centroid.x + (p.x - centroid.x) * k;
+    const scaledY = centroid.y + (p.y - centroid.y) * k;
+    const centeredX = scaledX - centroid.x + canvasCenter;
+    const centeredY = scaledY - centroid.y + canvasCenter;
     return {
-      x: Math.round(cx + r * Math.cos(a)),
-      y: Math.round(cy + r * Math.sin(a)),
+      x: Math.round(Math.max(6, Math.min(canvasSize - 6, centeredX))),
+      y: Math.round(Math.max(6, Math.min(canvasSize - 6, centeredY))),
     };
   });
 }
 
 /**
- * 基于真理大模生成高度竞争性的对抗干扰多边形
+ * 对多边形顶点施加微小扰动生成高相似干扰项
  */
-export function generateAdversarialDistractorHull(
-  targetHull: Point[],
+export function perturbPolygon(
+  baseVertices: Point[],
   level: number,
-  size = ABSTRACTION_2AFC_SIZE,
+  canvasSize = NEGATIVE_SPACE_CANVAS_SIZE,
 ): Point[] {
-  const t = (Math.max(1, Math.min(35, level)) - 1) / 34;
-  const n = targetHull.length;
-  const distractor: Point[] = targetHull.map((p) => ({ ...p }));
-  const cx = size / 2;
-  const cy = size / 2;
+  const clamped = Math.max(1, Math.min(35, level));
+  const t = (clamped - 1) / 34;
+  const maxPerturb = 36;
+  const minPerturb = 6;
+  const perturbAmount = maxPerturb * (minPerturb / maxPerturb) ** t;
 
-  const mutationType = Math.random();
-
-  if (mutationType < 0.35 && n > 4) {
-    const idx = Math.floor(Math.random() * n);
-    const prev = targetHull[(idx - 1 + n) % n];
-    const next = targetHull[(idx + 1) % n];
-    distractor[idx] = {
-      x: Math.round((prev.x + next.x) / 2),
-      y: Math.round((prev.y + next.y) / 2),
-    };
-  } else {
-    const mutateCount = t > 0.6 && Math.random() < 0.5 ? 2 : 1;
-    const chosenIndices = new Set<number>();
-    while (chosenIndices.size < mutateCount) {
-      chosenIndices.add(Math.floor(Math.random() * n));
-    }
-
-    const shiftMag = 14 + (1 - t) * 26;
-
-    for (const idx of chosenIndices) {
-      const p = targetHull[idx];
-      const angleFromCenter = Math.atan2(p.y - cy, p.x - cx);
-      const angle = angleFromCenter + (Math.random() - 0.5) * (Math.PI * 0.8);
-
-      distractor[idx] = {
-        x: Math.max(10, Math.min(size - 10, Math.round(p.x + Math.cos(angle) * shiftMag))),
-        y: Math.max(10, Math.min(size - 10, Math.round(p.y + Math.sin(angle) * shiftMag))),
-      };
-    }
-  }
-
-  return distractor;
+  return baseVertices.map((p) => {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = Math.random() * perturbAmount + 2;
+    const x = Math.max(15, Math.min(canvasSize - 15, Math.round(p.x + Math.cos(angle) * dist)));
+    const y = Math.max(15, Math.min(canvasSize - 15, Math.round(p.y + Math.sin(angle) * dist)));
+    return { x, y };
+  });
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/utils/abstraction/questionGenerator.ts
+src/utils/negativeSpace/questionGenerator.ts
 ~~~~~
 ~~~~~typescript
 import type { Point } from '../../types';
-import { expDecayInterpolate } from '../mathUtils';
-import { calculateOtsuThreshold, createNoise2D, fbm2D } from '../noiseUtils';
-import { generateTetrahedralDistractors, hsvToOkLab } from '../oklchUtils';
-import { getDistractorDistanceForLevel } from '../relativeColorUtils';
-import { calcPCAOrientation, generateFlowParticles, generateFlowParticlesWithClutter } from './pca';
 import {
-  fractalizePolygon,
-  generateAdversarialDistractorHull,
-  generateDetailedPolygon,
-} from './polygon';
+  calcPolygonArea,
+  generateRandomPolygon,
+  get2AfcdeltaForLevel,
+  getNegativeSpaceToleranceForLevel,
+  perturbPolygon,
+  scalePolygonToArea,
+} from './polygonMath';
 import {
-  ABSTRACTION_2AFC_SIZE,
-  ABSTRACTION_CANVAS_SIZE,
-  ABSTRACTION_THUMB_SIZE,
-  type AbstractionMode,
-  type AbstractionQuestionData,
-  type PaletteTile,
+  FITTING_CANVAS_SIZE,
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type NegativeSpaceMode,
+  type NegativeSpaceQuestionData,
+  TWO_AFC_CANVAS_SIZE,
 } from './types';
 
-export function generateAbstractionQuestion(
-  mode: AbstractionMode,
+export function generateNegativeSpaceQuestion(
+  mode: NegativeSpaceMode,
   level: number,
-): AbstractionQuestionData {
-  const id = `abs_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+): NegativeSpaceQuestionData {
+  const id = `nsq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
-  const t = (clampedLevel - 1) / 34;
 
-  // 1. GESTURE_AXIS 势线角度提取
-  if (mode === 'GESTURE_AXIS') {
-    const targetAngleDeg = Math.floor(Math.random() * 180);
-    const spreadRatio = 0.15 + t * 0.5;
-    const particles = generateFlowParticles(targetAngleDeg, spreadRatio);
-    const realPCA = calcPCAOrientation(particles);
-    const tolerance = Math.round(expDecayInterpolate(18.0, 2.5, clampedLevel) * 10) / 10;
+  if (mode === 'AREA_COMPARISON_2AFC') {
+    const canvasArea = TWO_AFC_CANVAS_SIZE * TWO_AFC_CANVAS_SIZE;
+    const delta = get2AfcdeltaForLevel(clampedLevel);
+
+    const largerSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+    const baseNegRatio = 0.45 + Math.random() * 0.3;
+    const halfDelta = delta / 2;
+
+    const negRatioA =
+      largerSide === 'A' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
+    const negRatioB =
+      largerSide === 'B' ? baseNegRatio * (1 + halfDelta) : baseNegRatio * (1 - halfDelta);
+
+    const clampedRatioA = Math.max(0.2, Math.min(0.88, negRatioA));
+    const clampedRatioB = Math.max(0.2, Math.min(0.88, negRatioB));
+
+    const negAreaA = Math.round(canvasArea * clampedRatioA);
+    const negAreaB = Math.round(canvasArea * clampedRatioB);
+
+    const posAreaA = canvasArea - negAreaA;
+    const posAreaB = canvasArea - negAreaB;
+
+    const rawPolyA = generateRandomPolygon(clampedLevel);
+    const rawPolyB = generateRandomPolygon(clampedLevel);
+
+    const verticesA = scalePolygonToArea(rawPolyA, posAreaA, TWO_AFC_CANVAS_SIZE);
+    const verticesB = scalePolygonToArea(rawPolyB, posAreaB, TWO_AFC_CANVAS_SIZE);
+
+    const actualPosA = calcPolygonArea(verticesA);
+    const actualPosB = calcPolygonArea(verticesB);
+    const actualNegA = canvasArea - actualPosA;
+    const actualNegB = canvasArea - actualPosB;
+
+    const finalRatioA = Math.round((actualNegA / canvasArea) * 1000) / 10;
+    const finalRatioB = Math.round((actualNegB / canvasArea) * 1000) / 10;
+    const finalLarger: 'A' | 'B' = actualNegA >= actualNegB ? 'A' : 'B';
+    const actualDeltaPercent =
+      Math.round((Math.abs(actualNegA - actualNegB) / ((actualNegA + actualNegB) / 2)) * 1000) / 10;
 
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      particles,
-      targetAngleDeg: realPCA,
-      tolerance,
+      canvasArea,
+      verticesA,
+      verticesB,
+      negAreaA: Math.round(actualNegA),
+      negAreaB: Math.round(actualNegB),
+      negRatioA: finalRatioA,
+      negRatioB: finalRatioB,
+      largerSide: finalLarger,
+      areaDeltaPercent: actualDeltaPercent,
+      tolerance: delta,
     };
   }
 
-  // 2. POLYGON_DECIMATION 折线大形 (2AFC)
-  if (mode === 'POLYGON_DECIMATION') {
-    const minVerts = 4 + Math.floor(t * 3);
-    const maxVerts = 5 + Math.floor(t * 4);
-    const vertCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
+  if (mode === 'NEGATIVE_VERTEX_FITTING') {
+    const canvasArea = FITTING_CANVAS_SIZE * FITTING_CANVAS_SIZE;
+    const vertices = generateRandomPolygon(clampedLevel, FITTING_CANVAS_SIZE);
+    const n = vertices.length;
 
-    const targetHull = generateDetailedPolygon(vertCount, ABSTRACTION_2AFC_SIZE);
-    const distractorHull = generateAdversarialDistractorHull(
-      targetHull,
+    const targetVertexIndex = Math.floor(Math.random() * n);
+    const targetPoint = vertices[targetVertexIndex];
+
+    const prevIdx = (targetVertexIndex - 1 + n) % n;
+    const nextIdx = (targetVertexIndex + 1) % n;
+    const prevPoint = vertices[prevIdx];
+    const nextPoint = vertices[nextIdx];
+
+    const cutRatio = 0.45;
+    const cutPrev: Point = {
+      x: Math.round(prevPoint.x + (targetPoint.x - prevPoint.x) * (1 - cutRatio)),
+      y: Math.round(prevPoint.y + (targetPoint.y - prevPoint.y) * (1 - cutRatio)),
+    };
+    const cutNext: Point = {
+      x: Math.round(nextPoint.x + (targetPoint.x - nextPoint.x) * (1 - cutRatio)),
+      y: Math.round(nextPoint.y + (targetPoint.y - nextPoint.y) * (1 - cutRatio)),
+    };
+
+    const truncatedVertices: Point[] = [];
+    for (let i = 0; i < n; i++) {
+      if (i === targetVertexIndex) {
+        truncatedVertices.push(cutPrev);
+        truncatedVertices.push(cutNext);
+      } else {
+        truncatedVertices.push(vertices[i]);
+      }
+    }
+
+    const gridDim = 3;
+    const S_MAX = 24;
+    const S_MIN = 3.5;
+    const t = (clampedLevel - 1) / 34;
+    const S = S_MAX * (S_MIN / S_MAX) ** t;
+
+    const targetRow = Math.floor(Math.random() * gridDim);
+    const targetCol = Math.floor(Math.random() * gridDim);
+    const distractorPoints: Point[] = [];
+
+    for (let r = 0; r < gridDim; r++) {
+      for (let c = 0; c < gridDim; c++) {
+        const x = Math.round((targetPoint.x + (c - targetCol) * S) * 100) / 100;
+        const y = Math.round((targetPoint.y + (r - targetRow) * S) * 100) / 100;
+        distractorPoints.push({ x, y });
+      }
+    }
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      canvasArea,
+      vertices,
+      targetVertexIndex,
+      targetPoint,
+      truncatedVertices,
+      distractorPoints,
+      gridDim,
+      tolerance: S / 2,
+    };
+  }
+
+  if (mode === 'SHAPE_MATCH_2AFC') {
+    const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
+    const targetPolygon = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
+    const distractorPolygon = perturbPolygon(
+      targetPolygon,
       clampedLevel,
-      ABSTRACTION_2AFC_SIZE,
+      NEGATIVE_SPACE_CANVAS_SIZE,
     );
 
-    const scaleToMain = ABSTRACTION_CANVAS_SIZE / ABSTRACTION_2AFC_SIZE;
-    const baseForDetailed = targetHull.map((p) => ({
-      x: Math.round(p.x * scaleToMain),
-      y: Math.round(p.y * scaleToMain),
-    }));
+    const isTargetA = Math.random() < 0.5;
+    const optionsPolygons = isTargetA
+      ? [targetPolygon, distractorPolygon]
+      : [distractorPolygon, targetPolygon];
+    const correctOptionIndex = isTargetA ? 0 : 1;
+    const correctChoice = isTargetA ? 'A' : 'B';
 
-    const noiseFactor = 0.4 + t * 0.9;
-    const detailedPolygon = fractalizePolygon(baseForDetailed, 2, noiseFactor);
-
-    const isA = Math.random() < 0.5;
-    const simplifiedOptions = isA ? [targetHull, distractorHull] : [distractorHull, targetHull];
+    const t = (clampedLevel - 1) / 34;
+    const maxDisplayMs = 2400;
+    const minDisplayMs = 450;
+    const displayTimeMs = Math.round(maxDisplayMs * (minDisplayMs / maxDisplayMs) ** t);
 
     return {
       id,
       mode,
       difficultyLevel: clampedLevel,
-      detailedPolygon,
-      simplifiedOptions,
-      correctPolyIndex: isA ? 0 : 1,
-      correctPolyChoice: isA ? 'A' : 'B',
+      canvasArea,
+      targetPolygon,
+      optionsPolygons,
+      correctOptionIndex,
+      correctChoice,
+      displayTimeMs,
       tolerance: 0,
     };
   }
 
-  // 3. NOTAN_THRESHOLD 黑白素描二值归组
-  if (mode === 'NOTAN_THRESHOLD') {
-    const fieldDim = 120;
-    const buffer = new Uint8Array(fieldDim * fieldDim);
+  // 默认 RATIO_ESTIMATION 滑块评估模式
+  const tolerance = getNegativeSpaceToleranceForLevel(clampedLevel);
+  const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
 
-    const macroNoise = createNoise2D(Math.random());
-    const microNoise = createNoise2D(Math.random());
+  let vertices = generateRandomPolygon(clampedLevel);
+  let posArea = calcPolygonArea(vertices);
 
-    const keyType = Math.random();
-    const baseKey =
-      keyType < 0.35
-        ? 22 + Math.random() * 14
-        : keyType < 0.7
-          ? 64 + Math.random() * 14
-          : 44 + Math.random() * 12;
-
-    const macroScale = 0.012 + Math.random() * 0.008;
-    const macroAmp = 42 + Math.random() * 10;
-
-    const microScale = 0.08 + Math.random() * 0.04;
-    const microAmp = 10 + t * 38;
-
-    for (let y = 0; y < fieldDim; y++) {
-      for (let x = 0; x < fieldDim; x++) {
-        const idx = y * fieldDim + x;
-        const macroVal =
-          (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
-        const microVal =
-          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
-
-        const raw = baseKey + macroVal + microVal;
-        const clamped0to100 = Math.max(0, Math.min(100, raw));
-        buffer[idx] = Math.round((clamped0to100 / 100) * 255);
-      }
-    }
-
-    const otsuByte = calculateOtsuThreshold(buffer);
-    const idealNotanThreshold = Math.round((otsuByte / 255) * 100);
-    const tolerance = Math.round(expDecayInterpolate(10.0, 2.0, clampedLevel) * 10) / 10;
-
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      notanBuffer: Array.from(buffer),
-      notanFieldDim: fieldDim,
-      idealNotanThreshold,
-      tolerance,
-    };
+  let attempts = 0;
+  while ((posArea / canvasArea < 0.15 || posArea / canvasArea > 0.8) && attempts < 10) {
+    attempts++;
+    vertices = generateRandomPolygon(clampedLevel);
+    posArea = calcPolygonArea(vertices);
   }
 
-  // 4. PALETTE_CLUSTERING 主调色群提炼 (4AFC)
-  if (mode === 'PALETTE_CLUSTERING') {
-    const baseH = Math.floor(Math.random() * 360);
-    const baseS = Math.floor(Math.random() * 40) + 40;
-    const baseV = Math.floor(Math.random() * 40) + 40;
-
-    const dominantColorHsv: [number, number, number] = [baseH, baseS, baseV];
-    const paletteTiles: PaletteTile[] = [];
-    const gridSize = 4;
-    const tileSize = ABSTRACTION_CANVAS_SIZE / gridSize;
-
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        const jitterH = (baseH + (Math.floor(Math.random() * 40) - 20) + 360) % 360;
-        const jitterS = Math.max(10, Math.min(100, baseS + (Math.floor(Math.random() * 30) - 15)));
-        const jitterV = Math.max(15, Math.min(100, baseV + (Math.floor(Math.random() * 30) - 15)));
-        paletteTiles.push({
-          x: c * tileSize,
-          y: r * tileSize,
-          w: tileSize,
-          h: tileSize,
-          hsv: [jitterH, jitterS, jitterV],
-          weight: 1,
-        });
-      }
-    }
-
-    const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
-    const labDom = hsvToOkLab(...dominantColorHsv);
-    const distractors = generateTetrahedralDistractors(labDom, distractorDeltaE);
-
-    const rawOptions = [dominantColorHsv, ...distractors];
-    const indexed = rawOptions.map((opt, i) => ({ opt, isTarget: i === 0 }));
-    for (let i = indexed.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
-    }
-
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      paletteTiles,
-      dominantColorHsv,
-      paletteOptions: indexed.map((item) => item.opt),
-      correctPaletteIndex: indexed.findIndex((item) => item.isTarget),
-      tolerance: distractorDeltaE,
-    };
-  }
-
-  // 5. TD_GESTURE_2AFC 自顶向下势线寻源 (2AFC)
-  if (mode === 'TD_GESTURE_2AFC') {
-    const targetAngle = Math.floor(Math.random() * 180);
-    const angleDelta = expDecayInterpolate(36.0, 4.0, clampedLevel);
-    const sign = Math.random() < 0.5 ? 1 : -1;
-    const distractorAngle = (targetAngle + sign * angleDelta + 180) % 180;
-
-    const rad = (targetAngle * Math.PI) / 180;
-    const L = ABSTRACTION_THUMB_SIZE * 0.36;
-    const cx = ABSTRACTION_THUMB_SIZE / 2;
-    const cy = ABSTRACTION_THUMB_SIZE / 2;
-    const promptSpine: Point[] = [
-      { x: cx - L * Math.cos(rad), y: cy - L * Math.sin(rad) },
-      { x: cx + L * Math.cos(rad), y: cy + L * Math.sin(rad) },
-    ];
-
-    const spreadRatio = 0.18 + t * 0.38;
-    const clutterRatio = t * 0.28;
-
-    const partA = generateFlowParticlesWithClutter(
-      targetAngle,
-      spreadRatio,
-      clutterRatio,
-      ABSTRACTION_2AFC_SIZE,
-    );
-    const partB = generateFlowParticlesWithClutter(
-      distractorAngle,
-      spreadRatio,
-      clutterRatio,
-      ABSTRACTION_2AFC_SIZE,
-    );
-
-    const isA = Math.random() < 0.5;
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      promptSpine,
-      particlesA: isA ? partA : partB,
-      particlesB: isA ? partB : partA,
-      correctParticleChoice: isA ? 'A' : 'B',
-      tolerance: 0,
-    };
-  }
-
-  // 6. TD_HULL_2AFC 自顶向下大模寻形 (2AFC)
-  if (mode === 'TD_HULL_2AFC') {
-    const minVerts = 4 + Math.floor(t * 2);
-    const maxVerts = 5 + Math.floor(t * 4);
-    const vertCount = Math.floor(Math.random() * (maxVerts - minVerts + 1)) + minVerts;
-
-    const promptHull = generateDetailedPolygon(vertCount, ABSTRACTION_THUMB_SIZE);
-    const scale = ABSTRACTION_2AFC_SIZE / ABSTRACTION_THUMB_SIZE;
-
-    const targetBase = promptHull.map((p) => ({
-      x: Math.round(p.x * scale),
-      y: Math.round(p.y * scale),
-    }));
-
-    const distractorBase = generateAdversarialDistractorHull(
-      targetBase,
-      clampedLevel,
-      ABSTRACTION_2AFC_SIZE,
-    );
-
-    const noiseFactor = 0.45 + t * 0.85;
-    const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);
-    const distractorDetailed = fractalizePolygon(distractorBase, 2, noiseFactor);
-
-    const isA = Math.random() < 0.5;
-
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      promptHull,
-      hullDetailedA: isA ? targetDetailed : distractorDetailed,
-      hullDetailedB: isA ? distractorDetailed : targetDetailed,
-      correctHullChoice: isA ? 'A' : 'B',
-      tolerance: 0,
-    };
-  }
-
-  // 7. TD_NOTAN_2AFC 自顶向下素描骨架匹配 (2AFC)
-  if (mode === 'TD_NOTAN_2AFC') {
-    const fieldDim = 120;
-    const totalPixels = fieldDim * fieldDim;
-
-    const targetMacroNoise = createNoise2D(Math.random());
-    const distractorMacroNoise = createNoise2D(Math.random() + 100);
-    const microNoise = createNoise2D(Math.random() + 200);
-
-    const keyType = Math.random();
-    const baseKey =
-      keyType < 0.35
-        ? 24 + Math.random() * 12
-        : keyType < 0.7
-          ? 64 + Math.random() * 12
-          : 45 + Math.random() * 10;
-
-    const macroScale = 0.012 + Math.random() * 0.008;
-    const macroAmp = 42 + Math.random() * 10;
-    const microScale = 0.08 + Math.random() * 0.04;
-    const microAmp = 10 + t * 38;
-
-    const macroSimilarityWeight = t * 0.68;
-    const blendNorm = Math.sqrt((1 - macroSimilarityWeight) ** 2 + macroSimilarityWeight ** 2);
-
-    const targetMacroBuffer = new Uint8Array(totalPixels);
-    const targetSceneBuffer = new Uint8Array(totalPixels);
-    const distractorSceneBuffer = new Uint8Array(totalPixels);
-
-    for (let y = 0; y < fieldDim; y++) {
-      for (let x = 0; x < fieldDim; x++) {
-        const idx = y * fieldDim + x;
-        const targetMacroVal =
-          (fbm2D(x * macroScale, y * macroScale, 2, targetMacroNoise) - 0.5) * 2 * macroAmp;
-        const rawIndependentDistractorVal =
-          (fbm2D(x * macroScale, y * macroScale, 2, distractorMacroNoise) - 0.5) * 2 * macroAmp;
-
-        const distractorMacroVal =
-          ((1 - macroSimilarityWeight) * rawIndependentDistractorVal +
-            macroSimilarityWeight * targetMacroVal) /
-          blendNorm;
-
-        const microVal =
-          (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
-
-        const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
-        targetMacroBuffer[idx] = Math.round((macroRaw / 100) * 255);
-
-        const targetSceneRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal + microVal));
-        targetSceneBuffer[idx] = Math.round((targetSceneRaw / 100) * 255);
-
-        const distractorSceneRaw = Math.max(
-          0,
-          Math.min(100, baseKey + distractorMacroVal + microVal),
-        );
-        distractorSceneBuffer[idx] = Math.round((distractorSceneRaw / 100) * 255);
-      }
-    }
-
-    const otsuByte = calculateOtsuThreshold(targetMacroBuffer);
-    const promptBuffer = new Uint8Array(totalPixels);
-    for (let i = 0; i < totalPixels; i++) {
-      promptBuffer[i] = targetMacroBuffer[i] <= otsuByte ? 15 : 248;
-    }
-
-    const isA = Math.random() < 0.5;
-    return {
-      id,
-      mode,
-      difficultyLevel: clampedLevel,
-      promptNotanBuffer: Array.from(promptBuffer),
-      notanSceneBufferA: isA ? Array.from(targetSceneBuffer) : Array.from(distractorSceneBuffer),
-      notanSceneBufferB: isA ? Array.from(distractorSceneBuffer) : Array.from(targetSceneBuffer),
-      notanFieldDim: fieldDim,
-      correctNotanChoice: isA ? 'A' : 'B',
-      tolerance: 0,
-    };
-  }
-
-  // 8. TD_PALETTE_2AFC (4AFC) 自顶向下调性基底归位
-  const baseH = Math.floor(Math.random() * 360);
-  const baseS = Math.floor(Math.random() * 40) + 40;
-  const baseV = Math.floor(Math.random() * 40) + 40;
-  const promptDominantColor: [number, number, number] = [baseH, baseS, baseV];
-
-  const makePatternTiles = (domH: number, domS: number, domV: number) => {
-    const tiles: PaletteTile[] = [];
-    const gridSize = 3;
-    const tileDim = ABSTRACTION_2AFC_SIZE / gridSize;
-    for (let r = 0; r < gridSize; r++) {
-      for (let c = 0; c < gridSize; c++) {
-        const jitterH = (domH + (Math.floor(Math.random() * 36) - 18) + 360) % 360;
-        const jitterS = Math.max(10, Math.min(100, domS + (Math.floor(Math.random() * 26) - 13)));
-        const jitterV = Math.max(15, Math.min(100, domV + (Math.floor(Math.random() * 26) - 13)));
-        tiles.push({
-          x: c * tileDim,
-          y: r * tileDim,
-          w: tileDim,
-          h: tileDim,
-          hsv: [jitterH, jitterS, jitterV],
-          weight: 1,
-        });
-      }
-    }
-    return tiles;
-  };
-
-  const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
-  const labDom = hsvToOkLab(...promptDominantColor);
-  const distractorsDom = generateTetrahedralDistractors(labDom, distractorDeltaE);
-
-  const rawPatterns: PaletteTile[][] = [
-    makePatternTiles(baseH, baseS, baseV),
-    makePatternTiles(...distractorsDom[0]),
-    makePatternTiles(...distractorsDom[1]),
-    makePatternTiles(...distractorsDom[2]),
-  ];
-
-  const indexedPatterns = rawPatterns.map((pat, idx) => ({ pat, isTarget: idx === 0 }));
-  for (let i = indexedPatterns.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indexedPatterns[i], indexedPatterns[j]] = [indexedPatterns[j], indexedPatterns[i]];
-  }
-
-  const palettePatternOptions = indexedPatterns.map((item) => item.pat);
-  const correctPatternIndex = indexedPatterns.findIndex((item) => item.isTarget);
+  const negArea = canvasArea - posArea;
+  const targetNegativeRatio = Math.round((negArea / canvasArea) * 1000) / 10;
 
   return {
     id,
     mode,
     difficultyLevel: clampedLevel,
-    promptDominantColor,
-    palettePatternOptions,
-    correctPatternIndex,
-    tolerance: 0,
+    vertices,
+    canvasArea,
+    positiveArea: Math.round(posArea),
+    negativeArea: Math.round(negArea),
+    targetNegativeRatio,
+    tolerance,
   };
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/utils/abstraction/hitDetection.ts
+src/utils/negativeSpace/hitDetection.ts
 ~~~~~
 ~~~~~typescript
-import type { AbstractionHitResult, AbstractionQuestionData } from './types';
+import type { Point } from '../../types';
+import { checkHit } from '../geometry';
+import type { NegativeSpaceHitResult, NegativeSpaceQuestionData } from './types';
 
-export function checkAbstractionHit(
-  userAnswer: number | 'A' | 'B' | [number, number, number],
-  question: AbstractionQuestionData,
-): AbstractionHitResult {
-  const { mode } = question;
+export function checkNegativeSpaceHit(
+  userAnswer: number | 'A' | 'B' | Point,
+  question: NegativeSpaceQuestionData,
+): NegativeSpaceHitResult {
+  if (question.mode === 'NEGATIVE_VERTEX_FITTING') {
+    const clickPoint = userAnswer as Point;
+    const targetPoint = question.targetPoint ?? { x: 0, y: 0 };
+    const distractorPoints = question.distractorPoints ?? [];
 
-  if (mode === 'GESTURE_AXIS') {
-    const userDeg = typeof userAnswer === 'number' ? userAnswer : 0;
-    const targetDeg = question.targetAngleDeg ?? 0;
-    let diff = Math.abs(userDeg - targetDeg);
-    diff = Math.min(diff, 180 - diff);
-    const isHit = diff <= question.tolerance;
+    const hitRes = checkHit(clickPoint, targetPoint, distractorPoints);
+    return {
+      isHit: hitRes.isHit,
+      clickPoint,
+      nearestGridPoint: hitRes.nearestGridPoint,
+      errorValue: hitRes.errorDistance,
+      tolerance: question.tolerance,
+      isWithinRange: hitRes.isWithinRange,
+    };
+  }
+
+  if (question.mode === 'AREA_COMPARISON_2AFC') {
+    const userChoice = userAnswer as 'A' | 'B';
+    const isHit = userChoice === question.largerSide;
 
     return {
       isHit,
-      userValue: userDeg,
-      targetValue: targetDeg,
-      errorValue: Math.round(diff * 10) / 10,
+      userChoice,
+      correctChoice: question.largerSide,
+      negRatioA: question.negRatioA,
+      negRatioB: question.negRatioB,
+      errorValue: isHit ? 0 : (question.areaDeltaPercent ?? 0),
       tolerance: question.tolerance,
     };
   }
 
-  if (mode === 'POLYGON_DECIMATION') {
-    const choice = userAnswer as 'A' | 'B';
-    const isHit = choice === question.correctPolyChoice;
+  if (question.mode === 'SHAPE_MATCH_2AFC') {
+    let userChoiceIndex: number;
+    if (typeof userAnswer === 'number') {
+      userChoiceIndex = userAnswer;
+    } else if (userAnswer === 'A') {
+      userChoiceIndex = 0;
+    } else if (userAnswer === 'B') {
+      userChoiceIndex = 1;
+    } else {
+      userChoiceIndex = 0;
+    }
+
+    const isHit = userChoiceIndex === question.correctOptionIndex;
+    const userChoice = userChoiceIndex === 0 ? 'A' : 'B';
+
     return {
       isHit,
-      userChoice: choice,
-      correctChoice: question.correctPolyChoice,
+      userChoice,
+      userChoiceIndex,
+      correctChoice: question.correctChoice,
+      correctOptionIndex: question.correctOptionIndex,
       errorValue: isHit ? 0 : 1,
       tolerance: 0,
     };
   }
 
-  if (mode === 'NOTAN_THRESHOLD') {
-    const userVal = typeof userAnswer === 'number' ? userAnswer : 50;
-    const targetVal = question.idealNotanThreshold ?? 50;
-    const errorVal = Math.round(Math.abs(userVal - targetVal) * 10) / 10;
-    const isHit = errorVal <= question.tolerance;
+  const userRatio = typeof userAnswer === 'number' ? userAnswer : 50;
+  const targetRatio = question.targetNegativeRatio ?? 50;
+  const errorValue = Math.round(Math.abs(userRatio - targetRatio) * 10) / 10;
+  const isHit = errorValue <= question.tolerance;
 
-    return {
-      isHit,
-      userValue: userVal,
-      targetValue: targetVal,
-      errorValue: errorVal,
-      tolerance: question.tolerance,
-    };
-  }
-
-  if (mode === 'PALETTE_CLUSTERING') {
-    const chosenIndex = typeof userAnswer === 'number' ? userAnswer : 0;
-    const isHit = chosenIndex === question.correctPaletteIndex;
-    return {
-      isHit,
-      userChoiceIndex: chosenIndex,
-      correctIndex: question.correctPaletteIndex,
-      errorValue: isHit ? 0 : 1,
-      tolerance: question.tolerance,
-    };
-  }
-
-  if (mode === 'TD_PALETTE_2AFC') {
-    const chosenIndex =
-      typeof userAnswer === 'number'
-        ? userAnswer
-        : userAnswer === 'A'
-          ? 0
-          : userAnswer === 'B'
-            ? 1
-            : 0;
-    const isHit = chosenIndex === question.correctPatternIndex;
-    return {
-      isHit,
-      userChoiceIndex: chosenIndex,
-      correctIndex: question.correctPatternIndex,
-      errorValue: isHit ? 0 : 1,
-      tolerance: 0,
-    };
-  }
-
-  // 2AFC Top-Down 通用处理
-  const choice = userAnswer as 'A' | 'B';
-  let correctChoice: 'A' | 'B' = 'A';
-  if (mode === 'TD_GESTURE_2AFC') correctChoice = question.correctParticleChoice ?? 'A';
-  if (mode === 'TD_HULL_2AFC') correctChoice = question.correctHullChoice ?? 'A';
-  if (mode === 'TD_NOTAN_2AFC') correctChoice = question.correctNotanChoice ?? 'A';
-
-  const isHit = choice === correctChoice;
   return {
     isHit,
-    userChoice: choice,
-    correctChoice,
-    errorValue: isHit ? 0 : 1,
-    tolerance: 0,
+    userRatio,
+    targetRatio,
+    errorValue,
+    tolerance: question.tolerance,
   };
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/utils/abstraction/index.ts
+src/utils/negativeSpace/index.ts
 ~~~~~
 ~~~~~typescript
 export * from './types';
-export * from './pca';
-export * from './polygon';
+export * from './polygonMath';
 export * from './questionGenerator';
 export * from './hitDetection';
 ~~~~~
 
 ~~~~~act
 write_file
-src/utils/abstractionUtils.ts
+src/utils/negativeSpaceUtils.ts
 ~~~~~
 ~~~~~typescript
-export * from './abstraction/index';
+export * from './negativeSpace/index';
 ~~~~~
 
-#### Acts 3: 拆分 `src/components/abstraction/` 题型子视图组件
+#### Acts 2: 拆分 `src/components/negativeSpace/` 交互子视图组件
 
 ~~~~~act
 write_file
-src/components/abstraction/GestureAxisView.tsx
+src/components/negativeSpace/RatioEstimationView.tsx
 ~~~~~
 ~~~~~typescript
-import { Eye } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
-import { ABSTRACTION_CANVAS_SIZE, type AbstractionHitResult, type AbstractionQuestionData } from '../../utils/abstraction';
-import { drawParticlesCanvas } from '../../utils/canvas/drawParticles';
+import {
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../../utils/negativeSpace';
+import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 
-interface GestureAxisViewProps {
-  question: AbstractionQuestionData;
+interface RatioEstimationViewProps {
+  question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
+  userAnswer: NegativeSpaceHitResult | null;
   onAnswer: (val: number) => void;
   disabled?: boolean;
   hitMargin?: number;
+  showToleranceBand?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function GestureAxisView({
+export function RatioEstimationView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   hitMargin = 12,
+  showToleranceBand = true,
   showCanvasHints = true,
-}: GestureAxisViewProps) {
-  const [sliderVal, setSliderVal] = useState<number>(90);
+}: RatioEstimationViewProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [currentVal, setCurrentVal] = useState<number>(50.0);
 
-  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
-    max: 180,
-    step: 0.5,
+  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+    max: 100,
+    step: 0.1,
     disabled: disabled || showAnswer,
-    onValChange: setSliderVal,
-    onCommit: (committedVal) => {
-      if (!disabled && !showAnswer) onAnswer(committedVal);
-    },
+    onValChange: setCurrentVal,
   });
 
-  const activeVal = hoverVal !== null ? hoverVal : sliderVal;
+  useEffect(() => {
+    setCurrentVal(50.0);
+    setHoverVal(null);
+  }, [question.id, setHoverVal]);
 
   useEffect(() => {
-    drawParticlesCanvas(
-      canvasRef.current,
-      question.particles,
-      ABSTRACTION_CANVAS_SIZE,
-      showAnswer ? question.targetAngleDeg : activeVal,
-      showAnswer ? '#22C55E' : '#6366F1',
-    );
-  }, [question.particles, activeVal, showAnswer, question.targetAngleDeg]);
+    if (question.vertices) {
+      drawPolygonCanvas({
+        canvas: canvasRef.current,
+        vertices: question.vertices,
+        size: NEGATIVE_SPACE_CANVAS_SIZE,
+        fillColor: '#0F172A',
+        strokeColor: '#1E293B',
+        isHighlighted: showAnswer && userAnswer?.isHit,
+      });
+    }
+  }, [question.vertices, showAnswer, userAnswer]);
 
-  const unit = '°';
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (disabled || showAnswer) return;
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        onAnswer(currentVal);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, showAnswer, currentVal, onAnswer]);
+
+  const { targetNegativeRatio, tolerance } = question;
+  const activeVal = hoverVal !== null ? hoverVal : currentVal;
 
   return (
     <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
       {showCanvasHints && (
         <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          旋转主轴对齐粒子群动态流向 (0°~180°)
+          估计白色留白 (负形) 占整幅画面的面积百分比
         </div>
       )}
 
       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
         <canvas
           ref={canvasRef}
-          width={ABSTRACTION_CANVAS_SIZE}
-          height={ABSTRACTION_CANVAS_SIZE}
-          className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm"
+          width={NEGATIVE_SPACE_CANVAS_SIZE}
+          height={NEGATIVE_SPACE_CANVAS_SIZE}
+          className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 shadow-sm"
         />
       </div>
 
       <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-          <span>动态势线角度:</span>
+          <span>负形空间占比估计:</span>
           <span className="font-mono text-base font-black text-indigo-600">
-            {showAnswer ? `${userAnswer?.userValue ?? sliderVal}${unit}` : `${activeVal}${unit}`}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 w-full">
-          <span className="font-bold font-mono text-slate-400 text-xs">0{unit}</span>
-
-          <div
-            {...pointerProps}
-            style={
-              hitMargin > 0
-                ? {
-                    paddingLeft: `${hitMargin}px`,
-                    paddingRight: `${hitMargin}px`,
-                    marginLeft: `-${hitMargin}px`,
-                    marginRight: `-${hitMargin}px`,
-                    paddingTop: '6px',
-                    paddingBottom: '6px',
-                    marginTop: '-6px',
-                    marginBottom: '-6px',
-                  }
-                : undefined
-            }
-            className={`relative flex-1 flex items-center select-none touch-none ${
-              !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
-            }`}
-          >
-            <div
-              ref={trackRef}
-              className="relative w-full h-7 rounded-xl bg-slate-200 border border-slate-300/80 shadow-inner flex items-center overflow-hidden"
-            >
-              <div
-                className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
-                style={{ width: `${(activeVal / 180) * 100}%` }}
-              />
-
-              {!showAnswer && (
-                <div
-                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
-                  style={{ left: `${(activeVal / 180) * 100}%` }}
-                />
-              )}
-
-              {showAnswer && (
-                <div
-                  className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
-                  style={{ left: `${((question.targetAngleDeg ?? 0) / 180) * 100}%` }}
-                />
-              )}
-            </div>
-          </div>
-
-          <span className="font-bold font-mono text-slate-400 text-xs">180{unit}</span>
-        </div>
-
-        {showAnswer && (
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              绝对真理值:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {question.targetAngleDeg}
-                {unit}
-              </span>
-            </span>
-            <span
-              className={
-                userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
-              }
-            >
-              误差: {userAnswer?.errorValue}
-              {unit} (容错: ±{question.tolerance}
-              {unit})
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/components/abstraction/NotanThresholdView.tsx
-~~~~~
-~~~~~typescript
-import { Eye } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { useTrackPointer } from '../../hooks/useTrackPointer';
-import {
-  ABSTRACTION_2AFC_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../../utils/abstraction';
-import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
-
-interface NotanThresholdViewProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (val: number) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showCanvasHints?: boolean;
-}
-
-export function NotanThresholdView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showCanvasHints = true,
-}: NotanThresholdViewProps) {
-  const [sliderVal, setSliderVal] = useState<number>(50);
-  const canvasRefA = useRef<HTMLCanvasElement | null>(null);
-  const canvasRefB = useRef<HTMLCanvasElement | null>(null);
-
-  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
-    max: 100,
-    step: 0.5,
-    disabled: disabled || showAnswer,
-    onValChange: setSliderVal,
-    onCommit: (committedVal) => {
-      if (!disabled && !showAnswer) onAnswer(committedVal);
-    },
-  });
-
-  const activeVal = hoverVal !== null ? hoverVal : sliderVal;
-
-  useEffect(() => {
-    if (question.notanBuffer) {
-      drawRawGrayscaleNoiseField(
-        canvasRefA.current,
-        question.notanBuffer,
-        question.notanFieldDim ?? 120,
-        ABSTRACTION_2AFC_SIZE,
-      );
-      drawNotanNoiseField(
-        canvasRefB.current,
-        question.notanBuffer,
-        question.notanFieldDim ?? 120,
-        showAnswer ? question.idealNotanThreshold : activeVal,
-        ABSTRACTION_2AFC_SIZE,
-      );
-    }
-  }, [question.notanBuffer, question.notanFieldDim, question.idealNotanThreshold, activeVal, showAnswer]);
-
-  return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            灰阶原图 (Raw Scene)
-          </span>
-          <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-            <canvas
-              ref={canvasRefA}
-              width={ABSTRACTION_2AFC_SIZE}
-              height={ABSTRACTION_2AFC_SIZE}
-              className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
-            二值显影 (Notan Output)
-          </span>
-          <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-            <canvas
-              ref={canvasRefB}
-              width={ABSTRACTION_2AFC_SIZE}
-              height={ABSTRACTION_2AFC_SIZE}
-              className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
-          <span>二值化截断阈值:</span>
-          <span className="font-mono text-base font-black text-indigo-600">
-            {showAnswer ? `${userAnswer?.userValue ?? sliderVal}%` : `${activeVal}%`}
+            {showAnswer ? `${userAnswer?.userRatio ?? currentVal}%` : `${activeVal}%`}
           </span>
         </div>
 
@@ -1378,15 +710,38 @@ export function NotanThresholdView({
               {!showAnswer && (
                 <div
                   className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
-                  style={{ left: `${activeVal}%` }}
+                  style={{ left: `${currentVal}%` }}
                 />
               )}
 
+              {!showAnswer && showToleranceBand && (
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    style={{ left: `${Math.max(0, activeVal - tolerance)}%` }}
+                  />
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    style={{ left: `${Math.min(100, activeVal + tolerance)}%` }}
+                  />
+                </>
+              )}
+
               {showAnswer && (
-                <div
-                  className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
-                  style={{ left: `${question.idealNotanThreshold ?? 50}%` }}
-                />
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
+                    style={{ left: `${targetNegativeRatio}%` }}
+                  />
+                  {userAnswer && (
+                    <div
+                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white shadow-md ${
+                        userAnswer.isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}
+                      style={{ left: `${userAnswer.userRatio}%` }}
+                    />
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1397,21 +752,32 @@ export function NotanThresholdView({
         {showAnswer && (
           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              最佳素描阈值:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {question.idealNotanThreshold}%
-              </span>
+              真实负形占比:{' '}
+              <span className="font-bold text-slate-800 font-mono">{targetNegativeRatio}%</span>
             </span>
             <span
               className={
                 userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
               }
             >
-              误差: {userAnswer?.errorValue}% (容错: ±{question.tolerance}%)
+              误差: {userAnswer?.errorValue}% (容错: ±{tolerance}%)
             </span>
           </div>
         )}
       </div>
+
+      {!showAnswer && (
+        <button
+          type="button"
+          onClick={() => {
+            if (!disabled && !showAnswer) onAnswer(currentVal);
+          }}
+          disabled={disabled}
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
+        >
+          确认提交 (Space)
+        </button>
+      )}
     </div>
   );
 }
@@ -1419,48 +785,37 @@ export function NotanThresholdView({
 
 ~~~~~act
 write_file
-src/components/abstraction/TopDown2AfcView.tsx
+src/components/negativeSpace/AreaComparison2AfcView.tsx
 ~~~~~
 ~~~~~typescript
-import { Columns } from 'lucide-preact';
+import { Check, Columns, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import {
-  ABSTRACTION_2AFC_SIZE,
-  ABSTRACTION_CANVAS_SIZE,
-  ABSTRACTION_THUMB_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../../utils/abstraction';
-import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
-import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../utils/canvas/drawParticles';
+  TWO_AFC_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../../utils/negativeSpace';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
-import { AnswerDiagnosticBar } from '../common/AnswerDiagnosticBar';
-import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
 
-interface TopDown2AfcViewProps {
-  question: AbstractionQuestionData;
+interface AreaComparison2AfcViewProps {
+  question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
+  userAnswer: NegativeSpaceHitResult | null;
   onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function TopDown2AfcView({
+export function AreaComparison2AfcView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: TopDown2AfcViewProps) {
-  const { mode } = question;
-  const isPoly = mode === 'POLYGON_DECIMATION';
-
-  const canvasMainRef = useRef<HTMLCanvasElement | null>(null);
+}: AreaComparison2AfcViewProps) {
   const canvasRefA = useRef<HTMLCanvasElement | null>(null);
   const canvasRefB = useRef<HTMLCanvasElement | null>(null);
-  const canvasThumbRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
   useEffect(() => {
@@ -1468,26 +823,21 @@ export function TopDown2AfcView({
   }, [question.id]);
 
   useEffect(() => {
-    if (isPoly && question.detailedPolygon) {
-      drawPolygonCanvas({ canvas: canvasMainRef.current, vertices: question.detailedPolygon, size: ABSTRACTION_CANVAS_SIZE });
-      drawPolygonCanvas({ canvas: canvasRefA.current, vertices: question.simplifiedOptions?.[0], size: ABSTRACTION_2AFC_SIZE, fillColor: '#4F46E5' });
-      drawPolygonCanvas({ canvas: canvasRefB.current, vertices: question.simplifiedOptions?.[1], size: ABSTRACTION_2AFC_SIZE, fillColor: '#4F46E5' });
-    } else if (mode === 'TD_GESTURE_2AFC') {
-      drawSpinePromptCanvas(canvasThumbRef.current, question.promptSpine, ABSTRACTION_THUMB_SIZE);
-      drawParticlesCanvas(canvasRefA.current, question.particlesA, ABSTRACTION_2AFC_SIZE);
-      drawParticlesCanvas(canvasRefB.current, question.particlesB, ABSTRACTION_2AFC_SIZE);
-    } else if (mode === 'TD_HULL_2AFC') {
-      drawPolygonCanvas({ canvas: canvasThumbRef.current, vertices: question.promptHull, size: ABSTRACTION_THUMB_SIZE, fillColor: '#4F46E5', strokeColor: '#3730A3' });
-      drawPolygonCanvas({ canvas: canvasRefA.current, vertices: question.hullDetailedA, size: ABSTRACTION_2AFC_SIZE });
-      drawPolygonCanvas({ canvas: canvasRefB.current, vertices: question.hullDetailedB, size: ABSTRACTION_2AFC_SIZE });
-    } else if (mode === 'TD_NOTAN_2AFC') {
-      if (question.promptNotanBuffer && question.notanSceneBufferA && question.notanSceneBufferB) {
-        drawRawGrayscaleNoiseField(canvasThumbRef.current, question.promptNotanBuffer, question.notanFieldDim ?? 120, ABSTRACTION_THUMB_SIZE);
-        drawRawGrayscaleNoiseField(canvasRefA.current, question.notanSceneBufferA, question.notanFieldDim ?? 120, ABSTRACTION_2AFC_SIZE);
-        drawRawGrayscaleNoiseField(canvasRefB.current, question.notanSceneBufferB, question.notanFieldDim ?? 120, ABSTRACTION_2AFC_SIZE);
-      }
-    }
-  }, [mode, isPoly, question]);
+    drawPolygonCanvas({
+      canvas: canvasRefA.current,
+      vertices: question.verticesA,
+      size: TWO_AFC_CANVAS_SIZE,
+      fillColor: '#0F172A',
+      strokeColor: '#1E293B',
+    });
+    drawPolygonCanvas({
+      canvas: canvasRefB.current,
+      vertices: question.verticesB,
+      size: TWO_AFC_CANVAS_SIZE,
+      fillColor: '#0F172A',
+      strokeColor: '#1E293B',
+    });
+  }, [question.verticesA, question.verticesB]);
 
   const handleSelectChoice = useCallback(
     (choice: 'A' | 'B') => {
@@ -1498,364 +848,140 @@ export function TopDown2AfcView({
     [disabled, showAnswer, onAnswer],
   );
 
-  const isTargetA = isPoly
-    ? question.correctPolyChoice === 'A'
-    : userAnswer?.correctChoice === 'A' ||
-      question.correctParticleChoice === 'A' ||
-      question.correctHullChoice === 'A' ||
-      question.correctNotanChoice === 'A';
-  const isTargetB = !isTargetA;
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (disabled || showAnswer) return;
+      if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
+        e.preventDefault();
+        handleSelectChoice('A');
+      } else if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
+        e.preventDefault();
+        handleSelectChoice('B');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, showAnswer, handleSelectChoice]);
+
+  const largerSide = question.largerSide;
+  const isAHit = largerSide === 'A';
+  const isBHit = largerSide === 'B';
 
   return (
-    <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
       {showCanvasHints && (
         <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
           <Columns className="w-3.5 h-3.5 text-indigo-600" />
-          {isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
+          判别哪一侧的白色留白 (负形) 面积更大 (键 1 / 2)
         </div>
       )}
 
-      {!isPoly && (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
-          </span>
-          <canvas
-            ref={canvasThumbRef}
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-          />
-        </div>
-      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+        {/* 卡片 A */}
+        <button
+          type="button"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelectChoice('A')}
+          className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+            showAnswer
+              ? isAHit
+                ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                : selectedChoice === 'A'
+                  ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                  : 'bg-slate-50/60 border-slate-200 opacity-60'
+              : selectedChoice === 'A'
+                ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+              <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                1
+              </span>
+              区域 A
+            </span>
 
-      {isPoly && (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            多边形原图
-          </span>
-          <canvas
-            ref={canvasMainRef}
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-40 h-40 rounded-xl border border-slate-200 shadow-sm"
-          />
-        </div>
-      )}
-
-      <Choice2AfcContainer
-        optionA={{
-          key: 'A',
-          title: '区域 A (键 1)',
-          isCorrect: isTargetA,
-          content: (
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefA}
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          ),
-        }}
-        optionB={{
-          key: 'B',
-          title: '区域 B (键 2)',
-          isCorrect: isTargetB,
-          content: (
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefB}
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          ),
-        }}
-        selectedChoice={selectedChoice}
-        showAnswer={showAnswer}
-        disabled={disabled}
-        enableKeyboardShortcuts={true}
-        onSelect={handleSelectChoice}
-      />
-
-      {showAnswer && (
-        <AnswerDiagnosticBar
-          isHit={Boolean(userAnswer?.isHit)}
-          successTitle="瞬时结构透视识别完全正确！"
-          failTitle="结构透视判断出现偏差"
-          subText={`(正确匹配为: 区域 ${userAnswer?.correctChoice ?? (isTargetA ? 'A' : 'B')})`}
-        />
-      )}
-    </div>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/components/abstraction/PaletteClusteringView.tsx
-~~~~~
-~~~~~typescript
-import { Sparkles } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import {
-  ABSTRACTION_CANVAS_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../../utils/abstraction';
-import { drawPaletteTilesCanvas } from '../../utils/canvas/drawPaletteTiles';
-import { hsvToHex } from '../../utils/colorUtils';
-
-interface PaletteClusteringViewProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (idx: number) => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function PaletteClusteringView({
-  question,
-  showAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: PaletteClusteringViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-
-  useEffect(() => {
-    setSelectedIdx(null);
-  }, [question.id]);
-
-  useEffect(() => {
-    drawPaletteTilesCanvas(canvasRef.current, question.paletteTiles, ABSTRACTION_CANVAS_SIZE);
-  }, [question.paletteTiles]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (disabled || showAnswer) return;
-      if (['1', '2', '3', '4'].includes(e.key)) {
-        e.preventDefault();
-        const idx = Number.parseInt(e.key, 10) - 1;
-        setSelectedIdx(idx);
-        onAnswer(idx);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, showAnswer, onAnswer]);
-
-  return (
-    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          选出最能代表全局主调的加权主色 (键 1-4)
-        </div>
-      )}
-
-      <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
-        <canvas
-          ref={canvasRef}
-          width={ABSTRACTION_CANVAS_SIZE}
-          height={ABSTRACTION_CANVAS_SIZE}
-          className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm"
-        />
-      </div>
-
-      <div className="grid grid-cols-4 gap-3 w-full">
-        {question.paletteOptions?.map((hsv, idx) => {
-          const isSelected = selectedIdx === idx;
-          const isTarget = idx === question.correctPaletteIndex;
-          const hex = hsvToHex(...hsv);
-
-          let border = 'border-slate-200';
-          if (showAnswer) {
-            border = isTarget
-              ? 'border-emerald-500 ring-2 ring-emerald-500/40'
-              : isSelected
-                ? 'border-rose-400 opacity-60'
-                : 'border-slate-200 opacity-40';
-          } else if (isSelected) {
-            border = 'border-indigo-600 ring-2 ring-indigo-500/30';
-          }
-
-          return (
-            <button
-              key={`palette-option-${idx}-${hex}`}
-              type="button"
-              disabled={disabled || showAnswer}
-              onClick={() => {
-                setSelectedIdx(idx);
-                onAnswer(idx);
-              }}
-              className={`p-1.5 rounded-2xl border bg-white transition-all duration-150 active:scale-95 cursor-pointer ${border}`}
-            >
-              <div
-                className="w-full aspect-square rounded-xl shadow-inner border border-white/60"
-                style={{ backgroundColor: hex }}
-              />
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/components/abstraction/TopDownPatternView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Sparkles, X } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import {
-  ABSTRACTION_2AFC_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../../utils/abstraction';
-import { drawPaletteTilesCanvas } from '../../utils/canvas/drawPaletteTiles';
-import { hsvToHex } from '../../utils/colorUtils';
-
-interface TopDownPatternViewProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (idx: number) => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function TopDownPatternView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: TopDownPatternViewProps) {
-  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
-  const patternCanvasRef0 = useRef<HTMLCanvasElement | null>(null);
-  const patternCanvasRef1 = useRef<HTMLCanvasElement | null>(null);
-  const patternCanvasRef2 = useRef<HTMLCanvasElement | null>(null);
-  const patternCanvasRef3 = useRef<HTMLCanvasElement | null>(null);
-
-  const patternRefs = [patternCanvasRef0, patternCanvasRef1, patternCanvasRef2, patternCanvasRef3];
-
-  useEffect(() => {
-    setSelectedIdx(null);
-  }, [question.id]);
-
-  useEffect(() => {
-    if (question.palettePatternOptions) {
-      question.palettePatternOptions.forEach((pat, i) => {
-        if (patternRefs[i].current) {
-          drawPaletteTilesCanvas(patternRefs[i].current, pat, ABSTRACTION_2AFC_SIZE);
-        }
-      });
-    }
-  }, [question.palettePatternOptions]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (disabled || showAnswer) return;
-      if (['1', '2', '3', '4'].includes(e.key)) {
-        e.preventDefault();
-        const idx = Number.parseInt(e.key, 10) - 1;
-        setSelectedIdx(idx);
-        onAnswer(idx);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, showAnswer, onAnswer]);
-
-  const promptHex = question.promptDominantColor
-    ? hsvToHex(...question.promptDominantColor)
-    : '#6366F1';
-  const targetIdx = question.correctPatternIndex ?? 0;
-  const chosenIdx = userAnswer?.userChoiceIndex ?? selectedIdx;
-
-  return (
-    <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          观察上方基准主色，选出以此为基调的拼贴画面 (键 1-4)
-        </div>
-      )}
-
-      <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          基准主调色
-        </span>
-        <div
-          className="w-16 h-16 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"
-          style={{ backgroundColor: promptHex }}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-        {question.palettePatternOptions?.map((pat, idx) => {
-          const isSelected = chosenIdx === idx;
-          const isTarget = idx === targetIdx;
-          const keyLabel = (idx + 1).toString();
-          const patternKey = `td-pattern-card-${question.id}-${pat.map((t) => `${t.x}_${t.y}_${t.hsv.join('_')}`).join('-')}`;
-
-          let border = 'border-slate-200/90 hover:border-indigo-300 hover:shadow-md bg-slate-50';
-          if (showAnswer) {
-            if (isTarget) {
-              border = 'bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
-            } else if (isSelected) {
-              border = 'bg-rose-50/50 border-rose-400 shadow-sm';
-            } else {
-              border = 'bg-slate-50/60 border-slate-200 opacity-50';
-            }
-          } else if (isSelected) {
-            border = 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md';
-          }
-
-          return (
-            <button
-              key={patternKey}
-              type="button"
-              disabled={disabled || showAnswer}
-              onClick={() => {
-                setSelectedIdx(idx);
-                onAnswer(idx);
-              }}
-              className={`group flex flex-col items-center gap-2.5 p-3 rounded-2xl border transition-all duration-200 text-left active:scale-[0.98] ${border}`}
-            >
-              <div className="flex items-center justify-between w-full px-1">
-                <span className="flex items-center gap-1.5 text-xs font-black text-slate-700">
-                  <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
-                    {keyLabel}
-                  </span>
-                  画面 {keyLabel}
-                </span>
-                {showAnswer && isTarget && (
-                  <Check className="w-4 h-4 text-emerald-600 font-extrabold" />
+            {showAnswer && (
+              <span
+                className={`text-xs font-extrabold flex items-center gap-1 ${
+                  isAHit ? 'text-emerald-600' : 'text-slate-400'
+                }`}
+              >
+                {isAHit ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    留白更大 ({question.negRatioA}%)
+                  </>
+                ) : (
+                  `留白 (${question.negRatioA}%)`
                 )}
-              </div>
+              </span>
+            )}
+          </div>
 
-              <div className="w-full aspect-square bg-white p-1 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
-                <canvas
-                  ref={patternRefs[idx]}
-                  width={ABSTRACTION_2AFC_SIZE}
-                  height={ABSTRACTION_2AFC_SIZE}
-                  className="w-full aspect-square rounded-lg shadow-sm"
-                />
-              </div>
-            </button>
-          );
-        })}
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={canvasRefA}
+              width={TWO_AFC_CANVAS_SIZE}
+              height={TWO_AFC_CANVAS_SIZE}
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
+            />
+          </div>
+        </button>
+
+        {/* 卡片 B */}
+        <button
+          type="button"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelectChoice('B')}
+          className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+            showAnswer
+              ? isBHit
+                ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                : selectedChoice === 'B'
+                  ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                  : 'bg-slate-50/60 border-slate-200 opacity-60'
+              : selectedChoice === 'B'
+                ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+          }`}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+              <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                2
+              </span>
+              区域 B
+            </span>
+
+            {showAnswer && (
+              <span
+                className={`text-xs font-extrabold flex items-center gap-1 ${
+                  isBHit ? 'text-emerald-600' : 'text-slate-400'
+                }`}
+              >
+                {isBHit ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    留白更大 ({question.negRatioB}%)
+                  </>
+                ) : (
+                  `留白 (${question.negRatioB}%)`
+                )}
+              </span>
+            )}
+          </div>
+
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={canvasRefB}
+              width={TWO_AFC_CANVAS_SIZE}
+              height={TWO_AFC_CANVAS_SIZE}
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
+            />
+          </div>
+        </button>
       </div>
 
       {showAnswer && (
@@ -1872,9 +998,295 @@ export function TopDownPatternView({
             </div>
             <div className="text-xs">
               <span className="font-bold text-slate-800">
-                {userAnswer?.isHit ? '调性基底寻源匹配完全正确！' : '色彩调性感知出现偏差'}
+                {userAnswer?.isHit ? '瞬时直觉判断正确！' : '直觉判断出现偏差'}
               </span>
-              <span className="text-slate-400 ml-2">(正确匹配为: 画面 {targetIdx + 1})</span>
+              <span className="text-slate-400 ml-2">
+                (留白实际差异率 Δ ={' '}
+                <strong className="font-mono text-slate-700">{question.areaDeltaPercent}%</strong>)
+              </span>
+            </div>
+          </div>
+
+          <div className="text-xs font-mono font-bold text-slate-600">
+            A: {question.negRatioA}% vs B: {question.negRatioB}%
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/components/negativeSpace/VertexFittingView.tsx
+~~~~~
+~~~~~typescript
+import { Check, Columns, X } from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import type { Point } from '../../types';
+import {
+  FITTING_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../../utils/negativeSpace';
+import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
+import {
+  findNearestGridPoint,
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+} from '../../utils/geometry';
+
+interface VertexFittingViewProps {
+  question: NegativeSpaceQuestionData;
+  showAnswer: boolean;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (clickPoint: Point) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+function drawDot(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  radius: number,
+) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+export function VertexFittingView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: VertexFittingViewProps) {
+  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
+  const rightFittingRef = useRef<HTMLCanvasElement | null>(null);
+  const [fittingHoverPoint, setFittingHoverPoint] = useState<Point | null>(null);
+
+  useEffect(() => {
+    setFittingHoverPoint(null);
+  }, [question.id]);
+
+  useEffect(() => {
+    if (!question.vertices) return;
+
+    drawPolygonCanvas({
+      canvas: leftFittingRef.current,
+      vertices: question.vertices,
+      size: FITTING_CANVAS_SIZE,
+      fillColor: '#0F172A',
+      strokeColor: '#1E293B',
+    });
+
+    const rightCanvas = rightFittingRef.current;
+    if (rightCanvas) {
+      const ctx = rightCanvas.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, FITTING_CANVAS_SIZE, FITTING_CANVAS_SIZE);
+
+        if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
+          for (let i = 1; i < question.truncatedVertices.length; i++) {
+            ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
+          }
+          ctx.closePath();
+          ctx.fillStyle = '#0F172A';
+          ctx.fill();
+          ctx.strokeStyle = '#1E293B';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        const distractorPoints = question.distractorPoints || [];
+        const dotRadius = getDynamicDotRadius(distractorPoints);
+        const hoverRadius = Math.max(2.5, dotRadius * 1.6);
+
+        for (const p of distractorPoints) {
+          drawDot(ctx, p.x, p.y, '#888888', dotRadius);
+        }
+
+        if (!disabled && !showAnswer && fittingHoverPoint) {
+          drawDot(ctx, fittingHoverPoint.x, fittingHoverPoint.y, '#4F46E5', hoverRadius);
+        }
+
+        if (showAnswer && question.targetPoint) {
+          const { x: tx, y: ty } = question.targetPoint;
+          const { size: chSize, lineWidth: chLineWidth } =
+            getDynamicCrosshairMetrics(distractorPoints);
+
+          ctx.beginPath();
+          ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
+          for (let i = 1; i < question.vertices.length; i++) {
+            ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+          ctx.lineWidth = 2.5;
+          ctx.setLineDash([4, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.strokeStyle = '#00AA00';
+          ctx.lineWidth = chLineWidth;
+          ctx.beginPath();
+          ctx.moveTo(tx - chSize, ty);
+          ctx.lineTo(tx + chSize, ty);
+          ctx.moveTo(tx, ty - chSize);
+          ctx.lineTo(tx, ty + chSize);
+          ctx.stroke();
+          drawDot(ctx, tx, ty, '#000000', dotRadius);
+
+          if (userAnswer?.nearestGridPoint && !userAnswer.isHit) {
+            const chosen = userAnswer.nearestGridPoint;
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(chosen.x, chosen.y);
+            ctx.lineTo(tx, ty);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            drawDot(ctx, chosen.x, chosen.y, '#FF0000', dotRadius);
+          }
+        }
+      }
+    }
+  }, [question, showAnswer, userAnswer, fittingHoverPoint, disabled]);
+
+  const handleFittingMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer || !question.distractorPoints) {
+      if (fittingHoverPoint) setFittingHoverPoint(null);
+      return;
+    }
+
+    const canvas = rightFittingRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = FITTING_CANVAS_SIZE / rect.width;
+    const scaleY = FITTING_CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(
+      { x: clickX, y: clickY },
+      question.distractorPoints,
+    );
+
+    if (isWithinRange) {
+      setFittingHoverPoint(nearestPoint);
+    } else if (fittingHoverPoint) {
+      setFittingHoverPoint(null);
+    }
+  };
+
+  const handleFittingClick = (e: MouseEvent) => {
+    if (disabled || showAnswer || !question.distractorPoints) return;
+
+    const canvas = rightFittingRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = FITTING_CANVAS_SIZE / rect.width;
+    const scaleY = FITTING_CANVAS_SIZE / rect.height;
+
+    const clickX = Math.round((e.clientX - rect.left) * scaleX * 100) / 100;
+    const clickY = Math.round((e.clientY - rect.top) * scaleY * 100) / 100;
+
+    const clickPoint: Point = { x: clickX, y: clickY };
+    const { isWithinRange } = findNearestGridPoint(clickPoint, question.distractorPoints);
+
+    if (!isWithinRange) return;
+
+    setFittingHoverPoint(null);
+    onAnswer(clickPoint);
+  };
+
+  return (
+    <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          <Columns className="w-3.5 h-3.5 text-indigo-600" />
+          对比左侧负形空间，在右侧点阵中点击定位被截断的顶点
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full">
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            完整剪影参考
+          </span>
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={leftFittingRef}
+              width={FITTING_CANVAS_SIZE}
+              height={FITTING_CANVAS_SIZE}
+              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-1.5">
+          <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider flex items-center gap-1">
+            交互定点画布 (点击定位)
+          </span>
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={rightFittingRef}
+              width={FITTING_CANVAS_SIZE}
+              height={FITTING_CANVAS_SIZE}
+              onClick={handleFittingClick}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label="右侧定点做答画布"
+              onMouseMove={handleFittingMouseMove}
+              onMouseLeave={() => setFittingHoverPoint(null)}
+              className={`w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm transition-all ${
+                disabled || showAnswer
+                  ? 'cursor-default'
+                  : fittingHoverPoint
+                    ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+                    : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+              }`}
+            />
+          </div>
+        </div>
+      </div>
+
+      {showAnswer && (
+        <div className="w-full max-w-xl bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <div
+              className={`p-1.5 rounded-xl ${
+                userAnswer?.isHit
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-rose-100 text-rose-700'
+              }`}
+            >
+              {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            </div>
+            <div className="text-xs">
+              <span className="font-bold text-slate-800">
+                {userAnswer?.isHit ? '精准命中目标顶点！' : '定点定位出现偏差'}
+              </span>
+              <span className="text-slate-400 ml-2">
+                (像素误差:{' '}
+                <strong className="font-mono text-slate-700">{userAnswer?.errorValue}px</strong>)
+              </span>
             </div>
           </div>
         </div>
@@ -1884,104 +1296,354 @@ export function TopDownPatternView({
 }
 ~~~~~
 
-#### Acts 4: 重构 `src/components/AbstractionCanvas.tsx` 为顶层分发器
+~~~~~act
+write_file
+src/components/negativeSpace/ShapeMemory2AfcView.tsx
+~~~~~
+~~~~~typescript
+import { Check, Sparkles, X } from 'lucide-preact';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import {
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../../utils/negativeSpace';
+import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
+
+interface ShapeMemory2AfcViewProps {
+  question: NegativeSpaceQuestionData;
+  showAnswer: boolean;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (choice: 0 | 1) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function ShapeMemory2AfcView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: ShapeMemory2AfcViewProps) {
+  const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
+  const [selectedMatchChoice, setSelectedMatchChoice] = useState<'A' | 'B' | null>(null);
+
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const matchOptionRefA = useRef<HTMLCanvasElement | null>(null);
+  const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    setMatchPhase('stimulus');
+    setSelectedMatchChoice(null);
+  }, [question.id]);
+
+  useEffect(() => {
+    if (matchPhase === 'stimulus' && !showAnswer) {
+      const timer = setTimeout(() => {
+        setMatchPhase('recall');
+      }, question.displayTimeMs || 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [matchPhase, question.displayTimeMs, showAnswer]);
+
+  useEffect(() => {
+    if (matchPhase === 'stimulus' && question.targetPolygon) {
+      drawPolygonCanvas({
+        canvas: canvasRef.current,
+        vertices: question.targetPolygon,
+        size: NEGATIVE_SPACE_CANVAS_SIZE,
+      });
+    }
+  }, [matchPhase, question.targetPolygon]);
+
+  useEffect(() => {
+    if ((matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
+      drawPolygonCanvas({
+        canvas: matchOptionRefA.current,
+        vertices: question.optionsPolygons[0],
+        size: NEGATIVE_SPACE_CANVAS_SIZE,
+      });
+      drawPolygonCanvas({
+        canvas: matchOptionRefB.current,
+        vertices: question.optionsPolygons[1],
+        size: NEGATIVE_SPACE_CANVAS_SIZE,
+      });
+    }
+  }, [matchPhase, showAnswer, question.optionsPolygons]);
+
+  const handleSelectMatchChoice = useCallback(
+    (choice: 'A' | 'B') => {
+      if (disabled || showAnswer || matchPhase !== 'recall') return;
+      setSelectedMatchChoice(choice);
+      onAnswer(choice === 'A' ? 0 : 1);
+    },
+    [disabled, showAnswer, matchPhase, onAnswer],
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (disabled || showAnswer || matchPhase !== 'recall') return;
+      if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
+        e.preventDefault();
+        handleSelectMatchChoice('A');
+      } else if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
+        e.preventDefault();
+        handleSelectMatchChoice('B');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, showAnswer, matchPhase, handleSelectMatchChoice]);
+
+  const isRevealed = showAnswer;
+  const isTargetA = question.correctOptionIndex === 0;
+  const isTargetB = question.correctOptionIndex === 1;
+
+  const isSelectedA =
+    selectedMatchChoice === 'A' ||
+    userAnswer?.userChoice === 'A' ||
+    userAnswer?.userChoiceIndex === 0;
+  const isSelectedB =
+    selectedMatchChoice === 'B' ||
+    userAnswer?.userChoice === 'B' ||
+    userAnswer?.userChoiceIndex === 1;
+
+  return (
+    <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
+      {showCanvasHints && (
+        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
+          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          {matchPhase === 'stimulus' && !isRevealed
+            ? `瞬时记忆负形轮廓特征 (${question.displayTimeMs}ms)`
+            : '匹配回忆：哪一侧与刚才展示完全相同？(键 1 / 2)'}
+        </div>
+      )}
+
+      {matchPhase === 'stimulus' && !isRevealed ? (
+        <div className="bg-slate-50 p-4 rounded-3xl border border-slate-200 shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
+          <canvas
+            ref={canvasRef}
+            width={NEGATIVE_SPACE_CANVAS_SIZE}
+            height={NEGATIVE_SPACE_CANVAS_SIZE}
+            className="w-full aspect-square rounded-2xl border border-slate-200 shadow-sm"
+          />
+          <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+            <div
+              key={`${question.id}-${matchPhase}`}
+              className="bg-indigo-600 h-full"
+              style={{
+                width: '100%',
+                animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
+              }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+          {/* 卡片 A */}
+          <button
+            type="button"
+            disabled={disabled || showAnswer}
+            onClick={() => handleSelectMatchChoice('A')}
+            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+              isRevealed
+                ? isTargetA
+                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                  : isSelectedA
+                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                    : 'bg-slate-50/60 border-slate-200 opacity-60'
+                : isSelectedA
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                  1
+                </span>
+                区域 A
+              </span>
+
+              {isRevealed && isTargetA && (
+                <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  真实目标
+                </span>
+              )}
+            </div>
+
+            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={matchOptionRefA}
+                width={NEGATIVE_SPACE_CANVAS_SIZE}
+                height={NEGATIVE_SPACE_CANVAS_SIZE}
+                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm"
+              />
+            </div>
+          </button>
+
+          {/* 卡片 B */}
+          <button
+            type="button"
+            disabled={disabled || showAnswer}
+            onClick={() => handleSelectMatchChoice('B')}
+            className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${
+              isRevealed
+                ? isTargetB
+                  ? 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
+                  : isSelectedB
+                    ? 'bg-rose-50/50 border-rose-400 shadow-sm'
+                    : 'bg-slate-50/60 border-slate-200 opacity-60'
+                : isSelectedB
+                  ? 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md'
+                  : 'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
+                <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+                  2
+                </span>
+                区域 B
+              </span>
+
+              {isRevealed && isTargetB && (
+                <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  真实目标
+                </span>
+              )}
+            </div>
+
+            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+              <canvas
+                ref={matchOptionRefB}
+                width={NEGATIVE_SPACE_CANVAS_SIZE}
+                height={NEGATIVE_SPACE_CANVAS_SIZE}
+                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm"
+              />
+            </div>
+          </button>
+        </div>
+      )}
+
+      {isRevealed && (
+        <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <div
+              className={`p-1.5 rounded-xl ${
+                userAnswer?.isHit
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-rose-100 text-rose-700'
+              }`}
+            >
+              {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            </div>
+            <div className="text-xs">
+              <span className="font-bold text-slate-800">
+                {userAnswer?.isHit ? '瞬时形态记忆完全正确！' : '记忆形态判断出现偏差'}
+              </span>
+              <span className="text-slate-400 ml-2">
+                (正确目标为: 区域 {question.correctChoice})
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 3: 重构 `src/components/NegativeSpaceCanvas.tsx` 为顶层路由分发组件
 
 ~~~~~act
 write_file
-src/components/AbstractionCanvas.tsx
+src/components/NegativeSpaceCanvas.tsx
 ~~~~~
 ~~~~~typescript
-import type { AbstractionHitResult, AbstractionQuestionData } from '../utils/abstraction';
-import { GestureAxisView } from './abstraction/GestureAxisView';
-import { NotanThresholdView } from './abstraction/NotanThresholdView';
-import { PaletteClusteringView } from './abstraction/PaletteClusteringView';
-import { TopDown2AfcView } from './abstraction/TopDown2AfcView';
-import { TopDownPatternView } from './abstraction/TopDownPatternView';
+import type { Point } from '../types';
+import type { NegativeSpaceHitResult, NegativeSpaceQuestionData } from '../utils/negativeSpace';
+import { AreaComparison2AfcView } from './negativeSpace/AreaComparison2AfcView';
+import { RatioEstimationView } from './negativeSpace/RatioEstimationView';
+import { ShapeMemory2AfcView } from './negativeSpace/ShapeMemory2AfcView';
+import { VertexFittingView } from './negativeSpace/VertexFittingView';
 
-interface AbstractionCanvasProps {
-  question: AbstractionQuestionData;
+interface NegativeSpaceCanvasProps {
+  question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (val: number | 'A' | 'B') => void;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (val: number | 'A' | 'B' | Point) => void;
   disabled?: boolean;
   hitMargin?: number;
   showToleranceBand?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function AbstractionCanvas({
+export function NegativeSpaceCanvas({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   hitMargin = 12,
+  showToleranceBand = true,
   showCanvasHints = true,
-}: AbstractionCanvasProps) {
+}: NegativeSpaceCanvasProps) {
   const { mode } = question;
 
-  if (mode === 'GESTURE_AXIS') {
+  if (mode === 'AREA_COMPARISON_2AFC') {
     return (
-      <GestureAxisView
+      <AreaComparison2AfcView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
-        onAnswer={(val) => onAnswer(val)}
-        disabled={disabled}
-        hitMargin={hitMargin}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'NOTAN_THRESHOLD') {
-    return (
-      <NotanThresholdView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(val) => onAnswer(val)}
-        disabled={disabled}
-        hitMargin={hitMargin}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'PALETTE_CLUSTERING') {
-    return (
-      <PaletteClusteringView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(idx) => onAnswer(idx)}
+        onAnswer={(choice) => onAnswer(choice)}
         disabled={disabled}
         showCanvasHints={showCanvasHints}
       />
     );
   }
 
-  if (mode === 'TD_PALETTE_2AFC') {
+  if (mode === 'NEGATIVE_VERTEX_FITTING') {
     return (
-      <TopDownPatternView
+      <VertexFittingView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
-        onAnswer={(idx) => onAnswer(idx)}
+        onAnswer={(point) => onAnswer(point)}
         disabled={disabled}
         showCanvasHints={showCanvasHints}
       />
     );
   }
 
-  // 默认 Top-Down 2AFC 视图 (TD_GESTURE_2AFC, TD_HULL_2AFC, TD_NOTAN_2AFC, POLYGON_DECIMATION)
+  if (mode === 'SHAPE_MATCH_2AFC') {
+    return (
+      <ShapeMemory2AfcView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={(choiceIdx) => onAnswer(choiceIdx)}
+        disabled={disabled}
+        showCanvasHints={showCanvasHints}
+      />
+    );
+  }
+
+  // 默认 RATIO_ESTIMATION 滑块评估模式
   return (
-    <TopDown2AfcView
+    <RatioEstimationView
       question={question}
       showAnswer={showAnswer}
       userAnswer={userAnswer}
-      onAnswer={(choice) => onAnswer(choice)}
+      onAnswer={(ratio) => onAnswer(ratio)}
       disabled={disabled}
+      hitMargin={hitMargin}
+      showToleranceBand={showToleranceBand}
       showCanvasHints={showCanvasHints}
     />
   );
@@ -1989,5 +1651,5 @@ export function AbstractionCanvas({
 ~~~~~
 
 ### 下一步建议
-- **执行构建与测试检查**：运行 `npm test` 和 `npm run build` 确保拆分后视知觉概括模块的所有类型、事件及绘图逻辑完全正常。
-- **继续拆分 P1 任务**：继续对正负形感知模块（`NegativeSpaceCanvas.tsx` 与 `negativeSpaceUtils.ts`）执行同样的模块化拆分。
+- **执行构建与单元测试验证**：运行 `npm test` 和 `npm run build`，验证正负形模块的各项功能及向后兼容性。
+- **继续拆分 P2 任务**：拆分全局插件配置中心 `src/config/trainingPlugins.tsx`，将各个领域的插件定义隔离到 `src/config/plugins/` 目录中。
