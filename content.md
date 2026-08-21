@@ -1,65 +1,63 @@
-你的分析完全正确。
-
-在执行 `npm run build` 时，TypeScript 检查到 `TopDownPatternView.tsx` 中定义了未被使用的回调参数 `pat`，同时 Biome 检查中也有一个关于 `PointClickCanvas.tsx` 中 `useEffect` 依赖项冗余的提示。为了确保项目能够通过严格的类型检查与代码检查，我们首先需要修复这两个小问题。
-
-我将生成一个草案计划来修复这两个编译及检查错误。
-
-# [WIP] fix(build): 修复 TypeScript 编译错误和 Biome 依赖警告
-
-### 错误分析
-
-1. **TypeScript 错误**: 在 `src/components/abstraction/TopDownPatternView.tsx` 的第 61 行，`nafcOptions` 映射函数中声明了 `pat` 参数但未在闭包中使用，触发了 TypeScript 的 `noUnusedParameters` 严格校验。
-2. **Biome 警告/错误**: 在 `src/components/common/PointClickCanvas.tsx` 的 `useEffect` 中包含了不必要的 `gridPoints` 依赖项。
+## [COMMIT] refactor(components): 提取通用交互容器组件并重构卡片视图
 
 ### 用户需求
-修复 TypeScript 编译错误和 Biome 检查错误，确保 `npm run build` 和 `npm run check` 能够 100% 通过。
+用户确认无误并要求创建提交，将本次架构重构和通用交互容器组件的提取进行 Git 提交。
 
 ### 评论
-这是一个保持代码库健康、确保 CI/CD 顺利通过的必要重构。
+本次提交将新建立的 4 个基础交互与布局组件（`QuestionCardShell`、`ChoiceNafcContainer`、`DualViewportContainer`、`PointClickCanvas`）以及重构后的 14 个卡片视图一并暂存并提交，极大地精简了全站代码冗余。
 
 ### 目标
-1. 修复 `TopDownPatternView.tsx` 中未使用的参数 `pat`。
-2. 修复 `PointClickCanvas.tsx` 中 `useEffect` 的不必要依赖项。
+1. 将修改后的代码和新增文件添加至 Git 暂存区。
+2. 提交带有规范前缀的 Commit。
 
 ### 基本原理
-通过将 `TopDownPatternView.tsx` 中的 `pat` 参数加上下划线前缀 (`_pat`) 显式标记为未使用参数，并调整 `PointClickCanvas.tsx` 的 `useEffect` 依赖，以完美符合 Biome 与 TypeScript 严格模式的规范。
+按照 ACA / Quipu 运行时协议，`[COMMIT]` 计划专用于 Git 提交操作，与文件变动的计划严格隔离，确保代码在验证通过后才沉淀到版本库。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #scope/core #ai/instruct #task/domain/testing #task/object/build-fixes #task/action/bug-fix #task/state/begin
+#intent/tooling #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/git-commit #task/action/git-commit #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `TopDownPatternView.tsx` 与 `PointClickCanvas.tsx` 中的类型和 Lint 问题
+#### Acts 1: 添加更改至暂存区并提交
 
 ~~~~~act
-patch_file
-src/components/abstraction/TopDownPatternView.tsx
-~~~~~
-~~~~~typescript.old
-  const nafcOptions = (question.palettePatternOptions || []).map((pat, idx) => {
-    const isTarget = idx === targetIdx;
-~~~~~
-~~~~~typescript.new
-  const nafcOptions = (question.palettePatternOptions || []).map((_pat, idx) => {
-    const isTarget = idx === targetIdx;
-~~~~~
-
-~~~~~act
-patch_file
+git_add
+src/components/common/QuestionCardShell.tsx
+src/components/common/ChoiceNafcContainer.tsx
+src/components/common/DualViewportContainer.tsx
 src/components/common/PointClickCanvas.tsx
+src/components/StarCanvas.tsx
+src/components/abstraction/GestureAxisView.tsx
+src/components/abstraction/NotanThresholdView.tsx
+src/components/abstraction/PaletteClusteringView.tsx
+src/components/abstraction/TopDown2AfcView.tsx
+src/components/abstraction/TopDownPatternView.tsx
+src/components/negativeSpace/AreaComparison2AfcView.tsx
+src/components/negativeSpace/RatioEstimationView.tsx
+src/components/negativeSpace/ShapeMemory2AfcView.tsx
+src/components/negativeSpace/VertexFittingView.tsx
+src/components/relativeColor/AlbersInductionView.tsx
+src/components/relativeColor/Decontextual2AfcView.tsx
+src/components/relativeColor/HueInductionView.tsx
+src/components/relativeColor/VectorShiftView.tsx
 ~~~~~
-~~~~~typescript.old
-  useEffect(() => {
-    setHoverPoint(null);
-  }, [gridPoints]);
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-  useEffect(() => {
-    setHoverPoint(null);
-  }, []);
+~~~~~text
+refactor(components): extract reusable interaction containers and refactor card views
+
+- Created four core layout and interaction components:
+  1. QuestionCardShell: Unified card shell container with optional canvas hint bar.
+  2. ChoiceNafcContainer: Reusable N-AFC multi-choice grid container with automatic 1~N keyboard shortcut binding and state styling.
+  3. DualViewportContainer: Standardized two-column grid layout for side-by-side viewports (reference vs interactive).
+  4. PointClickCanvas: Reused canvas wrapper for grid point detection, coordinate scaling, hover feedback, and crosshair rendering.
+- Refactored StarCanvas and 13 abstraction, negative space, and relative color card views to leverage these common containers, significantly reducing codebase duplication and ensuring 100% consistent UX and keyboard behaviors.
 ~~~~~
 
 ### 下一步建议
-修复完成后，建议执行 `npm run build` 和 `npm run check` 验证所有错误与警告是否已完全消除。
+- 运行 `npm run build` 确保生产构建无任何 TypeScript 类型报错或资产打包异常。
+- 启动 `npm run dev` 在浏览器本地进行一次全模块交互回归测试。
