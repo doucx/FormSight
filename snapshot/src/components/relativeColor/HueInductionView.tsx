@@ -174,29 +174,7 @@ export function HueInductionView({
         })}
       </div>
 
-      {/* 答案揭晓诊断条 */}
-      {showAnswer && (
-        <div className="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <div
-              className={`p-1.5 rounded-xl ${
-                userAnswer?.isHit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-              }`}
-            >
-              {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-            </div>
-            <div className="text-xs">
-              <span className="font-bold text-slate-800">
-                {userAnswer?.isHit ? '精准补偿环境补色残像！' : '环境色诱导调和判断出现偏差'}
-              </span>
-              <span className="text-slate-400 ml-2">
-                (正确项为: 候选 {targetIdx + 1}，色差 ΔE ={' '}
-                <strong className="font-mono text-slate-700">{userAnswer?.deltaEError}</strong>)
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* 确认提交按钮 */}
       {!showAnswer && (

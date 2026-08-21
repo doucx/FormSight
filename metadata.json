@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(relative-color): 为补色残像调和增加预览与显式提交机制", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787286652.666272, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 清除所有正确答案揭晓框", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787287114.3676178, "duration_ms": 0}}

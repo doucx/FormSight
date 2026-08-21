@@ -131,26 +131,6 @@ export function GestureAxisView({
           <span className="font-bold font-mono text-slate-400 text-xs">180{unit}</span>
         </div>
 
-        {showAnswer && (
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              绝对真理值:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {question.targetAngleDeg}
-                {unit}
-              </span>
-            </span>
-            <span
-              className={
-                userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
-              }
-            >
-              误差: {userAnswer?.errorValue}
-              {unit} (容错: ±{question.tolerance}
-              {unit})
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

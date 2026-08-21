@@ -79,14 +79,6 @@ export function Decontextual2AfcView({
         onSelect={onSelectChoice}
       />
 
-      {showAnswer && (
-        <AnswerDiagnosticBar
-          isHit={Boolean(userAnswer?.isHit)}
-          successTitle="成功穿透背景视错觉！"
-          failTitle="受背景诱导产生了认知偏差"
-          subText={`(已统一切换至中性灰背景对比，物理明度差 ΔV = ${question.physicalValueDiff}%)`}
-        />
-      )}
     </div>
   );
 }

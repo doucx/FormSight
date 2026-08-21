@@ -201,14 +201,6 @@ export function TopDown2AfcView({
         onSelect={handleSelectChoice}
       />
 
-      {showAnswer && (
-        <AnswerDiagnosticBar
-          isHit={Boolean(userAnswer?.isHit)}
-          successTitle="瞬时结构透视识别完全正确！"
-          failTitle="结构透视判断出现偏差"
-          subText={`(正确匹配为: 区域 ${userAnswer?.correctChoice ?? (isTargetA ? 'A' : 'B')})`}
-        />
-      )}
     </div>
   );
 }

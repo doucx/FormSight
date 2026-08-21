@@ -244,28 +244,6 @@ export function VertexFittingView({
         </div>
       </div>
 
-      {showAnswer && (
-        <div className="w-full max-w-xl bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <div
-              className={`p-1.5 rounded-xl ${
-                userAnswer?.isHit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-              }`}
-            >
-              {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-            </div>
-            <div className="text-xs">
-              <span className="font-bold text-slate-800">
-                {userAnswer?.isHit ? '精准命中目标顶点！' : '定点定位出现偏差'}
-              </span>
-              <span className="text-slate-400 ml-2">
-                (像素误差:{' '}
-                <strong className="font-mono text-slate-700">{userAnswer?.errorValue}px</strong>)
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
