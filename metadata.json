@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313160.084628, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 清空所有数据时同步重置用户自定义设置为默认值", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313161.6921992, "duration_ms": 0}}

@@ -6,7 +6,7 @@ import {
   savePlanStorageState,
   saveTrainingPlan,
 } from '../planStorage';
-import { loadSettings, saveSettings } from '../settings';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
 import { DB_VERSION, type TrainingDomain, getDB } from './schema';
 
 export async function exportAllData(): Promise<string> {
@@ -91,4 +91,5 @@ export async function clearAllData(): Promise<void> {
   await tx.done;
 
   resetPlansToDefault();
+  saveSettings(DEFAULT_SETTINGS);
 }
