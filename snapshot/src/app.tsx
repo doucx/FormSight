@@ -12,8 +12,7 @@ import type { TrainingPlan } from './types/plan';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
-  getProfilesByDomain,
-  getTrainingTimeMs,
+  repository,
 } from './utils/db/index';
 import {
   loadPlanStorageState,

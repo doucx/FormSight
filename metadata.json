@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 构建系统聚合 Repository 并强化数据导入导出事务原子性", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787324006.3420653, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] src/app.tsx", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787324053.1331267, "duration_ms": 0}}
