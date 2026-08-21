@@ -1,35 +1,31 @@
-好的，我们现在推进第二阶段架构重构：
-1. 封装通用声明式 Canvas 渲染组件 `<CanvasView />`，消除分散在数十个组件中的 `useRef` + `useEffect` 样板代码；
-2. 封装高阶通用 2AFC 交互壳组件 `<Standard2AfcView />`，统一管理 2AFC 状态重置、选项渲染与键盘响应逻辑，大幅削减领域层组件冗余。
+好的，我们现在推进通用滑块交互壳 `<StandardSliderView />` 的封装，将角度估算、势线提取、负形占比估算和黑白素描归组 4 个核心连续滑块卡片全面迁移至统一抽象壳层。
 
-## [WIP] refactor: 抽象通用 CanvasView 与 Standard2AfcView 消除重复样板代码
+## [WIP] refactor: 抽象通用 StandardSliderView 并重构连续滑块类卡片
 
 ### 用户需求
-消除各个领域组件中重复率超过 90% 的 Canvas 引用挂载逻辑与 2AFC 状态选择容器代码，构建高内聚的通用基础视图构件。
+将分散在各个领域组件中的滑块交互管理、容错指示区间、悬停/拖拽指针逻辑、作答揭晓与键盘响应逻辑抽取为通用组件 `<StandardSliderView />`，消除重复样板代码。
 
 ### 评论
-通过将 Canvas 命令式挂载声明化，以及将二选一（2AFC）的标准骨架提取为高阶交互组件，各个具体练习卡片只需要专注于“如何绘制数据”和“题目题干文案”，不再需要维护重复的 DOM 生命周期和状态胶水代码，代码可读性与可维护性显著提升。
+连续滑块交互在视觉训练中广泛用于估算类与调和类卡片。将滑块轨道控制、容错感应线与真理/作答标记线统一封装后，业务组件只需关注具体的数学模型与 Canvas 渲染，不仅代码量减少约 60%，而且保证了全站滑块交互体验的高度一致性。
 
 ### 目标
-1. 新建 `src/components/common/CanvasView.tsx`：提供统一的声明式 Canvas 挂载器。
-2. 新建 `src/components/common/Standard2AfcView.tsx`：提供标准的 2AFC 卡片壳与键盘/状态管理器。
-3. 重构以下 5 个领域 2AFC 组件，全面迁移至新架构：
-   - `src/domains/angle/components/AngleComparison2AfcView.tsx`
-   - `src/domains/angle/components/AngleParallel2AfcView.tsx`
-   - `src/domains/negative_space/components/AreaComparison2AfcView.tsx`
-   - `src/domains/relative_color/components/Decontextual2AfcView.tsx`
-   - `src/domains/abstraction/components/TopDown2AfcView.tsx`
+1. 新建 `src/components/common/StandardSliderView.tsx`：支持释放即提交 (`commit_on_release`) 与显式按钮提交 (`button`) 两种触发模式，并内置容错光标、悬停联动和真理指示标记。
+2. 重构以下 4 个滑块交互视图组件：
+   - `src/domains/angle/components/AngleEstimationView.tsx`
+   - `src/domains/abstraction/components/GestureAxisView.tsx`
+   - `src/domains/negative_space/components/RatioEstimationView.tsx`
+   - `src/domains/abstraction/components/NotanThresholdView.tsx`
 
 ### 基本原理
-- `<CanvasView width={w} height={h} draw={(canvas) => ...} deps={[...]} />` 封装了 `useRef` 与依赖驱动的重绘 Effect，避免组件内部书写重复的生命周期逻辑。
-- `<Standard2AfcView />` 组合了 `QuestionCardShell` 与 `Choice2AfcContainer`，内置了针对 `questionId` 变化的自动重置与选项激活逻辑，使每个领域只需返回轻量的纯布局配置。
+- `<StandardSliderView />` 组合了 `QuestionCardShell`、`useTrackPointer` 和通用滑块轨道渲染逻辑，通过 `preview` 属性插槽接收单视口或双视口 Canvas。
+- 外部可通过 `onValueChange` 接收实时悬停值，驱动上方 Canvas 进行试探性重绘（如粒子流向预览、Notan 阈值二值显影等），解耦了 DOM 事件与绘图管线。
 
 ### 标签
 #intent/refine #flow/ready #priority/high
 #comp/components #scope/dx #scope/core
 #ai/instruct
 #task/domain/refactoring
-#task/object/common-view-primitives
+#task/object/slider-view-primitive
 #task/action/abstraction-and-consolidation
 #task/state/continue #task/status/active
 
@@ -37,88 +33,138 @@
 
 ### Script
 
-#### Acts 1: 创建通用 `<CanvasView />` 与 `<Standard2AfcView />` 组件
+#### Acts 1: 创建通用 `<StandardSliderView />` 组件
 
 ~~~~~act
 write_file
-src/components/common/CanvasView.tsx
-~~~~~
-~~~~~typescript
-import { useEffect, useRef } from 'preact/hooks';
-
-export interface CanvasViewProps {
-  width: number;
-  height: number;
-  className?: string;
-  draw: (canvas: HTMLCanvasElement) => void;
-  deps?: unknown[];
-}
-
-export function CanvasView({ width, height, className = '', draw, deps = [] }: CanvasViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: dynamic dependencies passed by parent
-  useEffect(() => {
-    if (canvasRef.current) {
-      draw(canvasRef.current);
-    }
-  }, deps);
-
-  return <canvas ref={canvasRef} width={width} height={height} className={className} />;
-}
-~~~~~
-
-~~~~~act
-write_file
-src/components/common/Standard2AfcView.tsx
+src/components/common/StandardSliderView.tsx
 ~~~~~
 ~~~~~typescript
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
-import { Choice2AfcContainer, type Choice2AfcOption } from './Choice2AfcContainer';
+import { useTrackPointer } from '../../hooks/useTrackPointer';
 import { QuestionCardShell } from './QuestionCardShell';
 
-export interface Standard2AfcViewProps {
+export interface StandardSliderViewProps {
   questionId: string;
   hintText?: string;
   hintIcon?: (props: { className?: string }) => ComponentChildren;
   showCanvasHints?: boolean;
   maxWidth?: string;
-  prompt?: ComponentChildren;
-  optionA: Omit<Choice2AfcOption, 'key'>;
-  optionB: Omit<Choice2AfcOption, 'key'>;
+  preview: ComponentChildren;
+
+  // 滑块基本属性
+  label: string;
+  min?: number;
+  max: number;
+  step?: number;
+  initialValue?: number;
+  unit?: string;
+  formatValue?: (val: number) => string;
+
+  // 答案揭晓与容错评估
+  targetValue?: number;
+  tolerance?: number;
+  showToleranceBand?: boolean;
   showAnswer: boolean;
+  isHit?: boolean;
+  userValue?: number;
+
+  // 交互控制
   disabled?: boolean;
-  onAnswer: (choice: 'A' | 'B') => void;
-  enableKeyboardShortcuts?: boolean;
+  hitMargin?: number;
+  submitMode?: 'commit_on_release' | 'button' | 'both';
+  submitButtonText?: string;
+  onValueChange?: (currentVal: number, activeVal: number) => void;
+  onAnswer: (val: number) => void;
+
+  // 底部附加卡片槽位
+  footerDetails?: ComponentChildren;
 }
 
-export function Standard2AfcView({
+export function StandardSliderView({
   questionId,
   hintText,
   hintIcon,
   showCanvasHints = true,
-  maxWidth = 'max-w-2xl',
-  prompt,
-  optionA,
-  optionB,
+  maxWidth = 'max-w-lg',
+  preview,
+  label,
+  min = 0,
+  max,
+  step = 0.5,
+  initialValue,
+  unit = '',
+  formatValue,
+  targetValue,
+  tolerance,
+  showToleranceBand = true,
   showAnswer,
+  isHit = false,
+  userValue,
   disabled = false,
+  hitMargin = 12,
+  submitMode = 'commit_on_release',
+  submitButtonText = '确认提交 (Space)',
+  onValueChange,
   onAnswer,
-  enableKeyboardShortcuts = true,
-}: Standard2AfcViewProps) {
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
+  footerDetails,
+}: StandardSliderViewProps) {
+  const defaultVal = initialValue ?? (max - min) / 2;
+  const [currentVal, setCurrentVal] = useState<number>(defaultVal);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
+  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+    max,
+    step,
+    disabled: disabled || showAnswer,
+    onValChange: (val) => {
+      setCurrentVal(val);
+      onValueChange?.(val, val);
+    },
+    onHoverStateChange: (hVal) => {
+      onValueChange?.(currentVal, hVal !== null ? hVal : currentVal);
+    },
+    onCommit: (val) => {
+      if (submitMode === 'commit_on_release' || submitMode === 'both') {
+        if (!disabled && !showAnswer) {
+          onAnswer(val);
+        }
+      }
+    },
+  });
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset slider when questionId changes
   useEffect(() => {
-    setSelectedChoice(null);
-  }, [questionId]);
+    setCurrentVal(defaultVal);
+    setHoverVal(null);
+    onValueChange?.(defaultVal, defaultVal);
+  }, [questionId, defaultVal, setHoverVal]);
 
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
+  // 支持键盘 Space 键提交（在显式按钮提交模式下）
+  useEffect(() => {
+    if (submitMode !== 'button' && submitMode !== 'both') return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (disabled || showAnswer) return;
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        onAnswer(currentVal);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [submitMode, disabled, showAnswer, currentVal, onAnswer]);
+
+  const activeVal = hoverVal !== null ? hoverVal : currentVal;
+  const displayVal = showAnswer && userValue !== undefined ? userValue : activeVal;
+  const formattedDisplay = formatValue ? formatValue(displayVal) : `${displayVal}${unit}`;
+
+  const valToPercent = (val: number) => {
+    const clamped = Math.max(0, Math.min(max, val));
+    return `${(clamped / max) * 100}%`;
   };
+
+  const isButtonSubmit = submitMode === 'button' || submitMode === 'both';
 
   return (
     <QuestionCardShell
@@ -127,648 +173,511 @@ export function Standard2AfcView({
       showCanvasHints={showCanvasHints}
       maxWidth={maxWidth}
     >
-      {prompt}
-      <Choice2AfcContainer
-        optionA={{ ...optionA, key: 'A' }}
-        optionB={{ ...optionB, key: 'B' }}
-        selectedChoice={selectedChoice}
-        showAnswer={showAnswer}
-        disabled={disabled}
-        enableKeyboardShortcuts={enableKeyboardShortcuts}
-        onSelect={handleSelect}
-      />
+      {preview}
+
+      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+          <span>{label}</span>
+          <span className="font-mono text-base font-black text-indigo-600">{formattedDisplay}</span>
+        </div>
+
+        <div className="flex items-center gap-3 w-full">
+          <span className="font-bold font-mono text-slate-400 text-xs">
+            {min}
+            {unit}
+          </span>
+
+          <div
+            {...pointerProps}
+            style={
+              hitMargin > 0
+                ? {
+                    paddingLeft: `${hitMargin}px`,
+                    paddingRight: `${hitMargin}px`,
+                    marginLeft: `-${hitMargin}px`,
+                    marginRight: `-${hitMargin}px`,
+                    paddingTop: '6px',
+                    paddingBottom: '6px',
+                    marginTop: '-6px',
+                    marginBottom: '-6px',
+                  }
+                : undefined
+            }
+            className={`relative flex-1 flex items-center select-none touch-none ${
+              !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
+            }`}
+          >
+            <div
+              ref={trackRef}
+              className="relative w-full h-7 rounded-xl bg-slate-200 border border-slate-300/80 shadow-inner flex items-center overflow-hidden"
+            >
+              {/* 当前激活进度条 */}
+              <div
+                className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
+                style={{ width: valToPercent(activeVal) }}
+              />
+
+              {/* 未揭晓状态下的指针 */}
+              {!showAnswer && (
+                <div
+                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
+                  style={{ left: valToPercent(activeVal) }}
+                />
+              )}
+
+              {/* 动态容错感应区间 */}
+              {!showAnswer && showToleranceBand && tolerance !== undefined && tolerance > 0 && (
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    style={{ left: valToPercent(activeVal - tolerance) }}
+                  />
+                  <div
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    style={{ left: valToPercent(activeVal + tolerance) }}
+                  />
+                </>
+              )}
+
+              {/* 答案揭晓：真理线与用户作答线 */}
+              {showAnswer && targetValue !== undefined && (
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
+                    style={{ left: valToPercent(targetValue) }}
+                  />
+                  {userValue !== undefined && (
+                    <div
+                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white shadow-md ${
+                        isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}
+                      style={{ left: valToPercent(userValue) }}
+                    />
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <span className="font-bold font-mono text-slate-400 text-xs">
+            {max}
+            {unit}
+          </span>
+        </div>
+
+        {footerDetails}
+      </div>
+
+      {isButtonSubmit && !showAnswer && (
+        <button
+          type="button"
+          onClick={() => {
+            if (!disabled && !showAnswer) onAnswer(currentVal);
+          }}
+          disabled={disabled}
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
+        >
+          {submitButtonText}
+        </button>
+      )}
     </QuestionCardShell>
   );
 }
 ~~~~~
 
-#### Acts 2: 重构角度领域的两个 2AFC 组件
+#### Acts 2: 重构角度估算与势线提取组件
 
 ~~~~~act
 write_file
-src/domains/angle/components/AngleComparison2AfcView.tsx
+src/domains/angle/components/AngleEstimationView.tsx
 ~~~~~
 ~~~~~typescript
-import { Columns } from 'lucide-preact';
+import { Eye } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
+import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import {
-  ANGLE_2AFC_SIZE,
+  ANGLE_CANVAS_SIZE,
   type AngleHitResult,
   type AngleQuestionData,
   drawAngleCanvas,
 } from '../utils/angleUtils';
 
-interface AngleComparison2AfcViewProps {
+interface AngleEstimationViewProps {
   question: AngleQuestionData;
   showAnswer: boolean;
   userAnswer: AngleHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
+  onAnswer: (val: number) => void;
   disabled?: boolean;
+  hitMargin?: number;
+  showToleranceBand?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function AngleComparison2AfcView({
-  question,
-  showAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AngleComparison2AfcViewProps) {
-  const isAHit = question.largerSide === 'A';
-  const isBHit = question.largerSide === 'B';
-
-  return (
-    <Standard2AfcView
-      questionId={question.id}
-      hintText="二选一辨识哪一侧的两射线夹角更大 (键 1 / 2)"
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-      showAnswer={showAnswer}
-      disabled={disabled}
-      onAnswer={onAnswer}
-      optionA={{
-        title: '区域 A',
-        isCorrect: isAHit,
-        badge: showAnswer ? `${question.angleA}°` : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
-              deps={[question.linesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: '区域 B',
-        isCorrect: isBHit,
-        badge: showAnswer ? `${question.angleB}°` : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
-              deps={[question.linesB]}
-            />
-          </div>
-        ),
-      }}
-    />
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/domains/angle/components/AngleParallel2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Split } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import {
-  ANGLE_2AFC_SIZE,
-  ANGLE_PROMPT_SIZE,
-  type AngleHitResult,
-  type AngleQuestionData,
-  drawSingleLineCanvas,
-} from '../utils/angleUtils';
-
-interface AngleParallel2AfcViewProps {
-  question: AngleQuestionData;
-  showAnswer: boolean;
-  userAnswer: AngleHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AngleParallel2AfcView({
-  question,
-  showAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AngleParallel2AfcViewProps) {
-  const isAHit = question.parallelSide === 'A';
-  const isBHit = question.parallelSide === 'B';
-
-  return (
-    <Standard2AfcView
-      questionId={question.id}
-      hintText="观察上方基准线，选出下方与它严格平行的线 (键 1 / 2)"
-      hintIcon={Split}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-      showAnswer={showAnswer}
-      disabled={disabled}
-      onAnswer={onAnswer}
-      prompt={
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            平行基准线 (Prompt)
-          </span>
-          <CanvasView
-            width={ANGLE_PROMPT_SIZE}
-            height={ANGLE_PROMPT_SIZE}
-            className="w-28 h-28 rounded-xl border border-slate-200 shadow-sm bg-white"
-            draw={(canvas) =>
-              drawSingleLineCanvas(canvas, question.promptLine, ANGLE_PROMPT_SIZE, '#4F46E5', 3.0)
-            }
-            deps={[question.promptLine]}
-          />
-        </div>
-      }
-      optionA={{
-        title: '选项 A',
-        isCorrect: isAHit,
-        badge: showAnswer
-          ? isAHit
-            ? '绝对平行'
-            : `偏转 ${question.angularDeviation}°`
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
-              draw={(canvas) =>
-                drawSingleLineCanvas(canvas, question.lineOptionA, ANGLE_2AFC_SIZE, '#0F172A', 2.5)
-              }
-              deps={[question.lineOptionA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: '选项 B',
-        isCorrect: isBHit,
-        badge: showAnswer
-          ? isBHit
-            ? '绝对平行'
-            : `偏转 ${question.angularDeviation}°`
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
-              draw={(canvas) =>
-                drawSingleLineCanvas(canvas, question.lineOptionB, ANGLE_2AFC_SIZE, '#0F172A', 2.5)
-              }
-              deps={[question.lineOptionB]}
-            />
-          </div>
-        ),
-      }}
-    />
-  );
-}
-~~~~~
-
-#### Acts 3: 重构正负形与相对色感 2AFC 组件
-
-~~~~~act
-write_file
-src/domains/negative_space/components/AreaComparison2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import {
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-  TWO_AFC_CANVAS_SIZE,
-} from '../utils/index';
-
-interface AreaComparison2AfcViewProps {
-  question: NegativeSpaceQuestionData;
-  showAnswer: boolean;
-  userAnswer?: NegativeSpaceHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AreaComparison2AfcView({
-  question,
-  showAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AreaComparison2AfcViewProps) {
-  const largerSide = question.largerSide;
-  const isAHit = largerSide === 'A';
-  const isBHit = largerSide === 'B';
-
-  return (
-    <Standard2AfcView
-      questionId={question.id}
-      hintText="判别哪一侧的白色留白 (负形) 面积更大 (键 1 / 2)"
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-      showAnswer={showAnswer}
-      disabled={disabled}
-      onAnswer={onAnswer}
-      optionA={{
-        title: '区域 A',
-        isCorrect: isAHit,
-        badge: `留白 ${question.negRatioA}%`,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesA,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
-                })
-              }
-              deps={[question.verticesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: '区域 B',
-        isCorrect: isBHit,
-        badge: `留白 ${question.negRatioB}%`,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesB,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
-                })
-              }
-              deps={[question.verticesB]}
-            />
-          </div>
-        ),
-      }}
-    />
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/domains/relative_color/components/Decontextual2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Eye } from 'lucide-preact';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { hsvToHex } from '../../../core/color/colorUtils';
-import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
-
-interface Decontextual2AfcViewProps {
-  question: RelativeColorQuestionData;
-  showAnswer: boolean;
-  userAnswer?: RelativeColorHitResult | null;
-  selectedChoice?: 'A' | 'B' | null;
-  onSelectChoice: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function Decontextual2AfcView({
-  question,
-  showAnswer,
-  onSelectChoice,
-  disabled = false,
-  showCanvasHints = true,
-}: Decontextual2AfcViewProps) {
-  const isAHit = question.largerPhysicalSide === 'A';
-  const isBHit = question.largerPhysicalSide === 'B';
-
-  const hexBgA = hsvToHex(...(question.bgLeft ?? [0, 0, 90]));
-  const hexBgB = hsvToHex(...(question.bgRight ?? [0, 0, 10]));
-  const hexCenterA = hsvToHex(...(question.centerColorA ?? [0, 0, 50]));
-  const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
-
-  return (
-    <Standard2AfcView
-      questionId={question.id}
-      hintText="穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」"
-      hintIcon={Eye}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-      showAnswer={showAnswer}
-      disabled={disabled}
-      onAnswer={onSelectChoice}
-      optionA={{
-        title: '区域 A',
-        isCorrect: isAHit,
-        badge: isAHit
-          ? `物理明度更高 (V: ${question.centerColorA?.[2]}%)`
-          : `物理更暗 (V: ${question.centerColorA?.[2]}%)`,
-        content: (
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
-          >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: '区域 B',
-        isCorrect: isBHit,
-        badge: isBHit
-          ? `物理明度更高 (V: ${question.centerColorB?.[2]}%)`
-          : `物理更暗 (V: ${question.centerColorB?.[2]}%)`,
-        content: (
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
-          >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-          </div>
-        ),
-      }}
-    />
-  );
-}
-~~~~~
-
-#### Acts 4: 重构概括/细化领域的多模态 2AFC 组件
-
-~~~~~act
-write_file
-src/domains/abstraction/components/TopDown2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { drawRawGrayscaleNoiseField } from '../../../utils/canvas/drawNotanField';
-import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../../utils/canvas/drawParticles';
-import {
-  ABSTRACTION_2AFC_SIZE,
-  ABSTRACTION_CANVAS_SIZE,
-  ABSTRACTION_THUMB_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../utils/index';
-
-interface TopDown2AfcViewProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function TopDown2AfcView({
+export function AngleEstimationView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
+  hitMargin = 12,
+  showToleranceBand = true,
   showCanvasHints = true,
-}: TopDown2AfcViewProps) {
-  const { mode } = question;
-  const isPoly = mode === 'POLYGON_DECIMATION';
+}: AngleEstimationViewProps) {
+  const targetVal = question.targetAngleDeg ?? 90;
+  const tolerance = question.tolerance;
+  const isHit = Boolean(userAnswer?.isHit);
+  const userVal = userAnswer?.userValue;
 
-  const isTargetA = isPoly
-    ? question.correctPolyChoice === 'A'
-    : userAnswer?.correctChoice === 'A' ||
-      question.correctParticleChoice === 'A' ||
-      question.correctHullChoice === 'A' ||
-      question.correctNotanChoice === 'A';
-  const isTargetB = !isTargetA;
+  return (
+    <StandardSliderView
+      questionId={question.id}
+      hintText="观察两射线夹角，调制滑块逼近精准度数 (0°~180°)"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-lg"
+      label="夹角估算值:"
+      max={180}
+      step={0.5}
+      initialValue={90}
+      unit="°"
+      targetValue={targetVal}
+      tolerance={tolerance}
+      showToleranceBand={showToleranceBand}
+      showAnswer={showAnswer}
+      isHit={isHit}
+      userValue={userVal}
+      disabled={disabled}
+      hitMargin={hitMargin}
+      submitMode="commit_on_release"
+      onAnswer={onAnswer}
+      preview={
+        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+          <CanvasView
+            width={ANGLE_CANVAS_SIZE}
+            height={ANGLE_CANVAS_SIZE}
+            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white"
+            draw={(canvas) => {
+              if (question.lineA && question.lineB) {
+                drawAngleCanvas(canvas, [question.lineA, question.lineB], ANGLE_CANVAS_SIZE);
+              }
+            }}
+            deps={[question.lineA, question.lineB]}
+          />
+        </div>
+      }
+      footerDetails={
+        showAnswer && userVal !== undefined ? (
+          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
+            <span className="text-slate-500">
+              绝对真理值:{' '}
+              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
+            </span>
+            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+              误差: {Math.round(Math.abs(userVal - targetVal) * 10) / 10}° (容错: ±{tolerance}°)
+            </span>
+          </div>
+        ) : null
+      }
+    />
+  );
+}
+~~~~~
 
-  const renderPrompt = () => {
-    if (isPoly && question.detailedPolygon) {
-      return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            多边形原图
-          </span>
+~~~~~act
+write_file
+src/domains/abstraction/components/GestureAxisView.tsx
+~~~~~
+~~~~~typescript
+import { Eye } from 'lucide-preact';
+import { useState } from 'preact/hooks';
+import { CanvasView } from '../../../components/common/CanvasView';
+import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import { drawParticlesCanvas } from '../../../utils/canvas/drawParticles';
+import {
+  ABSTRACTION_CANVAS_SIZE,
+  type AbstractionHitResult,
+  type AbstractionQuestionData,
+} from '../utils/index';
+
+interface GestureAxisViewProps {
+  question: AbstractionQuestionData;
+  showAnswer: boolean;
+  userAnswer: AbstractionHitResult | null;
+  onAnswer: (val: number) => void;
+  disabled?: boolean;
+  hitMargin?: number;
+  showCanvasHints?: boolean;
+}
+
+export function GestureAxisView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  hitMargin = 12,
+  showCanvasHints = true,
+}: GestureAxisViewProps) {
+  const [activeSliderVal, setActiveSliderVal] = useState<number>(90);
+
+  const targetVal = question.targetAngleDeg ?? 0;
+  const userVal = userAnswer?.userValue ?? activeSliderVal;
+  const isHit = Boolean(userAnswer?.isHit);
+
+  return (
+    <StandardSliderView
+      questionId={question.id}
+      hintText="旋转主轴对齐粒子群动态流向 (0°~180°)"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-lg"
+      label="动态势线角度:"
+      max={180}
+      step={0.5}
+      initialValue={90}
+      unit="°"
+      targetValue={targetVal}
+      showAnswer={showAnswer}
+      isHit={isHit}
+      userValue={userAnswer?.userValue}
+      disabled={disabled}
+      hitMargin={hitMargin}
+      submitMode="commit_on_release"
+      onValueChange={(_val, active) => setActiveSliderVal(active)}
+      onAnswer={onAnswer}
+      preview={
+        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}
-            className="w-40 h-40 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawPolygonCanvas({
+            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm"
+            draw={(canvas) => {
+              drawParticlesCanvas(
                 canvas,
-                vertices: question.detailedPolygon,
-                size: ABSTRACTION_CANVAS_SIZE,
-              })
-            }
-            deps={[question.detailedPolygon]}
+                question.particles,
+                ABSTRACTION_CANVAS_SIZE,
+                showAnswer ? targetVal : activeSliderVal,
+                showAnswer ? '#22C55E' : '#6366F1',
+                showAnswer ? userVal : undefined,
+                isHit,
+              );
+            }}
+            deps={[question.particles, activeSliderVal, showAnswer, targetVal, userVal, isHit]}
           />
         </div>
-      );
-    }
+      }
+    />
+  );
+}
+~~~~~
 
-    if (mode === 'TD_GESTURE_2AFC') {
-      return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
-          </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawSpinePromptCanvas(canvas, question.promptSpine, ABSTRACTION_THUMB_SIZE)
-            }
-            deps={[question.promptSpine]}
-          />
-        </div>
-      );
-    }
+#### Acts 3: 重构负形占比估算与黑白素描归组组件
 
-    if (mode === 'TD_HULL_2AFC') {
-      return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
-          </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.promptHull,
-                size: ABSTRACTION_THUMB_SIZE,
-                fillColor: '#4F46E5',
-                strokeColor: '#3730A3',
-              })
-            }
-            deps={[question.promptHull]}
-          />
-        </div>
-      );
-    }
+~~~~~act
+write_file
+src/domains/negative_space/components/RatioEstimationView.tsx
+~~~~~
+~~~~~typescript
+import { Maximize2 } from 'lucide-preact';
+import { CanvasView } from '../../../components/common/CanvasView';
+import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import {
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../utils/index';
 
-    if (mode === 'TD_NOTAN_2AFC' && question.promptNotanBuffer) {
-      return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
-          </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawRawGrayscaleNoiseField(
-                canvas,
-                question.promptNotanBuffer,
-                question.notanFieldDim ?? 120,
-                ABSTRACTION_THUMB_SIZE,
-              )
-            }
-            deps={[question.promptNotanBuffer, question.notanFieldDim]}
-          />
-        </div>
-      );
-    }
+interface RatioEstimationViewProps {
+  question: NegativeSpaceQuestionData;
+  showAnswer: boolean;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (val: number) => void;
+  disabled?: boolean;
+  hitMargin?: number;
+  showToleranceBand?: boolean;
+  showCanvasHints?: boolean;
+}
 
-    return null;
-  };
-
-  const renderOptionCanvas = (choice: 'A' | 'B') => {
-    if (isPoly && question.simplifiedOptions) {
-      const verts = choice === 'A' ? question.simplifiedOptions[0] : question.simplifiedOptions[1];
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-          draw={(canvas) =>
-            drawPolygonCanvas({
-              canvas,
-              vertices: verts,
-              size: ABSTRACTION_2AFC_SIZE,
-              fillColor: '#4F46E5',
-            })
-          }
-          deps={[verts]}
-        />
-      );
-    }
-
-    if (mode === 'TD_GESTURE_2AFC') {
-      const particles = choice === 'A' ? question.particlesA : question.particlesB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-          draw={(canvas) => drawParticlesCanvas(canvas, particles, ABSTRACTION_2AFC_SIZE)}
-          deps={[particles]}
-        />
-      );
-    }
-
-    if (mode === 'TD_HULL_2AFC') {
-      const verts = choice === 'A' ? question.hullDetailedA : question.hullDetailedB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-          draw={(canvas) =>
-            drawPolygonCanvas({
-              canvas,
-              vertices: verts,
-              size: ABSTRACTION_2AFC_SIZE,
-            })
-          }
-          deps={[verts]}
-        />
-      );
-    }
-
-    if (mode === 'TD_NOTAN_2AFC') {
-      const buf = choice === 'A' ? question.notanSceneBufferA : question.notanSceneBufferB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
-          draw={(canvas) =>
-            drawRawGrayscaleNoiseField(
-              canvas,
-              buf,
-              question.notanFieldDim ?? 120,
-              ABSTRACTION_2AFC_SIZE,
-            )
-          }
-          deps={[buf, question.notanFieldDim]}
-        />
-      );
-    }
-
-    return null;
-  };
+export function RatioEstimationView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  hitMargin = 12,
+  showToleranceBand = true,
+  showCanvasHints = true,
+}: RatioEstimationViewProps) {
+  const { targetNegativeRatio, tolerance } = question;
+  const isHit = Boolean(userAnswer?.isHit);
 
   return (
-    <Standard2AfcView
+    <StandardSliderView
       questionId={question.id}
-      hintText={isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
-      hintIcon={Columns}
+      hintText="估计白色留白 (负形) 占整幅画面的面积百分比"
+      hintIcon={Maximize2}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
+      maxWidth="max-w-lg"
+      label="负形空间占比估计:"
+      max={100}
+      step={0.1}
+      initialValue={50.0}
+      unit="%"
+      targetValue={targetNegativeRatio}
+      tolerance={tolerance}
+      showToleranceBand={showToleranceBand}
       showAnswer={showAnswer}
+      isHit={isHit}
+      userValue={userAnswer?.userRatio}
       disabled={disabled}
+      hitMargin={hitMargin}
+      submitMode="button"
+      submitButtonText="确认提交 (Space)"
       onAnswer={onAnswer}
-      prompt={renderPrompt()}
-      optionA={{
-        title: '区域 A (键 1)',
-        isCorrect: isTargetA,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            {renderOptionCanvas('A')}
-          </div>
-        ),
-      }}
-      optionB={{
-        title: '区域 B (键 2)',
-        isCorrect: isTargetB,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            {renderOptionCanvas('B')}
-          </div>
-        ),
-      }}
+      preview={
+        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+          <CanvasView
+            width={NEGATIVE_SPACE_CANVAS_SIZE}
+            height={NEGATIVE_SPACE_CANVAS_SIZE}
+            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 shadow-sm"
+            draw={(canvas) => {
+              if (question.vertices) {
+                drawPolygonCanvas({
+                  canvas,
+                  vertices: question.vertices,
+                  size: NEGATIVE_SPACE_CANVAS_SIZE,
+                  fillColor: '#0F172A',
+                  strokeColor: '#1E293B',
+                  isHighlighted: showAnswer && isHit,
+                });
+              }
+            }}
+            deps={[question.vertices, showAnswer, isHit]}
+          />
+        </div>
+      }
+    />
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/domains/abstraction/components/NotanThresholdView.tsx
+~~~~~
+~~~~~typescript
+import { Eye } from 'lucide-preact';
+import { useState } from 'preact/hooks';
+import { CanvasView } from '../../../components/common/CanvasView';
+import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
+import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import {
+  drawNotanNoiseField,
+  drawRawGrayscaleNoiseField,
+} from '../../../utils/canvas/drawNotanField';
+import {
+  ABSTRACTION_2AFC_SIZE,
+  type AbstractionHitResult,
+  type AbstractionQuestionData,
+} from '../utils/index';
+
+interface NotanThresholdViewProps {
+  question: AbstractionQuestionData;
+  showAnswer: boolean;
+  userAnswer: AbstractionHitResult | null;
+  onAnswer: (val: number) => void;
+  disabled?: boolean;
+  hitMargin?: number;
+  showCanvasHints?: boolean;
+}
+
+export function NotanThresholdView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  hitMargin = 12,
+  showCanvasHints = true,
+}: NotanThresholdViewProps) {
+  const [activeVal, setActiveVal] = useState<number>(50);
+
+  const targetVal = question.idealNotanThreshold ?? 50;
+
+  return (
+    <StandardSliderView
+      questionId={question.id}
+      hintText="观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+      label="二值化截断阈值:"
+      max={100}
+      step={0.5}
+      initialValue={50}
+      unit="%"
+      targetValue={targetVal}
+      showAnswer={showAnswer}
+      isHit={Boolean(userAnswer?.isHit)}
+      userValue={userAnswer?.userValue}
+      disabled={disabled}
+      hitMargin={hitMargin}
+      submitMode="commit_on_release"
+      onValueChange={(_val, active) => setActiveVal(active)}
+      onAnswer={onAnswer}
+      preview={
+        <DualViewportContainer
+          leftTitle="灰阶原图 (Raw Scene)"
+          rightTitle="二值显影 (Notan Output)"
+          leftContent={
+            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+              <CanvasView
+                width={ABSTRACTION_2AFC_SIZE}
+                height={ABSTRACTION_2AFC_SIZE}
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+                draw={(canvas) => {
+                  if (question.notanBuffer) {
+                    drawRawGrayscaleNoiseField(
+                      canvas,
+                      question.notanBuffer,
+                      question.notanFieldDim ?? 120,
+                      ABSTRACTION_2AFC_SIZE,
+                    );
+                  }
+                }}
+                deps={[question.notanBuffer, question.notanFieldDim]}
+              />
+            </div>
+          }
+          rightContent={
+            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+              <CanvasView
+                width={ABSTRACTION_2AFC_SIZE}
+                height={ABSTRACTION_2AFC_SIZE}
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+                draw={(canvas) => {
+                  if (question.notanBuffer) {
+                    drawNotanNoiseField(
+                      canvas,
+                      question.notanBuffer,
+                      question.notanFieldDim ?? 120,
+                      showAnswer ? targetVal : activeVal,
+                      ABSTRACTION_2AFC_SIZE,
+                    );
+                  }
+                }}
+                deps={[question.notanBuffer, question.notanFieldDim, targetVal, activeVal, showAnswer]}
+              />
+            </div>
+          }
+        />
+      }
     />
   );
 }
 ~~~~~
 
 ### 下一步建议
-1. **测试用例与校验**：执行 `npm run check` 检查格式与类型，执行 `npm run test` 确保各模式下做答、判分与渲染全部正常。
-2. **抽象 Slider 交互壳 (`StandardSliderView`)**：进一步将单图/双图的滑块估算视图（角度估算、势线提取、负形占比估算等）抽离通用壳组件。
+1. **测试与质量验证**：运行 `npm run check` 检查格式与类型，运行 `npm run test` 验证各交互与做答逻辑。
+2. **N-AFC 组件抽象 (`StandardNafcView`)**：继续将四选一类视图（如 `PaletteClusteringView`, `TopDownPatternView`, `VectorShiftView`）抽离为通用 N-AFC 壳组件。

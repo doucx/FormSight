@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 抽象通用 CanvasView 与 Standard2AfcView 消除重复样板代码", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322195.6283054, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 抽象通用 StandardSliderView 并重构连续滑块类卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322289.667985, "duration_ms": 0}}
