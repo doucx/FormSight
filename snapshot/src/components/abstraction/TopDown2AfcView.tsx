@@ -45,22 +45,65 @@ export function TopDown2AfcView({
 
   useEffect(() => {
     if (isPoly && question.detailedPolygon) {
-      drawPolygonCanvas({ canvas: canvasMainRef.current, vertices: question.detailedPolygon, size: ABSTRACTION_CANVAS_SIZE });
-      drawPolygonCanvas({ canvas: canvasRefA.current, vertices: question.simplifiedOptions?.[0], size: ABSTRACTION_2AFC_SIZE, fillColor: '#4F46E5' });
-      drawPolygonCanvas({ canvas: canvasRefB.current, vertices: question.simplifiedOptions?.[1], size: ABSTRACTION_2AFC_SIZE, fillColor: '#4F46E5' });
+      drawPolygonCanvas({
+        canvas: canvasMainRef.current,
+        vertices: question.detailedPolygon,
+        size: ABSTRACTION_CANVAS_SIZE,
+      });
+      drawPolygonCanvas({
+        canvas: canvasRefA.current,
+        vertices: question.simplifiedOptions?.[0],
+        size: ABSTRACTION_2AFC_SIZE,
+        fillColor: '#4F46E5',
+      });
+      drawPolygonCanvas({
+        canvas: canvasRefB.current,
+        vertices: question.simplifiedOptions?.[1],
+        size: ABSTRACTION_2AFC_SIZE,
+        fillColor: '#4F46E5',
+      });
     } else if (mode === 'TD_GESTURE_2AFC') {
       drawSpinePromptCanvas(canvasThumbRef.current, question.promptSpine, ABSTRACTION_THUMB_SIZE);
       drawParticlesCanvas(canvasRefA.current, question.particlesA, ABSTRACTION_2AFC_SIZE);
       drawParticlesCanvas(canvasRefB.current, question.particlesB, ABSTRACTION_2AFC_SIZE);
     } else if (mode === 'TD_HULL_2AFC') {
-      drawPolygonCanvas({ canvas: canvasThumbRef.current, vertices: question.promptHull, size: ABSTRACTION_THUMB_SIZE, fillColor: '#4F46E5', strokeColor: '#3730A3' });
-      drawPolygonCanvas({ canvas: canvasRefA.current, vertices: question.hullDetailedA, size: ABSTRACTION_2AFC_SIZE });
-      drawPolygonCanvas({ canvas: canvasRefB.current, vertices: question.hullDetailedB, size: ABSTRACTION_2AFC_SIZE });
+      drawPolygonCanvas({
+        canvas: canvasThumbRef.current,
+        vertices: question.promptHull,
+        size: ABSTRACTION_THUMB_SIZE,
+        fillColor: '#4F46E5',
+        strokeColor: '#3730A3',
+      });
+      drawPolygonCanvas({
+        canvas: canvasRefA.current,
+        vertices: question.hullDetailedA,
+        size: ABSTRACTION_2AFC_SIZE,
+      });
+      drawPolygonCanvas({
+        canvas: canvasRefB.current,
+        vertices: question.hullDetailedB,
+        size: ABSTRACTION_2AFC_SIZE,
+      });
     } else if (mode === 'TD_NOTAN_2AFC') {
       if (question.promptNotanBuffer && question.notanSceneBufferA && question.notanSceneBufferB) {
-        drawRawGrayscaleNoiseField(canvasThumbRef.current, question.promptNotanBuffer, question.notanFieldDim ?? 120, ABSTRACTION_THUMB_SIZE);
-        drawRawGrayscaleNoiseField(canvasRefA.current, question.notanSceneBufferA, question.notanFieldDim ?? 120, ABSTRACTION_2AFC_SIZE);
-        drawRawGrayscaleNoiseField(canvasRefB.current, question.notanSceneBufferB, question.notanFieldDim ?? 120, ABSTRACTION_2AFC_SIZE);
+        drawRawGrayscaleNoiseField(
+          canvasThumbRef.current,
+          question.promptNotanBuffer,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_THUMB_SIZE,
+        );
+        drawRawGrayscaleNoiseField(
+          canvasRefA.current,
+          question.notanSceneBufferA,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_2AFC_SIZE,
+        );
+        drawRawGrayscaleNoiseField(
+          canvasRefB.current,
+          question.notanSceneBufferB,
+          question.notanFieldDim ?? 120,
+          ABSTRACTION_2AFC_SIZE,
+        );
       }
     }
   }, [mode, isPoly, question]);

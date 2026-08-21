@@ -147,9 +147,7 @@ export function TopDownPatternView({
           <div className="flex items-center gap-2">
             <div
               className={`p-1.5 rounded-xl ${
-                userAnswer?.isHit
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-rose-100 text-rose-700'
+                userAnswer?.isHit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
               }`}
             >
               {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}

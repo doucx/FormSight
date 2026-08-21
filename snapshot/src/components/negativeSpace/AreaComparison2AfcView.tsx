@@ -1,11 +1,11 @@
 import { Check, Columns, X } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import {
-  TWO_AFC_CANVAS_SIZE,
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
+  TWO_AFC_CANVAS_SIZE,
 } from '../../utils/negativeSpace';
-import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 
 interface AreaComparison2AfcViewProps {
   question: NegativeSpaceQuestionData;
@@ -199,9 +199,7 @@ export function AreaComparison2AfcView({
           <div className="flex items-center gap-2">
             <div
               className={`p-1.5 rounded-xl ${
-                userAnswer?.isHit
-                  ? 'bg-emerald-100 text-emerald-700'
-                  : 'bg-rose-100 text-rose-700'
+                userAnswer?.isHit ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
               }`}
             >
               {userAnswer?.isHit ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}

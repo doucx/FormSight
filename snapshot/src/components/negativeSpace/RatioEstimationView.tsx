@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
+import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
 } from '../../utils/negativeSpace';
-import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 
 interface RatioEstimationViewProps {
   question: NegativeSpaceQuestionData;

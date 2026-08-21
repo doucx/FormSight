@@ -1,7 +1,11 @@
 import { Eye } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
-import { ABSTRACTION_CANVAS_SIZE, type AbstractionHitResult, type AbstractionQuestionData } from '../../utils/abstraction';
+import {
+  ABSTRACTION_CANVAS_SIZE,
+  type AbstractionHitResult,
+  type AbstractionQuestionData,
+} from '../../utils/abstraction';
 import { drawParticlesCanvas } from '../../utils/canvas/drawParticles';
 
 interface GestureAxisViewProps {

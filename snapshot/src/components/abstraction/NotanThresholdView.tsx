@@ -59,7 +59,13 @@ export function NotanThresholdView({
         ABSTRACTION_2AFC_SIZE,
       );
     }
-  }, [question.notanBuffer, question.notanFieldDim, question.idealNotanThreshold, activeVal, showAnswer]);
+  }, [
+    question.notanBuffer,
+    question.notanFieldDim,
+    question.idealNotanThreshold,
+    activeVal,
+    showAnswer,
+  ]);
 
   return (
     <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
