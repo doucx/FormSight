@@ -14,7 +14,7 @@ import {
   type UnifiedProfileData,
   getProfilesByDomain,
   getTrainingTimeMs,
-} from './utils/db';
+} from './utils/db/index';
 import {
   loadPlanStorageState,
   loadTrainingPlan,

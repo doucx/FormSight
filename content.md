@@ -1,264 +1,260 @@
-好的，我将按照代码审核结果，分阶段实施首轮重构与代码清理：清理无用死代码、移除冗余中间转接文件、精简过时配置与无用 Hook 监听。
+收到，由于在 Vite 研发服务器热更新机制下，直接引用目录名可能会因客户端缓存尝试拉取旧版 `db.ts` 导致 404。我们立即将项目中所有业务模块对数据库的导入路径显式指向 `src/utils/db/index`。
 
-## [WIP] refactor: 清理死代码、移除冗余转接层并优化组件生命周期
+## [WIP] refactor: 规范化更新所有业务模块对 db 模块的显式导入路径
 
 ### 用户需求
-针对代码审核中发现的死代码、未使用的类型定义、冗余的 `db.ts` 垫片层以及无效 `useEffect` 进行清理与重构，提升代码库的纯净度与可维护性。
+将全项目中所有引用 `utils/db` 的文件显式更新为 `utils/db/index`，彻底消除 Vite 开发环境下模块解析歧义与 404 资源加载异常。
 
 ### 评论
-这次重构清理了历史迭代残留的无用声明与转接文件，消除了潜在的类型歧义与无意义的组件渲染开销，为后续进一步抽象通用交互与 Canvas 渲染容器奠定扎实基础。
+显式指定模块入口文件（`index`）是 ESM 规范与现代打包器最稳健的做法，避免了跨目录解析时对文件扩展名/同名目录的猜测开销与客户端缓存冲突。
 
 ### 目标
-1. 删除已完全由 `src/utils/db/index.ts` 替代的冗余中转文件 `src/utils/db.ts`。
-2. 从 `src/types/index.ts` 中移除已废弃的旧版 `TrialRecord` 接口定义。
-3. 从 `src/components/settings/DynamicDomainSettings.tsx` 中清理已被卡片级 Schema 替代的死配置 `DOMAIN_SETTING_SCHEMAS`。
-4. 移除 `src/components/common/PointClickCanvas.tsx` 中无意义的初始 `setHoverPoint(null)` Effect。
-5. 清理 `src/domains/abstraction/utils/types.ts` 中废弃的未引用字段。
+1. 批量更新 `src/app.tsx`、`src/views/*`、`src/components/*`、`src/hooks/*`、`src/domains/*` 中所有 `utils/db` 导入语句为 `utils/db/index`。
+2. 保持项目内所有组件与 hooks 的正常运行与热更新。
 
 ### 基本原理
-1. TypeScript + Vite bundler 模式下，直接引入目录 `'../utils/db'` 即可精确解析到 `src/utils/db/index.ts`，删除根级 `db.ts` 可以消除多层代理转接。
-2. 全局统一使用 `UnifiedTrialRecord`（由 `src/utils/db/schema.ts` 提供并别名导出为 `TrialRecord`），移除 `src/types/index.ts` 的重复冲突定义。
-3. 动态配置已经全面下沉到各个卡片的 `settingSchemas` 属性中，移除全局冗余字典以减小打包体积。
+通过将模糊的目录路径或已删除的单文件路径 `'../utils/db'` 明确修改为 `'../utils/db/index'`，使 Vite 的 HMR 与浏览器 ESM 能够精确定位到 `src/utils/db/index.ts`，防止向不存在的 `db.ts` 发起请求。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium
-#comp/core #comp/components #scope/core #scope/dx
+#intent/refine #flow/ready #priority/high
+#comp/build #scope/dx #scope/core
 #ai/instruct
 #task/domain/refactoring
-#task/object/codebase-hygiene
-#task/action/dead-code-elimination
-#task/state/begin #task/status/active
+#task/object/import-paths
+#task/action/explicit-module-resolution
+#task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 删除冗余的 `src/utils/db.ts` 代理文件
-
-直接使用目录内部的 `src/utils/db/index.ts` 作为统一导出入口。
-
-~~~~~act
-delete_file
-src/utils/db.ts
-~~~~~
-
-#### Acts 2: 清理 `src/types/index.ts` 中废弃的 `TrialRecord` 接口
-
-移除冗余的旧版 `TrialRecord`，消除与 `UnifiedTrialRecord` 的类型冲突。
+#### Acts 1: 更新应用主入口与视图层的 db 导入
 
 ~~~~~act
 patch_file
-src/types/index.ts
+src/app.tsx
 ~~~~~
 ~~~~~typescript.old
-export interface HitResult {
-  isHit: boolean; // 是否选中正确的网格点
-  nearestGridPoint: Point; // 用户点击位置对应的网格点
-  errorDistance: number; // 点击位置与真理点的像素误差
-  isWithinRange?: boolean; // 是否落在有效点击感应范围内
-}
-
-export interface TrialRecord {
-  id: string;
-  sessionId: string;
-  mode: TrainingMode;
-  timestamp: number;
-  difficultyLevel: number; // 存入 Level 等级
-  anchorA: [number, number];
-  anchorC?: [number, number];
-  targetB: [number, number];
-  userClick: [number, number];
-  angleDegree: number;
-  distanceRatio: number;
-  isHit: boolean;
-  errorPixelDistance: number;
-  responseTimeMs: number;
-}
+import {
+  type TrainingDomain,
+  type UnifiedProfileData,
+  getProfilesByDomain,
+  getTrainingTimeMs,
+} from './utils/db';
 ~~~~~
 ~~~~~typescript.new
-export interface HitResult {
-  isHit: boolean; // 是否选中正确的网格点
-  nearestGridPoint: Point; // 用户点击位置对应的网格点
-  errorDistance: number; // 点击位置与真理点的像素误差
-  isWithinRange?: boolean; // 是否落在有效点击感应范围内
-}
+import {
+  type TrainingDomain,
+  type UnifiedProfileData,
+  getProfilesByDomain,
+  getTrainingTimeMs,
+} from './utils/db/index';
 ~~~~~
 
-#### Acts 3: 清理 `DynamicDomainSettings.tsx` 中的死配置
+~~~~~act
+patch_file
+src/views/Home.tsx
+~~~~~
+~~~~~typescript.old
+import { type TrainingDomain, formatTotalTime } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { type TrainingDomain, formatTotalTime } from '../utils/db/index';
+~~~~~
 
-移除已被卡片内联 Schema 完全替代的 `DOMAIN_SETTING_SCHEMAS` 常量定义。
+~~~~~act
+patch_file
+src/views/GenericTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+import { saveSession, saveTrialRecord } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { saveSession, saveTrialRecord } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript.old
+import { getProfile } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { getProfile } from '../utils/db/index';
+~~~~~
+
+#### Acts 2: 更新配置、类型与 Hooks 中的 db 导入
+
+~~~~~act
+patch_file
+src/config/domains.ts
+~~~~~
+~~~~~typescript.old
+import type { TrainingDomain } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import type { TrainingDomain } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/config/trainingPlugins.tsx
+~~~~~
+~~~~~typescript.old
+import type { TrainingDomain } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import type { TrainingDomain } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/types/card.ts
+~~~~~
+~~~~~typescript.old
+import type { TrainingDomain } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import type { TrainingDomain } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
+~~~~~
+~~~~~typescript.old
+import type { TrainingDomain } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import type { TrainingDomain } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useTodayStats.ts
+~~~~~
+~~~~~typescript.old
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { type TrainingDomain, getTrialRecords } from '../utils/db/index';
+~~~~~
+
+#### Acts 3: 更新全局弹窗与设置组件的 db 导入
+
+~~~~~act
+patch_file
+src/components/GlobalSettingsModal.tsx
+~~~~~
+~~~~~typescript.old
+import { clearAllData, exportAllData, importAllData } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { clearAllData, exportAllData, importAllData } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/GlobalStatsModal.tsx
+~~~~~
+~~~~~typescript.old
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import { type TrainingDomain, getTrialRecords } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/WeaknessAnalyticsModal.tsx
+~~~~~
+~~~~~typescript.old
+import type { UnifiedTrialRecord } from '../utils/db';
+~~~~~
+~~~~~typescript.new
+import type { UnifiedTrialRecord } from '../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/dashboard/GenericDashboard.tsx
+~~~~~
+~~~~~typescript.old
+import { type UnifiedProfileData, getProfilesByDomain } from '../../utils/db';
+~~~~~
+~~~~~typescript.new
+import { type UnifiedProfileData, getProfilesByDomain } from '../../utils/db/index';
+~~~~~
 
 ~~~~~act
 patch_file
 src/components/settings/DynamicDomainSettings.tsx
 ~~~~~
 ~~~~~typescript.old
-export const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
-];
-
-export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]> = {
-  angle: [],
-  abstraction: [],
-  concretization: [],
-  star: [
-    {
-      type: 'buttonGroup',
-      key: 'gridSize',
-      title: '干扰点网格大小',
-      options: [
-        { label: '2x2', value: 2 },
-        { label: '3x3', value: 3 },
-        { label: '4x4', value: 4 },
-        { label: '5x5', value: 5 },
-      ],
-      gridCols: 'grid-cols-4',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的角度扇区：',
-      sectors: STAR_SECTORS,
-      gridCols: 'grid-cols-4',
-    },
-  ],
-  color: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '综合拾色悬停颜色实时联动',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '色相弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的色相扇区：',
-      sectors: COLOR_SECTORS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
-  relative_color: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '悬停推移色彩联动预览',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-  ],
-  negative_space: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 Δ% 动态容错区间',
-    },
-  ],
-};
-
-interface DynamicDomainSettingsProps {
+import type { TrainingDomain } from '../../utils/db';
 ~~~~~
 ~~~~~typescript.new
-export const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
-];
-
-interface DynamicDomainSettingsProps {
+import type { TrainingDomain } from '../../utils/db/index';
 ~~~~~
 
-#### Acts 4: 移除 `PointClickCanvas.tsx` 中多余的空挂载 `useEffect`
-
-清理组件挂载时重复设置默认值的无效操作。
+#### Acts 4: 更新分析模块与工具层的 db 导入
 
 ~~~~~act
 patch_file
-src/components/common/PointClickCanvas.tsx
+src/domains/color/analytics.tsx
 ~~~~~
 ~~~~~typescript.old
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  useEffect(() => {
-    setHoverPoint(null);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
+import { getTrialRecordsByCard } from '../../utils/db';
 ~~~~~
 ~~~~~typescript.new
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
+import { getTrialRecordsByCard } from '../../utils/db/index';
 ~~~~~
-
-#### Acts 5: 清理 `src/domains/abstraction/utils/types.ts` 中的未引用废弃字段
-
-移除 4AFC 改造前遗留的 `patternA`、`patternB` 和 `correctPatternChoice` 属性。
 
 ~~~~~act
 patch_file
-src/domains/abstraction/utils/types.ts
+src/domains/negative_space/analytics.tsx
 ~~~~~
 ~~~~~typescript.old
-  promptDominantColor?: [number, number, number]; // 题干单基准主色
-  palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
-  correctPatternIndex?: number; // 0..3
-  patternA?: PaletteTile[];
-  patternB?: PaletteTile[];
-  correctPatternChoice?: 'A' | 'B';
-}
-
-export interface AbstractionHitResult {
+import { getTrialRecordsByCard } from '../../utils/db';
 ~~~~~
 ~~~~~typescript.new
-  promptDominantColor?: [number, number, number]; // 题干单基准主色
-  palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
-  correctPatternIndex?: number; // 0..3
-}
+import { getTrialRecordsByCard } from '../../utils/db/index';
+~~~~~
 
-export interface AbstractionHitResult {
+~~~~~act
+patch_file
+src/domains/star/analytics.tsx
+~~~~~
+~~~~~typescript.old
+import { getTrialRecordsByCard } from '../../utils/db';
+~~~~~
+~~~~~typescript.new
+import { getTrialRecordsByCard } from '../../utils/db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/utils/canvas/drawHeatmap.ts
+~~~~~
+~~~~~typescript.old
+import type { UnifiedTrialRecord } from '../db';
+~~~~~
+~~~~~typescript.new
+import type { UnifiedTrialRecord } from '../db/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/utils/canvas/drawHueBiasChart.ts
+~~~~~
+~~~~~typescript.old
+import type { UnifiedTrialRecord } from '../db';
+~~~~~
+~~~~~typescript.new
+import type { UnifiedTrialRecord } from '../db/index';
 ~~~~~
 
 ### 下一步建议
-1. **统一 Canvas 渲染容器 (`<CanvasView />`)**：将各卡片组件中重复的 `useRef` + `useEffect` 样板代码抽取为通用 Canvas 组件。
-2. **抽象通用 2AFC / N-AFC / Slider 视图壳组件**：合并各 domain 下重复率高达 90% 的视图文件，大幅降低代码量。
-3. **测试验证**：执行 `npm run test` 和 `npm run check` 确保重构后所有测试用例与静态检查保持绿灯通过。
+1. 刷新浏览器页面，确认 404 告警已消除。
+2. 推进下一阶段重构：封装通用 `<CanvasView />` 与 2AFC 泛型交互壳，进一步精简重复代码。

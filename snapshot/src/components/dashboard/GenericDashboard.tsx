@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { DomainMeta } from '../../config/domains';
 import { useTodayStats } from '../../hooks/useTodayStats';
-import { type UnifiedProfileData, getProfilesByDomain } from '../../utils/db';
+import { type UnifiedProfileData, getProfilesByDomain } from '../../utils/db/index';
 import { loadSettings } from '../../utils/settings';
 import { DashboardShell } from './DashboardShell';
 import { ModeCard } from './ModeCard';

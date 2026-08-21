@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 清理死代码、移除冗余转接层并优化组件生命周期", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787321935.6749012, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 规范化更新所有业务模块对 db 模块的显式导入路径", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322094.8545465, "duration_ms": 0}}

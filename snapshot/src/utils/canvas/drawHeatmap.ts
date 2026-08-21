@@ -1,5 +1,5 @@
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import type { UnifiedTrialRecord } from '../db';
+import type { UnifiedTrialRecord } from '../db/index';
 
 export function renderHeatmapCanvas(
   canvas: HTMLCanvasElement,

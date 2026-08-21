@@ -4,7 +4,7 @@ import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
-import { getProfile } from '../utils/db';
+import { getProfile } from '../utils/db/index';
 import { type UserSettings, getCardSettings } from '../utils/settings';
 import { GenericTrainingView } from './GenericTrainingView';
 

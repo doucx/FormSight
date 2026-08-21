@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import type { TrainingDomain } from '../utils/db';
+import type { TrainingDomain } from '../utils/db/index';
 
 export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
   question: TQuestion;

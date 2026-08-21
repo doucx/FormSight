@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import type { CardAnalyticsView } from '../core/contracts';
 import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
-import type { UnifiedTrialRecord } from '../utils/db';
+import type { UnifiedTrialRecord } from '../utils/db/index';
 
 interface WeaknessAnalyticsModalProps {
   card: CardDefinition;

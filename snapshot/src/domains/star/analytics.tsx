@@ -2,7 +2,7 @@ import { Compass, Target } from 'lucide-preact';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
 import { type SectorStat, renderCompassCanvas } from '../../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../../utils/canvas/drawHeatmap';
-import { getTrialRecordsByCard } from '../../utils/db';
+import { getTrialRecordsByCard } from '../../utils/db/index';
 
 const STAR_SECTORS = [
   '正东 (0°)',

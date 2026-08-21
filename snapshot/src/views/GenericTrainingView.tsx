@@ -3,7 +3,7 @@ import { TrainingShell } from '../components/training/TrainingShell';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
-import { saveSession, saveTrialRecord } from '../utils/db';
+import { saveSession, saveTrialRecord } from '../utils/db/index';
 import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
 
 interface GenericTrainingPluginAdapter {

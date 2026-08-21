@@ -1,5 +1,5 @@
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import type { UnifiedTrialRecord } from '../db';
+import type { UnifiedTrialRecord } from '../db/index';
 
 /**
  * 计算带符号的角度偏差 (-180° ~ +180°)
