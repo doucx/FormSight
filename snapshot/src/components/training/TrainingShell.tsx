@@ -194,6 +194,7 @@ export function TrainingShell({
           sessionType={sessionType}
           elapsedSeconds={elapsedSeconds}
           history={sessionHistory}
+          endLevel={session.finalLevel}
           onClose={handleFinishSession}
           onRestart={handleRestartSession}
         />

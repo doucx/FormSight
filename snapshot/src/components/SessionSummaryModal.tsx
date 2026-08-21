@@ -15,6 +15,7 @@ interface SessionSummaryModalProps {
   sessionType: 'training' | 'benchmark';
   elapsedSeconds: number;
   history: SessionHistoryItem[];
+  endLevel?: number;
   onClose: () => void;
   onRestart: () => void;
 }
@@ -24,6 +25,7 @@ export function SessionSummaryModal({
   sessionType,
   elapsedSeconds,
   history,
+  endLevel: propEndLevel,
   onClose,
   onRestart,
 }: SessionSummaryModalProps) {
@@ -34,7 +36,7 @@ export function SessionSummaryModal({
   const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
 
   const startLevel = history.length > 0 ? history[0].level : 5;
-  const endLevel = history.length > 0 ? history[history.length - 1].level : 5;
+  const endLevel = propEndLevel ?? (history.length > 0 ? history[history.length - 1].level : startLevel);
   const levelDiff = endLevel - startLevel;
 
   const avgResponseTimeSec =

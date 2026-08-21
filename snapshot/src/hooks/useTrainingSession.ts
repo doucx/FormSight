@@ -279,11 +279,13 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
-    adaptiveEngineRef.current.setLevel(initialLevel);
+    // 保持当前掌握的难度等级连贯性，若需重置可按需调整
+    const currentLevel = adaptiveEngineRef.current.getCurrentLevel();
+    adaptiveEngineRef.current.setLevel(currentLevel);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }, [domain, mode, initialLevel, generateQuestion]);
+  }, [domain, mode, generateQuestion]);
 
   // === 闲置与失焦监听 ===
   useEffect(() => {
@@ -376,6 +378,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     isIdle,
     sessionHistory,
     showSummaryModal,
+    finalLevel: adaptiveEngineRef.current.getCurrentLevel(),
     resumeFromIdle,
     pauseToIdle,
     handleAnswer,
