@@ -1,6 +1,6 @@
 import { Plus } from 'lucide-preact';
-import type { CardDefinition } from '../../../types/card';
 import { DOMAINS_CONFIG } from '../../../config/domains';
+import type { CardDefinition } from '../../../types/card';
 
 interface CardPickerPanelProps {
   isAddingCard: boolean;

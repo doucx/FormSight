@@ -1,13 +1,4 @@
-import {
-  Check,
-  Copy,
-  Download,
-  Edit3,
-  Layers,
-  Sliders,
-  Sparkles,
-  Upload,
-} from 'lucide-preact';
+import { Check, Copy, Download, Edit3, Layers, Sliders, Sparkles, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { ALL_CARDS, getCardById } from '../../config/cards';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
@@ -21,9 +12,9 @@ import {
   togglePlanFavorite,
 } from '../../utils/planStorage';
 import { ModalShell } from '../common/ModalShell';
+import { CardPickerPanel } from './editor/CardPickerPanel';
 import { PlanLibraryDrawer } from './editor/PlanLibraryDrawer';
 import { PlanStageList } from './editor/PlanStageList';
-import { CardPickerPanel } from './editor/CardPickerPanel';
 
 interface PlanEditorModalProps {
   initialPlan: TrainingPlan;

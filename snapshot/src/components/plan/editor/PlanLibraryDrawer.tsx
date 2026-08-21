@@ -1,5 +1,5 @@
 import { Plus, Star, Trash2 } from 'lucide-preact';
-import type { TrainingPlan, PlanStorageState } from '../../../types/plan';
+import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
 
 interface PlanLibraryDrawerProps {
   storageState: PlanStorageState;
@@ -66,11 +66,14 @@ export function PlanLibraryDrawer({
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
                   {p.isBuiltin && (
-                    <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">官方</span>
+                    <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
+                      官方
+                    </span>
                   )}
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5">
-                  {stageCount} 个阶段 • {(p.items || []).reduce((acc, c) => acc + c.targetTrials, 0)} 题
+                  {stageCount} 个阶段 •{' '}
+                  {(p.items || []).reduce((acc, c) => acc + c.targetTrials, 0)} 题
                 </div>
               </button>
 
@@ -79,7 +82,9 @@ export function PlanLibraryDrawer({
                   type="button"
                   onClick={(e) => onToggleFavorite(p.id, e)}
                   className={`p-1 rounded-lg transition-colors ${
-                    isFav ? 'text-amber-500 hover:bg-amber-50' : 'text-slate-300 hover:text-slate-500'
+                    isFav
+                      ? 'text-amber-500 hover:bg-amber-50'
+                      : 'text-slate-300 hover:text-slate-500'
                   }`}
                   title={isFav ? '已收藏 (显示在主页快速切换)' : '未收藏'}
                 >
