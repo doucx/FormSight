@@ -1,5 +1,3 @@
-import { hsvToOkLab } from '../oklchUtils';
-
 /**
  * 根据难度等级 (Level 1..35) 计算干扰项的绝对 OKLab 距离 Radius R
  */

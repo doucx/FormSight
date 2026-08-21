@@ -7,7 +7,7 @@ import {
   type AbstractionHitResult,
   type AbstractionQuestionData,
 } from '../../utils/abstraction';
-import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
+import { drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
 import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../utils/canvas/drawParticles';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import { AnswerDiagnosticBar } from '../common/AnswerDiagnosticBar';
