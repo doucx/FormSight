@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(angle): 新增角度感知训练领域及连续滑块与 2AFC 卡片系列", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313578.4369924, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313816.0494637, "duration_ms": 0}}
