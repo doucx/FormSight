@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: A piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787312445.23687, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787313083.9123728, "duration_ms": 0}}

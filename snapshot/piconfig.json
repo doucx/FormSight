@@ -34,6 +34,42 @@
         "src/utils/abstraction/hitDetection.ts",
         "src/utils/abstraction/types.ts"
       ]
+    },
+    "core": {
+      "format": "xml",
+      "extension": ["ts", "tsx"],
+      "paths": [
+        "src/types/plan.ts",
+        "src/types/card.ts",
+        "src/types/index.ts",
+        "src/config/planTemplates.ts",
+        "src/config/cards.ts",
+        "src/config/domains.ts",
+        "src/config/trainingPlugins.tsx",
+        "src/config/plugins/index.ts",
+        "src/utils/planStorage.ts",
+        "src/utils/adaptiveEngine.ts",
+        "src/utils/settings.ts",
+        "src/utils/db/schema.ts",
+        "src/utils/db/queries.ts",
+        "src/utils/db/importExport.ts",
+        "src/hooks/useTrainingSession.ts",
+        "src/hooks/useHashRoute.ts",
+        "src/hooks/useTodayStats.ts",
+        "src/components/training/TrainingShell.tsx",
+        "src/components/SessionSummaryModal.tsx",
+        "src/components/plan/PlanHeroCard.tsx",
+        "src/components/plan/PlanEditorModal.tsx",
+        "src/components/plan/PlanSummaryModal.tsx",
+        "src/components/plan/PlanStepTransitionOverlay.tsx",
+        "src/components/plan/editor/PlanStageList.tsx",
+        "src/components/plan/editor/PlanLibraryDrawer.tsx",
+        "src/components/plan/editor/CardPickerPanel.tsx",
+        "src/views/PlanTrainingView.tsx",
+        "src/views/GenericTrainingView.tsx",
+        "src/views/Home.tsx",
+        "src/app.tsx"
+      ]
     }
   }
 }
