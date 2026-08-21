@@ -1,6 +1,6 @@
+import { generateTetrahedralDistractors, hsvToOkLab } from '../../../core/color/oklchUtils';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import { calculateOtsuThreshold, createNoise2D, fbm2D } from '../../../core/math/noiseUtils';
-import { generateTetrahedralDistractors, hsvToOkLab } from '../../../core/color/oklchUtils';
 import type { Point } from '../../../types';
 import { getDistractorDistanceForLevel } from '../../relative_color/utils/inductionMath';
 import { calcPCAOrientation, generateFlowParticles, generateFlowParticlesWithClutter } from './pca';

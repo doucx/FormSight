@@ -3,7 +3,10 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { useTrackPointer } from '../../../hooks/useTrackPointer';
-import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../../../utils/canvas/drawNotanField';
+import {
+  drawNotanNoiseField,
+  drawRawGrayscaleNoiseField,
+} from '../../../utils/canvas/drawNotanField';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,

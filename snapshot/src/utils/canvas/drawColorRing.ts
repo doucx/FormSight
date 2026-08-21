@@ -1,5 +1,5 @@
-import { hsvToHex } from '../../core/color/colorUtils';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { hsvToHex } from '../../core/color/colorUtils';
 import type { SectorStat } from './drawCompass';
 
 export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {

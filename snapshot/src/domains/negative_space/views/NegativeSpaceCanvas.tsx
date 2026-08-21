@@ -3,10 +3,7 @@ import { AreaComparison2AfcView } from '../components/AreaComparison2AfcView';
 import { RatioEstimationView } from '../components/RatioEstimationView';
 import { ShapeMemory2AfcView } from '../components/ShapeMemory2AfcView';
 import { VertexFittingView } from '../components/VertexFittingView';
-import type {
-  NegativeSpaceHitResult,
-  NegativeSpaceQuestionData,
-} from '../utils/index';
+import type { NegativeSpaceHitResult, NegativeSpaceQuestionData } from '../utils/index';
 
 export interface NegativeSpaceCanvasProps {
   question: NegativeSpaceQuestionData;

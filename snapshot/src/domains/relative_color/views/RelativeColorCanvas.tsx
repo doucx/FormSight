@@ -3,10 +3,7 @@ import { AlbersInductionView } from '../components/AlbersInductionView';
 import { Decontextual2AfcView } from '../components/Decontextual2AfcView';
 import { HueInductionView } from '../components/HueInductionView';
 import { VectorShiftView } from '../components/VectorShiftView';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../utils/index';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 export interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;
