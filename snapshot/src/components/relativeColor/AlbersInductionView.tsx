@@ -1,4 +1,4 @@
-import { Check, Eye, X } from 'lucide-preact';
+import { Eye } from 'lucide-preact';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
 import { HsvTrackSlider } from '../HsvTrackSlider';

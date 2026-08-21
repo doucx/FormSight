@@ -1,4 +1,4 @@
-import { Check, Columns, X } from 'lucide-preact';
+import { Check, Columns } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import {
@@ -10,7 +10,7 @@ import {
 interface AreaComparison2AfcViewProps {
   question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
+  userAnswer?: NegativeSpaceHitResult | null;
   onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;

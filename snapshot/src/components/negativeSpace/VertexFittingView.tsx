@@ -1,4 +1,4 @@
-import { Check, Columns, X } from 'lucide-preact';
+import { Columns } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { Point } from '../../types';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';

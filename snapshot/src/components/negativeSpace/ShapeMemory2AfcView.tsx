@@ -1,4 +1,4 @@
-import { Check, Sparkles, X } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import {

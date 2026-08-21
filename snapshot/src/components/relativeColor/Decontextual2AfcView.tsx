@@ -1,13 +1,12 @@
 import { Eye } from 'lucide-preact';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
-import { AnswerDiagnosticBar } from '../common/AnswerDiagnosticBar';
 import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
 
 interface Decontextual2AfcViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
+  userAnswer?: RelativeColorHitResult | null;
   selectedChoice: 'A' | 'B' | null;
   onSelectChoice: (choice: 'A' | 'B') => void;
   disabled?: boolean;

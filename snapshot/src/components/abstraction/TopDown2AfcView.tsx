@@ -10,7 +10,6 @@ import {
 import { drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
 import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../utils/canvas/drawParticles';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
-import { AnswerDiagnosticBar } from '../common/AnswerDiagnosticBar';
 import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
 
 interface TopDown2AfcViewProps {

@@ -1,4 +1,4 @@
-import { Check, Sparkles, X } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
   ABSTRACTION_2AFC_SIZE,

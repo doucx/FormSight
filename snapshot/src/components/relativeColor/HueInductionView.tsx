@@ -1,4 +1,4 @@
-import { Check, Sparkles, X } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
@@ -6,7 +6,7 @@ import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../ut
 interface HueInductionViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
+  userAnswer?: RelativeColorHitResult | null;
   onAnswer: (chosenColor: [number, number, number]) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
