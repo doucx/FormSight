@@ -3,6 +3,8 @@ import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { AdaptiveEngine } from '../core/engine/adaptiveEngine';
 import { type AdaptiveMode, type StepGranularity, loadSettings } from '../utils/settings';
 import { playHitSound, playMissSound } from '../utils/sound';
+import { useIdleProtection } from './session/useIdleProtection';
+import { useTrainingKeybindings } from './session/useTrainingKeybindings';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   domain: string;
@@ -85,15 +87,22 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
-  const [isIdle, setIsIdle] = useState<boolean>(false);
   const streakRef = useRef<number>(0);
-  const idleStartRef = useRef<number | null>(null);
-  const idleTimerRef = useRef<number | null>(null);
 
   const effectiveIdleTimeout =
     typeof optionsIdleTimeout === 'number'
       ? optionsIdleTimeout
       : (loadSettings().global.idleTimeout ?? 60);
+
+  // === 1. 闲置与失焦保护微 Hook ===
+  const { isIdle, pauseToIdle, resumeFromIdle } = useIdleProtection({
+    timeoutSec: effectiveIdleTimeout,
+    disabled: isFinished || showSummaryModal,
+    onResume: (idleDurationMs) => {
+      startTimeRef.current += idleDurationMs;
+      setQuestionStartTime((prev) => prev + idleDurationMs);
+    },
+  });
 
   const saveCurrentSession = useCallback(
     async (trials = totalTrials, hits = hitTrials, ended = false) => {
@@ -145,7 +154,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       setTotalTrials(newTotal);
       setHitTrials(newHits);
 
-      // 记录答题前的层阶（起点），做答后自适应更新层阶（终点）
       const levelBefore = adaptiveEngineRef.current.getCurrentLevel();
       adaptiveEngineRef.current.recordResult(hit);
       const levelAfter = adaptiveEngineRef.current.getCurrentLevel();
@@ -247,28 +255,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     onExit();
   }, [saveCurrentSession, totalTrials, hitTrials, onExit]);
 
-  const pauseToIdle = useCallback(() => {
-    if (isFinished || showSummaryModal || isIdle) return;
-    idleStartRef.current = Date.now();
-    setIsIdle(true);
-  }, [isFinished, showSummaryModal, isIdle]);
-
-  const resumeFromIdle = useCallback(() => {
-    if (!isIdle) return;
-    if (idleStartRef.current !== null) {
-      const idleDuration = Date.now() - idleStartRef.current;
-      startTimeRef.current += idleDuration;
-      setQuestionStartTime((prev) => prev + idleDuration);
-      idleStartRef.current = null;
-    }
-    setIsIdle(false);
-  }, [isIdle]);
-
   const handleRestartSession = useCallback(() => {
     setShowSummaryModal(false);
     setIsFinished(false);
-    setIsIdle(false);
-    idleStartRef.current = null;
     setTotalTrials(0);
     setHitTrials(0);
     setSessionHistory([]);
@@ -284,52 +273,18 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setQuestionStartTime(Date.now());
   }, [domain, mode, initialLevel, generateQuestion]);
 
-  // === 闲置与失焦监听 ===
-  useEffect(() => {
-    if (isFinished || showSummaryModal) return;
+  // === 2. 键盘快捷键微 Hook ===
+  useTrainingKeybindings({
+    isIdle,
+    showAnswer,
+    isFinished,
+    disabled: showSummaryModal,
+    onResumeFromIdle: resumeFromIdle,
+    onNextQuestion: handleNextQuestion,
+    onRequestFinish: handleRequestFinish,
+  });
 
-    const resetIdleTimer = () => {
-      if (isIdle) return;
-      if (idleTimerRef.current) {
-        clearTimeout(idleTimerRef.current);
-      }
-      if (effectiveIdleTimeout > 0) {
-        idleTimerRef.current = window.setTimeout(() => {
-          pauseToIdle();
-        }, effectiveIdleTimeout * 1000);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        pauseToIdle();
-      }
-    };
-
-    const handleWindowBlur = () => {
-      pauseToIdle();
-    };
-
-    const userActivityEvents = ['pointerdown', 'pointermove', 'keydown', 'touchstart'];
-    for (const evt of userActivityEvents) {
-      window.addEventListener(evt, resetIdleTimer, { passive: true });
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('blur', handleWindowBlur);
-
-    resetIdleTimer();
-
-    return () => {
-      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-      for (const evt of userActivityEvents) {
-        window.removeEventListener(evt, resetIdleTimer);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('blur', handleWindowBlur);
-    };
-  }, [isFinished, showSummaryModal, isIdle, effectiveIdleTimeout, pauseToIdle]);
-
-  // === 计时器 ===
+  // === 3. 活跃计时器 ===
   useEffect(() => {
     const timer = setInterval(() => {
       if (showSummaryModal || isFinished || isIdle) return;
@@ -337,32 +292,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     }, 1000);
     return () => clearInterval(timer);
   }, [showSummaryModal, isFinished, isIdle]);
-
-  // === 快捷键响应 (Space / Escape) ===
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isIdle) {
-        e.preventDefault();
-        resumeFromIdle();
-        return;
-      }
-      if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer) {
-          e.preventDefault();
-          if (!isFinished) {
-            handleNextQuestion();
-          } else {
-            handleRequestFinish();
-          }
-        }
-      } else if (e.code === 'Escape' || e.key === 'Escape') {
-        e.preventDefault();
-        handleRequestFinish();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isIdle, resumeFromIdle, showAnswer, isFinished, handleNextQuestion, handleRequestFinish]);
 
   return {
     question,
