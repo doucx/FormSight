@@ -1,0 +1,39 @@
+{
+  "presets": {
+    "cards": {
+      "format": "xml",
+      "extension": ["ts", "tsx"],
+      "paths": [
+        "src/types/card.ts",
+        "src/types/index.ts",
+        "src/utils/db/schema.ts",
+        "src/utils/settings.ts",
+        "src/utils/mathUtils.ts",
+        "src/utils/colorUtils.ts",
+        "src/utils/oklchUtils.ts",
+        "src/config/domains.ts",
+        "src/config/cards.ts",
+        "src/config/trainingPlugins.tsx",
+        "src/config/plugins/index.ts",
+        "src/config/plugins/starPlugin.tsx",
+        "src/config/plugins/abstractionPlugin.tsx",
+        "src/components/common/QuestionCardShell.tsx",
+        "src/components/common/DualViewportContainer.tsx",
+        "src/components/common/PointClickCanvas.tsx",
+        "src/components/common/ContinuousTrackPanel.tsx",
+        "src/components/common/Choice2AfcContainer.tsx",
+        "src/components/common/ChoiceNafcContainer.tsx",
+        "src/components/StarCanvas.tsx",
+        "src/components/abstraction/GestureAxisView.tsx",
+        "src/components/abstraction/PaletteClusteringView.tsx",
+        "src/components/abstraction/TopDown2AfcView.tsx",
+        "src/components/negativeSpace/AreaComparison2AfcView.tsx",
+        "src/utils/geometry/questionGenerator.ts",
+        "src/utils/geometry/hitDetection.ts",
+        "src/utils/abstraction/questionGenerator.ts",
+        "src/utils/abstraction/hitDetection.ts",
+        "src/utils/abstraction/types.ts"
+      ]
+    }
+  }
+}
