@@ -3,10 +3,7 @@ import { NotanThresholdView } from '../../../components/abstraction/NotanThresho
 import { PaletteClusteringView } from '../../../components/abstraction/PaletteClusteringView';
 import { TopDown2AfcView } from '../../../components/abstraction/TopDown2AfcView';
 import { TopDownPatternView } from '../../../components/abstraction/TopDownPatternView';
-import type {
-  AbstractionHitResult,
-  AbstractionQuestionData,
-} from '../../../utils/abstraction';
+import type { AbstractionHitResult, AbstractionQuestionData } from '../../../utils/abstraction';
 
 export interface AbstractionCanvasProps {
   question: AbstractionQuestionData;

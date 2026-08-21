@@ -226,7 +226,9 @@ export function PlanEditorModal({
     onClose();
   };
 
-  const validPlanItems = currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId)));
+  const validPlanItems = currentPlan.items.filter((item) =>
+    Boolean(registry.getCardById(item.cardId)),
+  );
   const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 

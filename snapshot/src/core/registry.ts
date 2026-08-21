@@ -19,14 +19,13 @@ class SystemDomainRegistry {
    * 自动扫描 src/domains/*\/index.ts 零中心注册所有领域模块
    */
   private autoDiscoverDomains(): void {
-    const modules = import.meta.glob<{ default: DomainManifest }>(
-      '../domains/*/index.ts',
-      { eager: true }
-    );
+    const modules = import.meta.glob<{ default: DomainManifest }>('../domains/*/index.ts', {
+      eager: true,
+    });
 
     for (const path in modules) {
       const manifest = modules[path]?.default;
-      if (manifest && manifest.domain) {
+      if (manifest?.domain) {
         this.register(manifest);
       }
     }

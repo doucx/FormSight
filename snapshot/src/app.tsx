@@ -116,8 +116,12 @@ export function App() {
 
   const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
 
-  const activeSettingsCard = activeSettingsCardId ? registry.getCardById(activeSettingsCardId) : null;
-  const activeAnalyticsCard = activeAnalyticsCardId ? registry.getCardById(activeAnalyticsCardId) : null;
+  const activeSettingsCard = activeSettingsCardId
+    ? registry.getCardById(activeSettingsCardId)
+    : null;
+  const activeAnalyticsCard = activeAnalyticsCardId
+    ? registry.getCardById(activeAnalyticsCardId)
+    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
@@ -147,22 +151,23 @@ export function App() {
         />
       )}
 
-      {route.type === 'dashboard' && (() => {
-        const meta = registry.getDomainMeta(route.domain);
-        if (!meta) {
-          navigate({ type: 'home' });
-          return null;
-        }
-        return (
-          <GenericDashboard
-            meta={meta}
-            onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
-            onBackToHome={() => navigate({ type: 'home' })}
-            onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-            onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
-          />
-        );
-      })()}
+      {route.type === 'dashboard' &&
+        (() => {
+          const meta = registry.getDomainMeta(route.domain);
+          if (!meta) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          return (
+            <GenericDashboard
+              meta={meta}
+              onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+              onBackToHome={() => navigate({ type: 'home' })}
+              onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+              onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
+            />
+          );
+        })()}
 
       {route.type === 'train' &&
         (() => {

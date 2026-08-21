@@ -24,7 +24,9 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
   const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
-  const validItems = (plan.items || []).filter((item) => Boolean(registry.getCardById(item.cardId)));
+  const validItems = (plan.items || []).filter((item) =>
+    Boolean(registry.getCardById(item.cardId)),
+  );
 
   const currentStep = validItems[currentStepIndex];
   const currentCard = currentStep ? registry.getCardById(currentStep.cardId) : null;
