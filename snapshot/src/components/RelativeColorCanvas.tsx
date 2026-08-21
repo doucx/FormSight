@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/relativeColor';
 import { AlbersInductionView } from './relativeColor/AlbersInductionView';
 import { Decontextual2AfcView } from './relativeColor/Decontextual2AfcView';
+import { HueInductionView } from './relativeColor/HueInductionView';
 import { VectorShiftView } from './relativeColor/VectorShiftView';
 
 interface RelativeColorCanvasProps {
@@ -31,7 +32,7 @@ export function RelativeColorCanvas({
   // === 1. VECTOR_SHIFT 模式状态 ===
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
-  // === 2. 阿尔伯斯诱导补偿模式状态 (调节右侧中心色) ===
+  // === 2. 阿尔伯斯明度诱导补偿模式状态 ===
   const [userRightH, setUserRightH] = useState<number>(180);
   const [userRightS, setUserRightS] = useState<number>(50);
   const [userRightV, setUserRightV] = useState<number>(50);
@@ -63,8 +64,8 @@ export function RelativeColorCanvas({
     [disabled, showAnswer, onAnswer],
   );
 
-  // 提交调制结果
-  const handleSubmitInduction = useCallback(() => {
+  // 提交明度补偿调制结果
+  const handleSubmitLightnessInduction = useCallback(() => {
     if (disabled || showAnswer) return;
     onAnswer([userRightH, userRightS, userRightV]);
   }, [disabled, showAnswer, userRightH, userRightS, userRightV, onAnswer]);
@@ -113,9 +114,11 @@ export function RelativeColorCanvas({
         return;
       }
 
-      if (e.code === 'Space' || e.key === ' ') {
-        e.preventDefault();
-        handleSubmitInduction();
+      if (mode === 'LIGHTNESS_INDUCTION') {
+        if (e.code === 'Space' || e.key === ' ') {
+          e.preventDefault();
+          handleSubmitLightnessInduction();
+        }
       }
     };
 
@@ -130,7 +133,7 @@ export function RelativeColorCanvas({
     question.targetD,
     onAnswer,
     handleSelect2Afc,
-    handleSubmitInduction,
+    handleSubmitLightnessInduction,
   ]);
 
   if (mode === 'DECONTEXTUAL_2AFC') {
@@ -147,7 +150,20 @@ export function RelativeColorCanvas({
     );
   }
 
-  if (mode === 'LIGHTNESS_INDUCTION' || mode === 'HUE_INDUCTION') {
+  if (mode === 'HUE_INDUCTION') {
+    return (
+      <HueInductionView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={(chosenColor) => onAnswer(chosenColor)}
+        disabled={disabled}
+        showCanvasHints={showCanvasHints}
+      />
+    );
+  }
+
+  if (mode === 'LIGHTNESS_INDUCTION') {
     return (
       <AlbersInductionView
         question={question}
@@ -159,7 +175,7 @@ export function RelativeColorCanvas({
         onUserRightHChange={setUserRightH}
         onUserRightSChange={setUserRightS}
         onUserRightVChange={setUserRightV}
-        onSubmit={handleSubmitInduction}
+        onSubmit={handleSubmitLightnessInduction}
         disabled={disabled}
         hitMargin={hitMargin}
         showToleranceBand={showToleranceBand}
