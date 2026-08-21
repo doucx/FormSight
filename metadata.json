@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(domains): modularize domain cards, analytics plugins, and utils into core registry", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787321629.764479, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M registry.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787321717.158277, "duration_ms": 0}}

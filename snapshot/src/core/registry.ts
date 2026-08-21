@@ -1,11 +1,11 @@
 import type { DomainMeta } from '../config/domains';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
-import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
-import type { CardAnalyticsPlugin, DomainManifest } from './contracts';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import type { CardDefinition } from '../types/card';
+import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db/schema';
+import type { TrainingDomain } from '../utils/db/schema';
+import type { CardAnalyticsPlugin, DomainManifest } from './contracts';
 import type { DomainManifest } from './contracts';
 
 class SystemDomainRegistry {
