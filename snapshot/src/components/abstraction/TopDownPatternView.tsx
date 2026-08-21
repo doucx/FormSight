@@ -58,7 +58,7 @@ export function TopDownPatternView({
 
   const refs = [patternCanvasRef0, patternCanvasRef1, patternCanvasRef2, patternCanvasRef3];
 
-  const nafcOptions = (question.palettePatternOptions || []).map((pat, idx) => {
+  const nafcOptions = (question.palettePatternOptions || []).map((_pat, idx) => {
     const isTarget = idx === targetIdx;
     return {
       key: `td-pattern-${question.id}-${idx}`,

@@ -35,7 +35,7 @@ export function PointClickCanvas({
 
   useEffect(() => {
     setHoverPoint(null);
-  }, [gridPoints]);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
