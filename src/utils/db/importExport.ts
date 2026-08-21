@@ -1,4 +1,4 @@
-import { getCardById } from '../../config/cards';
+import { registry } from '../../core/registry';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
@@ -56,7 +56,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     if (data.profiles) {
       for (const p of data.profiles) {
         const cardId = p.cardId || p.mode;
-        const card = getCardById(cardId);
+        const card = registry.getCardById(cardId);
         const domain = card ? card.domain : ((p.domain || 'star') as TrainingDomain);
         const totalTrials = p.totalTrials ?? 0;
         await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });

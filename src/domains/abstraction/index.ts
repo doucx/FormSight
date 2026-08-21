@@ -1,5 +1,5 @@
 import { Eye, Maximize2, Palette, RotateCw, Sun } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
+import { SLIDER_COMMON_SCHEMAS } from '../../config/schemas';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { abstractionPlugin } from './plugin';

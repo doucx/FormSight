@@ -1,6 +1,7 @@
 import { BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CARD_ANALYTICS_PLUGINS } from '../config/analyticsPlugins';
+import type { CardAnalyticsView } from '../core/contracts';
+import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db';
 
@@ -10,7 +11,7 @@ interface WeaknessAnalyticsModalProps {
 }
 
 export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
-  const plugin = CARD_ANALYTICS_PLUGINS[card.id];
+  const plugin = registry.getAnalyticsPluginByCardId(card.id);
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
@@ -24,7 +25,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
     setLoading(true);
 
     if (plugin) {
-      plugin.fetchRecords(card.id).then((data) => {
+      plugin.fetchRecords(card.id).then((data: UnifiedTrialRecord[]) => {
         if (isMounted) {
           setRecords(data);
           setLoading(false);
@@ -96,7 +97,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
         {/* 多页 Tab 切换栏 (当有多个视图时展示) */}
         {views.length > 1 && (
           <div className="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-2xl">
-            {views.map((v, idx) => {
+            {views.map((v: CardAnalyticsView, idx: number) => {
               const Icon = v.icon;
               const isActive = idx === activeViewIndex;
               return (

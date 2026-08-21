@@ -32,5 +32,3 @@ export interface TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings> {
 }
 
 export type AnyTrainingPlugin = TrainingPlugin<unknown, unknown, unknown, unknown>;
-
-export * from './plugins';

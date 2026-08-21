@@ -1,7 +1,7 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
 import type { HitResult, Point, QuestionData } from '../../types';
-import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../../utils/geometry';
 import type { StarSettings } from '../../utils/settings';
+import { type QuestionGenerateOptions, checkHit, generateQuestion } from './utils/index';
 import { StarCanvas } from './views/StarCanvas';
 
 export const starPlugin: TrainingPlugin<

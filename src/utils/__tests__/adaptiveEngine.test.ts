@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AdaptiveEngine } from '../adaptiveEngine';
+import { AdaptiveEngine } from '../../core/engine/adaptiveEngine';
 
 describe('AdaptiveEngine', () => {
   it('staircase mode - should increase level after 3 consecutive hits', () => {

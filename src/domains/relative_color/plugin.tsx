@@ -1,12 +1,12 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
+import type { RelativeColorSettings } from '../../utils/settings';
 import {
   type RelativeColorHitResult,
   type RelativeColorMode,
   type RelativeColorQuestionData,
   checkRelativeColorHit,
   generateRelativeColorQuestion,
-} from '../../utils/relativeColorUtils';
-import type { RelativeColorSettings } from '../../utils/settings';
+} from './utils/index';
 import { RelativeColorCanvas } from './views/RelativeColorCanvas';
 
 export const relativeColorPlugin: TrainingPlugin<

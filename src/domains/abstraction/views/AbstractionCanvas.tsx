@@ -1,9 +1,9 @@
-import { GestureAxisView } from '../../../components/abstraction/GestureAxisView';
-import { NotanThresholdView } from '../../../components/abstraction/NotanThresholdView';
-import { PaletteClusteringView } from '../../../components/abstraction/PaletteClusteringView';
-import { TopDown2AfcView } from '../../../components/abstraction/TopDown2AfcView';
-import { TopDownPatternView } from '../../../components/abstraction/TopDownPatternView';
-import type { AbstractionHitResult, AbstractionQuestionData } from '../../../utils/abstraction';
+import { GestureAxisView } from '../components/GestureAxisView';
+import { NotanThresholdView } from '../components/NotanThresholdView';
+import { PaletteClusteringView } from '../components/PaletteClusteringView';
+import { TopDown2AfcView } from '../components/TopDown2AfcView';
+import { TopDownPatternView } from '../components/TopDownPatternView';
+import type { AbstractionHitResult, AbstractionQuestionData } from '../utils/index';
 
 export interface AbstractionCanvasProps {
   question: AbstractionQuestionData;

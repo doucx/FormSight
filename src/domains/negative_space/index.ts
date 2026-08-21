@@ -1,8 +1,8 @@
 import { Columns, Crosshair, Maximize2, Sparkles } from 'lucide-preact';
-import { negRatioAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
+import { SLIDER_COMMON_SCHEMAS } from '../../config/schemas';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import { negRatioAnalyticsPlugin } from './analytics';
 import { negativeSpacePlugin } from './plugin';
 
 export const negativeSpaceCards: CardDefinition[] = [

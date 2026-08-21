@@ -1,5 +1,5 @@
+import { getToleranceSpan } from '../core/color/colorUtils';
 import { useTrackPointer } from '../hooks/useTrackPointer';
-import { getToleranceSpan } from '../utils/colorUtils';
 
 const getPercent = (val: number, max: number) => `${(val / max) * 100}%`;
 

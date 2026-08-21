@@ -1,4 +1,4 @@
-import { setupHiDpiCanvas } from './hidpi';
+import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 
 export interface SectorStat {
   sectorIdx: number;
