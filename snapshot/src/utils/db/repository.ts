@@ -1,5 +1,5 @@
 import { registry } from '../../core/registry';
-import type { PlanStorageState, TrainingPlan } from '../../types/plan';
+import type { TrainingPlan } from '../../types/plan';
 import {
   clonePlan,
   deletePlan,
@@ -15,7 +15,6 @@ import {
 } from '../planStorage';
 import {
   type BaseModuleSettings,
-  DEFAULT_SETTINGS,
   type UserSettings,
   getCardSettings,
   loadSettings,

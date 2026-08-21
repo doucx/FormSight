@@ -1,6 +1,5 @@
 import type { ComponentChildren } from 'preact';
 import type { Point } from '../types';
-import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db/index';
 import type {
   AbstractionSettings,
