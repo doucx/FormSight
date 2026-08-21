@@ -1,7 +1,6 @@
 import { Columns } from 'lucide-preact';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Choice2AfcContainer } from '../../../components/common/Choice2AfcContainer';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { CanvasView } from '../../../components/common/CanvasView';
+import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import {
   type NegativeSpaceHitResult,
@@ -25,91 +24,68 @@ export function AreaComparison2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AreaComparison2AfcViewProps) {
-  const canvasRefA = useRef<HTMLCanvasElement | null>(null);
-  const canvasRefB = useRef<HTMLCanvasElement | null>(null);
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  useEffect(() => {
-    drawPolygonCanvas({
-      canvas: canvasRefA.current,
-      vertices: question.verticesA,
-      size: TWO_AFC_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
-    });
-    drawPolygonCanvas({
-      canvas: canvasRefB.current,
-      vertices: question.verticesB,
-      size: TWO_AFC_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
-    });
-  }, [question.verticesA, question.verticesB]);
-
-  const handleSelectChoice = useCallback(
-    (choice: 'A' | 'B') => {
-      if (disabled || showAnswer) return;
-      setSelectedChoice(choice);
-      onAnswer(choice);
-    },
-    [disabled, showAnswer, onAnswer],
-  );
-
   const largerSide = question.largerSide;
   const isAHit = largerSide === 'A';
   const isBHit = largerSide === 'B';
 
   return (
-    <QuestionCardShell
+    <Standard2AfcView
+      questionId={question.id}
       hintText="判别哪一侧的白色留白 (负形) 面积更大 (键 1 / 2)"
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
-    >
-      <Choice2AfcContainer
-        optionA={{
-          key: 'A',
-          title: '区域 A',
-          isCorrect: isAHit,
-          badge: `留白 ${question.negRatioA}%`,
-          content: (
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefA}
-                width={TWO_AFC_CANVAS_SIZE}
-                height={TWO_AFC_CANVAS_SIZE}
-                className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          ),
-        }}
-        optionB={{
-          key: 'B',
-          title: '区域 B',
-          isCorrect: isBHit,
-          badge: `留白 ${question.negRatioB}%`,
-          content: (
-            <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-              <canvas
-                ref={canvasRefB}
-                width={TWO_AFC_CANVAS_SIZE}
-                height={TWO_AFC_CANVAS_SIZE}
-                className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
-              />
-            </div>
-          ),
-        }}
-        selectedChoice={selectedChoice}
-        showAnswer={showAnswer}
-        disabled={disabled}
-        enableKeyboardShortcuts={true}
-        onSelect={handleSelectChoice}
-      />
-    </QuestionCardShell>
+      showAnswer={showAnswer}
+      disabled={disabled}
+      onAnswer={onAnswer}
+      optionA={{
+        title: '区域 A',
+        isCorrect: isAHit,
+        badge: `留白 ${question.negRatioA}%`,
+        content: (
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={TWO_AFC_CANVAS_SIZE}
+              height={TWO_AFC_CANVAS_SIZE}
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
+              draw={(canvas) =>
+                drawPolygonCanvas({
+                  canvas,
+                  vertices: question.verticesA,
+                  size: TWO_AFC_CANVAS_SIZE,
+                  fillColor: '#0F172A',
+                  strokeColor: '#1E293B',
+                })
+              }
+              deps={[question.verticesA]}
+            />
+          </div>
+        ),
+      }}
+      optionB={{
+        title: '区域 B',
+        isCorrect: isBHit,
+        badge: `留白 ${question.negRatioB}%`,
+        content: (
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={TWO_AFC_CANVAS_SIZE}
+              height={TWO_AFC_CANVAS_SIZE}
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm"
+              draw={(canvas) =>
+                drawPolygonCanvas({
+                  canvas,
+                  vertices: question.verticesB,
+                  size: TWO_AFC_CANVAS_SIZE,
+                  fillColor: '#0F172A',
+                  strokeColor: '#1E293B',
+                })
+              }
+              deps={[question.verticesB]}
+            />
+          </div>
+        ),
+      }}
+    />
   );
 }
