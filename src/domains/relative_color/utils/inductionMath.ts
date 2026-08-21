@@ -1,13 +1,6 @@
-/**
- * 根据难度等级 (Level 1..35) 计算干扰项的绝对 OKLab 距离 Radius R
- */
-export function getDistractorDistanceForLevel(level: number): number {
-  const clampedLevel = Math.max(1, Math.min(35, level));
-  const t = (clampedLevel - 1) / 34;
-  const maxR = 0.14;
-  const minR = 0.015;
-  return maxR * (minR / maxR) ** t;
-}
+import { getDistractorDistanceForLevel } from '../../../core/color/oklchUtils';
+
+export { getDistractorDistanceForLevel };
 
 /**
  * 计算背景对中心色的感知诱导偏移 (OKLab 空间侧抑制模型)

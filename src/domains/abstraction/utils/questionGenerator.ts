@@ -1,8 +1,11 @@
-import { generateTetrahedralDistractors, hsvToOkLab } from '../../../core/color/oklchUtils';
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
+import {
+  generateTetrahedralDistractors,
+  getDistractorDistanceForLevel,
+  hsvToOkLab,
+} from '../../../core/color/oklchUtils';
+import { createShuffledChoices, expDecayInterpolate } from '../../../core/math/mathUtils';
 import { calculateOtsuThreshold, createNoise2D, fbm2D } from '../../../core/math/noiseUtils';
 import type { Point } from '../../../types';
-import { getDistractorDistanceForLevel } from '../../relative_color/utils/inductionMath';
 import { calcPCAOrientation, generateFlowParticles, generateFlowParticlesWithClutter } from './pca';
 import {
   fractalizePolygon,
@@ -162,13 +165,10 @@ export function generateAbstractionQuestion(
     const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
     const labDom = hsvToOkLab(...dominantColorHsv);
     const distractors = generateTetrahedralDistractors(labDom, distractorDeltaE);
-
-    const rawOptions = [dominantColorHsv, ...distractors];
-    const indexed = rawOptions.map((opt, i) => ({ opt, isTarget: i === 0 }));
-    for (let i = indexed.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
-    }
+    const { options: paletteOptions, correctIndex: correctPaletteIndex } = createShuffledChoices(
+      dominantColorHsv,
+      distractors,
+    );
 
     return {
       id,
@@ -176,8 +176,8 @@ export function generateAbstractionQuestion(
       difficultyLevel: clampedLevel,
       paletteTiles,
       dominantColorHsv,
-      paletteOptions: indexed.map((item) => item.opt),
-      correctPaletteIndex: indexed.findIndex((item) => item.isTarget),
+      paletteOptions,
+      correctPaletteIndex,
       tolerance: distractorDeltaE,
     };
   }
@@ -376,21 +376,12 @@ export function generateAbstractionQuestion(
   const labDom = hsvToOkLab(...promptDominantColor);
   const distractorsDom = generateTetrahedralDistractors(labDom, distractorDeltaE);
 
-  const rawPatterns: PaletteTile[][] = [
-    makePatternTiles(baseH, baseS, baseV),
-    makePatternTiles(...distractorsDom[0]),
-    makePatternTiles(...distractorsDom[1]),
-    makePatternTiles(...distractorsDom[2]),
-  ];
-
-  const indexedPatterns = rawPatterns.map((pat, idx) => ({ pat, isTarget: idx === 0 }));
-  for (let i = indexedPatterns.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [indexedPatterns[i], indexedPatterns[j]] = [indexedPatterns[j], indexedPatterns[i]];
-  }
-
-  const palettePatternOptions = indexedPatterns.map((item) => item.pat);
-  const correctPatternIndex = indexedPatterns.findIndex((item) => item.isTarget);
+  const { options: palettePatternOptions, correctIndex: correctPatternIndex } =
+    createShuffledChoices(makePatternTiles(baseH, baseS, baseV), [
+      makePatternTiles(...distractorsDom[0]),
+      makePatternTiles(...distractorsDom[1]),
+      makePatternTiles(...distractorsDom[2]),
+    ]);
 
   return {
     id,

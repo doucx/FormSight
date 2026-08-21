@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db';
+import type { TrainingDomain } from '../utils/db/index';
 
 export interface DomainMeta {
   domain: TrainingDomain;

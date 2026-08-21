@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { TrainingDomain } from '../utils/db';
+import type { TrainingDomain } from '../utils/db/index';
 
 export type RouteLocation =
   | { type: 'home' }

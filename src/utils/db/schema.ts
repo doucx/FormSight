@@ -44,7 +44,6 @@ export interface UnifiedProfileData {
   currentLevel: number;
   bestLevel: number;
   totalTrials: number;
-  totalTrainedCards?: number;
   totalHits: number;
   updatedAt: number;
 }

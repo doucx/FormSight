@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
-import { type TrainingDomain, getTrialRecords } from '../utils/db';
+import { type TrainingDomain, getTrialRecords } from '../utils/db/index';
 
 export function useTodayStats(domain?: TrainingDomain) {
   const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(

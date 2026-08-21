@@ -28,20 +28,3 @@ export interface HitResult {
   errorDistance: number; // 点击位置与真理点的像素误差
   isWithinRange?: boolean; // 是否落在有效点击感应范围内
 }
-
-export interface TrialRecord {
-  id: string;
-  sessionId: string;
-  mode: TrainingMode;
-  timestamp: number;
-  difficultyLevel: number; // 存入 Level 等级
-  anchorA: [number, number];
-  anchorC?: [number, number];
-  targetB: [number, number];
-  userClick: [number, number];
-  angleDegree: number;
-  distanceRatio: number;
-  isHit: boolean;
-  errorPixelDistance: number;
-  responseTimeMs: number;
-}

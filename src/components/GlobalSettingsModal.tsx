@@ -12,7 +12,7 @@ import {
   Volume2,
 } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db';
+import { clearAllData, exportAllData, importAllData } from '../utils/db/index';
 import { resetPlansToDefault } from '../utils/planStorage';
 import { loadSettings, saveSettings } from '../utils/settings';
 import { ConfirmModal } from './common/ConfirmModal';

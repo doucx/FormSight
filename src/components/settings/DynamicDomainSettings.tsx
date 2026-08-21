@@ -1,4 +1,3 @@
-import type { TrainingDomain } from '../../utils/db';
 import type { TargetingMode } from '../../utils/settings';
 import { SettingToggleItem } from './common/SettingToggleItem';
 import { SliderMarginGroup } from './common/SliderMarginGroup';
@@ -58,80 +57,6 @@ export const COLOR_SECTORS = [
   '品红 (300°-330°)',
   '紫红 (330°-360°)',
 ];
-
-export const DOMAIN_SETTING_SCHEMAS: Record<TrainingDomain, SettingFieldSchema[]> = {
-  angle: [],
-  abstraction: [],
-  concretization: [],
-  star: [
-    {
-      type: 'buttonGroup',
-      key: 'gridSize',
-      title: '干扰点网格大小',
-      options: [
-        { label: '2x2', value: 2 },
-        { label: '3x3', value: 3 },
-        { label: '4x4', value: 4 },
-        { label: '5x5', value: 5 },
-      ],
-      gridCols: 'grid-cols-4',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的角度扇区：',
-      sectors: STAR_SECTORS,
-      gridCols: 'grid-cols-4',
-    },
-  ],
-  color: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '综合拾色悬停颜色实时联动',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: '色相弱点专项靶向强化',
-      subTitle: '选择需要靶向强化的色相扇区：',
-      sectors: COLOR_SECTORS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
-  relative_color: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 ΔE 动态容错区间',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: '悬停推移色彩联动预览',
-      description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
-    },
-  ],
-  negative_space: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: '显示滑块容错感应区',
-      description: '在悬停光标两侧实时显示 Δ% 动态容错区间',
-    },
-  ],
-};
 
 interface DynamicDomainSettingsProps {
   schemas: SettingFieldSchema[];

@@ -4,7 +4,7 @@ import type { CardAnalyticsPlugin } from '../../core/contracts';
 import { renderHueRingCanvas } from '../../utils/canvas/drawColorRing';
 import type { SectorStat } from '../../utils/canvas/drawCompass';
 import { calcSignedHueBias, renderHueBiasChartCanvas } from '../../utils/canvas/drawHueBiasChart';
-import { getTrialRecordsByCard } from '../../utils/db';
+import { getTrialRecordsByCard } from '../../utils/db/index';
 
 const COLOR_SECTORS = [
   '红 (0°-30°)',

@@ -2,7 +2,7 @@ import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
-import { type TrainingDomain, formatTotalTime } from '../utils/db';
+import { type TrainingDomain, formatTotalTime } from '../utils/db/index';
 
 interface HomeProps {
   totalTimeMs: number;

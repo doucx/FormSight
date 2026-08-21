@@ -63,9 +63,6 @@ export interface AbstractionQuestionData {
   promptDominantColor?: [number, number, number]; // 题干单基准主色
   palettePatternOptions?: PaletteTile[][]; // 4 组候选图案
   correctPatternIndex?: number; // 0..3
-  patternA?: PaletteTile[];
-  patternB?: PaletteTile[];
-  correctPatternChoice?: 'A' | 'B';
 }
 
 export interface AbstractionHitResult {

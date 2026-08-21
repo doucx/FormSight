@@ -3,16 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { Choice2AfcContainer } from '../../../components/common/Choice2AfcContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
+import { NEGATIVE_SPACE_CANVAS_SIZE, type NegativeSpaceQuestionData } from '../utils/index';
 
 interface ShapeMemory2AfcViewProps {
   question: NegativeSpaceQuestionData;
   showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
   onAnswer: (choice: 0 | 1) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -21,7 +16,6 @@ interface ShapeMemory2AfcViewProps {
 export function ShapeMemory2AfcView({
   question,
   showAnswer,
-  userAnswer: _userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

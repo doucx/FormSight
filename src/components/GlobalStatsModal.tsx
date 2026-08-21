@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { type TrainingDomain, getTrialRecords } from '../utils/db';
+import { type TrainingDomain, getTrialRecords } from '../utils/db/index';
 
 interface GlobalStatsModalProps {
   onClose: () => void;

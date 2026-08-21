@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
-import type { TrainingDomain } from '../utils/db';
+import type { TrainingDomain } from '../utils/db/index';
 
 export type SensoryTargetTag =
   | 'geometry'

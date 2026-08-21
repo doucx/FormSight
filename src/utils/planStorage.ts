@@ -36,10 +36,6 @@ function createPlanFromTemplateInternal(
   };
 }
 
-export function createPlanFromTemplate(template: PlanTemplate): TrainingPlan {
-  return createPlanFromTemplateInternal(template, false, true);
-}
-
 export function getDefaultPlans(): TrainingPlan[] {
   return DEFAULT_PLAN_TEMPLATES.map((tmpl) => createPlanFromTemplateInternal(tmpl, true, true));
 }
@@ -104,11 +100,6 @@ export function loadPlanStorageState(): PlanStorageState {
 export function savePlanStorageState(state: PlanStorageState): void {
   try {
     localStorage.setItem(PLANS_STORAGE_KEY, JSON.stringify(state));
-    // 兼容旧接口读取
-    const active = state.plans.find((p) => p.id === state.activePlanId) || state.plans[0];
-    if (active) {
-      localStorage.setItem(LEGACY_PLAN_STORAGE_KEY, JSON.stringify(active));
-    }
   } catch (e) {
     console.error('Failed to save plan storage state:', e);
   }

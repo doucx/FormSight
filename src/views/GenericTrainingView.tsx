@@ -1,9 +1,10 @@
 import type { ComponentChildren } from 'preact';
+import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { TrainingShell } from '../components/training/TrainingShell';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
-import { saveSession, saveTrialRecord } from '../utils/db';
+import { saveSession, saveTrialRecord } from '../utils/db/index';
 import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
 
 interface GenericTrainingPluginAdapter {
@@ -28,8 +29,6 @@ interface GenericTrainingPluginAdapter {
     settings: unknown;
   }) => ComponentChildren;
 }
-
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 
 export interface GenericTrainingViewProps {
   card: CardDefinition;
@@ -76,7 +75,6 @@ export function GenericTrainingView({
     generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
     evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
     isHit: adapter.isHit,
-    getQuestionLevel: adapter.getQuestionLevel,
     saveTrialRecord: async ({
       sessionId,
       question: q,

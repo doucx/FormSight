@@ -75,13 +75,6 @@ export function hsvToHex(h: number, s: number, v: number): string {
   return `#${rHex}${gHex}${bHex}`.toUpperCase();
 }
 
-/**
- * 根据 Level (1..35) 计算允许的容错阈值（感知色差 ΔE）
- */
-export function getToleranceForLevel(_mode: ColorMode, level: number): number {
-  return getTargetDeltaEForLevel(level);
-}
-
 export interface ColorQuestionGenerateOptions {
   targetingMode?: 'off' | 'manual';
   targetSectors?: number[]; // [0~11] 代表 12 个 30° 的色相扇区

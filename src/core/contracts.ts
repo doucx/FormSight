@@ -38,8 +38,3 @@ export interface DomainManifest {
   analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
   defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
 }
-
-/**
- * 向后兼容的 DomainPlugin 别名
- */
-export type DomainPlugin = DomainManifest;

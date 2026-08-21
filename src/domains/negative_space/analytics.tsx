@@ -1,6 +1,6 @@
 import { Crosshair } from 'lucide-preact';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
-import { getTrialRecordsByCard } from '../../utils/db';
+import { getTrialRecordsByCard } from '../../utils/db/index';
 
 export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
   cardId: 'neg_ratio_estimation',
