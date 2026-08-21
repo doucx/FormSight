@@ -109,9 +109,11 @@ export function PlanSummaryModal({
               const stageHits = stage.history.filter((h) => h.isHit).length;
               const stageAcc =
                 stage.history.length > 0 ? Math.round((stageHits / stage.history.length) * 100) : 0;
-              const startLvl = stage.history.length > 0 ? stage.history[0].level : 5;
+              const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : 5;
               const endLvl =
-                stage.history.length > 0 ? stage.history[stage.history.length - 1].level : startLvl;
+                stage.history.length > 0
+                  ? stage.history[stage.history.length - 1].levelAfter
+                  : startLvl;
               const Icon = stage.card.icon;
 
               return (

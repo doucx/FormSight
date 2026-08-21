@@ -41,16 +41,21 @@ export function GestureAxisView({
   });
 
   const activeVal = hoverVal !== null ? hoverVal : sliderVal;
+  const userVal = userAnswer?.userValue ?? sliderVal;
+  const targetVal = question.targetAngleDeg ?? 0;
+  const isHit = Boolean(userAnswer?.isHit);
 
   useEffect(() => {
     drawParticlesCanvas(
       canvasRef.current,
       question.particles,
       ABSTRACTION_CANVAS_SIZE,
-      showAnswer ? question.targetAngleDeg : activeVal,
+      showAnswer ? targetVal : activeVal,
       showAnswer ? '#22C55E' : '#6366F1',
+      showAnswer ? userVal : undefined,
+      isHit,
     );
-  }, [question.particles, activeVal, showAnswer, question.targetAngleDeg]);
+  }, [question.particles, activeVal, showAnswer, targetVal, userVal, isHit]);
 
   const unit = '°';
 
@@ -120,10 +125,18 @@ export function GestureAxisView({
               )}
 
               {showAnswer && (
-                <div
-                  className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
-                  style={{ left: `${((question.targetAngleDeg ?? 0) / 180) * 100}%` }}
-                />
+                <>
+                  <div
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
+                    style={{ left: `${(targetVal / 180) * 100}%` }}
+                  />
+                  <div
+                    className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white shadow-md ${
+                      isHit ? 'bg-emerald-500' : 'bg-rose-500'
+                    }`}
+                    style={{ left: `${(userVal / 180) * 100}%` }}
+                  />
+                </>
               )}
             </div>
           </div>

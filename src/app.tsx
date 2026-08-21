@@ -152,8 +152,8 @@ export function App() {
         <PlanTrainingView
           plan={trainingPlan}
           settings={settings}
-          onExit={() => {
-            refreshProfiles();
+          onExit={async () => {
+            await refreshProfiles();
             navigate({ type: 'home' });
           }}
         />
@@ -195,7 +195,10 @@ export function App() {
               initialLevel={activeLevel}
               settings={getCardSettings(settings, activeCard.id)}
               globalSettings={settings.global}
-              onExit={() => navigate({ type: 'dashboard', domain: activeCard.domain })}
+              onExit={async () => {
+                await refreshProfiles();
+                navigate({ type: 'dashboard', domain: activeCard.domain });
+              }}
             />
           );
         })()}
