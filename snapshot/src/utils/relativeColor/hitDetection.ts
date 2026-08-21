@@ -1,6 +1,6 @@
 import { getTargetDeltaEForLevel, hsvToOkLab } from '../oklchUtils';
-import type { RelativeColorHitResult, RelativeColorMode, RelativeColorQuestionData } from './types';
 import { calcDeltaEOk } from '../oklchUtils';
+import type { RelativeColorHitResult, RelativeColorMode, RelativeColorQuestionData } from './types';
 
 export function checkRelativeColorHit(
   mode: RelativeColorMode,

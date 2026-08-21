@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../utils/relativeColor';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/relativeColor';
 import { AlbersInductionView } from './relativeColor/AlbersInductionView';
 import { Decontextual2AfcView } from './relativeColor/Decontextual2AfcView';
 import { VectorShiftView } from './relativeColor/VectorShiftView';

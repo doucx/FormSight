@@ -1,15 +1,12 @@
 import {
-  calcCompensatedRightColor,
-  getDistractorDistanceForLevel,
-} from './inductionMath';
-import type { RelativeColorMode, RelativeColorQuestionData } from './types';
-import {
   generateTetrahedralDistractors,
   getTargetDeltaEForLevel,
   hasGamutMargin,
   hsvToOkLab,
   okLabToHsv,
 } from '../oklchUtils';
+import { calcCompensatedRightColor, getDistractorDistanceForLevel } from './inductionMath';
+import type { RelativeColorMode, RelativeColorQuestionData } from './types';
 
 /**
  * 随机生成色彩矢量迁移题目
