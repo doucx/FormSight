@@ -377,14 +377,11 @@ export function generateAbstractionQuestion(
   const distractorsDom = generateTetrahedralDistractors(labDom, distractorDeltaE);
 
   const { options: palettePatternOptions, correctIndex: correctPatternIndex } =
-    createShuffledChoices(
-      makePatternTiles(baseH, baseS, baseV),
-      [
-        makePatternTiles(...distractorsDom[0]),
-        makePatternTiles(...distractorsDom[1]),
-        makePatternTiles(...distractorsDom[2]),
-      ],
-    );
+    createShuffledChoices(makePatternTiles(baseH, baseS, baseV), [
+      makePatternTiles(...distractorsDom[0]),
+      makePatternTiles(...distractorsDom[1]),
+      makePatternTiles(...distractorsDom[2]),
+    ]);
 
   return {
     id,
