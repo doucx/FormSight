@@ -64,7 +64,7 @@ export function StandardNafcView<T = unknown>({
   const activeIndex =
     controlledSelectedIndex !== undefined ? controlledSelectedIndex : internalSelectedIdx;
 
-  const handleSelectOption = (index: number, option: ChoiceNafcOption<T>) => {
+  const handleSelectOption = useCallback((index: number, option: ChoiceNafcOption<T>) => {
     if (disabled || showAnswer) return;
     setInternalSelectedIdx(index);
     onSelectIndex?.(index, option);
@@ -72,14 +72,14 @@ export function StandardNafcView<T = unknown>({
     if (submitMode === 'immediate') {
       onAnswer(index, option);
     }
-  };
+  }, [disabled, showAnswer, onSelectIndex, submitMode, onAnswer]);
 
-  const handleExplicitSubmit = () => {
+  const handleExplicitSubmit = useCallback(() => {
     if (disabled || showAnswer || !options.length) return;
     const targetIdx = activeIndex ?? 0;
     const targetOpt = options[targetIdx] ?? options[0];
     onAnswer(targetIdx, targetOpt);
-  };
+  }, [disabled, showAnswer, options, activeIndex, onAnswer]);
 
   // 支持键盘 Space 提交（在 button 模式下）
   useEffect(() => {

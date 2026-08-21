@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 抽象通用 StandardNafcView 并重构多选类训练卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322386.161893, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 使用 useCallback 修复 StandardNafcView 的 Linter 依赖告警", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787322481.5871997, "duration_ms": 0}}
