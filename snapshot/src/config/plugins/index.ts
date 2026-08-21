@@ -1,6 +1,7 @@
 import type { TrainingDomain } from '../../utils/db';
 import type { AnyTrainingPlugin } from '../trainingPlugins';
 import { abstractionPlugin } from './abstractionPlugin';
+import { anglePlugin } from './anglePlugin';
 import { colorPlugin } from './colorPlugin';
 import { negativeSpacePlugin } from './negativeSpacePlugin';
 import { relativeColorPlugin } from './relativeColorPlugin';
@@ -11,6 +12,7 @@ export { colorPlugin } from './colorPlugin';
 export { relativeColorPlugin } from './relativeColorPlugin';
 export { negativeSpacePlugin } from './negativeSpacePlugin';
 export { abstractionPlugin } from './abstractionPlugin';
+export { anglePlugin } from './anglePlugin';
 
 export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
   abstraction: abstractionPlugin as unknown as AnyTrainingPlugin,
@@ -19,9 +21,13 @@ export const TRAINING_PLUGINS: Record<TrainingDomain, AnyTrainingPlugin> = {
   color: colorPlugin as unknown as AnyTrainingPlugin,
   relative_color: relativeColorPlugin as unknown as AnyTrainingPlugin,
   negative_space: negativeSpacePlugin as unknown as AnyTrainingPlugin,
+  angle: anglePlugin as unknown as AnyTrainingPlugin,
 };
 
 export const CARD_PLUGINS: Record<string, AnyTrainingPlugin> = {
+  angle_estimation: anglePlugin as unknown as AnyTrainingPlugin,
+  angle_comparison_2afc: anglePlugin as unknown as AnyTrainingPlugin,
+  angle_parallel_2afc: anglePlugin as unknown as AnyTrainingPlugin,
   star_single: starPlugin as unknown as AnyTrainingPlugin,
   star_double_h: starPlugin as unknown as AnyTrainingPlugin,
   star_double_r: starPlugin as unknown as AnyTrainingPlugin,

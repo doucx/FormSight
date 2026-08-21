@@ -6,7 +6,8 @@ export type TrainingDomain =
   | 'relative_color'
   | 'negative_space'
   | 'abstraction'
-  | 'concretization';
+  | 'concretization'
+  | 'angle';
 
 export interface UnifiedSessionData {
   id: string;
