@@ -47,6 +47,7 @@ export function VertexFittingView({
   const rightFittingRef = useRef<HTMLCanvasElement | null>(null);
   const [fittingHoverPoint, setFittingHoverPoint] = useState<Point | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset hover point when question changes
   useEffect(() => {
     setFittingHoverPoint(null);
   }, [question.id]);

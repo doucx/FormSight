@@ -28,6 +28,7 @@ export function AreaComparison2AfcView({
   const canvasRefB = useRef<HTMLCanvasElement | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

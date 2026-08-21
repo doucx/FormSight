@@ -31,6 +31,7 @@ export function ShapeMemory2AfcView({
   const matchOptionRefA = useRef<HTMLCanvasElement | null>(null);
   const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset phase and selection when question changes
   useEffect(() => {
     setMatchPhase('stimulus');
     setSelectedMatchChoice(null);

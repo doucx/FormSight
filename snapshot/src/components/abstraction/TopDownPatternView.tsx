@@ -33,15 +33,18 @@ export function TopDownPatternView({
 
   const patternRefs = [patternCanvasRef0, patternCanvasRef1, patternCanvasRef2, patternCanvasRef3];
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
   useEffect(() => {
     setSelectedIdx(null);
   }, [question.id]);
 
   useEffect(() => {
     if (question.palettePatternOptions) {
+      const refs = [patternCanvasRef0, patternCanvasRef1, patternCanvasRef2, patternCanvasRef3];
       question.palettePatternOptions.forEach((pat, i) => {
-        if (patternRefs[i].current) {
-          drawPaletteTilesCanvas(patternRefs[i].current, pat, ABSTRACTION_2AFC_SIZE);
+        const canvas = refs[i]?.current;
+        if (canvas) {
+          drawPaletteTilesCanvas(canvas, pat, ABSTRACTION_2AFC_SIZE);
         }
       });
     }

@@ -27,6 +27,7 @@ export function PaletteClusteringView({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset selection when question changes
   useEffect(() => {
     setSelectedIdx(null);
   }, [question.id]);

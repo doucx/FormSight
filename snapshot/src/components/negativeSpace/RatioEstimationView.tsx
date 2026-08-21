@@ -38,6 +38,7 @@ export function RatioEstimationView({
     onValChange: setCurrentVal,
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset slider values when question changes
   useEffect(() => {
     setCurrentVal(50.0);
     setHoverVal(null);
