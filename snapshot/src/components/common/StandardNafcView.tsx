@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 import { ChoiceNafcContainer, type ChoiceNafcOption } from './ChoiceNafcContainer';
 import { QuestionCardShell } from './QuestionCardShell';
 

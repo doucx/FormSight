@@ -1,4 +1,3 @@
-import type { TrainingDomain } from '../../utils/db/index';
 import type { TargetingMode } from '../../utils/settings';
 import { SettingToggleItem } from './common/SettingToggleItem';
 import { SliderMarginGroup } from './common/SliderMarginGroup';
