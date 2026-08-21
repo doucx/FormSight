@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(core): 清理冗余镜像文件、死代码与桥接层并收敛 Domain 架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787320247.9131541, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(config): 解除 Setting Schemas 与 Registry 之间的循环依赖", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787320347.25339, "duration_ms": 0}}

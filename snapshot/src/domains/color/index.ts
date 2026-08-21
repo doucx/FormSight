@@ -1,6 +1,6 @@
 import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
 import { colorHueAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { COLOR_ALL_SCHEMAS, HUE_SCHEMAS, SLIDER_COMMON_SCHEMAS } from '../../config/cards';
+import { COLOR_ALL_SCHEMAS, HUE_SCHEMAS, SLIDER_COMMON_SCHEMAS } from '../../config/schemas';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { colorPlugin } from './plugin';
