@@ -40,7 +40,20 @@ export const relativeColorPlugin: TrainingPlugin<
         physicalValueDiff: q.physicalValueDiff,
       };
     }
-    if (mode === 'LIGHTNESS_INDUCTION' || mode === 'HUE_INDUCTION') {
+    if (mode === 'HUE_INDUCTION') {
+      return {
+        mode,
+        bgLeft: q.bgLeft,
+        bgRight: q.bgRight,
+        targetLeftCenter: q.targetLeftCenter,
+        idealRightCenter: q.idealRightCenter,
+        userRightColor: userVal,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        deltaEError: hitResult.deltaEError,
+      };
+    }
+    if (mode === 'LIGHTNESS_INDUCTION') {
       return {
         mode,
         bgLeft: q.bgLeft,

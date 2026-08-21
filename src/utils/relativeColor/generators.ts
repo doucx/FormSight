@@ -144,12 +144,13 @@ export function generateLightnessInductionQuestion(level: number): RelativeColor
 }
 
 /**
- * 生成补色残像与色相诱导补偿题目 (HUE_INDUCTION)
+ * 生成补色残像与色相诱导补偿题目 (HUE_INDUCTION - 4AFC 模式)
  */
 export function generateHueInductionQuestion(level: number): RelativeColorQuestionData {
   const id = `ahi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
   const tolerance = getTargetDeltaEForLevel(clampedLevel);
+  const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
 
   const bgLHue = Math.floor(Math.random() * 360);
   const bgLSat = Math.floor(Math.random() * 30) + 70;
@@ -173,6 +174,18 @@ export function generateHueInductionQuestion(level: number): RelativeColorQuesti
   const idealLabR = calcCompensatedRightColor(labBgL, labCenterL, labBgR, 0.22);
   const idealRightCenter = okLabToHsv(idealLabR);
 
+  // 利用正四面体算法生成 3 个等距对抗干扰色
+  const distractors = generateTetrahedralDistractors(idealLabR, distractorDeltaE);
+  const rawOptions: [number, number, number][] = [idealRightCenter, ...distractors];
+  const indexed = rawOptions.map((opt, index) => ({ opt, isTarget: index === 0 }));
+  for (let i = indexed.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+  }
+
+  const options = indexed.map((item) => item.opt);
+  const correctIndex = indexed.findIndex((item) => item.isTarget);
+
   return {
     id,
     mode: 'HUE_INDUCTION',
@@ -185,6 +198,8 @@ export function generateHueInductionQuestion(level: number): RelativeColorQuesti
     bgRight,
     targetLeftCenter,
     idealRightCenter,
+    options,
+    correctIndex,
     tolerance,
   };
 }

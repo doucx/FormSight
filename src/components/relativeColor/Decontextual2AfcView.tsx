@@ -1,13 +1,12 @@
 import { Eye } from 'lucide-preact';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
-import { AnswerDiagnosticBar } from '../common/AnswerDiagnosticBar';
 import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
 
 interface Decontextual2AfcViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
+  userAnswer?: RelativeColorHitResult | null;
   selectedChoice: 'A' | 'B' | null;
   onSelectChoice: (choice: 'A' | 'B') => void;
   disabled?: boolean;
@@ -17,7 +16,6 @@ interface Decontextual2AfcViewProps {
 export function Decontextual2AfcView({
   question,
   showAnswer,
-  userAnswer,
   selectedChoice,
   onSelectChoice,
   disabled = false,
@@ -78,15 +76,6 @@ export function Decontextual2AfcView({
         disabled={disabled}
         onSelect={onSelectChoice}
       />
-
-      {showAnswer && (
-        <AnswerDiagnosticBar
-          isHit={Boolean(userAnswer?.isHit)}
-          successTitle="成功穿透背景视错觉！"
-          failTitle="受背景诱导产生了认知偏差"
-          subText={`(已统一切换至中性灰背景对比，物理明度差 ΔV = ${question.physicalValueDiff}%)`}
-        />
-      )}
     </div>
   );
 }

@@ -164,24 +164,6 @@ export function NotanThresholdView({
 
           <span className="font-bold font-mono text-slate-400 text-xs">100%</span>
         </div>
-
-        {showAnswer && (
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              最佳素描阈值:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {question.idealNotanThreshold}%
-              </span>
-            </span>
-            <span
-              className={
-                userAnswer?.isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
-              }
-            >
-              误差: {userAnswer?.errorValue}% (容错: ±{question.tolerance}%)
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
