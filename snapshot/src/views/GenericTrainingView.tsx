@@ -7,9 +7,9 @@ import { saveSession, saveTrialRecord } from '../utils/db/index';
 import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
 
 export interface GenericTrainingViewProps<
-  TQuestion = any,
-  THitResult = any,
-  TAnswerVal = any,
+  TQuestion = unknown,
+  THitResult = unknown,
+  TAnswerVal = unknown,
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 > {
   card: CardDefinition;
@@ -25,9 +25,9 @@ export interface GenericTrainingViewProps<
 }
 
 export function GenericTrainingView<
-  TQuestion = any,
-  THitResult = any,
-  TAnswerVal = any,
+  TQuestion = unknown,
+  THitResult = unknown,
+  TAnswerVal = unknown,
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 >({
   card,
