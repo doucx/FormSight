@@ -7,6 +7,8 @@ import {
   type AbstractionQuestionData,
 } from '../../utils/abstraction';
 import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
+import { DualViewportContainer } from '../common/DualViewportContainer';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface NotanThresholdViewProps {
   question: AbstractionQuestionData;
@@ -68,19 +70,16 @@ export function NotanThresholdView({
   ]);
 
   return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-            灰阶原图 (Raw Scene)
-          </span>
+    <QuestionCardShell
+      hintText="观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+    >
+      <DualViewportContainer
+        leftTitle="灰阶原图 (Raw Scene)"
+        rightTitle="二值显影 (Notan Output)"
+        leftContent={
           <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
             <canvas
               ref={canvasRefA}
@@ -89,12 +88,8 @@ export function NotanThresholdView({
               className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
             />
           </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wider">
-            二值显影 (Notan Output)
-          </span>
+        }
+        rightContent={
           <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
             <canvas
               ref={canvasRefB}
@@ -103,8 +98,8 @@ export function NotanThresholdView({
               className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
             />
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
@@ -165,6 +160,6 @@ export function NotanThresholdView({
           <span className="font-bold font-mono text-slate-400 text-xs">100%</span>
         </div>
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }

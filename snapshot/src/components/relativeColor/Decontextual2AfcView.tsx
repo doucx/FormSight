@@ -2,6 +2,7 @@ import { Eye } from 'lucide-preact';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
 import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface Decontextual2AfcViewProps {
   question: RelativeColorQuestionData;
@@ -30,14 +31,12 @@ export function Decontextual2AfcView({
   const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
 
   return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」
-        </div>
-      )}
-
+    <QuestionCardShell
+      hintText="穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+    >
       <Choice2AfcContainer
         optionA={{
           key: 'A',
@@ -76,6 +75,6 @@ export function Decontextual2AfcView({
         disabled={disabled}
         onSelect={onSelectChoice}
       />
-    </div>
+    </QuestionCardShell>
   );
 }
