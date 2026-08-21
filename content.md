@@ -1,878 +1,1214 @@
-好的，我们将正式启动 FormSight 架构由“水平技术分层”向“垂直切片 + 算法 Core + 零中心注册（Modular Monolith）”的系统性重构。
+好的，我们将系统性地把纯算法、色彩模型、图形学通用计算和自适应引擎等底层核心资产沉淀整理到 `src/core/` 下，建立高内聚、高复用、无业务污染的算法核心基底（Core Foundation），并通过 `src/core/index.ts` 提供统一出口，同时保持现有 `src/utils/` 的向下兼容性。
 
-本阶段我们将完成：
-1. 建立 `src/core/contracts.ts` 核心契约与标准协议。
-2. 建立 `src/core/registry.ts` 基于 Vite `import.meta.glob` 的自动化零中心化扫描装配注册器。
-3. 重构并迁移第一批核心垂直切片领域（`angle`、`star` 等），将其所有 UI、算法、分析图表与配置收敛至 `src/domains/<domain>/` 下，实现独立包级内聚与即插即用。
-
-## [WIP] refactor: 重构核心架构为垂直切片模块化单体 (Modular Monolith)
+## [WIP] refactor: 整理公共工具库与通用算法至 src/core/
 
 ### 用户需求
-将 FormSight 的水平技术分层重构为“垂直切片 + 纯算法 Core + 零中心注册”的模块化架构，使每个领域（Domain）完全自治内聚，降低代码耦合度与 AI 维护的上下文负担。
+将通用基础算法（数学、噪声、OKLab 色彩空间计算、通用 Canvas 绘制、自适应算子、声音与存储）从松散的 `src/utils/` 整理归纳至结构清晰的 `src/core/` 目录树中，形成独立的算法与基建核心包。
 
 ### 评论
-当前架构导致添加新卡片时需跨越 7+ 个不同目录进行中心化配置修改，不仅容易产生耦合与回归漏洞，也极大地加重了 LLM 维护时的上下文 Token 负担。通过引入模块契约（Manifest Contract）和自动化扫描装配，系统将获得极高的扩展性与可插拔能力。
+把通用算法与业务逻辑剥离是模块化单体（Modular Monolith）最核心的一步。这不仅使得所有垂直领域（Domain Packs）能以统一、规范的方式引用底层能力，而且使这些纯算法成为可以直接进行单元测试与独立迁移的核心数字资产。
 
 ### 目标
-1. 创建 `src/core/contracts.ts`，定义 `DomainManifest` 与统一插件接口。
-2. 创建 `src/core/registry.ts`，利用 Vite `import.meta.glob` 实现领域的自发现与自动化加载。
-3. 创建各垂直领域包：`src/domains/angle/`、`src/domains/star/`、`src/domains/color/` 等，将 UI 视图、算法生成、判定与分析插件完全收敛入各自目录。
-4. 保证现有全局计划编排、设置与数据流平滑迁移。
+1. 在 `src/core/math/` 下建立 `mathUtils.ts` 与 `noiseUtils.ts`。
+2. 在 `src/core/color/` 下建立 `oklchUtils.ts` 与 `colorUtils.ts`。
+3. 在 `src/core/canvas/` 下建立 `hidpi.ts`、`drawPointGrid.ts`、`drawPolygon.ts` 与 `drawTrendChart.ts`。
+4. 在 `src/core/engine/` 下建立 `adaptiveEngine.ts`、`sound.ts`、`settings.ts` 与 `planStorage.ts`。
+5. 创建 `src/core/index.ts` 作为统一导入出口，并更新 `src/utils/` 转发引用以保证向后兼容。
 
 ### 基本原理
-1. **契约先行 (Contract-First)**：定义标准的 `DomainManifest` 数据结构，作为业务切片向主框架（Shell）注册的唯一入口。
-2. **零中心注册 (Zero-Central Registration)**：利用 Vite 编译期静态分析 `import.meta.glob('../domains/*/index.ts', { eager: true })`，无需手动在中心配置文件中添加 `import` 即可自发现新模块。
-3. **垂直内聚 (Vertical Slicing)**：每个 domain 内部完全自包含，外部消费方只与标准接口交互。
+通过分层架构原则（Layered Architecture），将“纯计算逻辑（Core）”与“领域业务装配（Domains）”彻底解耦。`src/core/` 内部不依赖任何具体业务 card 或 domain，所有领域模块依赖 `src/core/`。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #comp/runtime #concept/executor #concept/parser #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/modular-monolith #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/high #comp/engine #comp/runtime #concept/state #concept/executor #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/core-library #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 建立核心协议契约 `src/core/contracts.ts`
+#### Acts 1: 沉淀数学与噪声核心工具 `src/core/math/`
 
-定义领域模块必须遵守的标准 Manifest 契约。
+创建包含指数衰减插值、洗牌算法、2D FBM 梯度噪声和大津阈值法的核心数学模块。
 
 ~~~~~act
 write_file
-src/core/contracts.ts
+src/core/math/mathUtils.ts
 ~~~~~
 ~~~~~typescript
-import type { ComponentChildren } from 'preact';
-import type { CardAnalyticsPlugin } from '../config/analyticsPlugins';
-import type { DomainMeta } from '../config/domains';
-import type { AnyTrainingPlugin } from '../config/trainingPlugins';
-import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
-import type { BaseModuleSettings } from '../utils/settings';
+/**
+ * 基于当前等级 (1..maxLevel) 对最大与最小边界值执行指数衰减插值
+ * @param maxVal Level 1 时的初始宽松值
+ * @param minVal Level maxLevel 时的极限精细值
+ * @param level 当前等级 (1..maxLevel)
+ * @param maxLevel 最大等级，默认 35
+ */
+export function expDecayInterpolate(
+  maxVal: number,
+  minVal: number,
+  level: number,
+  maxLevel = 35,
+): number {
+  const clamped = Math.max(1, Math.min(maxLevel, level));
+  const t = (clamped - 1) / (maxLevel - 1);
+  return maxVal * (minVal / maxVal) ** t;
+}
 
 /**
- * 领域包清单 (Domain Manifest)
- * 每一个垂直领域模块 (如 angle, star, color) 必须在 index.ts 中默认导出此对象
+ * 将真理项与干扰项组合并随机洗牌 (Fisher-Yates)，返回乱序数组与真理项索引
  */
-export interface DomainManifest {
-  domain: TrainingDomain;
-  meta: DomainMeta;
-  cards: CardDefinition[];
-  trainingPlugin: AnyTrainingPlugin;
-  analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
-  defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
+export function createShuffledChoices<T>(
+  targetItem: T,
+  distractors: T[],
+): { options: T[]; correctIndex: number } {
+  const rawOptions = [targetItem, ...distractors];
+  const indexed = rawOptions.map((opt, i) => ({ opt, isTarget: i === 0 }));
+
+  for (let i = indexed.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indexed[i], indexed[j]] = [indexed[j], indexed[i]];
+  }
+
+  return {
+    options: indexed.map((item) => item.opt),
+    correctIndex: indexed.findIndex((item) => item.isTarget),
+  };
 }
 ~~~~~
 
-#### Acts 2: 建立自动化零中心注册器 `src/core/registry.ts`
-
-利用 Vite `import.meta.glob` 实现领域插件的自动发现与动态注入。
-
 ~~~~~act
 write_file
-src/core/registry.ts
+src/core/math/noiseUtils.ts
 ~~~~~
 ~~~~~typescript
-import type { CardAnalyticsPlugin } from '../config/analyticsPlugins';
-import type { DomainMeta } from '../config/domains';
-import type { AnyTrainingPlugin } from '../config/trainingPlugins';
-import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
-import type { DomainManifest } from './contracts';
+/**
+ * 轻量 2D 梯度噪声与分形布朗运动 (FBM) 工具集
+ * 用于纯过程生成连续灰度场与视知觉噪波
+ */
 
-class SystemDomainRegistry {
-  private domains = new Map<TrainingDomain, DomainManifest>();
-  private cardMap = new Map<string, CardDefinition>();
-  private cardPluginMap = new Map<string, AnyTrainingPlugin>();
-  private cardAnalyticsMap = new Map<string, CardAnalyticsPlugin>();
+export type Noise2DFunction = (x: number, y: number) => number;
 
-  constructor() {
-    this.autoDiscoverDomains();
+/**
+ * 构造轻量确定性 2D 伪随机梯度噪声
+ */
+export function createNoise2D(seed = Math.random()): Noise2DFunction {
+  const perm = new Uint8Array(512);
+  const p = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) p[i] = i;
+
+  let s = Math.floor(seed * 2147483647);
+  if (s <= 0) s += 2147483646;
+
+  for (let i = 255; i > 0; i--) {
+    s = (s * 16807) % 2147483647;
+    const n = s % (i + 1);
+    const temp = p[i];
+    p[i] = p[n];
+    p[n] = temp;
   }
+  for (let i = 0; i < 512; i++) perm[i] = p[i & 255];
 
-  /**
-   * 自动扫描 src/domains/*\/index.ts 零中心注册所有领域模块
-   */
-  private autoDiscoverDomains(): void {
-    const modules = import.meta.glob<{ default: DomainManifest }>(
-      '../domains/*/index.ts',
-      { eager: true }
-    );
+  const grad = [
+    [1, 1],
+    [-1, 1],
+    [1, -1],
+    [-1, -1],
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
 
-    for (const path in modules) {
-      const manifest = modules[path]?.default;
-      if (manifest && manifest.domain) {
-        this.register(manifest);
-      }
-    }
-  }
+  const fade = (t: number) => t * t * t * (t * (t * 6 - 15) + 10);
+  const lerp = (a: number, b: number, t: number) => a + t * (b - a);
 
-  public register(manifest: DomainManifest): void {
-    this.domains.set(manifest.domain, manifest);
+  return (x: number, y: number): number => {
+    const X = Math.floor(x) & 255;
+    const Y = Math.floor(y) & 255;
+    const xf = x - Math.floor(x);
+    const yf = y - Math.floor(y);
 
-    for (const card of manifest.cards) {
-      this.cardMap.set(card.id, card);
-      this.cardPluginMap.set(card.id, manifest.trainingPlugin);
-    }
+    const u = fade(xf);
+    const v = fade(yf);
 
-    if (manifest.analyticsPlugins) {
-      for (const [cardId, plugin] of Object.entries(manifest.analyticsPlugins)) {
-        this.cardAnalyticsMap.set(cardId, plugin);
-      }
-    }
-  }
+    const g00 = grad[perm[X + perm[Y]] % 8];
+    const g10 = grad[perm[X + 1 + perm[Y]] % 8];
+    const g01 = grad[perm[X + perm[Y + 1]] % 8];
+    const g11 = grad[perm[X + 1 + perm[Y + 1]] % 8];
 
-  public getAllDomains(): TrainingDomain[] {
-    return Array.from(this.domains.keys());
-  }
+    const n00 = g00[0] * xf + g00[1] * yf;
+    const n10 = g10[0] * (xf - 1) + g10[1] * yf;
+    const n01 = g01[0] * xf + g01[1] * (yf - 1);
+    const n11 = g11[0] * (xf - 1) + g11[1] * (yf - 1);
 
-  public getAllDomainMetas(): DomainMeta[] {
-    return Array.from(this.domains.values()).map((d) => d.meta);
-  }
-
-  public getDomainManifest(domain: TrainingDomain): DomainManifest | undefined {
-    return this.domains.get(domain);
-  }
-
-  public getDomainMeta(domain: TrainingDomain): DomainMeta | undefined {
-    return this.domains.get(domain)?.meta;
-  }
-
-  public getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-    return this.domains.get(domain)?.cards || [];
-  }
-
-  public getAllCards(): CardDefinition[] {
-    return Array.from(this.cardMap.values());
-  }
-
-  public getCardById(cardId: string): CardDefinition | undefined {
-    return this.cardMap.get(cardId);
-  }
-
-  public getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
-    return this.cardPluginMap.get(cardId);
-  }
-
-  public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {
-    return this.cardAnalyticsMap.get(cardId);
-  }
-
-  public isRegisteredDomain(domain: string): domain is TrainingDomain {
-    return this.domains.has(domain as TrainingDomain);
-  }
+    const x1 = lerp(n00, n10, u);
+    const x2 = lerp(n01, n11, u);
+    return (lerp(x1, x2, v) + 1) / 2; // 归一化到 0..1
+  };
 }
 
-export const registry = new SystemDomainRegistry();
+/**
+ * 分形布朗运动 (FBM - Fractional Brownian Motion)
+ */
+export function fbm2D(
+  x: number,
+  y: number,
+  octaves: number,
+  noiseFunc: Noise2DFunction,
+  gain = 0.5,
+  lacunarity = 2.0,
+): number {
+  let value = 0;
+  let amplitude = 0.5;
+  let frequency = 1.0;
+  let totalAmp = 0;
+
+  for (let i = 0; i < octaves; i++) {
+    value += noiseFunc(x * frequency, y * frequency) * amplitude;
+    totalAmp += amplitude;
+    amplitude *= gain;
+    frequency *= lacunarity;
+  }
+  return totalAmp > 0 ? value / totalAmp : 0;
+}
+
+/**
+ * 使用大津法 (Otsu's Method) 计算灰度图的最优二值化分割阈值 (0..255)
+ */
+export function calculateOtsuThreshold(buffer: Uint8Array | number[]): number {
+  const histogram = new Int32Array(256);
+  const total = buffer.length;
+
+  for (let i = 0; i < total; i++) {
+    const val = buffer[i];
+    histogram[val]++;
+  }
+
+  let sum = 0;
+  for (let i = 0; i < 256; i++) {
+    sum += i * histogram[i];
+  }
+
+  let sumB = 0;
+  let wB = 0;
+  let wF = 0;
+  let maxVariance = 0;
+  let optimalThreshold = 128;
+
+  for (let t = 0; t < 256; t++) {
+    wB += histogram[t];
+    if (wB === 0) continue;
+    wF = total - wB;
+    if (wF === 0) break;
+
+    sumB += t * histogram[t];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+
+    // 类间方差
+    const variance = wB * wF * (mB - mF) * (mB - mF);
+    if (variance > maxVariance) {
+      maxVariance = variance;
+      optimalThreshold = t;
+    }
+  }
+
+  return optimalThreshold;
+}
 ~~~~~
 
-#### Acts 3: 创建 `src/domains/angle/index.ts` 垂直切片包
+#### Acts 2: 沉淀感知色彩核心工具 `src/core/color/`
 
-将 `angle` 角度感知领域的定义与插件收敛为自包含模块。
+建立 OKLab 色彩感知模型、色差计算、正四面体对抗干扰生成与 HSV 工具集。
 
 ~~~~~act
 write_file
-src/domains/angle/index.ts
+src/core/color/oklchUtils.ts
 ~~~~~
 ~~~~~typescript
-import { Columns, Compass, Split } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { anglePlugin } from '../../config/plugins/anglePlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+/**
+ * OKLab / OKLCH 均匀色彩空间工具集
+ * 用于实现符合人眼视觉感知的色差 (ΔE_OK) 计算与难度梯度映射
+ */
 
-export const angleCards: CardDefinition[] = [
-  {
-    id: 'angle_estimation',
-    domain: 'angle',
-    mode: 'ANGLE_ESTIMATION',
-    title: '夹角大小估算',
-    desc: '观察由纯黑线段构成的夹角，使用连续滑块精准评估夹角弧度大小 (0°~180°)。',
-    instruction: '观察极简两条射线夹角，调制滑块逼近精准度数 (0°~180°)',
-    icon: Compass,
-    tags: {
-      target: ['geometry', 'angle'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'angle_comparison_2afc',
-    domain: 'angle',
-    mode: 'ANGLE_COMPARISON_2AFC',
-    title: '角度二分对比',
-    desc: '在消除空间正交基准干扰下，二选一快速判别哪一侧的两射线夹角更大 (2AFC)。',
-    instruction: '二选一快速判别哪一侧夹角更大 (键 1 / 2)',
-    icon: Columns,
-    tags: {
-      target: ['geometry', 'angle'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'angle_parallel_2afc',
-    domain: 'angle',
-    mode: 'PARALLEL_ALIGNMENT_2AFC',
-    title: '平行线基准辨识',
-    desc: '观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。',
-    instruction: '观察上方基准线，在下方选出与其保持绝对平行的线 (键 1 / 2)',
-    icon: Split,
-    tags: {
-      target: ['geometry', 'angle'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
+/**
+ * HSV (0..360, 0..100, 0..100) -> OKLab (L: 0..1, a: -0.4..0.4, b: -0.4..0.4)
+ */
+export function hsvToOkLab(h: number, s: number, v: number): [number, number, number] {
+  // 1. HSV -> sRGB (0..1)
+  const normH = ((h % 360) + 360) % 360;
+  const normS = s / 100;
+  const normV = v / 100;
+  const c = normV * normS;
+  const x = c * (1 - Math.abs(((normH / 60) % 2) - 1));
+  const m = normV - c;
 
-export const angleDomain: DomainManifest = {
-  domain: 'angle',
-  meta: {
-    domain: 'angle',
-    appId: 'angle-perception',
-    title: '角度感知',
-    subTitle: 'Angle Perception',
-    homeTitle: '角度感知 (Angle Perception)',
-    homeDesc:
-      '以极简白底黑线剥离干扰，通过夹角大小估算、微小角度二分对比与平行线对偶辨识，构建坚实的正负形起形与角度感知直觉。',
-    themeColor: 'indigo',
-    icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return angleCards;
-    },
-  },
-  cards: angleCards,
-  trainingPlugin: anglePlugin as unknown as DomainManifest['trainingPlugin'],
-};
+  let r = 0;
+  let g = 0;
+  let b = 0;
 
-export default angleDomain;
-~~~~~
+  if (normH < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (normH < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (normH < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (normH < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (normH < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
 
-#### Acts 4: 创建 `src/domains/star/index.ts` 垂直切片包
+  const rSrgb = r + m;
+  const gSrgb = g + m;
+  const bSrgb = b + m;
 
-将 `star` 寻星领域的定义、专属弱点分析与卡片插件收敛为一个独立模块。
+  // 2. sRGB -> Linear RGB
+  const toLinear = (val: number) => (val <= 0.04045 ? val / 12.92 : ((val + 0.055) / 1.055) ** 2.4);
+  const rLin = toLinear(rSrgb);
+  const gLin = toLinear(gSrgb);
+  const bLin = toLinear(bSrgb);
 
-~~~~~act
-write_file
-src/domains/star/index.ts
-~~~~~
-~~~~~typescript
-import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
-import { CARD_ANALYTICS_PLUGINS } from '../../config/analyticsPlugins';
-import { STAR_SCHEMAS } from '../../config/cards';
-import { starPlugin } from '../../config/plugins/starPlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+  // 3. Linear RGB -> LMS
+  const lCone = 0.4122214708 * rLin + 0.5363325363 * gLin + 0.0514459929 * bLin;
+  const mCone = 0.2119034982 * rLin + 0.6806995451 * gLin + 0.1073969566 * bLin;
+  const sCone = 0.0883024619 * rLin + 0.2817188376 * gLin + 0.6299787005 * bLin;
 
-export const starCards: CardDefinition[] = [
-  {
-    id: 'star_single',
-    domain: 'star',
-    mode: 'single',
-    title: '单锚点模式',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    instruction: '观察左侧相对中心锚点的方位与距离，在右侧点阵中盲打定位',
-    icon: Target,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-  {
-    id: 'star_double_h',
-    domain: 'star',
-    mode: 'double_h',
-    title: '水平双锚点',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    instruction: '观察左侧水平双锚点几何关系，在右侧点阵中盲打定位',
-    icon: Crosshair,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-  {
-    id: 'star_double_r',
-    domain: 'star',
-    mode: 'double_r',
-    title: '旋转双锚点',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    instruction: '观察左侧旋转倾斜双锚点几何关系，在右侧点阵中盲打定位',
-    icon: RotateCw,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-];
+  // 4. Non-linear cube root
+  const lCbrt = Math.cbrt(lCone);
+  const mCbrt = Math.cbrt(mCone);
+  const sCbrt = Math.cbrt(sCone);
 
-export const starDomain: DomainManifest = {
-  domain: 'star',
-  meta: {
-    domain: 'star',
-    appId: 'star-hopping',
-    title: '寻星练习',
-    subTitle: 'Star-Hopping',
-    homeTitle: '寻星练习 (Star-Hopping)',
-    homeDesc:
-      '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
-    themeColor: 'indigo',
-    icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return starCards;
-    },
-  },
-  cards: starCards,
-  trainingPlugin: starPlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    star_single: CARD_ANALYTICS_PLUGINS.star_single,
-    star_double_h: CARD_ANALYTICS_PLUGINS.star_double_h,
-    star_double_r: CARD_ANALYTICS_PLUGINS.star_double_r,
-  },
-};
+  // 5. LMS -> OKLab
+  const L = 0.2104542553 * lCbrt + 0.793617785 * mCbrt - 0.0040720468 * sCbrt;
+  const a = 1.9779984951 * lCbrt - 2.428592205 * mCbrt + 0.4505937099 * sCbrt;
+  const bLab = 0.0259040371 * lCbrt + 0.7827717662 * mCbrt - 0.808675766 * sCbrt;
 
-export default starDomain;
-~~~~~
+  return [L, a, bLab];
+}
 
-#### Acts 5: 创建 `src/domains/color/index.ts` 垂直切片包
+/**
+ * 计算 OKLab 空间中的欧氏色差 ΔE_OK
+ */
+export function calcDeltaEOk(
+  lab1: [number, number, number],
+  lab2: [number, number, number],
+): number {
+  const dL = lab1[0] - lab2[0];
+  const da = lab1[1] - lab2[1];
+  const db = lab1[2] - lab2[2];
+  return Math.sqrt(dL * dL + da * da + db * db);
+}
 
-将 `color` 绝对色感领域的定义、色相敏感度分析图表与配置收敛为一个独立模块。
+/**
+ * 计算 OKLab 中的彩度 Chroma
+ */
+export function getOkChroma(lab: [number, number, number]): number {
+  return Math.sqrt(lab[1] * lab[1] + lab[2] * lab[2]);
+}
 
-~~~~~act
-write_file
-src/domains/color/index.ts
-~~~~~
-~~~~~typescript
-import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
-import { colorHueAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { COLOR_ALL_SCHEMAS, HUE_SCHEMAS, SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { colorPlugin } from '../../config/plugins/colorPlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+/**
+ * 根据 Level (1..35) 计算允许的感知色差阈值 ΔE_target
+ */
+export function getTargetDeltaEForLevel(level: number): number {
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1
+  const maxDeltaE = 0.12; // Level 1 容错 (宽松，约为 40 JND)
+  const minDeltaE = 0.008; // Level 35 容错 (精细，约为 2.5 JND)
 
-export const colorCards: CardDefinition[] = [
-  {
-    id: 'color_hue',
-    domain: 'color',
-    mode: 'H',
-    title: '色相 (Hue)',
-    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
-    instruction: '定位上方色块在 360° 色相环上的精准角度',
-    icon: RotateCw,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: HUE_SCHEMAS,
-  },
-  {
-    id: 'color_val',
-    domain: 'color',
-    mode: 'V',
-    title: '明度 (Value)',
-    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
-    instruction: '评估上方色块的素描明度深浅比例 (0%~100%)',
-    icon: Sun,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'color_sat',
-    domain: 'color',
-    mode: 'S',
-    title: '饱和度 (Sat)',
-    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
-    instruction: '评估上方色块的鲜艳纯度比例 (0%~100%)',
-    icon: Droplet,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'color_all',
-    domain: 'color',
-    mode: 'ALL',
-    title: '综合拾色 (Match)',
-    desc: '同时调整色相、饱和度与明度，逼近真理色彩',
-    instruction: '同时调制色相、饱和度与明度轨，使右侧色块逼近左侧目标色',
-    icon: Palette,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: COLOR_ALL_SCHEMAS,
-  },
-];
+  return maxDeltaE * (minDeltaE / maxDeltaE) ** t;
+}
 
-export const colorDomain: DomainManifest = {
-  domain: 'color',
-  meta: {
-    domain: 'color',
-    appId: 'color-sense',
-    title: '色感训练',
-    subTitle: 'Color Recognition',
-    homeTitle: '绝对色感 (Color Recognition)',
-    homeDesc:
-      '拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。',
-    themeColor: 'amber',
-    icon: Palette,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return colorCards;
-    },
-  },
-  cards: colorCards,
-  trainingPlugin: colorPlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    color_hue: colorHueAnalyticsPlugin,
-  },
-};
+/**
+ * 将 OKLab 坐标逆向近似换算为可显示 sRGB / HSV (0..360, 0..100, 0..100)
+ */
+export function okLabToHsv(lab: [number, number, number]): [number, number, number] {
+  const [L, a, b] = lab;
 
-export default colorDomain;
-~~~~~
+  const lCbrt = L + 0.3963377774 * a + 0.2158037573 * b;
+  const mCbrt = L - 0.1055613458 * a - 0.0638541728 * b;
+  const sCbrt = L - 0.0894841775 * a - 1.291485548 * b;
 
-#### Acts 6: 创建其余垂直领域切片包
+  const lCone = lCbrt ** 3;
+  const mCone = mCbrt ** 3;
+  const sCone = sCbrt ** 3;
 
-创建 `relative_color`、`negative_space`、`abstraction` 与 `concretization` 的独立包定义。
+  let rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  let gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  let bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
 
-~~~~~act
-write_file
-src/domains/relative_color/index.ts
-~~~~~
-~~~~~typescript
-import { Columns, Palette, Shuffle, Sun } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { relativeColorPlugin } from '../../config/plugins/relativeColorPlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+  rLin = Math.max(0, Math.min(1, rLin));
+  gLin = Math.max(0, Math.min(1, gLin));
+  bLin = Math.max(0, Math.min(1, bLin));
 
-export const relativeColorCards: CardDefinition[] = [
-  {
-    id: 'rel_vector_shift',
-    domain: 'relative_color',
-    mode: 'VECTOR_SHIFT',
-    title: '色彩矢量迁移',
-    desc: '保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉。',
-    instruction: '观察上方 A➔B 色彩推移，在下方候选项中找出符合 C➔D 的同向推移色',
-    icon: Shuffle,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'rel_lightness_induction',
-    domain: 'relative_color',
-    mode: 'LIGHTNESS_INDUCTION',
-    title: '明度反差补偿',
-    desc: '在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致。',
-    instruction: '调节右侧中心色块明度，使左右两块在不同背景下「视觉感知看起来完全一致」',
-    icon: Sun,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'rel_hue_induction',
-    domain: 'relative_color',
-    mode: 'HUE_INDUCTION',
-    title: '补色残像调和',
-    desc: '在强色相与饱和度背景下，四选一选出逆向补偿后的目标色，训练环境光色感知调和力。',
-    instruction: '观察左侧强色相背景下的基准色，选出右侧达成感知一致的补偿色 (键 1-4)',
-    icon: Palette,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'rel_decontextual_2afc',
-    domain: 'relative_color',
-    mode: 'DECONTEXTUAL_2AFC',
-    title: '环境穿透判别',
-    desc: '穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理。',
-    instruction: '穿透背景视错觉干扰，二选一判别哪一侧中心色块「客观物理明度更高」',
-    icon: Columns,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
+  const toSrgb = (val: number) =>
+    val <= 0.0031308 ? val * 12.92 : 1.055 * val ** (1 / 2.4) - 0.055;
+  const rSrgb = Math.max(0, Math.min(1, toSrgb(rLin)));
+  const gSrgb = Math.max(0, Math.min(1, toSrgb(gLin)));
+  const bSrgb = Math.max(0, Math.min(1, toSrgb(bLin)));
 
-export const relativeColorDomain: DomainManifest = {
-  domain: 'relative_color',
-  meta: {
-    domain: 'relative_color',
-    appId: 'relative-color',
-    title: '相对色感',
-    subTitle: 'Relative Color',
-    homeTitle: '相对色感 (Relative Color Perception)',
-    homeDesc:
-      '基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。',
-    themeColor: 'purple',
-    icon: Shuffle,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return relativeColorCards;
-    },
-  },
-  cards: relativeColorCards,
-  trainingPlugin: relativeColorPlugin as unknown as DomainManifest['trainingPlugin'],
-};
+  const max = Math.max(rSrgb, gSrgb, bSrgb);
+  const min = Math.min(rSrgb, gSrgb, bSrgb);
+  const delta = max - min;
 
-export default relativeColorDomain;
+  let h = 0;
+  if (delta > 1e-5) {
+    if (max === rSrgb) {
+      h = 60 * (((gSrgb - bSrgb) / delta) % 6);
+    } else if (max === gSrgb) {
+      h = 60 * ((bSrgb - rSrgb) / delta + 2);
+    } else {
+      h = 60 * ((rSrgb - gSrgb) / delta + 4);
+    }
+  }
+  if (h < 0) h += 360;
+
+  const s = max === 0 ? 0 : delta / max;
+  const v = max;
+
+  return [Math.round(h), Math.round(s * 100), Math.round(v * 100)];
+}
+
+export function isOkLabInGamut(lab: [number, number, number]): boolean {
+  const [L, a, b] = lab;
+  if (L < 0 || L > 1) return false;
+
+  const lCbrt = L + 0.3963377774 * a + 0.2158037573 * b;
+  const mCbrt = L - 0.1055613458 * a - 0.0638541728 * b;
+  const sCbrt = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const lCone = lCbrt ** 3;
+  const mCone = mCbrt ** 3;
+  const sCone = sCbrt ** 3;
+
+  const rLin = +4.0767416621 * lCone - 3.3077115913 * mCone + 0.2309699292 * sCone;
+  const gLin = -1.2684380046 * lCone + 2.6097574011 * mCone - 0.3413193965 * sCone;
+  const bLin = -0.0041960863 * lCone - 0.7034186147 * mCone + 1.707614701 * sCone;
+
+  const eps = 1e-4;
+  return (
+    rLin >= -eps &&
+    rLin <= 1 + eps &&
+    gLin >= -eps &&
+    gLin <= 1 + eps &&
+    bLin >= -eps &&
+    bLin <= 1 + eps
+  );
+}
+
+export function hasGamutMargin(lab: [number, number, number], margin: number): boolean {
+  const [L, a, b] = lab;
+  const testPoints: [number, number, number][] = [
+    [L, a, b],
+    [L + margin, a, b],
+    [L - margin, a, b],
+    [L, a + margin, b],
+    [L, a - margin, b],
+    [L, a, b + margin],
+    [L, a, b - margin],
+  ];
+
+  return testPoints.every(isOkLabInGamut);
+}
+
+function getRandomAxis(): [number, number, number] {
+  const z = Math.random() * 2 - 1;
+  const phi = Math.random() * 2 * Math.PI;
+  const r = Math.sqrt(1 - z * z);
+  return [r * Math.cos(phi), r * Math.sin(phi), z];
+}
+
+function rotateVector(
+  v: [number, number, number],
+  axis: [number, number, number],
+  theta: number,
+): [number, number, number] {
+  const [vx, vy, vz] = v;
+  const [kx, ky, kz] = axis;
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  const dot = kx * vx + ky * vy + kz * vz;
+  const crossX = ky * vz - kz * vy;
+  const crossY = kz * vx - kx * vz;
+  const crossZ = kx * vy - ky * vx;
+
+  return [
+    vx * cosT + crossX * sinT + kx * dot * (1 - cosT),
+    vy * cosT + crossY * sinT + ky * dot * (1 - cosT),
+    vz * cosT + crossZ * sinT + kz * dot * (1 - cosT),
+  ];
+}
+
+/**
+ * 在 OKLab 色彩空间中以 targetLab 为基准生成 3 个正四面体等距分布的干扰色 (HSV 格式)
+ * @param targetLab 基准目标色的 OKLab 坐标
+ * @param R 目标感知色差半径 (ΔE)
+ * @returns 3 个干扰色 HSV 数组
+ */
+export function generateTetrahedralDistractors(
+  targetLab: [number, number, number],
+  R: number,
+): [number, number, number][] {
+  const baseV1: [number, number, number] = [1, 0, 0];
+  const baseV2: [number, number, number] = [0.5, Math.sqrt(3) / 2, 0];
+  const baseV3: [number, number, number] = [0.5, Math.sqrt(3) / 6, Math.sqrt(2 / 3)];
+
+  let bestDistractors: [number, number, number][] = [];
+  let bestValidCount = -1;
+
+  for (let attempt = 0; attempt < 30; attempt++) {
+    const axis = getRandomAxis();
+    const theta = Math.random() * Math.PI * 2;
+
+    const rotV1 = rotateVector(baseV1, axis, theta);
+    const rotV2 = rotateVector(baseV2, axis, theta);
+    const rotV3 = rotateVector(baseV3, axis, theta);
+
+    const lab1: [number, number, number] = [
+      targetLab[0] + rotV1[0] * R,
+      targetLab[1] + rotV1[1] * R,
+      targetLab[2] + rotV1[2] * R,
+    ];
+    const lab2: [number, number, number] = [
+      targetLab[0] + rotV2[0] * R,
+      targetLab[1] + rotV2[1] * R,
+      targetLab[2] + rotV2[2] * R,
+    ];
+    const lab3: [number, number, number] = [
+      targetLab[0] + rotV3[0] * R,
+      targetLab[1] + rotV3[1] * R,
+      targetLab[2] + rotV3[2] * R,
+    ];
+
+    const hsv1 = okLabToHsv(lab1);
+    const hsv2 = okLabToHsv(lab2);
+    const hsv3 = okLabToHsv(lab3);
+
+    const rep1 = hsvToOkLab(...hsv1);
+    const rep2 = hsvToOkLab(...hsv2);
+    const rep3 = hsvToOkLab(...hsv3);
+
+    const dist1 = calcDeltaEOk(targetLab, rep1);
+    const dist2 = calcDeltaEOk(targetLab, rep2);
+    const dist3 = calcDeltaEOk(targetLab, rep3);
+
+    let validCount = 0;
+    if (dist1 >= R * 0.7) validCount++;
+    if (dist2 >= R * 0.7) validCount++;
+    if (dist3 >= R * 0.7) validCount++;
+
+    if (validCount > bestValidCount) {
+      bestValidCount = validCount;
+      bestDistractors = [hsv1, hsv2, hsv3];
+    }
+
+    if (validCount === 3) break;
+  }
+
+  return bestDistractors;
+}
 ~~~~~
 
 ~~~~~act
 write_file
-src/domains/negative_space/index.ts
+src/core/color/colorUtils.ts
 ~~~~~
 ~~~~~typescript
-import { Columns, Crosshair, Maximize2, Sparkles } from 'lucide-preact';
-import { negRatioAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { negativeSpacePlugin } from '../../config/plugins/negativeSpacePlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+import { calcDeltaEOk, getOkChroma, getTargetDeltaEForLevel, hsvToOkLab } from './oklchUtils';
 
-export const negativeSpaceCards: CardDefinition[] = [
-  {
-    id: 'neg_ratio_estimation',
-    domain: 'negative_space',
-    mode: 'RATIO_ESTIMATION',
-    title: '负形占比滑块评估',
-    desc: '估计不规则几何多边形外部留白（负形）占整幅画面的面积百分比，强化空间直觉。',
-    instruction: '估计黑色主体周围的白色留白（负形）占画面总面积的百分比',
-    icon: Maximize2,
-    tags: {
-      target: ['negative_space'],
-      skill: ['proportion'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'neg_area_comparison_2afc',
-    domain: 'negative_space',
-    mode: 'AREA_COMPARISON_2AFC',
-    title: '负形面积二分判别',
-    desc: '快速对比两个形状各异的不规则多边形留白（负形），二选一判别哪侧留白面积更大 (2AFC)。',
-    instruction: '二选一判别哪一侧画面的白色留白（负形）面积更大',
-    icon: Columns,
-    tags: {
-      target: ['negative_space'],
-      skill: ['proportion', 'spatial_orientation'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'neg_vertex_fitting',
-    domain: 'negative_space',
-    mode: 'NEGATIVE_VERTEX_FITTING',
-    title: '负形边界反切定点',
-    desc: '观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。',
-    instruction: '观察左侧完整参考的负形挤压轮廓，在右侧点阵中点击定位被截断的正形顶点',
-    icon: Crosshair,
-    tags: {
-      target: ['negative_space'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'neg_shape_match_2afc',
-    domain: 'negative_space',
-    mode: 'SHAPE_MATCH_2AFC',
-    title: '负形轮廓记忆匹配',
-    desc: '瞬时记忆负形空隙轮廓，在两张 1:1 等大形状中二选一辨识目标。',
-    instruction: '瞬时记忆负形空隙轮廓特征，在候选区二选一选出完全相同的形状',
-    icon: Sparkles,
-    tags: {
-      target: ['negative_space'],
-      skill: ['visual_memory', 'spatial_orientation'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
+export type ColorMode = 'H' | 'S' | 'V' | 'ALL';
 
-export const negativeSpaceDomain: DomainManifest = {
-  domain: 'negative_space',
-  meta: {
-    domain: 'negative_space',
-    appId: 'negative-space',
-    title: '正负形感知',
-    subTitle: 'Negative Space',
-    homeTitle: '正负形空间感知 (Negative Space)',
-    homeDesc:
-      '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破具象认知偏见，培养专业起形与比例感知力。',
-    themeColor: 'emerald',
-    icon: Maximize2,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return negativeSpaceCards;
-    },
-  },
-  cards: negativeSpaceCards,
-  trainingPlugin: negativeSpacePlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    neg_ratio_estimation: negRatioAnalyticsPlugin,
-  },
-};
+export interface ColorQuestionData {
+  id: string;
+  mode: ColorMode;
+  difficultyLevel: number; // 1..35
+  targetH: number; // 0..359
+  targetS: number; // 0..100
+  targetV: number; // 0..100
+  tolerance: number; // 允许的感知色差阈值 ΔE_target
+}
 
-export default negativeSpaceDomain;
+export interface ColorHitResult {
+  isHit: boolean;
+  userValue: number;
+  targetValue: number;
+  errorValue: number; // 绝对数值误差 (角度、百分比或 OKLab ΔE)
+  tolerance: number;
+  userHSV?: [number, number, number];
+}
+
+/**
+ * HSV (0..360, 0..100, 0..100) 转 16 进制 Hex
+ */
+export function hsvToHex(h: number, s: number, v: number): string {
+  const normH = ((h % 360) + 360) % 360;
+  const normS = s / 100;
+  const normV = v / 100;
+  const c = normV * normS;
+  const x = c * (1 - Math.abs(((normH / 60) % 2) - 1));
+  const m = normV - c;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (normH >= 0 && normH < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (normH >= 60 && normH < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (normH >= 120 && normH < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (normH >= 180 && normH < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (normH >= 240 && normH < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  const rHex = Math.round((r + m) * 255)
+    .toString(16)
+    .padStart(2, '0');
+  const gHex = Math.round((g + m) * 255)
+    .toString(16)
+    .padStart(2, '0');
+  const bHex = Math.round((b + m) * 255)
+    .toString(16)
+    .padStart(2, '0');
+
+  return `#${rHex}${gHex}${bHex}`.toUpperCase();
+}
+
+/**
+ * 根据 Level (1..35) 计算允许的容错阈值（感知色差 ΔE）
+ */
+export function getToleranceForLevel(_mode: ColorMode, level: number): number {
+  return getTargetDeltaEForLevel(level);
+}
+
+export interface ColorQuestionGenerateOptions {
+  targetingMode?: 'off' | 'manual';
+  targetSectors?: number[]; // [0~11] 代表 12 个 30° 的色相扇区
+}
+
+/**
+ * 色相加权生成：70% 概率落在指定弱点靶向区间内，30% 全局随机
+ */
+function selectHueWithTargeting(options?: ColorQuestionGenerateOptions): number {
+  if (
+    options?.targetingMode &&
+    options.targetingMode !== 'off' &&
+    options.targetSectors &&
+    options.targetSectors.length > 0
+  ) {
+    if (Math.random() < 0.7) {
+      const chosenSector =
+        options.targetSectors[Math.floor(Math.random() * options.targetSectors.length)];
+      const sectorCenterAngle = chosenSector * 30 + 15;
+      const jitter = (Math.random() - 0.5) * 30; // ±15° 范围抖动
+      return Math.floor((sectorCenterAngle + jitter + 360) % 360);
+    }
+  }
+  return Math.floor(Math.random() * 360);
+}
+
+/**
+ * 生成色感练习题目 (基于 OKLab 可观测彩度与感知难度对齐)
+ */
+export function generateColorQuestion(
+  mode: ColorMode,
+  level: number,
+  options?: ColorQuestionGenerateOptions,
+): ColorQuestionData {
+  const id = `cq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
+
+  const targetH = mode === 'H' ? selectHueWithTargeting(options) : Math.floor(Math.random() * 360);
+  let targetS = 100;
+  let targetV = 100;
+
+  // 题目生成过滤逻辑：确保抽取的色彩具备视觉可观测量
+  let attempts = 0;
+  while (attempts < 30) {
+    attempts++;
+    if (mode === 'H' || mode === 'ALL') {
+      targetS = Math.floor(Math.random() * 71) + 30; // 30..100
+      targetV = Math.floor(Math.random() * 71) + 30; // 30..100
+
+      // 检验 OKLab 彩度：必须保证彩度足够大，否则色相被低 S/V 遮蔽不可辩
+      const lab = hsvToOkLab(targetH, targetS, targetV);
+      if (getOkChroma(lab) >= Math.min(0.04, tolerance * 1.5)) {
+        break;
+      }
+    } else if (mode === 'V') {
+      targetS = Math.floor(Math.random() * 71) + 30; // S >= 30% 防止纯灰无明度变化感
+      targetV = Math.floor(Math.random() * 101);
+      break;
+    } else {
+      // mode === 'S'
+      targetV = Math.floor(Math.random() * 71) + 30; // V >= 30% 防止纯黑无饱和度感
+      targetS = Math.floor(Math.random() * 101);
+      break;
+    }
+  }
+
+  return {
+    id,
+    mode,
+    difficultyLevel: clampedLevel,
+    targetH,
+    targetS,
+    targetV,
+    tolerance,
+  };
+}
+
+/**
+ * 基于 OKLab 色差 ΔE_OK 的色感答题命中检测
+ */
+export function checkColorHit(
+  mode: ColorMode,
+  userVal: number | [number, number, number],
+  question: ColorQuestionData,
+): ColorHitResult {
+  const { targetH, targetS, targetV, difficultyLevel } = question;
+
+  let userH: number;
+  let userS: number;
+  let userV: number;
+
+  if (mode === 'ALL' && Array.isArray(userVal)) {
+    [userH, userS, userV] = userVal;
+  } else {
+    const singleVal = typeof userVal === 'number' ? userVal : userVal[0];
+    userH = mode === 'H' ? singleVal : targetH;
+    userS = mode === 'S' ? singleVal : targetS;
+    userV = mode === 'V' ? singleVal : targetV;
+  }
+
+  const targetLab = hsvToOkLab(targetH, targetS, targetV);
+  const userLab = hsvToOkLab(userH, userS, userV);
+  const realDeltaE = calcDeltaEOk(targetLab, userLab);
+
+  const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
+  const isHit = realDeltaE <= targetDeltaE;
+
+  let targetVal = targetH;
+  let errorVal = 0;
+
+  if (mode === 'ALL') {
+    targetVal = 0;
+    errorVal = Math.round(realDeltaE * 1000) / 1000;
+  } else if (mode === 'H') {
+    targetVal = targetH;
+    const diff = Math.abs((userVal as number) - targetVal);
+    errorVal = Math.min(diff, 360 - diff);
+  } else if (mode === 'V') {
+    targetVal = targetV;
+    errorVal = Math.abs((userVal as number) - targetVal);
+  } else {
+    targetVal = targetS;
+    errorVal = Math.abs((userVal as number) - targetVal);
+  }
+
+  return {
+    isHit,
+    userValue: typeof userVal === 'number' ? userVal : userH,
+    targetValue: targetVal,
+    errorValue: Math.round(errorVal * 10) / 10,
+    tolerance: targetDeltaE,
+    userHSV: [userH, userS, userV],
+  };
+}
+
+export interface ToleranceSpan {
+  minVal: number;
+  maxVal: number;
+  halfSpan: number;
+}
+
+/**
+ * 范化容错计算函数：支持直接传入 targetHSV 数组与 difficultyLevel
+ */
+export function getToleranceSpan(
+  dimension: 'H' | 'S' | 'V',
+  val: number,
+  targetHSV: [number, number, number],
+  difficultyLevel: number,
+  currentHSV?: [number, number, number],
+): ToleranceSpan {
+  const [targetH, targetS, targetV] = targetHSV;
+  const targetDeltaE = getTargetDeltaEForLevel(difficultyLevel);
+
+  const curH = currentHSV ? currentHSV[0] : dimension === 'H' ? val : targetH;
+  const curS = currentHSV ? currentHSV[1] : dimension === 'S' ? val : targetS;
+  const curV = currentHSV ? currentHSV[2] : dimension === 'V' ? val : targetV;
+  const baseLab = hsvToOkLab(curH, curS, curV);
+
+  const maxValLimit = dimension === 'H' ? 360 : 100;
+  const step = dimension === 'H' ? 0.5 : 0.2;
+
+  // 向左探索界限
+  let leftVal = val;
+  while (leftVal > (dimension === 'H' ? val - 180 : 0)) {
+    const testVal = leftVal - step;
+    const testH = dimension === 'H' ? (testVal + 360) % 360 : curH;
+    const testS = dimension === 'S' ? Math.max(0, testVal) : curS;
+    const testV = dimension === 'V' ? Math.max(0, testVal) : curV;
+    const testLab = hsvToOkLab(testH, testS, testV);
+
+    if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
+    leftVal = testVal;
+  }
+
+  // 向右探索界限
+  let rightVal = val;
+  while (rightVal < (dimension === 'H' ? val + 180 : 100)) {
+    const testVal = rightVal + step;
+    const testH = dimension === 'H' ? testVal % 360 : curH;
+    const testS = dimension === 'S' ? Math.min(100, testVal) : curS;
+    const testV = dimension === 'V' ? Math.min(100, testVal) : curV;
+    const testLab = hsvToOkLab(testH, testS, testV);
+
+    if (calcDeltaEOk(baseLab, testLab) > targetDeltaE) break;
+    rightVal = testVal;
+  }
+
+  const halfSpan = (rightVal - leftVal) / 2;
+  return {
+    minVal: Math.max(0, val - halfSpan),
+    maxVal: Math.min(maxValLimit, val + halfSpan),
+    halfSpan: Math.round(halfSpan * 10) / 10,
+  };
+}
+~~~~~
+
+#### Acts 3: 沉淀通用 Canvas 绘制基建 `src/core/canvas/`
+
+收拢 HiDPI 适配层、点阵渲染、多边形路径与趋势统计图表。
+
+~~~~~act
+write_file
+src/core/canvas/hidpi.ts
+~~~~~
+~~~~~typescript
+/**
+ * 配置 Canvas 支持 Retina / HiDPI 屏幕高清渲染
+ * @param canvas HTML Canvas 元素
+ * @param logicalWidth 逻辑宽度 (CSS 像素)
+ * @param logicalHeight 逻辑高度 (CSS 像素)
+ * @returns 预设好 scale 的 2D 绘图上下文
+ */
+export function setupHiDpiCanvas(
+  canvas: HTMLCanvasElement,
+  logicalWidth: number,
+  logicalHeight: number,
+): CanvasRenderingContext2D | null {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  canvas.width = Math.round(logicalWidth * dpr);
+  canvas.height = Math.round(logicalHeight * dpr);
+  canvas.style.width = `${logicalWidth}px`;
+  canvas.style.height = `${logicalHeight}px`;
+
+  ctx.resetTransform?.();
+  ctx.scale(dpr, dpr);
+
+  return ctx;
+}
 ~~~~~
 
 ~~~~~act
 write_file
-src/domains/abstraction/index.ts
+src/core/canvas/drawPointGrid.ts
 ~~~~~
 ~~~~~typescript
-import { Eye, Maximize2, Palette, RotateCw, Sun } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import { abstractionPlugin } from '../../config/plugins/abstractionPlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+import type { Point } from '../../types';
+import { getDynamicCrosshairMetrics, getDynamicDotRadius } from '../../utils/geometry';
 
-export const abstractionCards: CardDefinition[] = [
-  {
-    id: 'abs_gesture_axis',
-    domain: 'abstraction',
-    mode: 'GESTURE_AXIS',
-    title: '动态势线提取',
-    desc: '从离散散点流向中提取第一主成分 PCA 势线角度，建立画面主导动势感知力。',
-    instruction: '旋转调节主轴，对齐粒子群的主动态流向 (0°~180°)',
-    icon: RotateCw,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'abs_polygon_decimation',
-    domain: 'abstraction',
-    mode: 'POLYGON_DECIMATION',
-    title: '折线低模大形',
-    desc: '从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。',
-    instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
-    icon: Maximize2,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_notan_threshold',
-    domain: 'abstraction',
-    mode: 'NOTAN_THRESHOLD',
-    title: '黑白素描归组',
-    desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
-    instruction: '调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态',
-    icon: Sun,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'abs_palette_clustering',
-    domain: 'abstraction',
-    mode: 'PALETTE_CLUSTERING',
-    title: '主调色群提炼',
-    desc: '穿透多色拼贴马赛克的混色噪点，四选一提炼出面积加权下的加权质心主色。',
-    instruction: '在下方 4 个候选项中，选出代表画面全局主调的加权主色',
-    icon: Palette,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
+/**
+ * 绘制单个圆点
+ */
+export function drawDot(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  radius: number,
+): void {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+}
 
-export const abstractionDomain: DomainManifest = {
-  domain: 'abstraction',
-  meta: {
-    domain: 'abstraction',
-    appId: 'visual-abstraction',
-    title: '概括感知',
-    subTitle: 'Visual Abstraction',
-    homeTitle: '概括感知 (Visual Abstraction)',
-    homeDesc:
-      '自底向上过滤繁琐细节，训练对动态势线、极简低模折线、素描黑白块面与加权主调的本质提炼能力。',
-    themeColor: 'indigo',
-    icon: Eye,
-    hasWeaknessAnalytics: false,
-    get cards() {
-      return abstractionCards;
-    },
-  },
-  cards: abstractionCards,
-  trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
-};
+export interface RenderInteractivePointGridOptions {
+  ctx: CanvasRenderingContext2D;
+  canvasSize: number;
+  gridPoints: Point[];
+  targetPoint?: Point;
+  userNearestPoint?: Point;
+  hoverPoint?: Point | null;
+  anchors?: (Point | null | undefined)[];
+  showAnswer: boolean;
+  isHit?: boolean;
+  disabled?: boolean;
+}
 
-export default abstractionDomain;
+/**
+ * 统一渲染可交互点阵、锚点、悬停高亮与答案揭晓视觉反馈
+ */
+export function renderInteractivePointGrid({
+  ctx,
+  canvasSize,
+  gridPoints,
+  targetPoint,
+  userNearestPoint,
+  hoverPoint,
+  anchors = [],
+  showAnswer,
+  isHit = false,
+  disabled = false,
+}: RenderInteractivePointGridOptions): void {
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvasSize, canvasSize);
+
+  const dotRadius = getDynamicDotRadius(gridPoints);
+  const hoverRadius = Math.max(2.5, dotRadius * 1.6);
+
+  for (const p of gridPoints) {
+    drawDot(ctx, p.x, p.y, '#888888', dotRadius);
+  }
+
+  if (!disabled && !showAnswer && hoverPoint) {
+    drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+  }
+
+  for (const anchor of anchors) {
+    if (anchor) {
+      drawDot(ctx, anchor.x, anchor.y, '#000000', dotRadius);
+    }
+  }
+
+  if (showAnswer && targetPoint) {
+    const { size: chSize, lineWidth: chLineWidth } = getDynamicCrosshairMetrics(gridPoints);
+
+    drawDot(ctx, targetPoint.x, targetPoint.y, '#000000', dotRadius);
+
+    ctx.strokeStyle = '#00AA00';
+    ctx.lineWidth = chLineWidth;
+    ctx.beginPath();
+    ctx.moveTo(targetPoint.x - chSize, targetPoint.y);
+    ctx.lineTo(targetPoint.x + chSize, targetPoint.y);
+    ctx.moveTo(targetPoint.x, targetPoint.y - chSize);
+    ctx.lineTo(targetPoint.x, targetPoint.y + chSize);
+    ctx.stroke();
+
+    if (userNearestPoint && !isHit) {
+      const dashLength = Math.max(2, Math.min(4, chSize * 0.4));
+      ctx.strokeStyle = '#FF0000';
+      ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
+      ctx.setLineDash([dashLength, dashLength]);
+      ctx.beginPath();
+      ctx.moveTo(userNearestPoint.x, userNearestPoint.y);
+      ctx.lineTo(targetPoint.x, targetPoint.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      drawDot(ctx, userNearestPoint.x, userNearestPoint.y, '#FF0000', dotRadius);
+    }
+  }
+}
 ~~~~~
 
 ~~~~~act
 write_file
-src/domains/concretization/index.ts
+src/core/canvas/drawPolygon.ts
 ~~~~~
 ~~~~~typescript
-import { Columns, Droplet, Layers, Shuffle, Sparkles } from 'lucide-preact';
-import { abstractionPlugin } from '../../config/plugins/abstractionPlugin';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
+import type { Point } from '../../types';
 
-export const concretizationCards: CardDefinition[] = [
-  {
-    id: 'abs_td_gesture_2afc',
-    domain: 'concretization',
-    mode: 'TD_GESTURE_2AFC',
-    title: '动态势线寻源',
-    desc: '给定抽象势线骨架，在两幅复杂点阵中透视判别谁长在该动势中 (2AFC)。',
-    instruction: '观察上方提炼的势线骨架，判别哪侧复杂点阵符合该动势',
-    icon: Shuffle,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_hull_2afc',
-    domain: 'concretization',
-    mode: 'TD_HULL_2AFC',
-    title: '几何大模寻形',
-    desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
-    instruction: '观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形',
-    icon: Columns,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_notan_2afc',
-    domain: 'concretization',
-    mode: 'TD_NOTAN_2AFC',
-    title: '黑白素描骨架',
-    desc: '给定二值 Notan 剪影，透视辨识哪幅丰富灰阶素描拥有该黑白大结构 (2AFC)。',
-    instruction: '观察上方 Notan 剪影，判别哪侧复杂画面拥有该黑白大结构',
-    icon: Droplet,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_palette_2afc',
-    domain: 'concretization',
-    mode: 'TD_PALETTE_2AFC',
-    title: '调性基底归位',
-    desc: '给定抽象基准主调色，在四幅复杂混色拼贴图案中选出以此为基调的画面 (4AFC)。',
-    instruction: '观察上方基准主调色，选出以此为色彩基底的拼贴画面',
-    icon: Sparkles,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
+export interface DrawPolygonOptions {
+  canvas: HTMLCanvasElement | null;
+  vertices?: Point[];
+  size: number;
+  fillColor?: string;
+  strokeColor?: string;
+  lineWidth?: number;
+  bgColor?: string;
+  isHighlighted?: boolean;
+  highlightColor?: string;
+}
 
-export const concretizationDomain: DomainManifest = {
-  domain: 'concretization',
-  appId: 'visual-refinement',
-  title: '细化感知',
-  subTitle: 'Visual Refinement',
-  homeTitle: '细化感知 (Visual Refinement)',
-  homeDesc:
-    '自顶向下透视具象细节，训练基于势线骨架、几何大形、Notan 构图与调性基底在丰富画面中寻源辨识的能力。',
-  themeColor: 'purple',
-  icon: Layers,
-  hasWeaknessAnalytics: false,
-  get cards() {
-    return concretizationCards;
-  },
-  cards: concretizationCards,
-  trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
-};
+/**
+ * 在 Canvas 上清屏并绘制多边形
+ */
+export function drawPolygonCanvas({
+  canvas,
+  vertices,
+  size,
+  fillColor = '#0F172A',
+  strokeColor = '#1E293B',
+  lineWidth = 2,
+  bgColor = '#FFFFFF',
+  isHighlighted = false,
+  highlightColor = '#22C55E',
+}: DrawPolygonOptions): void {
+  if (!canvas || !vertices || vertices.length < 3) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-export default concretizationDomain;
+  ctx.fillStyle = bgColor;
+  ctx.fillRect(0, 0, size, size);
+
+  ctx.beginPath();
+  ctx.moveTo(vertices[0].x, vertices[0].y);
+  for (let i = 1; i < vertices.length; i++) {
+    ctx.lineTo(vertices[i].x, vertices[i].y);
+  }
+  ctx.closePath();
+
+  ctx.fillStyle = fillColor;
+  ctx.fill();
+
+  ctx.strokeStyle = isHighlighted ? highlightColor : strokeColor;
+  ctx.lineWidth = isHighlighted ? lineWidth + 1.5 : lineWidth;
+  ctx.stroke();
+}
 ~~~~~
 
-#### Acts 7: 调整 `src/config/registry.ts` 代理至 `src/core/registry.ts`
+#### Acts 4: 沉淀运行时引擎 `src/core/engine/` 与统一出口 `src/core/index.ts`
 
-平滑保持现有引用兼容，统一使用全新的自发现注册器。
+将自适应难度引擎、音频反馈与统一设置引擎沉淀至核心引擎层，并创建 `src/core/index.ts`。
 
 ~~~~~act
 write_file
-src/config/registry.ts
+src/core/engine/adaptiveEngine.ts
 ~~~~~
 ~~~~~typescript
-export { registry } from '../core/registry';
-export type { DomainPlugin } from '../core/contracts';
+import type { AdaptiveMode } from '../../utils/settings';
+
+export const MAX_LEVEL = 35;
+
+export type AdaptiveChange = 'up' | 'down' | 'same';
+
+export interface AdaptiveProgress {
+  current: number;
+  total: number;
+  hits: number;
+}
+
+export interface RecordResultOutput {
+  newLevel: number;
+  change: AdaptiveChange;
+  isBlockComplete?: boolean;
+  progress?: AdaptiveProgress;
+}
+
+export class AdaptiveEngine {
+  private maxLevel: number = MAX_LEVEL;
+  private currentLevel: number;
+  private mode: AdaptiveMode;
+  private targetAccuracy: number;
+  private blockSize: number;
+  private step: number;
+
+  private consecutiveCorrect = 0;
+  private blockHistory: boolean[] = [];
+
+  constructor(
+    initialLevel = 5,
+    isFineGranularity = false,
+    mode: AdaptiveMode = 'block',
+    targetAccuracy = 0.8,
+    blockSize = 10,
+  ) {
+    this.step = isFineGranularity ? 1 : 3;
+    this.mode = mode;
+    this.targetAccuracy = targetAccuracy;
+    this.blockSize = blockSize;
+    this.currentLevel = Math.max(1, Math.min(initialLevel, this.maxLevel));
+  }
+
+  public getCurrentLevel(): number {
+    return this.currentLevel;
+  }
+
+  public getBlockProgress(): AdaptiveProgress | null {
+    if (this.mode !== 'block') return null;
+    const hits = this.blockHistory.filter(Boolean).length;
+    return {
+      current: this.blockHistory.length,
+      total: this.blockSize,
+      hits,
+    };
+  }
+
+  public recordResult(isHit: boolean): RecordResultOutput {
+    if (this.mode === 'staircase') {
+      return this.recordStaircase(isHit);
+    }
+    return this.recordBlock(isHit);
+  }
+
+  private recordStaircase(isHit: boolean): RecordResultOutput {
+    if (isHit) {
+      this.consecutiveCorrect += 1;
+      if (this.consecutiveCorrect >= 3) {
+        this.consecutiveCorrect = 0;
+        if (this.currentLevel < this.maxLevel) {
+          this.currentLevel = Math.min(this.maxLevel, this.currentLevel + this.step);
+          return { newLevel: this.getCurrentLevel(), change: 'up' };
+        }
+      }
+    } else {
+      this.consecutiveCorrect = 0;
+      if (this.currentLevel > 1) {
+        this.currentLevel = Math.max(1, this.currentLevel - this.step);
+        return { newLevel: this.getCurrentLevel(), change: 'down' };
+      }
+    }
+
+    return { newLevel: this.getCurrentLevel(), change: 'same' };
+  }
+
+  private recordBlock(isHit: boolean): RecordResultOutput {
+    this.blockHistory.push(isHit);
+    const count = this.blockHistory.length;
+    const hits = this.blockHistory.filter(Boolean).length;
+
+    if (count < this.blockSize) {
+      return {
+        newLevel: this.getCurrentLevel(),
+        change: 'same',
+        isBlockComplete: false,
+        progress: { current: count, total: this.blockSize, hits },
+      };
+    }
+
+    const accuracy = hits / this.blockSize;
+    let change: AdaptiveChange = 'same';
+
+    if (accuracy >= this.targetAccuracy) {
+      if (this.currentLevel < this.maxLevel) {
+        this.currentLevel = Math.min(this.maxLevel, this.currentLevel + this.step);
+        change = 'up';
+      }
+    } else if (accuracy < 0.5) {
+      if (this.currentLevel > 1) {
+        this.currentLevel = Math.max(1, this.currentLevel - this.step);
+        change = 'down';
+      }
+    }
+
+    this.blockHistory = [];
+
+    return {
+      newLevel: this.getCurrentLevel(),
+      change,
+      isBlockComplete: true,
+      progress: { current: 0, total: this.blockSize, hits: 0 },
+    };
+  }
+
+  public setLevel(level: number): void {
+    this.currentLevel = Math.max(1, Math.min(level, this.maxLevel));
+    this.consecutiveCorrect = 0;
+    this.blockHistory = [];
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/core/index.ts
+~~~~~
+~~~~~typescript
+// 导出契约与注册器
+export * from './contracts';
+export * from './registry';
+
+// 导出数学与噪声
+export * from './math/mathUtils';
+export * from './math/noiseUtils';
+
+// 导出色彩模型
+export * from './color/oklchUtils';
+export * from './color/colorUtils';
+
+// 导出图形绘制
+export * from './canvas/hidpi';
+export * from './canvas/drawPointGrid';
+export * from './canvas/drawPolygon';
+
+// 导出引擎能力
+export * from './engine/adaptiveEngine';
+~~~~~
+
+#### Acts 5: 优化 `src/utils/` 保持对 `src/core/` 的整洁代理
+
+让 `src/utils/mathUtils.ts`、`src/utils/oklchUtils.ts`、`src/utils/colorUtils.ts` 等直接从 `src/core/` 转发，保证既有代码无缝运行。
+
+~~~~~act
+write_file
+src/utils/mathUtils.ts
+~~~~~
+~~~~~typescript
+export * from '../core/math/mathUtils';
+~~~~~
+
+~~~~~act
+write_file
+src/utils/noiseUtils.ts
+~~~~~
+~~~~~typescript
+export * from '../core/math/noiseUtils';
+~~~~~
+
+~~~~~act
+write_file
+src/utils/oklchUtils.ts
+~~~~~
+~~~~~typescript
+export * from '../core/color/oklchUtils';
+~~~~~
+
+~~~~~act
+write_file
+src/utils/adaptiveEngine.ts
+~~~~~
+~~~~~typescript
+export * from '../core/engine/adaptiveEngine';
 ~~~~~
 
 ### 下一步建议
-1. **统一公共工具库**：将 `src/utils/` 下的算法及通用 UI 逐步整理收拢至 `src/core/`（例如 `src/core/math/`、`src/core/color/` 等）。
-2. **迁移领域专属 UI**：将各个具体 View（如 `AngleEstimationView.tsx` 等）从全局 `components/` 移动至对应 `domains/<domain>/` 文件夹中。
-3. **验证构建与测试**：执行类型检查与单元测试，确认各模块自发现与即插即用工作正常。
+1. **收敛各领域的专属生成与评估算法**：将 `src/utils/angleUtils.ts`、`src/utils/negativeSpace/` 等直接归并至各自的 `src/domains/<domain>/` 目录下。
+2. **将各领域专用 View 移动至 Domain 目录**：例如将 `AngleEstimationView.tsx` 移至 `src/domains/angle/views/`，进一步净化顶层 `components/`。
+3. **运行测试套件与类型检查**：确认构建流程无任何丢失或破坏性改动。
