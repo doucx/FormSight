@@ -170,7 +170,6 @@ export function RatioEstimationView({
 
           <span className="font-bold font-mono text-slate-400 text-xs">100%</span>
         </div>
-
       </div>
 
       {!showAnswer && (

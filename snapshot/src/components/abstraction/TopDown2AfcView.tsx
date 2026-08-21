@@ -200,7 +200,6 @@ export function TopDown2AfcView({
         enableKeyboardShortcuts={true}
         onSelect={handleSelectChoice}
       />
-
     </div>
   );
 }

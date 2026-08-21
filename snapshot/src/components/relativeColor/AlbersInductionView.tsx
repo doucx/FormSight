@@ -164,8 +164,6 @@ export function AlbersInductionView({
         />
       </div>
 
-
-
       {!showAnswer && (
         <button
           type="button"

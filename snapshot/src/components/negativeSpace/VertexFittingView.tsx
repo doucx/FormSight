@@ -243,7 +243,6 @@ export function VertexFittingView({
           </div>
         </div>
       </div>
-
     </div>
   );
 }

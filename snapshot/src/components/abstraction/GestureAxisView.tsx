@@ -130,7 +130,6 @@ export function GestureAxisView({
 
           <span className="font-bold font-mono text-slate-400 text-xs">180{unit}</span>
         </div>
-
       </div>
     </div>
   );

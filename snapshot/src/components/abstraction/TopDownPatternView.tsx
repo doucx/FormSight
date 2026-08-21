@@ -144,7 +144,6 @@ export function TopDownPatternView({
           );
         })}
       </div>
-
     </div>
   );
 }

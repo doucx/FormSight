@@ -133,7 +133,8 @@ export function HueInductionView({
           let borderStyle = 'border-slate-200 hover:border-indigo-300 hover:shadow-md bg-slate-50';
           if (showAnswer) {
             if (isTarget) {
-              borderStyle = 'bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
+              borderStyle =
+                'bg-emerald-50/50 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
             } else if (isSelected) {
               borderStyle = 'bg-rose-50/50 border-rose-400 shadow-sm';
             } else {
@@ -173,8 +174,6 @@ export function HueInductionView({
           );
         })}
       </div>
-
-
 
       {/* 确认提交按钮 */}
       {!showAnswer && (

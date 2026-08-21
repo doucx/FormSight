@@ -227,7 +227,6 @@ export function ShapeMemory2AfcView({
           </button>
         </div>
       )}
-
     </div>
   );
 }

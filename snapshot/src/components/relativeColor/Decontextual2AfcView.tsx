@@ -78,7 +78,6 @@ export function Decontextual2AfcView({
         disabled={disabled}
         onSelect={onSelectChoice}
       />
-
     </div>
   );
 }

@@ -194,7 +194,6 @@ export function AreaComparison2AfcView({
           </div>
         </button>
       </div>
-
     </div>
   );
 }
