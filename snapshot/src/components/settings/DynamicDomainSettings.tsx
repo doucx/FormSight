@@ -32,32 +32,6 @@ export type SettingFieldSchema =
       gridCols?: 'grid-cols-3' | 'grid-cols-4';
     };
 
-export const STAR_SECTORS = [
-  '正东(0°)',
-  '东北(45°)',
-  '正北(90°)',
-  '西北(135°)',
-  '正西(180°)',
-  '西南(225°)',
-  '正南(270°)',
-  '东南(315°)',
-];
-
-export const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
-];
-
 interface DynamicDomainSettingsProps {
   schemas: SettingFieldSchema[];
   values: Record<string, unknown>;

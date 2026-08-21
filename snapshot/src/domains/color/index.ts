@@ -1,9 +1,56 @@
 import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
-import { COLOR_ALL_SCHEMAS, HUE_SCHEMAS, SLIDER_COMMON_SCHEMAS } from '../../config/schemas';
+import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { colorHueAnalyticsPlugin } from './analytics';
 import { colorPlugin } from './plugin';
+
+export const COLOR_SECTORS = [
+  '红 (0°-30°)',
+  '橙 (30°-60°)',
+  '黄 (60°-90°)',
+  '黄绿 (90°-120°)',
+  '绿 (120°-150°)',
+  '青绿 (150°-180°)',
+  '青 (180°-210°)',
+  '蓝 (210°-240°)',
+  '蓝紫 (240°-270°)',
+  '紫 (270°-300°)',
+  '品红 (300°-330°)',
+  '紫红 (330°-360°)',
+];
+
+export const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'toggle',
+    key: 'showToleranceBand',
+    title: '显示滑块容错感应区',
+    description: '在悬停光标两侧实时显示动态容错区间',
+  },
+];
+
+export const HUE_SCHEMAS: SettingFieldSchema[] = [
+  ...SLIDER_COMMON_SCHEMAS,
+  {
+    type: 'targeting',
+    modeKey: 'targetingMode',
+    sectorsKey: 'manualTargetSectors',
+    title: '色相弱点专项靶向强化',
+    subTitle: '选择需要靶向强化的色相扇区：',
+    sectors: COLOR_SECTORS,
+    gridCols: 'grid-cols-3',
+  },
+];
+
+export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
+  ...SLIDER_COMMON_SCHEMAS,
+  {
+    type: 'toggle',
+    key: 'enableHoverColorPreview',
+    title: '综合拾色悬停颜色实时联动',
+    description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
+  },
+];
 
 export const colorCards: CardDefinition[] = [
   {

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M ShapeMemory2AfcView.tsx, M colorUtils.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787323951.8955534, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 下沉通用几何命中判定并实现领域配置完全自治", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787323954.6201687, "duration_ms": 0}}
