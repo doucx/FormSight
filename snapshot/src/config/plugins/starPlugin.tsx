@@ -1,7 +1,7 @@
-import type { HitResult, Point, QuestionData } from '../../types';
-import type { StarSettings } from '../../utils/settings';
 import { StarCanvas } from '../../components/StarCanvas';
+import type { HitResult, Point, QuestionData } from '../../types';
 import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../../utils/geometry';
+import type { StarSettings } from '../../utils/settings';
 import type { TrainingPlugin } from '../trainingPlugins';
 
 export const starPlugin: TrainingPlugin<
