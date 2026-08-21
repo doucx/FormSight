@@ -1,23 +1,15 @@
 import {
-  ArrowDown,
-  ArrowUp,
   Check,
   Copy,
   Download,
   Edit3,
   Layers,
-  Plus,
-  RotateCcw,
   Sliders,
   Sparkles,
-  Star,
-  Trash2,
   Upload,
-  Zap,
 } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { ALL_CARDS, getCardById } from '../../config/cards';
-import { DOMAINS_CONFIG } from '../../config/domains';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
 import {
   clonePlan,
@@ -29,6 +21,9 @@ import {
   togglePlanFavorite,
 } from '../../utils/planStorage';
 import { ModalShell } from '../common/ModalShell';
+import { PlanLibraryDrawer } from './editor/PlanLibraryDrawer';
+import { PlanStageList } from './editor/PlanStageList';
+import { CardPickerPanel } from './editor/CardPickerPanel';
 
 interface PlanEditorModalProps {
   initialPlan: TrainingPlan;
@@ -55,7 +50,6 @@ export function PlanEditorModal({
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
 
-  // 判断当前正在编辑的计划是否为新计划（未入库）
   const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
 
   const showToast = (msg: string) => {
@@ -371,296 +365,41 @@ export function PlanEditorModal({
 
         {/* 计划库抽屉管理 */}
         {showPlanManager && (
-          <div className="p-3.5 bg-slate-100/80 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">切换正在编辑的训练计划：</span>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleCreateNewBlankPlan}
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  新建空白计划
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowPlanManager(false)}
-                  className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
-                >
-                  收起
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-              {storageState.plans.map((p) => {
-                const isActive = currentPlan.id === p.id;
-                const isFav = p.isFavorite ?? true;
-                const stageCount = (p.items || []).length;
-
-                return (
-                  <div
-                    key={p.id}
-                    className={`p-2.5 rounded-xl border text-left transition-all flex items-center justify-between gap-2 ${
-                      isActive
-                        ? 'bg-white border-indigo-500 shadow-sm ring-1 ring-indigo-500/20'
-                        : 'bg-white/70 border-slate-200 hover:bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSelectPlanFromList(p)}
-                      className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
-                        {p.isBuiltin && (
-                          <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
-                            官方
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        {stageCount} 个阶段 •{' '}
-                        {(p.items || []).reduce((acc, c) => acc + c.targetTrials, 0)} 题
-                      </div>
-                    </button>
-
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleFavoriteItem(p.id, e)}
-                        className={`p-1 rounded-lg transition-colors ${
-                          isFav
-                            ? 'text-amber-500 hover:bg-amber-50'
-                            : 'text-slate-300 hover:text-slate-500'
-                        }`}
-                        title={isFav ? '已收藏 (显示在主页快速切换)' : '未收藏'}
-                      >
-                        <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-500' : ''}`} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => handleDeletePlanItem(p.id, e)}
-                        className="p-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                        title="删除计划"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PlanLibraryDrawer
+            storageState={storageState}
+            currentPlan={currentPlan}
+            onSelectPlan={handleSelectPlanFromList}
+            onCreateNewBlankPlan={handleCreateNewBlankPlan}
+            onClose={() => setShowPlanManager(false)}
+            onToggleFavorite={handleToggleFavoriteItem}
+            onDeletePlan={handleDeletePlanItem}
+          />
         )}
 
         {/* 计划阶段列表 */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-              <span>已编排阶段序列 ({currentPlan.items.length})</span>
-              <span className="text-slate-400 font-normal">
-                • 合计 {totalTrials} 题 · 约 {estimatedMin} 分钟
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {currentPlan.items.length > 0 && (
-                <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-                  <span className="text-[10px] font-bold text-slate-400">批量题量:</span>
-                  {[10, 15, 20].map((num) => (
-                    <button
-                      type="button"
-                      key={num}
-                      onClick={() => handleBatchUpdateTrials(num)}
-                      className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
-                    >
-                      {num}题
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {currentPlan.items.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleClearAll}
-                  className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  清空阶段
-                </button>
-              )}
-            </div>
-          </div>
-
-          {currentPlan.items.length === 0 ? (
-            <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
-              <Zap className="w-6 h-6 text-slate-300" />
-              <span>当前计划为空，请点击下方「添加训练阶段」挑选训练模块</span>
-            </div>
-          ) : (
-            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {currentPlan.items.map((item, idx) => {
-                const card = getCardById(item.cardId);
-                if (!card) return null;
-                const Icon = card.icon;
-
-                return (
-                  <div
-                    key={item.id}
-                    className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                      <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                        {idx + 1}
-                      </div>
-                      <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-slate-800">{card.title}</div>
-                        <div className="text-[10px] text-slate-400">
-                          {card.desc.slice(0, 26)}...
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* 题量选择档位 */}
-                    <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-                      <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                        {TRIAL_PRESETS.map((preset) => (
-                          <button
-                            type="button"
-                            key={preset}
-                            onClick={() => handleUpdateTrials(item.id, preset)}
-                            className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                              item.targetTrials === preset
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'text-slate-500 hover:text-slate-800'
-                            }`}
-                          >
-                            {preset}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* 排序与删除 */}
-                      <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                        <button
-                          type="button"
-                          disabled={idx === 0}
-                          onClick={() => handleMoveItem(idx, 'up')}
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                          title="上移"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          disabled={idx === currentPlan.items.length - 1}
-                          onClick={() => handleMoveItem(idx, 'down')}
-                          className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                          title="下移"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.id)}
-                          className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1"
-                          title="移除"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <PlanStageList
+          currentPlan={currentPlan}
+          totalTrials={totalTrials}
+          estimatedMin={estimatedMin}
+          trialPresets={TRIAL_PRESETS}
+          onBatchUpdateTrials={handleBatchUpdateTrials}
+          onClearAll={handleClearAll}
+          onUpdateTrials={handleUpdateTrials}
+          onMoveItem={handleMoveItem}
+          onRemoveItem={handleRemoveItem}
+        />
 
         {/* 添加卡片选择器展开面板 */}
-        {isAddingCard ? (
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700">挑选需要添加的训练模块：</span>
-              <button
-                type="button"
-                onClick={() => setIsAddingCard(false)}
-                className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-              >
-                收起
-              </button>
-            </div>
+        <CardPickerPanel
+          isAddingCard={isAddingCard}
+          selectedDomainFilter={selectedDomainFilter}
+          availableCards={availableCards}
+          onToggleAdding={setIsAddingCard}
+          onSelectDomainFilter={setSelectedDomainFilter}
+          onAddItem={handleAddItem}
+        />
 
-            {/* 领域分类 Filter */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              <button
-                type="button"
-                onClick={() => setSelectedDomainFilter('all')}
-                className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${
-                  selectedDomainFilter === 'all'
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-white text-slate-600 border border-slate-200'
-                }`}
-              >
-                全部
-              </button>
-              {Object.values(DOMAINS_CONFIG).map((d) => (
-                <button
-                  type="button"
-                  key={d.domain}
-                  onClick={() => setSelectedDomainFilter(d.domain)}
-                  className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-                    selectedDomainFilter === d.domain
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white text-slate-600 border border-slate-200'
-                  }`}
-                >
-                  {d.title}
-                </button>
-              ))}
-            </div>
-
-            {/* 模块卡片列表 */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
-              {availableCards.map((card) => {
-                const Icon = card.icon;
-                return (
-                  <button
-                    type="button"
-                    key={card.id}
-                    onClick={() => handleAddItem(card.id)}
-                    className="p-2.5 bg-white hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl text-left transition-all flex items-center gap-2 group active:scale-95"
-                  >
-                    <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform flex-shrink-0">
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-800 line-clamp-1">
-                      {card.title}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setIsAddingCard(true)}
-            className="w-full py-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-[0.99]"
-          >
-            <Plus className="w-4 h-4" />
-            添加训练阶段
-          </button>
-        )}
-
-        {/* 底部保存提交：根据是否为新计划动态调整文案 */}
+        {/* 底部保存提交 */}
         <div className="pt-2 flex gap-3">
           <button
             type="button"
