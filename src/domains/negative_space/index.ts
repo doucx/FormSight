@@ -1,6 +1,15 @@
 import { Columns, Crosshair, Maximize2, Sparkles } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/schemas';
+import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { DomainManifest } from '../../core/contracts';
+
+const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'toggle',
+    key: 'showToleranceBand',
+    title: '显示滑块容错感应区',
+    description: '在悬停光标两侧实时显示动态容错区间',
+  },
+];
 import type { CardDefinition } from '../../types/card';
 import { negRatioAnalyticsPlugin } from './analytics';
 import { negativeSpacePlugin } from './plugin';

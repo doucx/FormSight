@@ -1,4 +1,5 @@
 import { registry } from '../../core/registry';
+import type { PlanStorageState, TrainingPlan } from '../../types/plan';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
@@ -6,9 +7,49 @@ import {
   savePlanStorageState,
   saveTrainingPlan,
 } from '../planStorage';
-import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../settings';
-import { DB_VERSION, type TrainingDomain, getDB } from './schema';
+import { DEFAULT_SETTINGS, type UserSettings, loadSettings, saveSettings } from '../settings';
+import {
+  DB_VERSION,
+  type TrainingDomain,
+  type UnifiedProfileData,
+  type UnifiedSessionData,
+  type UnifiedTrialRecord,
+  getDB,
+} from './schema';
 
+export interface FormSightExportBundle {
+  appName: string;
+  version: number;
+  exportAt: string;
+  sessions: UnifiedSessionData[];
+  records: UnifiedTrialRecord[];
+  profiles: UnifiedProfileData[];
+  settings: UserSettings;
+  trainingPlan?: TrainingPlan;
+  planStorageState?: PlanStorageState;
+}
+
+/**
+ * 校验备份数据是否符合规范结构
+ */
+function validateImportBundle(data: unknown): data is FormSightExportBundle {
+  if (!data || typeof data !== 'object') return false;
+  const bundle = data as Record<string, unknown>;
+
+  if (bundle.appName !== 'FormSight') {
+    return false;
+  }
+
+  if (bundle.sessions && !Array.isArray(bundle.sessions)) return false;
+  if (bundle.records && !Array.isArray(bundle.records)) return false;
+  if (bundle.profiles && !Array.isArray(bundle.profiles)) return false;
+
+  return true;
+}
+
+/**
+ * 全量导出 FormSight 系统数据
+ */
 export async function exportAllData(): Promise<string> {
   const db = await getDB();
   const sessions = await db.getAll('sessions');
@@ -18,7 +59,7 @@ export async function exportAllData(): Promise<string> {
   const trainingPlan = loadTrainingPlan();
   const planStorageState = loadPlanStorageState();
 
-  const exportObject = {
+  const exportObject: FormSightExportBundle = {
     appName: 'FormSight',
     version: DB_VERSION,
     exportAt: new Date().toISOString(),
@@ -33,28 +74,50 @@ export async function exportAllData(): Promise<string> {
   return JSON.stringify(exportObject, null, 2);
 }
 
+/**
+ * 原子化全量数据导入（支持预校验与异常保护）
+ */
 export async function importAllData(jsonString: string): Promise<boolean> {
+  let parsed: unknown;
   try {
-    const data = JSON.parse(jsonString);
+    parsed = JSON.parse(jsonString);
+  } catch (err) {
+    console.error('备份文件不是合法的 JSON 格式:', err);
+    return false;
+  }
+
+  if (!validateImportBundle(parsed)) {
+    console.error('备份文件结构校验失败');
+    return false;
+  }
+
+  // 1. 创建 LocalStorage 关键配置快照，用于出现异常时回滚
+  const previousSettingsSnapshot = loadSettings();
+  const previousPlanStateSnapshot = loadPlanStorageState();
+
+  try {
+    // 2. 第一阶段：执行 IndexedDB 事务级写入
     const db = await getDB();
     const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
 
-    if (data.sessions) {
-      for (const s of data.sessions) {
+    if (parsed.sessions && parsed.sessions.length > 0) {
+      for (const s of parsed.sessions) {
         const domain = (s.domain || 'star') as TrainingDomain;
         const cardId = s.cardId || s.mode;
         await tx.objectStore('sessions').put({ ...s, domain, cardId });
       }
     }
-    if (data.records) {
-      for (const r of data.records) {
+
+    if (parsed.records && parsed.records.length > 0) {
+      for (const r of parsed.records) {
         const domain = (r.domain || 'star') as TrainingDomain;
         const cardId = r.cardId || r.mode;
         await tx.objectStore('records').put({ ...r, domain, cardId });
       }
     }
-    if (data.profiles) {
-      for (const p of data.profiles) {
+
+    if (parsed.profiles && parsed.profiles.length > 0) {
+      for (const p of parsed.profiles) {
         const cardId = p.cardId || p.mode;
         const card = registry.getCardById(cardId);
         const domain = card ? card.domain : ((p.domain || 'star') as TrainingDomain);
@@ -65,23 +128,33 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 
     await tx.done;
 
-    if (data.settings) {
-      saveSettings(data.settings);
+    // 3. 第二阶段：安全更新 LocalStorage
+    if (parsed.settings) {
+      saveSettings(parsed.settings);
     }
 
-    if (data.planStorageState) {
-      savePlanStorageState(data.planStorageState);
-    } else if (data.trainingPlan) {
-      saveTrainingPlan(data.trainingPlan);
+    if (parsed.planStorageState) {
+      savePlanStorageState(parsed.planStorageState);
+    } else if (parsed.trainingPlan) {
+      saveTrainingPlan(parsed.trainingPlan);
     }
 
     return true;
   } catch (err) {
-    console.error('导入数据失败:', err);
+    console.error('导入数据事务执行失败，尝试回滚状态:', err);
+    try {
+      saveSettings(previousSettingsSnapshot);
+      savePlanStorageState(previousPlanStateSnapshot);
+    } catch (rollbackErr) {
+      console.error('回滚快照失败:', rollbackErr);
+    }
     return false;
   }
 }
 
+/**
+ * 原子化清空全量数据并重置为初始状态
+ */
 export async function clearAllData(): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');

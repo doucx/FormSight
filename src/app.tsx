@@ -9,12 +9,7 @@ import { PlanEditorModal } from './components/plan/PlanEditorModal';
 import { registry } from './core/registry';
 import { useHashRoute } from './hooks/useHashRoute';
 import type { TrainingPlan } from './types/plan';
-import {
-  type TrainingDomain,
-  type UnifiedProfileData,
-  getProfilesByDomain,
-  getTrainingTimeMs,
-} from './utils/db/index';
+import { type TrainingDomain, type UnifiedProfileData, repository } from './utils/db/index';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
@@ -62,26 +57,13 @@ export function App() {
   }, []);
 
   const refreshProfiles = useCallback(async () => {
-    const domains = registry.getAllDomains();
-    const timesEntries = await Promise.all(
-      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
+    const summary = await repository.getAppSummary();
 
-    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
-    const pMap: Record<string, UnifiedProfileData> = {};
-    for (const list of allProfilesList) {
-      for (const p of list) {
-        pMap[p.cardId] = p;
-      }
-    }
-
-    setDomainTimes(timesMap);
-    setCurrentDomainProfiles(pMap);
-    setSettings(loadSettings());
-    const planState = loadPlanStorageState();
-    setTrainingPlan(loadTrainingPlan());
-    setAllPlans(planState.plans);
+    setDomainTimes(summary.domainTimes);
+    setCurrentDomainProfiles(summary.profiles);
+    setSettings(summary.settings);
+    setTrainingPlan(summary.trainingPlan);
+    setAllPlans(summary.allPlans);
     setProfilesLoaded(true);
   }, []);
 

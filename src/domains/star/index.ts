@@ -1,9 +1,44 @@
 import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
-import { STAR_SCHEMAS } from '../../config/schemas';
+import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { createStarAnalyticsPlugin } from './analytics';
 import { starPlugin } from './plugin';
+
+export const STAR_SECTORS = [
+  '正东(0°)',
+  '东北(45°)',
+  '正北(90°)',
+  '西北(135°)',
+  '正西(180°)',
+  '西南(225°)',
+  '正南(270°)',
+  '东南(315°)',
+];
+
+export const STAR_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'buttonGroup',
+    key: 'gridSize',
+    title: '干扰点网格大小',
+    options: [
+      { label: '2x2', value: 2 },
+      { label: '3x3', value: 3 },
+      { label: '4x4', value: 4 },
+      { label: '5x5', value: 5 },
+    ],
+    gridCols: 'grid-cols-4',
+  },
+  {
+    type: 'targeting',
+    modeKey: 'targetingMode',
+    sectorsKey: 'manualTargetSectors',
+    title: '弱点专项靶向强化',
+    subTitle: '选择需要靶向强化的角度扇区：',
+    sectors: STAR_SECTORS,
+    gridCols: 'grid-cols-4',
+  },
+];
 
 export const starCards: CardDefinition[] = [
   {

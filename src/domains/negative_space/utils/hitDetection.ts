@@ -1,5 +1,5 @@
+import { evaluatePointGridHit } from '../../../core/geometry/pointGrid';
 import type { Point } from '../../../types';
-import { checkHit } from '../../star/utils/index';
 import type { NegativeSpaceHitResult, NegativeSpaceQuestionData } from './types';
 
 export function checkNegativeSpaceHit(
@@ -11,7 +11,7 @@ export function checkNegativeSpaceHit(
     const targetPoint = question.targetPoint ?? { x: 0, y: 0 };
     const distractorPoints = question.distractorPoints ?? [];
 
-    const hitRes = checkHit(clickPoint, targetPoint, distractorPoints);
+    const hitRes = evaluatePointGridHit(clickPoint, targetPoint, distractorPoints);
     return {
       isHit: hitRes.isHit,
       clickPoint,
