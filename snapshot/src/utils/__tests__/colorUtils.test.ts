@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  checkColorHit,
-  generateColorQuestion,
-  hsvToHex,
-} from '../../core/color/colorUtils';
+import { checkColorHit, generateColorQuestion, hsvToHex } from '../../core/color/colorUtils';
 import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
 
 describe('colorUtils & oklchUtils', () => {
