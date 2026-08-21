@@ -30,6 +30,7 @@ export function Home({
   onOpenGlobalStats,
 }: HomeProps) {
   const domainOrder: TrainingDomain[] = [
+    'angle',
     'star',
     'color',
     'relative_color',

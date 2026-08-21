@@ -29,6 +29,7 @@ import { Home } from './views/Home';
 import { PlanTrainingView } from './views/PlanTrainingView';
 
 const ALL_DOMAINS: TrainingDomain[] = [
+  'angle',
   'abstraction',
   'concretization',
   'star',
@@ -53,6 +54,7 @@ export function App() {
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
   const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
+    angle: 0,
     abstraction: 0,
     concretization: 0,
     star: 0,

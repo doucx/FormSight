@@ -12,7 +12,8 @@ export interface DomainMeta {
     | 'relative-color'
     | 'negative-space'
     | 'visual-abstraction'
-    | 'visual-refinement';
+    | 'visual-refinement'
+    | 'angle-perception';
   title: string;
   subTitle: string;
   homeTitle: string;
@@ -24,6 +25,21 @@ export interface DomainMeta {
 }
 
 export const DOMAINS_CONFIG: Record<TrainingDomain, DomainMeta> = {
+  angle: {
+    domain: 'angle',
+    appId: 'angle-perception',
+    title: '角度感知',
+    subTitle: 'Angle Perception',
+    homeTitle: '角度感知 (Angle Perception)',
+    homeDesc:
+      '以极简白底黑线剥离干扰，通过夹角大小估算、微小角度二分对比与平行线对偶辨识，构建坚实的正负形起形与角度感知直觉。',
+    themeColor: 'indigo',
+    icon: Compass,
+    hasWeaknessAnalytics: true,
+    get cards() {
+      return getCardsByDomain('angle');
+    },
+  },
   star: {
     domain: 'star',
     appId: 'star-hopping',

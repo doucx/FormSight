@@ -1,5 +1,6 @@
 import {
   Columns,
+  Compass,
   Crosshair,
   Droplet,
   Maximize2,
@@ -7,6 +8,7 @@ import {
   RotateCw,
   Shuffle,
   Sparkles,
+  Split,
   Sun,
   Target,
 } from 'lucide-preact';
@@ -75,6 +77,56 @@ const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
 ];
 
 export const ALL_CARDS: CardDefinition[] = [
+  // ==========================================
+  // 角度感知系列 (Angle Perception)
+  // ==========================================
+  {
+    id: 'angle_estimation',
+    domain: 'angle',
+    mode: 'ANGLE_ESTIMATION',
+    title: '夹角大小估算',
+    desc: '观察由纯黑线段构成的夹角，使用连续滑块精准评估夹角弧度大小 (0°~180°)。',
+    instruction: '观察极简两条射线夹角，调制滑块逼近精准度数 (0°~180°)',
+    icon: Compass,
+    tags: {
+      target: ['geometry', 'angle'],
+      skill: ['spatial_orientation', 'proportion'],
+      interaction: ['continuous_slider'],
+    },
+    hasWeaknessAnalytics: true,
+    settingSchemas: SLIDER_COMMON_SCHEMAS,
+  },
+  {
+    id: 'angle_comparison_2afc',
+    domain: 'angle',
+    mode: 'ANGLE_COMPARISON_2AFC',
+    title: '角度二分对比',
+    desc: '在消除空间正交基准干扰下，二选一快速判别哪一侧的两射线夹角更大 (2AFC)。',
+    instruction: '二选一快速判别哪一侧夹角更大 (键 1 / 2)',
+    icon: Columns,
+    tags: {
+      target: ['geometry', 'angle'],
+      skill: ['spatial_orientation', 'proportion'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+  {
+    id: 'angle_parallel_2afc',
+    domain: 'angle',
+    mode: 'PARALLEL_ALIGNMENT_2AFC',
+    title: '平行线基准辨识',
+    desc: '观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。',
+    instruction: '观察上方基准线，在下方选出与其保持绝对平行的线 (键 1 / 2)',
+    icon: Split,
+    tags: {
+      target: ['geometry', 'angle'],
+      skill: ['spatial_orientation', 'proportion'],
+      interaction: ['choice_2afc'],
+    },
+    hasWeaknessAnalytics: false,
+  },
+
   // ==========================================
   // 0. 视知觉概括系列 (Visual Abstraction)
   // ==========================================

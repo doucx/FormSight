@@ -75,6 +75,13 @@ export const DEFAULT_SETTINGS: UserSettings = {
     showExperimentalCards: false,
   },
   cards: {
+    angle_estimation: {
+      ...DEFAULT_BASE_SETTINGS,
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    angle_comparison_2afc: { ...DEFAULT_BASE_SETTINGS },
+    angle_parallel_2afc: { ...DEFAULT_BASE_SETTINGS },
     star_single: {
       ...DEFAULT_BASE_SETTINGS,
       gridSize: 3,

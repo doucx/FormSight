@@ -4,6 +4,11 @@
       "format": "xml",
       "extension": ["ts", "tsx"],
       "paths": [
+        "src/views/Home.tsx",
+        "src/hooks/useHashRoute.ts",
+        "src/app.tsx",
+        "src/components/GlobalStatsModal.tsx",
+        "src/components/settings/DynamicDomainSettings.tsx",
         "src/types/card.ts",
         "src/types/index.ts",
         "src/utils/db/schema.ts",
