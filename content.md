@@ -1,170 +1,40 @@
-我将为你生成一个结构化的重构方案与执行计划，将 FormSight 从“多点硬编码分散配置”全面重构为“微内核 + 插件注册表 (Domain Plugin Registry)”架构，实现单一数据源（Single Source of Truth, SSOT）。
+这里是因为 `cards.ts` 与 `registry.ts` 之间存在双向循环引用（Circular Dependency），导致在模块初始化阶段 `ALL_CARDS` 触发了暂存死区（TDZ）的引用错误；同时包含了 Biome 的 hook 依赖与 TypeScript 未使用导入警告。
 
-## [WIP] refactor: 重构领域与卡片体系为插件注册表架构
+我将生成一个修复计划来彻底解除循环依赖并修正 linter 错误。
+
+## [WIP] fix: 解除 registry 循环依赖并修复构建与校验问题
+
+### 错误分析
+1. **循环依赖引发的 TDZ 错误**：`registry.ts` 在顶层导入了 `cards.ts` 中的 `ALL_CARDS` 并在模块加载时立即读取；而 `cards.ts` 顶层又导入了 `registry.ts` 的 `registry` 实例，两者形成相互依赖循环，导致 `ALL_CARDS` 初始化之前被调用。
+2. **Biome 依赖项告警**：`GlobalStatsModal.tsx` 中 `allDomains` 在组件顶层读取，但在 `useEffect` 中没有加入依赖数组。
+3. **TS 编译报错**：`registry.ts` 中存在未使用的 `ComponentChildren` 导入声明。
 
 ### 用户需求
-解决新增训练领域或卡片时需要修改十几个文件（包括路由白名单、主页顺序、全局状态、统计、设置默认值等）的问题，建立高内聚、微内核的插件注册表架构，使每个领域具备自我描述与完整配置能力。
+消除模块加载时的 ReferenceError，修复 Biome lint 检查与 TypeScript build 构建。
 
 ### 评论
-当前架构的根本瓶颈在于开闭原则（OCP）的缺失。通过倒转控制流（IoC）与注册表模式（Registry Pattern），核心调度层只面向标准接口（Plugin Interface）工作，所有业务领域（Angle, Star, Color, RelativeColor, NegativeSpace, Abstraction, Concretization）自包含卡片定义、训练引擎、设置 Schema 及分析视图，不仅消除了每次增删模块的漏改风险，也为未来的自定义卡片包与插件化拓展打下了坚实的地基。
+解除循环依赖的最佳实践是保持单向依赖流：让数据定义层（Cards, Domains, Plugins）作为底层被 `registry.ts` 单向消费，而上层应用只从 `registry.ts` 或通过纯函数索引卡片，彻底斩断双向引用。
 
 ### 目标
-1. **建立领域插件规范 (`DomainPlugin`) 与核心注册表 (`src/config/registry.ts`)**：聚合 Domain 元数据、Card 列表、训练 Plugin、专属设置 Schema 以及弱点分析视图。
-2. **重构设置与默认值构建**：使 `src/utils/settings.ts` 动态从所有注册的卡片中收集初始配置，不再硬编码每一张卡片名。
-3. **解耦所有消费方**：
-   - `src/hooks/useHashRoute.ts`：基于注册表动态校验 Domain 路由。
-   - `src/views/Home.tsx`：由注册表驱动主页领域看板渲染，消除硬编码的 `domainOrder`。
-   - `src/app.tsx` 与 `src/components/GlobalStatsModal.tsx`：动态读取所有已注册的 Domain 列表与统计数据。
-   - 保持所有现有功能、自适应引擎和 TypeScript 严格类型兼容。
+1. 重构 `src/config/cards.ts`，使其成为纯数据与纯索引函数模块（单向流向 `registry.ts`），消除循环引用。
+2. 清理 `src/config/registry.ts` 中的无用导入。
+3. 在 `src/components/GlobalStatsModal.tsx` 内部直接调用 `registry.getAllDomains()`，满足 hooks 依赖完整性。
 
 ### 基本原理
-1. 将 `TrainingDomain` 从封闭的联合类型泛化为基于注册表的字符串标识，并在运行时通过 `isRegisteredDomain(id)` 进行安全校验。
-2. 在 `src/config/registry.ts` 中构建单例注册表，支持统一的查询 API（如 `getAllDomains()`、`getDomainMeta(id)`、`getCardById(id)`、`getPluginByCardId(id)`）。
-3. 现有的 `src/config/domains.ts`、`cards.ts`、`trainingPlugins.tsx`、`analyticsPlugins.tsx` 转换为以领域为单元的内聚插件导出，并通过 Registry 统一托管。
+1. `cards.ts` 自包含 `CARD_MAP`，提供高效的 `getCardById` 和 `getCardsByDomain`，无需反向依赖 `registry`。
+2. `registry.ts` 单向导入 `ALL_CARDS`、`DOMAINS_CONFIG` 等完成集中注册。
+3. 清理未使用的类型与修正 hooks 依赖。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #comp/cli #concept/config #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/plugin-registry #task/action/refactor #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/engine #comp/build #scope/core #ai/instruct #task/domain/architecture #task/object/plugin-registry #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 建立核心领域插件接口与统一注册表
+#### Acts 1: 修复 `src/config/cards.ts`，解除循环依赖
 
-我们创建 `src/config/registry.ts`，定义 `DomainPlugin` 接口并将现有的 7 个领域（Angle, Star, Color, RelativeColor, NegativeSpace, Abstraction, Concretization）集中注册，提供全局查询函数。
-
-~~~~~act
-write_file
-src/config/registry.ts
-~~~~~
-~~~~~typescript
-import type { ComponentChildren } from 'preact';
-import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
-import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
-import type { BaseModuleSettings } from '../utils/settings';
-import type { CardAnalyticsPlugin } from './analyticsPlugins';
-import type { DomainMeta } from './domains';
-import type { AnyTrainingPlugin } from './trainingPlugins';
-
-// 引入各领域现有卡片与插件资源
-import { CARD_ANALYTICS_PLUGINS } from './analyticsPlugins';
-import { ALL_CARDS } from './cards';
-import { DOMAINS_CONFIG } from './domains';
-import { TRAINING_PLUGINS } from './plugins';
-
-export interface DomainPlugin {
-  domain: TrainingDomain;
-  meta: DomainMeta;
-  cards: CardDefinition[];
-  trainingPlugin: AnyTrainingPlugin;
-  settingSchemas?: SettingFieldSchema[];
-  defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
-  analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
-}
-
-class DomainRegistry {
-  private plugins = new Map<TrainingDomain, DomainPlugin>();
-  private cardMap = new Map<string, CardDefinition>();
-  private cardPluginMap = new Map<string, AnyTrainingPlugin>();
-  private cardAnalyticsMap = new Map<string, CardAnalyticsPlugin>();
-
-  public register(plugin: DomainPlugin): void {
-    this.plugins.set(plugin.domain, plugin);
-
-    for (const card of plugin.cards) {
-      this.cardMap.set(card.id, card);
-      this.cardPluginMap.set(card.id, plugin.trainingPlugin);
-    }
-
-    if (plugin.analyticsPlugins) {
-      for (const [cardId, analyticsPlugin] of Object.entries(plugin.analyticsPlugins)) {
-        this.cardAnalyticsMap.set(cardId, analyticsPlugin);
-      }
-    }
-  }
-
-  public getAllDomains(): TrainingDomain[] {
-    return Array.from(this.plugins.keys());
-  }
-
-  public getAllDomainMetas(): DomainMeta[] {
-    return Array.from(this.plugins.values()).map((p) => p.meta);
-  }
-
-  public getDomainPlugin(domain: TrainingDomain): DomainPlugin | undefined {
-    return this.plugins.get(domain);
-  }
-
-  public getDomainMeta(domain: TrainingDomain): DomainMeta | undefined {
-    return this.plugins.get(domain)?.meta;
-  }
-
-  public getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-    return this.plugins.get(domain)?.cards || [];
-  }
-
-  public getAllCards(): CardDefinition[] {
-    return Array.from(this.cardMap.values());
-  }
-
-  public getCardById(cardId: string): CardDefinition | undefined {
-    return this.cardMap.get(cardId);
-  }
-
-  public getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
-    return this.cardPluginMap.get(cardId);
-  }
-
-  public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {
-    return this.cardAnalyticsMap.get(cardId);
-  }
-
-  public isRegisteredDomain(domain: string): domain is TrainingDomain {
-    return this.plugins.has(domain as TrainingDomain);
-  }
-}
-
-export const registry = new DomainRegistry();
-
-// 注册所有预设领域
-const REGISTERED_DOMAINS: TrainingDomain[] = [
-  'angle',
-  'star',
-  'color',
-  'relative_color',
-  'negative_space',
-  'abstraction',
-  'concretization',
-];
-
-for (const domain of REGISTERED_DOMAINS) {
-  const meta = DOMAINS_CONFIG[domain];
-  const cards = ALL_CARDS.filter((c) => c.domain === domain);
-  const trainingPlugin = TRAINING_PLUGINS[domain];
-  const analyticsPlugins: Record<string, CardAnalyticsPlugin> = {};
-
-  for (const card of cards) {
-    if (CARD_ANALYTICS_PLUGINS[card.id]) {
-      analyticsPlugins[card.id] = CARD_ANALYTICS_PLUGINS[card.id];
-    }
-  }
-
-  if (meta && trainingPlugin) {
-    registry.register({
-      domain,
-      meta,
-      cards,
-      trainingPlugin,
-      analyticsPlugins,
-    });
-  }
-}
-~~~~~
-
-#### Acts 2: 将 cards.ts 与 domains.ts 重构为基于 Registry 的透传层
-
-保持与现有消费代码平滑兼容，使 `src/config/cards.ts` 和 `src/config/domains.ts` 直接从 `registry` 中导出。
+我们将 `cards.ts` 中的卡片查询函数直接基于内部的 `CARD_MAP` 实现，完全移除对 `registry.ts` 的反向导入，使依赖链变成严格的单向流。
 
 ~~~~~act
 write_file
@@ -172,15 +42,27 @@ src/config/cards.ts
 ~~~~~
 ~~~~~typescript
 import {
+  Columns,
+  Compass,
+  Crosshair,
+  Droplet,
+  Maximize2,
+  Palette,
+  RotateCw,
+  Shuffle,
+  Sparkles,
+  Split,
+  Sun,
+  Target,
+} from 'lucide-preact';
+import {
   COLOR_SECTORS,
   STAR_SECTORS,
   type SettingFieldSchema,
 } from '../components/settings/DynamicDomainSettings';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
-import { registry } from './registry';
 
-// 导出配置 Schema 常量供各模块复用
 export const STAR_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'buttonGroup',
@@ -236,22 +118,6 @@ export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
     description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
   },
 ];
-
-// 原始卡片列表
-import {
-  Columns,
-  Compass,
-  Crosshair,
-  Droplet,
-  Maximize2,
-  Palette,
-  RotateCw,
-  Shuffle,
-  Sparkles,
-  Split,
-  Sun,
-  Target,
-} from 'lucide-preact';
 
 export const ALL_CARDS: CardDefinition[] = [
   // 角度感知系列
@@ -670,275 +536,54 @@ export const ALL_CARDS: CardDefinition[] = [
   },
 ];
 
+const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c]));
+
 export function getCardById(id: string): CardDefinition | undefined {
-  return registry.getCardById(id);
+  return CARD_MAP.get(id);
 }
 
 export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-  return registry.getCardsByDomain(domain);
+  return ALL_CARDS.filter((c) => c.domain === domain);
 }
 ~~~~~
 
-#### Acts 3: 重构动态配置中心，消除硬编码默认值
+#### Acts 2: 修复 `src/config/registry.ts` 未使用的类型声明
 
-重构 `src/utils/settings.ts`，自动从 `ALL_CARDS` 中收集每张卡片的基础配置与特征项（例如 `sliderHitMargin`、`showToleranceBand` 等），杜绝手动维护超长卡片列表。
-
-~~~~~act
-write_file
-src/utils/settings.ts
-~~~~~
-~~~~~typescript
-import { ALL_CARDS } from '../config/cards';
-
-export type StepGranularity = 'standard' | 'fine';
-export type AdaptiveMode = 'block' | 'staircase';
-export type TargetingMode = 'off' | 'manual';
-
-export interface BaseModuleSettings {
-  autoNext: boolean;
-  autoNextDelay: number;
-  stepGranularity: StepGranularity;
-  adaptiveMode: AdaptiveMode;
-  targetAccuracy: number;
-  blockSize: number;
-  [key: string]: unknown;
-}
-
-export interface StarSettings extends BaseModuleSettings {
-  gridSize?: number;
-  targetingMode?: TargetingMode;
-  manualTargetSectors?: number[];
-}
-
-export interface ColorSenseSettings extends BaseModuleSettings {
-  sliderHitMargin?: number;
-  showToleranceBand?: boolean;
-  enableHoverColorPreview?: boolean;
-  targetingMode?: TargetingMode;
-  manualTargetSectors?: number[];
-}
-
-export interface RelativeColorSettings extends BaseModuleSettings {
-  sliderHitMargin?: number;
-  showToleranceBand?: boolean;
-  enableHoverColorPreview?: boolean;
-}
-
-export interface NegativeSpaceSettings extends BaseModuleSettings {
-  sliderHitMargin?: number;
-  showToleranceBand?: boolean;
-}
-
-export interface AbstractionSettings extends BaseModuleSettings {
-  sliderHitMargin?: number;
-  showToleranceBand?: boolean;
-}
-
-export interface GlobalSettings {
-  idleTimeout: number;
-  soundEnabled: boolean;
-  sliderHitMargin: number;
-  showCanvasHints?: boolean;
-  showExperimentalCards?: boolean;
-}
-
-export interface UserSettings {
-  global: GlobalSettings;
-  cards: Record<string, BaseModuleSettings>;
-}
-
-const SETTINGS_KEY = 'formsight_user_settings';
-
-export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
-  autoNext: true,
-  autoNextDelay: 500,
-  stepGranularity: 'standard',
-  adaptiveMode: 'block',
-  targetAccuracy: 0.8,
-  blockSize: 10,
-};
-
-// 动态根据卡片定义构建初始默认配置
-function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
-  const cards: Record<string, BaseModuleSettings> = {};
-
-  for (const card of ALL_CARDS) {
-    const cardConfig: BaseModuleSettings = { ...DEFAULT_BASE_SETTINGS };
-
-    // 如果卡片包含滑块交互或相关设置 schema，配置默认容错与外延感应
-    if (card.tags.interaction.includes('continuous_slider')) {
-      cardConfig.sliderHitMargin = 12;
-      cardConfig.showToleranceBand = true;
-    }
-
-    if (card.domain === 'star') {
-      cardConfig.gridSize = 3;
-      cardConfig.targetingMode = 'off';
-      cardConfig.manualTargetSectors = [];
-    } else if (card.id === 'color_hue') {
-      cardConfig.enableHoverColorPreview = true;
-      cardConfig.targetingMode = 'off';
-      cardConfig.manualTargetSectors = [];
-    } else if (card.id === 'color_all') {
-      cardConfig.enableHoverColorPreview = true;
-    }
-
-    cards[card.id] = cardConfig;
-  }
-
-  return cards;
-}
-
-export const DEFAULT_SETTINGS: UserSettings = {
-  global: {
-    idleTimeout: 60,
-    soundEnabled: true,
-    sliderHitMargin: 12,
-    showCanvasHints: true,
-    showExperimentalCards: false,
-  },
-  cards: buildDefaultCardSettings(),
-};
-
-export function loadSettings(): UserSettings {
-  try {
-    const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
-
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return DEFAULT_SETTINGS;
-
-    const defaultCards = buildDefaultCardSettings();
-    const cards: Record<string, BaseModuleSettings> = { ...defaultCards };
-
-    if (parsed.cards && typeof parsed.cards === 'object') {
-      for (const [cardId, val] of Object.entries(parsed.cards)) {
-        cards[cardId] = {
-          ...(cards[cardId] || DEFAULT_BASE_SETTINGS),
-          ...(val as Record<string, unknown>),
-        };
-      }
-    }
-
-    return {
-      global: { ...DEFAULT_SETTINGS.global, ...(parsed.global || {}) },
-      cards,
-    };
-  } catch (e) {
-    console.error('Failed to load user settings, fallback to default:', e);
-    return DEFAULT_SETTINGS;
-  }
-}
-
-export function saveSettings(settings: UserSettings): void {
-  try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  } catch (e) {
-    console.error('Failed to save user settings:', e);
-  }
-}
-
-export function getCardSettings(settings: UserSettings, cardId: string): BaseModuleSettings {
-  return settings.cards[cardId] || DEFAULT_SETTINGS.cards[cardId] || DEFAULT_BASE_SETTINGS;
-}
-~~~~~
-
-#### Acts 4: 重构路由与消费视图，消除所有硬编码 Domain 列表
-
-解耦 `useHashRoute.ts`、`Home.tsx`、`GlobalStatsModal.tsx` 与 `app.tsx`，直接从 `registry` 获取领域。
+移除无用的 `ComponentChildren` 导入。
 
 ~~~~~act
 patch_file
-src/hooks/useHashRoute.ts
+src/config/registry.ts
 ~~~~~
 ~~~~~typescript.old
-  if (segments[0] === 'dashboard' && segments[1]) {
-    const domain = segments[1] as TrainingDomain;
-    if (
-      [
-        'angle',
-        'abstraction',
-        'concretization',
-        'star',
-        'color',
-        'relative_color',
-        'negative_space',
-      ].includes(domain)
-    ) {
-      return { type: 'dashboard', domain };
-    }
-  }
+import type { ComponentChildren } from 'preact';
+import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 ~~~~~
 ~~~~~typescript.new
-  if (segments[0] === 'dashboard' && segments[1]) {
-    const domain = segments[1] as TrainingDomain;
-    return { type: 'dashboard', domain };
-  }
+import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 ~~~~~
 
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-  const domainOrder: TrainingDomain[] = [
-    'angle',
-    'star',
-    'color',
-    'relative_color',
-    'negative_space',
-    'abstraction',
-    'concretization',
-  ];
-  const domains = domainOrder.map((d) => DOMAINS_CONFIG[d]);
-~~~~~
-~~~~~typescript.new
-  const domains = Object.values(DOMAINS_CONFIG);
-~~~~~
+#### Acts 3: 修复 `src/components/GlobalStatsModal.tsx` 的 useEffect 依赖
+
+将 `allDomains` 直接移至 `useEffect` 内部读取，避免产生外部作用域未在 dependency array 声明的问题。
 
 ~~~~~act
 patch_file
 src/components/GlobalStatsModal.tsx
 ~~~~~
 ~~~~~typescript.old
-const ALL_DOMAINS: TrainingDomain[] = [
-  'angle',
-  'abstraction',
-  'concretization',
-  'star',
-  'color',
-  'relative_color',
-  'negative_space',
-];
-
-export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
-~~~~~
-~~~~~typescript.new
-import { registry } from '../config/registry';
-
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const allDomains = registry.getAllDomains();
-~~~~~
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~typescript.old
-      const results = await Promise.all(
-        ALL_DOMAINS.map(async (domain) => {
-          const domainRecords = await getTrialRecords(domain);
-          return domainRecords.map((r) => ({
-            timestamp: r.timestamp,
-            isHit: r.isHit,
-            level: r.difficultyLevel,
-            module: domain,
-            subMode: r.mode,
-          }));
-        }),
-      );
-~~~~~
-~~~~~typescript.new
+  // === 1. 数据加载与聚合 ===
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
       const results = await Promise.all(
         allDomains.map(async (domain) => {
           const domainRecords = await getTrialRecords(domain);
@@ -952,98 +597,32 @@ src/components/GlobalStatsModal.tsx
         }),
       );
 ~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-const ALL_DOMAINS: TrainingDomain[] = [
-  'angle',
-  'abstraction',
-  'concretization',
-  'star',
-  'color',
-  'relative_color',
-  'negative_space',
-];
-
-export function App() {
-  const { route, navigate } = useHashRoute();
-
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isPlanEditorOpen, setIsPlanEditorOpen] = useState<boolean>(false);
-  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
-  const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
-
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
-  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
-
-  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>({
-    angle: 0,
-    abstraction: 0,
-    concretization: 0,
-    star: 0,
-    color: 0,
-    relative_color: 0,
-    negative_space: 0,
-  });
-~~~~~
 ~~~~~typescript.new
-import { registry } from './config/registry';
+export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-export function App() {
-  const { route, navigate } = useHashRoute();
-  const allDomains = registry.getAllDomains();
-
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isPlanEditorOpen, setIsPlanEditorOpen] = useState<boolean>(false);
-  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
-  const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
-
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
-  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
-  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
-
-  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>(() => {
-    const init: Record<string, number> = {};
-    for (const d of allDomains) init[d] = 0;
-    return init as Record<TrainingDomain, number>;
-  });
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript.old
-  const refreshProfiles = useCallback(async () => {
-    const timesEntries = await Promise.all(
-      ALL_DOMAINS.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
-
-    const allProfilesList = await Promise.all(ALL_DOMAINS.map((d) => getProfilesByDomain(d)));
-~~~~~
-~~~~~typescript.new
-  const refreshProfiles = useCallback(async () => {
-    const domains = registry.getAllDomains();
-    const timesEntries = await Promise.all(
-      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
-
-    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
+  // === 1. 数据加载与聚合 ===
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
+      const domains = registry.getAllDomains();
+      const results = await Promise.all(
+        domains.map(async (domain) => {
+          const domainRecords = await getTrialRecords(domain);
+          return domainRecords.map((r) => ({
+            timestamp: r.timestamp,
+            isHit: r.isHit,
+            level: r.difficultyLevel,
+            module: domain,
+            subMode: r.mode,
+          }));
+        }),
+      );
 ~~~~~
 
 ### 下一步建议
-1. 执行代码检查与测试运行，确保重构后所有模块正常工作：
-   - 运行 `npm run check` 或 `npm run test`。
-2. 考虑后续将各个 Domain 进一步物理文件夹模块化（例如将 `src/utils/angleUtils.ts` 与对应视图合并进 `src/domains/angle/`），形成完全独立的领域微内核包。
+- 重新运行 `npm run checkf` 和 `npm run build`，验证语法检查与 TypeScript 编译是否完全通过。

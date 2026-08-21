@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构领域与卡片体系为插件注册表架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787314782.187153, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 解除 registry 循环依赖并修复构建与校验问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787314896.5963979, "duration_ms": 0}}

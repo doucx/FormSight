@@ -28,7 +28,6 @@ interface UnifiedRecord {
 import { registry } from '../config/registry';
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
-  const allDomains = registry.getAllDomains();
   const [loading, setLoading] = useState(true);
   const [records, setRecords] = useState<UnifiedRecord[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
@@ -39,8 +38,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
+      const domains = registry.getAllDomains();
       const results = await Promise.all(
-        allDomains.map(async (domain) => {
+        domains.map(async (domain) => {
           const domainRecords = await getTrialRecords(domain);
           return domainRecords.map((r) => ({
             timestamp: r.timestamp,

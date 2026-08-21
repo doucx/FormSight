@@ -1,13 +1,25 @@
 import {
+  Columns,
+  Compass,
+  Crosshair,
+  Droplet,
+  Maximize2,
+  Palette,
+  RotateCw,
+  Shuffle,
+  Sparkles,
+  Split,
+  Sun,
+  Target,
+} from 'lucide-preact';
+import {
   COLOR_SECTORS,
   STAR_SECTORS,
   type SettingFieldSchema,
 } from '../components/settings/DynamicDomainSettings';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
-import { registry } from './registry';
 
-// 导出配置 Schema 常量供各模块复用
 export const STAR_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'buttonGroup',
@@ -63,22 +75,6 @@ export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
     description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
   },
 ];
-
-// 原始卡片列表
-import {
-  Columns,
-  Compass,
-  Crosshair,
-  Droplet,
-  Maximize2,
-  Palette,
-  RotateCw,
-  Shuffle,
-  Sparkles,
-  Split,
-  Sun,
-  Target,
-} from 'lucide-preact';
 
 export const ALL_CARDS: CardDefinition[] = [
   // 角度感知系列
@@ -497,10 +493,12 @@ export const ALL_CARDS: CardDefinition[] = [
   },
 ];
 
+const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c]));
+
 export function getCardById(id: string): CardDefinition | undefined {
-  return registry.getCardById(id);
+  return CARD_MAP.get(id);
 }
 
 export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-  return registry.getCardsByDomain(domain);
+  return ALL_CARDS.filter((c) => c.domain === domain);
 }

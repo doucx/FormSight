@@ -1,4 +1,3 @@
-import type { ComponentChildren } from 'preact';
 import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db/schema';
