@@ -2,6 +2,7 @@ import { getCardById } from '../../config/cards';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
+  resetPlansToDefault,
   savePlanStorageState,
   saveTrainingPlan,
 } from '../planStorage';
@@ -88,4 +89,6 @@ export async function clearAllData(): Promise<void> {
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
   await tx.done;
+
+  resetPlansToDefault();
 }
