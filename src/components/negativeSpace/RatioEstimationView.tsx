@@ -1,3 +1,4 @@
+import { Maximize2 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
@@ -6,6 +7,7 @@ import {
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
 } from '../../utils/negativeSpace';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface RatioEstimationViewProps {
   question: NegativeSpaceQuestionData;
@@ -73,13 +75,12 @@ export function RatioEstimationView({
   const activeVal = hoverVal !== null ? hoverVal : currentVal;
 
   return (
-    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          估计白色留白 (负形) 占整幅画面的面积百分比
-        </div>
-      )}
-
+    <QuestionCardShell
+      hintText="估计白色留白 (负形) 占整幅画面的面积百分比"
+      hintIcon={Maximize2}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-lg"
+    >
       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
         <canvas
           ref={canvasRef}
@@ -184,6 +185,6 @@ export function RatioEstimationView({
           确认提交 (Space)
         </button>
       )}
-    </div>
+    </QuestionCardShell>
   );
 }

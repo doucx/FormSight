@@ -11,6 +11,7 @@ import { drawRawGrayscaleNoiseField } from '../../utils/canvas/drawNotanField';
 import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../utils/canvas/drawParticles';
 import { drawPolygonCanvas } from '../../utils/canvas/drawPolygon';
 import { Choice2AfcContainer } from '../common/Choice2AfcContainer';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface TopDown2AfcViewProps {
   question: AbstractionQuestionData;
@@ -126,14 +127,12 @@ export function TopDown2AfcView({
   const isTargetB = !isTargetA;
 
   return (
-    <div className="w-full max-w-3xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Columns className="w-3.5 h-3.5 text-indigo-600" />
-          {isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
-        </div>
-      )}
-
+    <QuestionCardShell
+      hintText={isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
+      hintIcon={Columns}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-3xl"
+    >
       {!isPoly && (
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
@@ -199,6 +198,6 @@ export function TopDown2AfcView({
         enableKeyboardShortcuts={true}
         onSelect={handleSelectChoice}
       />
-    </div>
+    </QuestionCardShell>
   );
 }

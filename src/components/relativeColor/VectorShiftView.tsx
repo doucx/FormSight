@@ -1,7 +1,10 @@
-import { ArrowRight } from 'lucide-preact';
+import { ArrowRight, Shuffle } from 'lucide-preact';
+import { useEffect } from 'preact/hooks';
 import { hsvToHex } from '../../utils/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../utils/relativeColor';
 import { HsvTrackSlider } from '../HsvTrackSlider';
+import { ChoiceNafcContainer } from '../common/ChoiceNafcContainer';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface VectorShiftViewProps {
   question: RelativeColorQuestionData;
@@ -53,14 +56,43 @@ export function VectorShiftView({
   const cSatGradient = `linear-gradient(to right, ${hsvToHex(cH, 0, cV)}, ${hsvToHex(cH, 100, cV)})`;
   const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
 
-  return (
-    <div className="w-full max-w-2xl bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色
-        </div>
-      )}
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (disabled || showAnswer) return;
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        onSubmit();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [disabled, showAnswer, onSubmit]);
 
+  const nafcOptions = (options || []).map((opt, idx) => {
+    const isTarget = idx === correctIndex;
+    const hexVal = hsvToHex(...opt);
+    return {
+      key: `vector-shift-opt-${idx}-${hexVal}`,
+      title: `候选 ${idx + 1}`,
+      value: opt,
+      isCorrect: isTarget,
+      content: (
+        <div
+          className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+          style={{ backgroundColor: hexVal }}
+        />
+      ),
+    };
+  });
+
+  return (
+    <QuestionCardShell
+      hintText="观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
+      hintIcon={Shuffle}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+    >
       <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 w-full flex flex-col items-center gap-3">
         <div className="flex items-center justify-center gap-4">
           <div
@@ -209,46 +241,14 @@ export function VectorShiftView({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 gap-3 w-full">
-        {options?.map((opt, idx) => {
-          const isSelected = selectedIndex === idx;
-          const isTarget = idx === correctIndex;
-          const hexVal = hsvToHex(...opt);
-
-          let borderStyle = 'border-slate-200 hover:border-slate-300';
-          let ringStyle = '';
-
-          if (showAnswer) {
-            if (isTarget) {
-              borderStyle = 'border-emerald-500';
-              ringStyle = 'ring-2 ring-emerald-500/40';
-            } else if (isSelected && !isTarget) {
-              borderStyle = 'border-rose-400';
-              ringStyle = 'ring-1 ring-rose-400/40 opacity-80';
-            } else {
-              borderStyle = 'border-slate-200 opacity-40';
-            }
-          } else if (isSelected) {
-            borderStyle = 'border-indigo-600';
-            ringStyle = 'ring-2 ring-indigo-500/30 shadow-sm';
-          }
-
-          return (
-            <button
-              key={`${idx}-${hexVal}`}
-              type="button"
-              disabled={disabled || showAnswer}
-              onClick={() => onSelectIndex(idx)}
-              className={`p-1.5 rounded-2xl border bg-white transition-all duration-150 active:scale-95 cursor-pointer ${borderStyle} ${ringStyle}`}
-            >
-              <div
-                className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
-                style={{ backgroundColor: hexVal }}
-              />
-            </button>
-          );
-        })}
-      </div>
+      <ChoiceNafcContainer
+        options={nafcOptions}
+        selectedIndex={selectedIndex}
+        showAnswer={showAnswer}
+        disabled={disabled}
+        columns={4}
+        onSelect={(idx) => onSelectIndex(idx)}
+      />
 
       {!showAnswer && (
         <button
@@ -260,6 +260,6 @@ export function VectorShiftView({
           确认提交 (Space)
         </button>
       )}
-    </div>
+    </QuestionCardShell>
   );
 }

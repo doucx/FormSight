@@ -7,6 +7,7 @@ import {
   type AbstractionQuestionData,
 } from '../../utils/abstraction';
 import { drawParticlesCanvas } from '../../utils/canvas/drawParticles';
+import { QuestionCardShell } from '../common/QuestionCardShell';
 
 interface GestureAxisViewProps {
   question: AbstractionQuestionData;
@@ -60,14 +61,12 @@ export function GestureAxisView({
   const unit = '°';
 
   return (
-    <div className="w-full max-w-lg bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-5 mx-auto">
-      {showCanvasHints && (
-        <div className="text-xs font-bold text-slate-600 flex items-center gap-1.5 bg-slate-50 px-3.5 py-1.5 rounded-full border border-slate-200/60">
-          <Eye className="w-3.5 h-3.5 text-indigo-600" />
-          旋转主轴对齐粒子群动态流向 (0°~180°)
-        </div>
-      )}
-
+    <QuestionCardShell
+      hintText="旋转主轴对齐粒子群动态流向 (0°~180°)"
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-lg"
+    >
       <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
         <canvas
           ref={canvasRef}
@@ -144,6 +143,6 @@ export function GestureAxisView({
           <span className="font-bold font-mono text-slate-400 text-xs">180{unit}</span>
         </div>
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }
