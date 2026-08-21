@@ -115,9 +115,9 @@ export const ALL_CARDS: CardDefinition[] = [
     id: 'angle_parallel_2afc',
     domain: 'angle',
     mode: 'PARALLEL_ALIGNMENT_2AFC',
-    title: '平行线对偶辨识',
-    desc: '在空间任意旋转倾角下，二选一辨识哪一组线对保持严格几何平行 (2AFC)。',
-    instruction: '二选一判别哪一侧线对严格平行 (键 1 / 2)',
+    title: '平行线基准辨识',
+    desc: '观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。',
+    instruction: '观察上方基准线，在下方选出与其保持绝对平行的线 (键 1 / 2)',
     icon: Split,
     tags: {
       target: ['geometry', 'angle'],

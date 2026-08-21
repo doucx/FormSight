@@ -8,6 +8,7 @@ export type AngleMode =
 
 export const ANGLE_CANVAS_SIZE = 340;
 export const ANGLE_2AFC_SIZE = 240;
+export const ANGLE_PROMPT_SIZE = 140;
 
 export interface LineSegment {
   p1: Point;
@@ -33,9 +34,10 @@ export interface AngleQuestionData {
   linesB?: [LineSegment, LineSegment];
   largerSide?: 'A' | 'B';
 
-  // 3. PARALLEL_ALIGNMENT_2AFC 字段
-  parallelLinesA?: [LineSegment, LineSegment];
-  parallelLinesB?: [LineSegment, LineSegment];
+  // 3. PARALLEL_ALIGNMENT_2AFC (基准线 2AFC) 字段
+  promptLine?: LineSegment;
+  lineOptionA?: LineSegment;
+  lineOptionB?: LineSegment;
   parallelSide?: 'A' | 'B';
   angularDeviation?: number; // 干扰项偏离平行的微小角度
 }
@@ -81,16 +83,16 @@ export function drawAngleCanvas(
 }
 
 /**
- * 绘制两根平行或微小偏转的独立线段
+ * 绘制单条居中线段 (极简纯黑白)
  */
-export function drawParallelLinesCanvas(
+export function drawSingleLineCanvas(
   canvas: HTMLCanvasElement | null,
-  lines: [LineSegment, LineSegment] | undefined,
+  line: LineSegment | undefined,
   size = ANGLE_2AFC_SIZE,
   strokeColor = '#0F172A',
   lineWidth = 2.5,
 ): void {
-  if (!canvas || !lines) return;
+  if (!canvas || !line) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -101,12 +103,32 @@ export function drawParallelLinesCanvas(
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'round';
 
-  for (const line of lines) {
-    ctx.beginPath();
-    ctx.moveTo(line.p1.x, line.p1.y);
-    ctx.lineTo(line.p2.x, line.p2.y);
-    ctx.stroke();
-  }
+  ctx.beginPath();
+  ctx.moveTo(line.p1.x, line.p1.y);
+  ctx.lineTo(line.p2.x, line.p2.y);
+  ctx.stroke();
+}
+
+/**
+ * 根据中心点、角度和长度生成居中对称线段
+ */
+function createCenteredLine(
+  center: Point,
+  angleDeg: number,
+  length: number,
+): LineSegment {
+  const rad = (angleDeg * Math.PI) / 180;
+  const halfL = length / 2;
+  return {
+    p1: {
+      x: Math.round((center.x - halfL * Math.cos(rad)) * 10) / 10,
+      y: Math.round((center.y + halfL * Math.sin(rad)) * 10) / 10,
+    },
+    p2: {
+      x: Math.round((center.x + halfL * Math.cos(rad)) * 10) / 10,
+      y: Math.round((center.y - halfL * Math.sin(rad)) * 10) / 10,
+    },
+  };
 }
 
 /**
@@ -125,55 +147,6 @@ function createRadialLine(
       y: Math.round((center.y - length * Math.sin(rad)) * 10) / 10,
     },
   };
-}
-
-/**
- * 生成空间中居中平行分布的两根线段
- */
-function createParallelPair(
-  center: Point,
-  angleDeg: number,
-  length: number,
-  spacing: number,
-  angularJitter = 0,
-): [LineSegment, LineSegment] {
-  const rad = (angleDeg * Math.PI) / 180;
-  const normRad = rad + Math.PI / 2;
-
-  const offsetX = (spacing / 2) * Math.cos(normRad);
-  const offsetY = -(spacing / 2) * Math.sin(normRad);
-
-  const c1: Point = { x: center.x + offsetX, y: center.y + offsetY };
-  const c2: Point = { x: center.x - offsetX, y: center.y - offsetY };
-
-  const halfL = length / 2;
-
-  // 线 1
-  const line1: LineSegment = {
-    p1: {
-      x: Math.round((c1.x - halfL * Math.cos(rad)) * 10) / 10,
-      y: Math.round((c1.y + halfL * Math.sin(rad)) * 10) / 10,
-    },
-    p2: {
-      x: Math.round((c1.x + halfL * Math.cos(rad)) * 10) / 10,
-      y: Math.round((c1.y - halfL * Math.sin(rad)) * 10) / 10,
-    },
-  };
-
-  // 线 2 (带有可选的微小偏转)
-  const rad2 = ((angleDeg + angularJitter) * Math.PI) / 180;
-  const line2: LineSegment = {
-    p1: {
-      x: Math.round((c2.x - halfL * Math.cos(rad2)) * 10) / 10,
-      y: Math.round((c2.y + halfL * Math.sin(rad2)) * 10) / 10,
-    },
-    p2: {
-      x: Math.round((c2.x + halfL * Math.cos(rad2)) * 10) / 10,
-      y: Math.round((c2.y - halfL * Math.sin(rad2)) * 10) / 10,
-    },
-  };
-
-  return [line1, line2];
 }
 
 export function generateAngleQuestion(
@@ -252,36 +225,52 @@ export function generateAngleQuestion(
     };
   }
 
-  // 3. PARALLEL_ALIGNMENT_2AFC (平行线对偶辨识)
+  // 3. PARALLEL_ALIGNMENT_2AFC (基准线平行 2AFC)
   const baseAngle = Math.floor(Math.random() * 360);
   const angularDeviation =
     Math.round(expDecayInterpolate(16.0, 1.0, clampedLevel) * 10) / 10;
   const deviationSign = Math.random() < 0.5 ? 1 : -1;
-  const jitter = angularDeviation * deviationSign;
+  const distractorAngle = (baseAngle + angularDeviation * deviationSign + 360) % 360;
 
-  const center: Point = { x: ANGLE_2AFC_SIZE / 2, y: ANGLE_2AFC_SIZE / 2 };
-  const lineLength = ANGLE_2AFC_SIZE * 0.6;
-  const spacing = ANGLE_2AFC_SIZE * 0.28;
+  // 上方 Prompt 基准线
+  const promptCenter: Point = {
+    x: ANGLE_PROMPT_SIZE / 2,
+    y: ANGLE_PROMPT_SIZE / 2,
+  };
+  const promptLine = createCenteredLine(
+    promptCenter,
+    baseAngle,
+    ANGLE_PROMPT_SIZE * 0.68,
+  );
 
-  const anglePairA = Math.floor(Math.random() * 360);
-  const anglePairB = Math.floor(Math.random() * 360);
+  // 下方选项候选线 (带有适度中心位移，防止仅依赖绝对屏幕位置)
+  const optCenterA: Point = {
+    x: ANGLE_2AFC_SIZE / 2 + (Math.random() * 20 - 10),
+    y: ANGLE_2AFC_SIZE / 2 + (Math.random() * 20 - 10),
+  };
+  const optCenterB: Point = {
+    x: ANGLE_2AFC_SIZE / 2 + (Math.random() * 20 - 10),
+    y: ANGLE_2AFC_SIZE / 2 + (Math.random() * 20 - 10),
+  };
 
+  const lineLength = ANGLE_2AFC_SIZE * 0.65;
   const isAParallel = Math.random() < 0.5;
 
-  const parallelLinesA = isAParallel
-    ? createParallelPair(center, anglePairA, lineLength, spacing, 0)
-    : createParallelPair(center, anglePairA, lineLength, spacing, jitter);
+  const lineOptionA = isAParallel
+    ? createCenteredLine(optCenterA, baseAngle, lineLength)
+    : createCenteredLine(optCenterA, distractorAngle, lineLength);
 
-  const parallelLinesB = isAParallel
-    ? createParallelPair(center, anglePairB, lineLength, spacing, jitter)
-    : createParallelPair(center, anglePairB, lineLength, spacing, 0);
+  const lineOptionB = isAParallel
+    ? createCenteredLine(optCenterB, distractorAngle, lineLength)
+    : createCenteredLine(optCenterB, baseAngle, lineLength);
 
   return {
     id,
     mode,
     difficultyLevel: clampedLevel,
-    parallelLinesA,
-    parallelLinesB,
+    promptLine,
+    lineOptionA,
+    lineOptionB,
     parallelSide: isAParallel ? 'A' : 'B',
     angularDeviation,
     tolerance: angularDeviation,

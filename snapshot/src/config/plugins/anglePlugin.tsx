@@ -21,7 +21,7 @@ export const anglePlugin: TrainingPlugin<
     const map: Record<string, string> = {
       ANGLE_ESTIMATION: '夹角大小估算',
       ANGLE_COMPARISON_2AFC: '角度二分对比',
-      PARALLEL_ALIGNMENT_2AFC: '平行线对偶辨识',
+      PARALLEL_ALIGNMENT_2AFC: '平行线基准辨识',
     };
     return map[mode] || mode;
   },
