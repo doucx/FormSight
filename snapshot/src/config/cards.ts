@@ -1,26 +1,14 @@
 import {
-  Columns,
-  Compass,
-  Crosshair,
-  Droplet,
-  Maximize2,
-  Palette,
-  RotateCw,
-  Shuffle,
-  Sparkles,
-  Split,
-  Sun,
-  Target,
-} from 'lucide-preact';
-import {
   COLOR_SECTORS,
   STAR_SECTORS,
   type SettingFieldSchema,
 } from '../components/settings/DynamicDomainSettings';
 import type { CardDefinition } from '../types/card';
 import type { TrainingDomain } from '../utils/db';
+import { registry } from './registry';
 
-const STAR_SCHEMAS: SettingFieldSchema[] = [
+// 导出配置 Schema 常量供各模块复用
+export const STAR_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'buttonGroup',
     key: 'gridSize',
@@ -44,7 +32,7 @@ const STAR_SCHEMAS: SettingFieldSchema[] = [
   },
 ];
 
-const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
+export const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'toggle',
     key: 'showToleranceBand',
@@ -53,7 +41,7 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   },
 ];
 
-const HUE_SCHEMAS: SettingFieldSchema[] = [
+export const HUE_SCHEMAS: SettingFieldSchema[] = [
   ...SLIDER_COMMON_SCHEMAS,
   {
     type: 'targeting',
@@ -66,7 +54,7 @@ const HUE_SCHEMAS: SettingFieldSchema[] = [
   },
 ];
 
-const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
+export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
   ...SLIDER_COMMON_SCHEMAS,
   {
     type: 'toggle',
@@ -76,10 +64,24 @@ const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
   },
 ];
 
+// 原始卡片列表
+import {
+  Columns,
+  Compass,
+  Crosshair,
+  Droplet,
+  Maximize2,
+  Palette,
+  RotateCw,
+  Shuffle,
+  Sparkles,
+  Split,
+  Sun,
+  Target,
+} from 'lucide-preact';
+
 export const ALL_CARDS: CardDefinition[] = [
-  // ==========================================
-  // 角度感知系列 (Angle Perception)
-  // ==========================================
+  // 角度感知系列
   {
     id: 'angle_estimation',
     domain: 'angle',
@@ -127,9 +129,7 @@ export const ALL_CARDS: CardDefinition[] = [
     hasWeaknessAnalytics: false,
   },
 
-  // ==========================================
-  // 0. 视知觉概括系列 (Visual Abstraction)
-  // ==========================================
+  // 视知觉概括系列
   {
     id: 'abs_gesture_axis',
     domain: 'abstraction',
@@ -253,9 +253,7 @@ export const ALL_CARDS: CardDefinition[] = [
     hasWeaknessAnalytics: false,
   },
 
-  // ==========================================
-  // 1. 寻星练习系列 (Star-Hopping)
-  // ==========================================
+  // 寻星练习系列
   {
     id: 'star_single',
     domain: 'star',
@@ -305,9 +303,7 @@ export const ALL_CARDS: CardDefinition[] = [
     settingSchemas: STAR_SCHEMAS,
   },
 
-  // ==========================================
-  // 2. 绝对色感系列 (Color Recognition)
-  // ==========================================
+  // 绝对色感系列
   {
     id: 'color_hue',
     domain: 'color',
@@ -373,9 +369,7 @@ export const ALL_CARDS: CardDefinition[] = [
     settingSchemas: COLOR_ALL_SCHEMAS,
   },
 
-  // ==========================================
-  // 3. 相对色感系列 (Relative Color)
-  // ==========================================
+  // 相对色感系列
   {
     id: 'rel_vector_shift',
     domain: 'relative_color',
@@ -439,9 +433,7 @@ export const ALL_CARDS: CardDefinition[] = [
     hasWeaknessAnalytics: false,
   },
 
-  // ==========================================
-  // 4. 正负形空间系列 (Negative Space)
-  // ==========================================
+  // 正负形空间系列
   {
     id: 'neg_ratio_estimation',
     domain: 'negative_space',
@@ -505,12 +497,10 @@ export const ALL_CARDS: CardDefinition[] = [
   },
 ];
 
-const CARD_MAP = new Map<string, CardDefinition>(ALL_CARDS.map((c) => [c.id, c]));
-
 export function getCardById(id: string): CardDefinition | undefined {
-  return CARD_MAP.get(id);
+  return registry.getCardById(id);
 }
 
 export function getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-  return ALL_CARDS.filter((c) => c.domain === domain);
+  return registry.getCardsByDomain(domain);
 }
