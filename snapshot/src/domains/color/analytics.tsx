@@ -1,9 +1,9 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
+import { hsvToHex } from '../../core/color/colorUtils';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
 import { renderHueRingCanvas } from '../../utils/canvas/drawColorRing';
 import type { SectorStat } from '../../utils/canvas/drawCompass';
 import { calcSignedHueBias, renderHueBiasChartCanvas } from '../../utils/canvas/drawHueBiasChart';
-import { hsvToHex } from '../../utils/colorUtils';
 import { getTrialRecordsByCard } from '../../utils/db';
 
 const COLOR_SECTORS = [

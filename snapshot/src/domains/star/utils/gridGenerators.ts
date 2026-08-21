@@ -1,4 +1,4 @@
-import type { Point } from '../../types';
+import type { Point } from '../../../types';
 import { DEFAULT_GRID_DIM, calcDistance } from './pointMath';
 
 /**

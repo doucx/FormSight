@@ -4,8 +4,8 @@ import {
   generateColorQuestion,
   getToleranceForLevel,
   hsvToHex,
-} from '../colorUtils';
-import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../oklchUtils';
+} from '../../core/color/colorUtils';
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
 
 describe('colorUtils & oklchUtils', () => {
   it('hsvToHex - should correctly convert HSV to HEX string including 360 boundary', () => {

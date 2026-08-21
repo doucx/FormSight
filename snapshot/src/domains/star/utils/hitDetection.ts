@@ -1,4 +1,4 @@
-import type { HitResult, Point } from '../../types';
+import type { HitResult, Point } from '../../../types';
 import { calcDistance } from './pointMath';
 
 /**

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
+import { findNearestGridPoint } from '../../domains/star/utils/hitDetection';
 import type { Point } from '../../types';
-import { renderInteractivePointGrid } from '../../utils/canvas/drawPointGrid';
-import { findNearestGridPoint } from '../../utils/geometry';
 
 export interface PointClickCanvasProps {
   canvasSize: number;

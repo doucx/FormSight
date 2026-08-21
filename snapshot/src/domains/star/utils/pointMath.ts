@@ -1,4 +1,4 @@
-import type { Point } from '../../types';
+import type { Point } from '../../../types';
 
 export const CANVAS_SIZE = 500;
 export const CX = CANVAS_SIZE / 2; // 250

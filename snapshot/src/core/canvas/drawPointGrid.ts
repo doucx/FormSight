@@ -1,5 +1,8 @@
+import {
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+} from '../../domains/star/utils/hitDetection';
 import type { Point } from '../../types';
-import { getDynamicCrosshairMetrics, getDynamicDotRadius } from '../../utils/geometry';
 
 /**
  * 绘制单个圆点
