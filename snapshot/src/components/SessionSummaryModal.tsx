@@ -5,7 +5,8 @@ import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
 export interface SessionHistoryItem {
   trialIndex: number;
-  level: number;
+  levelBefore: number;
+  levelAfter: number;
   isHit: boolean;
   responseTimeMs: number;
 }
@@ -33,8 +34,8 @@ export function SessionSummaryModal({
   const hitCount = history.filter((h) => h.isHit).length;
   const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
 
-  const startLevel = history.length > 0 ? history[0].level : 5;
-  const endLevel = history.length > 0 ? history[history.length - 1].level : 5;
+  const startLevel = history.length > 0 ? history[0].levelBefore : 5;
+  const endLevel = history.length > 0 ? history[history.length - 1].levelAfter : startLevel;
   const levelDiff = endLevel - startLevel;
 
   const avgResponseTimeSec =

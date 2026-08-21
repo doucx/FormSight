@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787290163.9179492, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(session): 修复训练退出时内存缓存滞后，并重构会话历史为状态迁移边模型", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787290805.8551998, "duration_ms": 0}}

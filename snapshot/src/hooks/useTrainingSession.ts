@@ -58,7 +58,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   generateQuestion,
   evaluateAnswer,
   isHit,
-  getQuestionLevel,
+  getQuestionLevel: _getQuestionLevel,
   saveTrialRecord,
   saveSession,
   onExit,
@@ -147,9 +147,10 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       setTotalTrials(newTotal);
       setHitTrials(newHits);
 
-      // 先执行自适应算子，获取答完该题后的最新能力等级
+      // 记录答题前的层阶（起点），做答后自适应更新层阶（终点）
+      const levelBefore = adaptiveEngineRef.current.getCurrentLevel();
       adaptiveEngineRef.current.recordResult(hit);
-      const latestLevel = adaptiveEngineRef.current.getCurrentLevel();
+      const levelAfter = adaptiveEngineRef.current.getCurrentLevel();
 
       await saveTrialRecord({
         sessionId: sessionIdRef.current,
@@ -157,12 +158,13 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         hitResult,
         responseTimeMs,
         userVal,
-        currentProfileLevel: latestLevel,
+        currentProfileLevel: levelAfter,
       });
 
       const nextHistoryItem: SessionHistoryItem = {
         trialIndex: newTotal,
-        level: getQuestionLevel(question),
+        levelBefore,
+        levelAfter,
         isHit: hit,
         responseTimeMs,
       };
@@ -207,7 +209,6 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       totalTrials,
       hitTrials,
       saveTrialRecord,
-      getQuestionLevel,
       sessionHistory,
       targetLimitTrials,
       onTargetLimitReached,
