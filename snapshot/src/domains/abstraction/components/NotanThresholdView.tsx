@@ -98,7 +98,13 @@ export function NotanThresholdView({
                     );
                   }
                 }}
-                deps={[question.notanBuffer, question.notanFieldDim, targetVal, activeVal, showAnswer]}
+                deps={[
+                  question.notanBuffer,
+                  question.notanFieldDim,
+                  targetVal,
+                  activeVal,
+                  showAnswer,
+                ]}
               />
             </div>
           }

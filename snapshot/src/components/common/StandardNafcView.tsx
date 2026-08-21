@@ -64,15 +64,18 @@ export function StandardNafcView<T = unknown>({
   const activeIndex =
     controlledSelectedIndex !== undefined ? controlledSelectedIndex : internalSelectedIdx;
 
-  const handleSelectOption = useCallback((index: number, option: ChoiceNafcOption<T>) => {
-    if (disabled || showAnswer) return;
-    setInternalSelectedIdx(index);
-    onSelectIndex?.(index, option);
+  const handleSelectOption = useCallback(
+    (index: number, option: ChoiceNafcOption<T>) => {
+      if (disabled || showAnswer) return;
+      setInternalSelectedIdx(index);
+      onSelectIndex?.(index, option);
 
-    if (submitMode === 'immediate') {
-      onAnswer(index, option);
-    }
-  }, [disabled, showAnswer, onSelectIndex, submitMode, onAnswer]);
+      if (submitMode === 'immediate') {
+        onAnswer(index, option);
+      }
+    },
+    [disabled, showAnswer, onSelectIndex, submitMode, onAnswer],
+  );
 
   const handleExplicitSubmit = useCallback(() => {
     if (disabled || showAnswer || !options.length) return;

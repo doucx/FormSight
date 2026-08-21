@@ -75,8 +75,7 @@ export function AngleEstimationView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              绝对真理值:{' '}
-              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
+              绝对真理值: <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
               误差: {Math.round(Math.abs(userVal - targetVal) * 10) / 10}° (容错: ±{tolerance}°)
