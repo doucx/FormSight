@@ -1,560 +1,502 @@
-好的，我们将继续把 `star`、`color`、`relative_color`、`negative_space` 与 `abstraction` 等所有领域的专用 Canvas 视图、生成与评估算法、以及 Plugin 胶水层全面收敛至各自的 `src/domains/<domain>/` 目录中，完成全领域的垂直切片改造。
+经检查，上层消费方（如 `App.tsx`、`PlanTrainingView.tsx`、`Home.tsx`、`GlobalStatsModal.tsx` 及计划编辑器组件）中仍然存在对 `src/config/cards` 和 `src/config/domains` 的直接静态依赖。
 
-## [WIP] refactor: 全面收敛各领域专属算法、Canvas 视图与插件至 Domain 包
+我们将立即实施这一步解耦：让整个前端 Shell 和各级页面完全通过统一的 `registry`（来自 `src/core/registry`）获取领域元数据、卡片定义与训练插件，彻底消除残留的静态配置耦合。
+
+## [WIP] refactor: 全面解耦上层视图与静态配置，接入统一 registry
 
 ### 用户需求
-将 `star`、`color`、`relative_color`、`negative_space`、`abstraction` 等所有领域的业务视图、算法逻辑和插件定义收敛至 `src/domains/<domain>/`，实现各领域的彻底自包含，并保持向后兼容性。
+将 `App.tsx`、`PlanTrainingView`、`Home`、`GlobalStatsModal` 及 `Plan` 相关组件中的遗留静态引用（`DOMAINS_CONFIG`、`ALL_CARDS`、`CARD_PLUGINS`）彻底替换为从 `src/core/registry` 获取，实现整个应用自顶向下的动态自发现与装配。
 
 ### 评论
-完成全量领域的垂直切片迁移后，FormSight 体系将正式成为标准的模块化单体架构。新增、修改或移除任何一个感知训练领域，只需在其独立的 `src/domains/<name>/` 目录内增删改文件，彻底摆脱跨目录散落代码的维护困难。
+解除顶层消费方与具体静态配置的直接依赖，是完成插件化架构闭环的关键。改造后，新增领域不需要修改任何页面级代码，系统会在运行时通过 `registry` 自动为新领域渲染看板卡片、路由、练习入口及计划选择器。
 
 ### 目标
-1. 在 `src/domains/star/` 中建立 `views/StarCanvas.tsx`、`plugin.tsx` 并更新 `index.ts`。
-2. 在 `src/domains/color/` 中建立 `views/ColorCanvas.tsx`、`plugin.tsx` 并更新 `index.ts`。
-3. 在 `src/domains/relative_color/` 中收敛 `views/`、`utils/`、`plugin.tsx` 并更新 `index.ts`。
-4. 在 `src/domains/negative_space/` 中收敛 `views/`、`utils/`、`plugin.tsx` 并更新 `index.ts`。
-5. 在 `src/domains/abstraction/` 中收敛 `views/`、`utils/`、`plugin.tsx` 并更新 `index.ts` 和 `concretization/index.ts`。
-6. 更新全局别名映射以确保平滑兼容。
+1. 重构 `src/app.tsx`，统一使用 `registry.getCardById`、`registry.getDomainMeta` 和 `registry.getPluginByCardId`。
+2. 重构 `src/views/PlanTrainingView.tsx` 和 `src/views/Home.tsx`。
+3. 重构 `src/components/GlobalStatsModal.tsx` 与计划编辑器相关子组件（`PlanEditorModal.tsx`、`CardPickerPanel.tsx`、`PlanStageList.tsx`、`PlanHeroCard.tsx`）。
+4. 保证类型安全与全链路无缝衔接。
 
 ### 基本原理
-每个领域由 4 个标准层构成：
-- `utils/`：该领域的数学模型、数据结构、题目生成与 Hit 判定算法。
-- `views/`：该领域所有的 UI 交互与 Canvas 渲染组件。
-- `plugin.tsx`：实现 `TrainingPlugin` 接口的胶水层，负责串联数据与视图。
-- `index.ts`：导出符合 `DomainManifest` 规范的模块描述对象，供 `src/core/registry.ts` 自动扫描加载。
+利用 `registry` 提供的单例查询方法统一屏蔽底层数据结构的构建细节。所有组件依赖抽象的 `registry` 接口而非静态声明常量。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #comp/runtime #concept/executor #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/domain-slices #task/action/refactor #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/cli #comp/runtime #concept/state #concept/executor #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/view-decoupling #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 收敛 `star` 寻星练习领域至 `src/domains/star/`
-
-建立 `src/domains/star/views/StarCanvas.tsx`、`src/domains/star/plugin.tsx` 并更新 `src/domains/star/index.ts`。
+#### Acts 1: 重构 `src/app.tsx` 接入统一 `registry`
 
 ~~~~~act
 write_file
-src/domains/star/views/StarCanvas.tsx
+src/app.tsx
 ~~~~~
 ~~~~~typescript
-import { useEffect, useRef } from 'preact/hooks';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import type { HitResult, Point, QuestionData } from '../../../types';
-import { drawDot } from '../../../utils/canvas/drawPointGrid';
-import { CANVAS_SIZE, checkHit, getDynamicDotRadius } from '../../../utils/geometry';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { GlobalSettingsModal } from './components/GlobalSettingsModal';
+import { GlobalStatsModal } from './components/GlobalStatsModal';
+import { SettingsModal } from './components/SettingsModal';
+import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
+import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
+import { GenericDashboard } from './components/dashboard/GenericDashboard';
+import { PlanEditorModal } from './components/plan/PlanEditorModal';
+import { registry } from './core/registry';
+import { useHashRoute } from './hooks/useHashRoute';
+import type { TrainingPlan } from './types/plan';
+import {
+  type TrainingDomain,
+  type UnifiedProfileData,
+  getProfilesByDomain,
+  getTrainingTimeMs,
+} from './utils/db';
+import {
+  loadPlanStorageState,
+  loadTrainingPlan,
+  saveTrainingPlan,
+  setActivePlan,
+} from './utils/planStorage';
+import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
+import { GenericTrainingView } from './views/GenericTrainingView';
+import { Home } from './views/Home';
+import { PlanTrainingView } from './views/PlanTrainingView';
 
-export interface StarCanvasProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
-  onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
-  disabled?: boolean;
-}
+export function App() {
+  const { route, navigate } = useHashRoute();
+  const allDomains = registry.getAllDomains();
 
-export function StarCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-}: StarCanvasProps) {
-  const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
+  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
+  const [isPlanEditorOpen, setIsPlanEditorOpen] = useState<boolean>(false);
+  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
+  const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const dotRadius = getDynamicDotRadius(question.distractorPoints);
-    const leftCanvas = leftCanvasRef.current;
-    if (leftCanvas) {
-      const ctx = leftCanvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
+  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
 
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
+  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>(() => {
+    const init: Record<string, number> = {};
+    for (const d of allDomains) init[d] = 0;
+    return init as Record<TrainingDomain, number>;
+  });
 
-        if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
-        }
+  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
+    Record<string, UnifiedProfileData>
+  >({});
 
-        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', dotRadius);
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const refreshProfiles = useCallback(async () => {
+    const domains = registry.getAllDomains();
+    const timesEntries = await Promise.all(
+      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
+    );
+    const timesMap = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
+
+    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
+    const pMap: Record<string, UnifiedProfileData> = {};
+    for (const list of allProfilesList) {
+      for (const p of list) {
+        pMap[p.cardId] = p;
       }
     }
-  }, [question]);
 
-  const handleCommitPoint = (clickPoint: Point) => {
-    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
-    if (!hitResult.isWithinRange) return;
-    onAnswer(clickPoint, hitResult);
-  };
+    setDomainTimes(timesMap);
+    setCurrentDomainProfiles(pMap);
+    setSettings(loadSettings());
+    const planState = loadPlanStorageState();
+    setTrainingPlan(loadTrainingPlan());
+    setAllPlans(planState.plans);
+    setProfilesLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    refreshProfiles();
+  }, [refreshProfiles]);
+
+  useEffect(() => {
+    if (route.type === 'home') {
+      document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
+    } else if (route.type === 'plan-train') {
+      document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
+    } else if (route.type === 'dashboard') {
+      const meta = registry.getDomainMeta(route.domain);
+      document.title = `${meta?.title || '训练'} (${meta?.subTitle || ''}) - FormSight`;
+    } else if (route.type === 'train') {
+      const card = registry.getCardById(route.cardId);
+      document.title = `${card?.title || '训练'} - FormSight`;
+    }
+  }, [route, trainingPlan.name]);
+
+  const handleSelectPlanOnHome = useCallback(
+    (planId: string) => {
+      const target = setActivePlan(planId);
+      if (target) {
+        setTrainingPlan(target);
+        showToast(`已切换至【${target.name}】`, 'info');
+      }
+    },
+    [showToast],
+  );
+
+  const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
+
+  const activeSettingsCard = activeSettingsCardId ? registry.getCardById(activeSettingsCardId) : null;
+  const activeAnalyticsCard = activeAnalyticsCardId ? registry.getCardById(activeAnalyticsCardId) : null;
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner"
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
+      {route.type === 'home' && (
+        <Home
+          totalTimeMs={totalTimeMs}
+          domainTimes={domainTimes}
+          trainingPlan={trainingPlan}
+          allPlans={allPlans}
+          onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
+          onStartPlan={() => navigate({ type: 'plan-train' })}
+          onOpenPlanEditor={() => setIsPlanEditorOpen(true)}
+          onSelectPlan={handleSelectPlanOnHome}
+          onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
         />
-      </div>
+      )}
 
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
-        <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
-          showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
-          disabled={disabled}
-          onCommitPoint={handleCommitPoint}
+      {route.type === 'plan-train' && (
+        <PlanTrainingView
+          plan={trainingPlan}
+          settings={settings}
+          onExit={async () => {
+            await refreshProfiles();
+            navigate({ type: 'home' });
+          }}
         />
-      </div>
+      )}
+
+      {route.type === 'dashboard' && (() => {
+        const meta = registry.getDomainMeta(route.domain);
+        if (!meta) {
+          navigate({ type: 'home' });
+          return null;
+        }
+        return (
+          <GenericDashboard
+            meta={meta}
+            onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+            onBackToHome={() => navigate({ type: 'home' })}
+            onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+            onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
+          />
+        );
+      })()}
+
+      {route.type === 'train' &&
+        (() => {
+          if (!profilesLoaded) {
+            return (
+              <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold">
+                正在同步能力层阶与训练数据...
+              </div>
+            );
+          }
+          const activeCard = registry.getCardById(route.cardId);
+          if (!activeCard) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          const plugin = registry.getPluginByCardId(activeCard.id);
+          if (!plugin) {
+            navigate({ type: 'home' });
+            return null;
+          }
+          const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
+
+          return (
+            <GenericTrainingView
+              key={`${activeCard.id}-${route.sessionType}`}
+              card={activeCard}
+              plugin={plugin}
+              sessionType={route.sessionType}
+              initialLevel={activeLevel}
+              settings={getCardSettings(settings, activeCard.id)}
+              globalSettings={settings.global}
+              onExit={async () => {
+                await refreshProfiles();
+                navigate({ type: 'dashboard', domain: activeCard.domain });
+              }}
+            />
+          );
+        })()}
+
+      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+
+      {isGlobalSettingsOpen && (
+        <GlobalSettingsModal
+          onClose={() => setIsGlobalSettingsOpen(false)}
+          onDataChanged={refreshProfiles}
+          showToast={showToast}
+        />
+      )}
+
+      {isGlobalStatsOpen && <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />}
+
+      {activeSettingsCard && (
+        <SettingsModal
+          card={activeSettingsCard}
+          settings={settings}
+          onClose={() => setActiveSettingsCardId(null)}
+          onSave={(newSettings) => setSettings(newSettings)}
+        />
+      )}
+
+      {activeAnalyticsCard && (
+        <WeaknessAnalyticsModal
+          card={activeAnalyticsCard}
+          onClose={() => setActiveAnalyticsCardId(null)}
+        />
+      )}
+
+      {isPlanEditorOpen && (
+        <PlanEditorModal
+          initialPlan={trainingPlan}
+          onClose={() => setIsPlanEditorOpen(false)}
+          onPlanListChanged={refreshProfiles}
+          onSave={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            setTrainingPlan(newPlan);
+            refreshProfiles();
+            showToast('训练计划已成功更新', 'success');
+          }}
+        />
+      )}
     </div>
   );
 }
 ~~~~~
 
-~~~~~act
-write_file
-src/domains/star/plugin.tsx
-~~~~~
-~~~~~typescript
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import type { HitResult, Point, QuestionData } from '../../types';
-import { type QuestionGenerateOptions, checkHit, generateQuestion } from '../../utils/geometry';
-import type { StarSettings } from '../../utils/settings';
-import { StarCanvas } from './views/StarCanvas';
-
-export const starPlugin: TrainingPlugin<
-  QuestionData,
-  HitResult,
-  { clickPoint: Point; hitResult: HitResult },
-  StarSettings
-> = {
-  domain: 'star',
-  title: '寻星练习',
-  getModeBadge: (mode) => mode,
-  isTargeting: (_mode, settings) => settings.targetingMode === 'manual',
-  generateQuestion: (mode, level, settings) => {
-    const opts: QuestionGenerateOptions = {
-      targetingMode: settings.targetingMode,
-      targetSectors: settings.manualTargetSectors,
-      gridSize: settings.gridSize,
-    };
-    return generateQuestion(mode as 'single' | 'double_h' | 'double_r', level, opts);
-  },
-  evaluateAnswer: (userVal) => userVal.hitResult,
-  isHit: (hitResult) => hitResult.isHit,
-  getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult) => ({
-    anchorA: [q.anchorA.x, q.anchorA.y],
-    anchorC: q.anchorC ? [q.anchorC.x, q.anchorC.y] : undefined,
-    targetB: [q.targetB.x, q.targetB.y],
-    userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
-    angleDegree: q.angleDegree,
-    distanceRatio: q.distanceRatio,
-    errorPixelDistance: hitResult.errorDistance,
-  }),
-  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
-    <StarCanvas
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={
-        userAnswer ? { clickPoint: userAnswer.nearestGridPoint, hitResult: userAnswer } : null
-      }
-      onAnswer={(clickPoint) => {
-        const hitRes = checkHit(clickPoint, question.targetB, question.distractorPoints);
-        if (hitRes.isWithinRange) {
-          onAnswer({ clickPoint, hitResult: hitRes });
-        }
-      }}
-      disabled={disabled}
-    />
-  ),
-};
-~~~~~
+#### Acts 2: 重构 `src/views/PlanTrainingView.tsx` 与 `src/views/Home.tsx`
 
 ~~~~~act
 write_file
-src/domains/star/index.ts
+src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
-import { CARD_ANALYTICS_PLUGINS } from '../../config/analyticsPlugins';
-import { STAR_SCHEMAS } from '../../config/cards';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { starPlugin } from './plugin';
-
-export const starCards: CardDefinition[] = [
-  {
-    id: 'star_single',
-    domain: 'star',
-    mode: 'single',
-    title: '单锚点模式',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    instruction: '观察左侧相对中心锚点的方位与距离，在右侧点阵中盲打定位',
-    icon: Target,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-  {
-    id: 'star_double_h',
-    domain: 'star',
-    mode: 'double_h',
-    title: '水平双锚点',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    instruction: '观察左侧水平双锚点几何关系，在右侧点阵中盲打定位',
-    icon: Crosshair,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-  {
-    id: 'star_double_r',
-    domain: 'star',
-    mode: 'double_r',
-    title: '旋转双锚点',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    instruction: '观察左侧旋转倾斜双锚点几何关系，在右侧点阵中盲打定位',
-    icon: RotateCw,
-    tags: {
-      target: ['geometry'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: STAR_SCHEMAS,
-  },
-];
-
-export const starDomain: DomainManifest = {
-  domain: 'star',
-  meta: {
-    domain: 'star',
-    appId: 'star-hopping',
-    title: '寻星练习',
-    subTitle: 'Star-Hopping',
-    homeTitle: '寻星练习 (Star-Hopping)',
-    homeDesc:
-      '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
-    themeColor: 'indigo',
-    icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return starCards;
-    },
-  },
-  cards: starCards,
-  trainingPlugin: starPlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    star_single: CARD_ANALYTICS_PLUGINS.star_single,
-    star_double_h: CARD_ANALYTICS_PLUGINS.star_double_h,
-    star_double_r: CARD_ANALYTICS_PLUGINS.star_double_r,
-  },
-};
-
-export default starDomain;
-~~~~~
-
-#### Acts 2: 收敛 `color` 绝对色感领域至 `src/domains/color/`
-
-建立 `src/domains/color/views/ColorCanvas.tsx`、`src/domains/color/plugin.tsx` 并更新 `src/domains/color/index.ts`。
-
-~~~~~act
-write_file
-src/domains/color/views/ColorCanvas.tsx
-~~~~~
-~~~~~typescript
+import { ArrowLeft, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../../core/color/colorUtils';
+import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
+import { registry } from '../core/registry';
+import type { TrainingPlan } from '../types/plan';
+import { getProfile } from '../utils/db';
+import { type UserSettings, getCardSettings } from '../utils/settings';
+import { GenericTrainingView } from './GenericTrainingView';
 
-export interface ColorCanvasProps {
-  question: ColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
-  onAnswer: (userVal: number | [number, number, number]) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  enableHoverColorPreview?: boolean;
+interface PlanTrainingViewProps {
+  plan: TrainingPlan;
+  settings: UserSettings;
+  onExit: () => void;
 }
 
-export function ColorCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-  enableHoverColorPreview = true,
-}: ColorCanvasProps) {
-  const { mode, targetH, targetS, targetV, difficultyLevel } = question;
-  const targetHex = hsvToHex(targetH, targetS, targetV);
-  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
+export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewProps) {
+  const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+  const [stageResults, setStageResults] = useState<PlanStageResult[]>([]);
+  const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+  const [sessionStartTime, setSessionStartTime] = useState<number>(Date.now());
+  const [totalElapsedSeconds, setTotalElapsedSeconds] = useState<number>(0);
+  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
-  const [userH, setUserH] = useState<number>(180);
-  const [userS, setUserS] = useState<number>(50);
-  const [userV, setUserV] = useState<number>(50);
+  const validItems = (plan.items || []).filter((item) => Boolean(registry.getCardById(item.cardId)));
 
-  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
-    H: null,
-    S: null,
-    V: null,
-  });
-  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
-
-  const handleHoverH = useCallback(
-    (hVal: number | null) =>
-      setAllHoverVals((prev) => (prev.H === hVal ? prev : { ...prev, H: hVal })),
-    [],
-  );
-  const handleHoverS = useCallback(
-    (sVal: number | null) =>
-      setAllHoverVals((prev) => (prev.S === sVal ? prev : { ...prev, S: sVal })),
-    [],
-  );
-  const handleHoverV = useCallback(
-    (vVal: number | null) =>
-      setAllHoverVals((prev) => (prev.V === vVal ? prev : { ...prev, V: vVal })),
-    [],
-  );
-
-  const handleDragH = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'H' : null), []);
-  const handleDragS = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'S' : null), []);
-  const handleDragV = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'V' : null), []);
+  const currentStep = validItems[currentStepIndex];
+  const currentCard = currentStep ? registry.getCardById(currentStep.cardId) : null;
 
   useEffect(() => {
-    if (mode === 'ALL') {
-      setUserH(180);
-      setUserS(50);
-      setUserV(50);
-      setAllHoverVals({ H: null, S: null, V: null });
-      setDraggingLabel(null);
+    let isMounted = true;
+    const stepIdx = currentStepIndex;
+    const sessionKey = planSessionKey;
+
+    if (currentCard) {
+      setIsLevelLoaded(false);
+      getProfile(currentCard.id)
+        .then((p) => {
+          if (!isMounted) return;
+          setStageInitialLevel(p?.currentLevel || 5);
+          setIsLevelLoaded(true);
+        })
+        .catch((err) => {
+          console.error(
+            `Failed to load profile for card ${currentCard.id} at step ${stepIdx} (session ${sessionKey}):`,
+            err,
+          );
+          if (!isMounted) return;
+          setStageInitialLevel(5);
+          setIsLevelLoaded(true);
+        });
+    } else {
+      setIsLevelLoaded(true);
     }
-  }, [mode]);
-
-  const handleSubmitAll = () => {
-    if (disabled || showAnswer) return;
-    onAnswer([userH, userS, userV]);
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [currentCard, currentStepIndex, planSessionKey]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && mode === 'ALL' && !showAnswer && !disabled) {
-        e.preventDefault();
-        onAnswer([userH, userS, userV]);
+    const timer = setInterval(() => {
+      if (!showSummaryModal) {
+        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
       }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sessionStartTime, showSummaryModal]);
+
+  const handleStageReached = useCallback(
+    (history: SessionHistoryItem[]) => {
+      if (!currentCard) return;
+
+      const stageRes: PlanStageResult = {
+        card: currentCard,
+        targetTrials: currentStep.targetTrials,
+        history,
+      };
+
+      const nextResults = [...stageResults, stageRes];
+      setStageResults(nextResults);
+
+      if (currentStepIndex + 1 < validItems.length) {
+        setIsLevelLoaded(false);
+        setCurrentStepIndex((prev) => prev + 1);
+      } else {
+        setShowSummaryModal(true);
+      }
+    },
+    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
+  );
+
+  const handleSkipCurrentStage = useCallback(() => {
+    if (!currentCard) return;
+    const skippedRes: PlanStageResult = {
+      card: currentCard,
+      targetTrials: currentStep.targetTrials,
+      history: [],
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, showAnswer, disabled, userH, userS, userV, onAnswer]);
+    const nextResults = [...stageResults, skippedRes];
+    setStageResults(nextResults);
 
-  const currentH = mode === 'ALL' ? userH : targetH;
-  const currentV = mode === 'ALL' ? userV : targetV;
+    if (currentStepIndex + 1 < validItems.length) {
+      setIsLevelLoaded(false);
+      setCurrentStepIndex((prev) => prev + 1);
+    } else {
+      setShowSummaryModal(true);
+    }
+  }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
 
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-  const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
-  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(currentH, 100, 100)})`;
+  const handleRequestExit = useCallback(() => {
+    if (stageResults.length > 0) {
+      setShowSummaryModal(true);
+    } else {
+      onExit();
+    }
+  }, [stageResults.length, onExit]);
+
+  const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
+    setShowSummaryModal(false);
+    setCurrentStepIndex(0);
+    setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
+    setPlanSessionKey((prev) => prev + 1);
+  }, []);
+
+  if (!currentCard || validItems.length === 0) {
+    onExit();
+    return null;
+  }
+
+  const plugin = registry.getPluginByCardId(currentCard.id);
+  if (!plugin) {
+    onExit();
+    return null;
+  }
+  const cardConfig = getCardSettings(settings, currentCard.id);
 
   return (
-    <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="flex flex-col items-center gap-2 w-full">
-        {mode === 'ALL' ? (
-          <div className="flex items-center justify-center gap-4 w-full">
-            <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
-              style={{ backgroundColor: targetHex }}
-            />
-            <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
-              style={{
-                backgroundColor: hsvToHex(
-                  draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                    ? (allHoverVals.H ?? userH)
-                    : userH,
-                  draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                    ? (allHoverVals.S ?? userS)
-                    : userS,
-                  draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                    ? (allHoverVals.V ?? userV)
-                    : userV,
-                ),
-              }}
-            />
+    <div className="w-full">
+      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleRequestExit}
+            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="结束并查看训练流总结"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            退出训练流
+          </button>
+          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
+              阶段 {currentStepIndex + 1} / {validItems.length}
+            </span>
+            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
           </div>
-        ) : (
-          <div
-            className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
-            style={{ backgroundColor: targetHex }}
-          />
-        )}
+        </div>
+
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
+          </div>
+          <button
+            type="button"
+            onClick={handleSkipCurrentStage}
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+            title="跳过当前阶段进入下一阶段"
+          >
+            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
+            跳过此阶段
+          </button>
+        </div>
       </div>
 
-      <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        {mode === 'ALL' ? (
-          <>
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={userH}
-              max={360}
-              unit="°"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetH}
-              userVal={userAnswer?.userHSV?.[0] ?? userH}
-              isHit={userAnswer?.isHit}
-              onValChange={setUserH}
-              allUserHSV={[userH, userS, userV]}
-              disabled={disabled}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-              onHoverStateChange={handleHoverH}
-              onDraggingStateChange={handleDragH}
-            />
-            <HsvTrackSlider
-              label="S"
-              gradient={satGradient}
-              val={userS}
-              max={100}
-              unit="%"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetS}
-              userVal={userAnswer?.userHSV?.[1] ?? userS}
-              isHit={userAnswer?.isHit}
-              onValChange={setUserS}
-              allUserHSV={[userH, userS, userV]}
-              disabled={disabled}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-              onHoverStateChange={handleHoverS}
-              onDraggingStateChange={handleDragS}
-            />
-            <HsvTrackSlider
-              label="V"
-              gradient={valGradient}
-              val={userV}
-              max={100}
-              unit="%"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetV}
-              userVal={userAnswer?.userHSV?.[2] ?? userV}
-              isHit={userAnswer?.isHit}
-              onValChange={setUserV}
-              allUserHSV={[userH, userS, userV]}
-              disabled={disabled}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand}
-              onHoverStateChange={handleHoverV}
-              onDraggingStateChange={handleDragV}
-            />
-          </>
-        ) : (
-          <>
-            <HsvTrackSlider
-              label="H"
-              gradient={hueGradient}
-              val={targetH}
-              max={360}
-              unit="°"
-              targetHSV={targetHSV}
-              difficultyLevel={difficultyLevel}
-              showAnswer={showAnswer}
-              targetVal={targetH}
-              userVal={mode === 'H' ? userAnswer?.userValue : undefined}
-              isHit={mode === 'H' ? userAnswer?.isHit : undefined}
-              isInteractiveTarget={mode === 'H'}
-              onCommit={(v) => {
-                if (mode === 'H' && !showAnswer && !disabled) onAnswer(v);
-              }}
-              disabled={disabled || mode !== 'H'}
-              hitMargin={hitMargin}
-              showToleranceBand={showToleranceBand && mode === 'H'}
-            />
+      {!isLevelLoaded ? (
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+          正在加载【{currentCard.title}】的生涯能力层阶...
+        </div>
+      ) : (
+        <GenericTrainingView
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          showExitButton={false}
+          onExit={handleRequestExit}
+        />
+      )}
 
-            {mode === 'S' && (
-              <HsvTrackSlider
-                label="S"
-                gradient={satGradient}
-                val={targetS}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetS}
-                userVal={mode === 'S' ? userAnswer?.userValue : undefined}
-                isHit={mode === 'S' ? userAnswer?.isHit : undefined}
-                isInteractiveTarget={true}
-                onCommit={(v) => {
-                  if (!showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
-            )}
-
-            {(mode === 'V' || mode === 'S') && (
-              <HsvTrackSlider
-                label="V"
-                gradient={valGradient}
-                val={targetV}
-                max={100}
-                unit="%"
-                targetHSV={targetHSV}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetV}
-                userVal={mode === 'V' ? userAnswer?.userValue : undefined}
-                isHit={mode === 'V' ? userAnswer?.isHit : undefined}
-                isInteractiveTarget={mode === 'V'}
-                onCommit={(v) => {
-                  if (mode === 'V' && !showAnswer && !disabled) onAnswer(v);
-                }}
-                disabled={disabled || mode !== 'V'}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand && mode === 'V'}
-              />
-            )}
-          </>
-        )}
-      </div>
-
-      {mode === 'ALL' && !showAnswer && (
-        <button
-          type="button"
-          onClick={handleSubmitAll}
-          disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
-        >
-          确认提交 (Space)
-        </button>
+      {showSummaryModal && (
+        <PlanSummaryModal
+          planName={plan.name}
+          stageResults={stageResults}
+          totalElapsedSeconds={totalElapsedSeconds}
+          onClose={onExit}
+          onRestart={handleRestartPlan}
+        />
       )}
     </div>
   );
@@ -563,1290 +505,1418 @@ export function ColorCanvas({
 
 ~~~~~act
 write_file
-src/domains/color/plugin.tsx
+src/views/Home.tsx
 ~~~~~
 ~~~~~typescript
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import {
-  type ColorHitResult,
-  type ColorMode,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../utils/settings';
-import { ColorCanvas } from './views/ColorCanvas';
+import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
+import { PlanHeroCard } from '../components/plan/PlanHeroCard';
+import { registry } from '../core/registry';
+import type { TrainingPlan } from '../types/plan';
+import { type TrainingDomain, formatTotalTime } from '../utils/db';
 
-export const colorPlugin: TrainingPlugin<
-  ColorQuestionData,
-  ColorHitResult,
-  number | [number, number, number],
-  ColorSenseSettings
-> = {
-  domain: 'color',
-  title: '色感训练',
-  getModeBadge: (mode) =>
-    mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色',
-  isTargeting: (mode, settings) => settings.targetingMode === 'manual' && mode === 'H',
-  generateQuestion: (mode, level, settings) =>
-    generateColorQuestion(mode as ColorMode, level, {
-      targetingMode: settings.targetingMode,
-      targetSectors: settings.manualTargetSectors,
-    }),
-  evaluateAnswer: (userVal, q, mode) => checkColorHit(mode as ColorMode, userVal, q),
-  isHit: (hitResult) => hitResult.isHit,
-  getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal, mode) => {
-    const computedUserHSV: [number, number, number] =
-      mode === 'ALL' && Array.isArray(userVal)
-        ? userVal
-        : [
-            mode === 'H' ? (userVal as number) : q.targetH,
-            mode === 'S' ? (userVal as number) : q.targetS,
-            mode === 'V' ? (userVal as number) : q.targetV,
-          ];
-    return {
-      targetHSV: [q.targetH, q.targetS, q.targetV],
-      userHSV: computedUserHSV,
-      errorValue: hitResult.errorValue,
-    };
-  },
-  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-    <ColorCanvas
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={onAnswer}
-      disabled={disabled}
-      hitMargin={settings.sliderHitMargin ?? 12}
-      showToleranceBand={settings.showToleranceBand ?? true}
-      enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
-    />
-  ),
-};
-~~~~~
-
-~~~~~act
-write_file
-src/domains/color/index.ts
-~~~~~
-~~~~~typescript
-import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
-import { colorHueAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { COLOR_ALL_SCHEMAS, HUE_SCHEMAS, SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { colorPlugin } from './plugin';
-
-export const colorCards: CardDefinition[] = [
-  {
-    id: 'color_hue',
-    domain: 'color',
-    mode: 'H',
-    title: '色相 (Hue)',
-    desc: '识别颜色在色相环上的具体角度 (0°~360°)',
-    instruction: '定位上方色块在 360° 色相环上的精准角度',
-    icon: RotateCw,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: HUE_SCHEMAS,
-  },
-  {
-    id: 'color_val',
-    domain: 'color',
-    mode: 'V',
-    title: '明度 (Value)',
-    desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
-    instruction: '评估上方色块的素描明度深浅比例 (0%~100%)',
-    icon: Sun,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'color_sat',
-    domain: 'color',
-    mode: 'S',
-    title: '饱和度 (Sat)',
-    desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
-    instruction: '评估上方色块的鲜艳纯度比例 (0%~100%)',
-    icon: Droplet,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'color_all',
-    domain: 'color',
-    mode: 'ALL',
-    title: '综合拾色 (Match)',
-    desc: '同时调整色相、饱和度与明度，逼近真理色彩',
-    instruction: '同时调制色相、饱和度与明度轨，使右侧色块逼近左侧目标色',
-    icon: Palette,
-    tags: {
-      target: ['color'],
-      skill: ['color_fidelity'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: COLOR_ALL_SCHEMAS,
-  },
-];
-
-export const colorDomain: DomainManifest = {
-  domain: 'color',
-  meta: {
-    domain: 'color',
-    appId: 'color-sense',
-    title: '色感训练',
-    subTitle: 'Color Recognition',
-    homeTitle: '绝对色感 (Color Recognition)',
-    homeDesc:
-      '拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。',
-    themeColor: 'amber',
-    icon: Palette,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return colorCards;
-    },
-  },
-  cards: colorCards,
-  trainingPlugin: colorPlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    color_hue: colorHueAnalyticsPlugin,
-  },
-};
-
-export default colorDomain;
-~~~~~
-
-#### Acts 3: 收敛 `relative_color` 相对色感领域至 `src/domains/relative_color/`
-
-建立 `src/domains/relative_color/views/RelativeColorCanvas.tsx`、`src/domains/relative_color/plugin.tsx` 并更新 `src/domains/relative_color/index.ts`。
-
-~~~~~act
-write_file
-src/domains/relative_color/views/RelativeColorCanvas.tsx
-~~~~~
-~~~~~typescript
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AlbersInductionView } from '../../../components/relativeColor/AlbersInductionView';
-import { Decontextual2AfcView } from '../../../components/relativeColor/Decontextual2AfcView';
-import { HueInductionView } from '../../../components/relativeColor/HueInductionView';
-import { VectorShiftView } from '../../../components/relativeColor/VectorShiftView';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../../../utils/relativeColor';
-
-export interface RelativeColorCanvasProps {
-  question: RelativeColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
-  onAnswer: (userD: [number, number, number] | 'A' | 'B') => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  enableHoverColorPreview?: boolean;
-  showCanvasHints?: boolean;
+interface HomeProps {
+  totalTimeMs: number;
+  domainTimes: Record<TrainingDomain, number>;
+  trainingPlan: TrainingPlan;
+  allPlans?: TrainingPlan[];
+  onNavigateDomain: (domain: TrainingDomain) => void;
+  onStartPlan: () => void;
+  onOpenPlanEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
+  onOpenGlobalSettings: () => void;
+  onOpenGlobalStats: () => void;
 }
 
-export function RelativeColorCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-  showCanvasHints = true,
-}: RelativeColorCanvasProps) {
-  const { mode } = question;
-
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
-  const [userRightH, setUserRightH] = useState<number>(180);
-  const [userRightS, setUserRightS] = useState<number>(50);
-  const [userRightV, setUserRightV] = useState<number>(50);
-  const [selected2AfcChoice, setSelected2AfcChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    if (question.id) {
-      setSelectedIndex(0);
-      setSelected2AfcChoice(null);
-
-      if (question.targetLeftCenter) {
-        setUserRightH(question.targetLeftCenter[0]);
-        setUserRightS(question.targetLeftCenter[1]);
-        setUserRightV(question.targetLeftCenter[2]);
-      }
-    }
-  }, [question.id, question.targetLeftCenter]);
-
-  const handleSelect2Afc = useCallback(
-    (choice: 'A' | 'B') => {
-      if (disabled || showAnswer) return;
-      setSelected2AfcChoice(choice);
-      onAnswer(choice);
-    },
-    [disabled, showAnswer, onAnswer],
-  );
-
-  const handleSubmitLightnessInduction = useCallback(() => {
-    if (disabled || showAnswer) return;
-    onAnswer([userRightH, userRightS, userRightV]);
-  }, [disabled, showAnswer, userRightH, userRightS, userRightV, onAnswer]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-      if (disabled || showAnswer) return;
-
-      if (mode === 'DECONTEXTUAL_2AFC') {
-        if (e.key === '1' || e.code === 'Digit1' || e.code === 'Numpad1') {
-          e.preventDefault();
-          handleSelect2Afc('A');
-        } else if (e.key === '2' || e.code === 'Digit2' || e.code === 'Numpad2') {
-          e.preventDefault();
-          handleSelect2Afc('B');
-        }
-        return;
-      }
-
-      if (mode === 'VECTOR_SHIFT') {
-        let targetIdx: number | null = null;
-        if (['1', '2', '3', '4'].includes(e.key)) {
-          targetIdx = Number.parseInt(e.key, 10) - 1;
-        } else if (e.code.startsWith('Digit') || e.code.startsWith('Numpad')) {
-          const num = Number.parseInt(e.code.replace(/\D/g, ''), 10);
-          if (num >= 1 && num <= 4) {
-            targetIdx = num - 1;
-          }
-        }
-
-        if (targetIdx !== null && question.options && targetIdx < question.options.length) {
-          e.preventDefault();
-          setSelectedIndex(targetIdx);
-          return;
-        }
-
-        if (e.code === 'Space' || e.key === ' ') {
-          e.preventDefault();
-          const chosenColor = question.options?.[selectedIndex] ?? question.targetD;
-          onAnswer(chosenColor);
-        }
-        return;
-      }
-
-      if (mode === 'LIGHTNESS_INDUCTION') {
-        if (e.code === 'Space' || e.key === ' ') {
-          e.preventDefault();
-          handleSubmitLightnessInduction();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    mode,
-    showAnswer,
-    disabled,
-    selectedIndex,
-    question.options,
-    question.targetD,
-    onAnswer,
-    handleSelect2Afc,
-    handleSubmitLightnessInduction,
-  ]);
-
-  if (mode === 'DECONTEXTUAL_2AFC') {
-    return (
-      <Decontextual2AfcView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        selectedChoice={selected2AfcChoice}
-        onSelectChoice={handleSelect2Afc}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'HUE_INDUCTION') {
-    return (
-      <HueInductionView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(chosenColor) => onAnswer(chosenColor)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'LIGHTNESS_INDUCTION') {
-    return (
-      <AlbersInductionView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        userRightH={userRightH}
-        userRightS={userRightS}
-        userRightV={userRightV}
-        onUserRightHChange={setUserRightH}
-        onUserRightSChange={setUserRightS}
-        onUserRightVChange={setUserRightV}
-        onSubmit={handleSubmitLightnessInduction}
-        disabled={disabled}
-        hitMargin={hitMargin}
-        showToleranceBand={showToleranceBand}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
+export function Home({
+  totalTimeMs,
+  domainTimes,
+  trainingPlan,
+  allPlans = [],
+  onNavigateDomain,
+  onStartPlan,
+  onOpenPlanEditor,
+  onSelectPlan,
+  onOpenGlobalSettings,
+  onOpenGlobalStats,
+}: HomeProps) {
+  const domains = registry.getAllDomainMetas();
 
   return (
-    <VectorShiftView
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      selectedIndex={selectedIndex}
-      onSelectIndex={setSelectedIndex}
-      onSubmit={() => {
-        const chosenColor = question.options?.[selectedIndex] ?? question.targetD;
-        onAnswer(chosenColor);
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-8">
+      {/* 品牌 Header */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-8 py-6 rounded-3xl shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-200">
+            <Sparkles className="w-7 h-7" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              FormSight{' '}
+              <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
+                v{__APP_VERSION__}
+              </span>
+            </h1>
+            <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知强化训练系统</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold">
+            <Clock className="w-4 h-4 text-indigo-500" />
+            <span>{formatTotalTime(totalTimeMs)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenGlobalStats}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            title="全局统计"
+          >
+            <BarChart2 className="w-4 h-4 text-indigo-500" />
+            统计
+          </button>
+          <button
+            type="button"
+            onClick={onOpenGlobalSettings}
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
+            title="全局设置"
+          >
+            <Sliders className="w-4 h-4" />
+            全局设置
+          </button>
+        </div>
+      </div>
+
+      {/* 计划 Hero 区域 */}
+      <PlanHeroCard
+        plan={trainingPlan}
+        allPlans={allPlans}
+        onStartPlan={onStartPlan}
+        onOpenEditor={onOpenPlanEditor}
+        onSelectPlan={onSelectPlan}
+      />
+
+      {/* 模块选择区 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {domains.map((meta) => {
+          const Icon = meta.icon;
+          const timeMs = domainTimes[meta.domain] || 0;
+
+          return (
+            <button
+              key={meta.domain}
+              type="button"
+              onClick={() => onNavigateDomain(meta.domain)}
+              className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
+                    <Icon className="w-8 h-8" />
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 mb-2">{meta.homeTitle}</h2>
+                  <p className="text-xs text-slate-500 leading-relaxed">{meta.homeDesc}</p>
+                </div>
+              </div>
+
+              <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
+                <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>累计练习: {formatTotalTime(timeMs)}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span>进入练习看板</span>
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 3: 重构 `src/components/GlobalStatsModal.tsx`
+
+~~~~~act
+write_file
+src/components/GlobalStatsModal.tsx
+~~~~~
+~~~~~typescript
+import {
+  Activity,
+  BarChart2,
+  Calendar,
+  ChevronDown,
+  Filter,
+  Target,
+  TrendingUp,
+  X,
+} from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { registry } from '../core/registry';
+import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
+import { type TrainingDomain, getTrialRecords } from '../utils/db';
+
+interface GlobalStatsModalProps {
+  onClose: () => void;
+}
+
+interface UnifiedRecord {
+  timestamp: number;
+  isHit: boolean;
+  level: number;
+  module: TrainingDomain;
+  subMode: string;
+}
+
+export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
+  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
+      const domains = registry.getAllDomains();
+      const results = await Promise.all(
+        domains.map(async (domain) => {
+          const domainRecords = await getTrialRecords(domain);
+          return domainRecords.map((r) => ({
+            timestamp: r.timestamp,
+            isHit: r.isHit,
+            level: r.difficultyLevel,
+            module: domain,
+            subMode: r.mode,
+          }));
+        }),
+      );
+
+      const combined = results.flat().sort((a, b) => a.timestamp - b.timestamp);
+
+      if (isMounted) {
+        setRecords(combined);
+        setLoading(false);
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredRecords = records.filter((r) => {
+    if (selectedFilter === 'all') return true;
+    if (selectedFilter.endsWith('_all')) {
+      const targetDomain = selectedFilter.replace('_all', '');
+      return r.module === targetDomain;
+    }
+    const [domain, mode] = selectedFilter.split(':');
+    return r.module === domain && r.subMode === mode;
+  });
+
+  const getCurrentFilterLabel = () => {
+    if (selectedFilter === 'all') return '全部练习项目';
+    if (selectedFilter.endsWith('_all')) {
+      const d = selectedFilter.replace('_all', '') as TrainingDomain;
+      const meta = registry.getDomainMeta(d);
+      return `${meta?.title || d} (全部)`;
+    }
+    const [domain, mode] = selectedFilter.split(':') as [TrainingDomain, string];
+    const meta = registry.getDomainMeta(domain);
+    const card = meta?.cards.find((c) => c.mode === mode);
+    return `${meta?.title || domain} • ${card?.title || mode}`;
+  };
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
+  const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+
+  const stats = {
+    today: { total: 0, hits: 0 },
+    week: { total: 0, hits: 0 },
+    year: { total: 0, hits: 0 },
+    allTime: { total: filteredRecords.length, hits: filteredRecords.filter((r) => r.isHit).length },
+  };
+
+  const dailyData: Record<string, { total: number; maxLevel: number }> = {};
+
+  for (const r of filteredRecords) {
+    if (r.timestamp >= startOfToday) {
+      stats.today.total++;
+      if (r.isHit) stats.today.hits++;
+    }
+    if (r.timestamp >= startOfWeek) {
+      stats.week.total++;
+      if (r.isHit) stats.week.hits++;
+    }
+    if (r.timestamp >= startOfYear) {
+      stats.year.total++;
+      if (r.isHit) stats.year.hits++;
+    }
+
+    const dateStr = new Date(r.timestamp).toISOString().slice(0, 10);
+    if (!dailyData[dateStr]) {
+      dailyData[dateStr] = { total: 0, maxLevel: r.level };
+    }
+    dailyData[dateStr].total++;
+    dailyData[dateStr].maxLevel = Math.max(dailyData[dateStr].maxLevel, r.level);
+  }
+
+  const calcAcc = (hits: number, total: number) =>
+    total === 0 ? 0 : Math.round((hits / total) * 100);
+
+  const heatmapDays = 84;
+  const heatmapData = Array.from({ length: heatmapDays }).map((_, i) => {
+    const d = new Date(startOfToday - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000);
+    const dateStr = d.toISOString().slice(0, 10);
+    return {
+      date: dateStr,
+      count: dailyData[dateStr]?.total || 0,
+    };
+  });
+
+  const getHeatmapColor = (count: number) => {
+    if (count === 0) return 'bg-slate-100';
+    if (count < 10) return 'bg-indigo-200';
+    if (count < 25) return 'bg-indigo-400';
+    if (count < 50) return 'bg-indigo-600';
+    return 'bg-indigo-800';
+  };
+
+  useEffect(() => {
+    if (loading) return;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      renderTrendChartCanvas(canvas, dailyData);
+    }
+  }, [loading]);
+
+  return (
+    <div
+      role="presentation"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
       }}
-      disabled={disabled}
-      hitMargin={hitMargin}
-      showToleranceBand={showToleranceBand}
-      showCanvasHints={showCanvasHints}
-    />
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === 'Escape' || e.key === 'Enter')) {
+          onClose();
+        }
+      }}
+    >
+      <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 flex flex-col gap-6 animate-in fade-in zoom-in-95 duration-150 my-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl">
+              <BarChart2 className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">全局数据统计</h2>
+              <p className="text-xs text-slate-400">洞察你的训练足迹与能力成长</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center">
+              <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
+              <select
+                value={selectedFilter}
+                onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
+                className="pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm"
+              >
+                <option value="all">全部练习项目</option>
+                {registry.getAllDomainMetas().map((meta) => (
+                  <optgroup key={meta.domain} label={meta.title}>
+                    <option value={`${meta.domain}_all`}>{meta.title} (全部)</option>
+                    {meta.cards.map((card) => (
+                      <option
+                        key={`${meta.domain}:${card.mode}`}
+                        value={`${meta.domain}:${card.mode}`}
+                      >
+                        {card.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
+            正在统计海量数据...
+          </div>
+        ) : filteredRecords.length === 0 ? (
+          <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
+            <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}
+            】下暂无训练数据，先去练习几道题吧！
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+                  今日刷题
+                </div>
+                <div className="text-2xl font-black text-slate-800">
+                  {stats.today.total}{' '}
+                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                </div>
+                <div className="text-xs text-indigo-600 font-semibold mt-1">
+                  正确率 {calcAcc(stats.today.hits, stats.today.total)}%
+                </div>
+              </div>
+
+              <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
+                  <Target className="w-3.5 h-3.5 text-emerald-500" />
+                  最近 7 天
+                </div>
+                <div className="text-2xl font-black text-slate-800">
+                  {stats.week.total}{' '}
+                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                </div>
+                <div className="text-xs text-emerald-600 font-semibold mt-1">
+                  正确率 {calcAcc(stats.week.hits, stats.week.total)}%
+                </div>
+              </div>
+
+              <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
+                  <Activity className="w-3.5 h-3.5 text-amber-500" />
+                  本年累计
+                </div>
+                <div className="text-2xl font-black text-slate-800">
+                  {stats.year.total}{' '}
+                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                </div>
+                <div className="text-xs text-amber-600 font-semibold mt-1">
+                  正确率 {calcAcc(stats.year.hits, stats.year.total)}%
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-slate-500" />
+                  生涯总计
+                </div>
+                <div className="text-2xl font-black text-slate-800">
+                  {stats.allTime.total}{' '}
+                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                </div>
+                <div className="text-xs text-slate-500 font-semibold mt-1">
+                  打卡 {Object.keys(dailyData).length} 天
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-4">
+                <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
+                  <span>近 12 周训练热力图</span>
+                  <div className="flex items-center gap-1 text-[10px] text-slate-400 font-normal">
+                    少 <div className="w-2.5 h-2.5 rounded-sm bg-slate-100" />
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-200" />
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-400" />
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-600" />
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-800" /> 多
+                  </div>
+                </div>
+                <div className="grid grid-cols-12 gap-1.5 self-center">
+                  {heatmapData.map((day) => (
+                    <div
+                      key={day.date}
+                      title={`${day.date} : 训练了 ${day.count} 题`}
+                      className={`w-3.5 h-3.5 rounded-[3px] transition-transform hover:scale-125 cursor-help ${getHeatmapColor(
+                        day.count,
+                      )}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-2">
+                <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
+                  <span>能力峰值演进轨迹</span>
+                  <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
+                    每日最高 Level
+                  </span>
+                </div>
+                <canvas ref={canvasRef} width={340} height={150} className="w-full mt-2" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 4: 重构计划编排相关组件接入统一 `registry`
+
+重构 `PlanEditorModal.tsx`、`CardPickerPanel.tsx`、`PlanStageList.tsx` 与 `PlanHeroCard.tsx`。
+
+~~~~~act
+write_file
+src/components/plan/PlanEditorModal.tsx
+~~~~~
+~~~~~typescript
+import { Check, Copy, Download, Edit3, Layers, Sliders, Sparkles, Upload } from 'lucide-preact';
+import { useRef, useState } from 'preact/hooks';
+import { registry } from '../../core/registry';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
+import {
+  clonePlan,
+  deletePlan,
+  exportPlanToJson,
+  importPlanFromJson,
+  loadPlanStorageState,
+  savePlanStorageState,
+  togglePlanFavorite,
+} from '../../utils/planStorage';
+import { ModalShell } from '../common/ModalShell';
+import { CardPickerPanel } from './editor/CardPickerPanel';
+import { PlanLibraryDrawer } from './editor/PlanLibraryDrawer';
+import { PlanStageList } from './editor/PlanStageList';
+
+interface PlanEditorModalProps {
+  initialPlan: TrainingPlan;
+  onClose: () => void;
+  onSave: (newPlan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+const TRIAL_PRESETS = [10, 15, 20, 30, 50];
+
+export function PlanEditorModal({
+  initialPlan,
+  onClose,
+  onSave,
+  onPlanListChanged,
+}: PlanEditorModalProps) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
+  const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
+  const [selectedDomainFilter, setSelectedDomainFilter] = useState<string>('all');
+  const [isAddingCard, setIsAddingCard] = useState<boolean>(false);
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
+  const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
+  const [toastNotice, setToastNotice] = useState<string | null>(null);
+
+  const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
+
+  const showToast = (msg: string) => {
+    setToastNotice(msg);
+    setTimeout(() => setToastNotice(null), 2500);
+  };
+
+  const handleSelectPlanFromList = (p: TrainingPlan) => {
+    setCurrentPlan({ ...p });
+    setPlanNameInput(p.name);
+    setIsEditingName(false);
+  };
+
+  const handleNameSave = () => {
+    const trimmed = planNameInput.trim();
+    if (!trimmed) {
+      setPlanNameInput(currentPlan.name);
+    } else {
+      setCurrentPlan((prev) => ({ ...prev, name: trimmed }));
+    }
+    setIsEditingName(false);
+  };
+
+  const handleBatchUpdateTrials = (trials: number) => {
+    setCurrentPlan((prev) => ({
+      ...prev,
+      items: prev.items.map((item) => ({ ...item, targetTrials: trials })),
+    }));
+    showToast(`已将所有阶段题量统一设为 ${trials} 题`);
+  };
+
+  const handleAddItem = (cardId: string) => {
+    const newItem: PlanItem = {
+      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      cardId,
+      targetTrials: 20,
+    };
+    setCurrentPlan((prev) => ({
+      ...prev,
+      items: [...prev.items, newItem],
+    }));
+    setIsAddingCard(false);
+  };
+
+  const handleRemoveItem = (id: string) => {
+    setCurrentPlan((prev) => ({
+      ...prev,
+      items: prev.items.filter((item) => item.id !== id),
+    }));
+  };
+
+  const handleMoveItem = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= currentPlan.items.length) return;
+
+    const newItems = [...currentPlan.items];
+    const [moved] = newItems.splice(index, 1);
+    newItems.splice(targetIndex, 0, moved);
+
+    setCurrentPlan((prev) => ({ ...prev, items: newItems }));
+  };
+
+  const handleUpdateTrials = (id: string, trials: number) => {
+    setCurrentPlan((prev) => ({
+      ...prev,
+      items: prev.items.map((item) =>
+        item.id === id ? { ...item, targetTrials: Math.max(5, trials) } : item,
+      ),
+    }));
+  };
+
+  const handleClearAll = () => {
+    setCurrentPlan((prev) => ({ ...prev, items: [] }));
+  };
+
+  const handleCreateNewBlankPlan = () => {
+    const newBlank: TrainingPlan = {
+      id: `custom_plan_${Date.now()}`,
+      name: '新建训练流',
+      description: '自定义多阶段训练流',
+      items: [],
+      isFavorite: true,
+      isBuiltin: false,
+      updatedAt: Date.now(),
+    };
+    setCurrentPlan(newBlank);
+    setPlanNameInput(newBlank.name);
+    setIsEditingName(true);
+    setIsAddingCard(true);
+    setShowPlanManager(false);
+    showToast('已进入新计划创建模式');
+  };
+
+  const handleCloneCurrent = () => {
+    const cloned = clonePlan(currentPlan);
+    const nextState = loadPlanStorageState();
+    setStorageState(nextState);
+    setCurrentPlan(cloned);
+    setPlanNameInput(cloned.name);
+    onPlanListChanged?.();
+    showToast(`已复制为新计划【${cloned.name}】`);
+  };
+
+  const handleToggleFavoriteItem = (planId: string, e: MouseEvent) => {
+    e.stopPropagation();
+    const nextState = togglePlanFavorite(planId);
+    setStorageState(nextState);
+    if (currentPlan.id === planId) {
+      setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+    }
+    onPlanListChanged?.();
+  };
+
+  const handleDeletePlanItem = (planId: string, e: MouseEvent) => {
+    e.stopPropagation();
+    if (storageState.plans.length <= 1) {
+      showToast('至少需保留一个训练计划');
+      return;
+    }
+    const nextState = deletePlan(planId);
+    setStorageState(nextState);
+    if (currentPlan.id === planId) {
+      const fallback = nextState.plans[0];
+      setCurrentPlan(fallback);
+      setPlanNameInput(fallback.name);
+    }
+    onPlanListChanged?.();
+    showToast('计划已删除');
+  };
+
+  const handleExportPlan = () => {
+    const jsonStr = exportPlanToJson(currentPlan);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('计划配置已导出为 JSON 文件');
+  };
+
+  const handleImportPlan = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      const file = target.files[0];
+      file.text().then((text) => {
+        const imported = importPlanFromJson(text);
+        if (imported) {
+          const nextState = loadPlanStorageState();
+          setStorageState(nextState);
+          setCurrentPlan(imported);
+          setPlanNameInput(imported.name);
+          setShowPlanManager(false);
+          onPlanListChanged?.();
+          showToast(`成功导入计划【${imported.name}】`);
+        } else {
+          showToast('导入失败：无效的训练计划文件');
+        }
+      });
+    }
+  };
+
+  const handleSave = () => {
+    const sanitizedPlan: TrainingPlan = {
+      ...currentPlan,
+      name: planNameInput.trim() || currentPlan.name,
+      items: currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId))),
+      updatedAt: Date.now(),
+    };
+
+    const updatedPlans = storageState.plans.some((p) => p.id === sanitizedPlan.id)
+      ? storageState.plans.map((p) => (p.id === sanitizedPlan.id ? sanitizedPlan : p))
+      : [sanitizedPlan, ...storageState.plans];
+
+    savePlanStorageState({
+      activePlanId: sanitizedPlan.id,
+      plans: updatedPlans,
+    });
+
+    onSave(sanitizedPlan);
+    onPlanListChanged?.();
+    onClose();
+  };
+
+  const validPlanItems = currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId)));
+  const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+
+  const availableCards = registry.getAllCards().filter((card) => {
+    if (selectedDomainFilter === 'all') return true;
+    return card.domain === selectedDomainFilter;
+  });
+
+  return (
+    <ModalShell title="定制日常训练流" icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
+      <div className="space-y-5">
+        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              {isEditingName ? (
+                <div className="flex items-center gap-1.5 w-full max-w-sm">
+                  <input
+                    type="text"
+                    value={planNameInput}
+                    onInput={(e) => setPlanNameInput((e.target as HTMLInputElement).value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleNameSave();
+                      if (e.key === 'Escape') {
+                        setPlanNameInput(currentPlan.name);
+                        setIsEditingName(false);
+                      }
+                    }}
+                    maxLength={32}
+                    className="w-full px-3 py-1.5 text-xs font-bold text-slate-800 bg-white border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    placeholder="输入计划名称..."
+                  />
+                  <button
+                    type="button"
+                    onClick={handleNameSave}
+                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0"
+                    title="确定"
+                  >
+                    <Check className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                  <h3 className="text-sm font-black text-slate-800 truncate tracking-tight">
+                    {currentPlan.name}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingName(true)}
+                    className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0"
+                    title="重命名计划"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+
+                  {isNewPlan ? (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 flex-shrink-0 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      新计划
+                    </span>
+                  ) : currentPlan.isBuiltin ? (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100 flex-shrink-0">
+                      官方预设
+                    </span>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowPlanManager(!showPlanManager)}
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-xl border transition-all flex items-center gap-1 ${
+                  showPlanManager
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`}
+                title="切换/管理所有计划"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                计划库 ({storageState.plans.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCloneCurrent}
+                className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                title="复制为新副本"
+              >
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportPlan}
+                className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                title="导出计划为 JSON"
+              >
+                <Download className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
+                title="导入 JSON 计划"
+              >
+                <Upload className="w-3.5 h-3.5" />
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportPlan}
+                className="hidden"
+              />
+            </div>
+          </div>
+
+          {toastNotice && (
+            <div className="text-[11px] font-bold text-indigo-600 bg-indigo-50/80 px-2.5 py-1 rounded-lg animate-in fade-in">
+              {toastNotice}
+            </div>
+          )}
+        </div>
+
+        {showPlanManager && (
+          <PlanLibraryDrawer
+            storageState={storageState}
+            currentPlan={currentPlan}
+            onSelectPlan={handleSelectPlanFromList}
+            onCreateNewBlankPlan={handleCreateNewBlankPlan}
+            onClose={() => setShowPlanManager(false)}
+            onToggleFavorite={handleToggleFavoriteItem}
+            onDeletePlan={handleDeletePlanItem}
+          />
+        )}
+
+        <PlanStageList
+          currentPlan={currentPlan}
+          totalTrials={totalTrials}
+          estimatedMin={estimatedMin}
+          trialPresets={TRIAL_PRESETS}
+          onBatchUpdateTrials={handleBatchUpdateTrials}
+          onClearAll={handleClearAll}
+          onUpdateTrials={handleUpdateTrials}
+          onMoveItem={handleMoveItem}
+          onRemoveItem={handleRemoveItem}
+        />
+
+        <CardPickerPanel
+          isAddingCard={isAddingCard}
+          selectedDomainFilter={selectedDomainFilter}
+          availableCards={availableCards}
+          onToggleAdding={setIsAddingCard}
+          onSelectDomainFilter={setSelectedDomainFilter}
+          onAddItem={handleAddItem}
+        />
+
+        <div className="pt-2 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={currentPlan.items.length === 0}
+            className={`w-full py-2.5 text-xs font-bold rounded-xl transition-all ${
+              currentPlan.items.length === 0
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 active:scale-[0.98]'
+            }`}
+          >
+            {isNewPlan ? '保存为新计划并使用' : '保存修改并使用此计划'}{' '}
+            {currentPlan.items.length === 0 && '(至少包含1个阶段)'}
+          </button>
+        </div>
+      </div>
+    </ModalShell>
   );
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/domains/relative_color/plugin.tsx
+src/components/plan/editor/CardPickerPanel.tsx
 ~~~~~
 ~~~~~typescript
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import {
-  type RelativeColorHitResult,
-  type RelativeColorMode,
-  type RelativeColorQuestionData,
-  checkRelativeColorHit,
-  generateRelativeColorQuestion,
-} from '../../utils/relativeColorUtils';
-import type { RelativeColorSettings } from '../../utils/settings';
-import { RelativeColorCanvas } from './views/RelativeColorCanvas';
+import { Plus } from 'lucide-preact';
+import { registry } from '../../../core/registry';
+import type { CardDefinition } from '../../../types/card';
 
-export const relativeColorPlugin: TrainingPlugin<
-  RelativeColorQuestionData,
-  RelativeColorHitResult,
-  [number, number, number] | 'A' | 'B',
-  RelativeColorSettings
-> = {
-  domain: 'relative_color',
-  title: '相对色感',
-  getModeBadge: (mode) =>
-    mode === 'LIGHTNESS_INDUCTION'
-      ? '明度反差补偿'
-      : mode === 'HUE_INDUCTION'
-        ? '补色残像调和'
-        : mode === 'DECONTEXTUAL_2AFC'
-          ? '环境穿透判别'
-          : '色彩矢量迁移',
-  generateQuestion: (mode, level) =>
-    generateRelativeColorQuestion(mode as RelativeColorMode, level),
-  evaluateAnswer: (userVal, q, mode) =>
-    checkRelativeColorHit(mode as RelativeColorMode, userVal, q),
-  isHit: (hitResult) => hitResult.isHit,
-  getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal, mode) => {
-    if (mode === 'DECONTEXTUAL_2AFC') {
-      return {
-        mode,
-        userChoice: userVal,
-        correctChoice: q.largerPhysicalSide,
-        physicalValueDiff: q.physicalValueDiff,
-      };
-    }
-    if (mode === 'HUE_INDUCTION') {
-      return {
-        mode,
-        bgLeft: q.bgLeft,
-        bgRight: q.bgRight,
-        targetLeftCenter: q.targetLeftCenter,
-        idealRightCenter: q.idealRightCenter,
-        userRightColor: userVal,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        deltaEError: hitResult.deltaEError,
-      };
-    }
-    if (mode === 'LIGHTNESS_INDUCTION') {
-      return {
-        mode,
-        bgLeft: q.bgLeft,
-        bgRight: q.bgRight,
-        targetLeftCenter: q.targetLeftCenter,
-        idealRightCenter: q.idealRightCenter,
-        userRightColor: userVal,
-        deltaEError: hitResult.deltaEError,
-      };
-    }
-    return {
-      mode: 'VECTOR_SHIFT',
-      colorA: q.colorA,
-      colorB: q.colorB,
-      colorC: q.colorC,
-      targetD: q.targetD,
-      userD: userVal,
-      deltaEError: hitResult.deltaEError,
-    };
-  },
-  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-    <RelativeColorCanvas
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={onAnswer}
-      disabled={disabled}
-      hitMargin={settings.sliderHitMargin ?? 12}
-      showToleranceBand={settings.showToleranceBand ?? true}
-      enableHoverColorPreview={settings.enableHoverColorPreview ?? true}
-      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
-    />
-  ),
-};
-~~~~~
-
-~~~~~act
-write_file
-src/domains/relative_color/index.ts
-~~~~~
-~~~~~typescript
-import { Columns, Palette, Shuffle, Sun } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { relativeColorPlugin } from './plugin';
-
-export const relativeColorCards: CardDefinition[] = [
-  {
-    id: 'rel_vector_shift',
-    domain: 'relative_color',
-    mode: 'VECTOR_SHIFT',
-    title: '色彩矢量迁移',
-    desc: '保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉。',
-    instruction: '观察上方 A➔B 色彩推移，在下方候选项中找出符合 C➔D 的同向推移色',
-    icon: Shuffle,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'rel_lightness_induction',
-    domain: 'relative_color',
-    mode: 'LIGHTNESS_INDUCTION',
-    title: '明度反差补偿',
-    desc: '在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致。',
-    instruction: '调节右侧中心色块明度，使左右两块在不同背景下「视觉感知看起来完全一致」',
-    icon: Sun,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'rel_hue_induction',
-    domain: 'relative_color',
-    mode: 'HUE_INDUCTION',
-    title: '补色残像调和',
-    desc: '在强色相与饱和度背景下，四选一选出逆向补偿后的目标色，训练环境光色感知调和力。',
-    instruction: '观察左侧强色相背景下的基准色，选出右侧达成感知一致的补偿色 (键 1-4)',
-    icon: Palette,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'rel_decontextual_2afc',
-    domain: 'relative_color',
-    mode: 'DECONTEXTUAL_2AFC',
-    title: '环境穿透判别',
-    desc: '穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理。',
-    instruction: '穿透背景视错觉干扰，二选一判别哪一侧中心色块「客观物理明度更高」',
-    icon: Columns,
-    tags: {
-      target: ['relative_color'],
-      skill: ['illusion_invariance'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
-
-export const relativeColorDomain: DomainManifest = {
-  domain: 'relative_color',
-  meta: {
-    domain: 'relative_color',
-    appId: 'relative-color',
-    title: '相对色感',
-    subTitle: 'Relative Color',
-    homeTitle: '相对色感 (Relative Color Perception)',
-    homeDesc:
-      '基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。',
-    themeColor: 'purple',
-    icon: Shuffle,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return relativeColorCards;
-    },
-  },
-  cards: relativeColorCards,
-  trainingPlugin: relativeColorPlugin as unknown as DomainManifest['trainingPlugin'],
-};
-
-export default relativeColorDomain;
-~~~~~
-
-#### Acts 4: 收敛 `negative_space` 正负形空间领域至 `src/domains/negative_space/`
-
-建立 `src/domains/negative_space/views/NegativeSpaceCanvas.tsx`、`src/domains/negative_space/plugin.tsx` 并更新 `src/domains/negative_space/index.ts`。
-
-~~~~~act
-write_file
-src/domains/negative_space/views/NegativeSpaceCanvas.tsx
-~~~~~
-~~~~~typescript
-import { AreaComparison2AfcView } from '../../../components/negativeSpace/AreaComparison2AfcView';
-import { RatioEstimationView } from '../../../components/negativeSpace/RatioEstimationView';
-import { ShapeMemory2AfcView } from '../../../components/negativeSpace/ShapeMemory2AfcView';
-import { VertexFittingView } from '../../../components/negativeSpace/VertexFittingView';
-import type { Point } from '../../../types';
-import type {
-  NegativeSpaceHitResult,
-  NegativeSpaceQuestionData,
-} from '../../../utils/negativeSpace';
-
-export interface NegativeSpaceCanvasProps {
-  question: NegativeSpaceQuestionData;
-  showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (val: number | 'A' | 'B' | Point) => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  showCanvasHints?: boolean;
+interface CardPickerPanelProps {
+  isAddingCard: boolean;
+  selectedDomainFilter: string;
+  availableCards: CardDefinition[];
+  onToggleAdding: (val: boolean) => void;
+  onSelectDomainFilter: (domain: string) => void;
+  onAddItem: (cardId: string) => void;
 }
 
-export function NegativeSpaceCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
-  showCanvasHints = true,
-}: NegativeSpaceCanvasProps) {
-  const { mode } = question;
-
-  if (mode === 'AREA_COMPARISON_2AFC') {
+export function CardPickerPanel({
+  isAddingCard,
+  selectedDomainFilter,
+  availableCards,
+  onToggleAdding,
+  onSelectDomainFilter,
+  onAddItem,
+}: CardPickerPanelProps) {
+  if (!isAddingCard) {
     return (
-      <AreaComparison2AfcView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(choice) => onAnswer(choice)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'NEGATIVE_VERTEX_FITTING') {
-    return (
-      <VertexFittingView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(point) => onAnswer(point)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
-
-  if (mode === 'SHAPE_MATCH_2AFC') {
-    return (
-      <ShapeMemory2AfcView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(choiceIdx) => onAnswer(choiceIdx)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
+      <button
+        type="button"
+        onClick={() => onToggleAdding(true)}
+        className="w-full py-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-[0.99]"
+      >
+        <Plus className="w-4 h-4" />
+        添加训练阶段
+      </button>
     );
   }
 
   return (
-    <RatioEstimationView
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={(ratio) => onAnswer(ratio)}
-      disabled={disabled}
-      hitMargin={hitMargin}
-      showToleranceBand={showToleranceBand}
-      showCanvasHints={showCanvasHints}
-    />
+    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-bold text-slate-700">挑选需要添加的训练模块：</span>
+        <button
+          type="button"
+          onClick={() => onToggleAdding(false)}
+          className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+        >
+          收起
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => onSelectDomainFilter('all')}
+          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all ${
+            selectedDomainFilter === 'all'
+              ? 'bg-indigo-600 text-white'
+              : 'bg-white text-slate-600 border border-slate-200'
+          }`}
+        >
+          全部
+        </button>
+        {registry.getAllDomainMetas().map((d) => (
+          <button
+            type="button"
+            key={d.domain}
+            onClick={() => onSelectDomainFilter(d.domain)}
+            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
+              selectedDomainFilter === d.domain
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white text-slate-600 border border-slate-200'
+            }`}
+          >
+            {d.title}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto pr-1">
+        {availableCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <button
+              type="button"
+              key={card.id}
+              onClick={() => onAddItem(card.id)}
+              className="p-2.5 bg-white hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl text-left transition-all flex items-center gap-2 group active:scale-95"
+            >
+              <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform flex-shrink-0">
+                <Icon className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-xs font-bold text-slate-800 line-clamp-1">{card.title}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/domains/negative_space/plugin.tsx
+src/components/plan/editor/PlanStageList.tsx
 ~~~~~
 ~~~~~typescript
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import type { Point } from '../../types';
-import {
-  type NegativeSpaceHitResult,
-  type NegativeSpaceMode,
-  type NegativeSpaceQuestionData,
-  checkNegativeSpaceHit,
-  generateNegativeSpaceQuestion,
-} from '../../utils/negativeSpaceUtils';
-import type { NegativeSpaceSettings } from '../../utils/settings';
-import { NegativeSpaceCanvas } from './views/NegativeSpaceCanvas';
+import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
+import { registry } from '../../../core/registry';
+import type { TrainingPlan } from '../../../types/plan';
 
-export const negativeSpacePlugin: TrainingPlugin<
-  NegativeSpaceQuestionData,
-  NegativeSpaceHitResult,
-  number | 'A' | 'B' | Point,
-  NegativeSpaceSettings
-> = {
-  domain: 'negative_space',
-  title: '正负形感知',
-  getModeBadge: (mode) =>
-    mode === 'AREA_COMPARISON_2AFC'
-      ? '负形面积二分判别'
-      : mode === 'NEGATIVE_VERTEX_FITTING'
-        ? '负形边界反切定点'
-        : mode === 'SHAPE_MATCH_2AFC'
-          ? '负形轮廓记忆匹配'
-          : '负形占比估算',
-  generateQuestion: (mode, level) =>
-    generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
-  evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),
-  isHit: (hitResult) => hitResult.isHit,
-  getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (q, hitResult, userVal, mode) => {
-    if (mode === 'NEGATIVE_VERTEX_FITTING') {
-      return {
-        mode: 'NEGATIVE_VERTEX_FITTING',
-        targetVertexIndex: q.targetVertexIndex,
-        targetPoint: q.targetPoint ? [q.targetPoint.x, q.targetPoint.y] : undefined,
-        userClick: hitResult.nearestGridPoint
-          ? [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y]
-          : undefined,
-        errorPixelDistance: hitResult.errorValue,
-      };
-    }
-    if (mode === 'AREA_COMPARISON_2AFC') {
-      return {
-        mode: 'AREA_COMPARISON_2AFC',
-        userChoice: userVal,
-        correctChoice: q.largerSide,
-        negRatioA: q.negRatioA,
-        negRatioB: q.negRatioB,
-        areaDeltaPercent: q.areaDeltaPercent,
-        errorValue: hitResult.errorValue,
-      };
-    }
-    if (mode === 'SHAPE_MATCH_2AFC') {
-      return {
-        mode: 'SHAPE_MATCH_2AFC',
-        userChoice: userVal === 0 || userVal === 'A' ? 'A' : 'B',
-        correctChoice: q.correctChoice,
-        displayTimeMs: q.displayTimeMs,
-        errorValue: hitResult.errorValue,
-      };
-    }
-    return {
-      targetNegativeRatio: q.targetNegativeRatio,
-      userRatio: userVal,
-      errorValue: hitResult.errorValue,
-      positiveArea: q.positiveArea,
-      negativeArea: q.negativeArea,
-    };
-  },
-  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-    <NegativeSpaceCanvas
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={onAnswer}
-      disabled={disabled}
-      hitMargin={settings.sliderHitMargin ?? 12}
-      showToleranceBand={settings.showToleranceBand ?? true}
-      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
-    />
-  ),
-};
-~~~~~
-
-~~~~~act
-write_file
-src/domains/negative_space/index.ts
-~~~~~
-~~~~~typescript
-import { Columns, Crosshair, Maximize2, Sparkles } from 'lucide-preact';
-import { negRatioAnalyticsPlugin } from '../../config/analyticsPlugins';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { negativeSpacePlugin } from './plugin';
-
-export const negativeSpaceCards: CardDefinition[] = [
-  {
-    id: 'neg_ratio_estimation',
-    domain: 'negative_space',
-    mode: 'RATIO_ESTIMATION',
-    title: '负形占比滑块评估',
-    desc: '估计不规则几何多边形外部留白（负形）占整幅画面的面积百分比，强化空间直觉。',
-    instruction: '估计黑色主体周围的白色留白（负形）占画面总面积的百分比',
-    icon: Maximize2,
-    tags: {
-      target: ['negative_space'],
-      skill: ['proportion'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: true,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'neg_area_comparison_2afc',
-    domain: 'negative_space',
-    mode: 'AREA_COMPARISON_2AFC',
-    title: '负形面积二分判别',
-    desc: '快速对比两个形状各异的不规则多边形留白（负形），二选一判别哪侧留白面积更大 (2AFC)。',
-    instruction: '二选一判别哪一侧画面的白色留白（负形）面积更大',
-    icon: Columns,
-    tags: {
-      target: ['negative_space'],
-      skill: ['proportion', 'spatial_orientation'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'neg_vertex_fitting',
-    domain: 'negative_space',
-    mode: 'NEGATIVE_VERTEX_FITTING',
-    title: '负形边界反切定点',
-    desc: '观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。',
-    instruction: '观察左侧完整参考的负形挤压轮廓，在右侧点阵中点击定位被截断的正形顶点',
-    icon: Crosshair,
-    tags: {
-      target: ['negative_space'],
-      skill: ['spatial_orientation', 'proportion'],
-      interaction: ['point_click'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'neg_shape_match_2afc',
-    domain: 'negative_space',
-    mode: 'SHAPE_MATCH_2AFC',
-    title: '负形轮廓记忆匹配',
-    desc: '瞬时记忆负形空隙轮廓，在两张 1:1 等大形状中二选一辨识目标。',
-    instruction: '瞬时记忆负形空隙轮廓特征，在候选区二选一选出完全相同的形状',
-    icon: Sparkles,
-    tags: {
-      target: ['negative_space'],
-      skill: ['visual_memory', 'spatial_orientation'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
-
-export const negativeSpaceDomain: DomainManifest = {
-  domain: 'negative_space',
-  meta: {
-    domain: 'negative_space',
-    appId: 'negative-space',
-    title: '正负形感知',
-    subTitle: 'Negative Space',
-    homeTitle: '正负形空间感知 (Negative Space)',
-    homeDesc:
-      '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破具象认知偏见，培养专业起形与比例感知力。',
-    themeColor: 'emerald',
-    icon: Maximize2,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return negativeSpaceCards;
-    },
-  },
-  cards: negativeSpaceCards,
-  trainingPlugin: negativeSpacePlugin as unknown as DomainManifest['trainingPlugin'],
-  analyticsPlugins: {
-    neg_ratio_estimation: negRatioAnalyticsPlugin,
-  },
-};
-
-export default negativeSpaceDomain;
-~~~~~
-
-#### Acts 5: 收敛 `abstraction` 与 `concretization` 领域
-
-建立 `src/domains/abstraction/views/AbstractionCanvas.tsx`、`src/domains/abstraction/plugin.tsx` 并更新对应 Manifest。
-
-~~~~~act
-write_file
-src/domains/abstraction/views/AbstractionCanvas.tsx
-~~~~~
-~~~~~typescript
-import { GestureAxisView } from '../../../components/abstraction/GestureAxisView';
-import { NotanThresholdView } from '../../../components/abstraction/NotanThresholdView';
-import { PaletteClusteringView } from '../../../components/abstraction/PaletteClusteringView';
-import { TopDown2AfcView } from '../../../components/abstraction/TopDown2AfcView';
-import { TopDownPatternView } from '../../../components/abstraction/TopDownPatternView';
-import type {
-  AbstractionHitResult,
-  AbstractionQuestionData,
-} from '../../../utils/abstraction';
-
-export interface AbstractionCanvasProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (val: number | 'A' | 'B') => void;
-  disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
-  showCanvasHints?: boolean;
+interface PlanStageListProps {
+  currentPlan: TrainingPlan;
+  totalTrials: number;
+  estimatedMin: number;
+  trialPresets: number[];
+  onBatchUpdateTrials: (trials: number) => void;
+  onClearAll: () => void;
+  onUpdateTrials: (id: string, trials: number) => void;
+  onMoveItem: (index: number, direction: 'up' | 'down') => void;
+  onRemoveItem: (id: string) => void;
 }
 
-export function AbstractionCanvas({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  hitMargin = 12,
-  showCanvasHints = true,
-}: AbstractionCanvasProps) {
-  const { mode } = question;
+export function PlanStageList({
+  currentPlan,
+  totalTrials,
+  estimatedMin,
+  trialPresets,
+  onBatchUpdateTrials,
+  onClearAll,
+  onUpdateTrials,
+  onMoveItem,
+  onRemoveItem,
+}: PlanStageListProps) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
+          <span>已编排阶段序列 ({currentPlan.items.length})</span>
+          <span className="text-slate-400 font-normal">
+            • 合计 {totalTrials} 题 · 约 {estimatedMin} 分钟
+          </span>
+        </div>
 
-  if (mode === 'GESTURE_AXIS') {
-    return (
-      <GestureAxisView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(val) => onAnswer(val)}
-        disabled={disabled}
-        hitMargin={hitMargin}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
+        <div className="flex items-center gap-2">
+          {currentPlan.items.length > 0 && (
+            <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
+              <span className="text-[10px] font-bold text-slate-400">批量题量:</span>
+              {trialPresets.map((num) => (
+                <button
+                  type="button"
+                  key={num}
+                  onClick={() => onBatchUpdateTrials(num)}
+                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
+                >
+                  {num}题
+                </button>
+              ))}
+            </div>
+          )}
 
-  if (mode === 'NOTAN_THRESHOLD') {
-    return (
-      <NotanThresholdView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(val) => onAnswer(val)}
-        disabled={disabled}
-        hitMargin={hitMargin}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
+          {currentPlan.items.length > 0 && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              清空阶段
+            </button>
+          )}
+        </div>
+      </div>
 
-  if (mode === 'PALETTE_CLUSTERING') {
-    return (
-      <PaletteClusteringView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(idx) => onAnswer(idx)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
-    );
-  }
+      {currentPlan.items.length === 0 ? (
+        <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
+          <Zap className="w-6 h-6 text-slate-300" />
+          <span>当前计划为空，请点击下方「添加训练阶段」挑选训练模块</span>
+        </div>
+      ) : (
+        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+          {currentPlan.items.map((item, idx) => {
+            const card = registry.getCardById(item.cardId);
+            if (!card) return null;
+            const Icon = card.icon;
 
-  if (mode === 'TD_PALETTE_2AFC') {
+            return (
+              <div
+                key={item.id}
+                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3"
+              >
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                    {idx + 1}
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">{card.title}</div>
+                    <div className="text-[10px] text-slate-400">{card.desc.slice(0, 26)}...</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
+                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
+                    {trialPresets.map((preset) => (
+                      <button
+                        type="button"
+                        key={preset}
+                        onClick={() => onUpdateTrials(item.id, preset)}
+                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                          item.targetTrials === preset
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-slate-500 hover:text-slate-800'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
+                    <button
+                      type="button"
+                      disabled={idx === 0}
+                      onClick={() => onMoveItem(idx, 'up')}
+                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
+                      title="上移"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={idx === currentPlan.items.length - 1}
+                      onClick={() => onMoveItem(idx, 'down')}
+                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
+                      title="下移"
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1"
+                      title="移除"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/components/plan/PlanHeroCard.tsx
+~~~~~
+~~~~~typescript
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Play,
+  Plus,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { registry } from '../../core/registry';
+import type { TrainingPlan } from '../../types/plan';
+
+interface PlanHeroCardProps {
+  plan: TrainingPlan;
+  allPlans?: TrainingPlan[];
+  onStartPlan: () => void;
+  onOpenEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
+}
+
+export function PlanHeroCard({
+  plan,
+  allPlans = [],
+  onStartPlan,
+  onOpenEditor,
+  onSelectPlan,
+}: PlanHeroCardProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const hasItems = plan.items && plan.items.length > 0;
+  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+
+  const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
+
+  if (!hasItems) {
     return (
-      <TopDownPatternView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={(idx) => onAnswer(idx)}
-        disabled={disabled}
-        showCanvasHints={showCanvasHints}
-      />
+      <div className="w-full bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 border-2 border-dashed border-indigo-200/80 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-indigo-100 text-indigo-600 rounded-2xl">
+            <Sparkles className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-800">今日训练计划</h2>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
+                未设置
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              按需编排多模块定制训练流，一站式贯通寻星、色感、相对推移与空间负形。
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenEditor}
+          className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          定制我的训练流
+        </button>
+      </div>
     );
   }
 
   return (
-    <TopDown2AfcView
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={(choice) => onAnswer(choice)}
-      disabled={disabled}
-      showCanvasHints={showCanvasHints}
-    />
+    <div className="group w-full bg-white border border-indigo-100 hover:border-indigo-300 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200">
+            <Zap className="w-5 h-5 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {favoritePlans.length > 1 && onSelectPlan ? (
+                <div ref={dropdownRef} className="relative inline-block text-left">
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="group/btn inline-flex items-center gap-1.5 text-lg font-black text-slate-900 tracking-tight hover:text-indigo-600 transition-colors focus:outline-none"
+                  >
+                    <span>{plan.name}</span>
+                    <div
+                      className={`p-1 rounded-lg bg-slate-100 group-hover/btn:bg-indigo-50 text-slate-500 group-hover/btn:text-indigo-600 transition-all duration-200 ${
+                        isDropdownOpen ? 'rotate-180 bg-indigo-50 text-indigo-600' : ''
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
+                        <span>快速切换训练流</span>
+                        <span className="font-mono">{favoritePlans.length} 个可用</span>
+                      </div>
+
+                      <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
+                        {favoritePlans.map((p) => {
+                          const isSelected = p.id === plan.id;
+                          const stageCount = (p.items || []).length;
+                          const pTrials = (p.items || []).reduce(
+                            (acc, c) => acc + c.targetTrials,
+                            0,
+                          );
+
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => {
+                                onSelectPlan(p.id);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2.5 ${
+                                isSelected
+                                  ? 'bg-indigo-50/80 text-indigo-900 font-bold border border-indigo-200/80 shadow-sm'
+                                  : 'text-slate-700 hover:bg-slate-50 border border-transparent'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold truncate">{p.name}</span>
+                                  {p.isBuiltin && (
+                                    <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
+                                      官方
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                  {stageCount} 个阶段 • {pTrials} 题
+                                </div>
+                              </div>
+
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">{plan.name}</h2>
+              )}
+
+              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
+                {plan.items.length} 个训练阶段
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
+              <span>合计 {totalTrials} 题</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-slate-400" />
+                预计约 {estimatedMin} 分钟
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onOpenEditor}
+          className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+          title="调整阶段或题量"
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          编排计划
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {plan.items.map((item, idx) => {
+          const card = registry.getCardById(item.cardId);
+          if (!card) return null;
+          const Icon = card.icon;
+
+          return (
+            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-2xl shadow-inner">
+                <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">
+                  {idx + 1}
+                </div>
+                <Icon className="w-4 h-4 text-slate-600" />
+                <span className="text-xs font-bold text-slate-800">{card.title}</span>
+                <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
+                  {item.targetTrials}题
+                </span>
+              </div>
+              {idx < plan.items.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+        <div className="text-xs text-slate-400 font-medium">
+          各阶段自适应难度与答题记录将自动同步至个人生涯档案
+        </div>
+
+        <button
+          type="button"
+          onClick={onStartPlan}
+          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 ml-auto"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          开始今日训练流
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
   );
 }
-~~~~~
-
-~~~~~act
-write_file
-src/domains/abstraction/plugin.tsx
-~~~~~
-~~~~~typescript
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import {
-  type AbstractionHitResult,
-  type AbstractionMode,
-  type AbstractionQuestionData,
-  checkAbstractionHit,
-  generateAbstractionQuestion,
-} from '../../utils/abstractionUtils';
-import type { BaseModuleSettings } from '../../utils/settings';
-import { AbstractionCanvas } from './views/AbstractionCanvas';
-
-export const abstractionPlugin: TrainingPlugin<
-  AbstractionQuestionData,
-  AbstractionHitResult,
-  number | 'A' | 'B',
-  BaseModuleSettings
-> = {
-  domain: 'abstraction',
-  title: '视知觉概括',
-  getModeBadge: (mode) => {
-    const map: Record<string, string> = {
-      GESTURE_AXIS: '动态势线提取',
-      POLYGON_DECIMATION: '折线低模大形',
-      NOTAN_THRESHOLD: '黑白素描归组',
-      PALETTE_CLUSTERING: '主调色群提炼',
-      TD_GESTURE_2AFC: '动态势线寻源',
-      TD_HULL_2AFC: '几何大模寻形',
-      TD_NOTAN_2AFC: '黑白素描骨架',
-      TD_PALETTE_2AFC: '调性基底归位',
-    };
-    return map[mode] || mode;
-  },
-  generateQuestion: (mode, level) => generateAbstractionQuestion(mode as AbstractionMode, level),
-  evaluateAnswer: (userVal, q) => checkAbstractionHit(userVal, q),
-  isHit: (hitResult) => hitResult.isHit,
-  getQuestionLevel: (q) => q.difficultyLevel,
-  extractRecordDetails: (_q, hitResult, userVal, mode) => ({
-    mode,
-    userAnswer: userVal,
-    errorValue: hitResult.errorValue,
-  }),
-  renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-    <AbstractionCanvas
-      question={question}
-      showAnswer={showAnswer}
-      userAnswer={userAnswer}
-      onAnswer={onAnswer}
-      disabled={disabled}
-      hitMargin={(settings.sliderHitMargin as number) ?? 12}
-      showToleranceBand={(settings.showToleranceBand as boolean) ?? true}
-      showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
-    />
-  ),
-};
-~~~~~
-
-~~~~~act
-write_file
-src/domains/abstraction/index.ts
-~~~~~
-~~~~~typescript
-import { Eye, Maximize2, Palette, RotateCw, Sun } from 'lucide-preact';
-import { SLIDER_COMMON_SCHEMAS } from '../../config/cards';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { abstractionPlugin } from './plugin';
-
-export const abstractionCards: CardDefinition[] = [
-  {
-    id: 'abs_gesture_axis',
-    domain: 'abstraction',
-    mode: 'GESTURE_AXIS',
-    title: '动态势线提取',
-    desc: '从离散散点流向中提取第一主成分 PCA 势线角度，建立画面主导动势感知力。',
-    instruction: '旋转调节主轴，对齐粒子群的主动态流向 (0°~180°)',
-    icon: RotateCw,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'abs_polygon_decimation',
-    domain: 'abstraction',
-    mode: 'POLYGON_DECIMATION',
-    title: '折线低模大形',
-    desc: '从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。',
-    instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
-    icon: Maximize2,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_notan_threshold',
-    domain: 'abstraction',
-    mode: 'NOTAN_THRESHOLD',
-    title: '黑白素描归组',
-    desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
-    instruction: '调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态',
-    icon: Sun,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['continuous_slider'],
-    },
-    hasWeaknessAnalytics: false,
-    settingSchemas: SLIDER_COMMON_SCHEMAS,
-  },
-  {
-    id: 'abs_palette_clustering',
-    domain: 'abstraction',
-    mode: 'PALETTE_CLUSTERING',
-    title: '主调色群提炼',
-    desc: '穿透多色拼贴马赛克的混色噪点，四选一提炼出面积加权下的加权质心主色。',
-    instruction: '在下方 4 个候选项中，选出代表画面全局主调的加权主色',
-    icon: Palette,
-    tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
-
-export const abstractionDomain: DomainManifest = {
-  domain: 'abstraction',
-  meta: {
-    domain: 'abstraction',
-    appId: 'visual-abstraction',
-    title: '概括感知',
-    subTitle: 'Visual Abstraction',
-    homeTitle: '概括感知 (Visual Abstraction)',
-    homeDesc:
-      '自底向上过滤繁琐细节，训练对动态势线、极简低模折线、素描黑白块面与加权主调的本质提炼能力。',
-    themeColor: 'indigo',
-    icon: Eye,
-    hasWeaknessAnalytics: false,
-    get cards() {
-      return abstractionCards;
-    },
-  },
-  cards: abstractionCards,
-  trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
-};
-
-export default abstractionDomain;
-~~~~~
-
-~~~~~act
-write_file
-src/domains/concretization/index.ts
-~~~~~
-~~~~~typescript
-import { Columns, Droplet, Layers, Shuffle, Sparkles } from 'lucide-preact';
-import type { DomainManifest } from '../../core/contracts';
-import type { CardDefinition } from '../../types/card';
-import { abstractionPlugin } from '../abstraction/plugin';
-
-export const concretizationCards: CardDefinition[] = [
-  {
-    id: 'abs_td_gesture_2afc',
-    domain: 'concretization',
-    mode: 'TD_GESTURE_2AFC',
-    title: '动态势线寻源',
-    desc: '给定抽象势线骨架，在两幅复杂点阵中透视判别谁长在该动势中 (2AFC)。',
-    instruction: '观察上方提炼的势线骨架，判别哪侧复杂点阵符合该动势',
-    icon: Shuffle,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_hull_2afc',
-    domain: 'concretization',
-    mode: 'TD_HULL_2AFC',
-    title: '几何大模寻形',
-    desc: '给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。',
-    instruction: '观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形',
-    icon: Columns,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_notan_2afc',
-    domain: 'concretization',
-    mode: 'TD_NOTAN_2AFC',
-    title: '黑白素描骨架',
-    desc: '给定二值 Notan 剪影，透视辨识哪幅丰富灰阶素描拥有该黑白大结构 (2AFC)。',
-    instruction: '观察上方 Notan 剪影，判别哪侧复杂画面拥有该黑白大结构',
-    icon: Droplet,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['choice_2afc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-  {
-    id: 'abs_td_palette_2afc',
-    domain: 'concretization',
-    mode: 'TD_PALETTE_2AFC',
-    title: '调性基底归位',
-    desc: '给定抽象基准主调色，在四幅复杂混色拼贴图案中选出以此为基调的画面 (4AFC)。',
-    instruction: '观察上方基准主调色，选出以此为色彩基底的拼贴画面',
-    icon: Sparkles,
-    tags: {
-      target: ['concretization'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
-    },
-    hasWeaknessAnalytics: false,
-  },
-];
-
-export const concretizationDomain: DomainManifest = {
-  domain: 'concretization',
-  meta: {
-    domain: 'concretization',
-    appId: 'visual-refinement',
-    title: '细化感知',
-    subTitle: 'Visual Refinement',
-    homeTitle: '细化感知 (Visual Refinement)',
-    homeDesc:
-      '自顶向下透视具象细节，训练基于势线骨架、几何大形、Notan 构图与调性基底在丰富画面中寻源辨识的能力。',
-    themeColor: 'purple',
-    icon: Layers,
-    hasWeaknessAnalytics: false,
-    get cards() {
-      return concretizationCards;
-    },
-  },
-  cards: concretizationCards,
-  trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
-};
-
-export default concretizationDomain;
-~~~~~
-
-#### Acts 6: 保持全局 Canvas 别名向下兼容
-
-~~~~~act
-write_file
-src/components/StarCanvas.tsx
-~~~~~
-~~~~~typescript
-export { StarCanvas, type StarCanvasProps } from '../domains/star/views/StarCanvas';
-~~~~~
-
-~~~~~act
-write_file
-src/components/ColorCanvas.tsx
-~~~~~
-~~~~~typescript
-export { ColorCanvas, type ColorCanvasProps } from '../domains/color/views/ColorCanvas';
-~~~~~
-
-~~~~~act
-write_file
-src/components/RelativeColorCanvas.tsx
-~~~~~
-~~~~~typescript
-export {
-  RelativeColorCanvas,
-  type RelativeColorCanvasProps,
-} from '../domains/relative_color/views/RelativeColorCanvas';
-~~~~~
-
-~~~~~act
-write_file
-src/components/NegativeSpaceCanvas.tsx
-~~~~~
-~~~~~typescript
-export {
-  NegativeSpaceCanvas,
-  type NegativeSpaceCanvasProps,
-} from '../domains/negative_space/views/NegativeSpaceCanvas';
-~~~~~
-
-~~~~~act
-write_file
-src/components/AbstractionCanvas.tsx
-~~~~~
-~~~~~typescript
-export {
-  AbstractionCanvas,
-  type AbstractionCanvasProps,
-} from '../domains/abstraction/views/AbstractionCanvas';
 ~~~~~
 
 ### 下一步建议
-1. **测试与构建校验**：运行 `npm run check` 或 `npm test` 确认 TypeScript 类型与 Vite 编译完全通过。
-2. **提交 Git 变更**：在用户确认后，创建清晰的 Git Commit 记录本次架构升级。
+我们已经成功实施了视图层与静态配置的全面解耦，所有页面现已 100% 接入动态自发现的 `src/core/registry`。
+
+下一步可以生成对应的 `[COMMIT]` 计划，将这次架构重构完整持久化提交至 Git 仓库。

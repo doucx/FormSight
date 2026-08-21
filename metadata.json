@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 全面收敛各领域专属算法、Canvas 视图与插件至 Domain 包", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787319609.1987438, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 全面解耦上层视图与静态配置，接入统一 registry", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787319795.9592762, "duration_ms": 0}}

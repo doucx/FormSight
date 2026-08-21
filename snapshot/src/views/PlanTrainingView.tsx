@@ -2,8 +2,7 @@ import { ArrowLeft, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
-import { getCardById } from '../config/cards';
-import { CARD_PLUGINS } from '../config/trainingPlugins';
+import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
 import { getProfile } from '../utils/db';
 import { type UserSettings, getCardSettings } from '../utils/settings';
@@ -25,10 +24,10 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
   const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 
-  const validItems = (plan.items || []).filter((item) => Boolean(getCardById(item.cardId)));
+  const validItems = (plan.items || []).filter((item) => Boolean(registry.getCardById(item.cardId)));
 
   const currentStep = validItems[currentStepIndex];
-  const currentCard = currentStep ? getCardById(currentStep.cardId) : null;
+  const currentCard = currentStep ? registry.getCardById(currentStep.cardId) : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -60,7 +59,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     };
   }, [currentCard, currentStepIndex, planSessionKey]);
 
-  // 总计时器
   useEffect(() => {
     const timer = setInterval(() => {
       if (!showSummaryModal) {
@@ -70,7 +68,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return () => clearInterval(timer);
   }, [sessionStartTime, showSummaryModal]);
 
-  // 阶段完成：静默直接进入下一阶段或进入总结
   const handleStageReached = useCallback(
     (history: SessionHistoryItem[]) => {
       if (!currentCard) return;
@@ -85,18 +82,15 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
       setStageResults(nextResults);
 
       if (currentStepIndex + 1 < validItems.length) {
-        // 静默无缝进入下一个训练阶段
         setIsLevelLoaded(false);
         setCurrentStepIndex((prev) => prev + 1);
       } else {
-        // 全部阶段顺利完成，进入总结
         setShowSummaryModal(true);
       }
     },
     [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
   );
 
-  // 跳过当前阶段
   const handleSkipCurrentStage = useCallback(() => {
     if (!currentCard) return;
     const skippedRes: PlanStageResult = {
@@ -115,7 +109,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     }
   }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
 
-  // 拦截退出操作：若已有做答成果则展示结算总结
   const handleRequestExit = useCallback(() => {
     if (stageResults.length > 0) {
       setShowSummaryModal(true);
@@ -139,12 +132,15 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return null;
   }
 
-  const plugin = CARD_PLUGINS[currentCard.id];
+  const plugin = registry.getPluginByCardId(currentCard.id);
+  if (!plugin) {
+    onExit();
+    return null;
+  }
   const cardConfig = getCardSettings(settings, currentCard.id);
 
   return (
     <div className="w-full">
-      {/* 顶部流水线全局进度与操作栏 */}
       <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button

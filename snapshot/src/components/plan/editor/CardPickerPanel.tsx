@@ -1,5 +1,5 @@
 import { Plus } from 'lucide-preact';
-import { DOMAINS_CONFIG } from '../../../config/domains';
+import { registry } from '../../../core/registry';
 import type { CardDefinition } from '../../../types/card';
 
 interface CardPickerPanelProps {
@@ -57,7 +57,7 @@ export function CardPickerPanel({
         >
           全部
         </button>
-        {Object.values(DOMAINS_CONFIG).map((d) => (
+        {registry.getAllDomainMetas().map((d) => (
           <button
             type="button"
             key={d.domain}

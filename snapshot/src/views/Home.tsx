@@ -1,6 +1,6 @@
 import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
-import { DOMAINS_CONFIG } from '../config/domains';
+import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
 import { type TrainingDomain, formatTotalTime } from '../utils/db';
 
@@ -29,7 +29,7 @@ export function Home({
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
-  const domains = Object.values(DOMAINS_CONFIG);
+  const domains = registry.getAllDomainMetas();
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-8">
