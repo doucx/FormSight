@@ -1,41 +1,22 @@
-import type { ComponentChildren } from 'preact';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { TrainingShell } from '../components/training/TrainingShell';
-import type { AnyTrainingPlugin } from '../config/trainingPlugins';
+import type { TrainingPlugin } from '../config/trainingPlugins';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
 import { saveSession, saveTrialRecord } from '../utils/db/index';
 import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
 
-interface GenericTrainingPluginAdapter {
-  isTargeting?: (mode: string, settings: unknown) => boolean;
-  generateQuestion: (mode: string, level: number, settings: unknown) => unknown;
-  evaluateAnswer: (userVal: unknown, question: unknown, mode: string) => unknown;
-  isHit: (hitResult: unknown) => boolean;
-  getQuestionLevel: (question: unknown) => number;
-  extractRecordDetails: (
-    question: unknown,
-    hitResult: unknown,
-    userVal: unknown,
-    mode: string,
-  ) => Record<string, unknown>;
-  renderCanvas: (props: {
-    question: unknown;
-    showAnswer: boolean;
-    userAnswer: unknown;
-    onAnswer: (val: unknown) => void;
-    disabled: boolean;
-    isIdle: boolean;
-    settings: unknown;
-  }) => ComponentChildren;
-}
-
-export interface GenericTrainingViewProps {
+export interface GenericTrainingViewProps<
+  TQuestion = any,
+  THitResult = any,
+  TAnswerVal = any,
+  TSettings extends BaseModuleSettings = BaseModuleSettings,
+> {
   card: CardDefinition;
-  plugin: AnyTrainingPlugin;
+  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
-  settings: BaseModuleSettings;
+  settings: TSettings;
   globalSettings?: GlobalSettings;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
@@ -43,7 +24,12 @@ export interface GenericTrainingViewProps {
   onExit: () => void;
 }
 
-export function GenericTrainingView({
+export function GenericTrainingView<
+  TQuestion = any,
+  THitResult = any,
+  TAnswerVal = any,
+  TSettings extends BaseModuleSettings = BaseModuleSettings,
+>({
   card,
   plugin,
   sessionType,
@@ -54,12 +40,11 @@ export function GenericTrainingView({
   onTargetLimitReached,
   showExitButton = true,
   onExit,
-}: GenericTrainingViewProps) {
+}: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const domain = card.domain;
   const mode = card.mode;
-  const adapter = plugin as unknown as GenericTrainingPluginAdapter;
 
-  const session = useTrainingSession<unknown, unknown, unknown>({
+  const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,
     mode,
     sessionType,
@@ -72,9 +57,9 @@ export function GenericTrainingView({
     blockSize: settings.blockSize,
     targetLimitTrials,
     onTargetLimitReached,
-    generateQuestion: (level) => adapter.generateQuestion(mode, level, settings),
-    evaluateAnswer: (userVal, q) => adapter.evaluateAnswer(userVal, q, mode),
-    isHit: adapter.isHit,
+    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
+    evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
+    isHit: (hitResult) => plugin.isHit(hitResult),
     saveTrialRecord: async ({
       sessionId,
       question: q,
@@ -91,10 +76,10 @@ export function GenericTrainingView({
           domain,
           mode,
           timestamp: Date.now(),
-          difficultyLevel: adapter.getQuestionLevel(q),
-          isHit: adapter.isHit(hitResult),
+          difficultyLevel: plugin.getQuestionLevel(q),
+          isHit: plugin.isHit(hitResult),
           responseTimeMs,
-          details: adapter.extractRecordDetails(q, hitResult, userVal, mode),
+          details: plugin.extractRecordDetails(q, hitResult, userVal, mode),
         },
         currentProfileLevel,
       );
@@ -124,13 +109,13 @@ export function GenericTrainingView({
     onExit,
   });
 
-  const isTargeting = adapter.isTargeting ? adapter.isTargeting(mode, settings) : false;
+  const isTargeting = plugin.isTargeting ? plugin.isTargeting(mode, settings) : false;
 
   return (
     <TrainingShell
       card={card}
       sessionType={sessionType}
-      currentLevel={session.question ? adapter.getQuestionLevel(session.question) : initialLevel}
+      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}
@@ -138,7 +123,7 @@ export function GenericTrainingView({
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>
-        adapter.renderCanvas({
+        plugin.renderCanvas({
           question: session.question,
           showAnswer: session.showAnswer,
           userAnswer: session.userAnswer,
@@ -148,9 +133,9 @@ export function GenericTrainingView({
           settings: {
             ...settings,
             sliderHitMargin:
-              globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number) ?? 12,
+              globalSettings?.sliderHitMargin ?? (settings.sliderHitMargin as number | undefined) ?? 12,
             showCanvasHints:
-              globalSettings?.showCanvasHints ?? (settings.showCanvasHints as boolean) ?? true,
+              globalSettings?.showCanvasHints ?? (settings.showCanvasHints as boolean | undefined) ?? true,
           },
         })
       }

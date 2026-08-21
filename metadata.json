@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 解耦 useTrainingSession 并模块化闲置保护与快捷键监听", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787324114.7057323, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 重塑 TrainingPlugin 判别联合类型与泛型视图，消除双重类型断言", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787324176.3195996, "duration_ms": 0}}
