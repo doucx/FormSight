@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
+import { drawDot } from '../../../core/canvas/drawPointGrid';
 import type { HitResult, Point, QuestionData } from '../../../types';
-import { drawDot } from '../../../utils/canvas/drawPointGrid';
-import { CANVAS_SIZE, checkHit, getDynamicDotRadius } from '../../../utils/geometry';
+import { CANVAS_SIZE, checkHit, getDynamicDotRadius } from '../utils/index';
 
 export interface StarCanvasProps {
   question: QuestionData;

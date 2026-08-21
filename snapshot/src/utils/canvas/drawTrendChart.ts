@@ -1,5 +1,5 @@
 import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
-import { setupHiDpiCanvas } from './hidpi';
+import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 
 export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,

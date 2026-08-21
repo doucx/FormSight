@@ -1,8 +1,8 @@
 import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
-import { CARD_ANALYTICS_PLUGINS } from '../../config/analyticsPlugins';
 import { STAR_SCHEMAS } from '../../config/schemas';
 import type { DomainManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import { createStarAnalyticsPlugin } from './analytics';
 import { starPlugin } from './plugin';
 
 export const starCards: CardDefinition[] = [
@@ -76,9 +76,9 @@ export const starDomain: DomainManifest = {
   cards: starCards,
   trainingPlugin: starPlugin as unknown as DomainManifest['trainingPlugin'],
   analyticsPlugins: {
-    star_single: CARD_ANALYTICS_PLUGINS.star_single,
-    star_double_h: CARD_ANALYTICS_PLUGINS.star_double_h,
-    star_double_r: CARD_ANALYTICS_PLUGINS.star_double_r,
+    star_single: createStarAnalyticsPlugin('star_single', '单锚点'),
+    star_double_h: createStarAnalyticsPlugin('star_double_h', '水平双锚点'),
+    star_double_r: createStarAnalyticsPlugin('star_double_r', '旋转双锚点'),
   },
 };
 

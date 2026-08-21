@@ -1,6 +1,6 @@
-import { AngleComparison2AfcView } from '../../../components/angle/AngleComparison2AfcView';
-import { AngleEstimationView } from '../../../components/angle/AngleEstimationView';
-import { AngleParallel2AfcView } from '../../../components/angle/AngleParallel2AfcView';
+import { AngleComparison2AfcView } from '../components/AngleComparison2AfcView';
+import { AngleEstimationView } from '../components/AngleEstimationView';
+import { AngleParallel2AfcView } from '../components/AngleParallel2AfcView';
 import type { AngleHitResult, AngleQuestionData } from '../utils/angleUtils';
 
 export interface AngleCanvasProps {

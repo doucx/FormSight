@@ -1,13 +1,13 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
 import type { Point } from '../../types';
+import type { NegativeSpaceSettings } from '../../utils/settings';
 import {
   type NegativeSpaceHitResult,
   type NegativeSpaceMode,
   type NegativeSpaceQuestionData,
   checkNegativeSpaceHit,
   generateNegativeSpaceQuestion,
-} from '../../utils/negativeSpaceUtils';
-import type { NegativeSpaceSettings } from '../../utils/settings';
+} from './utils/index';
 import { NegativeSpaceCanvas } from './views/NegativeSpaceCanvas';
 
 export const negativeSpacePlugin: TrainingPlugin<

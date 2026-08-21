@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(config): 解除 Setting Schemas 与 Registry 之间的循环依赖", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787320347.25339, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(domains): 下沉领域组件与算法至对应 domains 目录并清理死代码", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787321272.8873415, "duration_ms": 0}}

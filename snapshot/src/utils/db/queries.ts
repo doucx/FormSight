@@ -1,4 +1,4 @@
-import { getCardById } from '../../config/cards';
+import { registry } from '../../core/registry';
 import {
   type TrainingDomain,
   type UnifiedProfileData,
@@ -75,7 +75,7 @@ async function updateProfile(
   currentLevel: number,
 ): Promise<void> {
   const db = await getDB();
-  const card = getCardById(cardId);
+  const card = registry.getCardById(cardId);
   const canonicalDomain = card ? card.domain : domain;
   const existing = await db.get('user_profiles', cardId);
 

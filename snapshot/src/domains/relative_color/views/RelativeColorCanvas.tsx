@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { AlbersInductionView } from '../../../components/relativeColor/AlbersInductionView';
-import { Decontextual2AfcView } from '../../../components/relativeColor/Decontextual2AfcView';
-import { HueInductionView } from '../../../components/relativeColor/HueInductionView';
-import { VectorShiftView } from '../../../components/relativeColor/VectorShiftView';
+import { AlbersInductionView } from '../components/AlbersInductionView';
+import { Decontextual2AfcView } from '../components/Decontextual2AfcView';
+import { HueInductionView } from '../components/HueInductionView';
+import { VectorShiftView } from '../components/VectorShiftView';
 import type {
   RelativeColorHitResult,
   RelativeColorQuestionData,
-} from '../../../utils/relativeColor';
+} from '../utils/index';
 
 export interface RelativeColorCanvasProps {
   question: RelativeColorQuestionData;

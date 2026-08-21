@@ -1,9 +1,30 @@
-import type { CardAnalyticsPlugin } from '../config/analyticsPlugins';
+import type { ComponentChildren } from 'preact';
 import type { DomainMeta } from '../config/domains';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import type { CardDefinition } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
+import type { TrainingDomain, UnifiedTrialRecord } from '../utils/db/schema';
 import type { BaseModuleSettings } from '../utils/settings';
+
+export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord> {
+  id: string;
+  tabLabel: string;
+  title: string;
+  subTitle: string;
+  icon?: (props: { className?: string }) => ComponentChildren;
+  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[]) => void;
+  renderDiagnostics: (records: TRecord[]) => ComponentChildren;
+  getOverallStats?: (records: TRecord[]) => {
+    accuracy: number;
+    total: number;
+    customSummary?: ComponentChildren;
+  };
+}
+
+export interface CardAnalyticsPlugin<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord> {
+  cardId: string;
+  fetchRecords: (cardId: string) => Promise<TRecord[]>;
+  views: CardAnalyticsView<TRecord>[];
+}
 
 /**
  * 领域包清单 (Domain Manifest)

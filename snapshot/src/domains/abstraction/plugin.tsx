@@ -1,12 +1,12 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
+import type { BaseModuleSettings } from '../../utils/settings';
 import {
   type AbstractionHitResult,
   type AbstractionMode,
   type AbstractionQuestionData,
   checkAbstractionHit,
   generateAbstractionQuestion,
-} from '../../utils/abstractionUtils';
-import type { BaseModuleSettings } from '../../utils/settings';
+} from './utils/index';
 import { AbstractionCanvas } from './views/AbstractionCanvas';
 
 export const abstractionPlugin: TrainingPlugin<

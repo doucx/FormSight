@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { AdaptiveEngine } from '../utils/adaptiveEngine';
+import { AdaptiveEngine } from '../core/engine/adaptiveEngine';
 import { type AdaptiveMode, type StepGranularity, loadSettings } from '../utils/settings';
 import { playHitSound, playMissSound } from '../utils/sound';
 

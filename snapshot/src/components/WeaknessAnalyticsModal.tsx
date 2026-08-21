@@ -1,6 +1,6 @@
 import { BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { CARD_ANALYTICS_PLUGINS } from '../config/analyticsPlugins';
+import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db';
 
@@ -10,7 +10,7 @@ interface WeaknessAnalyticsModalProps {
 }
 
 export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
-  const plugin = CARD_ANALYTICS_PLUGINS[card.id];
+  const plugin = registry.getAnalyticsPluginByCardId(card.id);
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
