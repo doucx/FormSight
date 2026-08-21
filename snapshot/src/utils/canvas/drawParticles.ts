@@ -6,6 +6,8 @@ export function drawParticlesCanvas(
   size = 400,
   axisAngle?: number,
   axisColor = '#22C55E',
+  userAxisAngle?: number,
+  isHit?: boolean,
 ) {
   if (!canvas || !particles) return;
   const ctx = canvas.getContext('2d');
@@ -22,7 +24,24 @@ export function drawParticlesCanvas(
     ctx.fill();
   }
 
-  // 绘制指示势线
+  // 若存在用户作答角度且已揭晓，先绘制用户选择的势线（命中绿，未命中红）
+  if (userAxisAngle !== undefined && userAxisAngle !== axisAngle) {
+    const radU = (userAxisAngle * Math.PI) / 180;
+    const cx = size / 2;
+    const cy = size / 2;
+    const L = size * 0.44;
+
+    ctx.strokeStyle = isHit ? '#22C55E' : '#EF4444';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(cx - L * Math.cos(radU), cy - L * Math.sin(radU));
+    ctx.lineTo(cx + L * Math.cos(radU), cy + L * Math.sin(radU));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // 绘制指示势线 (标准真理线)
   if (axisAngle !== undefined) {
     const rad = (axisAngle * Math.PI) / 180;
     const cx = size / 2;
