@@ -5,7 +5,6 @@ import { QuestionCardShell } from '../../../components/common/QuestionCardShell'
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
 } from '../utils/index';
 

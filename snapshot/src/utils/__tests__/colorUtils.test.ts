@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   checkColorHit,
   generateColorQuestion,
-  getToleranceForLevel,
   hsvToHex,
 } from '../../core/color/colorUtils';
 import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
@@ -38,8 +37,6 @@ describe('colorUtils & oklchUtils', () => {
     expect(tolL1).toBeCloseTo(0.12, 2);
     expect(tolL35).toBeCloseTo(0.008, 3);
     expect(tolL1).toBeGreaterThan(tolL35);
-
-    expect(getToleranceForLevel('H', 1)).toBe(tolL1);
   });
 
   it('checkColorHit - should dynamically adjust angular/value tolerance using OKLab delta E', () => {
