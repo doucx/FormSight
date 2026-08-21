@@ -1,10 +1,7 @@
 import type { Point } from '../types';
 import { expDecayInterpolate } from './mathUtils';
 
-export type AngleMode =
-  | 'ANGLE_ESTIMATION'
-  | 'ANGLE_COMPARISON_2AFC'
-  | 'PARALLEL_ALIGNMENT_2AFC';
+export type AngleMode = 'ANGLE_ESTIMATION' | 'ANGLE_COMPARISON_2AFC' | 'PARALLEL_ALIGNMENT_2AFC';
 
 export const ANGLE_CANVAS_SIZE = 340;
 export const ANGLE_2AFC_SIZE = 240;
@@ -112,11 +109,7 @@ export function drawSingleLineCanvas(
 /**
  * 根据中心点、角度和长度生成居中对称线段
  */
-function createCenteredLine(
-  center: Point,
-  angleDeg: number,
-  length: number,
-): LineSegment {
+function createCenteredLine(center: Point, angleDeg: number, length: number): LineSegment {
   const rad = (angleDeg * Math.PI) / 180;
   const halfL = length / 2;
   return {
@@ -134,11 +127,7 @@ function createCenteredLine(
 /**
  * 根据极角生成一条由中心发散出去的线段
  */
-function createRadialLine(
-  center: Point,
-  angleDeg: number,
-  length: number,
-): LineSegment {
+function createRadialLine(center: Point, angleDeg: number, length: number): LineSegment {
   const rad = (angleDeg * Math.PI) / 180;
   return {
     p1: { x: center.x, y: center.y },
@@ -149,10 +138,7 @@ function createRadialLine(
   };
 }
 
-export function generateAngleQuestion(
-  mode: AngleMode,
-  level: number,
-): AngleQuestionData {
+export function generateAngleQuestion(mode: AngleMode, level: number): AngleQuestionData {
   const id = `ang_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
 
@@ -168,8 +154,7 @@ export function generateAngleQuestion(
     const lineA = createRadialLine(center, startAngleDeg, armLength);
     const lineB = createRadialLine(center, endAngleDeg, armLength);
 
-    const tolerance =
-      Math.round(expDecayInterpolate(12.0, 1.5, clampedLevel) * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(12.0, 1.5, clampedLevel) * 10) / 10;
 
     return {
       id,
@@ -186,8 +171,7 @@ export function generateAngleQuestion(
   // 2. ANGLE_COMPARISON_2AFC (角度大小对比)
   if (mode === 'ANGLE_COMPARISON_2AFC') {
     const baseAngle = Math.floor(Math.random() * 110) + 30; // 30° ~ 140°
-    const deltaAngle =
-      Math.round(expDecayInterpolate(25.0, 1.2, clampedLevel) * 10) / 10;
+    const deltaAngle = Math.round(expDecayInterpolate(25.0, 1.2, clampedLevel) * 10) / 10;
 
     const largerAngle = Math.min(170, baseAngle + deltaAngle);
     const smallerAngle = Math.max(10, baseAngle);
@@ -227,8 +211,7 @@ export function generateAngleQuestion(
 
   // 3. PARALLEL_ALIGNMENT_2AFC (基准线平行 2AFC)
   const baseAngle = Math.floor(Math.random() * 360);
-  const angularDeviation =
-    Math.round(expDecayInterpolate(16.0, 1.0, clampedLevel) * 10) / 10;
+  const angularDeviation = Math.round(expDecayInterpolate(16.0, 1.0, clampedLevel) * 10) / 10;
   const deviationSign = Math.random() < 0.5 ? 1 : -1;
   const distractorAngle = (baseAngle + angularDeviation * deviationSign + 360) % 360;
 
@@ -237,11 +220,7 @@ export function generateAngleQuestion(
     x: ANGLE_PROMPT_SIZE / 2,
     y: ANGLE_PROMPT_SIZE / 2,
   };
-  const promptLine = createCenteredLine(
-    promptCenter,
-    baseAngle,
-    ANGLE_PROMPT_SIZE * 0.68,
-  );
+  const promptLine = createCenteredLine(promptCenter, baseAngle, ANGLE_PROMPT_SIZE * 0.68);
 
   // 下方选项候选线 (带有适度中心位移，防止仅依赖绝对屏幕位置)
   const optCenterA: Point = {
@@ -301,8 +280,8 @@ export function checkAngleHit(
   const choice = userAnswer as 'A' | 'B';
   const correctChoice =
     mode === 'ANGLE_COMPARISON_2AFC'
-      ? question.largerSide ?? 'A'
-      : question.parallelSide ?? 'A';
+      ? (question.largerSide ?? 'A')
+      : (question.parallelSide ?? 'A');
 
   const isHit = choice === correctChoice;
 

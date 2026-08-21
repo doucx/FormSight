@@ -44,20 +44,8 @@ export function AngleParallel2AfcView({
       '#4F46E5', // 基准线用 Indigo 突出
       3.0,
     );
-    drawSingleLineCanvas(
-      canvasRefA.current,
-      question.lineOptionA,
-      ANGLE_2AFC_SIZE,
-      '#0F172A',
-      2.5,
-    );
-    drawSingleLineCanvas(
-      canvasRefB.current,
-      question.lineOptionB,
-      ANGLE_2AFC_SIZE,
-      '#0F172A',
-      2.5,
-    );
+    drawSingleLineCanvas(canvasRefA.current, question.lineOptionA, ANGLE_2AFC_SIZE, '#0F172A', 2.5);
+    drawSingleLineCanvas(canvasRefB.current, question.lineOptionB, ANGLE_2AFC_SIZE, '#0F172A', 2.5);
   }, [question.promptLine, question.lineOptionA, question.lineOptionB]);
 
   const handleSelectChoice = useCallback(
