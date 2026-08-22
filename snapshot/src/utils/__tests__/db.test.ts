@@ -5,7 +5,6 @@ import {
   exportAllData,
   formatTotalTime,
   getAllProfiles,
-  getDailySummaries,
   getProfile,
   getTodaySummaries,
   getTrainingTimeMs,
