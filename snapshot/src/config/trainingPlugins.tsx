@@ -79,12 +79,7 @@ export type AbstractionPlugin = TrainingPlugin<
   AbstractionSettings
 >;
 
-export type AnglePlugin = TrainingPlugin<
-  unknown,
-  unknown,
-  number | 'A' | 'B',
-  BaseModuleSettings
->;
+export type AnglePlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B', BaseModuleSettings>;
 
 export type AnyDomainPlugin =
   | StarPlugin
