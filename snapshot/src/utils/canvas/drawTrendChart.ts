@@ -1,5 +1,6 @@
 import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { lttbDownsample } from '../../core/math/downsample';
 
 export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,
@@ -28,13 +29,23 @@ export function renderTrendChartCanvas(
     return;
   }
 
-  const levels = recentDates.map((d) => dailyData[d].maxLevel);
+  const rawPoints = recentDates.map((d, idx) => ({
+    x: idx,
+    y: dailyData[d].maxLevel,
+    date: d,
+  }));
+
+  // 若采样点超过 60 个，自适应执行 LTTB 降采样
+  const sampledPoints = rawPoints.length > 60 ? lttbDownsample(rawPoints, 40) : rawPoints;
+
+  const levels = sampledPoints.map((p) => p.y);
   const maxLevel = Math.max(...levels, 35);
   const minLevel = 1;
 
   const getY = (val: number) =>
     padding.top + (1 - (val - minLevel) / (maxLevel - minLevel || 1)) * chartH;
-  const getX = (idx: number) => padding.left + (idx / Math.max(1, recentDates.length - 1)) * chartW;
+  const getX = (idx: number) =>
+    padding.left + (idx / Math.max(1, sampledPoints.length - 1)) * chartW;
 
   ctx.strokeStyle = '#E2E8F0';
   ctx.lineWidth = 1;
@@ -56,7 +67,7 @@ export function renderTrendChartCanvas(
   }
   ctx.stroke();
 
-  const pointRadius = recentDates.length > 20 ? 2.5 : 3.5;
+  const pointRadius = sampledPoints.length > 20 ? 2.5 : 3.5;
   for (let i = 0; i < levels.length; i++) {
     ctx.beginPath();
     ctx.arc(getX(i), getY(levels[i]), pointRadius, 0, Math.PI * 2);
@@ -94,9 +105,21 @@ export function renderSessionTrendChartCanvas(
   ctx.fillStyle = '#1E293B';
   ctx.fillRect(0, 0, width, height);
 
-  // 构造完整的难度演进轨迹状态序列：[levelBefore_0, levelAfter_0, levelAfter_1, ..., levelAfter_N-1]
-  const levelSequence = [history[0].levelBefore, ...history.map((h) => h.levelAfter)];
-  const totalPoints = levelSequence.length;
+  // 构造序列
+  const rawPoints = [
+    { x: 0, y: history[0].levelBefore, isHit: true },
+    ...history.map((h, i) => ({
+      x: i + 1,
+      y: h.levelAfter,
+      isHit: h.isHit,
+    })),
+  ];
+
+  // 当会话题量 > 120 题时执行 LTTB 降采样至 80 点
+  const sampledPoints = rawPoints.length > 120 ? lttbDownsample(rawPoints, 80) : rawPoints;
+
+  const totalPoints = sampledPoints.length;
+  const levelSequence = sampledPoints.map((p) => p.y);
   const maxLevel = Math.max(...levelSequence, 35);
   const minLevel = Math.min(...levelSequence, 1);
 
@@ -150,7 +173,7 @@ export function renderSessionTrendChartCanvas(
   // 主折线
   ctx.beginPath();
   ctx.strokeStyle = '#818CF8';
-  ctx.lineWidth = totalPoints > 100 ? 1.8 : 2.5;
+  ctx.lineWidth = totalPoints > 60 ? 1.8 : 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(levelSequence[0]));
   for (let i = 1; i < totalPoints; i++) {
@@ -164,14 +187,14 @@ export function renderSessionTrendChartCanvas(
 
   if (!isSuperCrowded) {
     const dotRadius = isCrowded ? 2 : 3.5;
-    for (let i = 0; i < history.length; i++) {
-      const h = history[i];
-      const x = getX(i + 1);
-      const y = getY(h.levelAfter);
+    for (let i = 0; i < sampledPoints.length; i++) {
+      const p = sampledPoints[i];
+      const x = getX(i);
+      const y = getY(p.y);
 
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.fillStyle = h.isHit ? '#22C55E' : '#EF4444';
+      ctx.fillStyle = p.isHit ? '#22C55E' : '#EF4444';
       ctx.fill();
     }
   }

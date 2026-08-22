@@ -20,7 +20,8 @@ import {
   loadSettings,
   saveSettings,
 } from '../settings';
-import { clearAllData, exportAllData, importAllData } from './importExport';
+import { clearAllData, exportAllData, exportAllDataStream, importAllData } from './importExport';
+import { pruneColdRecords } from './prune';
 import {
   formatTotalTime,
   getDailySummaries,
@@ -46,7 +47,7 @@ export interface AppDataSummary {
 
 /**
  * 聚合仓储层 (SystemRepository)
- * 统一收敛 IndexedDB、LocalStorage 及跨介质事务操作
+ * 统一收敛 IndexedDB、LocalStorage 及跨介质事务与稳态治理操作
  */
 export class SystemRepository {
   // === 查询与聚合统计 ===
@@ -114,10 +115,12 @@ export class SystemRepository {
   public exportPlanJson = exportPlanToJson;
   public importPlanJson = importPlanFromJson;
 
-  // === 全局备份恢复与危险操作 ===
+  // === 全局备份恢复与稳态治理 ===
   public exportAllData = exportAllData;
+  public exportAllDataStream = exportAllDataStream;
   public importAllData = importAllData;
   public clearAllData = clearAllData;
+  public pruneColdRecords = pruneColdRecords;
 }
 
 export const repository = new SystemRepository();
