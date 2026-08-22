@@ -21,7 +21,11 @@ export type CognitiveSkillTag =
   | 'gesture_flow'
   | 'notan_grouping';
 
-export type InteractionTag = 'continuous_slider' | 'point_click' | 'choice_2afc' | 'choice_nafc';
+export type InteractionTag =
+  | 'continuous_slider'
+  | 'point_click'
+  | 'choice_2afc'
+  | 'choice_nafc';
 
 export interface CardTags {
   target: SensoryTargetTag[];
@@ -31,6 +35,7 @@ export interface CardTags {
 
 export interface CardDefinition {
   id: string;
+  packId?: string;
   domain: TrainingDomain;
   mode: string;
   title: string;
@@ -41,4 +46,24 @@ export interface CardDefinition {
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
   isExperimental?: boolean;
+}
+
+export interface PackMeta {
+  id: string;
+  title: string;
+  desc: string;
+  version?: string;
+  author?: string;
+  themeColor?: 'indigo' | 'amber' | 'purple' | 'emerald';
+  icon?: (props: { className?: string }) => ComponentChildren;
+}
+
+export interface CardQueryOptions {
+  packId?: string;
+  domain?: TrainingDomain;
+  targets?: SensoryTargetTag[];
+  skills?: CognitiveSkillTag[];
+  interactions?: InteractionTag[];
+  includeExperimental?: boolean;
+  searchKeyword?: string;
 }

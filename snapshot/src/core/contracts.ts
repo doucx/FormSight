@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import type { DomainMeta } from '../config/domains';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
-import type { CardDefinition } from '../types/card';
+import type { CardDefinition, PackMeta } from '../types/card';
 import type { TrainingDomain, UnifiedTrialRecord } from '../utils/db/schema';
 import type { BaseModuleSettings } from '../utils/settings';
 
@@ -27,8 +27,21 @@ export interface CardAnalyticsPlugin<TRecord extends UnifiedTrialRecord = Unifie
 }
 
 /**
+ * 扩展包清单 (Pack Manifest)
+ * v0.4.x 核心插件规范：任何独立内容扩展包（Pack）均可提供此清单
+ */
+export interface PackManifest {
+  packId: string;
+  meta: PackMeta;
+  cards: CardDefinition[];
+  trainingPlugin: AnyTrainingPlugin;
+  analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
+  defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
+}
+
+/**
  * 领域包清单 (Domain Manifest)
- * 每一个垂直领域模块 (如 angle, star, color) 必须在 index.ts 中默认导出此对象
+ * 兼容 v0.3.x 存量领域模块定义
  */
 export interface DomainManifest {
   domain: TrainingDomain;
@@ -38,3 +51,5 @@ export interface DomainManifest {
   analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
   defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
 }
+
+export type AnyManifest = PackManifest | DomainManifest;
