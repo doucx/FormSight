@@ -1,4 +1,3 @@
-import { lttbDownsample } from '../math/downsample';
 import type {
   HeatmapBinningInput,
   HeatmapBinningOutput,
@@ -8,6 +7,7 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from '../../workers/compute.worker';
+import { lttbDownsample } from '../math/downsample';
 
 class ComputeWorkerClient {
   private worker: Worker | null = null;
@@ -30,10 +30,9 @@ class ComputeWorkerClient {
     }
 
     try {
-      this.worker = new Worker(
-        new URL('../../workers/compute.worker.ts', import.meta.url),
-        { type: 'module' },
-      );
+      this.worker = new Worker(new URL('../../workers/compute.worker.ts', import.meta.url), {
+        type: 'module',
+      });
 
       this.worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
         const { id, success, data, error } = e.data;
@@ -57,7 +56,10 @@ class ComputeWorkerClient {
     }
   }
 
-  private sendRequest<TResult>(action: WorkerRequest['action'], payload: unknown): Promise<TResult> {
+  private sendRequest<TResult>(
+    action: WorkerRequest['action'],
+    payload: unknown,
+  ): Promise<TResult> {
     if (!this.worker) {
       return this.fallbackCompute<TResult>(action, payload);
     }

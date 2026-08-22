@@ -194,14 +194,16 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       self.postMessage({ id, success: true, data: res } as WorkerResponse);
     } else if (action === 'heatmapBinning') {
       const res = heatmapBinningCompute(payload as HeatmapBinningInput);
-      self.postMessage({ id, success: true, data: res } as WorkerResponse, [
-        res.bins.buffer,
-      ]);
+      self.postMessage({ id, success: true, data: res } as WorkerResponse, [res.bins.buffer]);
     } else if (action === 'hueBiasAnalysis') {
       const res = hueBiasCompute(payload as HueBiasAnalysisInput);
       self.postMessage({ id, success: true, data: res } as WorkerResponse);
     } else {
-      self.postMessage({ id, success: false, error: `Unknown action: ${action}` } as WorkerResponse);
+      self.postMessage({
+        id,
+        success: false,
+        error: `Unknown action: ${action}`,
+      } as WorkerResponse);
     }
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);

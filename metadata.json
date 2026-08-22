@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(worker): 引入 Web Worker 计算线程与高性能图表降采样聚合", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787404886.6523297, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M workerClient.ts, M compute.worker.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787404891.3669996, "duration_ms": 0}}
