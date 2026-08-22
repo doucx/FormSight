@@ -99,38 +99,42 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const startOfWeekStr = getLocalDateString(now.getTime() - 6 * 24 * 60 * 60 * 1000);
   const startOfYearStr = `${now.getFullYear()}-01-01`;
 
-  const stats = {
-    today: { total: 0, hits: 0 },
-    week: { total: 0, hits: 0 },
-    year: { total: 0, hits: 0 },
-    allTime: { total: 0, hits: 0 },
-  };
+  const { stats, dailyData } = useMemo(() => {
+    const statsObj = {
+      today: { total: 0, hits: 0 },
+      week: { total: 0, hits: 0 },
+      year: { total: 0, hits: 0 },
+      allTime: { total: 0, hits: 0 },
+    };
 
-  const dailyData: Record<string, { total: number; maxLevel: number }> = {};
+    const data: Record<string, { total: number; maxLevel: number }> = {};
 
-  for (const s of filteredSummaries) {
-    stats.allTime.total += s.totalCount;
-    stats.allTime.hits += s.hitCount;
+    for (const s of filteredSummaries) {
+      statsObj.allTime.total += s.totalCount;
+      statsObj.allTime.hits += s.hitCount;
 
-    if (s.date === todayStr) {
-      stats.today.total += s.totalCount;
-      stats.today.hits += s.hitCount;
-    }
-    if (s.date >= startOfWeekStr) {
-      stats.week.total += s.totalCount;
-      stats.week.hits += s.hitCount;
-    }
-    if (s.date >= startOfYearStr) {
-      stats.year.total += s.totalCount;
-      stats.year.hits += s.hitCount;
+      if (s.date === todayStr) {
+        statsObj.today.total += s.totalCount;
+        statsObj.today.hits += s.hitCount;
+      }
+      if (s.date >= startOfWeekStr) {
+        statsObj.week.total += s.totalCount;
+        statsObj.week.hits += s.hitCount;
+      }
+      if (s.date >= startOfYearStr) {
+        statsObj.year.total += s.totalCount;
+        statsObj.year.hits += s.hitCount;
+      }
+
+      if (!data[s.date]) {
+        data[s.date] = { total: 0, maxLevel: s.maxLevel };
+      }
+      data[s.date].total += s.totalCount;
+      data[s.date].maxLevel = Math.max(data[s.date].maxLevel, s.maxLevel);
     }
 
-    if (!dailyData[s.date]) {
-      dailyData[s.date] = { total: 0, maxLevel: s.maxLevel };
-    }
-    dailyData[s.date].total += s.totalCount;
-    dailyData[s.date].maxLevel = Math.max(dailyData[s.date].maxLevel, s.maxLevel);
-  }
+    return { stats: statsObj, dailyData: data };
+  }, [filteredSummaries, todayStr, startOfWeekStr, startOfYearStr]);
 
   const calcAcc = (hits: number, total: number) =>
     total === 0 ? 0 : Math.round((hits / total) * 100);
