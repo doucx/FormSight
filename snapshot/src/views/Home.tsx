@@ -68,7 +68,9 @@ export function Home({
                 v{__APP_VERSION__}
               </span>
             </h1>
-            <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知自适应强化训练系统</p>
+            <p className="text-xs text-slate-400 font-medium">
+              视觉造型构图与色彩感知自适应强化训练系统
+            </p>
           </div>
         </div>
 

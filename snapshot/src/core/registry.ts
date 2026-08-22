@@ -9,12 +9,7 @@ import type {
   SensoryTargetTag,
 } from '../types/card';
 import type { TrainingDomain } from '../utils/db/schema';
-import type {
-  AnyManifest,
-  CardAnalyticsPlugin,
-  DomainManifest,
-  PackManifest,
-} from './contracts';
+import type { AnyManifest, CardAnalyticsPlugin, DomainManifest, PackManifest } from './contracts';
 
 class InvertedCardIndex {
   private targetMap = new Map<SensoryTargetTag, Set<string>>();
@@ -224,7 +219,8 @@ class SystemDomainRegistry {
       intersect(interactionUnion);
     }
 
-    const idsToFilter = candidateIds === null ? Array.from(this.cardMap.keys()) : Array.from(candidateIds);
+    const idsToFilter =
+      candidateIds === null ? Array.from(this.cardMap.keys()) : Array.from(candidateIds);
     let results = idsToFilter
       .map((id) => this.cardMap.get(id))
       .filter((card): card is CardDefinition => Boolean(card));

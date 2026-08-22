@@ -16,11 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
 import type { CognitiveSkillTag } from '../types/card';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import {
-  type DailySummaryData,
-  getDailySummaries,
-  getLocalDateString,
-} from '../utils/db/index';
+import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../utils/db/index';
 import { SKILL_TAG_LABELS } from './discovery/FilterEngine';
 
 interface GlobalStatsModalProps {
@@ -281,7 +277,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           </div>
         ) : stats.allTime.total === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
-            <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}】下暂无做答记录，先去练习几道题吧！
+            <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}
+            】下暂无做答记录，先去练习几道题吧！
           </div>
         ) : (
           <div className="flex flex-col gap-6">

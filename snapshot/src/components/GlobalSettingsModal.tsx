@@ -344,7 +344,9 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-indigo-900">数据库瘦身与修剪</div>
-                <div className="text-[11px] text-indigo-600">清理 90 天以前的高开销图形几何细节</div>
+                <div className="text-[11px] text-indigo-600">
+                  清理 90 天以前的高开销图形几何细节
+                </div>
               </div>
             </div>
             <button

@@ -38,7 +38,7 @@ export async function pruneColdRecords(retentionDays = 90): Promise<PruneResult>
         ...record,
         details: undefined,
       };
-      delete prunedRecord.details;
+      prunedRecord.details = undefined;
       await cursor.update(prunedRecord);
       prunedCount++;
     }

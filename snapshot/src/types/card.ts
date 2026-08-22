@@ -21,11 +21,7 @@ export type CognitiveSkillTag =
   | 'gesture_flow'
   | 'notan_grouping';
 
-export type InteractionTag =
-  | 'continuous_slider'
-  | 'point_click'
-  | 'choice_2afc'
-  | 'choice_nafc';
+export type InteractionTag = 'continuous_slider' | 'point_click' | 'choice_2afc' | 'choice_nafc';
 
 export interface CardTags {
   target: SensoryTargetTag[];

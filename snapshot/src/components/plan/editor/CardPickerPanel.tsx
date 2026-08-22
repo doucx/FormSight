@@ -10,11 +10,7 @@ interface CardPickerPanelProps {
   onAddItem: (cardId: string) => void;
 }
 
-export function CardPickerPanel({
-  isAddingCard,
-  onToggleAdding,
-  onAddItem,
-}: CardPickerPanelProps) {
+export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: CardPickerPanelProps) {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [selectedSkill, setSelectedSkill] = useState<CognitiveSkillTag | 'all'>('all');
   const [selectedPackId, setSelectedPackId] = useState<string>('all');

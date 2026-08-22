@@ -83,9 +83,7 @@ export function FilterEngine({
 
   const toggleSkill = (skill: CognitiveSkillTag) => {
     const current = query.skills || [];
-    const next = current.includes(skill)
-      ? current.filter((s) => s !== skill)
-      : [...current, skill];
+    const next = current.includes(skill) ? current.filter((s) => s !== skill) : [...current, skill];
     onChange({ ...query, skills: next.length > 0 ? next : undefined });
   };
 
@@ -144,7 +142,9 @@ export function FilterEngine({
           <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
             <span>
-              已匹配 <strong className="font-mono text-indigo-600 font-black">{totalMatches}</strong> 个训练模块
+              已匹配{' '}
+              <strong className="font-mono text-indigo-600 font-black">{totalMatches}</strong>{' '}
+              个训练模块
             </span>
           </div>
 
