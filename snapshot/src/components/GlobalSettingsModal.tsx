@@ -6,7 +6,6 @@ import {
   RotateCcw,
   Scissors,
   Sliders,
-  Sparkles,
   ToggleLeft,
   ToggleRight,
   Trash2,

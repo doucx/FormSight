@@ -1,7 +1,7 @@
-import { Filter, Plus, Search, Sparkles, X } from 'lucide-preact';
+import { Plus, Search, Sparkles, X } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
 import { registry } from '../../../core/registry';
-import type { CardDefinition, CardQueryOptions, CognitiveSkillTag } from '../../../types/card';
+import type { CardQueryOptions, CognitiveSkillTag } from '../../../types/card';
 import { SKILL_TAG_LABELS } from '../../discovery/FilterEngine';
 
 interface CardPickerPanelProps {

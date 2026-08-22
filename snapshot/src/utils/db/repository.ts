@@ -1,4 +1,3 @@
-import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 import {
   clonePlan,

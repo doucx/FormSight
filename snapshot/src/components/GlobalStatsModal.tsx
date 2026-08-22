@@ -1,13 +1,10 @@
 import {
   Activity,
-  Award,
   BarChart2,
   Calendar,
   ChevronDown,
   Compass,
   Filter,
-  Layers,
-  Sparkles,
   Target,
   TrendingUp,
   X,

@@ -73,7 +73,7 @@ export function GenericTrainingView<
           id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
           sessionId,
           cardId: card.id,
-          domain,
+          domain: packId,
           mode,
           timestamp: Date.now(),
           difficultyLevel: plugin.getQuestionLevel(q),
@@ -95,7 +95,7 @@ export function GenericTrainingView<
       await saveSession({
         id: sessionId,
         cardId: card.id,
-        domain,
+        domain: packId,
         mode,
         type: sessionType,
         startTimestamp,

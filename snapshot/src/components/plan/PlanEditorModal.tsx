@@ -232,11 +232,6 @@ export function PlanEditorModal({
   const totalTrials = validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
-  const availableCards = registry.getAllCards().filter((card) => {
-    if (selectedDomainFilter === 'all') return true;
-    return card.packId === selectedDomainFilter;
-  });
-
   return (
     <ModalShell title="定制日常训练流" icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-5">
@@ -381,10 +376,7 @@ export function PlanEditorModal({
 
         <CardPickerPanel
           isAddingCard={isAddingCard}
-          selectedDomainFilter={selectedDomainFilter}
-          availableCards={availableCards}
           onToggleAdding={setIsAddingCard}
-          onSelectDomainFilter={setSelectedDomainFilter}
           onAddItem={handleAddItem}
         />
 

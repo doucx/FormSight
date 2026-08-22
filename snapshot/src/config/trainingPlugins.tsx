@@ -89,4 +89,4 @@ export type AnyDomainPlugin =
   | AbstractionPlugin
   | AnglePlugin;
 
-export type AnyTrainingPlugin = TrainingPlugin;
+export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;

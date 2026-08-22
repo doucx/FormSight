@@ -6,7 +6,7 @@ import {
   generateNegativeSpaceQuestion,
   generateRandomPolygon,
   getNegativeSpaceToleranceForLevel,
-} from '../../domains/negative_space/utils';
+} from '../../packs/negative_space/utils';
 
 describe('negativeSpaceUtils', () => {
   it('calcPolygonArea - should calculate rectangle and triangle area accurately via Shoelace formula', () => {

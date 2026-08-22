@@ -194,7 +194,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       self.postMessage({ id, success: true, data: res } as WorkerResponse);
     } else if (action === 'heatmapBinning') {
       const res = heatmapBinningCompute(payload as HeatmapBinningInput);
-      self.postMessage({ id, success: true, data: res } as WorkerResponse, [res.bins.buffer]);
+      (self as unknown as Worker).postMessage({ id, success: true, data: res } as WorkerResponse, [
+        res.bins.buffer,
+      ]);
     } else if (action === 'hueBiasAnalysis') {
       const res = hueBiasCompute(payload as HueBiasAnalysisInput);
       self.postMessage({ id, success: true, data: res } as WorkerResponse);
