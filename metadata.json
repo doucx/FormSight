@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 升级数据引擎底座至 v2 (写时物化聚合与日统计视图)", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787403022.6469226, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787403051.2970552, "duration_ms": 0}}
