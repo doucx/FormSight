@@ -1,15 +1,23 @@
-import { ArrowRight, BarChart2, Clock, Sliders, Sparkles } from 'lucide-preact';
+import { BarChart2, Clock, Inbox, RotateCcw, Sliders, Sparkles } from 'lucide-preact';
+import { useMemo, useState } from 'preact/hooks';
+import { ModeCard } from '../components/common/ModeCard';
+import { FilterEngine } from '../components/discovery/FilterEngine';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { registry } from '../core/registry';
+import type { CardQueryOptions } from '../types/card';
 import type { TrainingPlan } from '../types/plan';
-import { type TrainingDomain, formatTotalTime } from '../utils/db/index';
+import { type UnifiedProfileData, formatTotalTime } from '../utils/db/index';
 
 interface HomeProps {
   totalTimeMs: number;
-  domainTimes: Record<TrainingDomain, number>;
+  todayStats: Record<string, { count: number; timeMs: number }>;
+  profiles: Record<string, UnifiedProfileData>;
   trainingPlan: TrainingPlan;
   allPlans?: TrainingPlan[];
-  onNavigateDomain: (domain: TrainingDomain) => void;
+  showExperimental?: boolean;
+  onStartCard: (cardId: string, type: 'training' | 'benchmark') => void;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenCardAnalytics: (cardId: string) => void;
   onStartPlan: () => void;
   onOpenPlanEditor: () => void;
   onSelectPlan?: (planId: string) => void;
@@ -19,22 +27,36 @@ interface HomeProps {
 
 export function Home({
   totalTimeMs,
-  domainTimes,
+  todayStats,
+  profiles,
   trainingPlan,
   allPlans = [],
-  onNavigateDomain,
+  showExperimental = false,
+  onStartCard,
+  onOpenCardSettings,
+  onOpenCardAnalytics,
   onStartPlan,
   onOpenPlanEditor,
   onSelectPlan,
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
-  const domains = registry.getAllDomainMetas();
+  const [query, setQuery] = useState<CardQueryOptions>({
+    includeExperimental: showExperimental,
+  });
+
+  // 结合全局设置与查询条件获取过滤后的卡片
+  const filteredCards = useMemo(() => {
+    return registry.queryCards({
+      ...query,
+      includeExperimental: showExperimental || query.includeExperimental,
+    });
+  }, [query, showExperimental]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-8">
-      {/* 品牌 Header */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-8 py-6 rounded-3xl shadow-sm">
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
+      {/* 品牌 Header 状态栏 */}
+      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-7 py-5 sm:px-8 sm:py-6 rounded-3xl shadow-sm flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-200">
             <Sparkles className="w-7 h-7" />
@@ -46,7 +68,9 @@ export function Home({
                 v{__APP_VERSION__}
               </span>
             </h1>
-            <p className="text-xs text-slate-400 font-medium">视觉造型构图与色彩感知强化训练系统</p>
+            <p className="text-xs text-slate-400 font-medium">
+              视觉造型构图与色彩感知自适应强化训练系统
+            </p>
           </div>
         </div>
 
@@ -58,7 +82,7 @@ export function Home({
           <button
             type="button"
             onClick={onOpenGlobalStats}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95"
             title="全局统计"
           >
             <BarChart2 className="w-4 h-4 text-indigo-500" />
@@ -67,7 +91,7 @@ export function Home({
           <button
             type="button"
             onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5"
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
             title="全局设置"
           >
             <Sliders className="w-4 h-4" />
@@ -76,7 +100,7 @@ export function Home({
         </div>
       </div>
 
-      {/* 计划 Hero 区域 */}
+      {/* 今日定制训练流 Hero 区域 */}
       <PlanHeroCard
         plan={trainingPlan}
         allPlans={allPlans}
@@ -85,46 +109,63 @@ export function Home({
         onSelectPlan={onSelectPlan}
       />
 
-      {/* 模块选择区 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {domains.map((meta) => {
-          const Icon = meta.icon;
-          const timeMs = domainTimes[meta.domain] || 0;
+      {/* 大盘发现库核心筛选引擎 */}
+      <FilterEngine
+        query={query}
+        totalMatches={filteredCards.length}
+        onChange={(newQuery) => setQuery(newQuery)}
+      />
 
-          return (
-            <button
-              key={meta.domain}
-              type="button"
-              onClick={() => onNavigateDomain(meta.domain)}
-              className="group cursor-pointer bg-white border border-slate-200/80 hover:border-indigo-400 rounded-3xl p-8 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden text-left"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="p-4 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-                    <Icon className="w-8 h-8" />
-                  </div>
-                </div>
+      {/* 大盘卡片网格流 (Discovery Hub Cards Grid) */}
+      {filteredCards.length === 0 ? (
+        <div className="w-full bg-white border border-slate-200/80 rounded-3xl p-12 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
+          <div className="p-4 bg-slate-50 text-slate-400 rounded-3xl">
+            <Inbox className="w-8 h-8" />
+          </div>
+          <div className="text-base font-bold text-slate-800">未找到符合条件的训练模块</div>
+          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+            尝试调整或清空当前的多维筛选标签、搜索关键字，以探索更多训练模块。
+          </p>
+          <button
+            type="button"
+            onClick={() => setQuery({ includeExperimental: showExperimental })}
+            className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            重置所有筛选条件
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCards.map((card) => {
+            const profile = profiles[card.id];
+            const totalTrials = profile?.totalTrials || 0;
+            const accuracy =
+              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
+            const currentLevel = profile?.currentLevel || 5;
+            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
 
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-2">{meta.homeTitle}</h2>
-                  <p className="text-xs text-slate-500 leading-relaxed">{meta.homeDesc}</p>
-                </div>
-              </div>
-
-              <div className="pt-8 flex items-center justify-between text-indigo-600 font-bold text-xs group-hover:translate-x-1 transition-transform border-t border-slate-100 mt-4">
-                <div className="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>累计练习: {formatTotalTime(timeMs)}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span>进入练习看板</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+            return (
+              <ModeCard
+                key={card.id}
+                title={card.title}
+                desc={card.desc}
+                icon={card.icon}
+                todayCount={stat.count}
+                todayTimeMs={stat.timeMs}
+                currentLevel={currentLevel}
+                accuracy={accuracy}
+                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
+                isExperimental={Boolean(card.isExperimental)}
+                onStartTraining={() => onStartCard(card.id, 'training')}
+                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
+                onOpenSettings={() => onOpenCardSettings(card.id)}
+                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

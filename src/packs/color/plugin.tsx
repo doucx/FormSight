@@ -15,7 +15,7 @@ export const colorPlugin: TrainingPlugin<
   number | [number, number, number],
   ColorSenseSettings
 > = {
-  domain: 'color',
+  packId: 'color',
   title: '色感训练',
   getModeBadge: (mode) =>
     mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色',

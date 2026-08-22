@@ -1,6 +1,6 @@
 import { Droplet, Palette, RotateCw, Sun } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
-import type { DomainManifest } from '../../core/contracts';
+import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { colorHueAnalyticsPlugin } from './analytics';
 import { colorPlugin } from './plugin';
@@ -55,7 +55,7 @@ export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
 export const colorCards: CardDefinition[] = [
   {
     id: 'color_hue',
-    domain: 'color',
+    packId: 'color',
     mode: 'H',
     title: '色相 (Hue)',
     desc: '识别颜色在色相环上的具体角度 (0°~360°)',
@@ -71,7 +71,7 @@ export const colorCards: CardDefinition[] = [
   },
   {
     id: 'color_val',
-    domain: 'color',
+    packId: 'color',
     mode: 'V',
     title: '明度 (Value)',
     desc: '已知色相，评估颜色的素描明暗程度 (0%~100%)',
@@ -87,7 +87,7 @@ export const colorCards: CardDefinition[] = [
   },
   {
     id: 'color_sat',
-    domain: 'color',
+    packId: 'color',
     mode: 'S',
     title: '饱和度 (Sat)',
     desc: '已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)',
@@ -103,7 +103,7 @@ export const colorCards: CardDefinition[] = [
   },
   {
     id: 'color_all',
-    domain: 'color',
+    packId: 'color',
     mode: 'ALL',
     title: '综合拾色 (Match)',
     desc: '同时调整色相、饱和度与明度，逼近真理色彩',
@@ -119,28 +119,21 @@ export const colorCards: CardDefinition[] = [
   },
 ];
 
-export const colorDomain: DomainManifest = {
-  domain: 'color',
+export const colorPack: PackManifest = {
+  packId: 'color',
   meta: {
-    domain: 'color',
-    appId: 'color-sense',
-    title: '色感训练',
+    id: 'color',
+    title: '绝对色感',
     subTitle: 'Color Recognition',
-    homeTitle: '绝对色感 (Color Recognition)',
-    homeDesc:
-      '拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。',
+    desc: '拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。',
     themeColor: 'amber',
     icon: Palette,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return colorCards;
-    },
   },
   cards: colorCards,
-  trainingPlugin: colorPlugin as unknown as DomainManifest['trainingPlugin'],
+  trainingPlugin: colorPlugin,
   analyticsPlugins: {
     color_hue: colorHueAnalyticsPlugin,
   },
 };
 
-export default colorDomain;
+export default colorPack;

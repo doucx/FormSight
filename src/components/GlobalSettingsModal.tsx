@@ -4,6 +4,7 @@ import {
   FlaskConical,
   HelpCircle,
   RotateCcw,
+  Scissors,
   Sliders,
   ToggleLeft,
   ToggleRight,
@@ -12,7 +13,12 @@ import {
   Volume2,
 } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
-import { clearAllData, exportAllData, importAllData } from '../utils/db/index';
+import {
+  clearAllData,
+  exportAllDataStream,
+  importAllData,
+  pruneColdRecords,
+} from '../utils/db/index';
 import { resetPlansToDefault } from '../utils/planStorage';
 import { loadSettings, saveSettings } from '../utils/settings';
 import { ConfirmModal } from './common/ConfirmModal';
@@ -35,6 +41,8 @@ export function GlobalSettingsModal({
   const [settings, setSettings] = useState(loadSettings);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleToggleSound = () => {
     const updated = {
@@ -104,19 +112,26 @@ export function GlobalSettingsModal({
   };
 
   const handleExport = async () => {
-    const jsonStr = await exportAllData();
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const now = new Date();
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-    a.download = `formsight_data_${dateStr}_${timeStr}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('全量数据已成功导出为 JSON 文件', 'success');
+    try {
+      setIsExporting(true);
+      const blob = await exportAllDataStream();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      a.download = `formsight_data_${dateStr}_${timeStr}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('全量数据已流式导出为 JSON 备份', 'success');
+    } catch (e) {
+      console.error('Export failed:', e);
+      showToast('导出失败，请重试', 'error');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleImportFile = async (e: Event) => {
@@ -126,12 +141,27 @@ export function GlobalSettingsModal({
       const text = await file.text();
       const success = await importAllData(text);
       if (success) {
-        showToast('数据已成功导入并合并！', 'success');
+        showToast('数据已成功分批导入并合并！', 'success');
         onDataChanged();
         onClose();
       } else {
         showToast('导入失败，备份文件格式不匹配', 'error');
       }
+    }
+  };
+
+  const handlePruneConfirmed = async () => {
+    setShowPruneConfirm(false);
+    try {
+      const res = await pruneColdRecords(90);
+      showToast(
+        `已修剪 ${res.prunedCount} 条 90 天前记录中的多边形/点阵细节，释放了海量存储空间！`,
+        'success',
+      );
+      onDataChanged();
+    } catch (err) {
+      console.error('Prune failed:', err);
+      showToast('修剪操作失败', 'error');
     }
   };
 
@@ -273,19 +303,20 @@ export function GlobalSettingsModal({
           </div>
         </div>
 
-        {/* 数据管理 */}
+        {/* 数据管理与稳态治理 */}
         <div className="space-y-4">
           <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-            数据备份与恢复
+            数据备份与稳态治理
           </div>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
+              disabled={isExporting}
               onClick={handleExport}
-              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95"
+              className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
             >
               <Download className="w-4 h-4 text-indigo-600" />
-              导出全量 JSON
+              {isExporting ? '正在流式打包...' : '流式导出 JSON'}
             </button>
             <button
               type="button"
@@ -304,8 +335,30 @@ export function GlobalSettingsModal({
             />
           </div>
 
+          {/* 数据库瘦身与修剪 */}
+          <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                <Scissors className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-indigo-900">数据库瘦身与修剪</div>
+                <div className="text-[11px] text-indigo-600">
+                  清理 90 天以前的高开销图形几何细节
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowPruneConfirm(true)}
+              className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0"
+            >
+              安全瘦身
+            </button>
+          </div>
+
           {/* 计划库重置与危险操作 */}
-          <div className="pt-3 border-t border-slate-100 space-y-3">
+          <div className="pt-2 border-t border-slate-100 space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-bold text-slate-700">恢复官方训练计划</div>
@@ -348,6 +401,16 @@ export function GlobalSettingsModal({
           </button>
         </div>
       </ModalShell>
+
+      <ConfirmModal
+        isOpen={showPruneConfirm}
+        title="数据库冷数据安全瘦身"
+        message="确定要清理 90 天前记录中的多边形/点阵冗余图形细节吗？此操作将大幅压缩存储空间，且完全保留您的总做答数、打卡日历、正确率与能力层阶！"
+        confirmText="开始瘦身"
+        isDangerous={false}
+        onConfirm={handlePruneConfirmed}
+        onCancel={() => setShowPruneConfirm(false)}
+      />
 
       <ConfirmModal
         isOpen={showResetPlansConfirm}

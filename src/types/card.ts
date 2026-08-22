@@ -1,6 +1,5 @@
 import type { ComponentChildren } from 'preact';
 import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
-import type { TrainingDomain } from '../utils/db/index';
 
 export type SensoryTargetTag =
   | 'geometry'
@@ -31,7 +30,7 @@ export interface CardTags {
 
 export interface CardDefinition {
   id: string;
-  domain: TrainingDomain;
+  packId: string;
   mode: string;
   title: string;
   desc: string;
@@ -41,4 +40,24 @@ export interface CardDefinition {
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
   isExperimental?: boolean;
+}
+
+export interface PackMeta {
+  id: string;
+  title: string;
+  subTitle?: string;
+  desc: string;
+  version?: string;
+  author?: string;
+  themeColor?: 'indigo' | 'amber' | 'purple' | 'emerald';
+  icon?: (props: { className?: string }) => ComponentChildren;
+}
+
+export interface CardQueryOptions {
+  packId?: string;
+  targets?: SensoryTargetTag[];
+  skills?: CognitiveSkillTag[];
+  interactions?: InteractionTag[];
+  includeExperimental?: boolean;
+  searchKeyword?: string;
 }

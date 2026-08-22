@@ -1,30 +1,113 @@
 import { registry } from '../../core/registry';
 import {
-  type TrainingDomain,
+  type DailySummaryData,
   type UnifiedProfileData,
   type UnifiedSessionData,
   type UnifiedTrialRecord,
   getDB,
+  getLocalDateString,
 } from './schema';
 
+/**
+ * 原子化保存单次做答记录并写时累加物化日聚合与能力档案
+ */
 export async function saveTrialRecord(
   record: UnifiedTrialRecord,
   currentProfileLevel?: number,
 ): Promise<void> {
   const db = await getDB();
-  const domain = record.domain || 'star';
   const cardId = record.cardId || record.mode;
-  const normalizedRecord: UnifiedTrialRecord = { ...record, domain, cardId };
-  await db.put('records', normalizedRecord);
+  const canonicalCard = registry.getCardById(cardId);
+  const packId = canonicalCard ? canonicalCard.packId : record.domain || 'core';
   const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
-  await updateProfile(cardId, domain, record.mode, record.isHit, targetProfileLevel);
+
+  const normalizedRecord: UnifiedTrialRecord = {
+    ...record,
+    cardId,
+    domain: packId,
+  };
+
+  const dateStr = getLocalDateString(record.timestamp);
+  const summaryId = `${dateStr}_${cardId}`;
+  const respMs = Number(record.responseTimeMs) || 0;
+
+  // 使用单一读写事务保证原子性
+  const tx = db.transaction(['records', 'daily_summaries', 'user_profiles'], 'readwrite');
+
+  // 1. 写入原始答题记录
+  await tx.objectStore('records').put(normalizedRecord);
+
+  // 2. 写时物化更新日聚合表 (daily_summaries)
+  const dailyStore = tx.objectStore('daily_summaries');
+  const existingDaily = await dailyStore.get(summaryId);
+
+  if (!existingDaily) {
+    const newSummary: DailySummaryData = {
+      id: summaryId,
+      date: dateStr,
+      cardId,
+      domain: packId,
+      mode: record.mode,
+      totalCount: 1,
+      hitCount: record.isHit ? 1 : 0,
+      totalTimeMs: respMs,
+      maxLevel: targetProfileLevel,
+      minLevel: targetProfileLevel,
+      lastLevel: targetProfileLevel,
+      updatedAt: record.timestamp,
+    };
+    await dailyStore.put(newSummary);
+  } else {
+    existingDaily.domain = packId;
+    existingDaily.mode = record.mode;
+    existingDaily.totalCount += 1;
+    if (record.isHit) existingDaily.hitCount += 1;
+    existingDaily.totalTimeMs += respMs;
+    existingDaily.maxLevel = Math.max(existingDaily.maxLevel, targetProfileLevel);
+    existingDaily.minLevel = Math.min(existingDaily.minLevel, targetProfileLevel);
+    existingDaily.lastLevel = targetProfileLevel;
+    existingDaily.updatedAt = record.timestamp;
+    await dailyStore.put(existingDaily);
+  }
+
+  // 3. 更新用户能力档案 (user_profiles)
+  const profileStore = tx.objectStore('user_profiles');
+  const existingProfile = await profileStore.get(cardId);
+
+  if (!existingProfile) {
+    const newProfile: UnifiedProfileData = {
+      cardId,
+      domain: packId,
+      mode: record.mode,
+      currentLevel: targetProfileLevel,
+      bestLevel: targetProfileLevel,
+      totalTrials: 1,
+      totalHits: record.isHit ? 1 : 0,
+      updatedAt: Date.now(),
+    };
+    await profileStore.put(newProfile);
+  } else {
+    existingProfile.domain = packId;
+    existingProfile.mode = record.mode;
+    existingProfile.totalTrials += 1;
+    if (record.isHit) existingProfile.totalHits += 1;
+    existingProfile.currentLevel = targetProfileLevel;
+    if (targetProfileLevel > existingProfile.bestLevel) {
+      existingProfile.bestLevel = targetProfileLevel;
+    }
+    existingProfile.updatedAt = Date.now();
+    await profileStore.put(existingProfile);
+  }
+
+  await tx.done;
 }
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
-  const domain = session.domain || 'star';
   const cardId = session.cardId || session.mode;
-  await db.put('sessions', { ...session, domain, cardId });
+  const canonicalCard = registry.getCardById(cardId);
+  const packId = canonicalCard ? canonicalCard.packId : session.domain || 'core';
+  await db.put('sessions', { ...session, cardId, domain: packId });
 }
 
 export async function getProfile(cardId: string): Promise<UnifiedProfileData | null> {
@@ -33,89 +116,75 @@ export async function getProfile(cardId: string): Promise<UnifiedProfileData | n
   return profile || null;
 }
 
-export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
+export async function getAllProfiles(): Promise<UnifiedProfileData[]> {
   const db = await getDB();
-  return db.getAllFromIndex('user_profiles', 'by-domain', domain);
+  return db.getAll('user_profiles');
 }
 
-export async function getTrialRecords(
-  domain?: TrainingDomain,
-  mode?: string,
+/**
+ * 从 daily_summaries 快速检索聚合数据 (毫秒级)
+ */
+export async function getDailySummaries(options?: {
+  cardId?: string;
+  date?: string;
+  startDate?: string;
+  endDate?: string;
+}): Promise<DailySummaryData[]> {
+  const db = await getDB();
+
+  if (options?.date && options?.cardId) {
+    const item = await db.get('daily_summaries', `${options.date}_${options.cardId}`);
+    return item ? [item] : [];
+  }
+
+  if (options?.date) {
+    return db.getAllFromIndex('daily_summaries', 'by-date', options.date);
+  }
+
+  if (options?.cardId) {
+    return db.getAllFromIndex('daily_summaries', 'by-card', options.cardId);
+  }
+
+  let summaries = await db.getAll('daily_summaries');
+  if (options?.startDate || options?.endDate) {
+    summaries = summaries.filter((s) => {
+      if (options.startDate && s.date < options.startDate) return false;
+      if (options.endDate && s.date > options.endDate) return false;
+      return true;
+    });
+  }
+
+  return summaries;
+}
+
+/**
+ * 快速获取今日所有卡片聚合数据
+ */
+export async function getTodaySummaries(): Promise<DailySummaryData[]> {
+  const todayStr = getLocalDateString(Date.now());
+  return getDailySummaries({ date: todayStr });
+}
+
+export async function getTrialRecordsByCard(
+  cardId: string,
+  limit?: number,
 ): Promise<UnifiedTrialRecord[]> {
   const db = await getDB();
-  let rawRecords: UnifiedTrialRecord[] = [];
-  if (domain && mode) {
-    rawRecords = await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
-  } else if (domain) {
-    rawRecords = await db.getAllFromIndex('records', 'by-domain', domain);
-  } else {
-    rawRecords = await db.getAll('records');
-  }
-
-  return rawRecords.map((r) => ({
-    ...r,
-    ...(r.details || {}),
-  }));
-}
-
-export async function getTrialRecordsByCard(cardId: string): Promise<UnifiedTrialRecord[]> {
-  const db = await getDB();
   const rawRecords = await db.getAllFromIndex('records', 'by-card', cardId);
-  return rawRecords.map((r) => ({
+  const mapped = rawRecords.map((r) => ({
     ...r,
     ...(r.details || {}),
   }));
+  return limit && mapped.length > limit ? mapped.slice(-limit) : mapped;
 }
 
-async function updateProfile(
-  cardId: string,
-  domain: TrainingDomain,
-  mode: string,
-  isHit: boolean,
-  currentLevel: number,
-): Promise<void> {
+export async function getTrainingTimeMs(): Promise<number> {
   const db = await getDB();
-  const card = registry.getCardById(cardId);
-  const canonicalDomain = card ? card.domain : domain;
-  const existing = await db.get('user_profiles', cardId);
-
-  if (!existing) {
-    const newProfile: UnifiedProfileData = {
-      cardId,
-      domain: canonicalDomain,
-      mode,
-      currentLevel,
-      bestLevel: currentLevel,
-      totalTrials: 1,
-      totalHits: isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await db.put('user_profiles', newProfile);
-  } else {
-    existing.domain = canonicalDomain;
-    existing.mode = mode;
-    existing.totalTrials += 1;
-    if (isHit) existing.totalHits += 1;
-    existing.currentLevel = currentLevel;
-    if (currentLevel > existing.bestLevel) {
-      existing.bestLevel = currentLevel;
-    }
-    existing.updatedAt = Date.now();
-    await db.put('user_profiles', existing);
-  }
-}
-
-export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number> {
-  const db = await getDB();
-  const sessions = domain
-    ? await db.getAllFromIndex('sessions', 'by-domain', domain)
-    : await db.getAll('sessions');
+  const summaries = await db.getAll('daily_summaries');
 
   let totalMs = 0;
-  for (const s of sessions) {
-    if (s.endTimestamp && s.endTimestamp > s.startTimestamp) {
-      totalMs += s.endTimestamp - s.startTimestamp;
-    }
+  for (const s of summaries) {
+    totalMs += Number(s.totalTimeMs) || 0;
   }
   return totalMs;
 }

@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { TrainingDomain } from '../utils/db/index';
 
 export type RouteLocation =
   | { type: 'home' }
-  | { type: 'dashboard'; domain: TrainingDomain }
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
   | { type: 'plan-train' };
 
@@ -18,11 +16,6 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'plan-train' };
   }
 
-  if (segments[0] === 'dashboard' && segments[1]) {
-    const domain = segments[1] as TrainingDomain;
-    return { type: 'dashboard', domain };
-  }
-
   if (segments[0] === 'train' && segments[1]) {
     const cardId = segments[1];
     const params = new URLSearchParams(queryPart || '');
@@ -30,13 +23,13 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'train', cardId, sessionType };
   }
 
+  // 兼容老版本 #/dashboard/:domain 路由，统一回退到主页
   return { type: 'home' };
 }
 
 function stringifyRoute(route: RouteLocation): string {
   if (route.type === 'home') return '#/';
   if (route.type === 'plan-train') return '#/plan-train';
-  if (route.type === 'dashboard') return `#/dashboard/${route.domain}`;
   if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
   return '#/';
 }

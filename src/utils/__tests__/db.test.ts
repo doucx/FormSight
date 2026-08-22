@@ -4,10 +4,11 @@ import {
   clearAllData,
   exportAllData,
   formatTotalTime,
+  getAllProfiles,
   getProfile,
-  getProfilesByDomain,
+  getTodaySummaries,
   getTrainingTimeMs,
-  getTrialRecords,
+  getTrialRecordsByCard,
   importAllData,
   saveSession,
   saveTrialRecord,
@@ -20,7 +21,7 @@ describe('Unified Database Layer Tests', () => {
   });
 
   describe('Trial Records and Profiles', () => {
-    it('should save trial record and automatically update user profile', async () => {
+    it('should save trial record and automatically update user profile and daily summaries', async () => {
       const record: UnifiedTrialRecord = {
         id: 'rec_1',
         sessionId: 'sess_1',
@@ -36,7 +37,7 @@ describe('Unified Database Layer Tests', () => {
 
       await saveTrialRecord(record);
 
-      const records = await getTrialRecords('star', 'single');
+      const records = await getTrialRecordsByCard('star_single');
       expect(records.length).toBe(1);
       expect(records[0].id).toBe('rec_1');
       expect(records[0].isHit).toBe(true);
@@ -48,12 +49,18 @@ describe('Unified Database Layer Tests', () => {
       expect(profile?.totalHits).toBe(1);
       expect(profile?.currentLevel).toBe(5);
       expect(profile?.bestLevel).toBe(5);
+
+      const todaySummaries = await getTodaySummaries();
+      expect(todaySummaries.length).toBe(1);
+      expect(todaySummaries[0].cardId).toBe('star_single');
+      expect(todaySummaries[0].totalCount).toBe(1);
     });
 
-    it('should filter records by domain correctly', async () => {
+    it('should filter records by card correctly', async () => {
       await saveTrialRecord({
         id: 'rec_star',
         sessionId: 'sess_star',
+        cardId: 'star_single',
         domain: 'star',
         mode: 'single',
         timestamp: 1000,
@@ -65,6 +72,7 @@ describe('Unified Database Layer Tests', () => {
       await saveTrialRecord({
         id: 'rec_color',
         sessionId: 'sess_color',
+        cardId: 'color_hue',
         domain: 'color',
         mode: 'H',
         timestamp: 2000,
@@ -73,22 +81,20 @@ describe('Unified Database Layer Tests', () => {
         responseTimeMs: 600,
       });
 
-      const starRecords = await getTrialRecords('star');
+      const starRecords = await getTrialRecordsByCard('star_single');
       expect(starRecords.length).toBe(1);
       expect(starRecords[0].id).toBe('rec_star');
 
-      const colorRecords = await getTrialRecords('color');
+      const colorRecords = await getTrialRecordsByCard('color_hue');
       expect(colorRecords.length).toBe(1);
       expect(colorRecords[0].id).toBe('rec_color');
-
-      const allRecords = await getTrialRecords();
-      expect(allRecords.length).toBe(2);
     });
 
-    it('should retrieve profiles by domain', async () => {
+    it('should retrieve all profiles correctly', async () => {
       await saveTrialRecord({
         id: 'rec_h',
         sessionId: 's1',
+        cardId: 'color_hue',
         domain: 'color',
         mode: 'H',
         timestamp: 1000,
@@ -100,6 +106,7 @@ describe('Unified Database Layer Tests', () => {
       await saveTrialRecord({
         id: 'rec_v',
         sessionId: 's2',
+        cardId: 'color_val',
         domain: 'color',
         mode: 'V',
         timestamp: 1000,
@@ -108,17 +115,18 @@ describe('Unified Database Layer Tests', () => {
         responseTimeMs: 400,
       });
 
-      const profiles = await getProfilesByDomain('color');
+      const profiles = await getAllProfiles();
       expect(profiles.length).toBe(2);
-      const modes = profiles.map((p) => p.mode).sort();
-      expect(modes).toEqual(['H', 'V']);
+      const cardIds = profiles.map((p) => p.cardId).sort();
+      expect(cardIds).toEqual(['color_hue', 'color_val']);
     });
   });
 
   describe('Sessions and Time Aggregation', () => {
-    it('should save session and calculate training time', async () => {
+    it('should save session and calculate training time via daily summaries', async () => {
       const session1: UnifiedSessionData = {
         id: 'sess_1',
+        cardId: 'star_single',
         domain: 'star',
         mode: 'single',
         type: 'training',
@@ -130,30 +138,34 @@ describe('Unified Database Layer Tests', () => {
         endLevel: 6,
       };
 
-      const session2: UnifiedSessionData = {
-        id: 'sess_2',
+      await saveSession(session1);
+
+      await saveTrialRecord({
+        id: 'rec_t1',
+        sessionId: 'sess_1',
+        cardId: 'star_single',
+        domain: 'star',
+        mode: 'single',
+        timestamp: 15000,
+        difficultyLevel: 5,
+        isHit: true,
+        responseTimeMs: 600,
+      });
+
+      await saveTrialRecord({
+        id: 'rec_t2',
+        sessionId: 'sess_1',
+        cardId: 'color_hue',
         domain: 'color',
         mode: 'H',
-        type: 'training',
-        startTimestamp: 100000,
-        endTimestamp: 220000, // 120s = 120000ms
-        totalTrials: 20,
-        hitTrials: 15,
-        startLevel: 5,
-        endLevel: 7,
-      };
-
-      await saveSession(session1);
-      await saveSession(session2);
-
-      const starTime = await getTrainingTimeMs('star');
-      expect(starTime).toBe(60000);
-
-      const colorTime = await getTrainingTimeMs('color');
-      expect(colorTime).toBe(120000);
+        timestamp: 25000,
+        difficultyLevel: 5,
+        isHit: true,
+        responseTimeMs: 400,
+      });
 
       const totalTime = await getTrainingTimeMs();
-      expect(totalTime).toBe(180000);
+      expect(totalTime).toBe(1000);
     });
 
     it('should format total time strings properly', () => {
@@ -168,6 +180,7 @@ describe('Unified Database Layer Tests', () => {
       await saveTrialRecord({
         id: 'rec_exp',
         sessionId: 'sess_exp',
+        cardId: 'star_single',
         domain: 'star',
         mode: 'single',
         timestamp: 1000,
@@ -178,6 +191,7 @@ describe('Unified Database Layer Tests', () => {
 
       await saveSession({
         id: 'sess_exp',
+        cardId: 'star_single',
         domain: 'star',
         mode: 'single',
         type: 'training',
@@ -193,13 +207,13 @@ describe('Unified Database Layer Tests', () => {
       expect(typeof json).toBe('string');
 
       await clearAllData();
-      const recordsAfterClear = await getTrialRecords();
+      const recordsAfterClear = await getTrialRecordsByCard('star_single');
       expect(recordsAfterClear.length).toBe(0);
 
       const success = await importAllData(json);
       expect(success).toBe(true);
 
-      const restoredRecords = await getTrialRecords('star');
+      const restoredRecords = await getTrialRecordsByCard('star_single');
       expect(restoredRecords.length).toBe(1);
       expect(restoredRecords[0].id).toBe('rec_exp');
     });

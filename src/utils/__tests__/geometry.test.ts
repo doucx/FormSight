@@ -10,7 +10,7 @@ import {
   getDynamicDotRadius,
   getGridMinSpacing,
   rotatePoint,
-} from '../../domains/star/utils';
+} from '../../packs/star/utils';
 
 describe('geometry utils', () => {
   it('rotatePoint - should correctly rotate a point around center', () => {

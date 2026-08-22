@@ -1,6 +1,5 @@
 import type { ComponentChildren } from 'preact';
 import type { Point } from '../types';
-import type { TrainingDomain } from '../utils/db/index';
 import type {
   AbstractionSettings,
   BaseModuleSettings,
@@ -26,7 +25,7 @@ export interface TrainingPlugin<
   TAnswerVal = unknown,
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 > {
-  domain: TrainingDomain;
+  packId?: string;
   title: string;
   getModeBadge: (mode: string) => string;
   isTargeting?: (mode: string, settings: TSettings) => boolean;
@@ -45,60 +44,42 @@ export interface TrainingPlugin<
   ) => ComponentChildren;
 }
 
-// 判别联合类型 (Discriminated Unions) 描述全系统受支持的垂直领域插件
 export type StarPlugin = TrainingPlugin<
   unknown,
   unknown,
   { clickPoint: Point; hitResult: unknown },
   StarSettings
-> & {
-  domain: 'star';
-};
+>;
 
 export type ColorPlugin = TrainingPlugin<
   unknown,
   unknown,
   number | [number, number, number],
   ColorSenseSettings
-> & {
-  domain: 'color';
-};
+>;
 
 export type RelativeColorPlugin = TrainingPlugin<
   unknown,
   unknown,
   [number, number, number] | 'A' | 'B',
   RelativeColorSettings
-> & {
-  domain: 'relative_color';
-};
+>;
 
 export type NegativeSpacePlugin = TrainingPlugin<
   unknown,
   unknown,
   number | 'A' | 'B' | Point,
   NegativeSpaceSettings
-> & {
-  domain: 'negative_space';
-};
+>;
 
 export type AbstractionPlugin = TrainingPlugin<
   unknown,
   unknown,
   number | 'A' | 'B',
   AbstractionSettings
-> & {
-  domain: 'abstraction' | 'concretization';
-};
+>;
 
-export type AnglePlugin = TrainingPlugin<
-  unknown,
-  unknown,
-  number | 'A' | 'B',
-  BaseModuleSettings
-> & {
-  domain: 'angle';
-};
+export type AnglePlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B', BaseModuleSettings>;
 
 export type AnyDomainPlugin =
   | StarPlugin
@@ -108,4 +89,5 @@ export type AnyDomainPlugin =
   | AbstractionPlugin
   | AnglePlugin;
 
-export type AnyTrainingPlugin = TrainingPlugin;
+// biome-ignore lint/suspicious/noExplicitAny: type erasure for generic training plugin registry
+export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;

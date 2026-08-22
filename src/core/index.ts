@@ -18,3 +18,6 @@ export * from './geometry/pointGrid';
 
 // 导出引擎能力
 export * from './engine/adaptiveEngine';
+
+// 导出高性能 Worker 调度器
+export * from './worker/workerClient';

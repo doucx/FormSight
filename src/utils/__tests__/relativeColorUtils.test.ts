@@ -4,7 +4,7 @@ import {
   generateRelativeColorQuestion,
   getDistractorDistanceForLevel,
   okLabToHsv,
-} from '../../domains/relative_color/utils';
+} from '../../packs/relative_color/utils';
 
 describe('relativeColorUtils with deterministic orthogonal distractors & Albers modes', () => {
   // === 1. 基础工具函数测试 ===

@@ -10,7 +10,7 @@ export const starPlugin: TrainingPlugin<
   { clickPoint: Point; hitResult: HitResult },
   StarSettings
 > = {
-  domain: 'star',
+  packId: 'star',
   title: '寻星练习',
   getModeBadge: (mode) => mode,
   isTargeting: (_mode, settings) => settings.targetingMode === 'manual',

@@ -1,46 +1,42 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
 import type { BaseModuleSettings } from '../../utils/settings';
 import {
-  type AbstractionHitResult,
-  type AbstractionMode,
-  type AbstractionQuestionData,
-  checkAbstractionHit,
-  generateAbstractionQuestion,
-} from './utils/index';
-import { AbstractionCanvas } from './views/AbstractionCanvas';
+  type AngleHitResult,
+  type AngleMode,
+  type AngleQuestionData,
+  checkAngleHit,
+  generateAngleQuestion,
+} from './utils/angleUtils';
+import { AngleCanvas } from './views/AngleCanvas';
 
-export const abstractionPlugin: TrainingPlugin<
-  AbstractionQuestionData,
-  AbstractionHitResult,
+export const anglePlugin: TrainingPlugin<
+  AngleQuestionData,
+  AngleHitResult,
   number | 'A' | 'B',
   BaseModuleSettings
 > = {
-  domain: 'abstraction',
-  title: '视知觉概括',
+  packId: 'angle',
+  title: '角度感知',
   getModeBadge: (mode) => {
     const map: Record<string, string> = {
-      GESTURE_AXIS: '动态势线提取',
-      POLYGON_DECIMATION: '折线低模大形',
-      NOTAN_THRESHOLD: '黑白素描归组',
-      PALETTE_CLUSTERING: '主调色群提炼',
-      TD_GESTURE_2AFC: '动态势线寻源',
-      TD_HULL_2AFC: '几何大模寻形',
-      TD_NOTAN_2AFC: '黑白素描骨架',
-      TD_PALETTE_2AFC: '调性基底归位',
+      ANGLE_ESTIMATION: '夹角大小估算',
+      ANGLE_COMPARISON_2AFC: '角度二分对比',
+      PARALLEL_ALIGNMENT_2AFC: '平行线基准辨识',
     };
     return map[mode] || mode;
   },
-  generateQuestion: (mode, level) => generateAbstractionQuestion(mode as AbstractionMode, level),
-  evaluateAnswer: (userVal, q) => checkAbstractionHit(userVal, q),
+  generateQuestion: (mode, level) => generateAngleQuestion(mode as AngleMode, level),
+  evaluateAnswer: (userVal, q) => checkAngleHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,
   getQuestionLevel: (q) => q.difficultyLevel,
   extractRecordDetails: (_q, hitResult, userVal, mode) => ({
     mode,
     userAnswer: userVal,
     errorValue: hitResult.errorValue,
+    tolerance: hitResult.tolerance,
   }),
   renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-    <AbstractionCanvas
+    <AngleCanvas
       question={question}
       showAnswer={showAnswer}
       userAnswer={userAnswer}

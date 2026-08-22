@@ -1,6 +1,8 @@
 import { Columns, Palette, Shuffle, Sun } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
-import type { DomainManifest } from '../../core/contracts';
+import type { PackManifest } from '../../core/contracts';
+import type { CardDefinition } from '../../types/card';
+import { relativeColorPlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
@@ -10,13 +12,11 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
     description: '在悬停光标两侧实时显示动态容错区间',
   },
 ];
-import type { CardDefinition } from '../../types/card';
-import { relativeColorPlugin } from './plugin';
 
 export const relativeColorCards: CardDefinition[] = [
   {
     id: 'rel_vector_shift',
-    domain: 'relative_color',
+    packId: 'relative_color',
     mode: 'VECTOR_SHIFT',
     title: '色彩矢量迁移',
     desc: '保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉。',
@@ -32,7 +32,7 @@ export const relativeColorCards: CardDefinition[] = [
   },
   {
     id: 'rel_lightness_induction',
-    domain: 'relative_color',
+    packId: 'relative_color',
     mode: 'LIGHTNESS_INDUCTION',
     title: '明度反差补偿',
     desc: '在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致。',
@@ -48,7 +48,7 @@ export const relativeColorCards: CardDefinition[] = [
   },
   {
     id: 'rel_hue_induction',
-    domain: 'relative_color',
+    packId: 'relative_color',
     mode: 'HUE_INDUCTION',
     title: '补色残像调和',
     desc: '在强色相与饱和度背景下，四选一选出逆向补偿后的目标色，训练环境光色感知调和力。',
@@ -63,7 +63,7 @@ export const relativeColorCards: CardDefinition[] = [
   },
   {
     id: 'rel_decontextual_2afc',
-    domain: 'relative_color',
+    packId: 'relative_color',
     mode: 'DECONTEXTUAL_2AFC',
     title: '环境穿透判别',
     desc: '穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理。',
@@ -78,25 +78,18 @@ export const relativeColorCards: CardDefinition[] = [
   },
 ];
 
-export const relativeColorDomain: DomainManifest = {
-  domain: 'relative_color',
+export const relativeColorPack: PackManifest = {
+  packId: 'relative_color',
   meta: {
-    domain: 'relative_color',
-    appId: 'relative-color',
+    id: 'relative_color',
     title: '相对色感',
-    subTitle: 'Relative Color',
-    homeTitle: '相对色感 (Relative Color Perception)',
-    homeDesc:
-      '基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。',
+    subTitle: 'Relative Color Perception',
+    desc: '基于 OKLab 感知均匀色彩空间，通过固有色与环境光的推移矢量 (Vector v_AB)，建立客观光影下相对色彩推移与对比关系的硬核艺术敏锐度。',
     themeColor: 'purple',
     icon: Shuffle,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return relativeColorCards;
-    },
   },
   cards: relativeColorCards,
-  trainingPlugin: relativeColorPlugin as unknown as DomainManifest['trainingPlugin'],
+  trainingPlugin: relativeColorPlugin,
 };
 
-export default relativeColorDomain;
+export default relativeColorPack;

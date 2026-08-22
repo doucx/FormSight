@@ -82,7 +82,7 @@ function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
       cardConfig.showToleranceBand = true;
     }
 
-    if (card.domain === 'star') {
+    if (card.packId === 'star') {
       cardConfig.gridSize = 3;
       cardConfig.targetingMode = 'off';
       cardConfig.manualTargetSectors = [];

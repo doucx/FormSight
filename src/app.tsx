@@ -4,12 +4,12 @@ import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { GenericDashboard } from './components/dashboard/GenericDashboard';
 import { PlanEditorModal } from './components/plan/PlanEditorModal';
 import { registry } from './core/registry';
 import { useHashRoute } from './hooks/useHashRoute';
+import { useTodayStats } from './hooks/useTodayStats';
 import type { TrainingPlan } from './types/plan';
-import { type TrainingDomain, type UnifiedProfileData, repository } from './utils/db/index';
+import { type UnifiedProfileData, repository } from './utils/db/index';
 import {
   loadPlanStorageState,
   loadTrainingPlan,
@@ -23,7 +23,7 @@ import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
   const { route, navigate } = useHashRoute();
-  const allDomains = registry.getAllDomains();
+  const todayStats = useTodayStats();
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
@@ -36,16 +36,8 @@ export function App() {
   const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
-
-  const [domainTimes, setDomainTimes] = useState<Record<TrainingDomain, number>>(() => {
-    const init: Record<string, number> = {};
-    for (const d of allDomains) init[d] = 0;
-    return init as Record<TrainingDomain, number>;
-  });
-
-  const [currentDomainProfiles, setCurrentDomainProfiles] = useState<
-    Record<string, UnifiedProfileData>
-  >({});
+  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+  const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData>>({});
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
@@ -59,8 +51,8 @@ export function App() {
   const refreshProfiles = useCallback(async () => {
     const summary = await repository.getAppSummary();
 
-    setDomainTimes(summary.domainTimes);
-    setCurrentDomainProfiles(summary.profiles);
+    setTotalTimeMs(summary.totalTimeMs);
+    setProfiles(summary.profiles);
     setSettings(summary.settings);
     setTrainingPlan(summary.trainingPlan);
     setAllPlans(summary.allPlans);
@@ -76,9 +68,6 @@ export function App() {
       document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
     } else if (route.type === 'plan-train') {
       document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
-    } else if (route.type === 'dashboard') {
-      const meta = registry.getDomainMeta(route.domain);
-      document.title = `${meta?.title || '训练'} (${meta?.subTitle || ''}) - FormSight`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
       document.title = `${card?.title || '训练'} - FormSight`;
@@ -96,8 +85,6 @@ export function App() {
     [showToast],
   );
 
-  const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
-
   const activeSettingsCard = activeSettingsCardId
     ? registry.getCardById(activeSettingsCardId)
     : null;
@@ -110,10 +97,14 @@ export function App() {
       {route.type === 'home' && (
         <Home
           totalTimeMs={totalTimeMs}
-          domainTimes={domainTimes}
+          todayStats={todayStats}
+          profiles={profiles}
           trainingPlan={trainingPlan}
           allPlans={allPlans}
-          onNavigateDomain={(domain) => navigate({ type: 'dashboard', domain })}
+          showExperimental={settings.global.showExperimentalCards}
+          onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+          onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+          onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
           onStartPlan={() => navigate({ type: 'plan-train' })}
           onOpenPlanEditor={() => setIsPlanEditorOpen(true)}
           onSelectPlan={handleSelectPlanOnHome}
@@ -132,24 +123,6 @@ export function App() {
           }}
         />
       )}
-
-      {route.type === 'dashboard' &&
-        (() => {
-          const meta = registry.getDomainMeta(route.domain);
-          if (!meta) {
-            navigate({ type: 'home' });
-            return null;
-          }
-          return (
-            <GenericDashboard
-              meta={meta}
-              onStart={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
-              onBackToHome={() => navigate({ type: 'home' })}
-              onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-              onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
-            />
-          );
-        })()}
 
       {route.type === 'train' &&
         (() => {
@@ -170,7 +143,7 @@ export function App() {
             navigate({ type: 'home' });
             return null;
           }
-          const activeLevel = currentDomainProfiles[activeCard.id]?.currentLevel || 5;
+          const activeLevel = profiles[activeCard.id]?.currentLevel || 5;
 
           return (
             <GenericTrainingView
@@ -183,7 +156,7 @@ export function App() {
               globalSettings={settings.global}
               onExit={async () => {
                 await refreshProfiles();
-                navigate({ type: 'dashboard', domain: activeCard.domain });
+                navigate({ type: 'home' });
               }}
             />
           );

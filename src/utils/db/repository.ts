@@ -1,4 +1,3 @@
-import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 import {
   clonePlan,
@@ -20,22 +19,23 @@ import {
   loadSettings,
   saveSettings,
 } from '../settings';
-import { clearAllData, exportAllData, importAllData } from './importExport';
+import { clearAllData, exportAllData, exportAllDataStream, importAllData } from './importExport';
+import { pruneColdRecords } from './prune';
 import {
   formatTotalTime,
+  getAllProfiles,
+  getDailySummaries,
   getProfile,
-  getProfilesByDomain,
+  getTodaySummaries,
   getTrainingTimeMs,
-  getTrialRecords,
   getTrialRecordsByCard,
   saveSession,
   saveTrialRecord,
 } from './queries';
-import type { TrainingDomain, UnifiedProfileData } from './schema';
+import type { UnifiedProfileData } from './schema';
 
 export interface AppDataSummary {
   totalTimeMs: number;
-  domainTimes: Record<TrainingDomain, number>;
   profiles: Record<string, UnifiedProfileData>;
   settings: UserSettings;
   trainingPlan: TrainingPlan;
@@ -44,25 +44,17 @@ export interface AppDataSummary {
 
 /**
  * 聚合仓储层 (SystemRepository)
- * 统一收敛 IndexedDB、LocalStorage 及跨介质事务操作
+ * 统一收敛 IndexedDB、LocalStorage 及跨介质事务与稳态治理操作
  */
 export class SystemRepository {
   // === 查询与聚合统计 ===
   public async getAppSummary(): Promise<AppDataSummary> {
-    const domains = registry.getAllDomains();
-
-    const timesEntries = await Promise.all(
-      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const domainTimes = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
-    const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
-
-    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
+    const totalTimeMs = await getTrainingTimeMs();
+    const allProfilesList = await getAllProfiles();
     const profiles: Record<string, UnifiedProfileData> = {};
-    for (const list of allProfilesList) {
-      for (const p of list) {
-        profiles[p.cardId] = p;
-      }
+
+    for (const p of allProfilesList) {
+      profiles[p.cardId] = p;
     }
 
     const settings = loadSettings();
@@ -71,7 +63,6 @@ export class SystemRepository {
 
     return {
       totalTimeMs,
-      domainTimes,
       profiles,
       settings,
       trainingPlan,
@@ -83,8 +74,9 @@ export class SystemRepository {
   public saveTrial = saveTrialRecord;
   public saveSession = saveSession;
   public getProfile = getProfile;
-  public getProfilesByDomain = getProfilesByDomain;
-  public getTrialRecords = getTrialRecords;
+  public getAllProfiles = getAllProfiles;
+  public getDailySummaries = getDailySummaries;
+  public getTodaySummaries = getTodaySummaries;
   public getTrialRecordsByCard = getTrialRecordsByCard;
   public getTrainingTimeMs = getTrainingTimeMs;
   public formatTotalTime = formatTotalTime;
@@ -110,10 +102,12 @@ export class SystemRepository {
   public exportPlanJson = exportPlanToJson;
   public importPlanJson = importPlanFromJson;
 
-  // === 全局备份恢复与危险操作 ===
+  // === 全局备份恢复与稳态治理 ===
   public exportAllData = exportAllData;
+  public exportAllDataStream = exportAllDataStream;
   public importAllData = importAllData;
   public clearAllData = clearAllData;
+  public pruneColdRecords = pruneColdRecords;
 }
 
 export const repository = new SystemRepository();

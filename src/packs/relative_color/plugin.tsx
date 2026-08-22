@@ -15,7 +15,7 @@ export const relativeColorPlugin: TrainingPlugin<
   [number, number, number] | 'A' | 'B',
   RelativeColorSettings
 > = {
-  domain: 'relative_color',
+  packId: 'relative_color',
   title: '相对色感',
   getModeBadge: (mode) =>
     mode === 'LIGHTNESS_INDUCTION'
