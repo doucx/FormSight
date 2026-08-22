@@ -34,7 +34,6 @@ export function PlanEditorModal({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
   const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
-  const [selectedDomainFilter, setSelectedDomainFilter] = useState<string>('all');
   const [isAddingCard, setIsAddingCard] = useState<boolean>(false);
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);

@@ -89,4 +89,5 @@ export type AnyDomainPlugin =
   | AbstractionPlugin
   | AnglePlugin;
 
+// biome-ignore lint/suspicious/noExplicitAny: type erasure for generic training plugin registry
 export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;
