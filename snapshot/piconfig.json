@@ -18,12 +18,12 @@
         "src/components/common/StandardSliderView.tsx",
         "src/components/common/Standard2AfcView.tsx",
         "src/components/common/StandardNafcView.tsx",
-        "src/domains/angle/index.ts",
-        "src/domains/angle/plugin.tsx",
-        "src/domains/angle/views/AngleCanvas.tsx",
-        "src/domains/angle/components/AngleEstimationView.tsx",
-        "src/domains/angle/components/AngleComparison2AfcView.tsx",
-        "src/domains/angle/utils/angleUtils.ts"
+        "src/packs/angle/index.ts",
+        "src/packs/angle/plugin.tsx",
+        "src/packs/angle/views/AngleCanvas.tsx",
+        "src/packs/angle/components/AngleEstimationView.tsx",
+        "src/packs/angle/components/AngleComparison2AfcView.tsx",
+        "src/packs/angle/utils/angleUtils.ts"
       ]
     },
     "core": {

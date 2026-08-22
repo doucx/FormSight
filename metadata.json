@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(perf): 实施里程碑4流式分块备份、数据冷热修剪与LTTB降采样治理", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787404351.1609344, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将 src/domains 目录平移重命名为 src/packs", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787404533.587176, "duration_ms": 0}}
