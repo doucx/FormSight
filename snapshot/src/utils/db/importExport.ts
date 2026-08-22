@@ -10,11 +10,13 @@ import {
 import { DEFAULT_SETTINGS, type UserSettings, loadSettings, saveSettings } from '../settings';
 import {
   DB_VERSION,
+  type DailySummaryData,
   type TrainingDomain,
   type UnifiedProfileData,
   type UnifiedSessionData,
   type UnifiedTrialRecord,
   getDB,
+  getLocalDateString,
 } from './schema';
 
 export interface FormSightExportBundle {
@@ -24,6 +26,7 @@ export interface FormSightExportBundle {
   sessions: UnifiedSessionData[];
   records: UnifiedTrialRecord[];
   profiles: UnifiedProfileData[];
+  dailySummaries?: DailySummaryData[];
   settings: UserSettings;
   trainingPlan?: TrainingPlan;
   planStorageState?: PlanStorageState;
@@ -55,6 +58,7 @@ export async function exportAllData(): Promise<string> {
   const sessions = await db.getAll('sessions');
   const records = await db.getAll('records');
   const profiles = await db.getAll('user_profiles');
+  const dailySummaries = await db.getAll('daily_summaries');
   const settings = loadSettings();
   const trainingPlan = loadTrainingPlan();
   const planStorageState = loadPlanStorageState();
@@ -66,6 +70,7 @@ export async function exportAllData(): Promise<string> {
     sessions,
     records,
     profiles,
+    dailySummaries,
     settings,
     trainingPlan,
     planStorageState,
@@ -75,7 +80,7 @@ export async function exportAllData(): Promise<string> {
 }
 
 /**
- * 原子化全量数据导入（支持预校验与异常保护）
+ * 原子化全量数据导入（支持预校验、物化视图自动补全与异常保护）
  */
 export async function importAllData(jsonString: string): Promise<boolean> {
   let parsed: unknown;
@@ -96,9 +101,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
   const previousPlanStateSnapshot = loadPlanStorageState();
 
   try {
-    // 2. 第一阶段：执行 IndexedDB 事务级写入
+    // 2. 执行 IndexedDB 事务级写入
     const db = await getDB();
-    const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+    const tx = db.transaction(
+      ['sessions', 'records', 'user_profiles', 'daily_summaries'],
+      'readwrite',
+    );
 
     if (parsed.sessions && parsed.sessions.length > 0) {
       for (const s of parsed.sessions) {
@@ -126,9 +134,57 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       }
     }
 
+    // 写入或根据 records 重新生成 daily_summaries
+    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+      for (const d of parsed.dailySummaries) {
+        await tx.objectStore('daily_summaries').put(d);
+      }
+    } else if (parsed.records && parsed.records.length > 0) {
+      const summaryMap = new Map<string, DailySummaryData>();
+      for (const r of parsed.records) {
+        const domain = (r.domain || 'star') as TrainingDomain;
+        const cardId = r.cardId || r.mode;
+        const date = getLocalDateString(r.timestamp);
+        const summaryId = `${date}_${cardId}`;
+        const respMs = Number(r.responseTimeMs) || 0;
+        const level = Number(r.difficultyLevel) || 1;
+
+        const existing = summaryMap.get(summaryId);
+        if (!existing) {
+          summaryMap.set(summaryId, {
+            id: summaryId,
+            date,
+            cardId,
+            domain,
+            mode: r.mode,
+            totalCount: 1,
+            hitCount: r.isHit ? 1 : 0,
+            totalTimeMs: respMs,
+            maxLevel: level,
+            minLevel: level,
+            lastLevel: level,
+            updatedAt: r.timestamp,
+          });
+        } else {
+          existing.totalCount += 1;
+          if (r.isHit) existing.hitCount += 1;
+          existing.totalTimeMs += respMs;
+          existing.maxLevel = Math.max(existing.maxLevel, level);
+          existing.minLevel = Math.min(existing.minLevel, level);
+          if (r.timestamp >= existing.updatedAt) {
+            existing.lastLevel = level;
+            existing.updatedAt = r.timestamp;
+          }
+        }
+      }
+      for (const summary of summaryMap.values()) {
+        await tx.objectStore('daily_summaries').put(summary);
+      }
+    }
+
     await tx.done;
 
-    // 3. 第二阶段：安全更新 LocalStorage
+    // 3. 安全更新 LocalStorage
     if (parsed.settings) {
       saveSettings(parsed.settings);
     }
@@ -157,10 +213,14 @@ export async function importAllData(jsonString: string): Promise<boolean> {
  */
 export async function clearAllData(): Promise<void> {
   const db = await getDB();
-  const tx = db.transaction(['sessions', 'records', 'user_profiles'], 'readwrite');
+  const tx = db.transaction(
+    ['sessions', 'records', 'user_profiles', 'daily_summaries'],
+    'readwrite',
+  );
   await tx.objectStore('sessions').clear();
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
+  await tx.objectStore('daily_summaries').clear();
   await tx.done;
 
   resetPlansToDefault();

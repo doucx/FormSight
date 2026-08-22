@@ -11,23 +11,20 @@ import {
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-import { type TrainingDomain, getTrialRecords } from '../utils/db/index';
+import {
+  type DailySummaryData,
+  type TrainingDomain,
+  getDailySummaries,
+  getLocalDateString,
+} from '../utils/db/index';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
 }
 
-interface UnifiedRecord {
-  timestamp: number;
-  isHit: boolean;
-  level: number;
-  module: TrainingDomain;
-  subMode: string;
-}
-
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   const [loading, setLoading] = useState(true);
-  const [records, setRecords] = useState<UnifiedRecord[]>([]);
+  const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -35,24 +32,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     let isMounted = true;
     const loadData = async () => {
       setLoading(true);
-      const domains = registry.getAllDomains();
-      const results = await Promise.all(
-        domains.map(async (domain) => {
-          const domainRecords = await getTrialRecords(domain);
-          return domainRecords.map((r) => ({
-            timestamp: r.timestamp,
-            isHit: r.isHit,
-            level: r.difficultyLevel,
-            module: domain,
-            subMode: r.mode,
-          }));
-        }),
-      );
-
-      const combined = results.flat().sort((a, b) => a.timestamp - b.timestamp);
-
+      const data = await getDailySummaries();
       if (isMounted) {
-        setRecords(combined);
+        setSummaries(data);
         setLoading(false);
       }
     };
@@ -62,14 +44,14 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     };
   }, []);
 
-  const filteredRecords = records.filter((r) => {
+  const filteredSummaries = summaries.filter((s) => {
     if (selectedFilter === 'all') return true;
     if (selectedFilter.endsWith('_all')) {
       const targetDomain = selectedFilter.replace('_all', '');
-      return r.module === targetDomain;
+      return s.domain === targetDomain;
     }
     const [domain, mode] = selectedFilter.split(':');
-    return r.module === domain && r.subMode === mode;
+    return s.domain === domain && (s.mode === mode || s.cardId === mode);
   });
 
   const getCurrentFilterLabel = () => {
@@ -81,53 +63,56 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     }
     const [domain, mode] = selectedFilter.split(':') as [TrainingDomain, string];
     const meta = registry.getDomainMeta(domain);
-    const card = meta?.cards.find((c) => c.mode === mode);
+    const card = meta?.cards.find((c) => c.mode === mode || c.id === mode);
     return `${meta?.title || domain} • ${card?.title || mode}`;
   };
 
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const startOfWeek = startOfToday - 6 * 24 * 60 * 60 * 1000;
-  const startOfYear = new Date(now.getFullYear(), 0, 1).getTime();
+  const todayStr = getLocalDateString(now.getTime());
+  const startOfWeekStr = getLocalDateString(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const startOfYearStr = `${now.getFullYear()}-01-01`;
 
   const stats = {
     today: { total: 0, hits: 0 },
     week: { total: 0, hits: 0 },
     year: { total: 0, hits: 0 },
-    allTime: { total: filteredRecords.length, hits: filteredRecords.filter((r) => r.isHit).length },
+    allTime: { total: 0, hits: 0 },
   };
 
   const dailyData: Record<string, { total: number; maxLevel: number }> = {};
 
-  for (const r of filteredRecords) {
-    if (r.timestamp >= startOfToday) {
-      stats.today.total++;
-      if (r.isHit) stats.today.hits++;
+  for (const s of filteredSummaries) {
+    stats.allTime.total += s.totalCount;
+    stats.allTime.hits += s.hitCount;
+
+    if (s.date === todayStr) {
+      stats.today.total += s.totalCount;
+      stats.today.hits += s.hitCount;
     }
-    if (r.timestamp >= startOfWeek) {
-      stats.week.total++;
-      if (r.isHit) stats.week.hits++;
+    if (s.date >= startOfWeekStr) {
+      stats.week.total += s.totalCount;
+      stats.week.hits += s.hitCount;
     }
-    if (r.timestamp >= startOfYear) {
-      stats.year.total++;
-      if (r.isHit) stats.year.hits++;
+    if (s.date >= startOfYearStr) {
+      stats.year.total += s.totalCount;
+      stats.year.hits += s.hitCount;
     }
 
-    const dateStr = new Date(r.timestamp).toISOString().slice(0, 10);
-    if (!dailyData[dateStr]) {
-      dailyData[dateStr] = { total: 0, maxLevel: r.level };
+    if (!dailyData[s.date]) {
+      dailyData[s.date] = { total: 0, maxLevel: s.maxLevel };
     }
-    dailyData[dateStr].total++;
-    dailyData[dateStr].maxLevel = Math.max(dailyData[dateStr].maxLevel, r.level);
+    dailyData[s.date].total += s.totalCount;
+    dailyData[s.date].maxLevel = Math.max(dailyData[s.date].maxLevel, s.maxLevel);
   }
 
   const calcAcc = (hits: number, total: number) =>
     total === 0 ? 0 : Math.round((hits / total) * 100);
 
   const heatmapDays = 84;
+  const startOfTodayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const heatmapData = Array.from({ length: heatmapDays }).map((_, i) => {
-    const d = new Date(startOfToday - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000);
-    const dateStr = d.toISOString().slice(0, 10);
+    const dMs = startOfTodayMs - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000;
+    const dateStr = getLocalDateString(dMs);
     return {
       date: dateStr,
       count: dailyData[dateStr]?.total || 0,
@@ -148,7 +133,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (canvas) {
       renderTrendChartCanvas(canvas, dailyData);
     }
-  }, [loading]);
+  }, [loading, dailyData]);
 
   return (
     <div
@@ -215,7 +200,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
           <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
             正在统计海量数据...
           </div>
-        ) : filteredRecords.length === 0 ? (
+        ) : stats.allTime.total === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
             <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}
             】下暂无训练数据，先去练习几道题吧！

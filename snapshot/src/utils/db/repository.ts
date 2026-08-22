@@ -23,8 +23,10 @@ import {
 import { clearAllData, exportAllData, importAllData } from './importExport';
 import {
   formatTotalTime,
+  getDailySummaries,
   getProfile,
   getProfilesByDomain,
+  getTodaySummaries,
   getTrainingTimeMs,
   getTrialRecords,
   getTrialRecordsByCard,
@@ -84,6 +86,8 @@ export class SystemRepository {
   public saveSession = saveSession;
   public getProfile = getProfile;
   public getProfilesByDomain = getProfilesByDomain;
+  public getDailySummaries = getDailySummaries;
+  public getTodaySummaries = getTodaySummaries;
   public getTrialRecords = getTrialRecords;
   public getTrialRecordsByCard = getTrialRecordsByCard;
   public getTrainingTimeMs = getTrainingTimeMs;
