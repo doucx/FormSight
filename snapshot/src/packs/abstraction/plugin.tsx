@@ -15,7 +15,7 @@ export const abstractionPlugin: TrainingPlugin<
   number | 'A' | 'B',
   BaseModuleSettings
 > = {
-  domain: 'abstraction',
+  packId: 'abstraction',
   title: '视知觉概括',
   getModeBadge: (mode) => {
     const map: Record<string, string> = {

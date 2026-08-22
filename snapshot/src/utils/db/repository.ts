@@ -24,21 +24,19 @@ import { clearAllData, exportAllData, exportAllDataStream, importAllData } from 
 import { pruneColdRecords } from './prune';
 import {
   formatTotalTime,
+  getAllProfiles,
   getDailySummaries,
   getProfile,
-  getProfilesByDomain,
   getTodaySummaries,
   getTrainingTimeMs,
-  getTrialRecords,
   getTrialRecordsByCard,
   saveSession,
   saveTrialRecord,
 } from './queries';
-import type { TrainingDomain, UnifiedProfileData } from './schema';
+import type { UnifiedProfileData } from './schema';
 
 export interface AppDataSummary {
   totalTimeMs: number;
-  domainTimes: Record<TrainingDomain, number>;
   profiles: Record<string, UnifiedProfileData>;
   settings: UserSettings;
   trainingPlan: TrainingPlan;
@@ -52,20 +50,12 @@ export interface AppDataSummary {
 export class SystemRepository {
   // === 查询与聚合统计 ===
   public async getAppSummary(): Promise<AppDataSummary> {
-    const domains = registry.getAllDomains();
-
-    const timesEntries = await Promise.all(
-      domains.map(async (d) => [d, await getTrainingTimeMs(d)] as const),
-    );
-    const domainTimes = Object.fromEntries(timesEntries) as Record<TrainingDomain, number>;
-    const totalTimeMs = Object.values(domainTimes).reduce((acc, t) => acc + t, 0);
-
-    const allProfilesList = await Promise.all(domains.map((d) => getProfilesByDomain(d)));
+    const totalTimeMs = await getTrainingTimeMs();
+    const allProfilesList = await getAllProfiles();
     const profiles: Record<string, UnifiedProfileData> = {};
-    for (const list of allProfilesList) {
-      for (const p of list) {
-        profiles[p.cardId] = p;
-      }
+
+    for (const p of allProfilesList) {
+      profiles[p.cardId] = p;
     }
 
     const settings = loadSettings();
@@ -74,7 +64,6 @@ export class SystemRepository {
 
     return {
       totalTimeMs,
-      domainTimes,
       profiles,
       settings,
       trainingPlan,
@@ -86,10 +75,9 @@ export class SystemRepository {
   public saveTrial = saveTrialRecord;
   public saveSession = saveSession;
   public getProfile = getProfile;
-  public getProfilesByDomain = getProfilesByDomain;
+  public getAllProfiles = getAllProfiles;
   public getDailySummaries = getDailySummaries;
   public getTodaySummaries = getTodaySummaries;
-  public getTrialRecords = getTrialRecords;
   public getTrialRecordsByCard = getTrialRecordsByCard;
   public getTrainingTimeMs = getTrainingTimeMs;
   public formatTotalTime = formatTotalTime;

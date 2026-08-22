@@ -1,6 +1,8 @@
 import { Columns, Compass, Split } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
-import type { DomainManifest } from '../../core/contracts';
+import type { PackManifest } from '../../core/contracts';
+import type { CardDefinition } from '../../types/card';
+import { anglePlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
@@ -10,13 +12,11 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
     description: '在悬停光标两侧实时显示动态容错区间',
   },
 ];
-import type { CardDefinition } from '../../types/card';
-import { anglePlugin } from './plugin';
 
 export const angleCards: CardDefinition[] = [
   {
     id: 'angle_estimation',
-    domain: 'angle',
+    packId: 'angle',
     mode: 'ANGLE_ESTIMATION',
     title: '夹角大小估算',
     desc: '观察由纯黑线段构成的夹角，使用连续滑块精准评估夹角弧度大小 (0°~180°)。',
@@ -32,7 +32,7 @@ export const angleCards: CardDefinition[] = [
   },
   {
     id: 'angle_comparison_2afc',
-    domain: 'angle',
+    packId: 'angle',
     mode: 'ANGLE_COMPARISON_2AFC',
     title: '角度二分对比',
     desc: '在消除空间正交基准干扰下，二选一快速判别哪一侧的两射线夹角更大 (2AFC)。',
@@ -47,7 +47,7 @@ export const angleCards: CardDefinition[] = [
   },
   {
     id: 'angle_parallel_2afc',
-    domain: 'angle',
+    packId: 'angle',
     mode: 'PARALLEL_ALIGNMENT_2AFC',
     title: '平行线基准辨识',
     desc: '观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。',
@@ -62,25 +62,18 @@ export const angleCards: CardDefinition[] = [
   },
 ];
 
-export const angleDomain: DomainManifest = {
-  domain: 'angle',
+export const anglePack: PackManifest = {
+  packId: 'angle',
   meta: {
-    domain: 'angle',
-    appId: 'angle-perception',
+    id: 'angle',
     title: '角度感知',
     subTitle: 'Angle Perception',
-    homeTitle: '角度感知 (Angle Perception)',
-    homeDesc:
-      '以极简白底黑线剥离干扰，通过夹角大小估算、微小角度二分对比与平行线对偶辨识，构建坚实的正负形起形与角度感知直觉。',
+    desc: '以极简白底黑线剥离干扰，通过夹角大小估算、微小角度二分对比与平行线对偶辨识，构建坚实的正负形起形与角度感知直觉。',
     themeColor: 'indigo',
     icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return angleCards;
-    },
   },
   cards: angleCards,
-  trainingPlugin: anglePlugin as unknown as DomainManifest['trainingPlugin'],
+  trainingPlugin: anglePlugin,
 };
 
-export default angleDomain;
+export default anglePack;

@@ -1,18 +1,11 @@
 import { type DBSchema, type IDBPDatabase, openDB } from 'idb';
 
-export type TrainingDomain =
-  | 'star'
-  | 'color'
-  | 'relative_color'
-  | 'negative_space'
-  | 'abstraction'
-  | 'concretization'
-  | 'angle';
+export type TrainingDomain = string;
 
 export interface UnifiedSessionData {
   id: string;
-  cardId?: string;
-  domain: TrainingDomain;
+  cardId: string;
+  domain?: string;
   mode: string;
   type: 'training' | 'benchmark';
   startTimestamp: number;
@@ -26,8 +19,8 @@ export interface UnifiedSessionData {
 export interface UnifiedTrialRecord {
   id: string;
   sessionId: string;
-  cardId?: string;
-  domain: TrainingDomain;
+  cardId: string;
+  domain?: string;
   mode: string;
   timestamp: number;
   difficultyLevel: number;
@@ -39,7 +32,7 @@ export interface UnifiedTrialRecord {
 
 export interface UnifiedProfileData {
   cardId: string;
-  domain: TrainingDomain;
+  domain?: string;
   mode: string;
   currentLevel: number;
   bestLevel: number;
@@ -55,7 +48,7 @@ export interface DailySummaryData {
   id: string; // 格式: `${date}_${cardId}` (例如 '2026-08-22_star_single')
   date: string; // 本地日期 'YYYY-MM-DD'
   cardId: string;
-  domain: TrainingDomain;
+  domain?: string;
   mode: string;
   totalCount: number;
   hitCount: number;
@@ -72,8 +65,8 @@ export interface FormSightDBSchema extends DBSchema {
     value: UnifiedSessionData;
     indexes: {
       'by-card': string;
-      'by-domain': TrainingDomain;
-      'by-domain-mode': [TrainingDomain, string];
+      'by-domain': string;
+      'by-domain-mode': [string, string];
     };
   };
   records: {
@@ -82,8 +75,8 @@ export interface FormSightDBSchema extends DBSchema {
     indexes: {
       'by-card': string;
       'by-session': string;
-      'by-domain': TrainingDomain;
-      'by-domain-mode': [TrainingDomain, string];
+      'by-domain': string;
+      'by-domain-mode': [string, string];
       'by-mode': string;
       'by-card-timestamp': [string, number];
       'by-timestamp': number;
@@ -95,16 +88,16 @@ export interface FormSightDBSchema extends DBSchema {
     indexes: {
       'by-date': string;
       'by-card': string;
-      'by-domain': TrainingDomain;
+      'by-domain': string;
       'by-date-card': [string, string];
-      'by-date-domain': [string, TrainingDomain];
+      'by-date-domain': [string, string];
     };
   };
   user_profiles: {
     key: string;
     value: UnifiedProfileData;
     indexes: {
-      'by-domain': TrainingDomain;
+      'by-domain': string;
     };
   };
 }
@@ -204,8 +197,8 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               const summaryMap = new Map<string, DailySummaryData>();
 
               for (const r of allRecords) {
-                const domain = r.domain || 'star';
                 const cardId = r.cardId || r.mode;
+                const domain = r.domain || cardId;
                 const date = getLocalDateString(r.timestamp);
                 const summaryId = `${date}_${cardId}`;
                 const respMs = Number(r.responseTimeMs) || 0;

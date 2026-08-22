@@ -1,4 +1,3 @@
-import type { DomainMeta } from '../config/domains';
 import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import type {
   CardDefinition,
@@ -8,38 +7,24 @@ import type {
   PackMeta,
   SensoryTargetTag,
 } from '../types/card';
-import type { TrainingDomain } from '../utils/db/schema';
-import type { AnyManifest, CardAnalyticsPlugin, DomainManifest, PackManifest } from './contracts';
+import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 
 class InvertedCardIndex {
   private targetMap = new Map<SensoryTargetTag, Set<string>>();
   private skillMap = new Map<CognitiveSkillTag, Set<string>>();
   private interactionMap = new Map<InteractionTag, Set<string>>();
   private packMap = new Map<string, Set<string>>();
-  private domainMap = new Map<TrainingDomain, Set<string>>();
 
   public clear(): void {
     this.targetMap.clear();
     this.skillMap.clear();
     this.interactionMap.clear();
     this.packMap.clear();
-    this.domainMap.clear();
   }
 
   public indexCard(card: CardDefinition): void {
     const id = card.id;
 
-    // 索引 Domain
-    if (card.domain) {
-      let set = this.domainMap.get(card.domain);
-      if (!set) {
-        set = new Set();
-        this.domainMap.set(card.domain, set);
-      }
-      set.add(id);
-    }
-
-    // 索引 Pack
     if (card.packId) {
       let set = this.packMap.get(card.packId);
       if (!set) {
@@ -49,7 +34,6 @@ class InvertedCardIndex {
       set.add(id);
     }
 
-    // 索引多维标签
     if (card.tags) {
       for (const t of card.tags.target || []) {
         let set = this.targetMap.get(t);
@@ -95,14 +79,9 @@ class InvertedCardIndex {
   public getCardIdsByPack(packId: string): Set<string> {
     return this.packMap.get(packId) || new Set();
   }
-
-  public getCardIdsByDomain(domain: TrainingDomain): Set<string> {
-    return this.domainMap.get(domain) || new Set();
-  }
 }
 
 class SystemDomainRegistry {
-  private domains = new Map<TrainingDomain, DomainManifest>();
   private packs = new Map<string, PackManifest>();
   private cardMap = new Map<string, CardDefinition>();
   private cardPluginMap = new Map<string, AnyTrainingPlugin>();
@@ -114,14 +93,10 @@ class SystemDomainRegistry {
   }
 
   /**
-   * 自动扫描 src/packs/*\/index.ts 以及 src/domains/*\/index.ts 零配置注册
+   * 自动扫描 src/packs/*\/index.ts 零配置注册
    */
   private autoDiscover(): void {
-    const packModules = import.meta.glob<{ default: AnyManifest }>('../packs/*/index.ts', {
-      eager: true,
-    });
-
-    const domainModules = import.meta.glob<{ default: AnyManifest }>('../domains/*/index.ts', {
+    const packModules = import.meta.glob<{ default: PackManifest }>('../packs/*/index.ts', {
       eager: true,
     });
 
@@ -129,26 +104,15 @@ class SystemDomainRegistry {
       const manifest = packModules[path]?.default;
       if (manifest) this.register(manifest);
     }
-
-    for (const path in domainModules) {
-      const manifest = domainModules[path]?.default;
-      if (manifest) this.register(manifest);
-    }
   }
 
-  public register(manifest: AnyManifest): void {
-    if ('packId' in manifest) {
-      this.packs.set(manifest.packId, manifest);
-    }
-
-    if ('domain' in manifest) {
-      this.domains.set(manifest.domain, manifest);
-    }
+  public register(manifest: PackManifest): void {
+    this.packs.set(manifest.packId, manifest);
 
     for (const card of manifest.cards) {
       const normalizedCard: CardDefinition = {
         ...card,
-        packId: ('packId' in manifest ? manifest.packId : card.packId) || card.domain,
+        packId: manifest.packId,
       };
 
       this.cardMap.set(card.id, normalizedCard);
@@ -183,10 +147,6 @@ class SystemDomainRegistry {
 
     if (options.packId) {
       intersect(this.invertedIndex.getCardIdsByPack(options.packId));
-    }
-
-    if (options.domain) {
-      intersect(this.invertedIndex.getCardIdsByDomain(options.domain));
     }
 
     if (options.targets && options.targets.length > 0) {
@@ -253,25 +213,8 @@ class SystemDomainRegistry {
     return this.packs.get(packId);
   }
 
-  // === Domain 兼容接口 (向后兼容 v0.3.x 视图) ===
-  public getAllDomains(): TrainingDomain[] {
-    return Array.from(this.domains.keys());
-  }
-
-  public getAllDomainMetas(): DomainMeta[] {
-    return Array.from(this.domains.values()).map((d) => d.meta);
-  }
-
-  public getDomainManifest(domain: TrainingDomain): DomainManifest | undefined {
-    return this.domains.get(domain);
-  }
-
-  public getDomainMeta(domain: TrainingDomain): DomainMeta | undefined {
-    return this.domains.get(domain)?.meta;
-  }
-
-  public getCardsByDomain(domain: TrainingDomain): CardDefinition[] {
-    return this.domains.get(domain)?.cards || [];
+  public getAllPackMetas(): PackMeta[] {
+    return Array.from(this.packs.values()).map((p) => p.meta);
   }
 
   // === 卡片直查接口 ===
@@ -289,10 +232,6 @@ class SystemDomainRegistry {
 
   public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {
     return this.cardAnalyticsMap.get(cardId);
-  }
-
-  public isRegisteredDomain(domain: string): domain is TrainingDomain {
-    return this.domains.has(domain as TrainingDomain);
   }
 }
 

@@ -1,6 +1,6 @@
 import { BarChart2, Clock, Inbox, RotateCcw, Sliders, Sparkles } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
-import { ModeCard } from '../components/dashboard/ModeCard';
+import { ModeCard } from '../components/common/ModeCard';
 import { FilterEngine } from '../components/discovery/FilterEngine';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { registry } from '../core/registry';

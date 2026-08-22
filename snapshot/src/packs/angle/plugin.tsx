@@ -15,7 +15,7 @@ export const anglePlugin: TrainingPlugin<
   number | 'A' | 'B',
   BaseModuleSettings
 > = {
-  domain: 'angle',
+  packId: 'angle',
   title: '角度感知',
   getModeBadge: (mode) => {
     const map: Record<string, string> = {

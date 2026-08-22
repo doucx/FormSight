@@ -1,7 +1,6 @@
 import { registry } from '../../core/registry';
 import {
   type DailySummaryData,
-  type TrainingDomain,
   type UnifiedProfileData,
   type UnifiedSessionData,
   type UnifiedTrialRecord,
@@ -17,16 +16,15 @@ export async function saveTrialRecord(
   currentProfileLevel?: number,
 ): Promise<void> {
   const db = await getDB();
-  const domain = record.domain || 'star';
   const cardId = record.cardId || record.mode;
   const canonicalCard = registry.getCardById(cardId);
-  const canonicalDomain = canonicalCard ? canonicalCard.domain : domain;
+  const packId = canonicalCard ? canonicalCard.packId : record.domain || 'core';
   const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
 
   const normalizedRecord: UnifiedTrialRecord = {
     ...record,
-    domain: canonicalDomain,
     cardId,
+    domain: packId,
   };
 
   const dateStr = getLocalDateString(record.timestamp);
@@ -48,7 +46,7 @@ export async function saveTrialRecord(
       id: summaryId,
       date: dateStr,
       cardId,
-      domain: canonicalDomain,
+      domain: packId,
       mode: record.mode,
       totalCount: 1,
       hitCount: record.isHit ? 1 : 0,
@@ -60,7 +58,7 @@ export async function saveTrialRecord(
     };
     await dailyStore.put(newSummary);
   } else {
-    existingDaily.domain = canonicalDomain;
+    existingDaily.domain = packId;
     existingDaily.mode = record.mode;
     existingDaily.totalCount += 1;
     if (record.isHit) existingDaily.hitCount += 1;
@@ -79,7 +77,7 @@ export async function saveTrialRecord(
   if (!existingProfile) {
     const newProfile: UnifiedProfileData = {
       cardId,
-      domain: canonicalDomain,
+      domain: packId,
       mode: record.mode,
       currentLevel: targetProfileLevel,
       bestLevel: targetProfileLevel,
@@ -89,7 +87,7 @@ export async function saveTrialRecord(
     };
     await profileStore.put(newProfile);
   } else {
-    existingProfile.domain = canonicalDomain;
+    existingProfile.domain = packId;
     existingProfile.mode = record.mode;
     existingProfile.totalTrials += 1;
     if (record.isHit) existingProfile.totalHits += 1;
@@ -106,9 +104,10 @@ export async function saveTrialRecord(
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
-  const domain = session.domain || 'star';
   const cardId = session.cardId || session.mode;
-  await db.put('sessions', { ...session, domain, cardId });
+  const canonicalCard = registry.getCardById(cardId);
+  const packId = canonicalCard ? canonicalCard.packId : session.domain || 'core';
+  await db.put('sessions', { ...session, cardId, domain: packId });
 }
 
 export async function getProfile(cardId: string): Promise<UnifiedProfileData | null> {
@@ -117,16 +116,15 @@ export async function getProfile(cardId: string): Promise<UnifiedProfileData | n
   return profile || null;
 }
 
-export async function getProfilesByDomain(domain: TrainingDomain): Promise<UnifiedProfileData[]> {
+export async function getAllProfiles(): Promise<UnifiedProfileData[]> {
   const db = await getDB();
-  return db.getAllFromIndex('user_profiles', 'by-domain', domain);
+  return db.getAll('user_profiles');
 }
 
 /**
  * 从 daily_summaries 快速检索聚合数据 (毫秒级)
  */
 export async function getDailySummaries(options?: {
-  domain?: TrainingDomain;
   cardId?: string;
   date?: string;
   startDate?: string;
@@ -139,20 +137,12 @@ export async function getDailySummaries(options?: {
     return item ? [item] : [];
   }
 
-  if (options?.date && options?.domain) {
-    return db.getAllFromIndex('daily_summaries', 'by-date-domain', [options.date, options.domain]);
-  }
-
   if (options?.date) {
     return db.getAllFromIndex('daily_summaries', 'by-date', options.date);
   }
 
   if (options?.cardId) {
     return db.getAllFromIndex('daily_summaries', 'by-card', options.cardId);
-  }
-
-  if (options?.domain) {
-    return db.getAllFromIndex('daily_summaries', 'by-domain', options.domain);
   }
 
   let summaries = await db.getAll('daily_summaries');
@@ -170,29 +160,9 @@ export async function getDailySummaries(options?: {
 /**
  * 快速获取今日所有卡片聚合数据
  */
-export async function getTodaySummaries(domain?: TrainingDomain): Promise<DailySummaryData[]> {
+export async function getTodaySummaries(): Promise<DailySummaryData[]> {
   const todayStr = getLocalDateString(Date.now());
-  return getDailySummaries({ date: todayStr, domain });
-}
-
-export async function getTrialRecords(
-  domain?: TrainingDomain,
-  mode?: string,
-): Promise<UnifiedTrialRecord[]> {
-  const db = await getDB();
-  let rawRecords: UnifiedTrialRecord[] = [];
-  if (domain && mode) {
-    rawRecords = await db.getAllFromIndex('records', 'by-domain-mode', [domain, mode]);
-  } else if (domain) {
-    rawRecords = await db.getAllFromIndex('records', 'by-domain', domain);
-  } else {
-    rawRecords = await db.getAll('records');
-  }
-
-  return rawRecords.map((r) => ({
-    ...r,
-    ...(r.details || {}),
-  }));
+  return getDailySummaries({ date: todayStr });
 }
 
 export async function getTrialRecordsByCard(
@@ -208,11 +178,9 @@ export async function getTrialRecordsByCard(
   return limit && mapped.length > limit ? mapped.slice(-limit) : mapped;
 }
 
-export async function getTrainingTimeMs(domain?: TrainingDomain): Promise<number> {
+export async function getTrainingTimeMs(): Promise<number> {
   const db = await getDB();
-  const summaries = domain
-    ? await db.getAllFromIndex('daily_summaries', 'by-domain', domain)
-    : await db.getAll('daily_summaries');
+  const summaries = await db.getAll('daily_summaries');
 
   let totalMs = 0;
   for (const s of summaries) {

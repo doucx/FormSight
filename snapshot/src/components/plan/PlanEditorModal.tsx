@@ -234,7 +234,7 @@ export function PlanEditorModal({
 
   const availableCards = registry.getAllCards().filter((card) => {
     if (selectedDomainFilter === 'all') return true;
-    return card.domain === selectedDomainFilter;
+    return card.packId === selectedDomainFilter;
   });
 
   return (

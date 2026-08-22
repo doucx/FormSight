@@ -1,6 +1,6 @@
 import { Compass, Crosshair, RotateCw, Target } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
-import type { DomainManifest } from '../../core/contracts';
+import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { createStarAnalyticsPlugin } from './analytics';
 import { starPlugin } from './plugin';
@@ -43,7 +43,7 @@ export const STAR_SCHEMAS: SettingFieldSchema[] = [
 export const starCards: CardDefinition[] = [
   {
     id: 'star_single',
-    domain: 'star',
+    packId: 'star',
     mode: 'single',
     title: '单锚点模式',
     desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
@@ -59,7 +59,7 @@ export const starCards: CardDefinition[] = [
   },
   {
     id: 'star_double_h',
-    domain: 'star',
+    packId: 'star',
     mode: 'double_h',
     title: '水平双锚点',
     desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
@@ -75,7 +75,7 @@ export const starCards: CardDefinition[] = [
   },
   {
     id: 'star_double_r',
-    domain: 'star',
+    packId: 'star',
     mode: 'double_r',
     title: '旋转双锚点',
     desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
@@ -91,25 +91,18 @@ export const starCards: CardDefinition[] = [
   },
 ];
 
-export const starDomain: DomainManifest = {
-  domain: 'star',
+export const starPack: PackManifest = {
+  packId: 'star',
   meta: {
-    domain: 'star',
-    appId: 'star-hopping',
+    id: 'star',
     title: '寻星练习',
     subTitle: 'Star-Hopping',
-    homeTitle: '寻星练习 (Star-Hopping)',
-    homeDesc:
-      '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
+    desc: '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
     themeColor: 'indigo',
     icon: Compass,
-    hasWeaknessAnalytics: true,
-    get cards() {
-      return starCards;
-    },
   },
   cards: starCards,
-  trainingPlugin: starPlugin as unknown as DomainManifest['trainingPlugin'],
+  trainingPlugin: starPlugin,
   analyticsPlugins: {
     star_single: createStarAnalyticsPlugin('star_single', '单锚点'),
     star_double_h: createStarAnalyticsPlugin('star_double_h', '水平双锚点'),
@@ -117,4 +110,4 @@ export const starDomain: DomainManifest = {
   },
 };
 
-export default starDomain;
+export default starPack;

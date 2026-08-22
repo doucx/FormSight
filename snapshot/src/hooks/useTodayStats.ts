@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
-import { type TrainingDomain, getTodaySummaries } from '../utils/db/index';
+import { getTodaySummaries } from '../utils/db/index';
 
-export function useTodayStats(domain?: TrainingDomain) {
+export function useTodayStats() {
   const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
     {},
   );
@@ -9,7 +9,7 @@ export function useTodayStats(domain?: TrainingDomain) {
   useEffect(() => {
     let isMounted = true;
     const fetchStats = async () => {
-      const summaries = await getTodaySummaries(domain);
+      const summaries = await getTodaySummaries();
       const stats: Record<string, { count: number; timeMs: number }> = {};
 
       for (const s of summaries) {
@@ -30,7 +30,7 @@ export function useTodayStats(domain?: TrainingDomain) {
     return () => {
       isMounted = false;
     };
-  }, [domain]);
+  }, []);
 
   return todayStats;
 }

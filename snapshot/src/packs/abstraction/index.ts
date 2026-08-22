@@ -1,6 +1,8 @@
 import { Eye, Maximize2, Palette, RotateCw, Sun } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
-import type { DomainManifest } from '../../core/contracts';
+import type { PackManifest } from '../../core/contracts';
+import type { CardDefinition } from '../../types/card';
+import { abstractionPlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
@@ -10,13 +12,11 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
     description: '在悬停光标两侧实时显示动态容错区间',
   },
 ];
-import type { CardDefinition } from '../../types/card';
-import { abstractionPlugin } from './plugin';
 
 export const abstractionCards: CardDefinition[] = [
   {
     id: 'abs_gesture_axis',
-    domain: 'abstraction',
+    packId: 'abstraction',
     mode: 'GESTURE_AXIS',
     title: '动态势线提取',
     desc: '从离散散点流向中提取第一主成分 PCA 势线角度，建立画面主导动势感知力。',
@@ -32,7 +32,7 @@ export const abstractionCards: CardDefinition[] = [
   },
   {
     id: 'abs_polygon_decimation',
-    domain: 'abstraction',
+    packId: 'abstraction',
     mode: 'POLYGON_DECIMATION',
     title: '折线低模大形',
     desc: '从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。',
@@ -47,7 +47,7 @@ export const abstractionCards: CardDefinition[] = [
   },
   {
     id: 'abs_notan_threshold',
-    domain: 'abstraction',
+    packId: 'abstraction',
     mode: 'NOTAN_THRESHOLD',
     title: '黑白素描归组',
     desc: '调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。',
@@ -63,7 +63,7 @@ export const abstractionCards: CardDefinition[] = [
   },
   {
     id: 'abs_palette_clustering',
-    domain: 'abstraction',
+    packId: 'abstraction',
     mode: 'PALETTE_CLUSTERING',
     title: '主调色群提炼',
     desc: '穿透多色拼贴马赛克的混色噪点，四选一提炼出面积加权下的加权质心主色。',
@@ -78,25 +78,18 @@ export const abstractionCards: CardDefinition[] = [
   },
 ];
 
-export const abstractionDomain: DomainManifest = {
-  domain: 'abstraction',
+export const abstractionPack: PackManifest = {
+  packId: 'abstraction',
   meta: {
-    domain: 'abstraction',
-    appId: 'visual-abstraction',
+    id: 'abstraction',
     title: '概括感知',
     subTitle: 'Visual Abstraction',
-    homeTitle: '概括感知 (Visual Abstraction)',
-    homeDesc:
-      '自底向上过滤繁琐细节，训练对动态势线、极简低模折线、素描黑白块面与加权主调的本质提炼能力。',
+    desc: '自底向上过滤繁琐细节，训练对动态势线、极简低模折线、素描黑白块面与加权主调的本质提炼能力。',
     themeColor: 'indigo',
     icon: Eye,
-    hasWeaknessAnalytics: false,
-    get cards() {
-      return abstractionCards;
-    },
   },
   cards: abstractionCards,
-  trainingPlugin: abstractionPlugin as unknown as DomainManifest['trainingPlugin'],
+  trainingPlugin: abstractionPlugin,
 };
 
-export default abstractionDomain;
+export default abstractionPack;

@@ -41,11 +41,11 @@ export function GenericTrainingView<
   showExitButton = true,
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
-  const domain = card.domain;
+  const packId = card.packId;
   const mode = card.mode;
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
-    domain,
+    domain: packId,
     mode,
     sessionType,
     initialLevel,

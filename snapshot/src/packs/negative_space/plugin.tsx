@@ -16,7 +16,7 @@ export const negativeSpacePlugin: TrainingPlugin<
   number | 'A' | 'B' | Point,
   NegativeSpaceSettings
 > = {
-  domain: 'negative_space',
+  packId: 'negative_space',
   title: '正负形感知',
   getModeBadge: (mode) =>
     mode === 'AREA_COMPARISON_2AFC'
