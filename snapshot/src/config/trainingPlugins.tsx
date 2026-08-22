@@ -89,4 +89,5 @@ export type AnyDomainPlugin =
   | AbstractionPlugin
   | AnglePlugin;
 
-export type AnyTrainingPlugin = TrainingPlugin;
+// biome-ignore lint/suspicious/noExplicitAny: generic wildcard for heterogeneous pack plugins
+export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;

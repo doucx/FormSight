@@ -179,10 +179,10 @@ class SystemDomainRegistry {
       intersect(interactionUnion);
     }
 
-    const idsToFilter =
+    const idsToFilter: string[] =
       candidateIds === null ? Array.from(this.cardMap.keys()) : Array.from(candidateIds);
     let results = idsToFilter
-      .map((id) => this.cardMap.get(id))
+      .map((id: string) => this.cardMap.get(id))
       .filter((card): card is CardDefinition => Boolean(card));
 
     if (!options.includeExperimental) {

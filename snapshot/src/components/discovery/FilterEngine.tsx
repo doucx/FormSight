@@ -4,11 +4,9 @@ import {
   Compass,
   Crosshair,
   Filter,
-  Layers,
   MousePointer,
   RotateCcw,
   Search,
-  Sliders,
   Sparkles,
   X,
 } from 'lucide-preact';
