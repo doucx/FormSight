@@ -397,11 +397,11 @@ export function draw3DCubeWireframe(
 }
 
 const PROPORTION_PRESETS: ProportionTarget[] = [
-  { name: '1/2 处 (中心中点)', ratio: 0.5 },
-  { name: '1/3 处', ratio: 1 / 3 },
-  { name: '2/3 处', ratio: 2 / 3 },
-  { name: '1/4 处', ratio: 0.25 },
-  { name: '黄金分割点 (0.618)', ratio: 0.618 },
+  { name: '1/2', ratio: 0.5 },
+  { name: '1/3', ratio: 1 / 3 },
+  { name: '2/3', ratio: 2 / 3 },
+  { name: '1/4', ratio: 0.25 },
+  { name: '0.618', ratio: 0.618 },
 ];
 
 /**

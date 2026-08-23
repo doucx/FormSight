@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(packs): 新增实验性卡片“空间比例角度迁移”", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787477197.8673632, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] tune(packs): 精简比例盲切与迁移卡片的提示文案与目标面板", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787477714.3225276, "duration_ms": 0}}

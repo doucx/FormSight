@@ -140,14 +140,11 @@ export function ProportionDivisionView({
         ) : null
       }
     >
-      {/* 醒目的核心目标指引面板 */}
-      <div className="w-full bg-indigo-50/70 border border-indigo-100/90 rounded-2xl p-3.5 flex flex-col items-center gap-1.5 text-center">
-        <div className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">
-          作答目标 (从紫环起点端起算)
-        </div>
-        <div className="text-base font-black text-indigo-900 tracking-tight">
-          标出【{question.targetRatioName ?? '指定比例'}】
-        </div>
+      {/* 极简纯数字目标面板 */}
+      <div className="w-full bg-indigo-50/80 border border-indigo-100/90 rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
+        <span className="text-2xl font-black text-indigo-900 font-mono tracking-widest">
+          {question.targetRatioName ?? '1/2'}
+        </span>
       </div>
 
       <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex flex-col items-center gap-2">

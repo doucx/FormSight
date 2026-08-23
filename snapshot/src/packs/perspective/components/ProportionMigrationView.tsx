@@ -143,21 +143,16 @@ export function ProportionMigrationView({
       }
     >
       {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex flex-col items-center gap-1.5 shadow-sm">
-        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
-          基准水平比例 (从左侧紫环起点起算)
-        </div>
-        <div className="w-full flex justify-center py-1">
-          <CanvasView
-            width={280}
-            height={48}
-            className="w-full max-w-[280px] h-[48px] bg-white rounded-xl border border-slate-200 shadow-inner"
-            draw={(canvas) => {
-              drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
-            }}
-            deps={[question.targetRatio]}
-          />
-        </div>
+      <div className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl p-2.5 flex justify-center shadow-inner">
+        <CanvasView
+          width={280}
+          height={48}
+          className="w-full max-w-[280px] h-[48px] bg-white rounded-xl border border-slate-200 shadow-sm"
+          draw={(canvas) => {
+            drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
+          }}
+          deps={[question.targetRatio]}
+        />
       </div>
 
       {/* 下方倾斜角度作答画布 */}
