@@ -1,0 +1,139 @@
+import { Box } from 'lucide-preact';
+import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
+import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import type { Point } from '../../../types';
+import {
+  draw3DCubeWireframe,
+  PERSPECTIVE_CANVAS_SIZE,
+  type PerspectiveHitResult,
+  type PerspectiveQuestionData,
+} from '../utils/perspectiveUtils';
+
+interface StructureProjection3DViewProps {
+  question: PerspectiveQuestionData;
+  showAnswer: boolean;
+  userAnswer: PerspectiveHitResult | null;
+  onAnswer: (point: Point) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function StructureProjection3DView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: StructureProjection3DViewProps) {
+  const isHit = Boolean(userAnswer?.isHit);
+  const targetPt3D = question.targetPoint3D;
+  const dim = question.gridDim3D ?? 3;
+
+  return (
+    <QuestionCardShell
+      hintText="观察左侧正交三视图标点，在右侧 3D 立方体透视点阵中选出对应空间坐标点"
+      hintIcon={Box}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-3xl"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full items-center">
+        {/* 左侧三视图正交切面预览 */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col gap-3">
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider text-center">
+            三视图正交坐标 (Top / Front / Side)
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-slate-600">
+            {/* 顶视图 (X-Z) */}
+            <div className="flex flex-col items-center gap-1 bg-white p-2 rounded-xl border border-slate-200">
+              <span className="text-slate-400 font-bold">顶视图 (Top)</span>
+              <div
+                className="w-14 h-14 border border-dashed border-indigo-200 rounded grid relative bg-slate-50"
+                style={{
+                  gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,
+                }}
+              >
+                {targetPt3D && (
+                  <div
+                    className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${((targetPt3D.x + 0.5) / dim) * 100}%`,
+                      top: `${((targetPt3D.z + 0.5) / dim) * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* 正视图 (X-Y) */}
+            <div className="flex flex-col items-center gap-1 bg-white p-2 rounded-xl border border-slate-200">
+              <span className="text-slate-400 font-bold">正视图 (Front)</span>
+              <div
+                className="w-14 h-14 border border-dashed border-indigo-200 rounded grid relative bg-slate-50"
+                style={{
+                  gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,
+                }}
+              >
+                {targetPt3D && (
+                  <div
+                    className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${((targetPt3D.x + 0.5) / dim) * 100}%`,
+                      top: `${(((dim - 1 - targetPt3D.y) + 0.5) / dim) * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* 侧视图 (Z-Y) */}
+            <div className="flex flex-col items-center gap-1 bg-white p-2 rounded-xl border border-slate-200">
+              <span className="text-slate-400 font-bold">侧视图 (Side)</span>
+              <div
+                className="w-14 h-14 border border-dashed border-indigo-200 rounded grid relative bg-slate-50"
+                style={{
+                  gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,
+                }}
+              >
+                {targetPt3D && (
+                  <div
+                    className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${((targetPt3D.z + 0.5) / dim) * 100}%`,
+                      top: `${(((dim - 1 - targetPt3D.y) + 0.5) / dim) * 100}%`,
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧 3D 立方体透视交互点阵 */}
+        <div className="flex justify-center">
+          <PointClickCanvas
+            canvasSize={PERSPECTIVE_CANVAS_SIZE}
+            gridPoints={question.projectedGridPoints || []}
+            targetPoint={question.targetProjectedPoint}
+            showAnswer={showAnswer}
+            isHit={isHit}
+            disabled={disabled}
+            onCommitPoint={onAnswer}
+            customOverlayRender={(ctx) => {
+              const center = {
+                x: PERSPECTIVE_CANVAS_SIZE / 2,
+                y: PERSPECTIVE_CANVAS_SIZE / 2 + 10,
+              };
+              const scale = dim === 4 ? 42 : 55;
+              draw3DCubeWireframe(ctx, center, scale, dim);
+            }}
+          />
+        </div>
+      </div>
+    </QuestionCardShell>
+  );
+}
