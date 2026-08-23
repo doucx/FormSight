@@ -150,7 +150,9 @@ export function TrainingShell({
           {showTimer && (
             <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
+              <span className="font-mono font-bold text-slate-700">
+                {formatTime(elapsedSeconds)}
+              </span>
             </div>
           )}
         </div>
