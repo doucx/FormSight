@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构实验性卡片标记为正交状态标签维度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787479905.6737137, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(cards): Migrate experimental flag to card status tags and filter engine", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787480311.8367946, "duration_ms": 0}}
