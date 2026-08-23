@@ -23,7 +23,7 @@ import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
   const { route, navigate } = useHashRoute();
-  const todayStats = useTodayStats();
+  const { todayStats, refreshTodayStats } = useTodayStats();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
@@ -50,7 +50,10 @@ export function App() {
   }, []);
 
   const refreshProfiles = useCallback(async () => {
-    const summary = await repository.getAppSummary();
+    const [summary] = await Promise.all([
+      repository.getAppSummary(),
+      refreshTodayStats(),
+    ]);
 
     setTotalTimeMs(summary.totalTimeMs);
     setProfiles(summary.profiles);
@@ -58,7 +61,7 @@ export function App() {
     setTrainingPlan(summary.trainingPlan);
     setAllPlans(summary.allPlans);
     setProfilesLoaded(true);
-  }, []);
+  }, [refreshTodayStats]);
 
   useEffect(() => {
     refreshProfiles();
