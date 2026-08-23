@@ -29,6 +29,7 @@ interface TrainingShellProps {
   autoNext: boolean;
   session: TrainingSessionHandle;
   showExitButton?: boolean;
+  showTimer?: boolean;
   onExit: () => void;
   children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
 }
@@ -41,6 +42,7 @@ export function TrainingShell({
   autoNext,
   session,
   showExitButton = true,
+  showTimer = true,
   children,
 }: TrainingShellProps) {
   const { title, instruction, desc } = card;
@@ -145,10 +147,14 @@ export function TrainingShell({
             <span className="font-black text-indigo-600">Level {currentLevel}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
-          </div>
+          {showTimer && (
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span className="font-mono font-bold text-slate-700">
+                {formatTime(elapsedSeconds)}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 

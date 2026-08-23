@@ -1,4 +1,4 @@
-import { ArrowLeft, FastForward } from 'lucide-preact';
+import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
@@ -23,6 +23,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
   const [planSessionKey, setPlanSessionKey] = useState<number>(0);
+  const [isPlanIdle, setIsPlanIdle] = useState<boolean>(false);
 
   const validItems = (plan.items || []).filter((item) =>
     Boolean(registry.getCardById(item.cardId)),
@@ -61,14 +62,22 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     };
   }, [currentCard, currentStepIndex, planSessionKey]);
 
+  const handleIdleChange = useCallback((idle: boolean) => {
+    setIsPlanIdle(idle);
+  }, []);
+
+  const handleIdleResume = useCallback((idleDurationMs: number) => {
+    setSessionStartTime((prev) => prev + idleDurationMs);
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!showSummaryModal) {
+      if (!showSummaryModal && !isPlanIdle && isLevelLoaded) {
         setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [sessionStartTime, showSummaryModal]);
+  }, [sessionStartTime, showSummaryModal, isPlanIdle, isLevelLoaded]);
 
   const handleStageReached = useCallback(
     (history: SessionHistoryItem[]) => {
@@ -121,6 +130,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   const handleRestartPlan = useCallback(() => {
     setIsLevelLoaded(false);
+    setIsPlanIdle(false);
     setShowSummaryModal(false);
     setCurrentStepIndex(0);
     setStageResults([]);
@@ -140,6 +150,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return null;
   }
   const cardConfig = getCardSettings(settings, currentCard.id);
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   return (
     <div className="w-full">
@@ -166,6 +184,12 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
             本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-mono text-xs font-bold text-slate-700">
+              {formatTime(totalElapsedSeconds)}
+            </span>
           </div>
           <button
             type="button"
@@ -194,7 +218,10 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           globalSettings={settings.global}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
+          onIdleChange={handleIdleChange}
+          onIdleResume={handleIdleResume}
           showExitButton={false}
+          showTimer={false}
           onExit={handleRequestExit}
         />
       )}

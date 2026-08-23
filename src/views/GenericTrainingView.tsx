@@ -20,7 +20,10 @@ export interface GenericTrainingViewProps<
   globalSettings?: GlobalSettings;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onIdleChange?: (isIdle: boolean) => void;
+  onIdleResume?: (idleDurationMs: number) => void;
   showExitButton?: boolean;
+  showTimer?: boolean;
   onExit: () => void;
 }
 
@@ -38,7 +41,10 @@ export function GenericTrainingView<
   globalSettings,
   targetLimitTrials,
   onTargetLimitReached,
+  onIdleChange,
+  onIdleResume,
   showExitButton = true,
+  showTimer = true,
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const packId = card.packId;
@@ -57,6 +63,8 @@ export function GenericTrainingView<
     blockSize: settings.blockSize,
     targetLimitTrials,
     onTargetLimitReached,
+    onIdleChange,
+    onIdleResume,
     generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
     evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
     isHit: (hitResult) => plugin.isHit(hitResult),
@@ -120,6 +128,7 @@ export function GenericTrainingView<
       autoNext={settings.autoNext}
       session={session}
       showExitButton={showExitButton}
+      showTimer={showTimer}
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>
