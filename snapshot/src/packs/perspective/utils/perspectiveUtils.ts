@@ -147,6 +147,7 @@ export function drawProportionCanvas(
   line: LineSegment | undefined,
   targetPoint: Point | undefined,
   userPoint: Point | null | undefined,
+  hoverPoint?: Point | null,
   showAnswer = false,
   size = PERSPECTIVE_CANVAS_SIZE,
 ): void {
@@ -183,6 +184,19 @@ export function drawProportionCanvas(
   ctx.beginPath();
   ctx.arc(line.p2.x, line.p2.y, 4, 0, Math.PI * 2);
   ctx.fill();
+
+  // 未作答时：在线段上绘制鼠标垂直正交投影吸附点
+  if (!showAnswer && hoverPoint) {
+    ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
+    ctx.beginPath();
+    ctx.arc(hoverPoint.x, hoverPoint.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#4F46E5';
+    ctx.beginPath();
+    ctx.arc(hoverPoint.x, hoverPoint.y, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   // 显示用户点击点与真理点
   if (showAnswer) {

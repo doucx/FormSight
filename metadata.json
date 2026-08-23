@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(packs): 修复透视灭点实时联动与居中布局，优化比例盲切目标指引", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787476674.5512455, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(packs): 实现比例盲切的线段正交投影吸附与无光标定点交互", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787477054.472583, "duration_ms": 0}}
