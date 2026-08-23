@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(cards): Migrate experimental flag to card status tags and filter engine", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787480311.8367946, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M LICENSE, M README.md", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787493645.1395736, "duration_ms": 0}}
