@@ -23,16 +23,13 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     | InteractionTag[]
     | undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
-  const expRaw = params.get('exp');
-  const includeExperimental = expRaw !== null ? expRaw === '1' || expRaw === 'true' : undefined;
 
   if (
     !packId &&
     (!targets || targets.length === 0) &&
     (!skills || skills.length === 0) &&
     (!interactions || interactions.length === 0) &&
-    !searchKeyword &&
-    includeExperimental === undefined
+    !searchKeyword
   ) {
     return undefined;
   }
@@ -43,7 +40,6 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     skills: skills && skills.length > 0 ? skills : undefined,
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
     searchKeyword,
-    includeExperimental,
   };
 }
 
@@ -87,9 +83,6 @@ function stringifyRoute(route: RouteLocation): string {
     }
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());
-    }
-    if (route.query.includeExperimental) {
-      params.set('exp', '1');
     }
     const qs = params.toString();
     return qs ? `#/?${qs}` : '#/';

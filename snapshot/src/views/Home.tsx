@@ -14,7 +14,6 @@ interface HomeProps {
   profiles: Record<string, UnifiedProfileData>;
   trainingPlan: TrainingPlan;
   allPlans?: TrainingPlan[];
-  showExperimental?: boolean;
   query?: CardQueryOptions;
   onQueryChange?: (query: CardQueryOptions) => void;
   onStartCard: (cardId: string, type: 'training' | 'benchmark') => void;
@@ -33,7 +32,6 @@ export function Home({
   profiles,
   trainingPlan,
   allPlans = [],
-  showExperimental = false,
   query: externalQuery,
   onQueryChange,
   onStartCard,
@@ -45,10 +43,7 @@ export function Home({
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
-  const [localQuery, setLocalQuery] = useState<CardQueryOptions>({
-    includeExperimental: showExperimental,
-    ...(externalQuery || {}),
-  });
+  const [localQuery, setLocalQuery] = useState<CardQueryOptions>(externalQuery || {});
 
   const activeQuery = externalQuery !== undefined ? externalQuery : localQuery;
 
@@ -57,13 +52,10 @@ export function Home({
     onQueryChange?.(newQuery);
   };
 
-  // 结合全局设置与查询条件获取过滤后的卡片
+  // 结合查询条件获取过滤后的卡片
   const filteredCards = useMemo(() => {
-    return registry.queryCards({
-      ...activeQuery,
-      includeExperimental: showExperimental || activeQuery.includeExperimental,
-    });
-  }, [activeQuery, showExperimental]);
+    return registry.queryCards(activeQuery);
+  }, [activeQuery]);
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
@@ -140,7 +132,7 @@ export function Home({
           </p>
           <button
             type="button"
-            onClick={() => handleQueryChange({ includeExperimental: showExperimental })}
+            onClick={() => handleQueryChange({})}
             className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />

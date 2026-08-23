@@ -59,6 +59,5 @@ export interface CardQueryOptions {
   targets?: SensoryTargetTag[];
   skills?: CognitiveSkillTag[];
   interactions?: InteractionTag[];
-  includeExperimental?: boolean;
   searchKeyword?: string;
 }

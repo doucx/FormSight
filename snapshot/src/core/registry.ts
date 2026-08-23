@@ -185,10 +185,6 @@ class SystemDomainRegistry {
       .map((id) => this.cardMap.get(id))
       .filter((card): card is CardDefinition => Boolean(card));
 
-    if (!options.includeExperimental) {
-      results = results.filter((c) => !c.isExperimental);
-    }
-
     if (options.searchKeyword) {
       const kw = options.searchKeyword.trim().toLowerCase();
       if (kw) {
