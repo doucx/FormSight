@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type {
   CardQueryOptions,
+  CardStatusTag,
   CognitiveSkillTag,
   InteractionTag,
   SensoryTargetTag,
@@ -22,9 +23,18 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const interactions = params.get('interactions')?.split(',').filter(Boolean) as
     | InteractionTag[]
     | undefined;
-  const expParam = params.get('experimental');
-  const isExperimental =
-    expParam === 'true' ? true : expParam === 'false' ? false : undefined;
+  const statusesParam = params.get('statuses')?.split(',').filter(Boolean) as
+    | CardStatusTag[]
+    | undefined;
+  const legacyExpParam = params.get('experimental');
+  const statuses =
+    statusesParam && statusesParam.length > 0
+      ? statusesParam
+      : legacyExpParam === 'true'
+        ? (['experimental'] as CardStatusTag[])
+        : legacyExpParam === 'false'
+          ? (['stable'] as CardStatusTag[])
+          : undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
 
   if (
@@ -32,7 +42,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     (!targets || targets.length === 0) &&
     (!skills || skills.length === 0) &&
     (!interactions || interactions.length === 0) &&
-    isExperimental === undefined &&
+    (!statuses || statuses.length === 0) &&
     !searchKeyword
   ) {
     return undefined;
@@ -43,7 +53,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     targets: targets && targets.length > 0 ? targets : undefined,
     skills: skills && skills.length > 0 ? skills : undefined,
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
-    isExperimental,
+    statuses,
     searchKeyword,
   };
 }
@@ -86,8 +96,8 @@ function stringifyRoute(route: RouteLocation): string {
     if (route.query.interactions && route.query.interactions.length > 0) {
       params.set('interactions', route.query.interactions.join(','));
     }
-    if (route.query.isExperimental !== undefined) {
-      params.set('experimental', String(route.query.isExperimental));
+    if (route.query.statuses && route.query.statuses.length > 0) {
+      params.set('statuses', route.query.statuses.join(','));
     }
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());

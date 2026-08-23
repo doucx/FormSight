@@ -160,7 +160,7 @@ export function Home({
                 currentLevel={currentLevel}
                 accuracy={accuracy}
                 hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
-                isExperimental={Boolean(card.isExperimental)}
+                isExperimental={card.tags.status === 'experimental'}
                 onStartTraining={() => onStartCard(card.id, 'training')}
                 onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
                 onOpenSettings={() => onOpenCardSettings(card.id)}

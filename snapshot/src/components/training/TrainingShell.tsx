@@ -122,7 +122,7 @@ export function TrainingShell({
             </span>
           )}
 
-          {card.isExperimental && (
+          {card.tags.status === 'experimental' && (
             <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
               <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
               实验性模块

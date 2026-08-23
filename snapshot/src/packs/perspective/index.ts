@@ -26,10 +26,10 @@ export const perspectiveCards: CardDefinition[] = [
       target: ['geometry', 'perspective'],
       skill: ['spatial_orientation', 'proportion'],
       interaction: ['continuous_slider'],
+      status: 'experimental',
     },
     hasWeaknessAnalytics: true,
     settingSchemas: SLIDER_COMMON_SCHEMAS,
-    isExperimental: true,
   },
   {
     id: 'perspective_proportion_division',
@@ -43,9 +43,9 @@ export const perspectiveCards: CardDefinition[] = [
       target: ['geometry', 'perspective'],
       skill: ['proportion', 'spatial_orientation'],
       interaction: ['point_click'],
+      status: 'experimental',
     },
     hasWeaknessAnalytics: false,
-    isExperimental: true,
   },
   {
     id: 'perspective_proportion_migration',
@@ -59,9 +59,9 @@ export const perspectiveCards: CardDefinition[] = [
       target: ['geometry', 'perspective'],
       skill: ['proportion', 'spatial_orientation', 'visual_memory'],
       interaction: ['point_click'],
+      status: 'experimental',
     },
     hasWeaknessAnalytics: false,
-    isExperimental: true,
   },
   {
     id: 'perspective_gestalt_continuation_2afc',
@@ -75,9 +75,9 @@ export const perspectiveCards: CardDefinition[] = [
       target: ['geometry', 'perspective'],
       skill: ['illusion_invariance', 'spatial_orientation'],
       interaction: ['choice_2afc'],
+      status: 'experimental',
     },
     hasWeaknessAnalytics: false,
-    isExperimental: true,
   },
   {
     id: 'perspective_structure_3d',
@@ -91,9 +91,9 @@ export const perspectiveCards: CardDefinition[] = [
       target: ['geometry', 'perspective'],
       skill: ['spatial_orientation', 'visual_memory'],
       interaction: ['point_click'],
+      status: 'experimental',
     },
     hasWeaknessAnalytics: false,
-    isExperimental: true,
   },
 ];
 

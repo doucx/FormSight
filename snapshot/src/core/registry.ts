@@ -2,6 +2,7 @@ import type { AnyTrainingPlugin } from '../config/trainingPlugins';
 import type {
   CardDefinition,
   CardQueryOptions,
+  CardStatusTag,
   CognitiveSkillTag,
   InteractionTag,
   PackMeta,
@@ -13,12 +14,14 @@ class InvertedCardIndex {
   private targetMap = new Map<SensoryTargetTag, Set<string>>();
   private skillMap = new Map<CognitiveSkillTag, Set<string>>();
   private interactionMap = new Map<InteractionTag, Set<string>>();
+  private statusMap = new Map<CardStatusTag, Set<string>>();
   private packMap = new Map<string, Set<string>>();
 
   public clear(): void {
     this.targetMap.clear();
     this.skillMap.clear();
     this.interactionMap.clear();
+    this.statusMap.clear();
     this.packMap.clear();
   }
 
@@ -61,6 +64,14 @@ class InvertedCardIndex {
         }
         set.add(id);
       }
+
+      const status: CardStatusTag = card.tags.status || 'stable';
+      let stSet = this.statusMap.get(status);
+      if (!stSet) {
+        stSet = new Set();
+        this.statusMap.set(status, stSet);
+      }
+      stSet.add(id);
     }
   }
 
@@ -74,6 +85,10 @@ class InvertedCardIndex {
 
   public getCardIdsByInteraction(interaction: InteractionTag): Set<string> {
     return this.interactionMap.get(interaction) || new Set();
+  }
+
+  public getCardIdsByStatus(status: CardStatusTag): Set<string> {
+    return this.statusMap.get(status) || new Set();
   }
 
   public getCardIdsByPack(packId: string): Set<string> {
@@ -179,15 +194,21 @@ class SystemDomainRegistry {
       intersect(interactionUnion);
     }
 
+    if (options.statuses && options.statuses.length > 0) {
+      const statusUnion = new Set<string>();
+      for (const st of options.statuses) {
+        for (const id of this.invertedIndex.getCardIdsByStatus(st)) {
+          statusUnion.add(id);
+        }
+      }
+      intersect(statusUnion);
+    }
+
     const idsToFilter: string[] =
       candidateIds === null ? Array.from(this.cardMap.keys()) : Array.from(candidateIds);
     let results = idsToFilter
       .map((id) => this.cardMap.get(id))
       .filter((card): card is CardDefinition => Boolean(card));
-
-    if (options.isExperimental !== undefined) {
-      results = results.filter((c) => Boolean(c.isExperimental) === options.isExperimental);
-    }
 
     if (options.searchKeyword) {
       const kw = options.searchKeyword.trim().toLowerCase();
