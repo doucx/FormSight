@@ -4,7 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-LICENSE   | 862 +++++++++++++++++++++++++++++++++++++++++++++++---------------
- README.md |   2 +-
- 2 files changed, 662 insertions(+), 202 deletions(-)
+package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
