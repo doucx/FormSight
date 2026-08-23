@@ -20,6 +20,8 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   idleTimeoutSec?: number;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onIdleChange?: (isIdle: boolean) => void;
+  onIdleResume?: (idleDurationMs: number) => void;
   generateQuestion: (level: number) => TQuestion;
   evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
   isHit: (hitResult: THitResult) => boolean;
@@ -56,6 +58,8 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   idleTimeoutSec: optionsIdleTimeout,
   targetLimitTrials,
   onTargetLimitReached,
+  onIdleChange,
+  onIdleResume,
   generateQuestion,
   evaluateAnswer,
   isHit,
@@ -98,9 +102,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const { isIdle, pauseToIdle, resumeFromIdle } = useIdleProtection({
     timeoutSec: effectiveIdleTimeout,
     disabled: isFinished || showSummaryModal,
+    onPause: () => {
+      onIdleChange?.(true);
+    },
     onResume: (idleDurationMs) => {
       startTimeRef.current += idleDurationMs;
       setQuestionStartTime((prev) => prev + idleDurationMs);
+      onIdleChange?.(false);
+      onIdleResume?.(idleDurationMs);
     },
   });
 

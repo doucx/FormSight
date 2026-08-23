@@ -23,6 +23,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
   const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
   const [planSessionKey, setPlanSessionKey] = useState<number>(0);
+  const [isPlanIdle, setIsPlanIdle] = useState<boolean>(false);
 
   const validItems = (plan.items || []).filter((item) =>
     Boolean(registry.getCardById(item.cardId)),
@@ -61,14 +62,22 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     };
   }, [currentCard, currentStepIndex, planSessionKey]);
 
+  const handleIdleChange = useCallback((idle: boolean) => {
+    setIsPlanIdle(idle);
+  }, []);
+
+  const handleIdleResume = useCallback((idleDurationMs: number) => {
+    setSessionStartTime((prev) => prev + idleDurationMs);
+  }, []);
+
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!showSummaryModal) {
+      if (!showSummaryModal && !isPlanIdle && isLevelLoaded) {
         setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
       }
     }, 1000);
     return () => clearInterval(timer);
-  }, [sessionStartTime, showSummaryModal]);
+  }, [sessionStartTime, showSummaryModal, isPlanIdle, isLevelLoaded]);
 
   const handleStageReached = useCallback(
     (history: SessionHistoryItem[]) => {
@@ -121,6 +130,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   const handleRestartPlan = useCallback(() => {
     setIsLevelLoaded(false);
+    setIsPlanIdle(false);
     setShowSummaryModal(false);
     setCurrentStepIndex(0);
     setStageResults([]);
@@ -208,6 +218,8 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           globalSettings={settings.global}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
+          onIdleChange={handleIdleChange}
+          onIdleResume={handleIdleResume}
           showExitButton={false}
           showTimer={false}
           onExit={handleRequestExit}

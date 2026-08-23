@@ -20,6 +20,8 @@ export interface GenericTrainingViewProps<
   globalSettings?: GlobalSettings;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onIdleChange?: (isIdle: boolean) => void;
+  onIdleResume?: (idleDurationMs: number) => void;
   showExitButton?: boolean;
   showTimer?: boolean;
   onExit: () => void;
@@ -39,6 +41,8 @@ export function GenericTrainingView<
   globalSettings,
   targetLimitTrials,
   onTargetLimitReached,
+  onIdleChange,
+  onIdleResume,
   showExitButton = true,
   showTimer = true,
   onExit,
@@ -59,6 +63,8 @@ export function GenericTrainingView<
     blockSize: settings.blockSize,
     targetLimitTrials,
     onTargetLimitReached,
+    onIdleChange,
+    onIdleResume,
     generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
     evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
     isHit: (hitResult) => plugin.isHit(hitResult),

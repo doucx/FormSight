@@ -1,172 +1,125 @@
-这是一个合理的界面信息层级优化。在多阶段训练计划（Plan）中，各卡片的单阶段用时分散了注意力，而整体流的累计总用时才是核心指标。
+这是一个很关键的状态同步问题。
 
-我将为 `TrainingShell` 与 `GenericTrainingView` 增加 `showTimer` 开关配置，并在 `PlanTrainingView` 中隐藏单阶段用时、将总用时置于计划顶栏中。
+`PlanTrainingView` 之前只使用了简单的 `setInterval` 结合 `Date.now() - sessionStartTime` 独立计算总用时，未能接收到子视图会话因失焦或长时间无操作进入的 `isIdle` 状态与 `idleDurationMs`，导致闲置期间总计时器依然持续累加。
 
-## [WIP] feat: 在训练计划流中隐藏单卡计时并在顶栏展示总用时
+我将通过在训练会话中引入闲置状态与恢复时长回调，把闲置推移同步至计划总计时器。
+
+## [WIP] fix: 修复训练流闲置暂停时计划总用时继续计时的问题
+
+### 错误分析
+1. **状态孤岛**: 闲置与失焦保护机制（`useIdleProtection`）封装在各训练子会话（`useTrainingSession`）内部，当触发闲置时，子会话仅对自身的 `startTimeRef` 进行推移补偿，未向外层宿主（`GenericTrainingView` -> `PlanTrainingView`）派发事件。
+2. **盲目计时**: `PlanTrainingView` 顶层的 `useEffect` 定时器仅判断了 `!showSummaryModal`，在用户离开页面或闲置休眠期间，依然使用 `Date.now() - sessionStartTime` 计算差值，将休眠等待时间计入了有效训练总用时。
 
 ### 用户需求
-1. 在多阶段训练计划执行时，隐藏单个卡片右上角的计时器徽标。
-2. 将训练计划自启动以来的全局总累计用时显示在顶层导航状态栏上。
+当训练流因为失焦、切后台或长时间无操作进入闲置暂停（`IdlePauseOverlay` 遮罩显示）时，顶栏的训练总用时应停止计时；在用户点击恢复或按键激活继续后，总计时器应从暂停点继续，且不计入闲置期间的时间。
 
 ### 评论
-在单卡独立训练模式下，单卡用时能够反映个体模块的作答节奏；但在组合训练流中，过多的局部计时信息会增加认知负荷，用户更关注整体训练流的推进节奏与总用时消耗。将单卡计时隐藏并上浮训练流总用时至顶栏，符合宏观与微观信息架构的设计原则。
+精准的活跃用时度量对训练感知能力的准确评估至关重要。训练计划通常跨越较长时间（数分钟至数十分钟），中途临时离开是非常自然的场景，修正闲置时间补偿能够保证生涯档案统计数据的纯粹性与真实性。
 
 ### 目标
-1. 在 `TrainingShellProps` 和 `GenericTrainingViewProps` 中新增可选属性 `showTimer`（默认 `true`），按需控制单卡计时组件的渲染。
-2. 在 `PlanTrainingView` 中调用 `GenericTrainingView` 时显式传入 `showTimer={false}`。
-3. 在 `PlanTrainingView` 顶部状态栏中新增总用时（`totalElapsedSeconds`）徽标组件展示。
+1. 在 `useTrainingSession` 和 `GenericTrainingView` 中增加 `onIdleChange` 与 `onIdleResume` 回调接口。
+2. 当 `useIdleProtection` 触发暂停与恢复时，向外派发闲置状态变更和闲置持续时间（毫秒）。
+3. 在 `PlanTrainingView` 中监听闲置回调，在闲置期间冻结总用时递增，并在恢复时顺延 `sessionStartTime` 偏移量。
 
 ### 基本原理
-通过参数下发（Props Passing）实现轻量解耦，在保证单卡独立训练模式（`GenericTrainingView` 直接调用）行为不变的前提下，使宿主容器 `PlanTrainingView` 可以灵活隐藏子视图的局部计时器，并将自身维护的 `totalElapsedSeconds` 格式化后直接渲染在统一的计划顶栏中。
+当进入闲置状态时，`isPlanIdle` 标记置为 `true`，主计时器定时器停止更新；当用户重新唤醒时，`onResume(idleDurationMs)` 会传回在闲置期间流逝的精确毫秒数，通过 `setSessionStartTime((prev) => prev + idleDurationMs)` 将基准起始时间向后顺延等量时长，从而在绝对时间戳差值计算中完全剔除闲置休眠区间。
 
 ### 标签
-#intent/build #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/plan-timer #task/action/refactor #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #scope/ux #ai/instruct #task/domain/timer #task/object/idle-protection-sync #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `TrainingShell` 中支持 `showTimer` 控制开关
+#### Acts 1: 在 `useTrainingSession` 中支持闲置状态与恢复时长回调
 
 ~~~~~act
 patch_file
-src/components/training/TrainingShell.tsx
+src/hooks/useTrainingSession.ts
 ~~~~~
 ~~~~~typescript
-interface TrainingShellProps {
-  card: CardDefinition;
-  sessionType: 'training' | 'benchmark';
-  currentLevel: number;
-  isTargeting?: boolean;
-  autoNext: boolean;
-  session: TrainingSessionHandle;
-  showExitButton?: boolean;
-  onExit: () => void;
-  children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
-}
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  generateQuestion: (level: number) => TQuestion;
 ~~~~~
 ~~~~~typescript
-interface TrainingShellProps {
-  card: CardDefinition;
-  sessionType: 'training' | 'benchmark';
-  currentLevel: number;
-  isTargeting?: boolean;
-  autoNext: boolean;
-  session: TrainingSessionHandle;
-  showExitButton?: boolean;
-  showTimer?: boolean;
-  onExit: () => void;
-  children: (state: { disabled: boolean; isIdle: boolean }) => ComponentChildren;
-}
+  targetLimitTrials?: number;
+  onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onIdleChange?: (isIdle: boolean) => void;
+  onIdleResume?: (idleDurationMs: number) => void;
+  generateQuestion: (level: number) => TQuestion;
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/training/TrainingShell.tsx
+src/hooks/useTrainingSession.ts
 ~~~~~
 ~~~~~typescript
-export function TrainingShell({
-  card,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  showExitButton = true,
-  children,
-}: TrainingShellProps) {
+  idleTimeoutSec: optionsIdleTimeout,
+  targetLimitTrials,
+  onTargetLimitReached,
+  generateQuestion,
 ~~~~~
 ~~~~~typescript
-export function TrainingShell({
-  card,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  showExitButton = true,
-  showTimer = true,
-  children,
-}: TrainingShellProps) {
+  idleTimeoutSec: optionsIdleTimeout,
+  targetLimitTrials,
+  onTargetLimitReached,
+  onIdleChange,
+  onIdleResume,
+  generateQuestion,
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/training/TrainingShell.tsx
+src/hooks/useTrainingSession.ts
 ~~~~~
 ~~~~~typescript
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {currentLevel}</span>
-          </div>
-
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
-          </div>
-        </div>
-      </header>
+  // === 1. 闲置与失焦保护微 Hook ===
+  const { isIdle, pauseToIdle, resumeFromIdle } = useIdleProtection({
+    timeoutSec: effectiveIdleTimeout,
+    disabled: isFinished || showSummaryModal,
+    onResume: (idleDurationMs) => {
+      startTimeRef.current += idleDurationMs;
+      setQuestionStartTime((prev) => prev + idleDurationMs);
+    },
+  });
 ~~~~~
 ~~~~~typescript
-          <div>
-            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
-              当前难度
-            </span>
-            <span className="font-black text-indigo-600">Level {currentLevel}</span>
-          </div>
-
-          {showTimer && (
-            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span className="font-mono font-bold text-slate-700">{formatTime(elapsedSeconds)}</span>
-            </div>
-          )}
-        </div>
-      </header>
+  // === 1. 闲置与失焦保护微 Hook ===
+  const { isIdle, pauseToIdle, resumeFromIdle } = useIdleProtection({
+    timeoutSec: effectiveIdleTimeout,
+    disabled: isFinished || showSummaryModal,
+    onPause: () => {
+      onIdleChange?.(true);
+    },
+    onResume: (idleDurationMs) => {
+      startTimeRef.current += idleDurationMs;
+      setQuestionStartTime((prev) => prev + idleDurationMs);
+      onIdleChange?.(false);
+      onIdleResume?.(idleDurationMs);
+    },
+  });
 ~~~~~
 
-#### Acts 2: 在 `GenericTrainingView` 中透传 `showTimer` 属性
+#### Acts 2: 在 `GenericTrainingView` 中透传闲置回调
 
 ~~~~~act
 patch_file
 src/views/GenericTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-export interface GenericTrainingViewProps<
-  TQuestion = unknown,
-  THitResult = unknown,
-  TAnswerVal = unknown,
-  TSettings extends BaseModuleSettings = BaseModuleSettings,
-> {
-  card: CardDefinition;
-  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
-  sessionType: 'training' | 'benchmark';
-  initialLevel: number;
-  settings: TSettings;
-  globalSettings?: GlobalSettings;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   showExitButton?: boolean;
+  showTimer?: boolean;
   onExit: () => void;
 }
 ~~~~~
 ~~~~~typescript
-export interface GenericTrainingViewProps<
-  TQuestion = unknown,
-  THitResult = unknown,
-  TAnswerVal = unknown,
-  TSettings extends BaseModuleSettings = BaseModuleSettings,
-> {
-  card: CardDefinition;
-  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
-  sessionType: 'training' | 'benchmark';
-  initialLevel: number;
-  settings: TSettings;
-  globalSettings?: GlobalSettings;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onIdleChange?: (isIdle: boolean) => void;
+  onIdleResume?: (idleDurationMs: number) => void;
   showExitButton?: boolean;
   showTimer?: boolean;
   onExit: () => void;
@@ -178,39 +131,20 @@ patch_file
 src/views/GenericTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-export function GenericTrainingView<
-  TQuestion = unknown,
-  THitResult = unknown,
-  TAnswerVal = unknown,
-  TSettings extends BaseModuleSettings = BaseModuleSettings,
->({
-  card,
-  plugin,
-  sessionType,
-  initialLevel,
-  settings,
   globalSettings,
   targetLimitTrials,
   onTargetLimitReached,
   showExitButton = true,
+  showTimer = true,
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
 ~~~~~
 ~~~~~typescript
-export function GenericTrainingView<
-  TQuestion = unknown,
-  THitResult = unknown,
-  TAnswerVal = unknown,
-  TSettings extends BaseModuleSettings = BaseModuleSettings,
->({
-  card,
-  plugin,
-  sessionType,
-  initialLevel,
-  settings,
   globalSettings,
   targetLimitTrials,
   onTargetLimitReached,
+  onIdleChange,
+  onIdleResume,
   showExitButton = true,
   showTimer = true,
   onExit,
@@ -222,46 +156,36 @@ patch_file
 src/views/GenericTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-  return (
-    <TrainingShell
-      card={card}
-      sessionType={sessionType}
-      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
-      isTargeting={isTargeting}
-      autoNext={settings.autoNext}
-      session={session}
-      showExitButton={showExitButton}
-      onExit={onExit}
-    >
+    blockSize: settings.blockSize,
+    targetLimitTrials,
+    onTargetLimitReached,
+    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
 ~~~~~
 ~~~~~typescript
-  return (
-    <TrainingShell
-      card={card}
-      sessionType={sessionType}
-      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
-      isTargeting={isTargeting}
-      autoNext={settings.autoNext}
-      session={session}
-      showExitButton={showExitButton}
-      showTimer={showTimer}
-      onExit={onExit}
-    >
+    blockSize: settings.blockSize,
+    targetLimitTrials,
+    onTargetLimitReached,
+    onIdleChange,
+    onIdleResume,
+    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
 ~~~~~
 
-#### Acts 3: 在 `PlanTrainingView` 顶栏渲染总用时并关闭单卡计时器
+#### Acts 3: 在 `PlanTrainingView` 中联动闲置状态与用时补偿
 
 ~~~~~act
 patch_file
 src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-import { ArrowLeft, FastForward } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
 ~~~~~
 ~~~~~typescript
-import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
+  const [stageInitialLevel, setStageInitialLevel] = useState<number>(5);
+  const [isLevelLoaded, setIsLevelLoaded] = useState<boolean>(false);
+  const [planSessionKey, setPlanSessionKey] = useState<number>(0);
+  const [isPlanIdle, setIsPlanIdle] = useState<boolean>(false);
 ~~~~~
 
 ~~~~~act
@@ -269,136 +193,67 @@ patch_file
 src/views/PlanTrainingView.tsx
 ~~~~~
 ~~~~~typescript
-  const plugin = registry.getPluginByCardId(currentCard.id);
-  if (!plugin) {
-    onExit();
-    return null;
-  }
-  const cardConfig = getCardSettings(settings, currentCard.id);
-
-  return (
-    <div className="w-full">
-      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRequestExit}
-            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            title="结束并查看训练流总结"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            退出训练流
-          </button>
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
-              阶段 {currentStepIndex + 1} / {validItems.length}
-            </span>
-            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
-            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
-          </div>
-          <button
-            type="button"
-            onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            title="跳过当前阶段进入下一阶段"
-          >
-            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
-            跳过此阶段
-          </button>
-        </div>
-      </div>
-
-      {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-          正在加载【{currentCard.title}】的生涯能力层阶...
-        </div>
-      ) : (
-        <GenericTrainingView
-          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
-          card={currentCard}
-          plugin={plugin}
-          sessionType="training"
-          initialLevel={stageInitialLevel}
-          settings={cardConfig}
-          globalSettings={settings.global}
-          targetLimitTrials={currentStep.targetTrials}
-          onTargetLimitReached={handleStageReached}
-          showExitButton={false}
-          onExit={handleRequestExit}
-        />
-      )}
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!showSummaryModal) {
+        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sessionStartTime, showSummaryModal]);
 ~~~~~
 ~~~~~typescript
-  const plugin = registry.getPluginByCardId(currentCard.id);
-  if (!plugin) {
-    onExit();
-    return null;
-  }
-  const cardConfig = getCardSettings(settings, currentCard.id);
+  const handleIdleChange = useCallback((idle: boolean) => {
+    setIsPlanIdle(idle);
+  }, []);
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+  const handleIdleResume = useCallback((idleDurationMs: number) => {
+    setSessionStartTime((prev) => prev + idleDurationMs);
+  }, []);
 
-  return (
-    <div className="w-full">
-      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleRequestExit}
-            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            title="结束并查看训练流总结"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            退出训练流
-          </button>
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
-              阶段 {currentStepIndex + 1} / {validItems.length}
-            </span>
-            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
-          </div>
-        </div>
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!showSummaryModal && !isPlanIdle && isLevelLoaded) {
+        setTotalElapsedSeconds(Math.floor((Date.now() - sessionStartTime) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [sessionStartTime, showSummaryModal, isPlanIdle, isLevelLoaded]);
+~~~~~
 
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
-            本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
-          </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono text-xs font-bold text-slate-700">
-              {formatTime(totalElapsedSeconds)}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
-            title="跳过当前阶段进入下一阶段"
-          >
-            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
-            跳过此阶段
-          </button>
-        </div>
-      </div>
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript
+  const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
+    setShowSummaryModal(false);
+    setCurrentStepIndex(0);
+    setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
+    setPlanSessionKey((prev) => prev + 1);
+  }, []);
+~~~~~
+~~~~~typescript
+  const handleRestartPlan = useCallback(() => {
+    setIsLevelLoaded(false);
+    setIsPlanIdle(false);
+    setShowSummaryModal(false);
+    setCurrentStepIndex(0);
+    setStageResults([]);
+    setTotalElapsedSeconds(0);
+    setSessionStartTime(Date.now());
+    setPlanSessionKey((prev) => prev + 1);
+  }, []);
+~~~~~
 
-      {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
-          正在加载【{currentCard.title}】的生涯能力层阶...
-        </div>
-      ) : (
+~~~~~act
+patch_file
+src/views/PlanTrainingView.tsx
+~~~~~
+~~~~~typescript
         <GenericTrainingView
           key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
           card={currentCard}
@@ -413,9 +268,26 @@ src/views/PlanTrainingView.tsx
           showTimer={false}
           onExit={handleRequestExit}
         />
-      )}
+~~~~~
+~~~~~typescript
+        <GenericTrainingView
+          key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
+          card={currentCard}
+          plugin={plugin}
+          sessionType="training"
+          initialLevel={stageInitialLevel}
+          settings={cardConfig}
+          globalSettings={settings.global}
+          targetLimitTrials={currentStep.targetTrials}
+          onTargetLimitReached={handleStageReached}
+          onIdleChange={handleIdleChange}
+          onIdleResume={handleIdleResume}
+          showExitButton={false}
+          showTimer={false}
+          onExit={handleRequestExit}
+        />
 ~~~~~
 
 ### 下一步建议
-1. 启动本地开发服务并在浏览器中启动任意一个「今日训练计划」，确认顶栏计时器正常递增，且下方卡片状态栏已无重复的单卡计时器。
-2. 确认在独立单卡训练页面中，单卡计时器仍然正常显示并工作。
+1. 进入「今日训练流」中切到其他标签页或静置等待触发闲置保护（遮罩出现），观察顶栏计时器是否立即停止递增。
+2. 点击「点击继续」恢复训练，验证总用时是否在暂停时的秒数基础上平滑继续递增，并未累加闲置等待的秒数。
