@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(perspective): 修复 ProportionDivisionView 的 Biome 检查错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475786.7465403, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M ProportionDivisionView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475875.3997476, "duration_ms": 0}}
