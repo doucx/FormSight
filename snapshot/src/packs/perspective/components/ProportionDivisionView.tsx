@@ -71,13 +71,6 @@ export function ProportionDivisionView({
     >
       <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
         <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white transition-all ${
-            disabled || showAnswer ? 'cursor-default' : 'cursor-crosshair hover:border-indigo-300'
-          }`}
           ref={(el) => {
             canvasRef.current = el;
             if (el) {
@@ -91,6 +84,18 @@ export function ProportionDivisionView({
               );
             }
           }}
+          width={PERSPECTIVE_CANVAS_SIZE}
+          height={PERSPECTIVE_CANVAS_SIZE}
+          onClick={handleClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="比例盲切答题画布"
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white transition-all ${
+            disabled || showAnswer ? 'cursor-default' : 'cursor-crosshair hover:border-indigo-300'
+          }`}
         />
       </div>
     </QuestionCardShell>
