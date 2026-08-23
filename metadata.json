@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] tune(packs): 精简比例盲切与迁移卡片的提示文案与目标面板", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787477714.3225276, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M ProportionMigrationView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787477844.2221384, "duration_ms": 0}}
