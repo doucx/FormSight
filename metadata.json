@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 移除实验性模块开关与过滤逻辑，保留实验性标签展示", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787478121.411997, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M GlobalSettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787478197.6655188, "duration_ms": 0}}

@@ -234,8 +234,6 @@ export function GlobalSettingsModal({
             </button>
           </div>
 
-
-
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
             <div className="flex items-center gap-2.5 mb-1">
               <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
