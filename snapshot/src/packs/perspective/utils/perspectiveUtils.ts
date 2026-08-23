@@ -166,10 +166,21 @@ export function drawProportionCanvas(
   ctx.lineTo(line.p2.x, line.p2.y);
   ctx.stroke();
 
-  // 两端端点
-  ctx.fillStyle = '#0F172A';
+  // 起点端点 (P1)：带环形高亮标识，明确比例从 P1 算起
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(line.p1.x, line.p1.y, 4, 0, Math.PI * 2);
+  ctx.arc(line.p1.x, line.p1.y, 7, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(line.p1.x, line.p1.y, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 终点端点 (P2)
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
   ctx.arc(line.p2.x, line.p2.y, 4, 0, Math.PI * 2);
   ctx.fill();
 
@@ -329,37 +340,41 @@ export function generatePerspectiveQuestion(
     const vpAngle = (Math.floor(Math.random() * 360) * Math.PI) / 180;
     const center = PERSPECTIVE_CANVAS_SIZE / 2;
 
+    const dirX = Math.cos(vpAngle);
+    const dirY = Math.sin(vpAngle);
+    // 垂直于灭点方向的法向量
+    const perpX = -dirY;
+    const perpY = dirX;
+
     const vpPoint: Point = {
-      x: center + vpDist * Math.cos(vpAngle),
-      y: center + vpDist * Math.sin(vpAngle),
+      x: center + vpDist * dirX,
+      y: center + vpDist * dirY,
     };
 
-    // 参考线 1 和 2
-    const refLine1: LineSegment = {
-      p1: { x: center - 110, y: center - 80 + Math.random() * 20 },
-      p2: { x: 0, y: 0 },
-    };
-    const ang1 = Math.atan2(vpPoint.y - refLine1.p1.y, vpPoint.x - refLine1.p1.x);
-    refLine1.p2 = {
-      x: refLine1.p1.x + 90 * Math.cos(ang1),
-      y: refLine1.p1.y + 90 * Math.sin(ang1),
+    const lineLength = 95;
+
+    // 将 3 条线段的中心沿垂直法向均匀分布在画布中央区域
+    // 偏移分别为 -55 (参考线1), 0 (测试线), +55 (参考线2)
+    const getCenteredRay = (perpOffset: number, length = lineLength): { p1: Point; p2: Point } => {
+      // 锚点位于距离灭点反方向 (center - dir * (length/2)) 并叠加垂直偏移
+      const anchorX = center - dirX * (length * 0.5) + perpX * perpOffset;
+      const anchorY = center - dirY * (length * 0.5) + perpY * perpOffset;
+      const ang = Math.atan2(vpPoint.y - anchorY, vpPoint.x - anchorX);
+
+      return {
+        p1: { x: Math.round(anchorX * 10) / 10, y: Math.round(anchorY * 10) / 10 },
+        p2: {
+          x: Math.round((anchorX + length * Math.cos(ang)) * 10) / 10,
+          y: Math.round((anchorY + length * Math.sin(ang)) * 10) / 10,
+        },
+      };
     };
 
-    const refLine2: LineSegment = {
-      p1: { x: center - 100, y: center + 70 + Math.random() * 20 },
-      p2: { x: 0, y: 0 },
-    };
-    const ang2 = Math.atan2(vpPoint.y - refLine2.p1.y, vpPoint.x - refLine2.p1.x);
-    refLine2.p2 = {
-      x: refLine2.p1.x + 90 * Math.cos(ang2),
-      y: refLine2.p1.y + 90 * Math.sin(ang2),
-    };
+    const refLine1 = getCenteredRay(-55);
+    const refLine2 = getCenteredRay(55);
+    const testRay = getCenteredRay(0);
 
-    // 待调测试线段
-    const testAnchor: Point = {
-      x: center - 90 + Math.random() * 20,
-      y: center + (Math.random() * 40 - 20),
-    };
+    const testAnchor = testRay.p1;
     const targetRad = Math.atan2(vpPoint.y - testAnchor.y, vpPoint.x - testAnchor.x);
     const targetAngleDeg = Math.round((((targetRad * 180) / Math.PI + 360) % 360) * 10) / 10;
 
@@ -372,7 +387,7 @@ export function generatePerspectiveQuestion(
       vpPoint,
       referenceLines: [refLine1, refLine2],
       testLineAnchor: testAnchor,
-      testLineLength: 95,
+      testLineLength: lineLength,
       targetAngleDeg,
       tolerance,
     };

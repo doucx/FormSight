@@ -19,6 +19,8 @@ interface PerspectiveVpViewProps {
   showCanvasHints?: boolean;
 }
 
+import { useEffect, useState } from 'preact/hooks';
+
 export function PerspectiveVpView({
   question,
   showAnswer,
@@ -33,6 +35,16 @@ export function PerspectiveVpView({
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
   const userVal = userAnswer?.userValue as number | undefined;
+
+  const [liveAngle, setLiveAngle] = useState<number>(180);
+
+  // 当题目切换时重置当前调制角度为 180°
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset liveAngle on new question
+  useEffect(() => {
+    setLiveAngle(180);
+  }, [question.id]);
+
+  const currentActiveAngle = showAnswer && userVal !== undefined ? userVal : liveAngle;
 
   return (
     <StandardSliderView
@@ -55,6 +67,7 @@ export function PerspectiveVpView({
       disabled={disabled}
       hitMargin={hitMargin}
       submitMode="commit_on_release"
+      onValueChange={(_cur, active) => setLiveAngle(active)}
       onAnswer={onAnswer}
       preview={
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
@@ -67,14 +80,21 @@ export function PerspectiveVpView({
                 canvas,
                 question.referenceLines,
                 question.testLineAnchor,
-                userVal ?? 180,
+                currentActiveAngle,
                 question.testLineLength ?? 95,
                 PERSPECTIVE_CANVAS_SIZE,
                 showAnswer,
                 targetVal,
               );
             }}
-            deps={[question.referenceLines, userVal, showAnswer]}
+            deps={[
+              question.referenceLines,
+              question.testLineAnchor,
+              question.testLineLength,
+              currentActiveAngle,
+              showAnswer,
+              targetVal,
+            ]}
           />
         </div>
       }

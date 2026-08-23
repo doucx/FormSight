@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "biome Capture: M app.tsx, M useHashRoute.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787476311.4601626, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(packs): 修复透视灭点实时联动与居中布局，优化比例盲切目标指引", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787476674.5512455, "duration_ms": 0}}

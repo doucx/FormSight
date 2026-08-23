@@ -48,7 +48,7 @@ export function ProportionDivisionView({
 
   return (
     <QuestionCardShell
-      hintText={`在线段上直接点击标出：【${question.targetRatioName ?? ''}】`}
+      hintText="在倾斜线段上单次点击盲切估测指定比例位置"
       hintIcon={Disc}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -69,7 +69,17 @@ export function ProportionDivisionView({
         ) : null
       }
     >
-      <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+      {/* 醒目的核心目标指引面板 */}
+      <div className="w-full bg-indigo-50/70 border border-indigo-100/90 rounded-2xl p-3.5 flex flex-col items-center gap-1.5 text-center">
+        <div className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">
+          作答目标 (从紫环起点端起算)
+        </div>
+        <div className="text-base font-black text-indigo-900 tracking-tight">
+          标出【{question.targetRatioName ?? '指定比例'}】
+        </div>
+      </div>
+
+      <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex flex-col items-center gap-2">
         <canvas
           ref={(el) => {
             canvasRef.current = el;
@@ -97,6 +107,17 @@ export function ProportionDivisionView({
             disabled || showAnswer ? 'cursor-default' : 'cursor-crosshair hover:border-indigo-300'
           }`}
         />
+        <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
+            <span>起点 (0%)</span>
+          </span>
+          <span>→</span>
+          <span className="inline-flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+            <span>终点 (100%)</span>
+          </span>
+        </div>
       </div>
     </QuestionCardShell>
   );
