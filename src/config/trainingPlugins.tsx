@@ -81,13 +81,21 @@ export type AbstractionPlugin = TrainingPlugin<
 
 export type AnglePlugin = TrainingPlugin<unknown, unknown, number | 'A' | 'B', BaseModuleSettings>;
 
+export type PerspectivePlugin = TrainingPlugin<
+  unknown,
+  unknown,
+  number | 'A' | 'B' | Point,
+  BaseModuleSettings
+>;
+
 export type AnyDomainPlugin =
   | StarPlugin
   | ColorPlugin
   | RelativeColorPlugin
   | NegativeSpacePlugin
   | AbstractionPlugin
-  | AnglePlugin;
+  | AnglePlugin
+  | PerspectivePlugin;
 
 // biome-ignore lint/suspicious/noExplicitAny: type erasure for generic training plugin registry
 export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;

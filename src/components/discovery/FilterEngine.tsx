@@ -27,6 +27,7 @@ export const TARGET_TAG_LABELS: Record<SensoryTargetTag, string> = {
   abstraction: '形态概括',
   concretization: '具象构型',
   angle: '角度感知',
+  perspective: '透视空间',
 };
 
 export const SKILL_TAG_LABELS: Record<CognitiveSkillTag, string> = {

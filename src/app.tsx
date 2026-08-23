@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -6,7 +6,7 @@ import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { PlanEditorModal } from './components/plan/PlanEditorModal';
 import { registry } from './core/registry';
-import { useHashRoute } from './hooks/useHashRoute';
+import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
 import { useTodayStats } from './hooks/useTodayStats';
 import type { TrainingPlan } from './types/plan';
 import { type UnifiedProfileData, repository } from './utils/db/index';
@@ -23,7 +23,8 @@ import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
   const { route, navigate } = useHashRoute();
-  const todayStats = useTodayStats();
+  const { todayStats, refreshTodayStats } = useTodayStats();
+  const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
@@ -49,7 +50,7 @@ export function App() {
   }, []);
 
   const refreshProfiles = useCallback(async () => {
-    const summary = await repository.getAppSummary();
+    const [summary] = await Promise.all([repository.getAppSummary(), refreshTodayStats()]);
 
     setTotalTimeMs(summary.totalTimeMs);
     setProfiles(summary.profiles);
@@ -57,7 +58,7 @@ export function App() {
     setTrainingPlan(summary.trainingPlan);
     setAllPlans(summary.allPlans);
     setProfilesLoaded(true);
-  }, []);
+  }, [refreshTodayStats]);
 
   useEffect(() => {
     refreshProfiles();
@@ -65,6 +66,7 @@ export function App() {
 
   useEffect(() => {
     if (route.type === 'home') {
+      lastHomeRouteRef.current = route;
       document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
     } else if (route.type === 'plan-train') {
       document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
@@ -102,6 +104,10 @@ export function App() {
           trainingPlan={trainingPlan}
           allPlans={allPlans}
           showExperimental={settings.global.showExperimentalCards}
+          query={route.query}
+          onQueryChange={(newQuery) =>
+            navigate({ type: 'home', query: newQuery }, { replace: true })
+          }
           onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
           onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
           onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
@@ -119,7 +125,7 @@ export function App() {
           settings={settings}
           onExit={async () => {
             await refreshProfiles();
-            navigate({ type: 'home' });
+            navigate(lastHomeRouteRef.current);
           }}
         />
       )}
@@ -135,12 +141,12 @@ export function App() {
           }
           const activeCard = registry.getCardById(route.cardId);
           if (!activeCard) {
-            navigate({ type: 'home' });
+            navigate(lastHomeRouteRef.current);
             return null;
           }
           const plugin = registry.getPluginByCardId(activeCard.id);
           if (!plugin) {
-            navigate({ type: 'home' });
+            navigate(lastHomeRouteRef.current);
             return null;
           }
           const activeLevel = profiles[activeCard.id]?.currentLevel || 5;
@@ -156,7 +162,7 @@ export function App() {
               globalSettings={settings.global}
               onExit={async () => {
                 await refreshProfiles();
-                navigate({ type: 'home' });
+                navigate(lastHomeRouteRef.current);
               }}
             />
           );

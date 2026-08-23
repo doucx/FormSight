@@ -8,7 +8,8 @@ export type SensoryTargetTag =
   | 'negative_space'
   | 'abstraction'
   | 'concretization'
-  | 'angle';
+  | 'angle'
+  | 'perspective';
 
 export type CognitiveSkillTag =
   | 'spatial_orientation'

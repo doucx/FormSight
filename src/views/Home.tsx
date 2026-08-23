@@ -15,6 +15,8 @@ interface HomeProps {
   trainingPlan: TrainingPlan;
   allPlans?: TrainingPlan[];
   showExperimental?: boolean;
+  query?: CardQueryOptions;
+  onQueryChange?: (query: CardQueryOptions) => void;
   onStartCard: (cardId: string, type: 'training' | 'benchmark') => void;
   onOpenCardSettings: (cardId: string) => void;
   onOpenCardAnalytics: (cardId: string) => void;
@@ -32,6 +34,8 @@ export function Home({
   trainingPlan,
   allPlans = [],
   showExperimental = false,
+  query: externalQuery,
+  onQueryChange,
   onStartCard,
   onOpenCardSettings,
   onOpenCardAnalytics,
@@ -41,17 +45,25 @@ export function Home({
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
-  const [query, setQuery] = useState<CardQueryOptions>({
+  const [localQuery, setLocalQuery] = useState<CardQueryOptions>({
     includeExperimental: showExperimental,
+    ...(externalQuery || {}),
   });
+
+  const activeQuery = externalQuery !== undefined ? externalQuery : localQuery;
+
+  const handleQueryChange = (newQuery: CardQueryOptions) => {
+    setLocalQuery(newQuery);
+    onQueryChange?.(newQuery);
+  };
 
   // 结合全局设置与查询条件获取过滤后的卡片
   const filteredCards = useMemo(() => {
     return registry.queryCards({
-      ...query,
-      includeExperimental: showExperimental || query.includeExperimental,
+      ...activeQuery,
+      includeExperimental: showExperimental || activeQuery.includeExperimental,
     });
-  }, [query, showExperimental]);
+  }, [activeQuery, showExperimental]);
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
@@ -111,9 +123,9 @@ export function Home({
 
       {/* 大盘发现库核心筛选引擎 */}
       <FilterEngine
-        query={query}
+        query={activeQuery}
         totalMatches={filteredCards.length}
-        onChange={(newQuery) => setQuery(newQuery)}
+        onChange={handleQueryChange}
       />
 
       {/* 大盘卡片网格流 (Discovery Hub Cards Grid) */}
@@ -128,7 +140,7 @@ export function Home({
           </p>
           <button
             type="button"
-            onClick={() => setQuery({ includeExperimental: showExperimental })}
+            onClick={() => handleQueryChange({ includeExperimental: showExperimental })}
             className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
