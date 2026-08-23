@@ -1,4 +1,4 @@
-import { Box, Eye, Layers, Sliders } from 'lucide-preact';
+import { ArrowRightLeft, Box, Eye, Layers, Sliders } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
@@ -42,6 +42,22 @@ export const perspectiveCards: CardDefinition[] = [
     tags: {
       target: ['geometry', 'perspective'],
       skill: ['proportion', 'spatial_orientation'],
+      interaction: ['point_click'],
+    },
+    hasWeaknessAnalytics: false,
+    isExperimental: true,
+  },
+  {
+    id: 'perspective_proportion_migration',
+    packId: 'perspective',
+    mode: 'PROPORTION_MIGRATION',
+    title: '空间比例角度迁移',
+    desc: '观察上方水平基准线上的任意比例目标点，在下方随机倾斜角度的线段上准确标出相同比例位置。',
+    instruction: '观察上方基准线目标点，在下方倾斜线段上点选相同比例位置',
+    icon: ArrowRightLeft,
+    tags: {
+      target: ['geometry', 'perspective'],
+      skill: ['proportion', 'spatial_orientation', 'visual_memory'],
       interaction: ['point_click'],
     },
     hasWeaknessAnalytics: false,

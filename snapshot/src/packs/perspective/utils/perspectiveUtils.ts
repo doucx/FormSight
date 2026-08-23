@@ -4,6 +4,7 @@ import type { Point } from '../../../types';
 export type PerspectiveMode =
   | 'VP_CONVERGENCE'
   | 'PROPORTION_DIVISION'
+  | 'PROPORTION_MIGRATION'
   | 'GESTALT_CONTINUATION_2AFC'
   | 'STRUCTURE_PROJECTION_3D';
 
@@ -216,6 +217,71 @@ export function drawProportionCanvas(
 }
 
 /**
+ * 绘制顶部水平参考线与目标分段点
+ */
+export function drawHorizontalReferenceCanvas(
+  canvas: HTMLCanvasElement | null,
+  targetRatio = 0.5,
+  width = 280,
+  height = 48,
+): void {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
+
+  const marginX = 24;
+  const y = height / 2;
+  const lineW = width - marginX * 2;
+  const p1 = { x: marginX, y };
+  const p2 = { x: marginX + lineW, y };
+
+  // 1. 水平基准线
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+
+  // 2. 左端起点 (P1)：紫环高亮
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, 7, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. 右端终点 (P2)：灰端点
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
+  ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 4. 目标比例点：高亮指示
+  const targetX = p1.x + lineW * targetRatio;
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(targetX, y, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 垂直指示小针标
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(targetX, y - 11);
+  ctx.lineTo(targetX, y - 6);
+  ctx.stroke();
+}
+
+/**
  * 绘制良好连续性断线与障碍物
  */
 export function drawGestaltCanvas(
@@ -407,10 +473,24 @@ export function generatePerspectiveQuestion(
     };
   }
 
-  if (mode === 'PROPORTION_DIVISION') {
-    const preset = PROPORTION_PRESETS[Math.floor(Math.random() * PROPORTION_PRESETS.length)];
+  if (mode === 'PROPORTION_DIVISION' || mode === 'PROPORTION_MIGRATION') {
+    const isMigration = mode === 'PROPORTION_MIGRATION';
+
+    let ratio: number;
+    let ratioName: string | undefined;
+
+    if (isMigration) {
+      // 连续随机比例 (8% ~ 92% 之间，保留一位小数百分比精度)
+      ratio = Math.round((Math.random() * 0.84 + 0.08) * 1000) / 1000;
+      ratioName = `${(ratio * 100).toFixed(1)}% 处`;
+    } else {
+      const preset = PROPORTION_PRESETS[Math.floor(Math.random() * PROPORTION_PRESETS.length)];
+      ratio = preset.ratio;
+      ratioName = preset.name;
+    }
+
     const angleRad = Math.random() * Math.PI * 2;
-    const lineLen = 190 + Math.random() * 60;
+    const lineLen = 220;
     const center = PERSPECTIVE_CANVAS_SIZE / 2;
 
     const halfX = (lineLen / 2) * Math.cos(angleRad);
@@ -426,8 +506,8 @@ export function generatePerspectiveQuestion(
     };
 
     const targetDivisionPoint: Point = {
-      x: Math.round(p1.x + (p2.x - p1.x) * preset.ratio),
-      y: Math.round(p1.y + (p2.y - p1.y) * preset.ratio),
+      x: Math.round(p1.x + (p2.x - p1.x) * ratio),
+      y: Math.round(p1.y + (p2.y - p1.y) * ratio),
     };
 
     const tolerance = Math.round(expDecayInterpolate(0.08, 0.015, clampedLevel) * 1000) / 1000;
@@ -437,8 +517,8 @@ export function generatePerspectiveQuestion(
       mode,
       difficultyLevel: clampedLevel,
       divisionLine: { p1, p2 },
-      targetRatio: preset.ratio,
-      targetRatioName: preset.name,
+      targetRatio: ratio,
+      targetRatioName: ratioName,
       targetDivisionPoint,
       tolerance,
     };
@@ -575,7 +655,7 @@ export function checkPerspectiveHit(
     };
   }
 
-  if (mode === 'PROPORTION_DIVISION') {
+  if (mode === 'PROPORTION_DIVISION' || mode === 'PROPORTION_MIGRATION') {
     const clickPoint = userVal as Point;
     const line = question.divisionLine;
     if (!line) {

@@ -2,6 +2,7 @@ import type { Point } from '../../../types';
 import { GestaltContinuation2AfcView } from '../components/GestaltContinuation2AfcView';
 import { PerspectiveVpView } from '../components/PerspectiveVpView';
 import { ProportionDivisionView } from '../components/ProportionDivisionView';
+import { ProportionMigrationView } from '../components/ProportionMigrationView';
 import { StructureProjection3DView } from '../components/StructureProjection3DView';
 import type { PerspectiveHitResult, PerspectiveQuestionData } from '../utils/perspectiveUtils';
 
@@ -46,6 +47,19 @@ export function PerspectiveCanvas({
   if (mode === 'PROPORTION_DIVISION') {
     return (
       <ProportionDivisionView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={onAnswer as (point: Point) => void}
+        disabled={disabled}
+        showCanvasHints={showCanvasHints}
+      />
+    );
+  }
+
+  if (mode === 'PROPORTION_MIGRATION') {
+    return (
+      <ProportionMigrationView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

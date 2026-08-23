@@ -22,6 +22,7 @@ export const perspectivePlugin: TrainingPlugin<
     const map: Record<string, string> = {
       VP_CONVERGENCE: '透视灭点汇聚',
       PROPORTION_DIVISION: '比例盲切划分',
+      PROPORTION_MIGRATION: '空间比例角度迁移',
       GESTALT_CONTINUATION_2AFC: '格式塔完形断线',
       STRUCTURE_PROJECTION_3D: '3D 结构空间翻转',
     };
