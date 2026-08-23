@@ -143,10 +143,7 @@ export function ProportionMigrationView({
       }
     >
       {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex flex-col items-center gap-1.5 shadow-sm">
-        <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">
-          基准水平比例 (从左侧紫环起点起算)
-        </div>
+      <div className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex flex-col items-center gap-1 shadow-sm">
         <div className="w-full flex justify-center py-1">
           <CanvasView
             width={280}
@@ -157,6 +154,16 @@ export function ProportionMigrationView({
             }}
             deps={[question.targetRatio]}
           />
+        </div>
+      </div>
+
+      {/* 纯数字比例目标指引面板 */}
+      <div className="w-full bg-indigo-50/70 border border-indigo-100/90 rounded-2xl p-3 flex flex-col items-center gap-1 text-center">
+        <div className="text-[11px] font-bold text-indigo-500 uppercase tracking-wider">
+          目标比例
+        </div>
+        <div className="text-xl font-black text-indigo-900 tracking-tight font-mono">
+          {question.targetRatioName ?? `${((question.targetRatio ?? 0.5) * 100).toFixed(1)}%`}
         </div>
       </div>
 
