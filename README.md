@@ -5,6 +5,12 @@
 </p>
 
 <p align="center">
+  <a href="https://doucx.github.io/FormSight/">
+    <img src="https://img.shields.io/badge/🚀_在线体验-点击即练_(无需登录)-2ea44f?style=for-the-badge" alt="Live Demo">
+  </a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Framework-Preact_10-673ab7?style=flat-square&logo=preact" alt="Preact">
   <img src="https://img.shields.io/badge/Language-TypeScript_5-3178c6?style=flat-square&logo=typescript" alt="TypeScript">
   <img src="https://img.shields.io/badge/Styling-Tailwind_CSS_3-06b6d4?style=flat-square&logo=tailwindcss" alt="Tailwind CSS">
@@ -25,6 +31,12 @@ FPS 玩家会用 Aim Lab 练习微操定位与肌肉记忆，而画师在作画�
 - *画画容易陷入局部细节，看不出画面整体的动态势线和黑白结构？*
 
 FormSight 把传统美术学院中抽象、难以量化的“观察感觉”，拆解成了 20+ 个极简、可量化、可自适应升级的**眼力小练习**。通过记录你每次作答的微小误差与反应速度，动态调整难度，帮你打破大脑的具象认知偏见，建立扎实的造型与色彩直觉。
+
+<p align="center">
+  <a href="https://doucx.github.io/FormSight/">
+    <b>👉 网页端即点即练 👈</b>
+  </a>
+</p>
 
 ---
 
