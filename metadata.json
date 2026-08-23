@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复训练流闲置暂停时计划总用时继续计时的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787455149.7926655, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(plan): 优化训练流计时展示并同步闲置用时补偿", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787455223.756779, "duration_ms": 0}}
