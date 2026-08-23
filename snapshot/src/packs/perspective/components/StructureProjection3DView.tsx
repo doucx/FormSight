@@ -3,10 +3,10 @@ import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import type { Point } from '../../../types';
 import {
-  draw3DCubeWireframe,
   PERSPECTIVE_CANVAS_SIZE,
   type PerspectiveHitResult,
   type PerspectiveQuestionData,
+  draw3DCubeWireframe,
 } from '../utils/perspectiveUtils';
 
 interface StructureProjection3DViewProps {
@@ -82,7 +82,7 @@ export function StructureProjection3DView({
                     className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2"
                     style={{
                       left: `${((targetPt3D.x + 0.5) / dim) * 100}%`,
-                      top: `${(((dim - 1 - targetPt3D.y) + 0.5) / dim) * 100}%`,
+                      top: `${((dim - 1 - targetPt3D.y + 0.5) / dim) * 100}%`,
                     }}
                   />
                 )}
@@ -104,7 +104,7 @@ export function StructureProjection3DView({
                     className="absolute w-2.5 h-2.5 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2"
                     style={{
                       left: `${((targetPt3D.z + 0.5) / dim) * 100}%`,
-                      top: `${(((dim - 1 - targetPt3D.y) + 0.5) / dim) * 100}%`,
+                      top: `${((dim - 1 - targetPt3D.y + 0.5) / dim) * 100}%`,
                     }}
                   />
                 )}

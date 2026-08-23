@@ -2,10 +2,10 @@ import { Eye } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import {
-  drawGestaltCanvas,
   PERSPECTIVE_2AFC_SIZE,
   type PerspectiveHitResult,
   type PerspectiveQuestionData,
+  drawGestaltCanvas,
 } from '../utils/perspectiveUtils';
 
 interface GestaltContinuation2AfcViewProps {

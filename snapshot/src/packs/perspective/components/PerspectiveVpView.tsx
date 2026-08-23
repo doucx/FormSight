@@ -2,10 +2,10 @@ import { Sliders } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import {
-  drawVpConvergenceCanvas,
   PERSPECTIVE_CANVAS_SIZE,
   type PerspectiveHitResult,
   type PerspectiveQuestionData,
+  drawVpConvergenceCanvas,
 } from '../utils/perspectiveUtils';
 
 interface PerspectiveVpViewProps {

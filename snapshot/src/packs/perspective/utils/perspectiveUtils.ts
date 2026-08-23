@@ -242,11 +242,7 @@ export function drawGestaltCanvas(
 /**
  * 3D 轴测透视坐标转换
  */
-export function project3DTo2D(
-  p: Point3D,
-  center: Point,
-  scale: number,
-): Point {
+export function project3DTo2D(p: Point3D, center: Point, scale: number): Point {
   // 简易等角/透视投影：x轴向右下 30°，y轴向上 90°，z轴向左下 30°
   const rad30 = (30 * Math.PI) / 180;
   const screenX = center.x + (p.x * Math.cos(rad30) - p.z * Math.cos(rad30)) * scale;
@@ -286,9 +282,18 @@ export function draw3DCubeWireframe(
   ctx.setLineDash([4, 4]);
 
   const edges = [
-    [0, 1], [1, 2], [2, 3], [3, 0],
-    [4, 5], [5, 6], [6, 7], [7, 4],
-    [0, 4], [1, 5], [2, 6], [3, 7],
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 0],
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 4],
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7],
   ];
 
   for (const [start, end] of edges) {
@@ -375,7 +380,7 @@ export function generatePerspectiveQuestion(
 
   if (mode === 'PROPORTION_DIVISION') {
     const preset = PROPORTION_PRESETS[Math.floor(Math.random() * PROPORTION_PRESETS.length)];
-    const angleRad = (Math.random() * Math.PI * 2);
+    const angleRad = Math.random() * Math.PI * 2;
     const lineLen = 190 + Math.random() * 60;
     const center = PERSPECTIVE_CANVAS_SIZE / 2;
 
@@ -467,8 +472,12 @@ export function generatePerspectiveQuestion(
       difficultyLevel: clampedLevel,
       obstacle,
       incomingLine: { p1: inStart, p2: inEnd },
-      lineOptionA: isACorrect ? { p1: outStart, p2: outEnd } : { p1: distractorStart, p2: distractorEnd },
-      lineOptionB: isACorrect ? { p1: distractorStart, p2: distractorEnd } : { p1: outStart, p2: outEnd },
+      lineOptionA: isACorrect
+        ? { p1: outStart, p2: outEnd }
+        : { p1: distractorStart, p2: distractorEnd },
+      lineOptionB: isACorrect
+        ? { p1: distractorStart, p2: distractorEnd }
+        : { p1: outStart, p2: outEnd },
       correctChoice: isACorrect ? 'A' : 'B',
       parallelOffset,
       tolerance: parallelOffset,

@@ -3,10 +3,10 @@ import { useRef, useState } from 'preact/hooks';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import type { Point } from '../../../types';
 import {
-  drawProportionCanvas,
   PERSPECTIVE_CANVAS_SIZE,
   type PerspectiveHitResult,
   type PerspectiveQuestionData,
+  drawProportionCanvas,
 } from '../utils/perspectiveUtils';
 
 interface ProportionDivisionViewProps {
@@ -56,10 +56,14 @@ export function ProportionDivisionView({
         showAnswer ? (
           <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              目标比例: <span className="font-bold text-slate-800 font-mono">{((question.targetRatio ?? 0) * 100).toFixed(1)}%</span>
+              目标比例:{' '}
+              <span className="font-bold text-slate-800 font-mono">
+                {((question.targetRatio ?? 0) * 100).toFixed(1)}%
+              </span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              作答位置: {((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1)}% (误差: ±{(((userAnswer?.errorValue ?? 0) * 100)).toFixed(1)}%)
+              作答位置: {((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1)}% (误差: ±
+              {((userAnswer?.errorValue ?? 0) * 100).toFixed(1)}%)
             </span>
           </div>
         ) : null

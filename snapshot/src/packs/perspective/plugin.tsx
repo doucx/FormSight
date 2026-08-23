@@ -2,11 +2,11 @@ import type { TrainingPlugin } from '../../config/trainingPlugins';
 import type { Point } from '../../types';
 import type { BaseModuleSettings } from '../../utils/settings';
 import {
-  checkPerspectiveHit,
-  generatePerspectiveQuestion,
   type PerspectiveHitResult,
   type PerspectiveMode,
   type PerspectiveQuestionData,
+  checkPerspectiveHit,
+  generatePerspectiveQuestion,
 } from './utils/perspectiveUtils';
 import { PerspectiveCanvas } from './views/PerspectiveCanvas';
 
