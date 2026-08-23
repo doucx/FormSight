@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(filter): 在 FilterEngine 中补充 `perspective` 标签的中文映射", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475876.9066174, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "biome Capture: M FilterEngine.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475925.533425, "duration_ms": 0}}
