@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M GlobalSettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787478197.6655188, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 清理 GlobalSettingsModal 中残留的实验性模块开关逻辑与导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787478198.4469936, "duration_ms": 0}}

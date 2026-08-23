@@ -1,7 +1,6 @@
 import {
   Clock,
   Download,
-  FlaskConical,
   HelpCircle,
   RotateCcw,
   Scissors,
@@ -64,20 +63,6 @@ export function GlobalSettingsModal({
       global: {
         ...settings.global,
         showCanvasHints: !current,
-      },
-    };
-    saveSettings(updated);
-    setSettings(updated);
-    onDataChanged();
-  };
-
-  const handleToggleExperimental = () => {
-    const current = settings.global.showExperimentalCards ?? false;
-    const updated = {
-      ...settings,
-      global: {
-        ...settings.global,
-        showExperimentalCards: !current,
       },
     };
     saveSettings(updated);
