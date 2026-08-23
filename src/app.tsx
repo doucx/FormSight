@@ -103,7 +103,6 @@ export function App() {
           profiles={profiles}
           trainingPlan={trainingPlan}
           allPlans={allPlans}
-          showExperimental={settings.global.showExperimentalCards}
           query={route.query}
           onQueryChange={(newQuery) =>
             navigate({ type: 'home', query: newQuery }, { replace: true })

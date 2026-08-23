@@ -22,7 +22,6 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
       searchKeyword: searchKeyword || undefined,
       skills: selectedSkill !== 'all' ? [selectedSkill] : undefined,
       packId: selectedPackId !== 'all' ? selectedPackId : undefined,
-      includeExperimental: true,
     };
   }, [searchKeyword, selectedSkill, selectedPackId]);
 

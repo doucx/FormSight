@@ -4,9 +4,11 @@ import {
   Compass,
   Crosshair,
   Filter,
+  FlaskConical,
   MousePointer,
   RotateCcw,
   Search,
+  ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-preact';
@@ -14,6 +16,7 @@ import { useState } from 'preact/hooks';
 import { registry } from '../../core/registry';
 import type {
   CardQueryOptions,
+  CardStatusTag,
   CognitiveSkillTag,
   InteractionTag,
   SensoryTargetTag,
@@ -46,6 +49,12 @@ export const INTERACTION_TAG_LABELS: Record<InteractionTag, string> = {
   point_click: '点阵点击',
   choice_2afc: '2AFC 对抗',
   choice_nafc: 'N-AFC 判断',
+};
+
+export const STATUS_TAG_LABELS: Record<CardStatusTag, string> = {
+  stable: '稳定模块',
+  experimental: '实验性模块',
+  deprecated: '已废弃',
 };
 
 interface FilterEngineProps {
@@ -94,6 +103,14 @@ export function FilterEngine({
     onChange({ ...query, interactions: next.length > 0 ? next : undefined });
   };
 
+  const toggleStatus = (status: CardStatusTag) => {
+    const current = query.statuses || [];
+    const next = current.includes(status)
+      ? current.filter((s) => s !== status)
+      : [...current, status];
+    onChange({ ...query, statuses: next.length > 0 ? next : undefined });
+  };
+
   const handleSelectPack = (packId?: string) => {
     onChange({
       ...query,
@@ -110,7 +127,8 @@ export function FilterEngine({
       query.packId ||
       (query.targets && query.targets.length > 0) ||
       (query.skills && query.skills.length > 0) ||
-      (query.interactions && query.interactions.length > 0),
+      (query.interactions && query.interactions.length > 0) ||
+      (query.statuses && query.statuses.length > 0),
   );
 
   return (
@@ -300,6 +318,41 @@ export function FilterEngine({
                   >
                     {isSelected && <Check className="w-3 h-3" />}
                     <span>{INTERACTION_TAG_LABELS[i]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. 实验性与状态维度 (Status Tag) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <FlaskConical className="w-3 h-3 text-purple-500" />
+              特性与状态 (Status Tag)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(['stable', 'experimental'] as CardStatusTag[]).map((st) => {
+                const isSelected = query.statuses?.includes(st) ?? false;
+                return (
+                  <button
+                    type="button"
+                    key={st}
+                    onClick={() => toggleStatus(st)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? st === 'stable'
+                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                          : 'bg-purple-600 text-white shadow-sm shadow-purple-200'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    {st === 'stable' ? (
+                      <ShieldCheck className="w-3 h-3 text-indigo-500" />
+                    ) : (
+                      <FlaskConical className="w-3 h-3 text-amber-500" />
+                    )}
+                    <span>{STATUS_TAG_LABELS[st]}</span>
                   </button>
                 );
               })}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type {
   CardQueryOptions,
+  CardStatusTag,
   CognitiveSkillTag,
   InteractionTag,
   SensoryTargetTag,
@@ -22,17 +23,27 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const interactions = params.get('interactions')?.split(',').filter(Boolean) as
     | InteractionTag[]
     | undefined;
+  const statusesParam = params.get('statuses')?.split(',').filter(Boolean) as
+    | CardStatusTag[]
+    | undefined;
+  const legacyExpParam = params.get('experimental');
+  const statuses =
+    statusesParam && statusesParam.length > 0
+      ? statusesParam
+      : legacyExpParam === 'true'
+        ? (['experimental'] as CardStatusTag[])
+        : legacyExpParam === 'false'
+          ? (['stable'] as CardStatusTag[])
+          : undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
-  const expRaw = params.get('exp');
-  const includeExperimental = expRaw !== null ? expRaw === '1' || expRaw === 'true' : undefined;
 
   if (
     !packId &&
     (!targets || targets.length === 0) &&
     (!skills || skills.length === 0) &&
     (!interactions || interactions.length === 0) &&
-    !searchKeyword &&
-    includeExperimental === undefined
+    (!statuses || statuses.length === 0) &&
+    !searchKeyword
   ) {
     return undefined;
   }
@@ -42,8 +53,8 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     targets: targets && targets.length > 0 ? targets : undefined,
     skills: skills && skills.length > 0 ? skills : undefined,
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
+    statuses,
     searchKeyword,
-    includeExperimental,
   };
 }
 
@@ -85,11 +96,11 @@ function stringifyRoute(route: RouteLocation): string {
     if (route.query.interactions && route.query.interactions.length > 0) {
       params.set('interactions', route.query.interactions.join(','));
     }
+    if (route.query.statuses && route.query.statuses.length > 0) {
+      params.set('statuses', route.query.statuses.join(','));
+    }
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());
-    }
-    if (route.query.includeExperimental) {
-      params.set('exp', '1');
     }
     const qs = params.toString();
     return qs ? `#/?${qs}` : '#/';

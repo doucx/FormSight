@@ -23,10 +23,13 @@ export type CognitiveSkillTag =
 
 export type InteractionTag = 'continuous_slider' | 'point_click' | 'choice_2afc' | 'choice_nafc';
 
+export type CardStatusTag = 'stable' | 'experimental' | 'deprecated';
+
 export interface CardTags {
   target: SensoryTargetTag[];
   skill: CognitiveSkillTag[];
   interaction: InteractionTag[];
+  status?: CardStatusTag;
 }
 
 export interface CardDefinition {
@@ -40,7 +43,6 @@ export interface CardDefinition {
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
-  isExperimental?: boolean;
 }
 
 export interface PackMeta {
@@ -59,6 +61,6 @@ export interface CardQueryOptions {
   targets?: SensoryTargetTag[];
   skills?: CognitiveSkillTag[];
   interactions?: InteractionTag[];
-  includeExperimental?: boolean;
+  statuses?: CardStatusTag[];
   searchKeyword?: string;
 }
