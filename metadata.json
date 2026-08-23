@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "biome Capture: M FilterEngine.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475925.533425, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(route): 将主页筛选条件持久化至 URL 查询参数中", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787476167.9471152, "duration_ms": 0}}
