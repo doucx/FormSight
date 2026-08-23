@@ -50,10 +50,7 @@ export function App() {
   }, []);
 
   const refreshProfiles = useCallback(async () => {
-    const [summary] = await Promise.all([
-      repository.getAppSummary(),
-      refreshTodayStats(),
-    ]);
+    const [summary] = await Promise.all([repository.getAppSummary(), refreshTodayStats()]);
 
     setTotalTimeMs(summary.totalTimeMs);
     setProfiles(summary.profiles);
@@ -108,7 +105,9 @@ export function App() {
           allPlans={allPlans}
           showExperimental={settings.global.showExperimentalCards}
           query={route.query}
-          onQueryChange={(newQuery) => navigate({ type: 'home', query: newQuery }, { replace: true })}
+          onQueryChange={(newQuery) =>
+            navigate({ type: 'home', query: newQuery }, { replace: true })
+          }
           onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
           onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
           onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}

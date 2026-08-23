@@ -24,8 +24,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     | undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
   const expRaw = params.get('exp');
-  const includeExperimental =
-    expRaw !== null ? expRaw === '1' || expRaw === 'true' : undefined;
+  const includeExperimental = expRaw !== null ? expRaw === '1' || expRaw === 'true' : undefined;
 
   if (
     !packId &&
@@ -141,25 +140,22 @@ export function useHashRoute() {
     };
   }, []);
 
-  const navigate = useCallback(
-    (target: RouteLocation, options?: { replace?: boolean }) => {
-      const newHash = stringifyRoute(target);
-      if (window.location.hash !== newHash) {
-        const prevHash = currentHashRef.current || '#/';
-        scrollPositionsRef.current[prevHash] = window.scrollY;
-        if (options?.replace) {
-          const url = new URL(window.location.href);
-          url.hash = newHash;
-          window.history.replaceState(null, '', url.toString());
-          currentHashRef.current = newHash;
-          setRoute(parseHash(newHash));
-        } else {
-          window.location.hash = newHash;
-        }
+  const navigate = useCallback((target: RouteLocation, options?: { replace?: boolean }) => {
+    const newHash = stringifyRoute(target);
+    if (window.location.hash !== newHash) {
+      const prevHash = currentHashRef.current || '#/';
+      scrollPositionsRef.current[prevHash] = window.scrollY;
+      if (options?.replace) {
+        const url = new URL(window.location.href);
+        url.hash = newHash;
+        window.history.replaceState(null, '', url.toString());
+        currentHashRef.current = newHash;
+        setRoute(parseHash(newHash));
+      } else {
+        window.location.hash = newHash;
       }
-    },
-    [],
-  );
+    }
+  }, []);
 
   return { route, navigate };
 }
