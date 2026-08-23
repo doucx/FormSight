@@ -4,9 +4,11 @@ import {
   Compass,
   Crosshair,
   Filter,
+  FlaskConical,
   MousePointer,
   RotateCcw,
   Search,
+  ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-preact';
@@ -94,6 +96,13 @@ export function FilterEngine({
     onChange({ ...query, interactions: next.length > 0 ? next : undefined });
   };
 
+  const setExperimentalFilter = (val: boolean) => {
+    onChange({
+      ...query,
+      isExperimental: query.isExperimental === val ? undefined : val,
+    });
+  };
+
   const handleSelectPack = (packId?: string) => {
     onChange({
       ...query,
@@ -110,7 +119,8 @@ export function FilterEngine({
       query.packId ||
       (query.targets && query.targets.length > 0) ||
       (query.skills && query.skills.length > 0) ||
-      (query.interactions && query.interactions.length > 0),
+      (query.interactions && query.interactions.length > 0) ||
+      query.isExperimental !== undefined,
   );
 
   return (
@@ -303,6 +313,43 @@ export function FilterEngine({
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* 4. 实验性与状态维度 (Experimental Tag) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <FlaskConical className="w-3 h-3 text-purple-500" />
+              特性与状态 (Status Tag)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setExperimentalFilter(false)}
+                className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                  query.isExperimental === false
+                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                    : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
+                }`}
+              >
+                {query.isExperimental === false && <Check className="w-3 h-3" />}
+                <ShieldCheck className="w-3 h-3 text-indigo-500" />
+                <span>稳定模块</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExperimentalFilter(true)}
+                className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                  query.isExperimental === true
+                    ? 'bg-purple-600 text-white shadow-sm shadow-purple-200'
+                    : 'bg-slate-50 hover:bg-purple-50/60 text-slate-600 border border-slate-200/80 hover:border-purple-300'
+                }`}
+              >
+                {query.isExperimental === true && <Check className="w-3 h-3" />}
+                <FlaskConical className="w-3 h-3 text-amber-500" />
+                <span>实验性模块</span>
+              </button>
             </div>
           </div>
         </div>
