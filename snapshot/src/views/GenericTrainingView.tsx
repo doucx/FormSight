@@ -21,6 +21,7 @@ export interface GenericTrainingViewProps<
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   showExitButton?: boolean;
+  showTimer?: boolean;
   onExit: () => void;
 }
 
@@ -39,6 +40,7 @@ export function GenericTrainingView<
   targetLimitTrials,
   onTargetLimitReached,
   showExitButton = true,
+  showTimer = true,
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const packId = card.packId;
@@ -120,6 +122,7 @@ export function GenericTrainingView<
       autoNext={settings.autoNext}
       session={session}
       showExitButton={showExitButton}
+      showTimer={showTimer}
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>

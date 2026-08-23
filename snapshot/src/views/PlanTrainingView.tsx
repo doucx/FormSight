@@ -1,4 +1,4 @@
-import { ArrowLeft, FastForward } from 'lucide-preact';
+import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
@@ -141,6 +141,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   }
   const cardConfig = getCardSettings(settings, currentCard.id);
 
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   return (
     <div className="w-full">
       <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
@@ -166,6 +174,12 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
             本阶段目标: <strong className="text-slate-700">{currentStep.targetTrials}</strong> 题
+          </div>
+          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-mono text-xs font-bold text-slate-700">
+              {formatTime(totalElapsedSeconds)}
+            </span>
           </div>
           <button
             type="button"
@@ -195,6 +209,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
           showExitButton={false}
+          showTimer={false}
           onExit={handleRequestExit}
         />
       )}
