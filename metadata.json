@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现透视与空间几何感知扩展包 (perspective pack)", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475545.9404263, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat(perspective): 将透视扩展包的所有训练卡片标注为实验性卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787475712.5379696, "duration_ms": 0}}

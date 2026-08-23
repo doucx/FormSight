@@ -29,6 +29,7 @@ export const perspectiveCards: CardDefinition[] = [
     },
     hasWeaknessAnalytics: true,
     settingSchemas: SLIDER_COMMON_SCHEMAS,
+    isExperimental: true,
   },
   {
     id: 'perspective_proportion_division',
@@ -44,6 +45,7 @@ export const perspectiveCards: CardDefinition[] = [
       interaction: ['point_click'],
     },
     hasWeaknessAnalytics: false,
+    isExperimental: true,
   },
   {
     id: 'perspective_gestalt_continuation_2afc',
@@ -59,6 +61,7 @@ export const perspectiveCards: CardDefinition[] = [
       interaction: ['choice_2afc'],
     },
     hasWeaknessAnalytics: false,
+    isExperimental: true,
   },
   {
     id: 'perspective_structure_3d',
@@ -74,6 +77,7 @@ export const perspectiveCards: CardDefinition[] = [
       interaction: ['point_click'],
     },
     hasWeaknessAnalytics: false,
+    isExperimental: true,
   },
 ];
 
