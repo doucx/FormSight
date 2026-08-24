@@ -1,5 +1,4 @@
 import { ArrowRight, Shuffle } from 'lucide-preact';
-import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
@@ -7,7 +6,7 @@ import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils
 interface VectorShiftViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
+  userAnswer?: RelativeColorHitResult | null;
   selectedIndex: number;
   onSelectIndex: (idx: number) => void;
   onSubmit: () => void;
@@ -20,39 +19,21 @@ interface VectorShiftViewProps {
 export function VectorShiftView({
   question,
   showAnswer,
-  userAnswer,
   selectedIndex,
   onSelectIndex,
   onSubmit,
   disabled = false,
-  hitMargin = 12,
-  showToleranceBand = true,
   showCanvasHints = true,
 }: VectorShiftViewProps) {
-  const { colorA, colorB, colorC, targetD, options, correctIndex, difficultyLevel } = question;
+  const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
   const activeColor = options?.[selectedIndex] ?? targetD;
-  const userH = activeColor[0];
-  const userS = activeColor[1];
-  const userV = activeColor[2];
 
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
   const hexC = hsvToHex(...colorC);
 
-  const hexSelectedD = hsvToHex(userH, userS, userV);
+  const hexSelectedD = hsvToHex(...activeColor);
   const hexTargetD = hsvToHex(...targetD);
-
-  const cH = colorC[0];
-  const cS = colorC[1];
-  const cV = colorC[2];
-
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
-  const satGradient = `linear-gradient(to right, ${hsvToHex(userH, 0, userV)}, ${hsvToHex(userH, 100, userV)})`;
-  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(userH, 100, 100)})`;
-
-  const cSatGradient = `linear-gradient(to right, ${hsvToHex(cH, 0, cV)}, ${hsvToHex(cH, 100, cV)})`;
-  const cValGradient = `linear-gradient(to right, #000000, ${hsvToHex(cH, 100, 100)})`;
 
   const nafcOptions = (options || []).map((opt, idx) => {
     const isTarget = idx === correctIndex;
@@ -117,122 +98,6 @@ export function VectorShiftView({
                   style={{ backgroundColor: hexTargetD }}
                 />
               )}
-            </div>
-          </div>
-        </div>
-      }
-      middleContent={
-        <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3 md:pr-4 md:border-r border-slate-200/60">
-              <HsvTrackSlider
-                label="H"
-                gradient={hueGradient}
-                val={cH}
-                max={360}
-                unit="°"
-                targetHSV={colorC}
-                difficultyLevel={difficultyLevel}
-                showAnswer={false}
-                targetVal={cH}
-                userVal={cH}
-                allUserHSV={colorC}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={false}
-                onValChange={() => {}}
-              />
-              <HsvTrackSlider
-                label="S"
-                gradient={cSatGradient}
-                val={cS}
-                max={100}
-                unit="%"
-                targetHSV={colorC}
-                difficultyLevel={difficultyLevel}
-                showAnswer={false}
-                targetVal={cS}
-                userVal={cS}
-                allUserHSV={colorC}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={false}
-                onValChange={() => {}}
-              />
-              <HsvTrackSlider
-                label="V"
-                gradient={cValGradient}
-                val={cV}
-                max={100}
-                unit="%"
-                targetHSV={colorC}
-                difficultyLevel={difficultyLevel}
-                showAnswer={false}
-                targetVal={cV}
-                userVal={cV}
-                allUserHSV={colorC}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={false}
-                onValChange={() => {}}
-              />
-            </div>
-
-            <div className="space-y-3">
-              <HsvTrackSlider
-                label="H"
-                gradient={hueGradient}
-                val={userH}
-                max={360}
-                unit="°"
-                targetHSV={targetD}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetD[0]}
-                userVal={userAnswer?.userD?.[0] ?? userH}
-                isHit={userAnswer?.isHit}
-                onValChange={() => {}}
-                allUserHSV={[userH, userS, userV]}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
-              <HsvTrackSlider
-                label="S"
-                gradient={satGradient}
-                val={userS}
-                max={100}
-                unit="%"
-                targetHSV={targetD}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetD[1]}
-                userVal={userAnswer?.userD?.[1] ?? userS}
-                isHit={userAnswer?.isHit}
-                onValChange={() => {}}
-                allUserHSV={[userH, userS, userV]}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
-              <HsvTrackSlider
-                label="V"
-                gradient={valGradient}
-                val={userV}
-                max={100}
-                unit="%"
-                targetHSV={targetD}
-                difficultyLevel={difficultyLevel}
-                showAnswer={showAnswer}
-                targetVal={targetD[2]}
-                userVal={userAnswer?.userD?.[2] ?? userV}
-                isHit={userAnswer?.isHit}
-                onValChange={() => {}}
-                allUserHSV={[userH, userS, userV]}
-                disabled={true}
-                hitMargin={hitMargin}
-                showToleranceBand={showToleranceBand}
-              />
             </div>
           </div>
         </div>
