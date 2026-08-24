@@ -192,48 +192,52 @@ export function FilterEngine({
         </div>
       </div>
 
-      {/* 扩展包 (Pack) 快速切换横向标签 */}
+      {/* 扩展包 (Pack) 快速筛选标签 */}
       {packs.length > 0 && (
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-t border-slate-100 pt-3">
-          <span className="text-[11px] font-bold text-slate-400 mr-1 flex items-center gap-1 flex-shrink-0">
+        <div className="space-y-1.5 border-t border-slate-100 pt-3">
+          <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
             <Boxes className="w-3 h-3 text-indigo-500" />
-            扩展包:
-          </span>
-          <button
-            type="button"
-            onClick={() => handleSelectPack(undefined)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex-shrink-0 flex items-center gap-1 ${
-              !query.packId
-                ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                : 'bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100'
-            }`}
-          >
-            全部 Packs
-          </button>
-          {packs.map((p) => {
-            const isSelected = query.packId === p.packId;
-            return (
-              <button
-                type="button"
-                key={p.packId}
-                onClick={() => handleSelectPack(isSelected ? undefined : p.packId)}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex-shrink-0 flex items-center gap-1 ${
-                  isSelected
-                    ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                    : 'bg-slate-50 text-slate-600 border border-slate-200/80 hover:bg-slate-100'
-                }`}
-              >
-                <span>{p.meta.title}</span>
-                <span
-                  className={`text-[10px] font-mono px-1 rounded ${
-                    isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-500'
+            扩展包 (Packs)
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => handleSelectPack(undefined)}
+              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                !query.packId
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                  : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
+              }`}
+            >
+              {!query.packId && <Check className="w-3 h-3" />}
+              <span>全部 Packs</span>
+            </button>
+            {packs.map((p) => {
+              const isSelected = query.packId === p.packId;
+              return (
+                <button
+                  type="button"
+                  key={p.packId}
+                  onClick={() => handleSelectPack(isSelected ? undefined : p.packId)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                      : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
                   }`}
                 >
-                  {p.cards.length}
-                </span>
-              </button>
-            );
-          })}
+                  {isSelected && <Check className="w-3 h-3" />}
+                  <span>{p.meta.title}</span>
+                  <span
+                    className={`text-[10px] font-mono px-1 rounded ${
+                      isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-500'
+                    }`}
+                  >
+                    {p.cards.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

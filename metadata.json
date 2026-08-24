@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复移动端难度层阶变化曲线超出弹窗的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787540123.0373163, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(discovery): 将主页扩展包筛选栏调整为折行 Tag 样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787540327.8272843, "duration_ms": 0}}
