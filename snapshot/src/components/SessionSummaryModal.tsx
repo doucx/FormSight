@@ -152,7 +152,7 @@ export function SessionSummaryModal({
         </div>
 
         {/* 折线图 Canvas 区 */}
-        <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800">
+        <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800 w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
             <span className="text-[11px] font-bold text-slate-400">难度层阶变化曲线</span>
             <div className="flex items-center gap-3 text-[10px]">
@@ -168,7 +168,7 @@ export function SessionSummaryModal({
             ref={canvasRef}
             width={440}
             height={160}
-            className="w-full aspect-[11/4] rounded-xl"
+            className="w-full max-w-full aspect-[11/4] rounded-xl block"
           />
         </div>
 
