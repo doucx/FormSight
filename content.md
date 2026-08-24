@@ -1,491 +1,355 @@
-好的，我们优先推进 **`perspective` 透视包中比例盲切（`ProportionDivisionView`）与比例迁移（`ProportionMigrationView`）的 Touch 触控手势适配**。
+好的，我们将为点阵交互的核心底座组件 **`PointClickCanvas.tsx`** 实现**触控拖拽定位与实时浮动放大镜（Magnifier Loupe）机制**。
 
-我们将引入 `onTouchStart`、`onTouchMove` 与 `onTouchEnd` 手势监听，并添加 `touch-none` 阻断画布上的页面滚动，实现**“按住屏幕拖动实时吸附线段比例、抬手确认提交”**的移动端自然交互。
+当用户在手机或触控屏上按住并滑动时，手指上方 70px 处会自动浮现一个带十字准星与 2.5 倍放大的圆形放大镜，并在手指移动时实时磁吸最近点，松手时精准确认提交，彻底解决胖手指遮挡高密微小点阵（如 3.5px 极小间距）的痛点。该优化将一举惠及 **寻星三卡（`star` 全系列）**、**负形边界反切定点（`negative_space`）** 与 **3D 结构空间翻转（`perspective`）**。
 
-## [WIP] feat(perspective): 为比例盲切与比例迁移组件增加 Touch 手势与拖拽吸附支持
+## [WIP] feat(common): 为 PointClickCanvas 增加触控拖拽与浮动放大镜 (Loupe) 机制
 
 ### 用户需求
-支持手机/平板触摸屏在比例盲切（`PROPORTION_DIVISION`）与比例迁移（`PROPORTION_MIGRATION`）题型下的触摸操作，解决移动端无 `mouseMove` 导致无法实时预览吸附位置以及直接点击误判的问题。
+解决移动端触控屏在点阵类题型（寻星盲打、负形反切定点、3D 透视点阵）中手指遮挡目标点及点击精度不足（胖手指问题）的缺陷，支持触摸滑动试探与放大镜辅助对齐。
 
 ### 评论
-当前比例盲切和迁移仅绑定了 Mouse 事件（`mousemove`, `click`），在移动端会导致用户一触碰屏幕即立即触发 `click` 并提交错误位置，严重影响触控设备体验。引入“按住滑动试探 ➔ 实时吸附光标 ➔ 抬手确认”是触控环境下最精准、最流畅的比例选择交互模式。
+在高难度层阶（Level 30+）下，点阵间距会缩小至 3.5px~5px，远小于人手手指接触面（约 30px~40px）。如果没有放大镜与拖拽预览机制，移动端用户不仅完全看不清接触点下方的点阵排布，且极易误触非目标点。加入浮动放大镜与“按住滑动对齐 ➔ 抬手提交”交互，是触控端高精度定位的最优人机工程学解法。
 
 ### 目标
-1. 在 `ProportionDivisionView.tsx` 与 `ProportionMigrationView.tsx` 的画布上增加 `onTouchStart`、`onTouchMove`、`onTouchEnd` 与 `onTouchCancel` 监听。
-2. 在 Touch 事件中解析 `touch.clientX` / `touch.clientY` 并通过 `getProjectedPoint` 实时计算投影点，拖动时阻止默认页面滚动（`e.preventDefault()`）。
-3. 画布样式添加 `touch-none select-none`，并将光标适配为移动端友好的样式；优化提示文案使其兼顾触控与鼠标。
+1. 在 `PointClickCanvas.tsx` 中包裹相对定位容器，并引入 `onTouchStart`、`onTouchMove`、`onTouchEnd` 与 `onTouchCancel` 触控手势。
+2. 当发生触控手势时，在手指接触点上方（若靠顶则智能翻转至下方）渲染直径 100px、2.5 倍缩放且自带中心十字准星的圆形放大镜。
+3. 拖动过程中实时磁吸最近有效点阵点，松手抬起时精准触发 `onCommitPoint` 提交。
+4. 保持桌面端鼠标悬停与点击交互不受任何影响。
 
 ### 基本原理
-通过统一封装 `getProjectedPoint` 供 Mouse 与 Touch 共享，移动端用户按下手指时即刻渲染磁吸光标（`hoverPoint`），在手指滑动期间实时更新比例位置，松开手指时以最后捕获的有效投影点触发 `onAnswer` 提交作答，完美兼容桌面端与移动端。
+利用子 Canvas 的 `drawImage` 对主画布进行局部裁切并以 2.5 倍率绘制至圆形放大镜中，叠加中心十字微准星，结合触摸坐标正交反算与 `findNearestGridPoint` 碰撞检测，在不增加额外绘图开销的前提下提供像素级的高清局部视野。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/perspective-touch-interaction #task/action/implementation #task/state/begin
+#intent/build #flow/ready #priority/critical #comp/ui #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/point-click-loupe #task/action/implementation #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 `ProportionDivisionView.tsx` 支持 Touch 手势
+#### Acts 1: 升级 `PointClickCanvas.tsx` 实现触控拖拽与实时放大镜
 
 ~~~~~act
 write_file
-src/packs/perspective/components/ProportionDivisionView.tsx
+src/components/common/PointClickCanvas.tsx
 ~~~~~
 ~~~~~tsx
-import { Disc } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import type { Point } from '../../../types';
-import {
-  PERSPECTIVE_CANVAS_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  drawProportionCanvas,
-} from '../utils/perspectiveUtils';
+import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
+import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
+import type { Point } from '../../types';
 
-interface ProportionDivisionViewProps {
-  question: PerspectiveQuestionData;
+export interface PointClickCanvasProps {
+  canvasSize: number;
+  gridPoints: Point[];
+  targetPoint?: Point;
+  userNearestPoint?: Point;
+  anchors?: (Point | null | undefined)[];
   showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
-  onAnswer: (point: Point) => void;
+  isHit?: boolean;
   disabled?: boolean;
-  showCanvasHints?: boolean;
+  maxDisplayWidth?: string;
+  customOverlayRender?: (ctx: CanvasRenderingContext2D) => void;
+  onCommitPoint: (point: Point) => void;
 }
 
-export function ProportionDivisionView({
-  question,
+const LOUPE_SIZE = 104; // 放大镜直径 (px)
+const ZOOM_FACTOR = 2.5; // 放大倍率
+
+export function PointClickCanvas({
+  canvasSize,
+  gridPoints,
+  targetPoint,
+  userNearestPoint,
+  anchors = [],
   showAnswer,
-  userAnswer,
-  onAnswer,
+  isHit = false,
   disabled = false,
-  showCanvasHints = true,
-}: ProportionDivisionViewProps) {
+  maxDisplayWidth = 'max-w-[380px] lg:max-w-[420px]',
+  customOverlayRender,
+  onCommitPoint,
+}: PointClickCanvasProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
+  const loupeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [isTouching, setIsTouching] = useState<boolean>(false);
+  const [loupePos, setLoupePos] = useState<{ x: number; y: number } | null>(null);
+  const [currentCanvasPos, setCurrentCanvasPos] = useState<Point | null>(null);
 
-  // 题目切换时重置状态
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
+  // 1. 渲染主画布内容
   useEffect(() => {
-    setUserClickedPoint(null);
-    setHoverPoint(null);
-  }, [question.id]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-  /**
-   * 将屏幕鼠标或触控坐标垂直正交投影吸附至当前线段，获得线段上的垂足点与比例参数 t
-   */
-  const getProjectedPoint = useCallback(
-    (clientX: number, clientY: number): Point | null => {
-      const canvas = canvasRef.current;
-      const line = question.divisionLine;
-      if (!canvas || !line) return null;
+    renderInteractivePointGrid({
+      ctx,
+      canvasSize,
+      gridPoints,
+      targetPoint,
+      userNearestPoint,
+      hoverPoint,
+      anchors,
+      showAnswer,
+      isHit,
+      disabled,
+    });
 
-      const rect = canvas.getBoundingClientRect();
-      const scale = PERSPECTIVE_CANVAS_SIZE / rect.width;
-      const mouseX = (clientX - rect.left) * scale;
-      const mouseY = (clientY - rect.top) * scale;
+    customOverlayRender?.(ctx);
+  }, [
+    canvasSize,
+    gridPoints,
+    targetPoint,
+    userNearestPoint,
+    hoverPoint,
+    anchors,
+    showAnswer,
+    isHit,
+    disabled,
+    customOverlayRender,
+  ]);
 
-      const dx = line.p2.x - line.p1.x;
-      const dy = line.p2.y - line.p1.y;
-      const lenSq = dx * dx + dy * dy;
-      if (lenSq === 0) return null;
+  // 2. 渲染放大镜画布内容
+  const updateLoupeCanvas = useCallback(
+    (focusPt: Point) => {
+      const mainCanvas = canvasRef.current;
+      const loupeCanvas = loupeCanvasRef.current;
+      if (!mainCanvas || !loupeCanvas) return;
 
-      // 正交投影公式: t = (M - P1)·(P2 - P1) / |P2 - P1|^2
-      const t = ((mouseX - line.p1.x) * dx + (mouseY - line.p1.y) * dy) / lenSq;
-      const clampedT = Math.max(0, Math.min(1, t));
+      const loupeCtx = loupeCanvas.getContext('2d');
+      if (!loupeCtx) return;
 
-      return {
-        x: Math.round((line.p1.x + clampedT * dx) * 10) / 10,
-        y: Math.round((line.p1.y + clampedT * dy) * 10) / 10,
-      };
+      loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
+
+      // 主画布采样的视口区域
+      const sampleSize = LOUPE_SIZE / ZOOM_FACTOR;
+      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2));
+      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2));
+
+      // 绘制放大图像
+      loupeCtx.drawImage(
+        mainCanvas,
+        sx,
+        sy,
+        sampleSize,
+        sampleSize,
+        0,
+        0,
+        LOUPE_SIZE,
+        LOUPE_SIZE,
+      );
+
+      // 绘制中心十字准星
+      const center = LOUPE_SIZE / 2;
+      loupeCtx.strokeStyle = '#4F46E5';
+      loupeCtx.lineWidth = 1.5;
+
+      // 环形中心靶心
+      loupeCtx.beginPath();
+      loupeCtx.arc(center, center, 8, 0, Math.PI * 2);
+      loupeCtx.stroke();
+
+      // 十字延伸刻度
+      loupeCtx.beginPath();
+      loupeCtx.moveTo(center - 14, center);
+      loupeCtx.lineTo(center - 4, center);
+      loupeCtx.moveTo(center + 4, center);
+      loupeCtx.lineTo(center + 14, center);
+      loupeCtx.moveTo(center, center - 14);
+      loupeCtx.lineTo(center, center - 4);
+      loupeCtx.moveTo(center, center + 4);
+      loupeCtx.lineTo(center, center + 14);
+      loupeCtx.stroke();
     },
-    [question.divisionLine],
+    [canvasSize],
   );
 
+  // 3. 屏幕坐标换算为画布坐标
+  const getCanvasCoordinates = useCallback(
+    (clientX: number, clientY: number): { canvasPoint: Point; relX: number; relY: number } | null => {
+      const canvas = canvasRef.current;
+      const container = containerRef.current;
+      if (!canvas || !container) return null;
+
+      const rect = canvas.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      const scaleX = canvasSize / rect.width;
+      const scaleY = canvasSize / rect.height;
+
+      const clickX = Math.round((clientX - rect.left) * scaleX * 100) / 100;
+      const clickY = Math.round((clientY - rect.top) * scaleY * 100) / 100;
+
+      const relX = clientX - containerRect.left;
+      const relY = clientY - containerRect.top;
+
+      return {
+        canvasPoint: { x: clickX, y: clickY },
+        relX,
+        relY,
+      };
+    },
+    [canvasSize],
+  );
+
+  // 鼠标悬停与移动
   const handleMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer) {
-      if (hoverPoint) setHoverPoint(null);
-      return;
-    }
-    const projPt = getProjectedPoint(e.clientX, e.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
+    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    if (!coords) return;
+
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+
+    if (isWithinRange) {
+      setHoverPoint(nearestPoint);
+    } else if (hoverPoint) {
+      setHoverPoint(null);
     }
   };
 
   const handleMouseLeave = () => {
-    if (hoverPoint) setHoverPoint(null);
+    if (!isTouching && hoverPoint) setHoverPoint(null);
   };
 
+  // 鼠标普通点击
   const handleClick = (e: MouseEvent) => {
-    if (disabled || showAnswer) return;
-    const projPt = getProjectedPoint(e.clientX, e.clientY);
-    if (!projPt) return;
+    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    if (!coords) return;
 
-    setUserClickedPoint(projPt);
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    if (!isWithinRange) return;
+
     setHoverPoint(null);
-    onAnswer(projPt);
+    onCommitPoint(nearestPoint);
   };
 
+  // 触控开始
   const handleTouchStart = (e: TouchEvent) => {
-    if (disabled || showAnswer || !e.touches[0]) return;
+    if (disabled || showAnswer || !gridPoints.length || !e.touches[0]) return;
     const touch = e.touches[0];
-    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
-    }
+    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
+    if (!coords) return;
+
+    setIsTouching(true);
+    setCurrentCanvasPos(coords.canvasPoint);
+
+    // 计算放大镜位置（默认在手指上方 72px，若超出顶部则自动翻转至下方）
+    const flipDown = coords.relY < 90;
+    setLoupePos({
+      x: coords.relX,
+      y: flipDown ? coords.relY + 75 : coords.relY - 75,
+    });
+
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    setHoverPoint(isWithinRange ? nearestPoint : null);
+    updateLoupeCanvas(isWithinRange ? nearestPoint : coords.canvasPoint);
   };
 
+  // 触控移动
   const handleTouchMove = (e: TouchEvent) => {
-    if (disabled || showAnswer || !e.touches[0]) return;
+    if (disabled || showAnswer || !gridPoints.length || !e.touches[0] || !isTouching) return;
     if (e.cancelable) e.preventDefault();
+
     const touch = e.touches[0];
-    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
-    }
+    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
+    if (!coords) return;
+
+    setCurrentCanvasPos(coords.canvasPoint);
+
+    const flipDown = coords.relY < 90;
+    setLoupePos({
+      x: coords.relX,
+      y: flipDown ? coords.relY + 75 : coords.relY - 75,
+    });
+
+    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    setHoverPoint(isWithinRange ? nearestPoint : null);
+    updateLoupeCanvas(isWithinRange ? nearestPoint : coords.canvasPoint);
   };
 
+  // 触控松手确认提交
   const handleTouchEnd = () => {
-    if (disabled || showAnswer) return;
+    if (disabled || showAnswer || !isTouching) return;
+    setIsTouching(false);
+    setLoupePos(null);
+
     if (hoverPoint) {
-      const finalPt = hoverPoint;
-      setUserClickedPoint(finalPt);
+      const commitPt = hoverPoint;
       setHoverPoint(null);
-      onAnswer(finalPt);
+      onCommitPoint(commitPt);
+    } else if (currentCanvasPos) {
+      const { nearestPoint, isWithinRange } = findNearestGridPoint(currentCanvasPos, gridPoints);
+      if (isWithinRange) {
+        setHoverPoint(null);
+        onCommitPoint(nearestPoint);
+      }
     }
   };
 
-  const isHit = Boolean(userAnswer?.isHit);
-
-  // 触发 Canvas 重绘
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      drawProportionCanvas(
-        canvas,
-        question.divisionLine,
-        question.targetDivisionPoint,
-        userClickedPoint,
-        hoverPoint,
-        showAnswer,
-        PERSPECTIVE_CANVAS_SIZE,
-      );
-    }
-  }, [
-    question.divisionLine,
-    question.targetDivisionPoint,
-    userClickedPoint,
-    hoverPoint,
-    showAnswer,
-  ]);
+  const handleTouchCancel = () => {
+    setIsTouching(false);
+    setLoupePos(null);
+    setHoverPoint(null);
+  };
 
   return (
-    <QuestionCardShell
-      hintText="在倾斜线段上滑动试探，松手确认比例位置（也可直接点击）"
-      hintIcon={Disc}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
-      footer={
-        showAnswer ? (
-          <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              目标比例:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {((question.targetRatio ?? 0) * 100).toFixed(1)}%
-              </span>
-            </span>
-            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              作答位置: {((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1)}% (误差: ±
-              {((userAnswer?.errorValue ?? 0) * 100).toFixed(1)}%)
-            </span>
-          </div>
-        ) : null
-      }
+    <div
+      ref={containerRef}
+      className={`relative inline-block w-full ${maxDisplayWidth} select-none`}
     >
-      {/* 极简纯数字目标面板 */}
-      <div className="w-full bg-indigo-50/80 border border-indigo-100/90 rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
-        <span className="text-2xl font-black text-indigo-900 font-mono tracking-widest">
-          {question.targetRatioName ?? '1/2'}
-        </span>
-      </div>
+      <canvas
+        ref={canvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label="点阵做答画布"
+        className={`w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all ${
+          disabled || showAnswer
+            ? 'cursor-default'
+            : hoverPoint
+              ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+        }`}
+      />
 
-      <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex flex-col items-center gap-2">
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+      {/* 触控浮动放大镜 (Loupe) */}
+      {isTouching && loupePos && (
+        <div
+          className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 shadow-2xl bg-white ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
+          style={{
+            left: `${loupePos.x}px`,
+            top: `${loupePos.y}px`,
+            width: `${LOUPE_SIZE}px`,
+            height: `${LOUPE_SIZE}px`,
           }}
-          tabIndex={0}
-          role="button"
-          aria-label="比例盲切答题画布"
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
-        <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
-            <span>起点 (0%)</span>
-          </span>
-          <span>→</span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
-            <span>终点 (100%)</span>
-          </span>
+        >
+          <canvas
+            ref={loupeCanvasRef}
+            width={LOUPE_SIZE}
+            height={LOUPE_SIZE}
+            className="w-full h-full block"
+          />
         </div>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-#### Acts 2: 升级 `ProportionMigrationView.tsx` 支持 Touch 手势
-
-~~~~~act
-write_file
-src/packs/perspective/components/ProportionMigrationView.tsx
-~~~~~
-~~~~~tsx
-import { ArrowRightLeft } from 'lucide-preact';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import type { Point } from '../../../types';
-import {
-  PERSPECTIVE_CANVAS_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  drawHorizontalReferenceCanvas,
-  drawProportionCanvas,
-} from '../utils/perspectiveUtils';
-
-interface ProportionMigrationViewProps {
-  question: PerspectiveQuestionData;
-  showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
-  onAnswer: (point: Point) => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function ProportionMigrationView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: ProportionMigrationViewProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  // 题目切换时重置状态
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
-  useEffect(() => {
-    setUserClickedPoint(null);
-    setHoverPoint(null);
-  }, [question.id]);
-
-  /**
-   * 将屏幕鼠标或触控坐标垂直正交投影吸附至下方倾斜线段，获得线段上的垂足点与比例参数 t
-   */
-  const getProjectedPoint = useCallback(
-    (clientX: number, clientY: number): Point | null => {
-      const canvas = canvasRef.current;
-      const line = question.divisionLine;
-      if (!canvas || !line) return null;
-
-      const rect = canvas.getBoundingClientRect();
-      const scale = PERSPECTIVE_CANVAS_SIZE / rect.width;
-      const mouseX = (clientX - rect.left) * scale;
-      const mouseY = (clientY - rect.top) * scale;
-
-      const dx = line.p2.x - line.p1.x;
-      const dy = line.p2.y - line.p1.y;
-      const lenSq = dx * dx + dy * dy;
-      if (lenSq === 0) return null;
-
-      // 正交投影公式: t = (M - P1)·(P2 - P1) / |P2 - P1|^2
-      const t = ((mouseX - line.p1.x) * dx + (mouseY - line.p1.y) * dy) / lenSq;
-      const clampedT = Math.max(0, Math.min(1, t));
-
-      return {
-        x: Math.round((line.p1.x + clampedT * dx) * 10) / 10,
-        y: Math.round((line.p1.y + clampedT * dy) * 10) / 10,
-      };
-    },
-    [question.divisionLine],
-  );
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer) {
-      if (hoverPoint) setHoverPoint(null);
-      return;
-    }
-    const projPt = getProjectedPoint(e.clientX, e.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (hoverPoint) setHoverPoint(null);
-  };
-
-  const handleClick = (e: MouseEvent) => {
-    if (disabled || showAnswer) return;
-    const projPt = getProjectedPoint(e.clientX, e.clientY);
-    if (!projPt) return;
-
-    setUserClickedPoint(projPt);
-    setHoverPoint(null);
-    onAnswer(projPt);
-  };
-
-  const handleTouchStart = (e: TouchEvent) => {
-    if (disabled || showAnswer || !e.touches[0]) return;
-    const touch = e.touches[0];
-    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
-    }
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (disabled || showAnswer || !e.touches[0]) return;
-    if (e.cancelable) e.preventDefault();
-    const touch = e.touches[0];
-    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
-    if (projPt) {
-      setHoverPoint(projPt);
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (disabled || showAnswer) return;
-    if (hoverPoint) {
-      const finalPt = hoverPoint;
-      setUserClickedPoint(finalPt);
-      setHoverPoint(null);
-      onAnswer(finalPt);
-    }
-  };
-
-  const isHit = Boolean(userAnswer?.isHit);
-
-  // 触发下方倾斜 Canvas 重绘
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      drawProportionCanvas(
-        canvas,
-        question.divisionLine,
-        question.targetDivisionPoint,
-        userClickedPoint,
-        hoverPoint,
-        showAnswer,
-        PERSPECTIVE_CANVAS_SIZE,
-      );
-    }
-  }, [
-    question.divisionLine,
-    question.targetDivisionPoint,
-    userClickedPoint,
-    hoverPoint,
-    showAnswer,
-  ]);
-
-  return (
-    <QuestionCardShell
-      hintText="观察上方基准线目标点，在下方倾斜线段滑动试探并松手确认"
-      hintIcon={ArrowRightLeft}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
-      footer={
-        showAnswer ? (
-          <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
-              目标比例:{' '}
-              <span className="font-bold text-slate-800 font-mono">
-                {((question.targetRatio ?? 0) * 100).toFixed(1)}%
-              </span>
-            </span>
-            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              作答位置: {((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1)}% (误差: ±
-              {((userAnswer?.errorValue ?? 0) * 100).toFixed(1)}%)
-            </span>
-          </div>
-        ) : null
-      }
-    >
-      {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-slate-50 border border-slate-200/90 rounded-2xl p-2.5 flex justify-center shadow-inner">
-        <CanvasView
-          width={280}
-          height={48}
-          className="w-full max-w-[280px] h-[48px] bg-white rounded-xl border border-slate-200 shadow-sm"
-          draw={(canvas) => {
-            drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
-          }}
-          deps={[question.targetRatio]}
-        />
-      </div>
-
-      {/* 下方倾斜角度作答画布 */}
-      <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex flex-col items-center gap-2">
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label="比例迁移答题画布"
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
-        <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
-            <span>起点 (0%)</span>
-          </span>
-          <span>→</span>
-          <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
-            <span>终点 (100%)</span>
-          </span>
-        </div>
-      </div>
-    </QuestionCardShell>
+      )}
+    </div>
   );
 }
 ~~~~~
 
 ### 下一步建议
-1. **测试触控体验**：在移动端或 Chrome 移动端模拟器下测试比例盲切与比例迁移，验证滑动时吸附圈是否跟随手指平滑移动、松手是否精准判定。
-2. **推进 `star` 寻星练习（放大镜机制）**：为点阵交互核心组件 `PointClickCanvas`（或 `StarCanvas`）实现触控长按/拖拽时在手指上方弹出实时放大镜（Magnifier Loupe），彻底解决胖手指遮挡高密点阵（3.5px 间距）的定位问题。
+1. **真机与模拟器测试**：在移动端浏览器或 Chrome 触控模拟下进入寻星三卡（`star_single`、`star_double_h`、`star_double_r`），按住屏幕滑动测试放大镜跟随、局部放大清晰度与抬手磁吸判定的准确率。
+2. **多模块验证**：同时抽检负形边界反切定点（`VertexFittingView`）与 3D 结构空间翻转（`StructureProjection3DView`），确认这些复用 `PointClickCanvas` 的模块在移动端均能自动获得放大镜辅助支持。
