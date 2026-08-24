@@ -40,7 +40,7 @@ export function ProportionMigrationView({
   }, [question.id]);
 
   /**
-   * 将屏幕鼠标坐标垂直正交投影吸附至下方倾斜线段，获得线段上的垂足点与比例参数 t
+   * 将屏幕鼠标或触控坐标垂直正交投影吸附至下方倾斜线段，获得线段上的垂足点与比例参数 t
    */
   const getProjectedPoint = useCallback(
     (clientX: number, clientY: number): Point | null => {
@@ -95,6 +95,35 @@ export function ProportionMigrationView({
     onAnswer(projPt);
   };
 
+  const handleTouchStart = (e: TouchEvent) => {
+    if (disabled || showAnswer || !e.touches[0]) return;
+    const touch = e.touches[0];
+    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
+    if (projPt) {
+      setHoverPoint(projPt);
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (disabled || showAnswer || !e.touches[0]) return;
+    if (e.cancelable) e.preventDefault();
+    const touch = e.touches[0];
+    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
+    if (projPt) {
+      setHoverPoint(projPt);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled || showAnswer) return;
+    if (hoverPoint) {
+      const finalPt = hoverPoint;
+      setUserClickedPoint(finalPt);
+      setHoverPoint(null);
+      onAnswer(finalPt);
+    }
+  };
+
   const isHit = Boolean(userAnswer?.isHit);
 
   // 触发下方倾斜 Canvas 重绘
@@ -121,7 +150,7 @@ export function ProportionMigrationView({
 
   return (
     <QuestionCardShell
-      hintText="观察上方基准线上的目标点，在下方倾斜线段上精准点选相同比例位置"
+      hintText="观察上方基准线目标点，在下方倾斜线段滑动试探并松手确认"
       hintIcon={ArrowRightLeft}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -164,16 +193,20 @@ export function ProportionMigrationView({
           onClick={handleClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleMouseLeave}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
           }}
           tabIndex={0}
           role="button"
           aria-label="比例迁移答题画布"
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white transition-all ${
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : 'cursor-none hover:border-indigo-400 hover:shadow-md'
+              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
         <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">

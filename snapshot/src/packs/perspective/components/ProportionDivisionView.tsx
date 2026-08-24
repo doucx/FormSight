@@ -38,7 +38,7 @@ export function ProportionDivisionView({
   }, [question.id]);
 
   /**
-   * 将屏幕鼠标坐标垂直正交投影吸附至当前线段，获得线段上的垂足点与比例参数 t
+   * 将屏幕鼠标或触控坐标垂直正交投影吸附至当前线段，获得线段上的垂足点与比例参数 t
    */
   const getProjectedPoint = useCallback(
     (clientX: number, clientY: number): Point | null => {
@@ -93,6 +93,35 @@ export function ProportionDivisionView({
     onAnswer(projPt);
   };
 
+  const handleTouchStart = (e: TouchEvent) => {
+    if (disabled || showAnswer || !e.touches[0]) return;
+    const touch = e.touches[0];
+    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
+    if (projPt) {
+      setHoverPoint(projPt);
+    }
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (disabled || showAnswer || !e.touches[0]) return;
+    if (e.cancelable) e.preventDefault();
+    const touch = e.touches[0];
+    const projPt = getProjectedPoint(touch.clientX, touch.clientY);
+    if (projPt) {
+      setHoverPoint(projPt);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled || showAnswer) return;
+    if (hoverPoint) {
+      const finalPt = hoverPoint;
+      setUserClickedPoint(finalPt);
+      setHoverPoint(null);
+      onAnswer(finalPt);
+    }
+  };
+
   const isHit = Boolean(userAnswer?.isHit);
 
   // 触发 Canvas 重绘
@@ -119,7 +148,7 @@ export function ProportionDivisionView({
 
   return (
     <QuestionCardShell
-      hintText="在倾斜线段上移动光标吸附定点，单次点击确认比例位置"
+      hintText="在倾斜线段上滑动试探，松手确认比例位置（也可直接点击）"
       hintIcon={Disc}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -155,16 +184,20 @@ export function ProportionDivisionView({
           onClick={handleClick}
           onMouseMove={handleMouseMove}
           onMouseLeave={handleMouseLeave}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleMouseLeave}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
           }}
           tabIndex={0}
           role="button"
           aria-label="比例盲切答题画布"
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white transition-all ${
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
-              : 'cursor-none hover:border-indigo-400 hover:shadow-md'
+              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
         <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
