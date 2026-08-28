@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(analytics): 将通用分析中的直方图重构为折线图", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787920637.8046515, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M universalViews.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787920915.0632944, "duration_ms": 0}}
