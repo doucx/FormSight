@@ -2,6 +2,7 @@ import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import { useTranslation } from '../../../core/i18n';
 import { drawParticlesCanvas } from '../canvas/drawParticles';
 import {
   ABSTRACTION_CANVAS_SIZE,
@@ -28,6 +29,7 @@ export function GestureAxisView({
   hitMargin = 12,
   showCanvasHints = true,
 }: GestureAxisViewProps) {
+  const { t } = useTranslation();
   const [activeSliderVal, setActiveSliderVal] = useState<number>(90);
 
   const targetVal = question.targetAngleDeg ?? 0;
@@ -37,11 +39,11 @@ export function GestureAxisView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText="旋转主轴对齐粒子群动态流向 (0°~180°)"
+      hintText={t('packs.abstraction.cards.abs_gesture_axis.hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label="动态势线角度:"
+      label={t('packs.abstraction.cards.abs_gesture_axis.label')}
       max={180}
       step={0.5}
       initialValue={90}

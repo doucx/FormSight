@@ -20,8 +20,8 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'toggle',
     key: 'showToleranceBand',
-    title: '显示滑块容错感应区',
-    description: '在悬停光标两侧实时显示动态容错区间',
+    title: 'packs.abstraction.settings.showToleranceBandTitle',
+    description: 'packs.abstraction.settings.showToleranceBandDesc',
   },
 ];
 
