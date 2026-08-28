@@ -3,10 +3,7 @@ import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import {
-  drawNotanNoiseField,
-  drawRawGrayscaleNoiseField,
-} from '../canvas/drawNotanField';
+import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,
