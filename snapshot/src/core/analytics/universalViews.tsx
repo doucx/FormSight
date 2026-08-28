@@ -162,7 +162,7 @@ export function renderSpeedAccuracyVisualizer(
   }
 
   // 绘制数据节点与标签
-  points.forEach((p) => {
+  for (const p of points) {
     const { x, y, bin } = p;
 
     if (bin.total > 0) {
@@ -204,7 +204,7 @@ export function renderSpeedAccuracyVisualizer(
       x,
       height - padding.bottom + 18,
     );
-  });
+  }
 }
 
 export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentChildren {
@@ -373,7 +373,7 @@ export function renderDifficultyPlateauVisualizer(
   ctx.stroke();
 
   // 绘制数据节点与标签
-  points.forEach(({ x, y, stat }) => {
+  for (const { x, y, stat } of points) {
     const dotColor =
       stat.accuracy >= 80 ? '#10B981' : stat.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
 
@@ -407,7 +407,7 @@ export function renderDifficultyPlateauVisualizer(
       x,
       height - padding.bottom + 18,
     );
-  });
+  }
 }
 
 export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): ComponentChildren {
