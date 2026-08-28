@@ -16,10 +16,6 @@ export function setupHiDpiCanvas(
 
   canvas.width = Math.round(logicalWidth * dpr);
   canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = '100%';
-  canvas.style.height = '100%';
-  canvas.style.maxWidth = '100%';
-  canvas.style.aspectRatio = `${logicalWidth} / ${logicalHeight}`;
 
   ctx.resetTransform?.();
   ctx.scale(dpr, dpr);

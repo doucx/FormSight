@@ -45,14 +45,14 @@ export function TopDown2AfcView({
   const renderPrompt = () => {
     if (isPoly && question.detailedPolygon) {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner max-w-xs mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_polygon_decimation.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}
-            className="w-40 h-40 rounded-xl border border-slate-200 shadow-sm"
+            className="w-36 h-36 sm:w-40 sm:h-40 aspect-square rounded-xl border border-slate-200 shadow-sm block bg-white"
             draw={(canvas) =>
               drawPolygonCanvas({
                 canvas,
@@ -68,14 +68,14 @@ export function TopDown2AfcView({
 
     if (mode === 'TD_GESTURE_2AFC') {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner max-w-xs mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_gesture_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
             height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
+            className="w-24 h-24 aspect-square rounded-xl border border-slate-200 shadow-sm block bg-white"
             draw={(canvas) =>
               drawSpinePromptCanvas(canvas, question.promptSpine, ABSTRACTION_THUMB_SIZE)
             }
@@ -87,14 +87,14 @@ export function TopDown2AfcView({
 
     if (mode === 'TD_HULL_2AFC') {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner max-w-xs mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_hull_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
             height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
+            className="w-24 h-24 aspect-square rounded-xl border border-slate-200 shadow-sm block bg-white"
             draw={(canvas) =>
               drawPolygonCanvas({
                 canvas,
@@ -112,14 +112,14 @@ export function TopDown2AfcView({
 
     if (mode === 'TD_NOTAN_2AFC' && question.promptNotanBuffer) {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner max-w-xs mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_notan_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
             height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
+            className="w-24 h-24 aspect-square rounded-xl border border-slate-200 shadow-sm block bg-white"
             draw={(canvas) =>
               drawRawGrayscaleNoiseField(
                 canvas,
