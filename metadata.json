@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 将难度抗压分析重构为客观的层阶胜率直方图与明细分布", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787919057.0263832, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 在训练计划编排器中集成多维卡片筛选引擎", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787919367.0427394, "duration_ms": 0}}

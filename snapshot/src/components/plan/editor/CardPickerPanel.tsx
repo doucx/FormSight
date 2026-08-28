@@ -1,10 +1,9 @@
-import { Plus, Search, Sparkles, X } from 'lucide-preact';
-import { useMemo, useState } from 'preact/hooks';
-import { DOMAIN_TAGS } from '../../../config/tags';
-import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../../../core/i18n';
+import { Plus, Sparkles } from 'lucide-preact';
+import { useState } from 'preact/hooks';
+import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
-import type { CardQueryOptions, VisualDomainTag } from '../../../types/card';
-import { TagPill } from '../../common/TagPill';
+import type { CardQueryOptions } from '../../../types/card';
+import { FilterEngine } from '../../discovery/FilterEngine';
 
 interface CardPickerPanelProps {
   isAddingCard: boolean;
@@ -14,30 +13,16 @@ interface CardPickerPanelProps {
 
 export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: CardPickerPanelProps) {
   const { t } = useTranslation();
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [selectedDomain, setSelectedDomain] = useState<VisualDomainTag | 'all'>('all');
-  const [selectedPackId, setSelectedPackId] = useState<string>('all');
+  const [filterQuery, setFilterQuery] = useState<CardQueryOptions>({});
 
-  const packs = registry.getAllPacks();
-
-  const queryOptions: CardQueryOptions = useMemo(() => {
-    return {
-      searchKeyword: searchKeyword || undefined,
-      domains: selectedDomain !== 'all' ? [selectedDomain] : undefined,
-      packId: selectedPackId !== 'all' ? selectedPackId : undefined,
-    };
-  }, [searchKeyword, selectedDomain, selectedPackId]);
-
-  const availableCards = useMemo(() => {
-    return registry.queryCards(queryOptions);
-  }, [queryOptions]);
+  const availableCards = registry.queryCards(filterQuery);
 
   if (!isAddingCard) {
     return (
       <button
         type="button"
         onClick={() => onToggleAdding(true)}
-        className="w-full py-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-[0.99]"
+        className="w-full py-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-[0.99] cursor-pointer"
       >
         <Plus className="w-4 h-4" />
         {t('plan.addStage')}
@@ -54,73 +39,22 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
             {t('plan.selectCardPrompt')}
           </span>
         </div>
+        <span className="text-[11px] font-mono text-slate-400">
+          {t('home.matchedModules', { count: availableCards.length })}
+        </span>
       </div>
 
-      {/* 搜索框 */}
-      <div className="relative flex-shrink-0">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchKeyword}
-          onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder={t('home.searchPlaceholder')}
-          className="w-full pl-8 pr-8 py-2 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        />
-        {searchKeyword && (
-          <button
-            type="button"
-            onClick={() => setSearchKeyword('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-
-      {/* Pack 与视觉域快速筛选行 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-shrink-0">
-        <TagPill
-          size="sm"
-          label={t('common.all')}
-          count={registry.getAllCards().length}
-          selected={selectedDomain === 'all' && selectedPackId === 'all'}
-          onClick={() => {
-            setSelectedDomain('all');
-            setSelectedPackId('all');
-          }}
-        />
-
-        {packs.map((p) => (
-          <TagPill
-            key={p.packId}
-            size="sm"
-            label={getPackTitle(p, t)}
-            selected={selectedPackId === p.packId}
-            onClick={() => {
-              setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-              setSelectedDomain('all');
-            }}
-          />
-        ))}
-
-        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <TagPill
-            key={domain}
-            size="sm"
-            label={t(DOMAIN_TAGS[domain].i18nKey)}
-            themeColor={DOMAIN_TAGS[domain].themeColor || 'indigo'}
-            selected={selectedDomain === domain}
-            onClick={() => {
-              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
-              setSelectedPackId('all');
-            }}
-          />
-        ))}
-      </div>
+      {/* 嵌入紧凑变体的完整五维筛选引擎 */}
+      <FilterEngine
+        variant="compact"
+        query={filterQuery}
+        totalMatches={availableCards.length}
+        onChange={setFilterQuery}
+      />
 
       {/* 模块列表：自适应拉伸并滚动 */}
       {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[220px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
           {t('plan.noCardMatched')}
         </div>
       ) : (
