@@ -1,4 +1,4 @@
-import { Activity, Gauge, TrendingUp, Zap } from 'lucide-preact';
+import { Gauge, Zap } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { UnifiedTrialRecord } from '../../utils/db/schema';
 import { setupHiDpiCanvas } from '../canvas/hidpi';
