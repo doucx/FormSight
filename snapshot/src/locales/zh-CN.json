@@ -107,7 +107,7 @@
   },
   "card": {
     "todayTrials": "今日刷题",
-    "analyticsTooltip": "{{title}} 弱点分析",
+    "analyticsTooltip": "{{title}} 统计与分析",
     "settingsTooltip": "{{title}} 偏好设置",
     "experimentalBadge": "实验性",
     "skillLevel": "能力层阶",
@@ -159,6 +159,24 @@
     "overallEvaluation": "总体评估",
     "sampleSize": "样本量: {{count}} 题"
   },
+  "stats": {
+    "cardStatsBadge": "卡片统计",
+    "satTabLabel": "作答节奏 (SAT)",
+    "satViewTitle": "反应速度与正确率权衡 (Speed-Accuracy Tradeoff)",
+    "satViewSubtitle": "探查是否存在急躁盲击或过度犹豫导致的感知衰退",
+    "satPacingInsightTitle": "作答节奏与直觉诊断",
+    "satSweetSpot": "直觉甜点区",
+    "satSweetSpotDesc": "在 {{range}} 反应区间作答时正确率最高，达到 {{accuracy}}%",
+    "satNeedMoreSamples": "样本量不足，多练习几题后将自动生成认知节奏诊断。",
+    "satRushingWarning": "极速盲击区间 (<1.0s) 正确率偏低，提示存在急躁冒进倾向，建议多观察 0.5 秒。",
+    "satOverthinkingWarning": "长考区间 (>4.5s) 正确率显著下滑，提示视觉暂留出现衰退，超时后请相信第一直觉直接作答。",
+    "plateauTabLabel": "难度阶梯分布",
+    "plateauViewTitle": "能力层阶 (Level) 表现与瓶颈",
+    "plateauViewSubtitle": "评估各难度阶梯下的胜率稳定性与抗压表现",
+    "plateauInsightTitle": "能力层阶诊断",
+    "comfortZone": "感知舒适区 (胜率≥80%)",
+    "growthZone": "有效突破区 (胜率50%~80%)",
+    "bottleneckZone": "认知阻断壁垒 (胜率<50%)",
   "settingsModal": {
     "title": "{{title}} 偏好设置",
     "autoNext": "自动切换下一题",

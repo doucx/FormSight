@@ -107,7 +107,7 @@
   },
   "card": {
     "todayTrials": "Today",
-    "analyticsTooltip": "{{title}} Weakness Analytics",
+    "analyticsTooltip": "{{title}} Statistics & Insights",
     "settingsTooltip": "{{title}} Preferences",
     "experimentalBadge": "Experimental",
     "skillLevel": "Skill Level",
@@ -159,6 +159,24 @@
     "overallEvaluation": "Overall Evaluation",
     "sampleSize": "Sample size: {{count}} trials"
   },
+  "stats": {
+    "cardStatsBadge": "Card Stats",
+    "satTabLabel": "Pacing (SAT)",
+    "satViewTitle": "Speed-Accuracy Tradeoff (SAT Analysis)",
+    "satViewSubtitle": "Analyze whether rushing or hesitation affects perceptual accuracy",
+    "satPacingInsightTitle": "Pacing & Intuition Diagnostic",
+    "satSweetSpot": "Optimal Intuition Zone",
+    "satSweetSpotDesc": "Highest accuracy achieved in {{range}} with {{accuracy}}%",
+    "satNeedMoreSamples": "Need more trials to generate cognitive pacing diagnostics.",
+    "satRushingWarning": "Low accuracy under <1.0s indicates rushed responses. Take 0.5s more to observe.",
+    "satOverthinkingWarning": "Accuracy drops after >4.5s due to sensory memory decay. Trust your initial intuition.",
+    "plateauTabLabel": "Difficulty Spectrum",
+    "plateauViewTitle": "Skill Level Spectrum & Resistance",
+    "plateauViewSubtitle": "Evaluate accuracy stability across difficulty levels",
+    "plateauInsightTitle": "Level Spectrum Diagnostic",
+    "comfortZone": "Perceptual Comfort Zone (≥80%)",
+    "growthZone": "Active Growth Zone (50%~80%)",
+    "bottleneckZone": "Cognitive Ceiling (<50%)",
   "settingsModal": {
     "title": "{{title}} Preferences",
     "autoNext": "Auto Advance",

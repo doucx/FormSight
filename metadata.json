@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M TrainingShell.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787916024.6920354, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 实现通用卡片统计与反应时-正确率认知分析", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787916390.0289023, "duration_ms": 0}}

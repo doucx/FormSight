@@ -9,8 +9,10 @@ import type {
   PackMeta,
   VisualDomainTag,
 } from '../types/card';
+import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
+import { getTrialRecordsByCard } from '../utils/db/queries';
 
 class InvertedCardIndex {
   private domainMap = new Map<VisualDomainTag, Set<string>>();
@@ -284,7 +286,17 @@ class SystemDomainRegistry {
   }
 
   public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {
-    return this.cardAnalyticsMap.get(cardId);
+    const card = this.cardMap.get(cardId);
+    if (!card) return undefined;
+
+    const specificPlugin = this.cardAnalyticsMap.get(cardId);
+    const specificViews = specificPlugin?.views ?? [];
+
+    return {
+      cardId,
+      fetchRecords: specificPlugin?.fetchRecords ?? ((id) => getTrialRecordsByCard(id)),
+      views: [...specificViews, ...UNIVERSAL_ANALYTICS_VIEWS],
+    };
   }
 }
 
