@@ -13,7 +13,7 @@ interface WeaknessAnalyticsModalProps {
 
 export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
   const { t } = useTranslation();
-  const plugin = registry.getAnalyticsPluginByCardId(card.id);
+  const plugin = useMemo(() => registry.getAnalyticsPluginByCardId(card.id), [card.id]);
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
@@ -42,7 +42,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
     return () => {
       isMounted = false;
     };
-  }, [plugin, card.id]);
+  }, [card.id]);
 
   useEffect(() => {
     if (loading || !currentView) return;

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现全卡片通用的认知统计与反应时-正确率分析系统", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787916572.8013227, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复卡片统计弹窗由于引用变化导致的死循环重新渲染与页面跳动", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787916704.9955816, "duration_ms": 0}}
