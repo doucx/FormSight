@@ -9,6 +9,8 @@ import type {
   PackMeta,
   VisualDomainTag,
 } from '../types/card';
+import { getTrialRecordsByCard } from '../utils/db/queries';
+import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
 
@@ -284,7 +286,17 @@ class SystemDomainRegistry {
   }
 
   public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {
-    return this.cardAnalyticsMap.get(cardId);
+    const card = this.cardMap.get(cardId);
+    if (!card) return undefined;
+
+    const domainPlugin = this.cardAnalyticsMap.get(cardId);
+    const domainViews = domainPlugin?.views ?? [];
+
+    return {
+      cardId,
+      fetchRecords: domainPlugin?.fetchRecords ?? ((id) => getTrialRecordsByCard(id)),
+      views: [...domainViews, ...UNIVERSAL_ANALYTICS_VIEWS],
+    };
   }
 }
 

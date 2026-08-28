@@ -2,6 +2,7 @@
 export * from './contracts';
 export * from './registry';
 export * from './i18n';
+export * from './analytics/universalViews';
 
 // 导出数学与噪声
 export * from './math/mathUtils';

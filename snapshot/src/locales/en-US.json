@@ -107,7 +107,8 @@
   },
   "card": {
     "todayTrials": "Today",
-    "analyticsTooltip": "{{title}} Weakness Analytics",
+    "analyticsTooltip": "{{title}} Stats",
+    "statsTooltip": "{{title}} Stats & Analytics",
     "settingsTooltip": "{{title}} Preferences",
     "experimentalBadge": "Experimental",
     "skillLevel": "Skill Level",
@@ -154,10 +155,29 @@
     "trainAgain": "Train Again"
   },
   "analyticsModal": {
+    "cardStatsTitle": "[{{title}}] Performance & Stats",
     "analyzing": "Analyzing historical trial data...",
     "noRecords": "No practice records for [{{title}}]. Complete some trials first!",
     "overallEvaluation": "Overall Evaluation",
-    "sampleSize": "Sample size: {{count}} trials"
+    "sampleSize": "Sample size: {{count}} trials",
+    "needMoreSamples": "Sample size is small. Cognitive diagnosis will be generated as you complete more trials.",
+    "satTabLabel": "Speed-Accuracy (SAT)",
+    "satTitle": "Speed-Accuracy Trade-off (SAT Analysis)",
+    "satSubtitle": "Analyzes pace: reveals whether rushing or over-hesitation causes perception drop",
+    "sweetSpotTitle": "Intuition Sweet Spot",
+    "sweetSpotDesc": "Most accurate within {{range}}, reaching {{acc}}% accuracy",
+    "impatienceWarningTitle": "Rushing Tendency Detected",
+    "impatienceWarningDesc": "Lower accuracy under 1.0s. Consider slowing down slightly before committing.",
+    "hesitationWarningTitle": "Over-Hesitation Drop-off",
+    "hesitationWarningDesc": "Accuracy drops after 4.5s due to fading visual persistence. Trust your first instinct.",
+    "plateauTabLabel": "Difficulty Fragility",
+    "plateauTitle": "Skill Level Decay & Plateau Analysis",
+    "plateauSubtitle": "Identifies comfort zones, growth zones, and cognitive breakdown ceilings",
+    "comfortZoneTitle": "Comfort Zone",
+    "comfortZoneDesc": "Maintains 80%+ accuracy across Level 1 ~ {{maxLevel}}.",
+    "growthZoneTitle": "Current Growth Zone",
+    "ceilingTitle": "Breakdown Ceiling",
+    "ceilingDesc": "Accuracy drops below 50% around Level {{level}}. Focus on deliberate practice near this tier."
   },
   "settingsModal": {
     "title": "{{title}} Preferences",

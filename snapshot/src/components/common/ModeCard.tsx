@@ -109,12 +109,12 @@ export function ModeCard({
               onKeyDown={(e) => e.stopPropagation()}
               role="presentation"
             >
-              {hasAnalytics && onOpenAnalytics && (
+              {onOpenAnalytics && (
                 <button
                   type="button"
                   onClick={onOpenAnalytics}
                   className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all cursor-pointer"
-                  title={t('card.analyticsTooltip', { title })}
+                  title={t('card.statsTooltip', { title })}
                 >
                   <BarChart2 className="w-4 h-4" />
                 </button>

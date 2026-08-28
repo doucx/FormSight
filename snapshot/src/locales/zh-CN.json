@@ -107,7 +107,8 @@
   },
   "card": {
     "todayTrials": "今日刷题",
-    "analyticsTooltip": "{{title}} 弱点分析",
+    "analyticsTooltip": "{{title}} 统计",
+    "statsTooltip": "{{title}} 统计与认知分析",
     "settingsTooltip": "{{title}} 偏好设置",
     "experimentalBadge": "实验性",
     "skillLevel": "能力层阶",
@@ -154,10 +155,29 @@
     "trainAgain": "再练一轮"
   },
   "analyticsModal": {
+    "cardStatsTitle": "【{{title}}】答题统计与认知分析",
     "analyzing": "正在分析历史答题数据...",
     "noRecords": "暂无【{{title}}】的练习记录，先去完成几轮练习吧！",
     "overallEvaluation": "总体评估",
-    "sampleSize": "样本量: {{count}} 题"
+    "sampleSize": "样本量: {{count}} 题",
+    "needMoreSamples": "当前样本量较少，多完成几轮训练后将自动生成认知诊断。",
+    "satTabLabel": "反应速度-正确率 (SAT)",
+    "satTitle": "反应速度与准确率权衡 (SAT 分析)",
+    "satSubtitle": "分析作答节奏：是否存在急躁盲击或过度犹豫导致的感知衰退",
+    "sweetSpotTitle": "直觉黄金甜点区",
+    "sweetSpotDesc": "在 {{range}} 区间内表现最稳健，胜率高达 {{acc}}%",
+    "impatienceWarningTitle": "存在急躁盲击倾向",
+    "impatienceWarningDesc": "在极速盲击 (<1.0s) 时胜率较低，建议略微放缓节奏，观察确认后再提交。",
+    "hesitationWarningTitle": "存在犹豫衰退倾向",
+    "hesitationWarningDesc": "思考时间超过 4.5s 时正确率显著下滑，视觉暂留可能被干扰，建议相信第一直觉。",
+    "plateauTabLabel": "难度抗压分析",
+    "plateauTitle": "难度层阶 (Level) 衰减与瓶颈分析",
+    "plateauSubtitle": "识别认知舒适区、有效增长区与临界崩溃瓶颈",
+    "comfortZoneTitle": "绝对舒适区",
+    "comfortZoneDesc": "在 Level 1 ~ {{maxLevel}} 保持 80% 以上高胜率，掌握扎实。",
+    "growthZoneTitle": "当前突破区",
+    "ceilingTitle": "临界崩溃瓶颈",
+    "ceilingDesc": "在 Level {{level}} 胜率跌破 50%，建议在该阶梯附近重点巩固。"
   },
   "settingsModal": {
     "title": "{{title}} 偏好设置",

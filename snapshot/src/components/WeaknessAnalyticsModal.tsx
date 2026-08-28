@@ -1,5 +1,5 @@
-import { BarChart2, Info, X } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { BarChart2, CheckCircle, Clock, Info, Target, TrendingUp, X } from 'lucide-preact';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import type { CardAnalyticsView } from '../core/contracts';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -52,17 +52,21 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
     currentView.renderVisualizer(canvas, records);
   }, [currentView, loading, records]);
 
-  if (!plugin || views.length === 0) return null;
+  // 计算全局统计指标
+  const summaryStats = useMemo(() => {
+    const total = records.length;
+    const hits = records.filter((r) => r.isHit).length;
+    const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
+    const avgResponseTimeSec =
+      total > 0
+        ? (records.reduce((acc, r) => acc + (Number(r.responseTimeMs) || 0), 0) / total / 1000).toFixed(1)
+        : '0.0';
+    const maxLevel = records.length > 0 ? Math.max(...records.map((r) => Number(r.difficultyLevel) || 1)) : 1;
 
-  const stats = currentView.getOverallStats
-    ? currentView.getOverallStats(records)
-    : {
-        accuracy:
-          records.length > 0
-            ? Math.round((records.filter((r) => r.isHit).length / records.length) * 100)
-            : 0,
-        total: records.length,
-      };
+    return { total, hits, accuracy, avgResponseTimeSec, maxLevel };
+  }, [records]);
+
+  if (!plugin || views.length === 0) return null;
 
   const resolveText = (text?: string): string => {
     if (!text) return '';
@@ -91,22 +95,67 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
               <BarChart2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">{resolveText(currentView.title)}</h2>
-              <p className="text-xs text-slate-400">{resolveText(currentView.subTitle)}</p>
+              <h2 className="text-lg font-black text-slate-800 tracking-tight">
+                {t('analyticsModal.cardStatsTitle', { title: cardTitle })}
+              </h2>
+              <p className="text-xs text-slate-400">{resolveText(currentView?.subTitle)}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* 多页 Tab 切换栏 (当有多个视图时展示) */}
+        {/* 核心指标统计卡片概览 */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div className="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-100 space-y-0.5">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
+              <Target className="w-3 h-3 text-indigo-500" />
+              {t('common.accuracy')}
+            </div>
+            <div className="text-xl font-black text-slate-800">{summaryStats.accuracy}%</div>
+          </div>
+
+          <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100 space-y-0.5">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
+              <CheckCircle className="w-3 h-3 text-emerald-500" />
+              {t('common.totalHits')}
+            </div>
+            <div className="text-xl font-black text-slate-800">
+              {summaryStats.hits}{' '}
+              <span className="text-xs font-normal text-slate-400">/ {summaryStats.total}</span>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-0.5">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
+              <Clock className="w-3 h-3 text-indigo-500" />
+              {t('summary.duration')}
+            </div>
+            <div className="text-xl font-black text-slate-800 font-mono">
+              {summaryStats.avgResponseTimeSec}
+              <span className="text-xs font-normal text-slate-400"> s</span>
+            </div>
+          </div>
+
+          <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-100 space-y-0.5">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
+              <TrendingUp className="w-3 h-3 text-amber-500" />
+              {t('stats.dailyMaxLevel')}
+            </div>
+            <div className="text-xl font-black text-slate-800 font-mono">
+              Lvl {summaryStats.maxLevel}
+            </div>
+          </div>
+        </div>
+
+        {/* 多页 Tab 切换栏 */}
         {views.length > 1 && (
-          <div className="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-2xl">
+          <div className="flex items-center gap-1.5 bg-slate-100/80 p-1.5 rounded-2xl overflow-x-auto scrollbar-none">
             {views.map((v: CardAnalyticsView, idx: number) => {
               const Icon = v.icon;
               const isActive = idx === activeViewIndex;
@@ -115,7 +164,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
                   type="button"
                   key={v.id}
                   onClick={() => setActiveViewIndex(idx)}
-                  className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                     isActive
                       ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
@@ -154,17 +203,13 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
 
             {/* 右侧数据统计面板 */}
             <div className="md:col-span-5 flex flex-col gap-3">
-              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+              <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1">
                 <div className="text-xs font-bold text-slate-500 uppercase">
                   {t('analyticsModal.overallEvaluation')}
                 </div>
-                <div className="flex justify-between items-end">
-                  <span className="text-2xl font-black text-slate-800">{stats.accuracy}%</span>
-                  <span className="text-xs font-semibold text-slate-400 mb-1">
-                    {t('analyticsModal.sampleSize', { count: stats.total })}
-                  </span>
+                <div className="text-sm font-extrabold text-slate-800">
+                  {resolveText(currentView.title)}
                 </div>
-                {stats.customSummary}
               </div>
 
               {/* 插件个性化诊断 */}
