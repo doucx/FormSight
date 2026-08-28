@@ -14,6 +14,7 @@ interface VertexFittingViewProps {
   userAnswer: NegativeSpaceHitResult | null;
   onAnswer: (clickPoint: Point) => void;
   disabled?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function VertexFittingView({
@@ -22,6 +23,7 @@ export function VertexFittingView({
   userAnswer,
   onAnswer,
   disabled = false,
+  showCanvasHints = true,
 }: VertexFittingViewProps) {
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
