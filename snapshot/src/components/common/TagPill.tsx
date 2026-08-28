@@ -51,7 +51,7 @@ export function TagPill({
       type="button"
       onPointerDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`inline-flex items-center gap-1 font-bold rounded-xl transition-all cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${sizeClass} ${
+      className={`inline-flex items-center gap-1 font-bold rounded-xl transition-all cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] whitespace-nowrap flex-shrink-0 ${sizeClass} ${
         selected
           ? activeClass
           : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'

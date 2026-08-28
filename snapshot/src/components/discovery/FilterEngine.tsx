@@ -212,9 +212,9 @@ export function FilterEngine({
             {t('home.allPacks')}
           </div>
           <div
-            className={`flex gap-1 ${
+            className={`flex gap-1 items-center ${
               isCompact
-                ? 'flex-nowrap overflow-x-auto pb-1 scrollbar-none items-center'
+                ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none'
                 : 'flex-wrap'
             }`}
           >
