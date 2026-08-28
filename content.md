@@ -1,990 +1,558 @@
-好的，我将为你修复阶段卡片文本溢出挤压按钮的问题，并将阶段列表与卡片挑选区自适应拉伸占满视口高度，消除底部空白。
+好的，我将为你重构首页的 `FilterEngine.tsx`，将默认展示降维为直观的场景与视觉域主 Tab，并将学术化的五维正交矩阵收纳至清晰的“高级认知维度”抽屉中。
 
-## [WIP] fix(plan): 修复阶段列表文本溢出并实现编排视图高度自适应撑满视口
+## [WIP] refactor(discovery): 重构首页筛选引擎为直观场景 Tab 与折叠式专家维度
 
 ### 用户需求
-1. **防止横向溢出**：阶段列表在长标题/长描述场景下，不能挤压右侧题量设置与操作按钮，杜绝水平滚动条。
-2. **拉伸撑满视口**：使“训练阶段列表”和“模块挑选面板”双栏自适应延伸占满屏幕高度，移除页面底部多余空白，提升大屏下的信息展示效率。
+将首页原本过载的“五维学术化正交筛选（视觉域/认知路径/心智抗性/交互模式/状态）”降维，默认提供直观的训练大类 Tab（形体比例、空间结构、色彩明度、动态图底等），使普通用户能够一键定位训练目标，同时保留可按需展开的专家级多维筛选。
 
-### 错误分析
-1. **水平溢出原因**：`PlanStageList.tsx` 中条目的左侧文本容器与右侧操作容器在 flex 布局下缺少 `min-w-0` 与 `flex-shrink-0` 严格约束，导致长文本撑破弹性盒默认最小内容宽度（`min-width: auto`）。
-2. **底部空白原因**：`PlanEditorView.tsx` 及其内部子组件（`PlanStageList`、`CardPickerPanel`）使用了硬编码的矮固定高度（如 `max-h-72`、`max-h-52`），没有启用父子 Flex 链式 `flex-1` / `h-full` 伸展。
+### 评论
+首页是用户进入软件的第一个决策窗口。此前直接铺开 5 个高密度学术维度（如“自底向上提炼概括”、“图底反转”等），会导致普通用户产生严重的认知过载和决策疲劳。将其重构为“直观主分类 Tab + 扩展包快速切换 + 高级认知维度按需展开”的三层递进结构，既保证了 0 门槛的易用性，又保留了专业探索能力。
 
 ### 目标
-1. 优化 `PlanStageList.tsx` 条目布局，左侧赋予 `min-w-0 flex-1`，右侧操作栏赋予 `flex-shrink-0`，使文本超长时平滑截断，右侧按钮始终对齐不被挤压。
-2. 改造 `PlanEditorView.tsx`、`PlanStageList.tsx` 和 `CardPickerPanel.tsx`，将内部固定高度改为 `flex-1 overflow-y-auto`，双栏卡片高度撑满视口。
+1. **直观主 Tab 化**：在顶层直观展示“全部模块”、“形体与比例”、“空间与结构”、“色彩与明度”、“动态与图底”等视觉大类 Tab，支持单选/多选聚焦。
+2. **轻量化扩展包 (Pack) 切换**：以胶囊标签形式呈现扩展包选择与数量角标。
+3. **收敛高级维度**：将“认知路径”、“心智抗性”、“交互形态”等学术维度折叠入“高级维度 / 专家筛选”中，并在按钮上动态展示已激活的过滤项计数。
+4. **完善国际化文案**：补充相关辅助文案（如 `advancedFilter`、`activeFiltersBadge` 等）。
 
 ### 基本原理
-- 遵循 CSS Flexbox 规范：在 Flex 容器内的子级文本块设置 `min-w-0`，阻断内容宽度向外无限扩散，确保 `truncate` 真正生效。
-- 采用 `h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] flex flex-col` 布局，把中间网格设置为 `flex-1 min-h-0`，内部列表随视口自适应滚动，既整洁又消除多余留白。
+- 采用**渐进式呈现（Progressive Disclosure）**设计原则：80% 的用户通过搜索栏和 4 个直观视觉域 Tab 即可在 1 秒内找到目标；20% 探索型用户可通过“高级维度”展开精细的多维交叉检索。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/plan #concept/ui #scope/ux #ai/instruct #task/domain/plan #task/object/plan-layout #task/action/bug-fix #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/discovery #task/object/filter-engine #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `PlanStageList` 布局并支持高度自适应
+#### Acts 1: 更新国际化词条
 
 ~~~~~act
 patch_file
-src/components/plan/editor/PlanStageList.tsx
+src/locales/zh-CN.json
 ~~~~~
-~~~~~tsx.old
-export function PlanStageList({
-  currentPlan,
-  totalTrials,
-  estimatedMin,
-  trialPresets,
-  onBatchUpdateTrials,
-  onClearAll,
-  onUpdateTrials,
-  onMoveItem,
-  onRemoveItem,
-}: PlanStageListProps) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-          <span className="text-slate-400 font-normal">
-            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
-            {t('plan.estimatedTime', { min: estimatedMin })}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {currentPlan.items.length > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-400">{t('plan.batchTrials')}</span>
-              {trialPresets.map((num) => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => onBatchUpdateTrials(num)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
-                >
-                  {num}
-                  {t('common.trialsUnit')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {currentPlan.items.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              {t('plan.clearStages')}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {currentPlan.items.length === 0 ? (
-        <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
-        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate max-w-[180px] sm:max-w-xs">{cardDesc}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+~~~~~json.old
+    "matchedModules": "已匹配 {{count}} 个训练模块",
+    "expandFilter": "多维筛选",
+    "collapseFilter": "收起筛选",
+    "searchPlaceholder": "搜索训练卡片名称、编号或认知要领...",
+    "noMatchTitle": "未找到符合条件的训练模块",
+    "noMatchDesc": "尝试调整或清空当前的多维筛选标签、搜索关键字，以探索更多训练模块。",
+    "resetFilter": "重置所有筛选条件",
+    "allPacks": "全部 Packs",
+    "domainSection": "1. 基础视觉域 (Visual Domain)",
+    "pathSection": "2. 认知推演路径 (Cognitive Path)",
+    "challengeSection": "3. 核心心智抗性 (Mental Challenge)",
+    "interactionSection": "4. 交互评估形态 (Interaction Mode)",
+    "statusSection": "5. 特性与发布状态 (Status)"
 ~~~~~
-~~~~~tsx.new
-export function PlanStageList({
-  currentPlan,
-  totalTrials,
-  estimatedMin,
-  trialPresets,
-  onBatchUpdateTrials,
-  onClearAll,
-  onUpdateTrials,
-  onMoveItem,
-  onRemoveItem,
-}: PlanStageListProps) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="flex flex-col h-full space-y-3 min-h-0">
-      <div className="flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
-        <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-          <span className="text-slate-400 font-normal">
-            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
-            {t('plan.estimatedTime', { min: estimatedMin })}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {currentPlan.items.length > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-400">{t('plan.batchTrials')}</span>
-              {trialPresets.map((num) => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => onBatchUpdateTrials(num)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors cursor-pointer"
-                >
-                  {num}
-                  {t('common.trialsUnit')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {currentPlan.items.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              {t('plan.clearStages')}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {currentPlan.items.length === 0 ? (
-        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
-        <div className="flex-1 space-y-2.5 overflow-y-auto pr-1 min-h-0">
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
-              >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-
-                {/* 右侧：严格 flex-shrink-0 防挤压 */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1 cursor-pointer"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
+~~~~~json.new
+    "matchedModules": "已匹配 {{count}} 个训练模块",
+    "allModules": "全部训练模块",
+    "expandFilter": "高级认知维度",
+    "collapseFilter": "收起高级维度",
+    "activeFiltersCount": "{{count}} 项已选",
+    "searchPlaceholder": "搜索卡片名称、编号或视觉要领...",
+    "noMatchTitle": "未找到符合条件的训练模块",
+    "noMatchDesc": "尝试调整或清空当前的多维筛选标签、搜索关键字，以探索更多训练模块。",
+    "resetFilter": "重置所有筛选条件",
+    "allPacks": "全部扩展包",
+    "domainSection": "视觉域大类",
+    "pathSection": "认知推演路径 (Cognitive Path)",
+    "challengeSection": "核心心智抗性 (Mental Challenge)",
+    "interactionSection": "交互评估形态 (Interaction Mode)",
+    "statusSection": "特性与发布状态 (Status)"
 ~~~~~
-
-#### Acts 2: 改造 `CardPickerPanel` 支持自适应满高
 
 ~~~~~act
 patch_file
-src/components/plan/editor/CardPickerPanel.tsx
+src/locales/en-US.json
 ~~~~~
-~~~~~tsx.old
-  return (
-    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-bold text-slate-700">{t('plan.selectCardPrompt')}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => onToggleAdding(false)}
-          className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-        >
-          {t('home.collapseFilter')}
-        </button>
-      </div>
+~~~~~json.old
+    "matchedModules": "Matched {{count}} training modules",
+    "expandFilter": "Multi-Filter",
+    "collapseFilter": "Collapse Filter",
+    "searchPlaceholder": "Search by module name, ID, or visual concept...",
+    "noMatchTitle": "No matching modules found",
+    "noMatchDesc": "Try clearing or tweaking your filter tags or search keyword to discover more modules.",
+    "resetFilter": "Reset All Filters",
+    "allPacks": "All Packs",
+    "domainSection": "1. Visual Domain",
+    "pathSection": "2. Cognitive Path",
+    "challengeSection": "3. Mental Challenge",
+    "interactionSection": "4. Interaction Mode",
+    "statusSection": "5. Feature & Status"
+~~~~~
+~~~~~json.new
+    "matchedModules": "Matched {{count}} modules",
+    "allModules": "All Modules",
+    "expandFilter": "Advanced Dimensions",
+    "collapseFilter": "Collapse Dimensions",
+    "activeFiltersCount": "{{count}} active",
+    "searchPlaceholder": "Search by module name, ID, or visual concept...",
+    "noMatchTitle": "No matching modules found",
+    "noMatchDesc": "Try clearing or tweaking your filter tags or search keyword to discover more modules.",
+    "resetFilter": "Reset All Filters",
+    "allPacks": "All Packs",
+    "domainSection": "Visual Domains",
+    "pathSection": "Cognitive Paths",
+    "challengeSection": "Mental Challenges",
+    "interactionSection": "Interaction Modes",
+    "statusSection": "Feature & Status"
+~~~~~
 
-      {/* 搜索框 */}
-      <div className="relative">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchKeyword}
-          onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder={t('home.searchPlaceholder')}
-          className="w-full pl-8 pr-8 py-1.5 text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        />
-        {searchKeyword && (
+#### Acts 2: 重构 `FilterEngine.tsx` 实现直观 Tab + 渐进式折叠抽屉
+
+~~~~~act
+write_file
+src/components/discovery/FilterEngine.tsx
+~~~~~
+~~~~~tsx
+import {
+  Boxes,
+  Brain,
+  Check,
+  Compass,
+  Filter,
+  FlaskConical,
+  Layers,
+  MousePointer,
+  RotateCcw,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from 'lucide-preact';
+import { useState } from 'preact/hooks';
+import {
+  CHALLENGE_TAGS,
+  DOMAIN_TAGS,
+  INTERACTION_TAGS,
+  PATH_TAGS,
+  STATUS_TAGS,
+} from '../../config/tags';
+import { useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type {
+  CardQueryOptions,
+  CardStatusTag,
+  CognitivePathTag,
+  InteractionTag,
+  MentalChallengeTag,
+  VisualDomainTag,
+} from '../../types/card';
+
+interface FilterEngineProps {
+  query: CardQueryOptions;
+  totalMatches: number;
+  compact?: boolean;
+  onChange: (newQuery: CardQueryOptions) => void;
+}
+
+export function FilterEngine({
+  query,
+  totalMatches,
+  compact = false,
+  onChange,
+}: FilterEngineProps) {
+  const { t } = useTranslation();
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(!compact);
+
+  const packs = registry.getAllPacks();
+  const allCardsCount = registry.getAllCards().length;
+
+  const handleSearchChange = (val: string) => {
+    onChange({
+      ...query,
+      searchKeyword: val || undefined,
+    });
+  };
+
+  // 单选/反选主视觉域 Tab
+  const handleSelectPrimaryDomain = (domain?: VisualDomainTag) => {
+    if (!domain) {
+      onChange({ ...query, domains: undefined });
+    } else {
+      const isCurrentSingle = query.domains?.length === 1 && query.domains[0] === domain;
+      onChange({ ...query, domains: isCurrentSingle ? undefined : [domain] });
+    }
+  };
+
+  const toggleDomain = (domain: VisualDomainTag) => {
+    const current = query.domains || [];
+    const next = current.includes(domain)
+      ? current.filter((d) => d !== domain)
+      : [...current, domain];
+    onChange({ ...query, domains: next.length > 0 ? next : undefined });
+  };
+
+  const togglePath = (path: CognitivePathTag) => {
+    const current = query.paths || [];
+    const next = current.includes(path) ? current.filter((p) => p !== path) : [...current, path];
+    onChange({ ...query, paths: next.length > 0 ? next : undefined });
+  };
+
+  const toggleChallenge = (challenge: MentalChallengeTag) => {
+    const current = query.challenges || [];
+    const next = current.includes(challenge)
+      ? current.filter((c) => c !== challenge)
+      : [...current, challenge];
+    onChange({ ...query, challenges: next.length > 0 ? next : undefined });
+  };
+
+  const toggleInteraction = (interaction: InteractionTag) => {
+    const current = query.interactions || [];
+    const next = current.includes(interaction)
+      ? current.filter((i) => i !== interaction)
+      : [...current, interaction];
+    onChange({ ...query, interactions: next.length > 0 ? next : undefined });
+  };
+
+  const toggleStatus = (status: CardStatusTag) => {
+    const current = query.statuses || [];
+    const next = current.includes(status)
+      ? current.filter((s) => s !== status)
+      : [...current, status];
+    onChange({ ...query, statuses: next.length > 0 ? next : undefined });
+  };
+
+  const handleSelectPack = (packId?: string) => {
+    onChange({
+      ...query,
+      packId: packId || undefined,
+    });
+  };
+
+  const handleResetFilters = () => {
+    onChange({});
+  };
+
+  // 统计高级维度激活数量（不含主搜索词与 Pack）
+  const advancedFiltersCount =
+    (query.paths?.length || 0) +
+    (query.challenges?.length || 0) +
+    (query.interactions?.length || 0) +
+    (query.statuses?.length || 0);
+
+  const hasActiveFilters = Boolean(
+    query.searchKeyword ||
+      query.packId ||
+      (query.domains && query.domains.length > 0) ||
+      advancedFiltersCount > 0,
+  );
+
+  return (
+    <div className="w-full bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+      {/* 1. 顶栏：快速搜索条与操作按钮 */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={query.searchKeyword || ''}
+            onInput={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
+            placeholder={t('home.searchPlaceholder')}
+            className="w-full pl-10 pr-10 py-2.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-xs font-bold text-slate-800 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-400 placeholder:font-normal"
+          />
+          {query.searchKeyword && (
+            <button
+              type="button"
+              onClick={() => handleSearchChange('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between sm:justify-end gap-2 flex-shrink-0">
+          <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{t('home.matchedModules', { count: totalMatches })}</span>
+          </div>
+
           <button
             type="button"
-            onClick={() => setSearchKeyword('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+              showAdvanced || advancedFiltersCount > 0
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+            }`}
           >
-            <X className="w-3 h-3" />
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{showAdvanced ? t('home.collapseFilter') : t('home.expandFilter')}</span>
+            {advancedFiltersCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-mono">
+                {advancedFiltersCount}
+              </span>
+            )}
           </button>
-        )}
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+              title={t('common.clear')}
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              {t('common.clear')}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Pack 与视觉域快速筛选行 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+      {/* 2. 直观主 Tab 栏：基础视觉大类快速切换 */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-t border-slate-100 pt-3">
         <button
           type="button"
-          onClick={() => {
-            setSelectedDomain('all');
-            setSelectedPackId('all');
-          }}
-          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-            selectedDomain === 'all' && selectedPackId === 'all'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200'
+          onClick={() => handleSelectPrimaryDomain(undefined)}
+          className={`px-3.5 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
+            !query.domains || query.domains.length === 0
+              ? 'bg-slate-900 text-white shadow-sm'
+              : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
           }`}
         >
-          {t('common.all')} ({registry.getAllCards().length})
+          <Layers className="w-3.5 h-3.5" />
+          <span>{t('home.allModules')}</span>
+          <span className="text-[10px] font-mono opacity-80 ml-0.5">{allCardsCount}</span>
         </button>
 
-        {packs.map((p) => {
-          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
+        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => {
+          const isSelected = query.domains?.includes(domain) ?? false;
+          const tagMeta = DOMAIN_TAGS[domain];
+          const count = registry.queryCards({ domains: [domain] }).length;
+
           return (
             <button
               type="button"
-              key={p.packId}
-              onClick={() => {
-                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-                setSelectedDomain('all');
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-                selectedPackId === p.packId
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200'
+              key={domain}
+              onClick={() => handleSelectPrimaryDomain(domain)}
+              className={`px-3.5 py-2 text-xs font-black rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
+                isSelected
+                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
+                  : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-700 border border-slate-200/80 hover:border-indigo-300'
               }`}
             >
-              {packTitle}
+              {isSelected && <Check className="w-3.5 h-3.5" />}
+              <span>{t(tagMeta.i18nKey)}</span>
+              <span
+                className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md ${
+                  isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200/80 text-slate-500'
+                }`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}
-
-        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <button
-            type="button"
-            key={domain}
-            onClick={() => {
-              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
-              setSelectedPackId('all');
-            }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-              selectedDomain === domain
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            {t(DOMAIN_TAGS[domain].i18nKey)}
-          </button>
-        ))}
       </div>
 
-      {/* 模块列表 */}
-      {availableCards.length === 0 ? (
-        <div className="p-6 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
-          {t('plan.noCardMatched')}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
-          {availableCards.map((card) => {
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
+      {/* 3. 扩展包 (Pack) 胶囊筛选栏 */}
+      {packs.length > 0 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+          <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1 flex-shrink-0 mr-1">
+            <Boxes className="w-3 h-3 text-indigo-500" />
+            <span>Packs:</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => handleSelectPack(undefined)}
+            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 flex-shrink-0 cursor-pointer ${
+              !query.packId
+                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 font-black shadow-xs'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+            }`}
+          >
+            {!query.packId && <Check className="w-3 h-3" />}
+            <span>{t('home.allPacks')}</span>
+          </button>
+
+          {packs.map((p) => {
+            const isSelected = query.packId === p.packId;
+            const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
             return (
               <button
                 type="button"
-                key={card.id}
-                onClick={() => onAddItem(card.id)}
-                className="p-2.5 bg-white hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl text-left transition-all flex items-center justify-between gap-2 group active:scale-95 cursor-pointer"
+                key={p.packId}
+                onClick={() => handleSelectPack(isSelected ? undefined : p.packId)}
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer ${
+                  isSelected
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 font-black shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                }`}
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform flex-shrink-0">
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-                <Plus className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 flex-shrink-0" />
+                {isSelected && <Check className="w-3 h-3" />}
+                <span>{packTitle}</span>
+                <span className="text-[10px] font-mono opacity-70">({p.cards.length})</span>
               </button>
             );
           })}
         </div>
       )}
-    </div>
-  );
-~~~~~
-~~~~~tsx.new
-  return (
-    <div className="flex flex-col h-full space-y-3 min-h-0">
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-extrabold text-slate-700">{t('plan.selectCardPrompt')}</span>
-        </div>
-      </div>
 
-      {/* 搜索框 */}
-      <div className="relative flex-shrink-0">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchKeyword}
-          onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder={t('home.searchPlaceholder')}
-          className="w-full pl-8 pr-8 py-2 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        />
-        {searchKeyword && (
-          <button
-            type="button"
-            onClick={() => setSearchKeyword('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
+      {/* 4. 折叠展开区：高级认知推演维度 (Cognitive Dimensions) */}
+      {showAdvanced && (
+        <div className="space-y-3.5 pt-3 border-t border-slate-100 animate-in fade-in duration-150">
+          {/* 4.1 视觉域多选微调 */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Layers className="w-3 h-3 text-indigo-500" />
+              {t('home.domainSection')}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => {
+                const isSelected = query.domains?.includes(d) ?? false;
+                const tagMeta = DOMAIN_TAGS[d];
+                return (
+                  <button
+                    type="button"
+                    key={d}
+                    onClick={() => toggleDomain(d)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? 'bg-indigo-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    <span>{t(tagMeta.i18nKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Pack 与视觉域快速筛选行 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedDomain('all');
-            setSelectedPackId('all');
-          }}
-          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-            selectedDomain === 'all' && selectedPackId === 'all'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-          }`}
-        >
-          {t('common.all')} ({registry.getAllCards().length})
-        </button>
+          {/* 4.2 认知推演路径 (Cognitive Path) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Compass className="w-3 h-3 text-emerald-500" />
+              {t('home.pathSection')}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => {
+                const isSelected = query.paths?.includes(p) ?? false;
+                const tagMeta = PATH_TAGS[p];
+                return (
+                  <button
+                    type="button"
+                    key={p}
+                    onClick={() => togglePath(p)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-emerald-50/60 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    <span>{t(tagMeta.i18nKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {packs.map((p) => {
-          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-          return (
-            <button
-              type="button"
-              key={p.packId}
-              onClick={() => {
-                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-                setSelectedDomain('all');
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-                selectedPackId === p.packId
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {packTitle}
-            </button>
-          );
-        })}
+          {/* 4.3 心智抗性与错觉剥离 (Mental Challenge) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Brain className="w-3 h-3 text-rose-500" />
+              {t('home.challengeSection')}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => {
+                const isSelected = query.challenges?.includes(c) ?? false;
+                const tagMeta = CHALLENGE_TAGS[c];
+                return (
+                  <button
+                    type="button"
+                    key={c}
+                    onClick={() => toggleChallenge(c)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-rose-50/60 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    <span>{t(tagMeta.i18nKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <button
-            type="button"
-            key={domain}
-            onClick={() => {
-              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
-              setSelectedPackId('all');
-            }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-              selectedDomain === domain
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            {t(DOMAIN_TAGS[domain].i18nKey)}
-          </button>
-        ))}
-      </div>
+          {/* 4.4 交互形态维度 (Interaction Mode) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <MousePointer className="w-3 h-3 text-amber-500" />
+              {t('home.interactionSection')}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => {
+                const isSelected = query.interactions?.includes(i) ?? false;
+                const tagMeta = INTERACTION_TAGS[i];
+                return (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => toggleInteraction(i)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-amber-50/60 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    <span>{t(tagMeta.i18nKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* 模块列表：自适应拉伸并滚动 */}
-      {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[220px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-          {t('plan.noCardMatched')}
-        </div>
-      ) : (
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-1 min-h-0 content-start">
-          {availableCards.map((card) => {
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-            return (
-              <button
-                type="button"
-                key={card.id}
-                onClick={() => onAddItem(card.id)}
-                className="p-2.5 bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-2xl text-left transition-all flex items-center justify-between gap-2 group active:scale-98 cursor-pointer"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="p-1.5 rounded-xl bg-white text-indigo-600 shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-                <Plus className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 flex-shrink-0" />
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-~~~~~
-
-#### Acts 3: 优化 `PlanEditorView` 页面布局，撑满屏幕高度
-
-~~~~~act
-patch_file
-src/views/PlanEditorView.tsx
-~~~~~
-~~~~~tsx.old
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-1.5 w-full max-w-sm">
-                <input
-                  type="text"
-                  value={planNameInput}
-                  onInput={(e) => setPlanNameInput((e.target as HTMLInputElement).value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleNameSave();
-                    if (e.key === 'Escape') {
-                      setPlanNameInput(currentPlan.name);
-                      setIsEditingName(false);
-                    }
-                  }}
-                  maxLength={32}
-                  className="w-full px-3 py-1.5 text-sm font-black text-slate-800 bg-slate-50 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder={t('plan.nameInputPlaceholder')}
-                />
-                <button
-                  type="button"
-                  onClick={handleNameSave}
-                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('common.confirm')}
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <h1 className="text-xl font-black text-slate-900 truncate tracking-tight">
-                  {currentPlan.name}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(true)}
-                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('plan.renameTitle')}
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-
-                {isNewPlan ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex-shrink-0 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {t('common.newPlanBadge')}
-                  </span>
-                ) : currentPlan.isBuiltin ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 flex-shrink-0">
-                    {t('common.officialBadge')}
-                  </span>
-                ) : null}
-              </div>
-            )}
+          {/* 4.5 模块发布状态 (Status Tag) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <FlaskConical className="w-3 h-3 text-purple-500" />
+              {t('home.statusSection')}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(['stable', 'experimental'] as CardStatusTag[]).map((st) => {
+                const isSelected = query.statuses?.includes(st) ?? false;
+                const tagMeta = STATUS_TAGS[st];
+                return (
+                  <button
+                    type="button"
+                    key={st}
+                    onClick={() => toggleStatus(st)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? st === 'stable'
+                          ? 'bg-indigo-600 text-white shadow-xs'
+                          : 'bg-purple-600 text-white shadow-xs'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    {st === 'stable' ? (
+                      <ShieldCheck className="w-3 h-3 text-indigo-500" />
+                    ) : (
+                      <FlaskConical className="w-3 h-3 text-amber-500" />
+                    )}
+                    <span>{t(tagMeta.i18nKey)}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
-
-        {/* 右侧全局操作区 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setShowPlanManager(!showPlanManager)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
-              showPlanManager
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-            title={t('plan.switchAndManageTitle')}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            {t('plan.planLibraryTitle', { count: storageState.plans.length })}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCloneCurrent}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.cloneCopyTitle')}
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportPlan}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.exportJsonTitle')}
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportPlan}
-            className="hidden"
-          />
-
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-          <button
-            type="button"
-            onClick={handleSaveOnly}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {t('common.save')}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveAndStart}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('plan.startPlan')}
-          </button>
-        </div>
-      </header>
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2.5 rounded-2xl animate-in fade-in">
-          {toastNotice}
-        </div>
       )}
-
-      {/* 展开的计划库总览抽屉 */}
-      {showPlanManager && (
-        <PlanLibraryDrawer
-          storageState={storageState}
-          currentPlan={currentPlan}
-          onSelectPlan={handleSelectPlanFromList}
-          onCreateNewBlankPlan={handleCreateNewBlankPlan}
-          onClose={() => setShowPlanManager(false)}
-          onToggleFavorite={handleToggleFavoriteItem}
-          onDeletePlan={handleDeletePlanItem}
-        />
-      )}
-
-      {/* 核心双列/响应式编排区 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* 左侧/上半部：已编排的阶段序列与调序 */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-          <PlanStageList
-            currentPlan={currentPlan}
-            totalTrials={totalTrials}
-            estimatedMin={estimatedMin}
-            trialPresets={TRIAL_PRESETS}
-            onBatchUpdateTrials={handleBatchUpdateTrials}
-            onClearAll={handleClearAll}
-            onUpdateTrials={handleUpdateTrials}
-            onMoveItem={handleMoveItem}
-            onRemoveItem={handleRemoveItem}
-          />
-        </div>
-
-        {/* 右侧/下半部：模块添加与搜索挑选区 */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-          <CardPickerPanel
-            isAddingCard={isAddingCard || currentPlan.items.length === 0}
-            onToggleAdding={setIsAddingCard}
-            onAddItem={handleAddItem}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-~~~~~
-~~~~~tsx.new
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] gap-4 sm:gap-5 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-1.5 w-full max-w-sm">
-                <input
-                  type="text"
-                  value={planNameInput}
-                  onInput={(e) => setPlanNameInput((e.target as HTMLInputElement).value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleNameSave();
-                    if (e.key === 'Escape') {
-                      setPlanNameInput(currentPlan.name);
-                      setIsEditingName(false);
-                    }
-                  }}
-                  maxLength={32}
-                  className="w-full px-3 py-1.5 text-sm font-black text-slate-800 bg-slate-50 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder={t('plan.nameInputPlaceholder')}
-                />
-                <button
-                  type="button"
-                  onClick={handleNameSave}
-                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('common.confirm')}
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">
-                  {currentPlan.name}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(true)}
-                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('plan.renameTitle')}
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-
-                {isNewPlan ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex-shrink-0 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {t('common.newPlanBadge')}
-                  </span>
-                ) : currentPlan.isBuiltin ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 flex-shrink-0">
-                    {t('common.officialBadge')}
-                  </span>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 右侧全局操作区 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setShowPlanManager(!showPlanManager)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
-              showPlanManager
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-            title={t('plan.switchAndManageTitle')}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            {t('plan.planLibraryTitle', { count: storageState.plans.length })}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCloneCurrent}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.cloneCopyTitle')}
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportPlan}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.exportJsonTitle')}
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportPlan}
-            className="hidden"
-          />
-
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-          <button
-            type="button"
-            onClick={handleSaveOnly}
-            disabled={currentPlan.items.length === 0}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {t('common.save')}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveAndStart}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('plan.startPlan')}
-          </button>
-        </div>
-      </header>
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
-          {toastNotice}
-        </div>
-      )}
-
-      {/* 展开的计划库总览抽屉 */}
-      {showPlanManager && (
-        <div className="flex-shrink-0">
-          <PlanLibraryDrawer
-            storageState={storageState}
-            currentPlan={currentPlan}
-            onSelectPlan={handleSelectPlanFromList}
-            onCreateNewBlankPlan={handleCreateNewBlankPlan}
-            onClose={() => setShowPlanManager(false)}
-            onToggleFavorite={handleToggleFavoriteItem}
-            onDeletePlan={handleDeletePlanItem}
-          />
-        </div>
-      )}
-
-      {/* 核心双列/响应式编排区：占满视口剩余高度 */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 min-h-0 items-stretch">
-        {/* 左侧：已编排的阶段序列与调序 */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
-          <PlanStageList
-            currentPlan={currentPlan}
-            totalTrials={totalTrials}
-            estimatedMin={estimatedMin}
-            trialPresets={TRIAL_PRESETS}
-            onBatchUpdateTrials={handleBatchUpdateTrials}
-            onClearAll={handleClearAll}
-            onUpdateTrials={handleUpdateTrials}
-            onMoveItem={handleMoveItem}
-            onRemoveItem={handleRemoveItem}
-          />
-        </div>
-
-        {/* 右侧：模块添加与搜索挑选区 */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
-          <CardPickerPanel
-            isAddingCard={isAddingCard || currentPlan.items.length === 0}
-            onToggleAdding={setIsAddingCard}
-            onAddItem={handleAddItem}
-          />
-        </div>
-      </div>
     </div>
   );
 }
 ~~~~~
 
 ### 下一步建议
-1. **测试验收**：可在计划编排中加入长文本卡片（如多锚点透视、负空间拟合等），验证在任何分辨率下均不再出现横向拉伸或按钮重叠。
-2. **继续实施 P1 项**：重构首页 `FilterEngine.tsx`，将学术化五维筛选降维为直观的训练目标 Tab。
+1. **代码检查与验收**：运行 `npm run check` 确保所有组件类型与规范无误。
+2. **体验检查**：测试首页主视觉域 Tab 与搜索的即时过滤反应，验证折叠/展开高级维度的顺滑度。

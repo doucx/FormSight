@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(plan): 修复阶段列表文本溢出并实现编排视图高度自适应撑满视口", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787911734.160333, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(discovery): 重构首页筛选引擎为直观场景 Tab 与折叠式专家维度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787913416.3231993, "duration_ms": 0}}

@@ -213,19 +213,21 @@
     }
   },
   "home": {
-    "matchedModules": "Matched {{count}} training modules",
-    "expandFilter": "Multi-Filter",
-    "collapseFilter": "Collapse Filter",
+    "matchedModules": "Matched {{count}} modules",
+    "allModules": "All Modules",
+    "expandFilter": "Advanced Dimensions",
+    "collapseFilter": "Collapse Dimensions",
+    "activeFiltersCount": "{{count}} active",
     "searchPlaceholder": "Search by module name, ID, or visual concept...",
     "noMatchTitle": "No matching modules found",
     "noMatchDesc": "Try clearing or tweaking your filter tags or search keyword to discover more modules.",
     "resetFilter": "Reset All Filters",
     "allPacks": "All Packs",
-    "domainSection": "1. Visual Domain",
-    "pathSection": "2. Cognitive Path",
-    "challengeSection": "3. Mental Challenge",
-    "interactionSection": "4. Interaction Mode",
-    "statusSection": "5. Feature & Status"
+    "domainSection": "Visual Domains",
+    "pathSection": "Cognitive Paths",
+    "challengeSection": "Mental Challenges",
+    "interactionSection": "Interaction Modes",
+    "statusSection": "Feature & Status"
   },
   "plan": {
     "todayPlan": "Daily Training Plan",
