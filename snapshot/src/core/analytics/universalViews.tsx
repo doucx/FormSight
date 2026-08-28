@@ -114,7 +114,11 @@ export function renderSpeedAccuracyVisualizer(
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = '8px sans-serif';
-    ctx.fillText(`${bin.total}${i18n.t('common.trialsUnit')}`, x + barWidth / 2, height - padding.bottom + 18);
+    ctx.fillText(
+      `${bin.total}${i18n.t('common.trialsUnit')}`,
+      x + barWidth / 2,
+      height - padding.bottom + 18,
+    );
   });
 }
 
@@ -289,7 +293,9 @@ export function renderDifficultyPlateauVisualizer(
 export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): ComponentChildren {
   const levelStats = calculateLevelStats(records);
   const comfortLevels = levelStats.filter((s) => s.accuracy >= 80 && s.total >= 3);
-  const growthLevels = levelStats.filter((s) => s.accuracy >= 60 && s.accuracy < 80 && s.total >= 3);
+  const growthLevels = levelStats.filter(
+    (s) => s.accuracy >= 60 && s.accuracy < 80 && s.total >= 3,
+  );
   const bottleneckLevels = levelStats.filter((s) => s.accuracy < 50 && s.total >= 3);
 
   const maxComfort = comfortLevels.length > 0 ? Math.max(...comfortLevels.map((s) => s.level)) : 1;

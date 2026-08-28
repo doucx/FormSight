@@ -59,9 +59,14 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
     const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
     const avgResponseTimeSec =
       total > 0
-        ? (records.reduce((acc, r) => acc + (Number(r.responseTimeMs) || 0), 0) / total / 1000).toFixed(1)
+        ? (
+            records.reduce((acc, r) => acc + (Number(r.responseTimeMs) || 0), 0) /
+            total /
+            1000
+          ).toFixed(1)
         : '0.0';
-    const maxLevel = records.length > 0 ? Math.max(...records.map((r) => Number(r.difficultyLevel) || 1)) : 1;
+    const maxLevel =
+      records.length > 0 ? Math.max(...records.map((r) => Number(r.difficultyLevel) || 1)) : 1;
 
     return { total, hits, accuracy, avgResponseTimeSec, maxLevel };
   }, [records]);
