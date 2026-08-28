@@ -23,7 +23,6 @@ export function VertexFittingView({
   userAnswer,
   onAnswer,
   disabled = false,
-  showCanvasHints = true,
 }: VertexFittingViewProps) {
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
