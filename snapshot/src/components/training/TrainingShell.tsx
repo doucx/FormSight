@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
+import { ArrowLeft, ChevronRight, Clock, HelpCircle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
@@ -39,7 +39,6 @@ export function TrainingShell({
   card,
   sessionType,
   currentLevel,
-  isTargeting = false,
   autoNext,
   session,
   showExitButton = true,
