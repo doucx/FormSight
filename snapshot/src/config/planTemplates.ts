@@ -15,7 +15,8 @@ export const DEFAULT_PLAN_TEMPLATES: PlanTemplate[] = [
   {
     id: 'geometry_sculpting',
     name: 'Structure & Proportion Reinforcement (60 trials)',
-    description: 'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
+    description:
+      'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
     badge: 'Form Special',
     items: [
       { cardId: 'star_double_h', targetTrials: 20 },
@@ -26,7 +27,8 @@ export const DEFAULT_PLAN_TEMPLATES: PlanTemplate[] = [
   {
     id: 'color_light_mastery',
     name: 'Color & Light Environment Penetration (65 trials)',
-    description: 'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
+    description:
+      'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
     badge: 'Color Mastery',
     items: [
       { cardId: 'color_hue', targetTrials: 20 },
@@ -38,7 +40,8 @@ export const DEFAULT_PLAN_TEMPLATES: PlanTemplate[] = [
   {
     id: 'abstraction_essence',
     name: 'Perceptual Abstraction & Essence (60 trials)',
-    description: 'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
+    description:
+      'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
     badge: 'Abstraction',
     items: [
       { cardId: 'abs_gesture_axis', targetTrials: 20 },
