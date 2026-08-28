@@ -156,7 +156,9 @@ export function FilterEngine({
             <button
               type="button"
               onClick={() => handleSearchChange('')}
-              className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer`}
+              className={
+                'absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer'
+              }
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -213,9 +215,7 @@ export function FilterEngine({
           </div>
           <div
             className={`flex gap-1 items-center ${
-              isCompact
-                ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none'
-                : 'flex-wrap'
+              isCompact ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none' : 'flex-wrap'
             }`}
           >
             <TagPill
@@ -337,9 +337,7 @@ export function FilterEngine({
                   key={st}
                   size={tagSize}
                   label={t(STATUS_TAGS[st].i18nKey)}
-                  themeColor={
-                    STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')
-                  }
+                  themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')}
                   selected={query.statuses?.includes(st) ?? false}
                   onClick={() => toggleStatus(st)}
                 />

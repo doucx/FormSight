@@ -21,7 +21,14 @@ export function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] 
       { rangeLabel: '1.0~2.0s', minMs: 1000, maxMs: 2000, total: 0, hits: 0, accuracy: 0 },
       { rangeLabel: '2.0~3.5s', minMs: 2000, maxMs: 3500, total: 0, hits: 0, accuracy: 0 },
       { rangeLabel: '3.5~6.0s', minMs: 3500, maxMs: 6000, total: 0, hits: 0, accuracy: 0 },
-      { rangeLabel: '> 6.0s', minMs: 6000, maxMs: Number.MAX_SAFE_INTEGER, total: 0, hits: 0, accuracy: 0 },
+      {
+        rangeLabel: '> 6.0s',
+        minMs: 6000,
+        maxMs: Number.MAX_SAFE_INTEGER,
+        total: 0,
+        hits: 0,
+        accuracy: 0,
+      },
     ];
   }
 
@@ -44,10 +51,26 @@ export function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] 
 
   const rawBins: { minMs: number; maxMs: number; rangeLabel: string }[] = [
     { minMs: 0, maxMs: thresholds[0], rangeLabel: `< ${formatSec(thresholds[0])}` },
-    { minMs: thresholds[0], maxMs: thresholds[1], rangeLabel: `${formatSec(thresholds[0])}~${formatSec(thresholds[1])}` },
-    { minMs: thresholds[1], maxMs: thresholds[2], rangeLabel: `${formatSec(thresholds[1])}~${formatSec(thresholds[2])}` },
-    { minMs: thresholds[2], maxMs: thresholds[3], rangeLabel: `${formatSec(thresholds[2])}~${formatSec(thresholds[3])}` },
-    { minMs: thresholds[3], maxMs: Number.MAX_SAFE_INTEGER, rangeLabel: `> ${formatSec(thresholds[3])}` },
+    {
+      minMs: thresholds[0],
+      maxMs: thresholds[1],
+      rangeLabel: `${formatSec(thresholds[0])}~${formatSec(thresholds[1])}`,
+    },
+    {
+      minMs: thresholds[1],
+      maxMs: thresholds[2],
+      rangeLabel: `${formatSec(thresholds[1])}~${formatSec(thresholds[2])}`,
+    },
+    {
+      minMs: thresholds[2],
+      maxMs: thresholds[3],
+      rangeLabel: `${formatSec(thresholds[2])}~${formatSec(thresholds[3])}`,
+    },
+    {
+      minMs: thresholds[3],
+      maxMs: Number.MAX_SAFE_INTEGER,
+      rangeLabel: `> ${formatSec(thresholds[3])}`,
+    },
   ];
 
   return rawBins.map((bin) => {
