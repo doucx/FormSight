@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M app.tsx, M ModeCard.tsx, M CardAnalyticsView.tsx ... and 1 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787917679.7883754, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787917766.3655148, "duration_ms": 0}}
