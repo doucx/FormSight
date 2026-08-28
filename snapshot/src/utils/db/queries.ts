@@ -1,3 +1,4 @@
+import { i18n } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import {
   type DailySummaryData,
@@ -189,19 +190,18 @@ export async function getTrainingTimeMs(): Promise<number> {
   return totalMs;
 }
 
-export function formatTotalTime(ms: number, t?: (key: string) => string): string {
-  const tr = t || ((k: string) => (k === 'common.zeroTime' ? '0d 0h 0min' : k));
+export function formatTotalTime(ms: number, t: (key: string) => string = i18n.t): string {
   if (!ms || Number.isNaN(ms) || ms <= 0) {
-    return tr('common.zeroTime');
+    return t('common.zeroTime');
   }
   const totalMinutes = Math.floor(ms / (1000 * 60));
   const days = Math.floor(totalMinutes / (60 * 24));
   const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
   const minutes = totalMinutes % 60;
 
-  const dUnit = t ? t('common.daysUnit') : 'd ';
-  const hUnit = t ? t('common.hoursUnit') : 'h ';
-  const mUnit = t ? t('common.minutesUnit') : 'min';
+  const dUnit = t('common.daysUnit');
+  const hUnit = t('common.hoursUnit');
+  const mUnit = t('common.minutesUnit');
 
   return `${days}${dUnit}${hours}${hUnit}${minutes}${mUnit}`;
 }
