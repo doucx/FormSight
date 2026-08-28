@@ -15,6 +15,18 @@ class I18nManager {
       'zh-CN': zhCNGlobal as LocaleDictionary,
       'en-US': enUSGlobal as LocaleDictionary,
     });
+
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('formsight_user_settings');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.global?.locale) {
+            this.currentLocale = parsed.global.locale;
+          }
+        }
+      } catch {}
+    }
   }
 
   public init(initialLocale = 'zh-CN'): void {

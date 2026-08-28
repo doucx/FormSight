@@ -60,14 +60,15 @@ export function App() {
     setProfilesLoaded(true);
   }, [refreshTodayStats]);
 
+  const { locale: currentLocale, setLocale } = useTranslation();
+
   useEffect(() => {
     const savedLocale = loadSettings().global.locale;
-    if (savedLocale) {
-      registry; // ensure eager scanning
-      // initialize locale from persistent settings
+    if (savedLocale && savedLocale !== currentLocale) {
+      setLocale(savedLocale);
     }
     refreshProfiles();
-  }, [refreshProfiles]);
+  }, [refreshProfiles, currentLocale, setLocale]);
 
   useEffect(() => {
     if (route.type === 'home') {
