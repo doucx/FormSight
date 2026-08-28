@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
 import { QuestionCardShell } from './QuestionCardShell';
 
@@ -63,13 +64,16 @@ export function StandardSliderView({
   disabled = false,
   hitMargin = 12,
   submitMode = 'commit_on_release',
-  submitButtonText = '确认提交 (Space)',
+  submitButtonText,
   onValueChange,
   onAnswer,
   footerDetails,
 }: StandardSliderViewProps) {
+  const { t } = useTranslation();
   const defaultVal = initialValue ?? (max - min) / 2;
   const [currentVal, setCurrentVal] = useState<number>(defaultVal);
+
+  const effectiveSubmitButtonText = submitButtonText || t('common.submitSpace');
 
   const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
     max,
@@ -235,7 +239,7 @@ export function StandardSliderView({
           disabled={disabled}
           className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
         >
-          {submitButtonText}
+          {effectiveSubmitButtonText}
         </button>
       )}
     </QuestionCardShell>

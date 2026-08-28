@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
+import { useTranslation } from '../../core/i18n';
 import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
 
@@ -33,6 +34,7 @@ export function PointClickCanvas({
   customOverlayRender,
   onCommitPoint,
 }: PointClickCanvasProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const loupeCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -274,7 +276,7 @@ export function PointClickCanvas({
         }}
         tabIndex={0}
         role="button"
-        aria-label="点阵做答画布"
+        aria-label={t('shell.pointGridAria')}
         className={`w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all ${
           disabled || showAnswer
             ? 'cursor-default'

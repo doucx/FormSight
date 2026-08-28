@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 import { ChoiceNafcContainer, type ChoiceNafcOption } from './ChoiceNafcContainer';
 import { QuestionCardShell } from './QuestionCardShell';
 
@@ -45,13 +46,16 @@ export function StandardNafcView<T = unknown>({
   gridClassName,
   selectedIndex: controlledSelectedIndex,
   submitMode = 'immediate',
-  submitButtonText = '确认提交 (Space)',
+  submitButtonText,
   showAnswer,
   disabled = false,
   enableKeyboardShortcuts = true,
   onSelectIndex,
   onAnswer,
 }: StandardNafcViewProps<T>) {
+  const { t } = useTranslation();
+  const effectiveSubmitButtonText = submitButtonText || t('common.submitSpace');
+
   const [internalSelectedIdx, setInternalSelectedIdx] = useState<number | null>(
     submitMode === 'button' ? 0 : null,
   );
@@ -130,7 +134,7 @@ export function StandardNafcView<T = unknown>({
           disabled={disabled}
           className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
         >
-          {submitButtonText}
+          {effectiveSubmitButtonText}
         </button>
       )}
     </QuestionCardShell>

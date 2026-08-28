@@ -1,3 +1,5 @@
+import { useTranslation } from '../../../core/i18n';
+
 interface SliderMarginGroupProps {
   title?: string;
   value: number;
@@ -5,24 +7,27 @@ interface SliderMarginGroupProps {
   options?: { label: string; value: number }[];
 }
 
-const DEFAULT_MARGIN_OPTIONS = [
-  { label: '关闭 (0px)', value: 0 },
-  { label: '8px', value: 8 },
-  { label: '12px', value: 12 },
-  { label: '20px', value: 20 },
-];
-
 export function SliderMarginGroup({
-  title = '滑块极值吸附外延感应区',
+  title,
   value,
   onChange,
-  options = DEFAULT_MARGIN_OPTIONS,
+  options,
 }: SliderMarginGroupProps) {
+  const { t } = useTranslation();
+
+  const effectiveTitle = title || t('settingsModal.sliderMarginTitle');
+  const defaultOptions = options || [
+    { label: t('settingsModal.marginOff'), value: 0 },
+    { label: '8px', value: 8 },
+    { label: '12px', value: 12 },
+    { label: '20px', value: 20 },
+  ];
+
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold text-slate-700">{title}</div>
+      <div className="text-sm font-semibold text-slate-700">{effectiveTitle}</div>
       <div className="grid grid-cols-4 gap-1.5">
-        {options.map((opt) => (
+        {defaultOptions.map((opt) => (
           <button
             type="button"
             key={opt.value}

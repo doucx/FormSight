@@ -1,4 +1,5 @@
 import { Crosshair } from 'lucide-preact';
+import { useTranslation } from '../../../core/i18n';
 import type { TargetingMode } from '../../../utils/settings';
 
 interface TargetingSectionProps {
@@ -13,8 +14,8 @@ interface TargetingSectionProps {
 }
 
 export function TargetingSection({
-  title = '弱点专项靶向强化',
-  subTitle = '选择需要靶向强化的扇区：',
+  title,
+  subTitle,
   mode,
   onModeChange,
   sectors,
@@ -22,16 +23,21 @@ export function TargetingSection({
   onToggleSector,
   gridCols = 'grid-cols-4',
 }: TargetingSectionProps) {
+  const { t } = useTranslation();
+
+  const effectiveTitle = title || t('settingsModal.targetingTitle');
+  const effectiveSubTitle = subTitle || t('settingsModal.targetingSubTitle');
+
   return (
     <div className="space-y-2 pt-2 border-t border-slate-100">
       <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
         <Crosshair className="w-4 h-4 text-indigo-600" />
-        {title}
+        {effectiveTitle}
       </div>
       <div className="grid grid-cols-2 gap-1.5">
         {[
-          { id: 'off', label: '关闭 (全随机)' },
-          { id: 'manual', label: '手动指定' },
+          { id: 'off', label: t('settingsModal.targetingOff') },
+          { id: 'manual', label: t('settingsModal.targetingManual') },
         ].map((m) => (
           <button
             type="button"
@@ -50,7 +56,7 @@ export function TargetingSection({
 
       {mode === 'manual' && (
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
-          <div className="text-[11px] font-semibold text-slate-500">{subTitle}</div>
+          <div className="text-[11px] font-semibold text-slate-500">{effectiveSubTitle}</div>
           <div className={`grid ${gridCols} gap-1.5`}>
             {sectors.map((name, idx) => {
               const selected = selectedSectors.includes(idx);

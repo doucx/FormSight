@@ -1,6 +1,7 @@
 import { BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { CardAnalyticsView } from '../core/contracts';
+import { useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db/index';
@@ -11,11 +12,14 @@ interface WeaknessAnalyticsModalProps {
 }
 
 export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
+  const { t } = useTranslation();
   const plugin = registry.getAnalyticsPluginByCardId(card.id);
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
 
   const views = plugin?.views ?? [];
   const currentView = views[activeViewIndex] || views[0];
@@ -60,6 +64,12 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
         total: records.length,
       };
 
+  const resolveText = (text?: string): string => {
+    if (!text) return '';
+    const translated = t(text);
+    return translated !== text ? translated : text;
+  };
+
   return (
     <div
       role="presentation"
@@ -81,14 +91,16 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
               <BarChart2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">{currentView.title}</h2>
-              <p className="text-xs text-slate-400">{currentView.subTitle}</p>
+              <h2 className="text-lg font-bold text-slate-800">
+                {resolveText(currentView.title)}
+              </h2>
+              <p className="text-xs text-slate-400">{resolveText(currentView.subTitle)}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -105,14 +117,14 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
                   type="button"
                   key={v.id}
                   onClick={() => setActiveViewIndex(idx)}
-                  className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                  className={`flex-1 py-2 px-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     isActive
                       ? 'bg-white text-indigo-600 shadow-sm border border-slate-200/60'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
                   }`}
                 >
                   {Icon && <Icon className="w-3.5 h-3.5" />}
-                  {v.tabLabel}
+                  {resolveText(v.tabLabel)}
                 </button>
               );
             })}
@@ -122,12 +134,12 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
         {/* 内容展示区 */}
         {loading ? (
           <div className="h-72 flex items-center justify-center text-slate-400 text-xs">
-            正在分析历史答题数据...
+            {t('analyticsModal.analyzing')}
           </div>
         ) : records.length === 0 ? (
           <div className="h-72 flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
             <Info className="w-8 h-8 text-slate-300" />
-            暂无【{card.title}】的练习记录，先去完成几轮练习吧！
+            {t('analyticsModal.noRecords', { title: cardTitle })}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
@@ -145,11 +157,13 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
             {/* 右侧数据统计面板 */}
             <div className="md:col-span-5 flex flex-col gap-3">
               <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
-                <div className="text-xs font-bold text-slate-500 uppercase">总体评估</div>
+                <div className="text-xs font-bold text-slate-500 uppercase">
+                  {t('analyticsModal.overallEvaluation')}
+                </div>
                 <div className="flex justify-between items-end">
                   <span className="text-2xl font-black text-slate-800">{stats.accuracy}%</span>
                   <span className="text-xs font-semibold text-slate-400 mb-1">
-                    样本量: {stats.total} 题
+                    {t('analyticsModal.sampleSize', { count: stats.total })}
                   </span>
                 </div>
                 {stats.customSummary}
