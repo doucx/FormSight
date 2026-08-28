@@ -255,9 +255,9 @@ export function PlanEditorView({
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
+    <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] gap-4 sm:gap-5 animate-in fade-in duration-200">
       {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             type="button"
@@ -297,7 +297,7 @@ export function PlanEditorView({
               </div>
             ) : (
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <h1 className="text-xl font-black text-slate-900 truncate tracking-tight">
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">
                   {currentPlan.name}
                 </h1>
                 <button
@@ -380,7 +380,7 @@ export function PlanEditorView({
             type="button"
             onClick={handleSaveOnly}
             disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             {t('common.save')}
@@ -399,28 +399,30 @@ export function PlanEditorView({
       </header>
 
       {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2.5 rounded-2xl animate-in fade-in">
+        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
           {toastNotice}
         </div>
       )}
 
       {/* 展开的计划库总览抽屉 */}
       {showPlanManager && (
-        <PlanLibraryDrawer
-          storageState={storageState}
-          currentPlan={currentPlan}
-          onSelectPlan={handleSelectPlanFromList}
-          onCreateNewBlankPlan={handleCreateNewBlankPlan}
-          onClose={() => setShowPlanManager(false)}
-          onToggleFavorite={handleToggleFavoriteItem}
-          onDeletePlan={handleDeletePlanItem}
-        />
+        <div className="flex-shrink-0">
+          <PlanLibraryDrawer
+            storageState={storageState}
+            currentPlan={currentPlan}
+            onSelectPlan={handleSelectPlanFromList}
+            onCreateNewBlankPlan={handleCreateNewBlankPlan}
+            onClose={() => setShowPlanManager(false)}
+            onToggleFavorite={handleToggleFavoriteItem}
+            onDeletePlan={handleDeletePlanItem}
+          />
+        </div>
       )}
 
-      {/* 核心双列/响应式编排区 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* 左侧/上半部：已编排的阶段序列与调序 */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+      {/* 核心双列/响应式编排区：占满视口剩余高度 */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 min-h-0 items-stretch">
+        {/* 左侧：已编排的阶段序列与调序 */}
+        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
           <PlanStageList
             currentPlan={currentPlan}
             totalTrials={totalTrials}
@@ -434,8 +436,8 @@ export function PlanEditorView({
           />
         </div>
 
-        {/* 右侧/下半部：模块添加与搜索挑选区 */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
+        {/* 右侧：模块添加与搜索挑选区 */}
+        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
           <CardPickerPanel
             isAddingCard={isAddingCard || currentPlan.items.length === 0}
             onToggleAdding={setIsAddingCard}

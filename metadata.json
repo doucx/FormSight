@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(plan): 将训练流编辑器升级为独立沉浸式视图并消解弹窗嵌套", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787911478.0165882, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(plan): 修复阶段列表文本溢出并实现编排视图高度自适应撑满视口", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787911734.160333, "duration_ms": 0}}
