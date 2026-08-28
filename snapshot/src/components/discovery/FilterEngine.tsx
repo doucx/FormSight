@@ -194,11 +194,8 @@ export function FilterEngine({
           <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
-              onClick={(e) => {
-                (e.currentTarget as HTMLElement).blur();
-                handleSelectPack(undefined);
-              }}
-              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${
+              onClick={() => handleSelectPack(undefined)}
+              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                 !query.packId
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -214,11 +211,8 @@ export function FilterEngine({
                 <button
                   type="button"
                   key={p.packId}
-                  onClick={(e) => {
-                    (e.currentTarget as HTMLElement).blur();
-                    handleSelectPack(isSelected ? undefined : p.packId);
-                  }}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${
+                  onClick={() => handleSelectPack(isSelected ? undefined : p.packId)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                     isSelected
                       ? 'bg-indigo-600 text-white shadow-xs'
                       : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -257,11 +251,8 @@ export function FilterEngine({
                   <button
                     type="button"
                     key={d}
-                    onClick={(e) => {
-                      (e.currentTarget as HTMLElement).blur();
-                      toggleDomain(d);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${
+                    onClick={() => toggleDomain(d)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                       isSelected
                         ? 'bg-indigo-600 text-white shadow-xs'
                         : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -289,11 +280,8 @@ export function FilterEngine({
                   <button
                     type="button"
                     key={p}
-                    onClick={(e) => {
-                      (e.currentTarget as HTMLElement).blur();
-                      togglePath(p);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/30 ${
+                    onClick={() => togglePath(p)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                       isSelected
                         ? 'bg-emerald-600 text-white shadow-xs'
                         : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -321,11 +309,8 @@ export function FilterEngine({
                   <button
                     type="button"
                     key={c}
-                    onClick={(e) => {
-                      (e.currentTarget as HTMLElement).blur();
-                      toggleChallenge(c);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/30 ${
+                    onClick={() => toggleChallenge(c)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                       isSelected
                         ? 'bg-rose-600 text-white shadow-xs'
                         : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -353,11 +338,8 @@ export function FilterEngine({
                   <button
                     type="button"
                     key={i}
-                    onClick={(e) => {
-                      (e.currentTarget as HTMLElement).blur();
-                      toggleInteraction(i);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/30 ${
+                    onClick={() => toggleInteraction(i)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                       isSelected
                         ? 'bg-amber-600 text-white shadow-xs'
                         : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80 hover:border-slate-300'
@@ -385,11 +367,8 @@ export function FilterEngine({
                   <button
                     type="button"
                     key={st}
-                    onClick={(e) => {
-                      (e.currentTarget as HTMLElement).blur();
-                      toggleStatus(st);
-                    }}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/30 ${
+                    onClick={() => toggleStatus(st)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                       isSelected
                         ? st === 'stable'
                           ? 'bg-indigo-600 text-white shadow-xs'
