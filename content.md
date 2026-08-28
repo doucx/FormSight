@@ -1,237 +1,292 @@
-我已定位到负形包（`negative_space`）中的顶点反切定点模块（`VertexFittingView.tsx`）。
+出现“右侧比左侧小”的根本原因在于两个相互叠加的样式限制：
 
-该模块原先使用了 `QuestionCardShell` 和 `DualViewportContainer` 多层嵌套，并在外层卡片中将右侧 `PointClickCanvas` 与左侧 Canvas 限制在 `max-w-[300px]`，导致在不同分辨率下两侧未锁定为 1:1 正方形且样式风格与 `star`（寻星）模块不一致。
+1. **`setupHiDpiCanvas` 中的 `maxWidth` 限制了右侧画布**：`setupHiDpiCanvas` 原本将 `canvas.style.maxWidth` 硬编码为 `logicalWidth`（如负形定点的 340px）。当外部卡片容器宽度为 380px~420px 时，左侧普通 Canvas 撑满了容器（约 350~390px），而右侧交互 Canvas 被限制在最大 340px，导致右边明显比左边小一圈。
+2. **`PointClickCanvas` 包装容器未撑满**：`PointClickCanvas` 根容器原先使用了 `inline-block w-full`，未声明 `h-full aspect-square`，在居中布局下没有完全填满外层卡片。
+3. **两列未分配等比例 `flex-1`**：外层包装卡片未声明 `flex-1`，导致 Flexbox 在分配剩余空间时根据两边子元素的固有宽度产生了不对称。
 
-我将生成一个计划，将 `VertexFittingView.tsx` 的布局重构为与 `StarCanvas` 一致的双卡片沉浸式对称结构，确保左右两视口严格等大、均为正方形。
+我将生成一个修复计划，彻底解决尺寸不一致的问题。
 
-## [WIP] refactor: 重构负形顶点定点视图为 Star 风格对称正方形视口
+## [WIP] fix: 消除画布 maxWidth 限制并统一左右视口 100% 满充正方形
+
+### 错误分析
+
+1. **`setupHiDpiCanvas` 硬编码 `style.maxWidth = logicalWidth`**：逻辑分辨率 `logicalWidth`（如 340px）被写入行内样式作为最大宽度，使右侧 Canvas 在更宽的屏幕上无法跟随卡片容器放大，导致右侧永远比左侧小。
+2. **`PointClickCanvas` 未继承 100% 宽高**：内部包装层缺少 `h-full` 约束，导致右侧内容盒模型小于左侧。
+3. **外层卡片缺少 `flex-1` 对称分配**：Flex 容器未能强制给左右两列分配完全等同的宽度比例。
 
 ### 用户需求
 
-修复 `negative_space` 包中的点阵定点界面（`VertexFittingView`），使其界面布局与 `star` 模块一致，并保证左右两边窗格大小完全相同、均为严格的正方形。
+彻底确保寻星及负形点阵模块中，左侧参考窗格与右侧交互窗格在视觉上完全等大，且均为标准的 1:1 正方形。
 
 ### 评论
 
-统一全站双视口对比类模块的视觉语言（如寻星与负形顶点定点）有助于保持交互与视觉体验的一致性，消除多层嵌套容器带来的额外内边距与比例失真。
+左右两画布完全等大是几何定位与构图对比训练的基石，确保两边像素与物理尺寸 1:1 对齐可以彻底消除眼睛在两边切换时的比例错觉。
 
 ### 目标
 
-1. 重构 `VertexFittingView.tsx`，移除冗余的 `QuestionCardShell` 与 `DualViewportContainer` 容器嵌套。
-2. 采用与 `StarCanvas` 相同的双列对称卡片布局（`w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square`），锁定 1:1 正方形比例。
-3. 确保左侧多边形参考画布与右侧 `PointClickCanvas` 均撑满卡片容器且严格等大。
+1. 修复 `src/core/canvas/hidpi.ts`，将 `canvas.style.maxWidth` 统一为 `'100%'`，并设置 `width: '100%'; height: '100%'`，使 Canvas 始终由外层卡片容器尺寸驱动。
+2. 更新 `src/components/common/PointClickCanvas.tsx`，将内部包装层与 canvas 均设为 `w-full h-full aspect-square block`。
+3. 为 `StarCanvas.tsx` 和 `VertexFittingView.tsx` 左右两外层卡片添加 `flex-1` 约束，确保两侧在 Flexbox 中获得绝对均等的空间。
 
 ### 基本原理
 
-通过直接采用 `flex-col sm:flex-row` 容器包裹两个等尺寸的 `aspect-square` 卡片，使左侧参考图与右侧交互点阵在 Flex 布局中始终分配相同像素宽度与高度，并借助 `setupHiDpiCanvas` 保持清晰度与 1:1 几何无畸变。
+通过让 Canvas 和中间包装层无条件继承父容器的 `w-full h-full aspect-square`，并将外层左右两个卡片均设为 `flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square`，使两个卡片及内部画布由同一组响应式规则完全对称地约束，从根本上杜绝任何尺寸差异。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/negative-space-vertex-fitting #task/action/refactor #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/point-grid-symmetric-viewport #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `VertexFittingView.tsx` 布局结构
+#### Acts 1: 修复 `hidpi.ts` 解决逻辑像素限制画布撑满的问题
+
+~~~~~act
+patch_file
+src/core/canvas/hidpi.ts
+~~~~~
+~~~~~typescript.old
+export function setupHiDpiCanvas(
+  canvas: HTMLCanvasElement,
+  logicalWidth: number,
+  logicalHeight: number,
+): CanvasRenderingContext2D | null {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  canvas.width = Math.round(logicalWidth * dpr);
+  canvas.height = Math.round(logicalHeight * dpr);
+  canvas.style.width = '100%';
+  canvas.style.maxWidth = `${logicalWidth}px`;
+  canvas.style.aspectRatio = `${logicalWidth} / ${logicalHeight}`;
+  canvas.style.height = 'auto';
+
+  ctx.resetTransform?.();
+  ctx.scale(dpr, dpr);
+
+  return ctx;
+}
+~~~~~
+~~~~~typescript.new
+export function setupHiDpiCanvas(
+  canvas: HTMLCanvasElement,
+  logicalWidth: number,
+  logicalHeight: number,
+): CanvasRenderingContext2D | null {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  canvas.width = Math.round(logicalWidth * dpr);
+  canvas.height = Math.round(logicalHeight * dpr);
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.maxWidth = '100%';
+  canvas.style.aspectRatio = `${logicalWidth} / ${logicalHeight}`;
+
+  ctx.resetTransform?.();
+  ctx.scale(dpr, dpr);
+
+  return ctx;
+}
+~~~~~
+
+#### Acts 2: 修复 `PointClickCanvas.tsx` 包装层确保 100% 撑满
+
+~~~~~act
+patch_file
+src/components/common/PointClickCanvas.tsx
+~~~~~
+~~~~~typescript.old
+export function PointClickCanvas({
+  canvasSize,
+  gridPoints,
+  targetPoint,
+  userNearestPoint,
+  anchors = [],
+  showAnswer,
+  isHit = false,
+  disabled = false,
+  maxDisplayWidth = 'max-w-[380px] lg:max-w-[420px]',
+  customOverlayRender,
+  onCommitPoint,
+}: PointClickCanvasProps) {
+  const { t } = useTranslation();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const loupeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [isTouching, setIsTouching] = useState<boolean>(false);
+  const [loupePos, setLoupePos] = useState<{ x: number; y: number } | null>(null);
+  const [currentCanvasPos, setCurrentCanvasPos] = useState<Point | null>(null);
+~~~~~
+~~~~~typescript.new
+export function PointClickCanvas({
+  canvasSize,
+  gridPoints,
+  targetPoint,
+  userNearestPoint,
+  anchors = [],
+  showAnswer,
+  isHit = false,
+  disabled = false,
+  maxDisplayWidth = 'w-full h-full aspect-square',
+  customOverlayRender,
+  onCommitPoint,
+}: PointClickCanvasProps) {
+  const { t } = useTranslation();
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const loupeCanvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+  const [isTouching, setIsTouching] = useState<boolean>(false);
+  const [loupePos, setLoupePos] = useState<{ x: number; y: number } | null>(null);
+  const [currentCanvasPos, setCurrentCanvasPos] = useState<Point | null>(null);
+~~~~~
+
+~~~~~act
+patch_file
+src/components/common/PointClickCanvas.tsx
+~~~~~
+~~~~~typescript.old
+  return (
+    <div
+      ref={containerRef}
+      className={`relative inline-block w-full ${maxDisplayWidth} select-none`}
+    >
+      <canvas
+        ref={canvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={t('shell.pointGridAria')}
+        className={`w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all ${
+          disabled || showAnswer
+            ? 'cursor-default'
+            : hoverPoint
+              ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+        }`}
+      />
+~~~~~
+~~~~~typescript.new
+  return (
+    <div
+      ref={containerRef}
+      className={`relative block ${maxDisplayWidth} select-none`}
+    >
+      <canvas
+        ref={canvasRef}
+        width={canvasSize}
+        height={canvasSize}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+        }}
+        tabIndex={0}
+        role="button"
+        aria-label={t('shell.pointGridAria')}
+        className={`w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all block ${
+          disabled || showAnswer
+            ? 'cursor-default'
+            : hoverPoint
+              ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
+              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+        }`}
+      />
+~~~~~
+
+#### Acts 3: 优化 `StarCanvas.tsx` 与 `VertexFittingView.tsx` 双卡片对称属性
+
+~~~~~act
+patch_file
+src/packs/star/views/StarCanvas.tsx
+~~~~~
+~~~~~typescript.old
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
+      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <canvas
+          ref={leftCanvasRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+        />
+      </div>
+
+      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.hitResult.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+      </div>
+    </div>
+  );
+~~~~~
+~~~~~typescript.new
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <canvas
+          ref={leftCanvasRef}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+        />
+      </div>
+
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.hitResult.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+      </div>
+    </div>
+  );
+~~~~~
 
 ~~~~~act
 patch_file
 src/packs/negative_space/components/VertexFittingView.tsx
 ~~~~~
 ~~~~~typescript.old
-import { Columns } from 'lucide-preact';
-import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { useTranslation } from '../../../core/i18n';
-import type { Point } from '../../../types';
-import {
-  FITTING_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
-
-interface VertexFittingViewProps {
-  question: NegativeSpaceQuestionData;
-  showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (clickPoint: Point) => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function VertexFittingView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: VertexFittingViewProps) {
-  const { t } = useTranslation();
-  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    if (!question.vertices) return;
-    drawPolygonCanvas({
-      canvas: leftFittingRef.current,
-      vertices: question.vertices,
-      size: FITTING_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
-    });
-  }, [question.vertices]);
-
-  // 自定义绘制截断正形与参考边框
-  const handleCustomOverlayRender = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
-      if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
-        ctx.beginPath();
-        ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
-        for (let i = 1; i < question.truncatedVertices.length; i++) {
-          ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = '#0F172A';
-        ctx.fill();
-        ctx.strokeStyle = '#1E293B';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      if (showAnswer && question.vertices) {
-        ctx.beginPath();
-        ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
-        for (let i = 1; i < question.vertices.length; i++) {
-          ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    },
-    [question.truncatedVertices, question.vertices, showAnswer],
-  );
-
-  return (
-    <QuestionCardShell
-      hintText={t('packs.negative_space.views.vertexHint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-4xl"
-    >
-      <DualViewportContainer
-        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
-        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
-        leftContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <canvas
-              ref={leftFittingRef}
-              width={FITTING_CANVAS_SIZE}
-              height={FITTING_CANVAS_SIZE}
-              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
-            />
-          </div>
-        }
-        rightContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <PointClickCanvas
-              canvasSize={FITTING_CANVAS_SIZE}
-              gridPoints={question.distractorPoints || []}
-              targetPoint={question.targetPoint}
-              userNearestPoint={userAnswer?.nearestGridPoint}
-              showAnswer={showAnswer}
-              isHit={userAnswer?.isHit}
-              disabled={disabled}
-              maxDisplayWidth="max-w-[300px]"
-              customOverlayRender={handleCustomOverlayRender}
-              onCommitPoint={onAnswer}
-            />
-          </div>
-        }
-      />
-    </QuestionCardShell>
-  );
-}
-~~~~~
-~~~~~typescript.new
-import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import type { Point } from '../../../types';
-import {
-  FITTING_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
-
-interface VertexFittingViewProps {
-  question: NegativeSpaceQuestionData;
-  showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (clickPoint: Point) => void;
-  disabled?: boolean;
-}
-
-export function VertexFittingView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-}: VertexFittingViewProps) {
-  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    if (!question.vertices) return;
-    drawPolygonCanvas({
-      canvas: leftFittingRef.current,
-      vertices: question.vertices,
-      size: FITTING_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
-    });
-  }, [question.vertices]);
-
-  // 自定义绘制截断正形与参考边框
-  const handleCustomOverlayRender = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
-      if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
-        ctx.beginPath();
-        ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
-        for (let i = 1; i < question.truncatedVertices.length; i++) {
-          ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = '#0F172A';
-        ctx.fill();
-        ctx.strokeStyle = '#1E293B';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      if (showAnswer && question.vertices) {
-        ctx.beginPath();
-        ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
-        for (let i = 1; i < question.vertices.length; i++) {
-          ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
-        ctx.lineWidth = 2.5;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    },
-    [question.truncatedVertices, question.vertices, showAnswer],
-  );
-
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
       <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
@@ -259,10 +314,38 @@ export function VertexFittingView({
       </div>
     </div>
   );
-}
+~~~~~
+~~~~~typescript.new
+  return (
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <canvas
+          ref={leftFittingRef}
+          width={FITTING_CANVAS_SIZE}
+          height={FITTING_CANVAS_SIZE}
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+        />
+      </div>
+
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <PointClickCanvas
+          canvasSize={FITTING_CANVAS_SIZE}
+          gridPoints={question.distractorPoints || []}
+          targetPoint={question.targetPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          customOverlayRender={handleCustomOverlayRender}
+          onCommitPoint={onAnswer}
+        />
+      </div>
+    </div>
+  );
 ~~~~~
 
 ### 下一步建议
 
-1. **类型与格式检查**：运行 `npm run check` 确保无任何语法与样式报错。
-2. **多卡片对比测试**：分别打开「负形边界反切定点」与「单锚点/双锚点寻星」，验证两者的左右视口卡片在尺寸、内边距、正方形比例及响应式缩放上均保持完全一致。
+1. **类型与语法检查**：在终端运行 `npm run check`，验证无报错。
+2. **多端实际渲染验证**：打开「负形边界反切定点」和「单锚点模式」，在不同窗口缩放下确认左右两块区域（包括外部卡片与内部画布）在物理尺寸上完全 1:1 对等。

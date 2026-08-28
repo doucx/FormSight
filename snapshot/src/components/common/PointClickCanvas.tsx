@@ -31,7 +31,7 @@ export function PointClickCanvas({
   showAnswer,
   isHit = false,
   disabled = false,
-  maxDisplayWidth = 'max-w-[380px] lg:max-w-[420px]',
+  maxDisplayWidth = 'w-full h-full aspect-square',
   customOverlayRender,
   onCommitPoint,
 }: PointClickCanvasProps) {
@@ -261,7 +261,7 @@ export function PointClickCanvas({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-block w-full ${maxDisplayWidth} select-none`}
+      className={`relative block ${maxDisplayWidth} select-none`}
     >
       <canvas
         ref={canvasRef}
@@ -280,7 +280,7 @@ export function PointClickCanvas({
         tabIndex={0}
         role="button"
         aria-label={t('shell.pointGridAria')}
-        className={`w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all ${
+        className={`w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all block ${
           disabled || showAnswer
             ? 'cursor-default'
             : hoverPoint
