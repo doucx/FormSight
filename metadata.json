@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787900345.487106, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat: 实现全系统双语国际化支持与 i18n 自动化检查门禁", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787900415.2091463, "duration_ms": 0}}
