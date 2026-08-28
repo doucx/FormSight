@@ -45,6 +45,7 @@ export interface AbstractionSettings extends BaseModuleSettings {
 }
 
 export interface GlobalSettings {
+  locale: string;
   idleTimeout: number;
   soundEnabled: boolean;
   sliderHitMargin: number;
@@ -102,6 +103,7 @@ function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
 
 export const DEFAULT_SETTINGS: UserSettings = {
   global: {
+    locale: 'zh-CN',
     idleTimeout: 60,
     soundEnabled: true,
     sliderHitMargin: 12,

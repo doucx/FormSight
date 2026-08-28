@@ -130,6 +130,8 @@
   "settings": {
     "title": "全局偏好设置",
     "preferences": "系统偏好",
+    "languageTitle": "系统界面语言",
+    "languageDesc": "切换应用全局显示语言 (Language)",
     "soundTitle": "训练音效反馈",
     "soundDesc": "答对清脆升调提示，答错低沉提示",
     "hintsTitle": "显示任务文字指引",

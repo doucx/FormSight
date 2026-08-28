@@ -5,6 +5,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { PlanEditorModal } from './components/plan/PlanEditorModal';
+import { i18n, useTranslation } from './core/i18n';
 import { registry } from './core/registry';
 import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
 import { useTodayStats } from './hooks/useTodayStats';
@@ -22,6 +23,7 @@ import { Home } from './views/Home';
 import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
+  const { t, locale } = useTranslation();
   const { route, navigate } = useHashRoute();
   const { todayStats, refreshTodayStats } = useTodayStats();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
@@ -61,20 +63,22 @@ export function App() {
   }, [refreshTodayStats]);
 
   useEffect(() => {
+    i18n.init();
     refreshProfiles();
   }, [refreshProfiles]);
 
   useEffect(() => {
     if (route.type === 'home') {
       lastHomeRouteRef.current = route;
-      document.title = 'FormSight - 视觉造型构图与色彩感知训练系统';
+      document.title = `${t('common.appName')} - ${t('common.appSubtitle')}`;
     } else if (route.type === 'plan-train') {
-      document.title = `${trainingPlan.name || '今日训练流'} - FormSight`;
+      document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
-      document.title = `${card?.title || '训练'} - FormSight`;
+      const cardTitle = card ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title : t('shell.training');
+      document.title = `${cardTitle} - ${t('common.appName')}`;
     }
-  }, [route, trainingPlan.name]);
+  }, [route, trainingPlan.name, locale, t]);
 
   const handleSelectPlanOnHome = useCallback(
     (planId: string) => {
