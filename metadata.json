@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 推进 7 大领域扩展包（Packs）自包含与联邦本地化改造", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787896699.9441385, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 宿主层解耦、类型系统净化与声明式设置聚合", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787896794.815329, "duration_ms": 0}}
