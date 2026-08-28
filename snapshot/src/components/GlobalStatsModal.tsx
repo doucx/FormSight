@@ -299,7 +299,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               >
                 <option value="all">{t('stats.allModules')}</option>
 
-                <optgroup label="—— 扩展包 (Packs) ——">
+                <optgroup label={t('stats.optgroupPacks')}>
                   {packs.map((p) => {
                     const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
                     return (
@@ -310,7 +310,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   })}
                 </optgroup>
 
-                <optgroup label="—— 基础视觉域 (Domains) ——">
+                <optgroup label={t('stats.optgroupDomains')}>
                   {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
                     <option key={`domain:${domain}`} value={`domain:${domain}`}>
                       {t(DOMAIN_TAGS[domain].i18nKey)}
@@ -318,7 +318,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   ))}
                 </optgroup>
 
-                <optgroup label="—— 认知推演路径 (Paths) ——">
+                <optgroup label={t('stats.optgroupPaths')}>
                   {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((path) => (
                     <option key={`path:${path}`} value={`path:${path}`}>
                       {t(PATH_TAGS[path].i18nKey)}
@@ -326,7 +326,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   ))}
                 </optgroup>
 
-                <optgroup label="—— 核心心智抗性 (Challenges) ——">
+                <optgroup label={t('stats.optgroupChallenges')}>
                   {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((ch) => (
                     <option key={`challenge:${ch}`} value={`challenge:${ch}`}>
                       {t(CHALLENGE_TAGS[ch].i18nKey)}
@@ -334,7 +334,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   ))}
                 </optgroup>
 
-                <optgroup label="—— 具体训练模块 (Cards) ——">
+                <optgroup label={t('stats.optgroupCards')}>
                   {allCards.map((card) => {
                     const cardTitle =
                       t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
@@ -379,7 +379,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.today.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
                 </div>
                 <div className="text-xs text-indigo-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
@@ -393,7 +393,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.week.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
                 </div>
                 <div className="text-xs text-emerald-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
@@ -407,7 +407,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.year.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
                 </div>
                 <div className="text-xs text-amber-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
@@ -421,10 +421,10 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.allTime.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
                 </div>
                 <div className="text-xs text-slate-500 font-semibold mt-1">
-                  打卡 {Object.keys(dailyData).length} 天
+                  {t('stats.streakDays', { days: Object.keys(dailyData).length })}
                 </div>
               </div>
             </div>
@@ -464,8 +464,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                       </span>
                     </div>
                     <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                      <span>已练 {pm.total} 题</span>
-                      <span>{pm.cardCount} 模块</span>
+                      <span>{t('stats.practicedTrials', { count: pm.total })}</span>
+                      <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
                     </div>
                   </div>
                 ))}
@@ -507,8 +507,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                       </span>
                     </div>
                     <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                      <span>已练 {cm.total} 题</span>
-                      <span>{cm.cardCount} 模块</span>
+                      <span>{t('stats.practicedTrials', { count: cm.total })}</span>
+                      <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
                     </div>
                   </div>
                 ))}
@@ -533,7 +533,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   {heatmapData.map((day) => (
                     <div
                       key={day.date}
-                      title={`${day.date} : 训练了 ${day.count} 题`}
+                      title={t('stats.heatmapTooltip', { date: day.date, count: day.count })}
                       className={`w-3.5 h-3.5 rounded-[3px] transition-transform hover:scale-125 cursor-help ${getHeatmapColor(
                         day.count,
                       )}`}

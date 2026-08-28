@@ -50,7 +50,7 @@ export function PlanStageList({
                   onClick={() => onBatchUpdateTrials(num)}
                   className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
                 >
-                  {num}题
+                  {num}{t('common.trialsUnit')}
                 </button>
               ))}
             </div>
@@ -126,7 +126,7 @@ export function PlanStageList({
                       disabled={idx === 0}
                       onClick={() => onMoveItem(idx, 'up')}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title="上移"
+                      title={t('plan.moveUpTitle')}
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
                     </button>
@@ -135,7 +135,7 @@ export function PlanStageList({
                       disabled={idx === currentPlan.items.length - 1}
                       onClick={() => onMoveItem(idx, 'down')}
                       className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title="下移"
+                      title={t('plan.moveDownTitle')}
                     >
                       <ArrowDown className="w-3.5 h-3.5" />
                     </button>
@@ -143,7 +143,7 @@ export function PlanStageList({
                       type="button"
                       onClick={() => onRemoveItem(item.id)}
                       className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1"
-                      title="移除"
+                      title={t('plan.removeTitle')}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -87,10 +87,10 @@ export function App() {
       const target = setActivePlan(planId);
       if (target) {
         setTrainingPlan(target);
-        showToast(`已切换至【${target.name}】`, 'info');
+        showToast(t('common.switchedPlanToast', { name: target.name }), 'info');
       }
     },
-    [showToast],
+    [showToast, t],
   );
 
   const activeSettingsCard = activeSettingsCardId
@@ -140,7 +140,7 @@ export function App() {
           if (!profilesLoaded) {
             return (
               <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold">
-                正在同步能力层阶与训练数据...
+                {t('common.syncingProfiles')}
               </div>
             );
           }
@@ -210,7 +210,7 @@ export function App() {
             saveTrainingPlan(newPlan);
             setTrainingPlan(newPlan);
             refreshProfiles();
-            showToast('训练计划已成功更新', 'success');
+            showToast(t('common.planUpdatedToast'), 'success');
           }}
         />
       )}

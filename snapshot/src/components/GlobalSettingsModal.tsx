@@ -58,7 +58,7 @@ export function GlobalSettingsModal({
     setSettings(updated);
     setLocale(newLocale);
     onDataChanged();
-    showToast(newLocale === 'zh-CN' ? '已切换至简体中文' : 'Switched to English', 'success');
+    showToast(t('settings.switchedLocaleToast'), 'success');
   };
 
   const handleToggleSound = () => {
@@ -128,15 +128,10 @@ export function GlobalSettingsModal({
       a.download = `formsight_data_${dateStr}_${timeStr}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast(
-        locale === 'zh-CN'
-          ? '全量数据已流式导出为 JSON 备份'
-          : 'Backup exported streamingly as JSON',
-        'success',
-      );
+      showToast(t('settings.exportSuccessToast'), 'success');
     } catch (e) {
       console.error('Export failed:', e);
-      showToast(locale === 'zh-CN' ? '导出失败，请重试' : 'Export failed, please retry', 'error');
+      showToast(t('settings.exportFailToast'), 'error');
     } finally {
       setIsExporting(false);
     }
@@ -149,21 +144,11 @@ export function GlobalSettingsModal({
       const text = await file.text();
       const success = await importAllData(text);
       if (success) {
-        showToast(
-          locale === 'zh-CN'
-            ? '数据已成功分批导入并合并！'
-            : 'Data imported and merged successfully!',
-          'success',
-        );
+        showToast(t('settings.importSuccessToast'), 'success');
         onDataChanged();
         onClose();
       } else {
-        showToast(
-          locale === 'zh-CN'
-            ? '导入失败，备份文件格式不匹配'
-            : 'Import failed, invalid backup file format',
-          'error',
-        );
+        showToast(t('settings.importInvalidToast'), 'error');
       }
     }
   };
@@ -172,23 +157,18 @@ export function GlobalSettingsModal({
     setShowPruneConfirm(false);
     try {
       const res = await pruneColdRecords(90);
-      showToast(
-        locale === 'zh-CN'
-          ? `已修剪 ${res.prunedCount} 条 90 天前记录中的多边形/点阵细节，释放了海量存储空间！`
-          : `Pruned ${res.prunedCount} cold records older than 90 days, storage reclaimed!`,
-        'success',
-      );
+      showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
       onDataChanged();
     } catch (err) {
       console.error('Prune failed:', err);
-      showToast(locale === 'zh-CN' ? '修剪操作失败' : 'Prune operation failed', 'error');
+      showToast(t('settings.pruneFailToast'), 'error');
     }
   };
 
   const handleClearDataConfirmed = async () => {
     setShowClearConfirm(false);
     await clearAllData();
-    showToast(locale === 'zh-CN' ? '所有训练数据已清空' : 'All training data cleared', 'info');
+    showToast(t('settings.clearDataSuccessToast'), 'info');
     onDataChanged();
     onClose();
   };
@@ -196,12 +176,7 @@ export function GlobalSettingsModal({
   const handleResetPlansConfirmed = () => {
     setShowResetPlansConfirm(false);
     resetPlansToDefault();
-    showToast(
-      locale === 'zh-CN'
-        ? '所有训练计划已恢复为官方预设推荐'
-        : 'Plans restored to official presets',
-      'success',
-    );
+    showToast(t('settings.resetPlansSuccessToast'), 'success');
     onDataChanged();
   };
 
@@ -446,7 +421,7 @@ export function GlobalSettingsModal({
       <ConfirmModal
         isOpen={showPruneConfirm}
         title={t('settings.pruneTitle')}
-        message="确定要清理 90 天前记录中的多边形/点阵冗余图形细节吗？此操作将大幅压缩存储空间，且完全保留您的总做答数、打卡日历、正确率与能力层阶！"
+        message={t('settings.pruneConfirmMessage')}
         confirmText={t('settings.pruneBtn')}
         isDangerous={false}
         onConfirm={handlePruneConfirmed}
@@ -456,7 +431,7 @@ export function GlobalSettingsModal({
       <ConfirmModal
         isOpen={showResetPlansConfirm}
         title={t('settings.resetPlansTitle')}
-        message="确定要清除所有自定义计划并恢复官方默认推荐训练流吗？此操作不会影响您的历史答题数据与能力层阶。"
+        message={t('settings.resetPlansConfirmMessage')}
         confirmText={t('settings.resetPlansBtn')}
         isDangerous={false}
         onConfirm={handleResetPlansConfirmed}
@@ -466,7 +441,7 @@ export function GlobalSettingsModal({
       <ConfirmModal
         isOpen={showClearConfirm}
         title={t('settings.clearDataTitle')}
-        message="确定要清空 FormSight 所有训练日志、历史会话与能力评级数据吗？此操作无法撤销！"
+        message={t('settings.clearDataConfirmMessage')}
         confirmText={t('settings.clearDataBtn')}
         isDangerous={true}
         onConfirm={handleClearDataConfirmed}

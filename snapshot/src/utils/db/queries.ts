@@ -189,14 +189,19 @@ export async function getTrainingTimeMs(): Promise<number> {
   return totalMs;
 }
 
-export function formatTotalTime(ms: number): string {
+export function formatTotalTime(ms: number, t?: (key: string) => string): string {
+  const tr = t || ((k: string) => (k === 'common.zeroTime' ? '0天0小时0分钟' : k));
   if (!ms || Number.isNaN(ms) || ms <= 0) {
-    return '0天0小时0分钟';
+    return tr('common.zeroTime');
   }
   const totalMinutes = Math.floor(ms / (1000 * 60));
   const days = Math.floor(totalMinutes / (60 * 24));
   const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
   const minutes = totalMinutes % 60;
 
-  return `${days}天${hours}小时${minutes}分钟`;
+  const dUnit = t ? t('common.daysUnit') : '天';
+  const hUnit = t ? t('common.hoursUnit') : '小时';
+  const mUnit = t ? t('common.minutesUnit') : '分钟';
+
+  return `${days}${dUnit}${hours}${hUnit}${minutes}${mUnit}`;
 }
