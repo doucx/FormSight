@@ -247,8 +247,8 @@ class SystemDomainRegistry {
       if (kw) {
         results = results.filter(
           (c) =>
-            (c.title && c.title.toLowerCase().includes(kw)) ||
-            (c.desc && c.desc.toLowerCase().includes(kw)) ||
+            c.title?.toLowerCase().includes(kw) ||
+            c.desc?.toLowerCase().includes(kw) ||
             c.id.toLowerCase().includes(kw),
         );
       }
