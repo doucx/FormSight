@@ -1,10 +1,6 @@
-import { Columns } from 'lucide-preact';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { useTranslation } from '../../../core/i18n';
 import type { Point } from '../../../types';
 import {
   FITTING_CANVAS_SIZE,
@@ -27,9 +23,7 @@ export function VertexFittingView({
   userAnswer,
   onAnswer,
   disabled = false,
-  showCanvasHints = true,
 }: VertexFittingViewProps) {
-  const { t } = useTranslation();
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -78,42 +72,30 @@ export function VertexFittingView({
   );
 
   return (
-    <QuestionCardShell
-      hintText={t('packs.negative_space.views.vertexHint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-4xl"
-    >
-      <DualViewportContainer
-        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
-        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
-        leftContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <canvas
-              ref={leftFittingRef}
-              width={FITTING_CANVAS_SIZE}
-              height={FITTING_CANVAS_SIZE}
-              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
-            />
-          </div>
-        }
-        rightContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
-            <PointClickCanvas
-              canvasSize={FITTING_CANVAS_SIZE}
-              gridPoints={question.distractorPoints || []}
-              targetPoint={question.targetPoint}
-              userNearestPoint={userAnswer?.nearestGridPoint}
-              showAnswer={showAnswer}
-              isHit={userAnswer?.isHit}
-              disabled={disabled}
-              maxDisplayWidth="max-w-[300px]"
-              customOverlayRender={handleCustomOverlayRender}
-              onCommitPoint={onAnswer}
-            />
-          </div>
-        }
-      />
-    </QuestionCardShell>
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
+      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <canvas
+          ref={leftFittingRef}
+          width={FITTING_CANVAS_SIZE}
+          height={FITTING_CANVAS_SIZE}
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+        />
+      </div>
+
+      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+        <PointClickCanvas
+          canvasSize={FITTING_CANVAS_SIZE}
+          gridPoints={question.distractorPoints || []}
+          targetPoint={question.targetPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          customOverlayRender={handleCustomOverlayRender}
+          onCommitPoint={onAnswer}
+        />
+      </div>
+    </div>
   );
 }
