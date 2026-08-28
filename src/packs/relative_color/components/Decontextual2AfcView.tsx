@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-preact';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface Decontextual2AfcViewProps {
@@ -20,6 +21,7 @@ export function Decontextual2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: Decontextual2AfcViewProps) {
+  const { t } = useTranslation();
   const isAHit = question.largerPhysicalSide === 'A';
   const isBHit = question.largerPhysicalSide === 'B';
 
@@ -31,7 +33,7 @@ export function Decontextual2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText="穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」"
+      hintText={t('packs.relative_color.views.decontextualHint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -39,11 +41,15 @@ export function Decontextual2AfcView({
       disabled={disabled}
       onAnswer={onSelectChoice}
       optionA={{
-        title: '区域 A',
+        title: t('common.areaA'),
         isCorrect: isAHit,
         badge: isAHit
-          ? `物理明度更高 (V: ${question.centerColorA?.[2]}%)`
-          : `物理更暗 (V: ${question.centerColorA?.[2]}%)`,
+          ? t('packs.relative_color.views.physicallyBrighter', {
+              v: question.centerColorA?.[2] ?? 50,
+            })
+          : t('packs.relative_color.views.physicallyDarker', {
+              v: question.centerColorA?.[2] ?? 50,
+            }),
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
@@ -54,11 +60,15 @@ export function Decontextual2AfcView({
         ),
       }}
       optionB={{
-        title: '区域 B',
+        title: t('common.areaB'),
         isCorrect: isBHit,
         badge: isBHit
-          ? `物理明度更高 (V: ${question.centerColorB?.[2]}%)`
-          : `物理更暗 (V: ${question.centerColorB?.[2]}%)`,
+          ? t('packs.relative_color.views.physicallyBrighter', {
+              v: question.centerColorB?.[2] ?? 50,
+            })
+          : t('packs.relative_color.views.physicallyDarker', {
+              v: question.centerColorB?.[2] ?? 50,
+            }),
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"

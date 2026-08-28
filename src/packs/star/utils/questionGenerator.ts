@@ -1,6 +1,7 @@
-import type { Point, QuestionData, TrainingMode } from '../../../types';
+import type { Point } from '../../../types';
 import { generateBipolarGridPoints, generatePolarGridPoints } from './gridGenerators';
 import { CX, CY, DEFAULT_GRID_DIM, rotatePoint } from './pointMath';
+import type { QuestionData, TrainingMode } from './types';
 
 export interface QuestionGenerateOptions {
   targetingMode?: 'off' | 'manual';

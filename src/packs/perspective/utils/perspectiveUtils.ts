@@ -482,7 +482,7 @@ export function generatePerspectiveQuestion(
     if (isMigration) {
       // 连续随机比例 (8% ~ 92% 之间，保留一位小数百分比精度)
       ratio = Math.round((Math.random() * 0.84 + 0.08) * 1000) / 1000;
-      ratioName = `${(ratio * 100).toFixed(1)}% 处`;
+      ratioName = `${(ratio * 100).toFixed(1)}%`;
     } else {
       const preset = PROPORTION_PRESETS[Math.floor(Math.random() * PROPORTION_PRESETS.length)];
       ratio = preset.ratio;

@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
+import { useTranslation } from '../../../core/i18n';
 import {
   PERSPECTIVE_2AFC_SIZE,
   type PerspectiveHitResult,
@@ -24,13 +25,14 @@ export function GestaltContinuation2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: GestaltContinuation2AfcViewProps) {
+  const { t } = useTranslation();
   const isAHit = question.correctChoice === 'A';
   const isBHit = question.correctChoice === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText="观察穿入线段，二选一辨识哪一侧保持了绝对真实的贯穿延伸 (键 1 / 2)"
+      hintText={t('packs.perspective.views.gestaltHint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -38,7 +40,7 @@ export function GestaltContinuation2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: '选项 A',
+        title: t('common.optionA'),
         isCorrect: isAHit,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
@@ -61,7 +63,7 @@ export function GestaltContinuation2AfcView({
         ),
       }}
       optionB={{
-        title: '选项 B',
+        title: t('common.optionB'),
         isCorrect: isBHit,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">

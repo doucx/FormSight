@@ -1,4 +1,5 @@
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { i18n } from '../../core/i18n';
 import type { UnifiedTrialRecord } from '../db/index';
 
 /**
@@ -184,7 +185,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   ctx.fillStyle = '#94A3B8';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('偏大(+)', padding.left, padding.top - 10);
+  ctx.fillText(i18n.t('stats.biasPositive'), padding.left, padding.top - 10);
   ctx.textAlign = 'right';
-  ctx.fillText('偏小(-)', width - padding.right, height - padding.bottom - 4);
+  ctx.fillText(i18n.t('stats.biasNegative'), width - padding.right, height - padding.bottom - 4);
 }

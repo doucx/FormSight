@@ -1,6 +1,7 @@
 import { ArrowRight, Shuffle } from 'lucide-preact';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface VectorShiftViewProps {
@@ -25,6 +26,7 @@ export function VectorShiftView({
   disabled = false,
   showCanvasHints = true,
 }: VectorShiftViewProps) {
+  const { t } = useTranslation();
   const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
   const activeColor = options?.[selectedIndex] ?? targetD;
 
@@ -40,7 +42,7 @@ export function VectorShiftView({
     const hexVal = hsvToHex(...opt);
     return {
       key: `vector-shift-opt-${idx}-${hexVal}`,
-      title: `候选 ${idx + 1}`,
+      title: t('common.candidateN', { num: idx + 1 }),
       value: opt,
       isCorrect: isTarget,
       content: (
@@ -55,7 +57,7 @@ export function VectorShiftView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText="观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
+      hintText={t('packs.relative_color.views.vectorPrompt')}
       hintIcon={Shuffle}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -65,7 +67,7 @@ export function VectorShiftView({
       showAnswer={showAnswer}
       disabled={disabled}
       submitMode="button"
-      submitButtonText="确认提交 (Space)"
+      submitButtonText={t('common.confirmSpace')}
       onSelectIndex={(idx) => onSelectIndex(idx)}
       onAnswer={() => onSubmit()}
       preview={

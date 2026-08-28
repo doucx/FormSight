@@ -1,0 +1,79 @@
+{
+  "meta": {
+    "title": "绝对色感",
+    "subTitle": "Color Recognition",
+    "desc": "拆解 HSV 色彩空间，通过色相 (Hue)、明度 (Value) 与饱和度 (Saturation) 的分级递进识别，全面建立微小色彩差异感知力。"
+  },
+  "cards": {
+    "color_hue": {
+      "title": "色相 (Hue)",
+      "desc": "识别颜色在色相环上的具体角度 (0°~360°)",
+      "instruction": "定位上方色块在 360° 色相环上的精准角度",
+      "badge": "色相"
+    },
+    "color_val": {
+      "title": "明度 (Value)",
+      "desc": "已知色相，评估颜色的素描明暗程度 (0%~100%)",
+      "instruction": "评估上方色块的素描明度深浅比例 (0%~100%)",
+      "badge": "明度"
+    },
+    "color_sat": {
+      "title": "饱和度 (Sat)",
+      "desc": "已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)",
+      "instruction": "评估上方色块的鲜艳纯度比例 (0%~100%)",
+      "badge": "饱和度"
+    },
+    "color_all": {
+      "title": "综合拾色 (Match)",
+      "desc": "同时调整色相、饱和度与明度，逼近真理色彩",
+      "instruction": "同时调制色相、饱和度与明度轨，使右侧色块逼近左侧目标色",
+      "badge": "综合拾色"
+    }
+  },
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间",
+    "targetingTitle": "色相弱点专项靶向强化",
+    "targetingSubTitle": "选择需要靶向强化的色相扇区：",
+    "enableHoverColorPreviewTitle": "综合拾色悬停颜色实时联动",
+    "enableHoverColorPreviewDesc": "鼠标悬停滑块时右侧色块实时跟随试探预览"
+  },
+  "sectors": {
+    "red": "红 (0°-30°)",
+    "orange": "橙 (30°-60°)",
+    "yellow": "黄 (60°-90°)",
+    "yellowGreen": "黄绿 (90°-120°)",
+    "green": "绿 (120°-150°)",
+    "cyanGreen": "青绿 (150°-180°)",
+    "cyan": "青 (180°-210°)",
+    "blue": "蓝 (210°-240°)",
+    "blueViolet": "蓝紫 (240°-270°)",
+    "violet": "紫 (270°-300°)",
+    "magenta": "品红 (300°-330°)",
+    "rose": "紫红 (330°-360°)"
+  },
+  "analytics": {
+    "hueBias": {
+      "tabLabel": "色相偏差度",
+      "title": "色相偏差度分析",
+      "subTitle": "横轴色相与纵轴偏差分布，揭示系统性偏色倾向",
+      "cardTitle": "系统性偏色倾向诊断",
+      "avgSignedBias": "全局平均偏转角:",
+      "clockwise": "+{{val}}° (顺时针)",
+      "counterClockwise": "{{val}}° (逆时针)",
+      "maxBiasSector": "最大偏差扇区：",
+      "avgBias": "平均偏差:",
+      "needMoreTrials": "样本量达到每个扇区至少 3 题后可生成精准扇区偏向诊断。",
+      "avgAbsError": "平均绝对角度误差:"
+    },
+    "hueRing": {
+      "tabLabel": "12 色相敏感度",
+      "title": "12 色相敏感度分析",
+      "subTitle": "洞察你对 OKLab 色彩空间 12 色相扇区的敏感度与正确率分布",
+      "cardTitle": "色相盲区诊断",
+      "weakestHint": "你在 {{sector}} 色相上辨识度最低：",
+      "accuracyRate": "{{accuracy}}% 正确率",
+      "needMoreTrials": "需每个色相扇区完成至少 3 题才能生成弱点诊断。"
+    }
+  }
+}

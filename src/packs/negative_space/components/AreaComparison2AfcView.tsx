@@ -2,6 +2,7 @@ import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import { useTranslation } from '../../../core/i18n';
 import {
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,
@@ -24,6 +25,7 @@ export function AreaComparison2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AreaComparison2AfcViewProps) {
+  const { t } = useTranslation();
   const largerSide = question.largerSide;
   const isAHit = largerSide === 'A';
   const isBHit = largerSide === 'B';
@@ -31,7 +33,7 @@ export function AreaComparison2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText="判别哪一侧的白色留白 (负形) 面积更大 (键 1 / 2)"
+      hintText={t('packs.negative_space.views.areaHint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -39,9 +41,9 @@ export function AreaComparison2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: '区域 A',
+        title: t('common.areaA'),
         isCorrect: isAHit,
-        badge: `留白 ${question.negRatioA}%`,
+        badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioA ?? 50 }),
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
             <CanvasView
@@ -63,9 +65,9 @@ export function AreaComparison2AfcView({
         ),
       }}
       optionB={{
-        title: '区域 B',
+        title: t('common.areaB'),
         isCorrect: isBHit,
-        badge: `留白 ${question.negRatioB}%`,
+        badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioB ?? 50 }),
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
             <CanvasView

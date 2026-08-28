@@ -1,4 +1,5 @@
 import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 
@@ -23,6 +24,7 @@ export function PlanSummaryModal({
   onClose,
   onRestart,
 }: PlanSummaryModalProps) {
+  const { t } = useTranslation();
   const allHistory = stageResults.flatMap((s) => s.history);
   const totalTrials = allHistory.length;
   const hitCount = allHistory.filter((h) => h.isHit).length;
@@ -60,9 +62,11 @@ export function PlanSummaryModal({
               <Award className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">今日训练流总结</h2>
+              <h2 className="text-xl font-black text-slate-800 tracking-tight">
+                {t('common.planSummaryTitle')}
+              </h2>
               <p className="text-xs text-slate-400">
-                {planName} • 完成共 {stageResults.length} 个训练阶段
+                {t('common.planSummaryCompleted', { name: planName, count: stageResults.length })}
               </p>
             </div>
           </div>
@@ -73,7 +77,7 @@ export function PlanSummaryModal({
           <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Target className="w-3.5 h-3.5 text-indigo-500" />
-              综合正确率
+              {t('common.overallAccuracy')}
             </div>
             <div className="text-2xl font-black text-slate-800">{accuracy}%</div>
           </div>
@@ -81,7 +85,7 @@ export function PlanSummaryModal({
           <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-100 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-              总击中题数
+              {t('common.totalHits')}
             </div>
             <div className="text-2xl font-black text-slate-800">
               {hitCount} <span className="text-xs font-normal text-slate-400">/ {totalTrials}</span>
@@ -91,7 +95,7 @@ export function PlanSummaryModal({
           <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
-              总用时
+              {t('common.totalTimeSpent')}
             </div>
             <div className="text-2xl font-black text-slate-800 font-mono">
               {formatTime(totalElapsedSeconds)}
@@ -102,7 +106,7 @@ export function PlanSummaryModal({
         {/* 分阶段明细成果 */}
         <div className="space-y-2.5">
           <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-            阶段明细成绩
+            {t('common.stageBreakdown')}
           </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
@@ -115,6 +119,10 @@ export function PlanSummaryModal({
                   ? stage.history[stage.history.length - 1].levelAfter
                   : startLvl;
               const Icon = stage.card.icon;
+              const cardTitle =
+                t(`packs.${stage.card.packId}.cards.${stage.card.id}.title`) ||
+                stage.card.title ||
+                stage.card.id;
 
               return (
                 <div
@@ -129,9 +137,12 @@ export function PlanSummaryModal({
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-slate-800">{stage.card.title}</div>
+                      <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
                       <div className="text-[10px] text-slate-400">
-                        {stageHits}/{stage.history.length} 题正确
+                        {t('common.trialsCorrect', {
+                          hits: stageHits,
+                          total: stage.history.length,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -166,18 +177,18 @@ export function PlanSummaryModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95"
+            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <Home className="w-4 h-4" />
-            完成并返回主页
+            {t('common.completeAndReturnHome')}
           </button>
           <button
             type="button"
             onClick={onRestart}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
-            再练一遍此计划
+            {t('common.restartPlan')}
           </button>
         </div>
       </div>

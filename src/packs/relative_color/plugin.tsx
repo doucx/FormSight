@@ -16,15 +16,8 @@ export const relativeColorPlugin: TrainingPlugin<
   RelativeColorSettings
 > = {
   packId: 'relative_color',
-  title: '相对色感',
-  getModeBadge: (mode) =>
-    mode === 'LIGHTNESS_INDUCTION'
-      ? '明度反差补偿'
-      : mode === 'HUE_INDUCTION'
-        ? '补色残像调和'
-        : mode === 'DECONTEXTUAL_2AFC'
-          ? '环境穿透判别'
-          : '色彩矢量迁移',
+  title: 'relative_color',
+  getModeBadge: (mode) => mode,
   generateQuestion: (mode, level) =>
     generateRelativeColorQuestion(mode as RelativeColorMode, level),
   evaluateAnswer: (userVal, q, mode) =>

@@ -1,6 +1,7 @@
 import { Eye } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import { useTranslation } from '../../../core/i18n';
 import {
   ANGLE_CANVAS_SIZE,
   type AngleHitResult,
@@ -29,6 +30,7 @@ export function AngleEstimationView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: AngleEstimationViewProps) {
+  const { t } = useTranslation();
   const targetVal = question.targetAngleDeg ?? 90;
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
@@ -37,11 +39,11 @@ export function AngleEstimationView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText="观察两射线夹角，调制滑块逼近精准度数 (0°~180°)"
+      hintText={t('packs.angle.views.estimationHint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label="夹角估算值:"
+      label={t('packs.angle.views.estimationLabel')}
       max={180}
       step={0.5}
       initialValue={90}
@@ -75,10 +77,14 @@ export function AngleEstimationView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              绝对真理值: <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
+              {t('packs.angle.views.trueAngle')}{' '}
+              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              误差: {Math.round(Math.abs(userVal - targetVal) * 10) / 10}° (容错: ±{tolerance}°)
+              {t('packs.angle.views.errorInfo', {
+                error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
+                tolerance,
+              })}
             </span>
           </div>
         ) : null

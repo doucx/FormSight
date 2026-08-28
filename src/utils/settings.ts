@@ -45,6 +45,7 @@ export interface AbstractionSettings extends BaseModuleSettings {
 }
 
 export interface GlobalSettings {
+  locale: string;
   idleTimeout: number;
   soundEnabled: boolean;
   sliderHitMargin: number;
@@ -67,30 +68,31 @@ export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
   blockSize: 10,
 };
 
-// 动态根据注册表中的卡片定义构建初始默认配置
+/**
+ * 纯粹基于 SystemDomainRegistry 中的卡片与 Pack 声明式定义聚合初始默认配置
+ * 零特例、零硬编码分支
+ */
 function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
   const cards: Record<string, BaseModuleSettings> = {};
   const allCards = registry.getAllCards();
 
   for (const card of allCards) {
-    const cardConfig: BaseModuleSettings = { ...DEFAULT_BASE_SETTINGS };
+    const pack = registry.getPack(card.packId);
+    const packCardDefaults = pack?.defaultCardSettings?.[card.id] || {};
 
-    // 如果卡片包含滑块交互，配置默认容错与外延感应
+    const cardConfig: BaseModuleSettings = {
+      ...DEFAULT_BASE_SETTINGS,
+      ...packCardDefaults,
+    };
+
+    // 若声明了连续调制滑块交互，注入默认滑块偏好（若 Pack 未显式覆盖）
     if (card.tags?.interaction?.includes('continuous_mod')) {
-      cardConfig.sliderHitMargin = 12;
-      cardConfig.showToleranceBand = true;
-    }
-
-    if (card.packId === 'star') {
-      cardConfig.gridSize = 3;
-      cardConfig.targetingMode = 'off';
-      cardConfig.manualTargetSectors = [];
-    } else if (card.id === 'color_hue') {
-      cardConfig.enableHoverColorPreview = true;
-      cardConfig.targetingMode = 'off';
-      cardConfig.manualTargetSectors = [];
-    } else if (card.id === 'color_all') {
-      cardConfig.enableHoverColorPreview = true;
+      if (cardConfig.sliderHitMargin === undefined) {
+        cardConfig.sliderHitMargin = 12;
+      }
+      if (cardConfig.showToleranceBand === undefined) {
+        cardConfig.showToleranceBand = true;
+      }
     }
 
     cards[card.id] = cardConfig;
@@ -101,6 +103,7 @@ function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
 
 export const DEFAULT_SETTINGS: UserSettings = {
   global: {
+    locale: 'zh-CN',
     idleTimeout: 60,
     soundEnabled: true,
     sliderHitMargin: 12,

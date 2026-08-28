@@ -3,10 +3,8 @@ import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import {
-  drawNotanNoiseField,
-  drawRawGrayscaleNoiseField,
-} from '../../../utils/canvas/drawNotanField';
+import { useTranslation } from '../../../core/i18n';
+import { drawNotanNoiseField, drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,
@@ -32,6 +30,7 @@ export function NotanThresholdView({
   hitMargin = 12,
   showCanvasHints = true,
 }: NotanThresholdViewProps) {
+  const { t } = useTranslation();
   const [activeVal, setActiveVal] = useState<number>(50);
 
   const targetVal = question.idealNotanThreshold ?? 50;
@@ -39,11 +38,11 @@ export function NotanThresholdView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText="观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点"
+      hintText={t('packs.abstraction.cards.abs_notan_threshold.hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
-      label="二值化截断阈值:"
+      label={t('packs.abstraction.cards.abs_notan_threshold.label')}
       max={100}
       step={0.5}
       initialValue={50}
@@ -59,8 +58,8 @@ export function NotanThresholdView({
       onAnswer={onAnswer}
       preview={
         <DualViewportContainer
-          leftTitle="灰阶原图 (Raw Scene)"
-          rightTitle="二值显影 (Notan Output)"
+          leftTitle={t('packs.abstraction.cards.abs_notan_threshold.rawScene')}
+          rightTitle={t('packs.abstraction.cards.abs_notan_threshold.notanOutput')}
           leftContent={
             <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
               <CanvasView

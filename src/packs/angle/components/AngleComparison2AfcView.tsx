@@ -1,6 +1,7 @@
 import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
+import { useTranslation } from '../../../core/i18n';
 import {
   ANGLE_2AFC_SIZE,
   type AngleHitResult,
@@ -24,13 +25,14 @@ export function AngleComparison2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AngleComparison2AfcViewProps) {
+  const { t } = useTranslation();
   const isAHit = question.largerSide === 'A';
   const isBHit = question.largerSide === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText="二选一辨识哪一侧的两射线夹角更大 (键 1 / 2)"
+      hintText={t('packs.angle.views.comparisonHint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -38,7 +40,7 @@ export function AngleComparison2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: '区域 A',
+        title: t('common.areaA'),
         isCorrect: isAHit,
         badge: showAnswer ? `${question.angleA}°` : undefined,
         content: (
@@ -54,7 +56,7 @@ export function AngleComparison2AfcView({
         ),
       }}
       optionB={{
-        title: '区域 B',
+        title: t('common.areaB'),
         isCorrect: isBHit,
         badge: showAnswer ? `${question.angleB}°` : undefined,
         content: (

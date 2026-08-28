@@ -2,7 +2,8 @@ import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
-import { drawPaletteTilesCanvas } from '../../../utils/canvas/drawPaletteTiles';
+import { useTranslation } from '../../../core/i18n';
+import { drawPaletteTilesCanvas } from '../canvas/drawPaletteTiles';
 import {
   ABSTRACTION_CANVAS_SIZE,
   type AbstractionHitResult,
@@ -25,6 +26,8 @@ export function PaletteClusteringView({
   disabled = false,
   showCanvasHints = true,
 }: PaletteClusteringViewProps) {
+  const { t } = useTranslation();
+
   const nafcOptions = (question.paletteOptions || []).map((hsv, idx) => {
     const hex = hsvToHex(...hsv);
     const isTarget = idx === question.correctPaletteIndex;
@@ -44,7 +47,7 @@ export function PaletteClusteringView({
   return (
     <StandardNafcView
       questionId={question.id}
-      hintText="选出最能代表全局主调的加权主色 (键 1-4)"
+      hintText={t('packs.abstraction.cards.abs_palette_clustering.hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"

@@ -1,5 +1,6 @@
 import { Check, Copy, Download, Edit3, Layers, Sliders, Sparkles, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../types/plan';
 import {
@@ -31,6 +32,7 @@ export function PlanEditorModal({
   onSave,
   onPlanListChanged,
 }: PlanEditorModalProps) {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
   const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
@@ -68,7 +70,7 @@ export function PlanEditorModal({
       ...prev,
       items: prev.items.map((item) => ({ ...item, targetTrials: trials })),
     }));
-    showToast(`已将所有阶段题量统一设为 ${trials} 题`);
+    showToast(t('plan.batchSetTrialsToast', { trials }));
   };
 
   const handleAddItem = (cardId: string) => {
@@ -118,8 +120,8 @@ export function PlanEditorModal({
   const handleCreateNewBlankPlan = () => {
     const newBlank: TrainingPlan = {
       id: `custom_plan_${Date.now()}`,
-      name: '新建训练流',
-      description: '自定义多阶段训练流',
+      name: t('plan.newBlankPlan'),
+      description: t('common.defaultCustomPlanDesc'),
       items: [],
       isFavorite: true,
       isBuiltin: false,
@@ -130,7 +132,7 @@ export function PlanEditorModal({
     setIsEditingName(true);
     setIsAddingCard(true);
     setShowPlanManager(false);
-    showToast('已进入新计划创建模式');
+    showToast(t('plan.newPlanModeToast'));
   };
 
   const handleCloneCurrent = () => {
@@ -140,7 +142,7 @@ export function PlanEditorModal({
     setCurrentPlan(cloned);
     setPlanNameInput(cloned.name);
     onPlanListChanged?.();
-    showToast(`已复制为新计划【${cloned.name}】`);
+    showToast(t('plan.clonedPlanToast', { name: cloned.name }));
   };
 
   const handleToggleFavoriteItem = (planId: string, e: MouseEvent) => {
@@ -156,7 +158,7 @@ export function PlanEditorModal({
   const handleDeletePlanItem = (planId: string, e: MouseEvent) => {
     e.stopPropagation();
     if (storageState.plans.length <= 1) {
-      showToast('至少需保留一个训练计划');
+      showToast(t('plan.minOnePlanToast'));
       return;
     }
     const nextState = deletePlan(planId);
@@ -167,7 +169,7 @@ export function PlanEditorModal({
       setPlanNameInput(fallback.name);
     }
     onPlanListChanged?.();
-    showToast('计划已删除');
+    showToast(t('plan.planDeletedToast'));
   };
 
   const handleExportPlan = () => {
@@ -179,7 +181,7 @@ export function PlanEditorModal({
     a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('计划配置已导出为 JSON 文件');
+    showToast(t('plan.exportedJsonToast'));
   };
 
   const handleImportPlan = (e: Event) => {
@@ -195,9 +197,9 @@ export function PlanEditorModal({
           setPlanNameInput(imported.name);
           setShowPlanManager(false);
           onPlanListChanged?.();
-          showToast(`成功导入计划【${imported.name}】`);
+          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }));
         } else {
-          showToast('导入失败：无效的训练计划文件');
+          showToast(t('plan.importedPlanFailToast'));
         }
       });
     }
@@ -232,7 +234,7 @@ export function PlanEditorModal({
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
   return (
-    <ModalShell title="定制日常训练流" icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
+    <ModalShell title={t('plan.modalTitle')} icon={Sliders} onClose={onClose} maxWidth="max-w-2xl">
       <div className="space-y-5">
         <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-3">
@@ -252,13 +254,13 @@ export function PlanEditorModal({
                     }}
                     maxLength={32}
                     className="w-full px-3 py-1.5 text-xs font-bold text-slate-800 bg-white border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                    placeholder="输入计划名称..."
+                    placeholder={t('plan.nameInputPlaceholder')}
                   />
                   <button
                     type="button"
                     onClick={handleNameSave}
                     className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0"
-                    title="确定"
+                    title={t('common.confirm')}
                   >
                     <Check className="w-4 h-4" />
                   </button>
@@ -272,7 +274,7 @@ export function PlanEditorModal({
                     type="button"
                     onClick={() => setIsEditingName(true)}
                     className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0"
-                    title="重命名计划"
+                    title={t('plan.renameTitle')}
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
@@ -280,11 +282,11 @@ export function PlanEditorModal({
                   {isNewPlan ? (
                     <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 flex-shrink-0 flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
-                      新计划
+                      {t('common.newPlanBadge')}
                     </span>
                   ) : currentPlan.isBuiltin ? (
                     <span className="text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100 flex-shrink-0">
-                      官方预设
+                      {t('common.officialBadge')}
                     </span>
                   ) : null}
                 </div>
@@ -300,17 +302,17 @@ export function PlanEditorModal({
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
                     : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
-                title="切换/管理所有计划"
+                title={t('plan.switchAndManageTitle')}
               >
                 <Layers className="w-3.5 h-3.5" />
-                计划库 ({storageState.plans.length})
+                {t('plan.planLibraryTitle', { count: storageState.plans.length })}
               </button>
 
               <button
                 type="button"
                 onClick={handleCloneCurrent}
                 className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
-                title="复制为新副本"
+                title={t('plan.cloneCopyTitle')}
               >
                 <Copy className="w-3.5 h-3.5" />
               </button>
@@ -319,7 +321,7 @@ export function PlanEditorModal({
                 type="button"
                 onClick={handleExportPlan}
                 className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
-                title="导出计划为 JSON"
+                title={t('plan.exportJsonTitle')}
               >
                 <Download className="w-3.5 h-3.5" />
               </button>
@@ -328,7 +330,7 @@ export function PlanEditorModal({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-1.5 text-slate-500 hover:text-indigo-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-all"
-                title="导入 JSON 计划"
+                title={t('plan.importJsonTitle')}
               >
                 <Upload className="w-3.5 h-3.5" />
               </button>
@@ -385,7 +387,7 @@ export function PlanEditorModal({
             onClick={onClose}
             className="w-full py-2.5 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
           >
-            取消
+            {t('common.cancel')}
           </button>
           <button
             type="button"
@@ -397,8 +399,8 @@ export function PlanEditorModal({
                 : 'text-white bg-indigo-600 hover:bg-indigo-700 shadow-md shadow-indigo-200 active:scale-[0.98]'
             }`}
           >
-            {isNewPlan ? '保存为新计划并使用' : '保存修改并使用此计划'}{' '}
-            {currentPlan.items.length === 0 && '(至少包含1个阶段)'}
+            {isNewPlan ? t('plan.saveAsNewAndUse') : t('plan.saveAndUse')}{' '}
+            {currentPlan.items.length === 0 && t('plan.minOneStageRequired')}
           </button>
         </div>
       </div>

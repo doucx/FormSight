@@ -1,4 +1,4 @@
-import { hsvToHex } from '../../core/color/colorUtils';
+import { hsvToHex } from '../../../core/color/colorUtils';
 
 export interface PaletteTile {
   x: number;

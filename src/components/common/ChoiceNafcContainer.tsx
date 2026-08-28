@@ -1,6 +1,7 @@
 import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 
 export interface ChoiceNafcOption<T = unknown> {
   key?: string | number;
@@ -32,6 +33,8 @@ export function ChoiceNafcContainer<T = unknown>({
   enableKeyboardShortcuts = true,
   onSelect,
 }: ChoiceNafcContainerProps<T>) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!enableKeyboardShortcuts || disabled || showAnswer) return;
 
@@ -91,7 +94,7 @@ export function ChoiceNafcContainer<T = unknown>({
                 <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
                   {keyLabel}
                 </span>
-                {opt.title || `选项 ${keyLabel}`}
+                {opt.title || t('common.optionN', { num: keyLabel })}
               </span>
               {showAnswer && isTarget && (
                 <Check className="w-4 h-4 text-emerald-600 font-extrabold" />

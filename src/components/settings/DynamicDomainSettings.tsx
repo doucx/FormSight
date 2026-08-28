@@ -1,3 +1,4 @@
+import { useTranslation } from '../../core/i18n';
 import type { TargetingMode } from '../../utils/settings';
 import { SettingToggleItem } from './common/SettingToggleItem';
 import { SliderMarginGroup } from './common/SliderMarginGroup';
@@ -39,6 +40,8 @@ interface DynamicDomainSettingsProps {
 }
 
 export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDomainSettingsProps) {
+  const { t } = useTranslation();
+
   const handleSectorToggle = (sectorsKey: string, sectorIdx: number) => {
     const currentSectors = (values[sectorsKey] as number[] | undefined) || [];
     const exists = currentSectors.includes(sectorIdx);
@@ -49,6 +52,12 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
     onChange({ [sectorsKey]: updated });
   };
 
+  const resolveText = (text?: string): string => {
+    if (!text) return '';
+    const translated = t(text);
+    return translated !== text ? translated : text;
+  };
+
   return (
     <div className="space-y-4">
       {schemas.map((field) => {
@@ -56,7 +65,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
           return (
             <SliderMarginGroup
               key={field.key}
-              title={field.title}
+              title={field.title ? resolveText(field.title) : undefined}
               value={(values[field.key] as number | undefined) ?? 12}
               onChange={(val) => onChange({ [field.key]: val })}
             />
@@ -67,8 +76,8 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
           return (
             <SettingToggleItem
               key={field.key}
-              title={field.title}
-              description={field.description}
+              title={resolveText(field.title)}
+              description={field.description ? resolveText(field.description) : undefined}
               checked={Boolean(values[field.key])}
               onChange={(checked) => onChange({ [field.key]: checked })}
             />
@@ -79,7 +88,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
           const currentVal = values[field.key];
           return (
             <div key={field.key} className="space-y-2">
-              <div className="text-sm font-semibold text-slate-700">{field.title}</div>
+              <div className="text-sm font-semibold text-slate-700">{resolveText(field.title)}</div>
               <div className={`grid ${field.gridCols || 'grid-cols-4'} gap-1.5`}>
                 {field.options.map((opt) => (
                   <button
@@ -92,7 +101,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    {opt.label}
+                    {resolveText(opt.label)}
                   </button>
                 ))}
               </div>
@@ -107,8 +116,8 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
           return (
             <TargetingSection
               key={`${field.modeKey}-${field.sectorsKey}`}
-              title={field.title}
-              subTitle={field.subTitle}
+              title={resolveText(field.title)}
+              subTitle={resolveText(field.subTitle)}
               mode={mode}
               onModeChange={(m) => onChange({ [field.modeKey]: m })}
               sectors={field.sectors}

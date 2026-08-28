@@ -4,6 +4,7 @@ import { DualViewportContainer } from '../../../components/common/DualViewportCo
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import { useTranslation } from '../../../core/i18n';
 import type { Point } from '../../../types';
 import {
   FITTING_CANVAS_SIZE,
@@ -28,6 +29,7 @@ export function VertexFittingView({
   disabled = false,
   showCanvasHints = true,
 }: VertexFittingViewProps) {
+  const { t } = useTranslation();
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -77,14 +79,14 @@ export function VertexFittingView({
 
   return (
     <QuestionCardShell
-      hintText="对比左侧负形空间，在右侧点阵中点击定位被截断的顶点"
+      hintText={t('packs.negative_space.views.vertexHint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-4xl"
     >
       <DualViewportContainer
-        leftTitle="完整剪影参考"
-        rightTitle="交互定点画布 (点击定位)"
+        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
+        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
         leftContent={
           <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
             <canvas

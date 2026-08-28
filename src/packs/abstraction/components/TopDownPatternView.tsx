@@ -2,7 +2,8 @@ import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
-import { drawPaletteTilesCanvas } from '../../../utils/canvas/drawPaletteTiles';
+import { useTranslation } from '../../../core/i18n';
+import { drawPaletteTilesCanvas } from '../canvas/drawPaletteTiles';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,
@@ -25,6 +26,7 @@ export function TopDownPatternView({
   disabled = false,
   showCanvasHints = true,
 }: TopDownPatternViewProps) {
+  const { t } = useTranslation();
   const promptHex = question.promptDominantColor
     ? hsvToHex(...question.promptDominantColor)
     : '#6366F1';
@@ -34,7 +36,7 @@ export function TopDownPatternView({
     const isTarget = idx === targetIdx;
     return {
       key: `td-pattern-${question.id}-${idx}`,
-      title: `画面 ${idx + 1}`,
+      title: t('common.screenN', { num: idx + 1 }),
       value: idx,
       isCorrect: isTarget,
       content: (
@@ -54,7 +56,7 @@ export function TopDownPatternView({
   return (
     <StandardNafcView
       questionId={question.id}
-      hintText="观察上方基准主色，选出以此为基调的拼贴画面 (键 1-4)"
+      hintText={t('packs.abstraction.cards.abs_td_palette_2afc.hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -67,7 +69,7 @@ export function TopDownPatternView({
       preview={
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            基准主调色
+            {t('packs.abstraction.cards.abs_td_palette_2afc.promptTitle')}
           </span>
           <div
             className="w-16 h-16 rounded-2xl border-4 border-white shadow-md ring-1 ring-slate-200"

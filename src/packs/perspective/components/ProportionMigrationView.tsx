@@ -2,6 +2,7 @@ import { ArrowRightLeft } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { useTranslation } from '../../../core/i18n';
 import type { Point } from '../../../types';
 import {
   PERSPECTIVE_CANVAS_SIZE,
@@ -28,6 +29,7 @@ export function ProportionMigrationView({
   disabled = false,
   showCanvasHints = true,
 }: ProportionMigrationViewProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
@@ -150,7 +152,7 @@ export function ProportionMigrationView({
 
   return (
     <QuestionCardShell
-      hintText="观察上方基准线目标点，在下方倾斜线段滑动试探并松手确认"
+      hintText={t('packs.perspective.views.proportionMigrationHint')}
       hintIcon={ArrowRightLeft}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -158,14 +160,16 @@ export function ProportionMigrationView({
         showAnswer ? (
           <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              目标比例:{' '}
+              {t('packs.perspective.views.targetRatio')}{' '}
               <span className="font-bold text-slate-800 font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              作答位置: {((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1)}% (误差: ±
-              {((userAnswer?.errorValue ?? 0) * 100).toFixed(1)}%)
+              {t('packs.perspective.views.userPosition', {
+                pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
+                error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
+              })}
             </span>
           </div>
         ) : null
@@ -202,7 +206,7 @@ export function ProportionMigrationView({
           }}
           tabIndex={0}
           role="button"
-          aria-label="比例迁移答题画布"
+          aria-label={t('packs.perspective.cards.perspective_proportion_migration.title')}
           className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
@@ -212,12 +216,12 @@ export function ProportionMigrationView({
         <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
-            <span>起点 (0%)</span>
+            <span>{t('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
-            <span>终点 (100%)</span>
+            <span>{t('common.endPercent')}</span>
           </span>
         </div>
       </div>

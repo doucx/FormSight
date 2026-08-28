@@ -1,24 +1,25 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 import { hsvToHex } from '../../core/color/colorUtils';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { i18n } from '../../core/i18n';
 import { renderHueRingCanvas } from '../../utils/canvas/drawColorRing';
 import type { SectorStat } from '../../utils/canvas/drawCompass';
 import { calcSignedHueBias, renderHueBiasChartCanvas } from '../../utils/canvas/drawHueBiasChart';
 import { getTrialRecordsByCard } from '../../utils/db/index';
 
-const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
+const COLOR_SECTOR_KEYS = [
+  'packs.color.sectors.red',
+  'packs.color.sectors.orange',
+  'packs.color.sectors.yellow',
+  'packs.color.sectors.yellowGreen',
+  'packs.color.sectors.green',
+  'packs.color.sectors.cyanGreen',
+  'packs.color.sectors.cyan',
+  'packs.color.sectors.blue',
+  'packs.color.sectors.blueViolet',
+  'packs.color.sectors.violet',
+  'packs.color.sectors.magenta',
+  'packs.color.sectors.rose',
 ];
 
 export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
@@ -27,9 +28,9 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
   views: [
     {
       id: 'hue_bias_chart',
-      tabLabel: '色相偏差度',
-      title: '色相偏差度分析',
-      subTitle: '横轴色相与纵轴偏差分布，揭示系统性偏色倾向',
+      tabLabel: 'packs.color.analytics.hueBias.tabLabel',
+      title: 'packs.color.analytics.hueBias.title',
+      subTitle: 'packs.color.analytics.hueBias.subTitle',
       icon: Sparkles,
       renderVisualizer: (canvas, records) => {
         renderHueBiasChartCanvas(canvas, records);
@@ -56,7 +57,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         const validSectors = sectorBuckets
           .map((b, i) => ({
             sectorIdx: i,
-            label: COLOR_SECTORS[i],
+            label: i18n.t(COLOR_SECTOR_KEYS[i]),
             total: b.total,
             accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
             avgBias: b.total > 0 ? Math.round((b.sumBias / b.total) * 10) / 10 : 0,
@@ -70,16 +71,23 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               )
             : null;
 
+        const signedBiasText =
+          avgSignedBias > 0
+            ? i18n.t('packs.color.analytics.hueBias.clockwise', { val: avgSignedBias })
+            : avgSignedBias < 0
+              ? i18n.t('packs.color.analytics.hueBias.counterClockwise', { val: avgSignedBias })
+              : '0°';
+
         return (
           <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
             <div className="font-bold text-amber-900 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-              系统性偏色倾向诊断
+              {i18n.t('packs.color.analytics.hueBias.cardTitle')}
             </div>
 
             <div className="space-y-1 text-[11px] text-slate-700">
               <div className="flex justify-between bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm font-mono">
-                <span>全局平均偏转角:</span>
+                <span>{i18n.t('packs.color.analytics.hueBias.avgSignedBias')}</span>
                 <span
                   className={`font-bold ${
                     avgSignedBias > 0
@@ -89,18 +97,14 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                         : 'text-slate-700'
                   }`}
                 >
-                  {avgSignedBias > 0
-                    ? `+${avgSignedBias}° (顺时针)`
-                    : avgSignedBias < 0
-                      ? `${avgSignedBias}° (逆时针)`
-                      : '0°'}
+                  {signedBiasText}
                 </span>
               </div>
 
               {maxBiasSector ? (
                 <div className="mt-2 space-y-1.5">
                   <p className="text-slate-600">
-                    最大偏差扇区：
+                    {i18n.t('packs.color.analytics.hueBias.maxBiasSector')}
                     <span className="font-bold text-amber-800">{maxBiasSector.label}</span>
                   </p>
                   <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
@@ -116,7 +120,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                       </span>
                     </div>
                     <span className="font-black text-amber-700 font-mono text-xs">
-                      平均偏差:{' '}
+                      {i18n.t('packs.color.analytics.hueBias.avgBias')}{' '}
                       {maxBiasSector.avgBias > 0
                         ? `+${maxBiasSector.avgBias}°`
                         : `${maxBiasSector.avgBias}°`}
@@ -125,7 +129,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 </div>
               ) : (
                 <p className="text-slate-500 text-[10px] mt-1">
-                  样本量达到每个扇区至少 3 题后可生成精准扇区偏向诊断。
+                  {i18n.t('packs.color.analytics.hueBias.needMoreTrials')}
                 </p>
               )}
             </div>
@@ -144,7 +148,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           total,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
-              <span>平均绝对角度误差:</span>
+              <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>
           ),
@@ -153,9 +157,9 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
     },
     {
       id: 'hue_ring',
-      tabLabel: '12 色相敏感度',
-      title: '12 色相敏感度分析',
-      subTitle: '洞察你对 OKLab 色彩空间 12 色相扇区的敏感度与正确率分布',
+      tabLabel: 'packs.color.analytics.hueRing.tabLabel',
+      title: 'packs.color.analytics.hueRing.title',
+      subTitle: 'packs.color.analytics.hueRing.subTitle',
       icon: PieChart,
       renderVisualizer: (canvas, records) => {
         const sectorBuckets = Array.from({ length: 12 }, () => ({
@@ -172,7 +176,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         }
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
           sectorIdx: i,
-          label: COLOR_SECTORS[i],
+          label: i18n.t(COLOR_SECTOR_KEYS[i]),
           total: b.total,
           accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
           avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
@@ -197,7 +201,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         }
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
           sectorIdx: i,
-          label: COLOR_SECTORS[i],
+          label: i18n.t(COLOR_SECTOR_KEYS[i]),
           total: b.total,
           accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
           avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
@@ -212,13 +216,14 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
             <div className="font-bold text-amber-900 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-              色相盲区诊断
+              {i18n.t('packs.color.analytics.hueRing.cardTitle')}
             </div>
             {weakestSector ? (
               <div className="space-y-2">
                 <p className="text-slate-700 text-[11px]">
-                  你在 <span className="font-bold text-amber-700">{weakestSector.label}</span>{' '}
-                  色相上辨识度最低：
+                  {i18n.t('packs.color.analytics.hueRing.weakestHint', {
+                    sector: weakestSector.label,
+                  })}
                 </p>
                 <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
                   <div className="flex items-center gap-1.5">
@@ -233,13 +238,15 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                     </span>
                   </div>
                   <span className="font-black text-rose-600 text-sm">
-                    {weakestSector.accuracy}% 正确率
+                    {i18n.t('packs.color.analytics.hueRing.accuracyRate', {
+                      accuracy: weakestSector.accuracy,
+                    })}
                   </span>
                 </div>
               </div>
             ) : (
               <p className="text-slate-600 text-[11px]">
-                需每个色相扇区完成至少 3 题才能生成弱点诊断。
+                {i18n.t('packs.color.analytics.hueRing.needMoreTrials')}
               </p>
             )}
           </div>
@@ -257,7 +264,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           total,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
-              <span>平均绝对角度误差:</span>
+              <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>
           ),

@@ -14,6 +14,14 @@ import {
   X,
 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
+import {
+  CHALLENGE_TAGS,
+  DOMAIN_TAGS,
+  INTERACTION_TAGS,
+  PATH_TAGS,
+  STATUS_TAGS,
+} from '../../config/tags';
+import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type {
   CardQueryOptions,
@@ -23,40 +31,6 @@ import type {
   MentalChallengeTag,
   VisualDomainTag,
 } from '../../types/card';
-
-export const DOMAIN_TAG_LABELS: Record<VisualDomainTag, string> = {
-  form_and_proportion: '形体与比例',
-  spatial_structure: '空间与结构',
-  color_and_value: '色彩与明度',
-  rhythm_and_notan: '动态与图底',
-};
-
-export const PATH_TAG_LABELS: Record<CognitivePathTag, string> = {
-  extraction: '自底向上：提炼概括',
-  concretization: '自顶向下：具象寻源',
-  absolute_estimation: '绝对估测度量',
-  relational_mapping: '相对推移映射',
-};
-
-export const CHALLENGE_TAG_LABELS: Record<MentalChallengeTag, string> = {
-  illusion_piercing: '错觉剥离 (抗同化/环境光)',
-  figure_ground_reversal: '图底反转 (关注负空间)',
-  working_memory: '瞬时记忆 (抗视觉遗忘)',
-  dimensional_translation: '维次转译 (3D/2D展开)',
-};
-
-export const INTERACTION_TAG_LABELS: Record<InteractionTag, string> = {
-  continuous_mod: '连续调制 (滑块)',
-  spatial_locate: '空间定位 (点阵点击)',
-  binary_choice: '二分对抗 (2AFC)',
-  multi_choice: '多维检索 (N-AFC)',
-};
-
-export const STATUS_TAG_LABELS: Record<CardStatusTag, string> = {
-  stable: '稳定模块',
-  experimental: '实验性模块',
-  deprecated: '已废弃',
-};
 
 interface FilterEngineProps {
   query: CardQueryOptions;
@@ -71,6 +45,7 @@ export function FilterEngine({
   compact = false,
   onChange,
 }: FilterEngineProps) {
+  const { t } = useTranslation();
   const [showAdvanced, setShowAdvanced] = useState<boolean>(!compact);
 
   const packs = registry.getAllPacks();
@@ -151,7 +126,7 @@ export function FilterEngine({
             type="text"
             value={query.searchKeyword || ''}
             onInput={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
-            placeholder="搜索训练卡片名称、编号或认知要领..."
+            placeholder={t('home.searchPlaceholder')}
             className="w-full pl-10 pr-10 py-2.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white text-xs font-bold text-slate-800 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-400 placeholder:font-normal"
           />
           {query.searchKeyword && (
@@ -168,11 +143,7 @@ export function FilterEngine({
         <div className="flex items-center justify-between sm:justify-end gap-2.5 flex-shrink-0">
           <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
             <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            <span>
-              已匹配{' '}
-              <strong className="font-mono text-indigo-600 font-black">{totalMatches}</strong>{' '}
-              个训练模块
-            </span>
+            <span>{t('home.matchedModules', { count: totalMatches })}</span>
           </div>
 
           <button
@@ -185,7 +156,7 @@ export function FilterEngine({
             }`}
           >
             <Filter className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{showAdvanced ? '收起筛选' : '多维筛选'}</span>
+            <span>{showAdvanced ? t('home.collapseFilter') : t('home.expandFilter')}</span>
           </button>
 
           {hasActiveFilters && (
@@ -193,10 +164,10 @@ export function FilterEngine({
               type="button"
               onClick={handleResetFilters}
               className="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 rounded-xl transition-all flex items-center gap-1"
-              title="重置所有筛选"
+              title={t('common.clear')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              清空
+              {t('common.clear')}
             </button>
           )}
         </div>
@@ -207,7 +178,7 @@ export function FilterEngine({
         <div className="space-y-1.5 border-t border-slate-100 pt-3">
           <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
             <Boxes className="w-3 h-3 text-indigo-500" />
-            扩展包 (Packs)
+            {t('home.allPacks')}
           </div>
           <div className="flex flex-wrap gap-1.5">
             <button
@@ -220,10 +191,11 @@ export function FilterEngine({
               }`}
             >
               {!query.packId && <Check className="w-3 h-3" />}
-              <span>全部 Packs</span>
+              <span>{t('home.allPacks')}</span>
             </button>
             {packs.map((p) => {
               const isSelected = query.packId === p.packId;
+              const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
               return (
                 <button
                   type="button"
@@ -236,7 +208,7 @@ export function FilterEngine({
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3" />}
-                  <span>{p.meta.title}</span>
+                  <span>{packTitle}</span>
                   <span
                     className={`text-[10px] font-mono px-1 rounded ${
                       isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-500'
@@ -258,11 +230,12 @@ export function FilterEngine({
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <Eye className="w-3 h-3 text-indigo-500" />
-              1. 基础视觉域 (Visual Domain)
+              {t('home.domainSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((d) => {
+              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => {
                 const isSelected = query.domains?.includes(d) ?? false;
+                const tagMeta = DOMAIN_TAGS[d];
                 return (
                   <button
                     type="button"
@@ -275,7 +248,7 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{DOMAIN_TAG_LABELS[d]}</span>
+                    <span>{t(tagMeta.i18nKey)}</span>
                   </button>
                 );
               })}
@@ -286,11 +259,12 @@ export function FilterEngine({
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <Compass className="w-3 h-3 text-emerald-500" />
-              2. 认知推演路径 (Cognitive Path)
+              {t('home.pathSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((p) => {
+              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => {
                 const isSelected = query.paths?.includes(p) ?? false;
+                const tagMeta = PATH_TAGS[p];
                 return (
                   <button
                     type="button"
@@ -303,7 +277,7 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{PATH_TAG_LABELS[p]}</span>
+                    <span>{t(tagMeta.i18nKey)}</span>
                   </button>
                 );
               })}
@@ -314,11 +288,12 @@ export function FilterEngine({
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <Brain className="w-3 h-3 text-rose-500" />
-              3. 核心心智抗性 (Mental Challenge)
+              {t('home.challengeSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((c) => {
+              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => {
                 const isSelected = query.challenges?.includes(c) ?? false;
+                const tagMeta = CHALLENGE_TAGS[c];
                 return (
                   <button
                     type="button"
@@ -331,7 +306,7 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{CHALLENGE_TAG_LABELS[c]}</span>
+                    <span>{t(tagMeta.i18nKey)}</span>
                   </button>
                 );
               })}
@@ -342,11 +317,12 @@ export function FilterEngine({
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <MousePointer className="w-3 h-3 text-amber-500" />
-              4. 交互评估形态 (Interaction Mode)
+              {t('home.interactionSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(INTERACTION_TAG_LABELS) as InteractionTag[]).map((i) => {
+              {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => {
                 const isSelected = query.interactions?.includes(i) ?? false;
+                const tagMeta = INTERACTION_TAGS[i];
                 return (
                   <button
                     type="button"
@@ -359,7 +335,7 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{INTERACTION_TAG_LABELS[i]}</span>
+                    <span>{t(tagMeta.i18nKey)}</span>
                   </button>
                 );
               })}
@@ -370,11 +346,12 @@ export function FilterEngine({
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <FlaskConical className="w-3 h-3 text-purple-500" />
-              特性与状态 (Status)
+              {t('home.statusSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(['stable', 'experimental'] as CardStatusTag[]).map((st) => {
                 const isSelected = query.statuses?.includes(st) ?? false;
+                const tagMeta = STATUS_TAGS[st];
                 return (
                   <button
                     type="button"
@@ -394,7 +371,7 @@ export function FilterEngine({
                     ) : (
                       <FlaskConical className="w-3 h-3 text-amber-500" />
                     )}
-                    <span>{STATUS_TAG_LABELS[st]}</span>
+                    <span>{t(tagMeta.i18nKey)}</span>
                   </button>
                 );
               })}

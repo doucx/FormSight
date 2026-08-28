@@ -2,8 +2,9 @@ import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { drawRawGrayscaleNoiseField } from '../../../utils/canvas/drawNotanField';
-import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../../utils/canvas/drawParticles';
+import { useTranslation } from '../../../core/i18n';
+import { drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
+import { drawParticlesCanvas, drawSpinePromptCanvas } from '../canvas/drawParticles';
 import {
   ABSTRACTION_2AFC_SIZE,
   ABSTRACTION_CANVAS_SIZE,
@@ -29,6 +30,7 @@ export function TopDown2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: TopDown2AfcViewProps) {
+  const { t } = useTranslation();
   const { mode } = question;
   const isPoly = mode === 'POLYGON_DECIMATION';
 
@@ -45,7 +47,7 @@ export function TopDown2AfcView({
       return (
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            多边形原图
+            {t('packs.abstraction.cards.abs_polygon_decimation.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
@@ -68,7 +70,7 @@ export function TopDown2AfcView({
       return (
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
+            {t('packs.abstraction.cards.abs_td_gesture_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
@@ -87,7 +89,7 @@ export function TopDown2AfcView({
       return (
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
+            {t('packs.abstraction.cards.abs_td_hull_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
@@ -112,7 +114,7 @@ export function TopDown2AfcView({
       return (
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            概括基准 (Prompt)
+            {t('packs.abstraction.cards.abs_td_notan_2afc.promptTitle')}
           </span>
           <CanvasView
             width={ABSTRACTION_THUMB_SIZE}
@@ -211,10 +213,14 @@ export function TopDown2AfcView({
     return null;
   };
 
+  const hint = isPoly
+    ? t('packs.abstraction.cards.abs_polygon_decimation.hint')
+    : t('packs.abstraction.cards.abs_td_gesture_2afc.hint');
+
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={isPoly ? '选择保留了主要转折大形的精简项' : '判别哪一侧具象细节符合上方骨架'}
+      hintText={hint}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -223,7 +229,7 @@ export function TopDown2AfcView({
       onAnswer={onAnswer}
       prompt={renderPrompt()}
       optionA={{
-        title: '区域 A (键 1)',
+        title: `${t('common.areaA')} (${t('common.optionA')})`,
         isCorrect: isTargetA,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
@@ -232,7 +238,7 @@ export function TopDown2AfcView({
         ),
       }}
       optionB={{
-        title: '区域 B (键 2)',
+        title: `${t('common.areaB')} (${t('common.optionB')})`,
         isCorrect: isTargetB,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">

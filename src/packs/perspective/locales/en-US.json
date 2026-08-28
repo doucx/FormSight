@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "title": "Perspective & Spatial Perception",
+    "subTitle": "Perspective & Spatial Perception",
+    "desc": "Sharpen structural drawing intuition through Vanishing Point convergence, proportional division, Gestalt continuation, and 3D axonometric translation."
+  },
+  "cards": {
+    "perspective_vp_convergence": {
+      "title": "VP Convergence",
+      "desc": "Modulate the ray angle to make it converge at the exact same vanishing point.",
+      "instruction": "Adjust the ray angle using the slider so all lines meet at the vanishing point.",
+      "badge": "VP Convergence"
+    },
+    "perspective_proportion_division": {
+      "title": "Proportion Division",
+      "desc": "Blindly cut lines at 1/2, 1/3, 1/4, or golden ratio (0.618).",
+      "instruction": "Click at the designated target proportion along the tilted line.",
+      "badge": "Proportion Division"
+    },
+    "perspective_proportion_migration": {
+      "title": "Proportion Migration",
+      "desc": "Migrate proportional divisions from horizontal references onto randomly tilted lines.",
+      "instruction": "Observe the target point above and mark the identical proportion below.",
+      "badge": "Proportion Migration"
+    },
+    "perspective_gestalt_continuation_2afc": {
+      "title": "Gestalt Continuation 2AFC",
+      "desc": "Identify the true collinear continuation penetrating an obstacle (2AFC).",
+      "instruction": "Select the line that maintains true collinear continuation (Keys 1 / 2).",
+      "badge": "Gestalt Continuation"
+    },
+    "perspective_structure_3d": {
+      "title": "3D Structural Rotation",
+      "desc": "Translate orthographic tri-views into 3D isometric cube grid coordinates.",
+      "instruction": "Locate the 3D point in the axonometric cube grid based on the 3 views.",
+      "badge": "3D Structural Rotation"
+    }
+  },
+  "views": {
+    "vpHint": "Observe the existing perspective lines and adjust the slider to converge rays at the vanishing point (0°~360°)",
+    "rayAngle": "Ray Angle:",
+    "vpTrueAngle": "True Convergence Angle:",
+    "vpErrorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)",
+    "proportionDivisionHint": "Slide along the tilted segment and release to confirm proportional division (or click directly)",
+    "proportionMigrationHint": "Observe the horizontal reference above and confirm the corresponding proportion on the tilted segment below",
+    "targetRatio": "Target Proportion:",
+    "userPosition": "User Position: {{pos}}% (Error: ±{{error}}%)",
+    "gestaltHint": "Observe incoming line and identify the true collinear continuation penetrating the obstacle (Keys 1 / 2)",
+    "structureHint": "Observe the tri-view coordinates and select the corresponding 3D vertex inside the isometric grid"
+  }
+}

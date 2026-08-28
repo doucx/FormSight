@@ -16,20 +16,8 @@ export const abstractionPlugin: TrainingPlugin<
   BaseModuleSettings
 > = {
   packId: 'abstraction',
-  title: '视知觉概括',
-  getModeBadge: (mode) => {
-    const map: Record<string, string> = {
-      GESTURE_AXIS: '动态势线提取',
-      POLYGON_DECIMATION: '折线低模大形',
-      NOTAN_THRESHOLD: '黑白素描归组',
-      PALETTE_CLUSTERING: '主调色群提炼',
-      TD_GESTURE_2AFC: '动态势线寻源',
-      TD_HULL_2AFC: '几何大模寻形',
-      TD_NOTAN_2AFC: '黑白素描骨架',
-      TD_PALETTE_2AFC: '调性基底归位',
-    };
-    return map[mode] || mode;
-  },
+  title: 'abstraction',
+  getModeBadge: (mode) => mode,
   generateQuestion: (mode, level) => generateAbstractionQuestion(mode as AbstractionMode, level),
   evaluateAnswer: (userVal, q) => checkAbstractionHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,

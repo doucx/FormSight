@@ -17,17 +17,8 @@ export const perspectivePlugin: TrainingPlugin<
   BaseModuleSettings
 > = {
   packId: 'perspective',
-  title: '透视空间感知',
-  getModeBadge: (mode) => {
-    const map: Record<string, string> = {
-      VP_CONVERGENCE: '透视灭点汇聚',
-      PROPORTION_DIVISION: '比例盲切划分',
-      PROPORTION_MIGRATION: '空间比例角度迁移',
-      GESTALT_CONTINUATION_2AFC: '格式塔完形断线',
-      STRUCTURE_PROJECTION_3D: '3D 结构空间翻转',
-    };
-    return map[mode] || mode;
-  },
+  title: 'perspective',
+  getModeBadge: (mode) => mode,
   generateQuestion: (mode, level) => generatePerspectiveQuestion(mode as PerspectiveMode, level),
   evaluateAnswer: (userVal, q) => checkPerspectiveHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,

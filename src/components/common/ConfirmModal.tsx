@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
 import { ModalShell } from './ModalShell';
 
 interface ConfirmModalProps {
@@ -16,12 +17,15 @@ export function ConfirmModal({
   isOpen,
   title,
   message,
-  confirmText = '确认',
-  cancelText = '取消',
+  confirmText,
+  cancelText,
   isDangerous = false,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const { t } = useTranslation();
+  const effectiveConfirmText = confirmText || t('common.confirm');
+  const effectiveCancelText = cancelText || t('common.cancel');
   if (!isOpen) return null;
 
   return (
@@ -35,7 +39,7 @@ export function ConfirmModal({
             onClick={onCancel}
             className="w-full py-2.5 px-3 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all active:scale-95"
           >
-            {cancelText}
+            {effectiveCancelText}
           </button>
           <button
             type="button"
@@ -46,7 +50,7 @@ export function ConfirmModal({
                 : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
             }`}
           >
-            {confirmText}
+            {effectiveConfirmText}
           </button>
         </div>
       </div>

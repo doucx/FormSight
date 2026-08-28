@@ -3,6 +3,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { ModeCard } from '../components/common/ModeCard';
 import { FilterEngine } from '../components/discovery/FilterEngine';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
+import { useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardQueryOptions } from '../types/card';
 import type { TrainingPlan } from '../types/plan';
@@ -43,6 +44,7 @@ export function Home({
   onOpenGlobalSettings,
   onOpenGlobalStats,
 }: HomeProps) {
+  const { t } = useTranslation();
   const [localQuery, setLocalQuery] = useState<CardQueryOptions>(externalQuery || {});
 
   const activeQuery = externalQuery !== undefined ? externalQuery : localQuery;
@@ -67,14 +69,12 @@ export function Home({
           </div>
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              FormSight{' '}
+              {t('common.appName')}{' '}
               <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
                 v{__APP_VERSION__}
               </span>
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
-              视觉造型构图与色彩感知自适应强化训练系统
-            </p>
+            <p className="text-xs text-slate-400 font-medium">{t('common.appSubtitle')}</p>
           </div>
         </div>
 
@@ -86,20 +86,20 @@ export function Home({
           <button
             type="button"
             onClick={onOpenGlobalStats}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95"
-            title="全局统计"
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+            title={t('common.globalStats')}
           >
             <BarChart2 className="w-4 h-4 text-indigo-500" />
-            统计
+            {t('common.stats')}
           </button>
           <button
             type="button"
             onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95"
-            title="全局设置"
+            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            title={t('common.globalSettings')}
           >
             <Sliders className="w-4 h-4" />
-            全局设置
+            {t('common.settings')}
           </button>
         </div>
       </div>
@@ -126,17 +126,15 @@ export function Home({
           <div className="p-4 bg-slate-50 text-slate-400 rounded-3xl">
             <Inbox className="w-8 h-8" />
           </div>
-          <div className="text-base font-bold text-slate-800">未找到符合条件的训练模块</div>
-          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-            尝试调整或清空当前的多维筛选标签、搜索关键字，以探索更多训练模块。
-          </p>
+          <div className="text-base font-bold text-slate-800">{t('home.noMatchTitle')}</div>
+          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
           <button
             type="button"
             onClick={() => handleQueryChange({})}
             className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            重置所有筛选条件
+            {t('home.resetFilter')}
           </button>
         </div>
       ) : (
@@ -148,12 +146,15 @@ export function Home({
               totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
             const currentLevel = profile?.currentLevel || 5;
             const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
+            const cardTitle =
+              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
 
             return (
               <ModeCard
                 key={card.id}
-                title={card.title}
-                desc={card.desc}
+                title={cardTitle}
+                desc={cardDesc}
                 icon={card.icon}
                 todayCount={stat.count}
                 todayTimeMs={stat.timeMs}

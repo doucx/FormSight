@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "title": "形式与抽象感知",
+    "subTitle": "Visual Abstraction & Refinement",
+    "desc": "贯通「自底向上提炼」与「自顶向下寻源」双向视知觉闭环，训练对动态势线、极简低模、黑白Notan与色彩基调的穿透与具象推演能力。"
+  },
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+  },
+  "cards": {
+    "abs_gesture_axis": {
+      "title": "动态势线提取",
+      "desc": "从离散散点流向中提取第一主成分 PCA 势线角度，建立画面主导动势感知力。",
+      "instruction": "旋转调节主轴，对齐粒子群的主动态流向 (0°~180°)",
+      "badge": "动态势线提取",
+      "hint": "旋转主轴对齐粒子群动态流向 (0°~180°)",
+      "label": "动态势线角度:"
+    },
+    "abs_polygon_decimation": {
+      "title": "折线低模大形",
+      "desc": "从细碎繁复轮廓中穿透高频噪波，识别出其底层的最优关键折线大形框架。",
+      "instruction": "观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项",
+      "badge": "折线低模大形",
+      "hint": "选择保留了主要转折大形的精简项",
+      "promptTitle": "多边形原图"
+    },
+    "abs_notan_threshold": {
+      "title": "黑白素描归组",
+      "desc": "调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。",
+      "instruction": "调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态",
+      "badge": "黑白素描归组",
+      "hint": "观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点",
+      "label": "二值化截断阈值:",
+      "rawScene": "灰阶原图 (Raw Scene)",
+      "notanOutput": "二值显影 (Notan Output)"
+    },
+    "abs_palette_clustering": {
+      "title": "主调色群提炼",
+      "desc": "穿透多色拼贴马赛克的混色噪点，四选一提炼出面积加权下的加权质心主色。",
+      "instruction": "在下方 4 个候选项中，选出代表画面全局主调的加权主色",
+      "badge": "主调色群提炼",
+      "hint": "选出最能代表全局主调的加权主色 (键 1-4)"
+    },
+    "abs_td_gesture_2afc": {
+      "title": "动态势线寻源",
+      "desc": "给定抽象势线骨架，在两幅复杂点阵中透视判别谁长在该动势中 (2AFC)。",
+      "instruction": "观察上方提炼的势线骨架，判别哪侧复杂点阵符合该动势",
+      "badge": "动态势线寻源",
+      "hint": "判别哪一侧具象细节符合上方骨架",
+      "promptTitle": "概括基准 (Prompt)"
+    },
+    "abs_td_hull_2afc": {
+      "title": "几何大模寻形",
+      "desc": "给定极简低模多边形，在两个高细碎剪影中二选一辨识其具象原形 (2AFC)。",
+      "instruction": "观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形",
+      "badge": "几何大模寻形",
+      "hint": "判别哪一侧具象细节符合上方骨架",
+      "promptTitle": "概括基准 (Prompt)"
+    },
+    "abs_td_notan_2afc": {
+      "title": "黑白素描骨架",
+      "desc": "给定二值 Notan 剪影，透视辨识哪幅丰富灰阶素描拥有该黑白大结构 (2AFC)。",
+      "instruction": "观察上方 Notan 剪影，判别哪侧复杂画面拥有该黑白大结构",
+      "badge": "黑白素描骨架",
+      "hint": "判别哪一侧具象细节符合上方骨架",
+      "promptTitle": "概括基准 (Prompt)"
+    },
+    "abs_td_palette_2afc": {
+      "title": "调性基底归位",
+      "desc": "给定抽象基准主调色，在四幅复杂混色拼贴图案中选出以此为基调的画面 (4AFC)。",
+      "instruction": "观察上方基准主调色，选出以此为色彩基底的拼贴画面",
+      "badge": "调性基底归位",
+      "hint": "观察上方基准主色，选出以此为基调的拼贴画面 (键 1-4)",
+      "promptTitle": "基准主调色"
+    }
+  }
+}

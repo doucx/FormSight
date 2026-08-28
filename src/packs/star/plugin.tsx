@@ -1,7 +1,13 @@
 import type { TrainingPlugin } from '../../config/trainingPlugins';
-import type { HitResult, Point, QuestionData } from '../../types';
+import type { Point } from '../../types';
 import type { StarSettings } from '../../utils/settings';
-import { type QuestionGenerateOptions, checkHit, generateQuestion } from './utils/index';
+import {
+  type HitResult,
+  type QuestionData,
+  type QuestionGenerateOptions,
+  checkHit,
+  generateQuestion,
+} from './utils/index';
 import { StarCanvas } from './views/StarCanvas';
 
 export const starPlugin: TrainingPlugin<
@@ -11,7 +17,7 @@ export const starPlugin: TrainingPlugin<
   StarSettings
 > = {
   packId: 'star',
-  title: '寻星练习',
+  title: 'star',
   getModeBadge: (mode) => mode,
   isTargeting: (_mode, settings) => settings.targetingMode === 'manual',
   generateQuestion: (mode, level, settings) => {

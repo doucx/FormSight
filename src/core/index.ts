@@ -1,6 +1,7 @@
-// 导出契约与注册器
+// 导出契约、注册器与国际化引擎
 export * from './contracts';
 export * from './registry';
+export * from './i18n';
 
 // 导出数学与噪声
 export * from './math/mathUtils';

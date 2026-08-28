@@ -5,6 +5,7 @@ import {
   type ColorQuestionData,
   hsvToHex,
 } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
 
 export interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -27,6 +28,7 @@ export function ColorCanvas({
   showToleranceBand = true,
   enableHoverColorPreview = true,
 }: ColorCanvasProps) {
+  const { t } = useTranslation();
   const { mode, targetH, targetS, targetV, difficultyLevel } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
   const targetHSV: [number, number, number] = [targetH, targetS, targetV];
@@ -273,7 +275,7 @@ export function ColorCanvas({
           disabled={disabled}
           className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
         >
-          确认提交 (Space)
+          {t('common.confirmSpace')}
         </button>
       )}
     </div>

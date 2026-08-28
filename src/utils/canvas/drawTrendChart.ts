@@ -1,5 +1,6 @@
 import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { i18n } from '../../core/i18n';
 import { lttbDownsample } from '../../core/math/downsample';
 
 export function renderTrendChartCanvas(
@@ -25,7 +26,7 @@ export function renderTrendChartCanvas(
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('当前筛选条件下暂无做答轨迹', width / 2, height / 2);
+    ctx.fillText(i18n.t('stats.noTrace'), width / 2, height / 2);
     return;
   }
 
@@ -86,7 +87,7 @@ export function renderTrendChartCanvas(
     ctx.fillText(`L${l}`, padding.left - 5, getY(l));
   }
   ctx.textAlign = 'center';
-  ctx.fillText('最近活跃日演进趋势 ➔', width / 2, height - 5);
+  ctx.fillText(i18n.t('stats.trendAxisNotice'), width / 2, height - 5);
 }
 
 export function renderSessionTrendChartCanvas(
@@ -208,5 +209,5 @@ export function renderSessionTrendChartCanvas(
   ctx.fillStyle = '#94A3B8';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('题目做答序列 ➔', width / 2, height - 10);
+  ctx.fillText(i18n.t('stats.sessionSeqNotice'), width / 2, height - 10);
 }

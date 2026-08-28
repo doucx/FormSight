@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { Choice2AfcContainer } from '../../../components/common/Choice2AfcContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import { useTranslation } from '../../../core/i18n';
 import { NEGATIVE_SPACE_CANVAS_SIZE, type NegativeSpaceQuestionData } from '../utils/index';
 
 interface ShapeMemory2AfcViewProps {
@@ -20,6 +21,7 @@ export function ShapeMemory2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: ShapeMemory2AfcViewProps) {
+  const { t } = useTranslation();
   const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
   const [selectedMatchChoice, setSelectedMatchChoice] = useState<'A' | 'B' | null>(null);
 
@@ -84,8 +86,10 @@ export function ShapeMemory2AfcView({
     <QuestionCardShell
       hintText={
         matchPhase === 'stimulus' && !isRevealed
-          ? `瞬时记忆负形轮廓特征 (${question.displayTimeMs}ms)`
-          : '匹配回忆：哪一侧与刚才展示完全相同？(键 1 / 2)'
+          ? t('packs.negative_space.views.memoryStimulusHint', {
+              ms: question.displayTimeMs ?? 1500,
+            })
+          : t('packs.negative_space.views.memoryRecallHint')
       }
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
@@ -114,7 +118,7 @@ export function ShapeMemory2AfcView({
         <Choice2AfcContainer
           optionA={{
             key: 'A',
-            title: '区域 A',
+            title: t('common.areaA'),
             isCorrect: isTargetA,
             content: (
               <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
@@ -129,7 +133,7 @@ export function ShapeMemory2AfcView({
           }}
           optionB={{
             key: 'B',
-            title: '区域 B',
+            title: t('common.areaB'),
             isCorrect: isTargetB,
             content: (
               <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">

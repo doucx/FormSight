@@ -1,4 +1,5 @@
 import { Plus, Star, Trash2 } from 'lucide-preact';
+import { useTranslation } from '../../../core/i18n';
 import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
 
 interface PlanLibraryDrawerProps {
@@ -20,10 +21,12 @@ export function PlanLibraryDrawer({
   onToggleFavorite,
   onDeletePlan,
 }: PlanLibraryDrawerProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="p-3.5 bg-slate-100/80 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-slate-700">切换正在编辑的训练计划：</span>
+        <span className="text-xs font-bold text-slate-700">{t('plan.switchEditingPlan')}</span>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -31,14 +34,14 @@ export function PlanLibraryDrawer({
             className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
-            新建空白计划
+            {t('plan.createNewBlankPlan')}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="text-[11px] font-semibold text-slate-400 hover:text-slate-600"
           >
-            收起
+            {t('plan.collapse')}
           </button>
         </div>
       </div>
@@ -48,6 +51,7 @@ export function PlanLibraryDrawer({
           const isActive = currentPlan.id === p.id;
           const isFav = p.isFavorite ?? true;
           const stageCount = (p.items || []).length;
+          const totalTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
 
           return (
             <div
@@ -67,13 +71,12 @@ export function PlanLibraryDrawer({
                   <span className="text-xs font-bold text-slate-800 truncate">{p.name}</span>
                   {p.isBuiltin && (
                     <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
-                      官方
+                      {t('plan.officialTag')}
                     </span>
                   )}
                 </div>
                 <div className="text-[10px] text-slate-400 mt-0.5">
-                  {stageCount} 个阶段 •{' '}
-                  {(p.items || []).reduce((acc, c) => acc + c.targetTrials, 0)} 题
+                  {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
                 </div>
               </button>
 
@@ -86,7 +89,7 @@ export function PlanLibraryDrawer({
                       ? 'text-amber-500 hover:bg-amber-50'
                       : 'text-slate-300 hover:text-slate-500'
                   }`}
-                  title={isFav ? '已收藏 (显示在主页快速切换)' : '未收藏'}
+                  title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
                 >
                   <Star className={`w-3.5 h-3.5 ${isFav ? 'fill-amber-500' : ''}`} />
                 </button>
@@ -94,7 +97,7 @@ export function PlanLibraryDrawer({
                   type="button"
                   onClick={(e) => onDeletePlan(p.id, e)}
                   className="p-1 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
-                  title="删除计划"
+                  title={t('common.deletePlan')}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>

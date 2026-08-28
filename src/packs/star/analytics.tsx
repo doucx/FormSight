@@ -1,30 +1,31 @@
 import { Compass, Target } from 'lucide-preact';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { i18n } from '../../core/i18n';
 import { type SectorStat, renderCompassCanvas } from '../../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../../utils/canvas/drawHeatmap';
 import { getTrialRecordsByCard } from '../../utils/db/index';
 
-const STAR_SECTORS = [
-  '正东 (0°)',
-  '东北 (45°)',
-  '正北 (90°)',
-  '西北 (135°)',
-  '正西 (180°)',
-  '西南 (225°)',
-  '正南 (270°)',
-  '东南 (315°)',
+const STAR_SECTOR_KEYS = [
+  'packs.star.sectors.e',
+  'packs.star.sectors.ne',
+  'packs.star.sectors.n',
+  'packs.star.sectors.nw',
+  'packs.star.sectors.w',
+  'packs.star.sectors.sw',
+  'packs.star.sectors.s',
+  'packs.star.sectors.se',
 ];
 
-export function createStarAnalyticsPlugin(cardId: string, title: string): CardAnalyticsPlugin {
+export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
   return {
     cardId,
     fetchRecords: async (id) => getTrialRecordsByCard(id),
     views: [
       {
         id: 'spatial_bias',
-        tabLabel: '空间偏置散点',
-        title: `${title} · 空间偏置分析`,
-        subTitle: '中心绿点为绝对真理点，散点分布揭示手眼定位偏移',
+        tabLabel: 'packs.star.analytics.spatialBias.tabLabel',
+        title: 'packs.star.analytics.spatialBias.title',
+        subTitle: 'packs.star.analytics.spatialBias.subTitle',
         icon: Target,
         renderVisualizer: (canvas, records) => {
           const totalCount = records.length;
@@ -58,30 +59,40 @@ export function createStarAnalyticsPlugin(cardId: string, title: string): CardAn
           const avgDy = Math.round((sumDy / totalCount) * 10) / 10;
           const avgDist = Math.round((sumDist / totalCount) * 10) / 10;
 
+          const dxText =
+            avgDx > 0
+              ? i18n.t('packs.star.analytics.spatialBias.right', { val: avgDx })
+              : avgDx < 0
+                ? i18n.t('packs.star.analytics.spatialBias.left', { val: avgDx })
+                : '0';
+
+          const dyText =
+            avgDy > 0
+              ? i18n.t('packs.star.analytics.spatialBias.down', { val: avgDy })
+              : avgDy < 0
+                ? i18n.t('packs.star.analytics.spatialBias.up', { val: avgDy })
+                : '0';
+
           return (
             <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
               <div className="font-bold text-indigo-900 flex items-center gap-1">
                 <Target className="w-3.5 h-3.5 text-indigo-600" />
-                系统空间偏置 (Systematic Bias)
+                {i18n.t('packs.star.analytics.spatialBias.cardTitle')}
               </div>
               <p className="text-slate-600 leading-relaxed text-[11px]">
-                中心为绝对真理点。散点越收敛代表空间直觉越敏锐。
+                {i18n.t('packs.star.analytics.spatialBias.desc')}
               </p>
               <div className="pt-1 space-y-1 font-mono text-slate-700">
                 <div className="flex justify-between">
-                  <span>平均 X 轴偏移:</span>
-                  <span className="font-bold">
-                    {avgDx > 0 ? `右 +${avgDx}` : avgDx < 0 ? `左 ${avgDx}` : '0'}
-                  </span>
+                  <span>{i18n.t('packs.star.analytics.spatialBias.avgDx')}</span>
+                  <span className="font-bold">{dxText}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>平均 Y 轴偏移:</span>
-                  <span className="font-bold">
-                    {avgDy > 0 ? `下 +${avgDy}` : avgDy < 0 ? `上 ${avgDy}` : '0'}
-                  </span>
+                  <span>{i18n.t('packs.star.analytics.spatialBias.avgDy')}</span>
+                  <span className="font-bold">{dyText}</span>
                 </div>
                 <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
-                  <span>平均像素误差:</span>
+                  <span>{i18n.t('packs.star.analytics.spatialBias.avgDist')}</span>
                   <span>{avgDist}px</span>
                 </div>
               </div>
@@ -97,9 +108,9 @@ export function createStarAnalyticsPlugin(cardId: string, title: string): CardAn
       },
       {
         id: 'directional_compass',
-        tabLabel: '八向方位罗盘',
-        title: `${title} · 八向方位敏感度`,
-        subTitle: '洞察你在 8 个极坐标视角扇区上的定位准确率分布',
+        tabLabel: 'packs.star.analytics.directionalCompass.tabLabel',
+        title: 'packs.star.analytics.directionalCompass.title',
+        subTitle: 'packs.star.analytics.directionalCompass.subTitle',
         icon: Compass,
         renderVisualizer: (canvas, records) => {
           const sectorBuckets = Array.from({ length: 8 }, () => ({
@@ -118,7 +129,7 @@ export function createStarAnalyticsPlugin(cardId: string, title: string): CardAn
 
           const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
             sectorIdx: i,
-            label: STAR_SECTORS[i],
+            label: i18n.t(STAR_SECTOR_KEYS[i]),
             total: b.total,
             accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
             avgError: b.total > 0 ? Math.round((b.sumDist / b.total) * 10) / 10 : 0,
@@ -141,7 +152,7 @@ export function createStarAnalyticsPlugin(cardId: string, title: string): CardAn
 
           const validSectors = sectorBuckets
             .map((b, i) => ({
-              label: STAR_SECTORS[i],
+              label: i18n.t(STAR_SECTOR_KEYS[i]),
               total: b.total,
               accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
             }))
@@ -156,22 +167,27 @@ export function createStarAnalyticsPlugin(cardId: string, title: string): CardAn
             <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
               <div className="font-bold text-indigo-900 flex items-center gap-1">
                 <Compass className="w-3.5 h-3.5 text-indigo-600" />
-                方位盲区诊断
+                {i18n.t('packs.star.analytics.directionalCompass.cardTitle')}
               </div>
               {weakest ? (
                 <div className="space-y-1.5 text-[11px] text-slate-700">
                   <p>
-                    你在 <span className="font-bold text-indigo-800">{weakest.label}</span>{' '}
-                    方位上命中率最低：
+                    {i18n.t('packs.star.analytics.directionalCompass.weakestHint', {
+                      sector: weakest.label,
+                    })}
                   </p>
                   <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-indigo-100 font-mono">
                     <span>{weakest.label}</span>
-                    <span className="font-bold text-rose-600">{weakest.accuracy}% 准确率</span>
+                    <span className="font-bold text-rose-600">
+                      {i18n.t('packs.star.analytics.directionalCompass.accuracyRate', {
+                        accuracy: weakest.accuracy,
+                      })}
+                    </span>
                   </div>
                 </div>
               ) : (
                 <p className="text-slate-500 text-[11px]">
-                  各方位完成至少 3 题后可生成薄弱扇区诊断。
+                  {i18n.t('packs.star.analytics.directionalCompass.needMoreTrials')}
                 </p>
               )}
             </div>

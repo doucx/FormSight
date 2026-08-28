@@ -1,6 +1,7 @@
 import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 
 export interface Choice2AfcOption {
   key: 'A' | 'B';
@@ -30,6 +31,8 @@ export function Choice2AfcContainer({
   onSelect,
   enableKeyboardShortcuts = true,
 }: Choice2AfcContainerProps) {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (!enableKeyboardShortcuts || disabled || showAnswer) return;
 
@@ -84,7 +87,7 @@ export function Choice2AfcContainer({
           {showAnswer && isTarget && (
             <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
               <Check className="w-4 h-4 text-emerald-600" />
-              {opt.badge || '真实匹配'}
+              {opt.badge || t('common.trueMatch')}
             </span>
           )}
 

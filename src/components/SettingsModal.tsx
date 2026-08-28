@@ -1,5 +1,6 @@
 import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
 import { useState } from 'preact/hooks';
+import { useTranslation } from '../core/i18n';
 import type { CardDefinition } from '../types/card';
 import {
   type BaseModuleSettings,
@@ -18,8 +19,11 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ card, settings, onClose, onSave }: SettingsModalProps) {
+  const { t } = useTranslation();
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
   const cardConfig = getCardSettings(current, card.id);
+
+  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
 
   const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
     setCurrent((prev) => {
@@ -42,7 +46,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
   return (
     <ModalShell
-      title={`${card.title} 偏好设置`}
+      title={t('settingsModal.title', { title: cardTitle })}
       icon={Sliders}
       onClose={onClose}
       maxWidth="max-w-md"
@@ -51,8 +55,10 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         {/* 通用配置：自动翻页开关 */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold text-slate-700">自动切换下一题</div>
-            <div className="text-xs text-slate-400">点击答题后无需手动按空格切题</div>
+            <div className="text-sm font-semibold text-slate-700">
+              {t('settingsModal.autoNext')}
+            </div>
+            <div className="text-xs text-slate-400">{t('settingsModal.autoNextDesc')}</div>
           </div>
           <button
             type="button"
@@ -71,7 +77,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         {cardConfig.autoNext && (
           <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
             <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
-              <span>切换延迟时间</span>
+              <span>{t('settingsModal.delay')}</span>
               <span className="font-mono text-indigo-600 font-bold">
                 {cardConfig.autoNextDelay} ms
               </span>
@@ -93,7 +99,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
         {/* 通用配置：自适应算子模式 */}
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-slate-700">自适应算子模式</div>
+          <div className="text-sm font-semibold text-slate-700">
+            {t('settingsModal.adaptiveMode')}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -105,7 +113,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
               }`}
             >
               <Target className="w-3.5 h-3.5 text-indigo-600" />
-              轮次胜率评估 (推荐)
+              {t('settingsModal.modeBlock')}
             </button>
             <button
               type="button"
@@ -117,7 +125,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
               }`}
             >
               <Flame className="w-3.5 h-3.5 text-amber-500" />
-              经典 3U1D 阶梯
+              {t('settingsModal.modeStaircase')}
             </button>
           </div>
         </div>
@@ -127,7 +135,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           <div className="space-y-3 bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-100">
             <div className="space-y-1.5">
               <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                <span>目标通关正确率</span>
+                <span>{t('settingsModal.targetAcc')}</span>
                 <span className="font-bold text-indigo-600 font-mono">
                   {Math.round(cardConfig.targetAccuracy * 100)}%
                 </span>
@@ -152,9 +160,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
-                <span>每轮评估题量</span>
+                <span>{t('settingsModal.blockSize')}</span>
                 <span className="font-bold text-indigo-600 font-mono">
-                  {cardConfig.blockSize} 题/轮
+                  {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
@@ -169,7 +177,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                         : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    {size} 题
+                    {t('settingsModal.trialsUnit', { size })}
                   </button>
                 ))}
               </div>
@@ -179,7 +187,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
         {/* 难度阶梯精细度 */}
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-slate-700">难度阶梯精细度</div>
+          <div className="text-sm font-semibold text-slate-700">
+            {t('settingsModal.stepGranularity')}
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -190,7 +200,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              标准阶梯 (大步幅)
+              {t('settingsModal.stepStandard')}
             </button>
             <button
               type="button"
@@ -201,7 +211,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                   : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
               }`}
             >
-              精细阶梯 (小步幅)
+              {t('settingsModal.stepFine')}
             </button>
           </div>
         </div>
@@ -222,7 +232,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           onClick={onClose}
           className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
         >
-          完成
+          {t('common.complete')}
         </button>
       </div>
     </ModalShell>
