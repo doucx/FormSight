@@ -12,6 +12,8 @@ import {
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { abstractionPlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
@@ -165,6 +167,26 @@ export const abstractionPack: PackManifest = {
   },
   cards: abstractionCards,
   trainingPlugin: abstractionPlugin,
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    abs_gesture_axis: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    abs_polygon_decimation: {},
+    abs_notan_threshold: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    abs_palette_clustering: {},
+    abs_td_gesture_2afc: {},
+    abs_td_hull_2afc: {},
+    abs_td_notan_2afc: {},
+    abs_td_palette_2afc: {},
+  },
 };
 
 export default abstractionPack;

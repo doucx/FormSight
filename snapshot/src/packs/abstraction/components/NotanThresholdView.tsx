@@ -6,7 +6,7 @@ import { StandardSliderView } from '../../../components/common/StandardSliderVie
 import {
   drawNotanNoiseField,
   drawRawGrayscaleNoiseField,
-} from '../../../utils/canvas/drawNotanField';
+} from '../canvas/drawNotanField';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,

@@ -2,6 +2,8 @@ import { Columns, Palette, Shuffle, Sun } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { relativeColorPlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
@@ -94,6 +96,24 @@ export const relativeColorPack: PackManifest = {
   },
   cards: relativeColorCards,
   trainingPlugin: relativeColorPlugin,
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    rel_vector_shift: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    rel_lightness_induction: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    rel_hue_induction: {
+      sliderHitMargin: 12,
+    },
+    rel_decontextual_2afc: {},
+  },
 };
 
 export default relativeColorPack;

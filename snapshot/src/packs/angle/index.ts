@@ -2,6 +2,8 @@ import { Columns, Compass, Split } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { anglePlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
@@ -74,6 +76,16 @@ export const anglePack: PackManifest = {
   },
   cards: angleCards,
   trainingPlugin: anglePlugin,
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    angle_estimation: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+  },
 };
 
 export default anglePack;

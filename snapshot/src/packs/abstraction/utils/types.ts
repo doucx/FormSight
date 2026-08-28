@@ -1,5 +1,5 @@
 import type { Point } from '../../../types';
-import type { PaletteTile } from '../../../utils/canvas/drawPaletteTiles';
+import type { PaletteTile } from '../canvas/drawPaletteTiles';
 
 export type { PaletteTile };
 

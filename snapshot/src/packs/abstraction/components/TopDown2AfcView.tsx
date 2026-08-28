@@ -2,8 +2,8 @@ import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { drawRawGrayscaleNoiseField } from '../../../utils/canvas/drawNotanField';
-import { drawParticlesCanvas, drawSpinePromptCanvas } from '../../../utils/canvas/drawParticles';
+import { drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
+import { drawParticlesCanvas, drawSpinePromptCanvas } from '../canvas/drawParticles';
 import {
   ABSTRACTION_2AFC_SIZE,
   ABSTRACTION_CANVAS_SIZE,

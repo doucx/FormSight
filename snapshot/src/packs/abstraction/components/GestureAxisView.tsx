@@ -2,7 +2,7 @@ import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { drawParticlesCanvas } from '../../../utils/canvas/drawParticles';
+import { drawParticlesCanvas } from '../canvas/drawParticles';
 import {
   ABSTRACTION_CANVAS_SIZE,
   type AbstractionHitResult,

@@ -2,7 +2,7 @@ import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
-import { drawPaletteTilesCanvas } from '../../../utils/canvas/drawPaletteTiles';
+import { drawPaletteTilesCanvas } from '../canvas/drawPaletteTiles';
 import {
   ABSTRACTION_2AFC_SIZE,
   type AbstractionHitResult,

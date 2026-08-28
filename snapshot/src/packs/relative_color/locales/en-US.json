@@ -1,0 +1,33 @@
+{
+  "meta": {
+    "title": "Relative Color Perception",
+    "subTitle": "Relative Color Perception",
+    "desc": "Master color vector constancy and Albers simultaneous contrast in OKLab perceptual color space."
+  },
+  "cards": {
+    "rel_vector_shift": {
+      "title": "Color Vector Shift",
+      "desc": "Observe color vector shift A->B and select matching parallel shift C->D.",
+      "instruction": "Observe vector A->B and find matching vector C->D below.",
+      "badge": "Vector Shift"
+    },
+    "rel_lightness_induction": {
+      "title": "Lightness Induction",
+      "desc": "Compensate for background illusion to achieve perceived lightness constancy.",
+      "instruction": "Adjust right center value so both center squares appear perceptually identical.",
+      "badge": "Lightness Induction"
+    },
+    "rel_hue_induction": {
+      "title": "Hue Induction & Harmony",
+      "desc": "Select the compensated target color to counteract chromatic induction (4AFC).",
+      "instruction": "Select the hue that compensates for the colored background (Keys 1-4).",
+      "badge": "Hue Induction"
+    },
+    "rel_decontextual_2afc": {
+      "title": "Decontextualized 2AFC",
+      "desc": "Pierce through simultaneous contrast illusions to identify the objectively brighter color.",
+      "instruction": "Identify which center square is physically brighter (Keys 1 / 2).",
+      "badge": "Decontextualized"
+    }
+  }
+}

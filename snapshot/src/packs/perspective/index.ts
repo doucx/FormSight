@@ -2,6 +2,8 @@ import { ArrowRightLeft, Box, Eye, Layers, Sliders } from 'lucide-preact';
 import type { SettingFieldSchema } from '../../components/settings/DynamicDomainSettings';
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { perspectivePlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
@@ -112,6 +114,20 @@ export const perspectivePack: PackManifest = {
   },
   cards: perspectiveCards,
   trainingPlugin: perspectivePlugin,
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    perspective_vp_convergence: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    perspective_proportion_division: {},
+    perspective_proportion_migration: {},
+    perspective_gestalt_continuation_2afc: {},
+    perspective_structure_3d: {},
+  },
 };
 
 export default perspectivePack;

@@ -3,6 +3,8 @@ import type { SettingFieldSchema } from '../../components/settings/DynamicDomain
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { negRatioAnalyticsPlugin } from './analytics';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { negativeSpacePlugin } from './plugin';
 
 const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
@@ -96,6 +98,19 @@ export const negativeSpacePack: PackManifest = {
   trainingPlugin: negativeSpacePlugin,
   analyticsPlugins: {
     neg_ratio_estimation: negRatioAnalyticsPlugin,
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    neg_ratio_estimation: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    neg_area_comparison_2afc: {},
+    neg_vertex_fitting: {},
+    neg_shape_match_2afc: {},
   },
 };
 

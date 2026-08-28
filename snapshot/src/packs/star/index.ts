@@ -3,6 +3,8 @@ import type { SettingFieldSchema } from '../../components/settings/DynamicDomain
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { createStarAnalyticsPlugin } from './analytics';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { starPlugin } from './plugin';
 
 export const STAR_SECTORS = [
@@ -108,6 +110,27 @@ export const starPack: PackManifest = {
     star_single: createStarAnalyticsPlugin('star_single', '单锚点'),
     star_double_h: createStarAnalyticsPlugin('star_double_h', '水平双锚点'),
     star_double_r: createStarAnalyticsPlugin('star_double_r', '旋转双锚点'),
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    star_single: {
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_h: {
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    star_double_r: {
+      gridSize: 3,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
   },
 };
 

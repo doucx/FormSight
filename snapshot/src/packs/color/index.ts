@@ -3,6 +3,8 @@ import type { SettingFieldSchema } from '../../components/settings/DynamicDomain
 import type { PackManifest } from '../../core/contracts';
 import type { CardDefinition } from '../../types/card';
 import { colorHueAnalyticsPlugin } from './analytics';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 import { colorPlugin } from './plugin';
 
 export const COLOR_SECTORS = [
@@ -133,6 +135,31 @@ export const colorPack: PackManifest = {
   trainingPlugin: colorPlugin,
   analyticsPlugins: {
     color_hue: colorHueAnalyticsPlugin,
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  defaultCardSettings: {
+    color_hue: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+      targetingMode: 'off',
+      manualTargetSectors: [],
+    },
+    color_val: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    color_sat: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+    },
+    color_all: {
+      sliderHitMargin: 12,
+      showToleranceBand: true,
+      enableHoverColorPreview: true,
+    },
   },
 };
 
