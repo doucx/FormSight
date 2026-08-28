@@ -5,7 +5,6 @@ import {
   Calendar,
   ChevronDown,
   Compass,
-  Eye,
   Filter,
   Target,
   TrendingUp,
