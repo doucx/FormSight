@@ -1,157 +1,268 @@
-拉伸的根本原因在于：`setupHiDpiCanvas` 原先直接设置了固定的 inline `style.width = '500px'` 和 `style.height = '500px'`，配合 `max-width: 100%` 时，宽度随父容器收缩但高度被固定在 500px，导致 Canvas 纵向严重变形拉伸。
+我已定位到负形包（`negative_space`）中的顶点反切定点模块（`VertexFittingView.tsx`）。
 
-我将生成一个修复计划，优化 `setupHiDpiCanvas` 的宽高比与样式自适应规则，并为左右卡片及内部画布设置严格等比的正方形（`aspect-square`）约束。
+该模块原先使用了 `QuestionCardShell` 和 `DualViewportContainer` 多层嵌套，并在外层卡片中将右侧 `PointClickCanvas` 与左侧 Canvas 限制在 `max-w-[300px]`，导致在不同分辨率下两侧未锁定为 1:1 正方形且样式风格与 `star`（寻星）模块不一致。
 
-## [WIP] fix: 消除点阵视口拉伸变形并强制保持正方形宽高比
+我将生成一个计划，将 `VertexFittingView.tsx` 的布局重构为与 `StarCanvas` 一致的双卡片沉浸式对称结构，确保左右两视口严格等大、均为正方形。
 
-### 错误分析
-
-1. **Inline 样式覆盖 `aspect-ratio`**：`setupHiDpiCanvas` 原本将 `style.height` 显式设为逻辑像素高度（如 `500px`），当容器宽度受限时，`max-width: 100%` 缩小了宽度，但高度依然为 `500px`，导致绘制内容被强制纵向拉伸为非正方形。
-2. **容器宽高比未锁定**：外层卡片容器仅限制了宽度，未声明 `aspect-square`，导致外框与内部画布在 Flex 布局下未能按 1:1 锁定。
+## [WIP] refactor: 重构负形顶点定点视图为 Star 风格对称正方形视口
 
 ### 用户需求
 
-确保寻星点阵左右两个视口及其外部卡片均为严格的 1:1 正方形，杜绝任何拉伸与失真。
+修复 `negative_space` 包中的点阵定点界面（`VertexFittingView`），使其界面布局与 `star` 模块一致，并保证左右两边窗格大小完全相同、均为严格的正方形。
 
 ### 评论
 
-对于空间方位感知与距离估计训练而言，保持 1:1 真实正方形比例至关重要，否则会破坏用户的距离与角度直觉。
+统一全站双视口对比类模块的视觉语言（如寻星与负形顶点定点）有助于保持交互与视觉体验的一致性，消除多层嵌套容器带来的额外内边距与比例失真。
 
 ### 目标
 
-1. 改造 `src/core/canvas/hidpi.ts` 中的 `setupHiDpiCanvas`，将固定像素 height 调整为 `aspectRatio` + `height: auto`，确保所有 Canvas 响应式缩放时严格保持正方形。
-2. 更新 `src/packs/star/views/StarCanvas.tsx`，将左右卡片及其子元素设置为严格对称的 `w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square`。
+1. 重构 `VertexFittingView.tsx`，移除冗余的 `QuestionCardShell` 与 `DualViewportContainer` 容器嵌套。
+2. 采用与 `StarCanvas` 相同的双列对称卡片布局（`w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square`），锁定 1:1 正方形比例。
+3. 确保左侧多边形参考画布与右侧 `PointClickCanvas` 均撑满卡片容器且严格等大。
 
 ### 基本原理
 
-通过 CSS `aspectRatio: `${logicalWidth} / ${logicalHeight}`` 和 `height: 'auto'`，使得不论画布处于何种父容器宽度下，其高度都将严格按比例由宽度决定，从而在任何分辨率下均保持绝对无畸变的正方形。
+通过直接采用 `flex-col sm:flex-row` 容器包裹两个等尺寸的 `aspect-square` 卡片，使左侧参考图与右侧交互点阵在 Flex 布局中始终分配相同像素宽度与高度，并借助 `setupHiDpiCanvas` 保持清晰度与 1:1 几何无畸变。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/canvas-aspect-ratio #task/action/bug-fix #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/negative-space-vertex-fitting #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `hidpi.ts` 中的画布宽高比机制
+#### Acts 1: 重构 `VertexFittingView.tsx` 布局结构
 
 ~~~~~act
 patch_file
-src/core/canvas/hidpi.ts
+src/packs/negative_space/components/VertexFittingView.tsx
 ~~~~~
 ~~~~~typescript.old
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
+import { Columns } from 'lucide-preact';
+import { useCallback, useEffect, useRef } from 'preact/hooks';
+import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
+import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
+import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import { useTranslation } from '../../../core/i18n';
+import type { Point } from '../../../types';
+import {
+  FITTING_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../utils/index';
 
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = `${logicalWidth}px`;
-  canvas.style.height = `${logicalHeight}px`;
-  canvas.style.maxWidth = '100%';
-
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
-
-  return ctx;
+interface VertexFittingViewProps {
+  question: NegativeSpaceQuestionData;
+  showAnswer: boolean;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (clickPoint: Point) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
 }
-~~~~~
-~~~~~typescript.new
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
 
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = '100%';
-  canvas.style.maxWidth = `${logicalWidth}px`;
-  canvas.style.aspectRatio = `${logicalWidth} / ${logicalHeight}`;
-  canvas.style.height = 'auto';
+export function VertexFittingView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: VertexFittingViewProps) {
+  const { t } = useTranslation();
+  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
+  useEffect(() => {
+    if (!question.vertices) return;
+    drawPolygonCanvas({
+      canvas: leftFittingRef.current,
+      vertices: question.vertices,
+      size: FITTING_CANVAS_SIZE,
+      fillColor: '#0F172A',
+      strokeColor: '#1E293B',
+    });
+  }, [question.vertices]);
 
-  return ctx;
-}
-~~~~~
+  // 自定义绘制截断正形与参考边框
+  const handleCustomOverlayRender = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
+        ctx.beginPath();
+        ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
+        for (let i = 1; i < question.truncatedVertices.length; i++) {
+          ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#0F172A';
+        ctx.fill();
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
 
-#### Acts 2: 调整 `StarCanvas.tsx` 左右窗格卡片为严格等大正方形
-
-~~~~~act
-patch_file
-src/packs/star/views/StarCanvas.tsx
-~~~~~
-~~~~~typescript.old
-  return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[380px] lg:max-w-[420px] bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
-        />
-      </div>
-
-      <div className="flex-1 w-full max-w-[380px] lg:max-w-[420px] bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col items-center justify-center">
-        <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
-          showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
-          disabled={disabled}
-          maxDisplayWidth="w-full"
-          onCommitPoint={handleCommitPoint}
-        />
-      </div>
-    </div>
+      if (showAnswer && question.vertices) {
+        ctx.beginPath();
+        ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
+        for (let i = 1; i < question.vertices.length; i++) {
+          ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    },
+    [question.truncatedVertices, question.vertices, showAnswer],
   );
+
+  return (
+    <QuestionCardShell
+      hintText={t('packs.negative_space.views.vertexHint')}
+      hintIcon={Columns}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-4xl"
+    >
+      <DualViewportContainer
+        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
+        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
+        leftContent={
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={leftFittingRef}
+              width={FITTING_CANVAS_SIZE}
+              height={FITTING_CANVAS_SIZE}
+              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
+            />
+          </div>
+        }
+        rightContent={
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <PointClickCanvas
+              canvasSize={FITTING_CANVAS_SIZE}
+              gridPoints={question.distractorPoints || []}
+              targetPoint={question.targetPoint}
+              userNearestPoint={userAnswer?.nearestGridPoint}
+              showAnswer={showAnswer}
+              isHit={userAnswer?.isHit}
+              disabled={disabled}
+              maxDisplayWidth="max-w-[300px]"
+              customOverlayRender={handleCustomOverlayRender}
+              onCommitPoint={onAnswer}
+            />
+          </div>
+        }
+      />
+    </QuestionCardShell>
+  );
+}
 ~~~~~
 ~~~~~typescript.new
+import { useCallback, useEffect, useRef } from 'preact/hooks';
+import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
+import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import type { Point } from '../../../types';
+import {
+  FITTING_CANVAS_SIZE,
+  type NegativeSpaceHitResult,
+  type NegativeSpaceQuestionData,
+} from '../utils/index';
+
+interface VertexFittingViewProps {
+  question: NegativeSpaceQuestionData;
+  showAnswer: boolean;
+  userAnswer: NegativeSpaceHitResult | null;
+  onAnswer: (clickPoint: Point) => void;
+  disabled?: boolean;
+}
+
+export function VertexFittingView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: VertexFittingViewProps) {
+  const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    if (!question.vertices) return;
+    drawPolygonCanvas({
+      canvas: leftFittingRef.current,
+      vertices: question.vertices,
+      size: FITTING_CANVAS_SIZE,
+      fillColor: '#0F172A',
+      strokeColor: '#1E293B',
+    });
+  }, [question.vertices]);
+
+  // 自定义绘制截断正形与参考边框
+  const handleCustomOverlayRender = useCallback(
+    (ctx: CanvasRenderingContext2D) => {
+      if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
+        ctx.beginPath();
+        ctx.moveTo(question.truncatedVertices[0].x, question.truncatedVertices[0].y);
+        for (let i = 1; i < question.truncatedVertices.length; i++) {
+          ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#0F172A';
+        ctx.fill();
+        ctx.strokeStyle = '#1E293B';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      if (showAnswer && question.vertices) {
+        ctx.beginPath();
+        ctx.moveTo(question.vertices[0].x, question.vertices[0].y);
+        for (let i = 1; i < question.vertices.length; i++) {
+          ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    },
+    [question.truncatedVertices, question.vertices, showAnswer],
+  );
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
       <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
         <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
+          ref={leftFittingRef}
+          width={FITTING_CANVAS_SIZE}
+          height={FITTING_CANVAS_SIZE}
           className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
         />
       </div>
 
       <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
         <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
+          canvasSize={FITTING_CANVAS_SIZE}
+          gridPoints={question.distractorPoints || []}
+          targetPoint={question.targetPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
-          onCommitPoint={handleCommitPoint}
+          customOverlayRender={handleCustomOverlayRender}
+          onCommitPoint={onAnswer}
         />
       </div>
     </div>
   );
+}
 ~~~~~
 
 ### 下一步建议
 
-1. **运行代码质量检查**：执行 `npm run check` 验证格式与类型。
-2. **在浏览器中测试**：打开单锚点或双锚点寻星练习，确认左右两块区域呈现标准的 1:1 正方形，且网格圆点无任何椭圆或拉伸形变。
+1. **类型与格式检查**：运行 `npm run check` 确保无任何语法与样式报错。
+2. **多卡片对比测试**：分别打开「负形边界反切定点」与「单锚点/双锚点寻星」，验证两者的左右视口卡片在尺寸、内边距、正方形比例及响应式缩放上均保持完全一致。
