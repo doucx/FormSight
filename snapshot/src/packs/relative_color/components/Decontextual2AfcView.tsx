@@ -44,8 +44,12 @@ export function Decontextual2AfcView({
         title: t('common.areaA'),
         isCorrect: isAHit,
         badge: isAHit
-          ? t('packs.relative_color.views.physicallyBrighter', { v: question.centerColorA?.[2] ?? 50 })
-          : t('packs.relative_color.views.physicallyDarker', { v: question.centerColorA?.[2] ?? 50 }),
+          ? t('packs.relative_color.views.physicallyBrighter', {
+              v: question.centerColorA?.[2] ?? 50,
+            })
+          : t('packs.relative_color.views.physicallyDarker', {
+              v: question.centerColorA?.[2] ?? 50,
+            }),
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
@@ -59,8 +63,12 @@ export function Decontextual2AfcView({
         title: t('common.areaB'),
         isCorrect: isBHit,
         badge: isBHit
-          ? t('packs.relative_color.views.physicallyBrighter', { v: question.centerColorB?.[2] ?? 50 })
-          : t('packs.relative_color.views.physicallyDarker', { v: question.centerColorB?.[2] ?? 50 }),
+          ? t('packs.relative_color.views.physicallyBrighter', {
+              v: question.centerColorB?.[2] ?? 50,
+            })
+          : t('packs.relative_color.views.physicallyDarker', {
+              v: question.centerColorB?.[2] ?? 50,
+            }),
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"

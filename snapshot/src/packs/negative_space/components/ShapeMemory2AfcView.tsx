@@ -86,7 +86,9 @@ export function ShapeMemory2AfcView({
     <QuestionCardShell
       hintText={
         matchPhase === 'stimulus' && !isRevealed
-          ? t('packs.negative_space.views.memoryStimulusHint', { ms: question.displayTimeMs ?? 1500 })
+          ? t('packs.negative_space.views.memoryStimulusHint', {
+              ms: question.displayTimeMs ?? 1500,
+            })
           : t('packs.negative_space.views.memoryRecallHint')
       }
       hintIcon={Sparkles}

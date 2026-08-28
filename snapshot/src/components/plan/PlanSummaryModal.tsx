@@ -139,7 +139,10 @@ export function PlanSummaryModal({
                     <div>
                       <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
                       <div className="text-[10px] text-slate-400">
-                        {t('common.trialsCorrect', { hits: stageHits, total: stage.history.length })}
+                        {t('common.trialsCorrect', {
+                          hits: stageHits,
+                          total: stage.history.length,
+                        })}
                       </div>
                     </div>
                   </div>
