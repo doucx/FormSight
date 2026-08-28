@@ -339,6 +339,63 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
   );
 }
 
+export function getCognitiveOverviewInsights(records: UnifiedTrialRecord[]): {
+  sweetSpotText: string;
+  growthZoneText: string;
+} {
+  if (!records || records.length === 0) {
+    return {
+      sweetSpotText: i18n.t('analyticsModal.needMoreSamples'),
+      growthZoneText: i18n.t('analyticsModal.needMoreSamples'),
+    };
+  }
+
+  // 1. SAT 作答速度黄金甜点区计算
+  const bins = calculateSpeedBins(records);
+  const validBins = bins.filter((b) => b.total >= 3);
+  let sweetSpotText = '';
+
+  if (validBins.length > 0) {
+    const bestBin = [...validBins].sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
+    sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
+      range: bestBin.rangeLabel,
+      acc: bestBin.accuracy,
+    });
+  } else if (records.length >= 3) {
+    const populatedBins = bins.filter((b) => b.total > 0);
+    const bestBin = populatedBins.sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
+    if (bestBin) {
+      sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
+        range: bestBin.rangeLabel,
+        acc: bestBin.accuracy,
+      });
+    }
+  }
+
+  if (!sweetSpotText) {
+    sweetSpotText = i18n.t('analyticsModal.needMoreSamples');
+  }
+
+  // 2. 难度突破区计算
+  const levelStats = calculateLevelStats(records);
+  const growthLevels = levelStats.filter(
+    (s) => s.accuracy >= 60 && s.accuracy < 80 && s.total >= 2,
+  );
+
+  let growthZoneText = '';
+  if (growthLevels.length > 0) {
+    growthZoneText = growthLevels.map((s) => `Lvl ${s.level}`).join(', ');
+  } else {
+    const maxLvl = Math.max(...records.map((r) => Number(r.difficultyLevel) || 1));
+    growthZoneText = `Lvl ${Math.max(1, maxLvl - 2)} ~ Lvl ${maxLvl}`;
+  }
+
+  return {
+    sweetSpotText,
+    growthZoneText,
+  };
+}
+
 export const UNIVERSAL_ANALYTICS_VIEWS: CardAnalyticsView[] = [
   {
     id: 'universal_sat',

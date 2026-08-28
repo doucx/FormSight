@@ -1,528 +1,244 @@
-好的，我已全面梳理了系统中图表与 Canvas 渲染模糊的根本原因，并将对所有相关可视化绘图函数以及基础交互画布进行 HiDPI / 视网膜屏适配和容器自适应分辨率重构。
-
-以下是修复计划：
-
-## [WIP] fix: 修复图表与交互画布在不同分辨率与高分屏下的渲染模糊问题
+## [WIP] fix: 修复卡片分析总览页认知诊断错误显示样本量不足的问题
 
 ### 错误分析
 
-1. **逻辑尺寸与 CSS 容器宽度脱节拉伸**：
-   - 全局趋势图（`renderTrendChartCanvas`）在绘图逻辑中硬编码为 340px，而父容器在桌面端常达 500px+，CSS `w-full` 强行将 340px 栅格拉伸了 1.5 倍以上；
-   - 认知分析图（SAT 分析、难度抗压分析、色相偏差等）硬编码 320x320 逻辑尺寸，在 `CardAnalyticsView` 容器中被拉伸，且极小字号（8~10px）在插值放大后边缘严重虚化。
-2. **基础交互画布缺失 HiDPI / DPR 缩放**：
-   - `PointClickCanvas`（主交互画布及触控放大镜）与 `drawPolygonCanvas` 直接获取原生 2D 上下文，未根据设备的 `devicePixelRatio` 设置物理像素与 context scale，在高分屏（Retina / 移动端 / 4K 屏）上始终以 1x 低分辨率绘制。
+`CardAnalyticsView.tsx` 中的「总体评价与认知建议」区块未调用真实的作答速度与难度分箱算法，而是以 `summaryStats.accuracy >= 80` 作为硬编码分支。当总正确率低于 80% 时，无论做答了几百题都会被错误判定为“样本量较少”；且在大于 80% 时错误地将“绝对舒适区”的文案填入了“直觉黄金甜点区”的卡片中。
 
 ### 用户需求
 
-彻底消除“能力峰值演进轨迹”、“难度抗压分析”、“反应速度-正确率 (SAT)”以及其他分析图表和做答画布上的模糊、发虚和拉伸现象，确保在任何屏幕缩放比与容器宽度下均呈现锐利清晰的矢量级渲染效果。
+修复总览页面的认知诊断逻辑，基于真实作答反应时间分箱（SAT）与历史难度分阶动态生成“直觉黄金甜点区”与“当前突破区”建议，避免错误显示“样本量较少”。
 
 ### 评论
 
-Canvas 清晰度是视觉认知与色彩训练系统的核心基础体验。通过引入动态逻辑尺寸探测与统一的 HiDPI 像素比缩放管理，不仅能修复现有图表的模糊，还能提升整体界面质感与手眼交互精度。
+数据总览是用户复盘卡片表现的第一窗口。建立准确的认知指标聚合能让用户直观了解自己在哪个作答耗时区间内直觉最准，以及当前处于哪个难度突破带。
 
 ### 目标
 
-1. 增强 `setupHiDpiCanvas`，支持自适应逻辑尺寸与精确的 CSS 视口映射。
-2. 重构 `drawTrendChart.ts` 和 `universalViews.tsx`，动态按画布实际呈现宽度/高度进行自适应高清渲染。
-3. 同步重构其余分析图表（`drawHeatmap`、`drawCompass`、`drawColorRing`、`drawHueBiasChart`）。
-4. 为 `PointClickCanvas`（包括主画布与 Loupe 放大镜）和 `drawPolygon.ts` 补齐 DPR 高清缩放。
+1. 在 `universalViews.tsx` 中提取并导出通用的 `getCognitiveOverviewInsights` 认知评估函数。
+2. 在 `CardAnalyticsView.tsx` 中接入该评估函数，基于做答反应速度分布和难度层阶数据动态展示真实的认知甜点区与突破区。
 
 ### 基本原理
 
-1. **响应式尺寸探测**：在渲染前通过 `canvas.getBoundingClientRect()` 或父容器宽度获取真实 CSS 像素尺寸，消除位图在 CSS 层面被二次双线性插值放大的问题。
-2. **统一 DPR 缩放**：确保 `canvas.width = Math.round(width * dpr)` 且 `canvas.height = Math.round(height * dpr)`，同时通过 `ctx.scale(dpr, dpr)` 保持业务绘图坐标系不变。
+1. 通过 `calculateSpeedBins` 分析各作答耗时区间的正确率，找出样本量充足且胜率最高的区间作为“直觉黄金甜点区”。
+2. 当总做答样本量过少（<3题且无有效分箱）时才展示“需要更多样本”的友好提示。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/core #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/ui #task/object/canvas-hidpi-rendering #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/core #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/ui #task/object/analytics-overview-diagnosis #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级基础 HiDPI 工具函数与多边形绘制模块
+#### Acts 1: 在 `universalViews.tsx` 中提供总览认知诊断计算函数
 
-我们将优化 `setupHiDpiCanvas`，使其不仅设置物理像素尺寸，还同步锁定 CSS 样式宽高，避免不必要的拉伸；并在 `drawPolygonCanvas` 中引入高清屏缩放。
-
-~~~~~act
-patch_file
-src/core/canvas/hidpi.ts
-~~~~~
-~~~~~typescript.old
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.maxWidth = '100%';
-  canvas.style.height = 'auto';
-
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
-
-  return ctx;
-}
-~~~~~
-~~~~~typescript.new
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = `${logicalWidth}px`;
-  canvas.style.height = `${logicalHeight}px`;
-  canvas.style.maxWidth = '100%';
-
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
-
-  return ctx;
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/core/canvas/drawPolygon.ts
-~~~~~
-~~~~~typescript.old
-export function drawPolygonCanvas({
-  canvas,
-  vertices,
-  size,
-  fillColor = '#0F172A',
-  strokeColor = '#1E293B',
-  lineWidth = 2,
-  bgColor = '#FFFFFF',
-  isHighlighted = false,
-  highlightColor = '#22C55E',
-}: DrawPolygonOptions): void {
-  if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, size, size);
-~~~~~
-~~~~~typescript.new
-import { setupHiDpiCanvas } from './hidpi';
-
-export function drawPolygonCanvas({
-  canvas,
-  vertices,
-  size,
-  fillColor = '#0F172A',
-  strokeColor = '#1E293B',
-  lineWidth = 2,
-  bgColor = '#FFFFFF',
-  isHighlighted = false,
-  highlightColor = '#22C55E',
-}: DrawPolygonOptions): void {
-  if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = setupHiDpiCanvas(canvas, size, size);
-  if (!ctx) return;
-
-  ctx.fillStyle = bgColor;
-  ctx.fillRect(0, 0, size, size);
-~~~~~
-
-#### Acts 2: 修复全局趋势演进图与单次会话趋势图
-
-我们将 `drawTrendChart.ts` 中写死的 340 宽度改为动态探测画布实际 CSS 呈现宽度，解决“能力峰值演进轨迹”被拉伸模糊的根本问题。
-
-~~~~~act
-patch_file
-src/utils/canvas/drawTrendChart.ts
-~~~~~
-~~~~~typescript.old
-export function renderTrendChartCanvas(
-  canvas: HTMLCanvasElement,
-  dailyData: Record<string, { total: number; maxLevel: number }>,
-) {
-  const width = 340;
-  const height = 150;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderTrendChartCanvas(
-  canvas: HTMLCanvasElement,
-  dailyData: Record<string, { total: number; maxLevel: number }>,
-) {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.round(rect.width) || canvas.parentElement?.clientWidth || 480;
-  const height = 160;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/canvas/drawTrendChart.ts
-~~~~~
-~~~~~typescript.old
-export function renderSessionTrendChartCanvas(
-  canvas: HTMLCanvasElement,
-  history: SessionHistoryItem[],
-) {
-  const width = 440;
-  const height = 160;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx || history.length === 0) return;
-~~~~~
-~~~~~typescript.new
-export function renderSessionTrendChartCanvas(
-  canvas: HTMLCanvasElement,
-  history: SessionHistoryItem[],
-) {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.round(rect.width) || canvas.parentElement?.clientWidth || 440;
-  const height = 160;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx || history.length === 0) return;
-~~~~~
-
-#### Acts 3: 修复 SAT 与难度抗压分析可视化图表
-
-我们将 `universalViews.tsx` 的基准尺寸从 320x320 升级为动态自适应容器大小，并优化文字字号与清晰度。
+我们将导出 `getCognitiveOverviewInsights`，聚合 SAT 速度甜点区与难度抗压演进数据。
 
 ~~~~~act
 patch_file
 src/core/analytics/universalViews.tsx
 ~~~~~
 ~~~~~typescript.old
-export function renderSpeedAccuracyVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
+export const UNIVERSAL_ANALYTICS_VIEWS: CardAnalyticsView[] = [
+  {
+    id: 'universal_sat',
+    tabLabel: 'analyticsModal.satTabLabel',
+    title: 'analyticsModal.satTitle',
+    subTitle: 'analyticsModal.satSubtitle',
+    icon: Zap,
+    renderVisualizer: renderSpeedAccuracyVisualizer,
+    renderDiagnostics: diagnoseSpeedAccuracy,
+  },
+  {
+    id: 'universal_plateau',
+    tabLabel: 'analyticsModal.plateauTabLabel',
+    title: 'analyticsModal.plateauTitle',
+    subTitle: 'analyticsModal.plateauSubtitle',
+    icon: Gauge,
+    renderVisualizer: renderDifficultyPlateauVisualizer,
+    renderDiagnostics: diagnoseDifficultyPlateau,
+  },
+];
 ~~~~~
 ~~~~~typescript.new
-export function renderSpeedAccuracyVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
+export function getCognitiveOverviewInsights(records: UnifiedTrialRecord[]): {
+  sweetSpotText: string;
+  growthZoneText: string;
+} {
+  if (!records || records.length === 0) {
+    return {
+      sweetSpotText: i18n.t('analyticsModal.needMoreSamples'),
+      growthZoneText: i18n.t('analyticsModal.needMoreSamples'),
+    };
+  }
 
-~~~~~act
-patch_file
-src/core/analytics/universalViews.tsx
-~~~~~
-~~~~~typescript.old
-export function renderDifficultyPlateauVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderDifficultyPlateauVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
+  // 1. SAT 作答速度黄金甜点区计算
+  const bins = calculateSpeedBins(records);
+  const validBins = bins.filter((b) => b.total >= 3);
+  let sweetSpotText = '';
 
-#### Acts 4: 修复其他分析图表（罗盘、色环、热力图、色相偏差图）
-
-为 `drawCompass`、`drawColorRing`、`drawHeatmap`、`drawHueBiasChart` 同样引入动态尺寸探测与清晰度优化。
-
-~~~~~act
-patch_file
-src/utils/canvas/drawCompass.ts
-~~~~~
-~~~~~typescript.old
-export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/canvas/drawColorRing.ts
-~~~~~
-~~~~~typescript.old
-export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/canvas/drawHeatmap.ts
-~~~~~
-~~~~~typescript.old
-export function renderHeatmapCanvas(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-  avgDx: number,
-  avgDy: number,
-  totalCount: number,
-) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderHeatmapCanvas(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-  avgDx: number,
-  avgDy: number,
-  totalCount: number,
-) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-
-~~~~~act
-patch_file
-src/utils/canvas/drawHueBiasChart.ts
-~~~~~
-~~~~~typescript.old
-export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: UnifiedTrialRecord[]) {
-  const width = 320;
-  const height = 320;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-~~~~~typescript.new
-export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: UnifiedTrialRecord[]) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
-  const width = size;
-  const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
-~~~~~
-
-#### Acts 5: 为点阵交互画布与触控放大镜补齐 HiDPI 渲染
-
-修复 `PointClickCanvas.tsx` 中主交互 Canvas 和触控放大镜 Canvas 缺乏 DPR 缩放支持导致的点阵发虚。
-
-~~~~~act
-patch_file
-src/components/common/PointClickCanvas.tsx
-~~~~~
-~~~~~typescript.old
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
-import { useTranslation } from '../../core/i18n';
-import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
-import type { Point } from '../../types';
-
-export interface PointClickCanvasProps {
-  canvasSize: number;
-  gridPoints: Point[];
-  targetPoint?: Point;
-  userNearestPoint?: Point;
-  anchors?: (Point | null | undefined)[];
-  showAnswer: boolean;
-  isHit?: boolean;
-  disabled?: boolean;
-  maxDisplayWidth?: string;
-  customOverlayRender?: (ctx: CanvasRenderingContext2D) => void;
-  onCommitPoint: (point: Point) => void;
-}
-~~~~~
-~~~~~typescript.new
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { useTranslation } from '../../core/i18n';
-import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
-import type { Point } from '../../types';
-
-export interface PointClickCanvasProps {
-  canvasSize: number;
-  gridPoints: Point[];
-  targetPoint?: Point;
-  userNearestPoint?: Point;
-  anchors?: (Point | null | undefined)[];
-  showAnswer: boolean;
-  isHit?: boolean;
-  disabled?: boolean;
-  maxDisplayWidth?: string;
-  customOverlayRender?: (ctx: CanvasRenderingContext2D) => void;
-  onCommitPoint: (point: Point) => void;
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/components/common/PointClickCanvas.tsx
-~~~~~
-~~~~~typescript.old
-  // 1. 渲染主画布内容
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    renderInteractivePointGrid({
-      ctx,
-      canvasSize,
-      gridPoints,
-      targetPoint,
-      userNearestPoint,
-      hoverPoint,
-      anchors,
-      showAnswer,
-      isHit,
-      disabled,
+  if (validBins.length > 0) {
+    const bestBin = [...validBins].sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
+    sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
+      range: bestBin.rangeLabel,
+      acc: bestBin.accuracy,
     });
+  } else if (records.length >= 3) {
+    const populatedBins = bins.filter((b) => b.total > 0);
+    const bestBin = populatedBins.sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
+    if (bestBin) {
+      sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
+        range: bestBin.rangeLabel,
+        acc: bestBin.accuracy,
+      });
+    }
+  }
 
-    customOverlayRender?.(ctx);
-  }, [
-    canvasSize,
-    gridPoints,
-    targetPoint,
-    userNearestPoint,
-    hoverPoint,
-    anchors,
-    showAnswer,
-    isHit,
-    disabled,
-    customOverlayRender,
-  ]);
+  if (!sweetSpotText) {
+    sweetSpotText = i18n.t('analyticsModal.needMoreSamples');
+  }
 
-  // 2. 渲染放大镜画布内容
-  const updateLoupeCanvas = useCallback(
-    (focusPt: Point) => {
-      const mainCanvas = canvasRef.current;
-      const loupeCanvas = loupeCanvasRef.current;
-      if (!mainCanvas || !loupeCanvas) return;
+  // 2. 难度突破区计算
+  const levelStats = calculateLevelStats(records);
+  const growthLevels = levelStats.filter(
+    (s) => s.accuracy >= 60 && s.accuracy < 80 && s.total >= 2,
+  );
 
-      const loupeCtx = loupeCanvas.getContext('2d');
-      if (!loupeCtx) return;
+  let growthZoneText = '';
+  if (growthLevels.length > 0) {
+    growthZoneText = growthLevels.map((s) => `Lvl ${s.level}`).join(', ');
+  } else {
+    const maxLvl = Math.max(...records.map((r) => Number(r.difficultyLevel) || 1));
+    growthZoneText = `Lvl ${Math.max(1, maxLvl - 2)} ~ Lvl ${maxLvl}`;
+  }
 
-      loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
+  return {
+    sweetSpotText,
+    growthZoneText,
+  };
+}
 
-      // 主画布采样的视口区域
-      const sampleSize = LOUPE_SIZE / ZOOM_FACTOR;
-      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2));
-      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2));
+export const UNIVERSAL_ANALYTICS_VIEWS: CardAnalyticsView[] = [
+  {
+    id: 'universal_sat',
+    tabLabel: 'analyticsModal.satTabLabel',
+    title: 'analyticsModal.satTitle',
+    subTitle: 'analyticsModal.satSubtitle',
+    icon: Zap,
+    renderVisualizer: renderSpeedAccuracyVisualizer,
+    renderDiagnostics: diagnoseSpeedAccuracy,
+  },
+  {
+    id: 'universal_plateau',
+    tabLabel: 'analyticsModal.plateauTabLabel',
+    title: 'analyticsModal.plateauTitle',
+    subTitle: 'analyticsModal.plateauSubtitle',
+    icon: Gauge,
+    renderVisualizer: renderDifficultyPlateauVisualizer,
+    renderDiagnostics: diagnoseDifficultyPlateau,
+  },
+];
+~~~~~
 
-      // 绘制放大图像
-      loupeCtx.drawImage(mainCanvas, sx, sy, sampleSize, sampleSize, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+#### Acts 2: 在 `CardAnalyticsView.tsx` 中接入真实诊断数据
+
+重构 `CardAnalyticsView.tsx` 中的总览面板，使用 `getCognitiveOverviewInsights` 动态生成的诊断文案。
+
+~~~~~act
+patch_file
+src/views/CardAnalyticsView.tsx
+~~~~~
+~~~~~typescript.old
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
+import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { registry } from '../core/registry';
+import type { UnifiedTrialRecord } from '../utils/db/index';
 ~~~~~
 ~~~~~typescript.new
-  // 1. 渲染主画布内容
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = setupHiDpiCanvas(canvas, canvasSize, canvasSize);
-    if (!ctx) return;
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
+import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
+import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { registry } from '../core/registry';
+import type { UnifiedTrialRecord } from '../utils/db/index';
+~~~~~
 
-    renderInteractivePointGrid({
-      ctx,
-      canvasSize,
-      gridPoints,
-      targetPoint,
-      userNearestPoint,
-      hoverPoint,
-      anchors,
-      showAnswer,
-      isHit,
-      disabled,
-    });
+~~~~~act
+patch_file
+src/views/CardAnalyticsView.tsx
+~~~~~
+~~~~~typescript.old
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                  <div className="font-bold text-slate-900">
+                    {t('analyticsModal.sweetSpotTitle')}
+                  </div>
+                  <p className="text-slate-600">
+                    {summaryStats.accuracy >= 80
+                      ? t('analyticsModal.comfortZoneDesc', { maxLevel: summaryStats.maxLevel })
+                      : t('analyticsModal.needMoreSamples')}
+                  </p>
+                </div>
+              </div>
 
-    customOverlayRender?.(ctx);
-  }, [
-    canvasSize,
-    gridPoints,
-    targetPoint,
-    userNearestPoint,
-    hoverPoint,
-    anchors,
-    showAnswer,
-    isHit,
-    disabled,
-    customOverlayRender,
-  ]);
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
+                  <Gauge className="w-4 h-4" />
+                </div>
+                <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                  <div className="font-bold text-slate-900">
+                    {t('analyticsModal.growthZoneTitle')}
+                  </div>
+                  <p className="text-slate-600">
+                    Lvl {Math.max(1, summaryStats.maxLevel - 2)} ~ Lvl {summaryStats.maxLevel}
+                  </p>
+                </div>
+              </div>
+            </div>
+~~~~~
+~~~~~typescript.new
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {(() => {
+                const insights = getCognitiveOverviewInsights(records);
+                return (
+                  <>
+                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                      <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900">
+                          {t('analyticsModal.sweetSpotTitle')}
+                        </div>
+                        <p className="text-slate-600">{insights.sweetSpotText}</p>
+                      </div>
+                    </div>
 
-  // 2. 渲染放大镜画布内容
-  const updateLoupeCanvas = useCallback(
-    (focusPt: Point) => {
-      const mainCanvas = canvasRef.current;
-      const loupeCanvas = loupeCanvasRef.current;
-      if (!mainCanvas || !loupeCanvas) return;
-
-      const loupeCtx = setupHiDpiCanvas(loupeCanvas, LOUPE_SIZE, LOUPE_SIZE);
-      if (!loupeCtx) return;
-
-      loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
-
-      // 主画布采样的视口区域（注意考虑主画布的实际物理像素与逻辑像素对应）
-      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-      const sampleSize = LOUPE_SIZE / ZOOM_FACTOR;
-      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2)) * dpr;
-      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2)) * dpr;
-      const sSize = sampleSize * dpr;
-
-      // 绘制放大图像
-      loupeCtx.drawImage(mainCanvas, sx, sy, sSize, sSize, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
+                        <Gauge className="w-4 h-4" />
+                      </div>
+                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900">
+                          {t('analyticsModal.growthZoneTitle')}
+                        </div>
+                        <p className="text-slate-600">{insights.growthZoneText}</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
 ~~~~~
 
 ---
 
 ### 下一步建议
 
-1. **构建与类型检查**：执行 `npm run check` 确保所有 TypeScript 类型及 Biome 代码规范检查通过。
-2. **端到端视觉验证**：在高分屏（Retina 显示器或移动端设备）上分别验证“认知统计大盘”、“单卡认知分析”以及“寻星点阵训练”，检查折线、文字和点阵的清晰锐利度。
+1. **类型检查与验证**：执行 `npm run check` 确保所有 TypeScript 类型及代码规范检查无报错。
+2. **多卡片页面验证**：访问 `http://localhost:5173/#/analytics/abs_gesture_axis` 以及其他已有做答记录的模块，验证总览页中的“直觉黄金甜点区”是否已正确显示速度区间（如 `在 1.0~1.8s 区间内表现最稳健，胜率高达 xx%`）及对应的突破层级。

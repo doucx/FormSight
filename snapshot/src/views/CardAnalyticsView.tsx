@@ -14,6 +14,7 @@ import {
   Zap,
 } from 'lucide-preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
 import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
 import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -323,35 +324,36 @@ export function CardAnalyticsView({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
-                <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
-                  <Zap className="w-4 h-4" />
-                </div>
-                <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                  <div className="font-bold text-slate-900">
-                    {t('analyticsModal.sweetSpotTitle')}
-                  </div>
-                  <p className="text-slate-600">
-                    {summaryStats.accuracy >= 80
-                      ? t('analyticsModal.comfortZoneDesc', { maxLevel: summaryStats.maxLevel })
-                      : t('analyticsModal.needMoreSamples')}
-                  </p>
-                </div>
-              </div>
+              {(() => {
+                const insights = getCognitiveOverviewInsights(records);
+                return (
+                  <>
+                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                      <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
+                        <Zap className="w-4 h-4" />
+                      </div>
+                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900">
+                          {t('analyticsModal.sweetSpotTitle')}
+                        </div>
+                        <p className="text-slate-600">{insights.sweetSpotText}</p>
+                      </div>
+                    </div>
 
-              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
-                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
-                  <Gauge className="w-4 h-4" />
-                </div>
-                <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                  <div className="font-bold text-slate-900">
-                    {t('analyticsModal.growthZoneTitle')}
-                  </div>
-                  <p className="text-slate-600">
-                    Lvl {Math.max(1, summaryStats.maxLevel - 2)} ~ Lvl {summaryStats.maxLevel}
-                  </p>
-                </div>
-              </div>
+                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
+                        <Gauge className="w-4 h-4" />
+                      </div>
+                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900">
+                          {t('analyticsModal.growthZoneTitle')}
+                        </div>
+                        <p className="text-slate-600">{insights.growthZoneText}</p>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>

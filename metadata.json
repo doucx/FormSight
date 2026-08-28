@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复图表与交互画布在不同分辨率与高分屏下的渲染模糊问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787918145.954558, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复卡片分析总览页认知诊断错误显示样本量不足的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787918406.5281026, "duration_ms": 0}}
