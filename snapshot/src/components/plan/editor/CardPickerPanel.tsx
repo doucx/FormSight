@@ -1,8 +1,9 @@
 import { Plus, Search, Sparkles, X } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
+import { DOMAIN_TAGS } from '../../../config/tags';
+import { useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { CardQueryOptions, VisualDomainTag } from '../../../types/card';
-import { DOMAIN_TAG_LABELS } from '../../discovery/FilterEngine';
 
 interface CardPickerPanelProps {
   isAddingCard: boolean;
@@ -11,6 +12,7 @@ interface CardPickerPanelProps {
 }
 
 export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: CardPickerPanelProps) {
+  const { t } = useTranslation();
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [selectedDomain, setSelectedDomain] = useState<VisualDomainTag | 'all'>('all');
   const [selectedPackId, setSelectedPackId] = useState<string>('all');
@@ -37,7 +39,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
         className="w-full py-3 bg-slate-50 hover:bg-indigo-50 text-indigo-600 border border-slate-200 hover:border-indigo-300 rounded-2xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 active:scale-[0.99]"
       >
         <Plus className="w-4 h-4" />
-        添加训练阶段
+        {t('plan.addStage')}
       </button>
     );
   }
@@ -47,14 +49,14 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-bold text-slate-700">挑选需要加入训练流的模块：</span>
+          <span className="text-xs font-bold text-slate-700">{t('plan.selectCardPrompt')}</span>
         </div>
         <button
           type="button"
           onClick={() => onToggleAdding(false)}
           className="text-xs font-semibold text-slate-400 hover:text-slate-600"
         >
-          收起
+          {t('home.collapseFilter')}
         </button>
       </div>
 
@@ -65,7 +67,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
           type="text"
           value={searchKeyword}
           onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder="搜索模块名称或要领..."
+          placeholder={t('home.searchPlaceholder')}
           className="w-full pl-8 pr-8 py-1.5 text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
         />
         {searchKeyword && (
@@ -93,28 +95,31 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
               : 'bg-white text-slate-600 border border-slate-200'
           }`}
         >
-          全部 ({registry.getAllCards().length})
+          {t('common.all')} ({registry.getAllCards().length})
         </button>
 
-        {packs.map((p) => (
-          <button
-            type="button"
-            key={p.packId}
-            onClick={() => {
-              setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-              setSelectedDomain('all');
-            }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-              selectedPackId === p.packId
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-slate-600 border border-slate-200'
-            }`}
-          >
-            {p.meta.title}
-          </button>
-        ))}
+        {packs.map((p) => {
+          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
+          return (
+            <button
+              type="button"
+              key={p.packId}
+              onClick={() => {
+                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
+                setSelectedDomain('all');
+              }}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
+                selectedPackId === p.packId
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white text-slate-600 border border-slate-200'
+              }`}
+            >
+              {packTitle}
+            </button>
+          );
+        })}
 
-        {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((domain) => (
+        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
           <button
             type="button"
             key={domain}
@@ -128,7 +133,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
                 : 'bg-white text-slate-600 border border-slate-200'
             }`}
           >
-            {DOMAIN_TAG_LABELS[domain]}
+            {t(DOMAIN_TAGS[domain].i18nKey)}
           </button>
         ))}
       </div>
@@ -136,12 +141,14 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
       {/* 模块列表 */}
       {availableCards.length === 0 ? (
         <div className="p-6 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
-          未搜索到匹配的训练模块
+          {t('plan.noCardMatched')}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
           {availableCards.map((card) => {
             const Icon = card.icon;
+            const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
             return (
               <button
                 type="button"
@@ -154,8 +161,8 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 truncate">{card.title}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{card.desc}</div>
+                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
                   </div>
                 </div>
                 <Plus className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 flex-shrink-0" />

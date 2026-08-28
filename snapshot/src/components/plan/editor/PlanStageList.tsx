@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
+import { useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { TrainingPlan } from '../../../types/plan';
 
@@ -25,20 +26,22 @@ export function PlanStageList({
   onMoveItem,
   onRemoveItem,
 }: PlanStageListProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-          <span>已编排阶段序列 ({currentPlan.items.length})</span>
+          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
           <span className="text-slate-400 font-normal">
-            • 合计 {totalTrials} 题 · 约 {estimatedMin} 分钟
+            • {t('plan.totalTrialsSummary', { trials: totalTrials })} · {t('plan.estimatedTime', { min: estimatedMin })}
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           {currentPlan.items.length > 0 && (
             <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-400">批量题量:</span>
+              <span className="text-[10px] font-bold text-slate-400">{t('plan.batchTrials')}</span>
               {trialPresets.map((num) => (
                 <button
                   type="button"
@@ -59,7 +62,7 @@ export function PlanStageList({
               className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1"
             >
               <RotateCcw className="w-3 h-3" />
-              清空阶段
+              {t('plan.clearStages')}
             </button>
           )}
         </div>
@@ -68,7 +71,7 @@ export function PlanStageList({
       {currentPlan.items.length === 0 ? (
         <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
           <Zap className="w-6 h-6 text-slate-300" />
-          <span>当前计划为空，请点击下方「添加训练阶段」挑选训练模块</span>
+          <span>{t('plan.emptyPlanTip')}</span>
         </div>
       ) : (
         <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
@@ -76,6 +79,8 @@ export function PlanStageList({
             const card = registry.getCardById(item.cardId);
             if (!card) return null;
             const Icon = card.icon;
+            const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
 
             return (
               <div
@@ -90,8 +95,8 @@ export function PlanStageList({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-800">{card.title}</div>
-                    <div className="text-[10px] text-slate-400">{card.desc.slice(0, 26)}...</div>
+                    <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
+                    <div className="text-[10px] text-slate-400">{cardDesc.slice(0, 26)}...</div>
                   </div>
                 </div>
 

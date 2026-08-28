@@ -11,17 +11,19 @@ import {
   X,
 } from 'lucide-preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
+import { useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../utils/db/index';
-import { CHALLENGE_TAG_LABELS, DOMAIN_TAG_LABELS, PATH_TAG_LABELS } from './discovery/FilterEngine';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
 }
 
 export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
@@ -89,29 +91,31 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
   }, [summaries, selectedFilter]);
 
   const getCurrentFilterLabel = () => {
-    if (selectedFilter === 'all') return '全部练习项目';
+    if (selectedFilter === 'all') return t('stats.allModules');
     if (selectedFilter.startsWith('pack:')) {
-      const pack = registry.getPack(selectedFilter.replace('pack:', ''));
-      return `扩展包 • ${pack?.meta.title || selectedFilter}`;
+      const pId = selectedFilter.replace('pack:', '');
+      const pTitle = t(`packs.${pId}.meta.title`) || registry.getPack(pId)?.meta.title || pId;
+      return `${t('home.allPacks')} • ${pTitle}`;
     }
     if (selectedFilter.startsWith('domain:')) {
       const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
-      return `视觉域 • ${DOMAIN_TAG_LABELS[d] || d}`;
+      return `Domain • ${t(DOMAIN_TAGS[d]?.i18nKey || d)}`;
     }
     if (selectedFilter.startsWith('path:')) {
       const p = selectedFilter.replace('path:', '') as CognitivePathTag;
-      return `认知路径 • ${PATH_TAG_LABELS[p] || p}`;
+      return `Path • ${t(PATH_TAGS[p]?.i18nKey || p)}`;
     }
     if (selectedFilter.startsWith('challenge:')) {
       const c = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
-      return `心智抗性 • ${CHALLENGE_TAG_LABELS[c] || c}`;
+      return `Challenge • ${t(CHALLENGE_TAGS[c]?.i18nKey || c)}`;
     }
     if (selectedFilter.startsWith('card:')) {
       const cardId = selectedFilter.replace('card:', '');
       const card = registry.getCardById(cardId);
-      return `训练模块 • ${card?.title || cardId}`;
+      const cTitle = card ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title : cardId;
+      return `${cTitle}`;
     }
-    return '全部练习项目';
+    return t('stats.allModules');
   };
 
   const now = new Date();
@@ -190,7 +194,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       });
     }
 
-    return (Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((path) => {
+    return (Object.keys(PATH_TAGS) as CognitivePathTag[]).map((path) => {
       const matchingCards = registry.queryCards({ paths: [path] });
       let pathTotal = 0;
       let pathHits = 0;
@@ -206,14 +210,14 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       const acc = pathTotal > 0 ? Math.round((pathHits / pathTotal) * 100) : 0;
       return {
         path,
-        label: PATH_TAG_LABELS[path],
+        label: t(PATH_TAGS[path].i18nKey),
         total: pathTotal,
         hits: pathHits,
         accuracy: acc,
         cardCount: matchingCards.length,
       };
     });
-  }, [summaries]);
+  }, [summaries, t]);
 
   // 按心智抗性 (Mental Challenge) 聚合掌握度数据
   const challengeMasteryList = useMemo(() => {
@@ -227,7 +231,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       });
     }
 
-    return (Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((ch) => {
+    return (Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((ch) => {
       const matchingCards = registry.queryCards({ challenges: [ch] });
       let chTotal = 0;
       let chHits = 0;
@@ -243,14 +247,14 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       const acc = chTotal > 0 ? Math.round((chHits / chTotal) * 100) : 0;
       return {
         challenge: ch,
-        label: CHALLENGE_TAG_LABELS[ch],
+        label: t(CHALLENGE_TAGS[ch].i18nKey),
         total: chTotal,
         hits: chHits,
         accuracy: acc,
         cardCount: matchingCards.length,
       };
     });
-  }, [summaries]);
+  }, [summaries, t]);
 
   useEffect(() => {
     if (loading) return;
@@ -280,8 +284,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <BarChart2 className="w-6 h-6 text-indigo-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-800">全局认知数据统计</h2>
-              <p className="text-xs text-slate-400">洞察多维视觉认知成长与训练足迹</p>
+              <h2 className="text-xl font-bold text-slate-800">{t('stats.title')}</h2>
+              <p className="text-xs text-slate-400">{t('stats.subTitle')}</p>
             </div>
           </div>
 
@@ -293,46 +297,52 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
                 className="pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm max-w-xs truncate"
               >
-                <option value="all">全部练习项目</option>
+                <option value="all">{t('stats.allModules')}</option>
 
                 <optgroup label="—— 扩展包 (Packs) ——">
-                  {packs.map((p) => (
-                    <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
-                      {p.meta.title} (扩展包)
-                    </option>
-                  ))}
+                  {packs.map((p) => {
+                    const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
+                    return (
+                      <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
+                        {packTitle}
+                      </option>
+                    );
+                  })}
                 </optgroup>
 
                 <optgroup label="—— 基础视觉域 (Domains) ——">
-                  {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((domain) => (
+                  {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
                     <option key={`domain:${domain}`} value={`domain:${domain}`}>
-                      {DOMAIN_TAG_LABELS[domain]}
+                      {t(DOMAIN_TAGS[domain].i18nKey)}
                     </option>
                   ))}
                 </optgroup>
 
                 <optgroup label="—— 认知推演路径 (Paths) ——">
-                  {(Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((path) => (
+                  {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((path) => (
                     <option key={`path:${path}`} value={`path:${path}`}>
-                      {PATH_TAG_LABELS[path]}
+                      {t(PATH_TAGS[path].i18nKey)}
                     </option>
                   ))}
                 </optgroup>
 
                 <optgroup label="—— 核心心智抗性 (Challenges) ——">
-                  {(Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((ch) => (
+                  {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((ch) => (
                     <option key={`challenge:${ch}`} value={`challenge:${ch}`}>
-                      {CHALLENGE_TAG_LABELS[ch]}
+                      {t(CHALLENGE_TAGS[ch].i18nKey)}
                     </option>
                   ))}
                 </optgroup>
 
                 <optgroup label="—— 具体训练模块 (Cards) ——">
-                  {allCards.map((card) => (
-                    <option key={`card:${card.id}`} value={`card:${card.id}`}>
-                      {card.title}
-                    </option>
-                  ))}
+                  {allCards.map((card) => {
+                    const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+                    return (
+                      <option key={`card:${card.id}`} value={`card:${card.id}`}>
+                        {cardTitle}
+                      </option>
+                    );
+                  })}
                 </optgroup>
               </select>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
@@ -350,12 +360,12 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
         {loading ? (
           <div className="h-64 flex items-center justify-center text-slate-400 text-sm">
-            正在统计海量物化数据...
+            {t('stats.loading')}
           </div>
         ) : stats.allTime.total === 0 ? (
           <div className="h-64 flex flex-col items-center justify-center text-slate-400 text-sm gap-2">
-            <Activity className="w-10 h-10 text-slate-300" />【{getCurrentFilterLabel()}
-            】下暂无做答记录，先去练习几道题吧！
+            <Activity className="w-10 h-10 text-slate-300" />
+            {t('stats.noRecords', { filter: getCurrentFilterLabel() })}
           </div>
         ) : (
           <div className="flex flex-col gap-6">
@@ -364,49 +374,49 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <div className="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
                   <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                  今日刷题
+                  {t('stats.todayTrials')}
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.today.total}{' '}
                   <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
                 </div>
                 <div className="text-xs text-indigo-600 font-semibold mt-1">
-                  正确率 {calcAcc(stats.today.hits, stats.today.total)}%
+                  {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
                 </div>
               </div>
 
               <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
                   <Target className="w-3.5 h-3.5 text-emerald-500" />
-                  最近 7 天
+                  {t('stats.weekTrials')}
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.week.total}{' '}
                   <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
                 </div>
                 <div className="text-xs text-emerald-600 font-semibold mt-1">
-                  正确率 {calcAcc(stats.week.hits, stats.week.total)}%
+                  {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
                 </div>
               </div>
 
               <div className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
                   <Activity className="w-3.5 h-3.5 text-amber-500" />
-                  本年累计
+                  {t('stats.yearTrials')}
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.year.total}{' '}
                   <span className="text-xs font-semibold text-slate-400 font-normal">题</span>
                 </div>
                 <div className="text-xs text-amber-600 font-semibold mt-1">
-                  正确率 {calcAcc(stats.year.hits, stats.year.total)}%
+                  {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
                 </div>
               </div>
 
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 mb-1">
                   <TrendingUp className="w-3.5 h-3.5 text-slate-500" />
-                  生涯总计
+                  {t('stats.allTimeTrials')}
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.allTime.total}{' '}
@@ -423,9 +433,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <div className="flex items-center justify-between">
                 <div className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                   <Compass className="w-4 h-4 text-emerald-600" />
-                  认知推演路径掌握度 (Cognitive Path Mastery)
+                  {t('stats.pathMasteryTitle')}
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">基于全部历史试炼聚合</span>
+                <span className="text-[10px] text-slate-400 font-mono">{t('stats.pathMasterySubtitle')}</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -464,9 +474,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               <div className="flex items-center justify-between">
                 <div className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                   <Brain className="w-4 h-4 text-rose-500" />
-                  核心心智抗性与错觉克服 (Mental Challenge Index)
+                  {t('stats.challengeMasteryTitle')}
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">抗错觉 / 图底反转得分</span>
+                <span className="text-[10px] text-slate-400 font-mono">{t('stats.challengeMasterySubtitle')}</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -504,13 +514,13 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-4">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
-                  <span>近 12 周训练热力图</span>
+                  <span>{t('stats.heatmapTitle')}</span>
                   <div className="flex items-center gap-1 text-[10px] text-slate-400 font-normal">
-                    少 <div className="w-2.5 h-2.5 rounded-sm bg-slate-100" />
+                    {t('stats.heatmapLess')} <div className="w-2.5 h-2.5 rounded-sm bg-slate-100" />
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-200" />
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-400" />
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-600" />
-                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-800" /> 多
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-800" /> {t('stats.heatmapMore')}
                   </div>
                 </div>
                 <div className="grid grid-cols-12 gap-1.5 self-center">
@@ -528,9 +538,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
               <div className="bg-white border border-slate-100 shadow-sm p-5 rounded-2xl flex flex-col gap-2">
                 <div className="text-sm font-bold text-slate-700 flex items-center justify-between">
-                  <span>能力峰值演进轨迹</span>
+                  <span>{t('stats.trendTitle')}</span>
                   <span className="text-[10px] font-normal text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">
-                    每日最高 Level
+                    {t('stats.dailyMaxLevel')}
                   </span>
                 </div>
                 <canvas ref={canvasRef} width={340} height={150} className="w-full mt-2" />

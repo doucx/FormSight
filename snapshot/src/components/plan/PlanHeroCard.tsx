@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 
@@ -29,6 +30,7 @@ export function PlanHeroCard({
   onOpenEditor,
   onSelectPlan,
 }: PlanHeroCardProps) {
+  const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -71,13 +73,13 @@ export function PlanHeroCard({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-800">今日训练计划</h2>
+              <h2 className="text-lg font-bold text-slate-800">{t('plan.todayPlan')}</h2>
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
-                未设置
+                {t('common.empty')}
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              按需编排多模块定制训练流，一站式贯通寻星、色感、相对推移与空间负形。
+              {t('plan.emptyHeroDesc')}
             </p>
           </div>
         </div>
@@ -88,7 +90,7 @@ export function PlanHeroCard({
           className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 flex-shrink-0"
         >
           <Plus className="w-4 h-4" />
-          定制我的训练流
+          {t('plan.customizeBtn')}
         </button>
       </div>
     );
@@ -123,8 +125,8 @@ export function PlanHeroCard({
                   {isDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
                       <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
-                        <span>快速切换训练流</span>
-                        <span className="font-mono">{favoritePlans.length} 个可用</span>
+                        <span>{t('plan.switchPlan')}</span>
+                        <span className="font-mono">{t('plan.availableCount', { count: favoritePlans.length })}</span>
                       </div>
 
                       <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
@@ -155,12 +157,12 @@ export function PlanHeroCard({
                                   <span className="text-xs font-bold truncate">{p.name}</span>
                                   {p.isBuiltin && (
                                     <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
-                                      官方
+                                      {t('common.official')}
                                     </span>
                                   )}
                                 </div>
                                 <div className="text-[10px] text-slate-400 mt-0.5">
-                                  {stageCount} 个阶段 • {pTrials} 题
+                                  {t('plan.stageCount', { count: stageCount })} • {t('plan.totalTrialsSummary', { trials: pTrials })}
                                 </div>
                               </div>
 
@@ -179,15 +181,15 @@ export function PlanHeroCard({
               )}
 
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">
-                {plan.items.length} 个训练阶段
+                {t('plan.stageCount', { count: plan.items.length })}
               </span>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
-              <span>合计 {totalTrials} 题</span>
+              <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3 text-slate-400" />
-                预计约 {estimatedMin} 分钟
+                {t('plan.estimatedTime', { min: estimatedMin })}
               </span>
             </div>
           </div>
@@ -197,10 +199,10 @@ export function PlanHeroCard({
           type="button"
           onClick={onOpenEditor}
           className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
-          title="调整阶段或题量"
+          title={t('plan.editPlan')}
         >
           <Sliders className="w-3.5 h-3.5" />
-          编排计划
+          {t('plan.editPlan')}
         </button>
       </div>
 
@@ -209,6 +211,7 @@ export function PlanHeroCard({
           const card = registry.getCardById(item.cardId);
           if (!card) return null;
           const Icon = card.icon;
+          const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
 
           return (
             <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
@@ -217,7 +220,7 @@ export function PlanHeroCard({
                   {idx + 1}
                 </div>
                 <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">{card.title}</span>
+                <span className="text-xs font-bold text-slate-800">{cardTitle}</span>
                 <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
                   {item.targetTrials}题
                 </span>
@@ -232,7 +235,7 @@ export function PlanHeroCard({
 
       <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
         <div className="text-xs text-slate-400 font-medium">
-          各阶段自适应难度与答题记录将自动同步至个人生涯档案
+          {t('plan.syncNotice')}
         </div>
 
         <button
@@ -241,7 +244,7 @@ export function PlanHeroCard({
           className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 transition-all flex items-center gap-2 ml-auto"
         >
           <Play className="w-4 h-4 fill-current" />
-          开始今日训练流
+          {t('plan.startPlan')}
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </div>
