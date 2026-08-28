@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M VertexFittingView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787922604.7385354, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] feat: 将统计与单卡分析重构为一等视图并完善 HiDPI 渲染", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787922761.8395486, "duration_ms": 0}}
