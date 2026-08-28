@@ -213,7 +213,7 @@ export function GlobalSettingsModal({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                中文
+                {t('settings.langZh')}
               </button>
               <button
                 type="button"
@@ -224,7 +224,7 @@ export function GlobalSettingsModal({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                English
+                {t('settings.langEn')}
               </button>
             </div>
           </div>

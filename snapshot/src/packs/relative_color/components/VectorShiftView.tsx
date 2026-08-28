@@ -42,7 +42,7 @@ export function VectorShiftView({
     const hexVal = hsvToHex(...opt);
     return {
       key: `vector-shift-opt-${idx}-${hexVal}`,
-      title: `候选 ${idx + 1}`,
+      title: t('common.candidateN', { num: idx + 1 }),
       value: opt,
       isCorrect: isTarget,
       content: (

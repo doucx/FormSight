@@ -40,6 +40,7 @@
     "hueSelectHint": "观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)",
     "decontextualHint": "穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」",
     "physicallyBrighter": "物理明度更高 (V: {{v}}%)",
-    "physicallyDarker": "物理更暗 (V: {{v}}%)"
+    "physicallyDarker": "物理更暗 (V: {{v}}%)",
+    "splitComparisonTooltip": "上半部为您的选择，下半部为理论真理色"
   }
 }

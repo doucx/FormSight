@@ -75,9 +75,6 @@
     "copySuffix": "Copy",
     "importedSuffix": "Imported",
     "importedPlanDesc": "Routine imported from external JSON",
-    "confirm": "Confirm",
-    "cancel": "Cancel",
-    "save": "Save",
     "delete": "Delete",
     "officialBadge": "Official Preset",
     "newPlanBadge": "New Plan",
@@ -85,6 +82,28 @@
     "deletePlan": "Delete Plan",
     "favoritedTooltip": "Favorited (Quick switch on home)",
     "unfavoritedTooltip": "Not favorited"
+  },
+  "templates": {
+    "all_round_warmup": {
+      "name": "Morning All-Round Warmup (50 trials)",
+      "desc": "Quickly activate spatial geometry, absolute hue, and negative space intuition.",
+      "badge": "Recommended"
+    },
+    "geometry_sculpting": {
+      "name": "Structure & Proportion Reinforcement (60 trials)",
+      "desc": "Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.",
+      "badge": "Form Special"
+    },
+    "color_light_mastery": {
+      "name": "Color & Light Environment Penetration (65 trials)",
+      "desc": "Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.",
+      "badge": "Color Mastery"
+    },
+    "abstraction_essence": {
+      "name": "Perceptual Abstraction & Essence (60 trials)",
+      "desc": "Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.",
+      "badge": "Abstraction"
+    }
   },
   "card": {
     "todayTrials": "Today",
@@ -312,6 +331,8 @@
     "exportFailToast": "Export failed, please retry",
     "importSuccessToast": "Data imported and merged successfully!",
     "importInvalidToast": "Import failed, invalid backup file format",
+    "langZh": "中文",
+    "langEn": "English",
     "switchedLocaleToast": "Switched to English",
     "autoNextTitle": "Auto Advance",
     "autoNextDesc": "Automatically load next question after submission",

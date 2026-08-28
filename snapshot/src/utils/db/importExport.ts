@@ -143,12 +143,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
   try {
     parsed = JSON.parse(jsonString);
   } catch (err) {
-    console.error('备份文件不是合法的 JSON 格式:', err);
+    console.error('Backup file is not valid JSON:', err);
     return false;
   }
 
   if (!validateImportBundle(parsed)) {
-    console.error('备份文件结构校验失败');
+    console.error('Backup bundle validation failed');
     return false;
   }
 
@@ -266,12 +266,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 
     return true;
   } catch (err) {
-    console.error('导入数据失败，回滚快照:', err);
+    console.error('Failed to import data, rolling back snapshot:', err);
     try {
       saveSettings(previousSettingsSnapshot);
       savePlanStorageState(previousPlanStateSnapshot);
     } catch (rollbackErr) {
-      console.error('回滚快照失败:', rollbackErr);
+      console.error('Failed to rollback snapshot:', rollbackErr);
     }
     return false;
   }

@@ -1,4 +1,5 @@
 import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
+import { i18n } from '../core/i18n';
 import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
 
 const PLANS_STORAGE_KEY = 'formsight_training_plans_store';
@@ -6,8 +7,8 @@ const LEGACY_PLAN_STORAGE_KEY = 'formsight_custom_training_plan';
 
 export const EMPTY_TRAINING_PLAN: TrainingPlan = {
   id: 'custom_plan_default',
-  name: '我的自选训练流',
-  description: '自定义编排的日常多模块训练序列',
+  name: i18n.t('common.defaultCustomPlanName'),
+  description: i18n.t('common.defaultCustomPlanDesc'),
   items: [],
   isFavorite: true,
   isBuiltin: false,
@@ -25,10 +26,13 @@ function createPlanFromTemplateInternal(
     targetTrials: item.targetTrials,
   }));
 
+  const templateName = i18n.t(`templates.${template.id}.name`) || template.name;
+  const templateDesc = i18n.t(`templates.${template.id}.desc`) || template.description;
+
   return {
     id: `plan_${template.id}`,
-    name: template.name,
-    description: template.description,
+    name: templateName,
+    description: templateDesc,
     items,
     isFavorite,
     isBuiltin,
@@ -64,8 +68,8 @@ export function loadPlanStorageState(): PlanStorageState {
         if (legacyParsed && Array.isArray(legacyParsed.items) && legacyParsed.items.length > 0) {
           const customPlan: TrainingPlan = {
             id: legacyParsed.id || `custom_${Date.now()}`,
-            name: legacyParsed.name || '我的自选训练流',
-            description: '从旧版本迁移的自定义训练流',
+            name: legacyParsed.name || i18n.t('common.defaultCustomPlanName'),
+            description: i18n.t('common.migratedPlanDesc'),
             items: legacyParsed.items,
             isFavorite: true,
             isBuiltin: false,
@@ -184,7 +188,7 @@ export function clonePlan(plan: TrainingPlan): TrainingPlan {
   const cloned: TrainingPlan = {
     ...plan,
     id: newId,
-    name: `${plan.name} (副本)`,
+    name: `${plan.name} (${i18n.t('common.copySuffix')})`,
     isBuiltin: false,
     isFavorite: true,
     items: plan.items.map((item) => ({
@@ -229,8 +233,10 @@ export function importPlanFromJson(jsonStr: string): TrainingPlan | null {
     const newId = `plan_imported_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const importedPlan: TrainingPlan = {
       id: newId,
-      name: planData.name ? `${planData.name} (导入)` : '导入的训练流',
-      description: planData.description || '从外部 JSON 导入的训练流',
+      name: planData.name
+        ? `${planData.name} (${i18n.t('common.importedSuffix')})`
+        : i18n.t('common.importedPlanDesc'),
+      description: planData.description || i18n.t('common.importedPlanDesc'),
       isFavorite: true,
       isBuiltin: false,
       items: planData.items.map((item: { cardId: string; targetTrials?: number }) => ({

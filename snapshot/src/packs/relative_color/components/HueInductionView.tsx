@@ -41,7 +41,7 @@ export function HueInductionView({
     const hexVal = hsvToHex(...opt);
     return {
       key: `hue-opt-${idx}-${hexVal}`,
-      title: `候选 ${idx + 1}`,
+      title: t('common.candidateN', { num: idx + 1 }),
       value: opt,
       isCorrect: isTarget,
       content: (
@@ -102,7 +102,7 @@ export function HueInductionView({
                   <div
                     className="absolute bottom-0 left-0 right-0 h-1/2"
                     style={{ backgroundColor: idealRightHex }}
-                    title="上半部为您的选择，下半部为理论真理色"
+                    title={t('packs.relative_color.views.splitComparisonTooltip')}
                   />
                 )}
               </div>

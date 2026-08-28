@@ -80,7 +80,7 @@ export function App() {
         : t('shell.training');
       document.title = `${cardTitle} - ${t('common.appName')}`;
     }
-  }, [route, trainingPlan.name, locale, t]);
+  }, [route, trainingPlan.name, t]);
 
   const handleSelectPlanOnHome = useCallback(
     (planId: string) => {

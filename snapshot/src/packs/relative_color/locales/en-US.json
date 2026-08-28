@@ -40,6 +40,7 @@
     "hueSelectHint": "Observe reference and preview candidate compensations below (Keys 1-4, Space)",
     "decontextualHint": "Pierce background illusion and identify the objectively brighter center square",
     "physicallyBrighter": "Physically Brighter (V: {{v}}%)",
-    "physicallyDarker": "Physically Darker (V: {{v}}%)"
+    "physicallyDarker": "Physically Darker (V: {{v}}%)",
+    "splitComparisonTooltip": "Top half is your selection, bottom half is ground truth"
   }
 }
