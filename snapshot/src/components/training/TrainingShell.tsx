@@ -46,7 +46,7 @@ export function TrainingShell({
   children,
 }: TrainingShellProps) {
   const { title, instruction, desc } = card;
-  const badge = card.tags.target[0];
+  const badge = card.tags.domain[0];
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
 
   const {

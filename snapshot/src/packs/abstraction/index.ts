@@ -24,7 +24,7 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
 ];
 
 export const abstractionCards: CardDefinition[] = [
-  // === 自底向上：概括提炼 (Bottom-Up Abstraction) ===
+  // === 自底向上：提炼概括 (Bottom-Up Extraction) ===
   {
     id: 'abs_gesture_axis',
     packId: 'abstraction',
@@ -34,9 +34,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '旋转调节主轴，对齐粒子群的主动态流向 (0°~180°)',
     icon: RotateCw,
     tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['continuous_slider'],
+      domain: ['rhythm_and_notan'],
+      path: ['extraction'],
+      interaction: ['continuous_mod'],
     },
     hasWeaknessAnalytics: false,
     settingSchemas: SLIDER_COMMON_SCHEMAS,
@@ -50,9 +50,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '观察左侧细碎多边形，选择右侧保留了关键折线大形的概括项',
     icon: Maximize2,
     tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
+      domain: ['form_and_proportion'],
+      path: ['extraction'],
+      interaction: ['binary_choice'],
     },
     hasWeaknessAnalytics: false,
   },
@@ -65,9 +65,10 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态',
     icon: Sun,
     tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['continuous_slider'],
+      domain: ['rhythm_and_notan'],
+      path: ['extraction'],
+      challenge: ['figure_ground_reversal'],
+      interaction: ['continuous_mod'],
     },
     hasWeaknessAnalytics: false,
     settingSchemas: SLIDER_COMMON_SCHEMAS,
@@ -81,9 +82,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '在下方 4 个候选项中，选出代表画面全局主调的加权主色',
     icon: Palette,
     tags: {
-      target: ['abstraction'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
+      domain: ['color_and_value'],
+      path: ['extraction'],
+      interaction: ['multi_choice'],
     },
     hasWeaknessAnalytics: false,
   },
@@ -98,9 +99,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '观察上方提炼的势线骨架，判别哪侧复杂点阵符合该动势',
     icon: Shuffle,
     tags: {
-      target: ['concretization', 'abstraction'],
-      skill: ['abstraction', 'gesture_flow'],
-      interaction: ['choice_2afc'],
+      domain: ['rhythm_and_notan'],
+      path: ['concretization'],
+      interaction: ['binary_choice'],
     },
     hasWeaknessAnalytics: false,
   },
@@ -113,9 +114,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形',
     icon: Columns,
     tags: {
-      target: ['concretization', 'abstraction'],
-      skill: ['abstraction', 'proportion'],
-      interaction: ['choice_2afc'],
+      domain: ['form_and_proportion'],
+      path: ['concretization'],
+      interaction: ['binary_choice'],
     },
     hasWeaknessAnalytics: false,
   },
@@ -128,9 +129,10 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '观察上方 Notan 剪影，判别哪侧复杂画面拥有该黑白大结构',
     icon: Droplet,
     tags: {
-      target: ['concretization', 'abstraction'],
-      skill: ['abstraction', 'notan_grouping'],
-      interaction: ['choice_2afc'],
+      domain: ['rhythm_and_notan'],
+      path: ['concretization'],
+      challenge: ['figure_ground_reversal'],
+      interaction: ['binary_choice'],
     },
     hasWeaknessAnalytics: false,
   },
@@ -143,9 +145,9 @@ export const abstractionCards: CardDefinition[] = [
     instruction: '观察上方基准主调色，选出以此为色彩基底的拼贴画面',
     icon: Sparkles,
     tags: {
-      target: ['concretization', 'abstraction'],
-      skill: ['abstraction', 'color_fidelity'],
-      interaction: ['choice_nafc'],
+      domain: ['color_and_value'],
+      path: ['concretization'],
+      interaction: ['multi_choice'],
     },
     hasWeaknessAnalytics: false,
   },

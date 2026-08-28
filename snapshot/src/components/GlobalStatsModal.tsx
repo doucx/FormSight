@@ -1,9 +1,11 @@
 import {
   Activity,
   BarChart2,
+  Brain,
   Calendar,
   ChevronDown,
   Compass,
+  Eye,
   Filter,
   Target,
   TrendingUp,
@@ -11,10 +13,14 @@ import {
 } from 'lucide-preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
-import type { CognitiveSkillTag } from '../types/card';
+import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../utils/db/index';
-import { SKILL_TAG_LABELS } from './discovery/FilterEngine';
+import {
+  CHALLENGE_TAG_LABELS,
+  DOMAIN_TAG_LABELS,
+  PATH_TAG_LABELS,
+} from './discovery/FilterEngine';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
@@ -57,9 +63,23 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
         return packCardIds.has(s.cardId || s.mode);
       }
 
-      if (selectedFilter.startsWith('skill:')) {
-        const targetSkill = selectedFilter.replace('skill:', '') as CognitiveSkillTag;
-        const matchedCards = registry.queryCards({ skills: [targetSkill] });
+      if (selectedFilter.startsWith('domain:')) {
+        const targetDomain = selectedFilter.replace('domain:', '') as VisualDomainTag;
+        const matchedCards = registry.queryCards({ domains: [targetDomain] });
+        const matchedIds = new Set(matchedCards.map((c) => c.id));
+        return matchedIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('path:')) {
+        const targetPath = selectedFilter.replace('path:', '') as CognitivePathTag;
+        const matchedCards = registry.queryCards({ paths: [targetPath] });
+        const matchedIds = new Set(matchedCards.map((c) => c.id));
+        return matchedIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('challenge:')) {
+        const targetChallenge = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
+        const matchedCards = registry.queryCards({ challenges: [targetChallenge] });
         const matchedIds = new Set(matchedCards.map((c) => c.id));
         return matchedIds.has(s.cardId || s.mode);
       }
@@ -79,9 +99,17 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       const pack = registry.getPack(selectedFilter.replace('pack:', ''));
       return `扩展包 • ${pack?.meta.title || selectedFilter}`;
     }
-    if (selectedFilter.startsWith('skill:')) {
-      const skill = selectedFilter.replace('skill:', '') as CognitiveSkillTag;
-      return `认知技能 • ${SKILL_TAG_LABELS[skill] || skill}`;
+    if (selectedFilter.startsWith('domain:')) {
+      const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
+      return `视觉域 • ${DOMAIN_TAG_LABELS[d] || d}`;
+    }
+    if (selectedFilter.startsWith('path:')) {
+      const p = selectedFilter.replace('path:', '') as CognitivePathTag;
+      return `认知路径 • ${PATH_TAG_LABELS[p] || p}`;
+    }
+    if (selectedFilter.startsWith('challenge:')) {
+      const c = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
+      return `心智抗性 • ${CHALLENGE_TAG_LABELS[c] || c}`;
     }
     if (selectedFilter.startsWith('card:')) {
       const cardId = selectedFilter.replace('card:', '');
@@ -155,8 +183,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     return 'bg-indigo-800';
   };
 
-  // 计算按认知技能聚合的掌握度数据
-  const skillMasteryList = useMemo(() => {
+  // 按正交认知路径 (Cognitive Path) 聚合掌握度数据
+  const pathMasteryList = useMemo(() => {
     const cardSummaryMap = new Map<string, { total: number; hits: number }>();
     for (const s of summaries) {
       const key = s.cardId || s.mode;
@@ -167,25 +195,62 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
       });
     }
 
-    return (Object.keys(SKILL_TAG_LABELS) as CognitiveSkillTag[]).map((skill) => {
-      const matchingCards = registry.queryCards({ skills: [skill] });
-      let skillTotal = 0;
-      let skillHits = 0;
+    return (Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((path) => {
+      const matchingCards = registry.queryCards({ paths: [path] });
+      let pathTotal = 0;
+      let pathHits = 0;
 
       for (const card of matchingCards) {
         const item = cardSummaryMap.get(card.id);
         if (item) {
-          skillTotal += item.total;
-          skillHits += item.hits;
+          pathTotal += item.total;
+          pathHits += item.hits;
         }
       }
 
-      const acc = skillTotal > 0 ? Math.round((skillHits / skillTotal) * 100) : 0;
+      const acc = pathTotal > 0 ? Math.round((pathHits / pathTotal) * 100) : 0;
       return {
-        skill,
-        label: SKILL_TAG_LABELS[skill],
-        total: skillTotal,
-        hits: skillHits,
+        path,
+        label: PATH_TAG_LABELS[path],
+        total: pathTotal,
+        hits: pathHits,
+        accuracy: acc,
+        cardCount: matchingCards.length,
+      };
+    });
+  }, [summaries]);
+
+  // 按心智抗性 (Mental Challenge) 聚合掌握度数据
+  const challengeMasteryList = useMemo(() => {
+    const cardSummaryMap = new Map<string, { total: number; hits: number }>();
+    for (const s of summaries) {
+      const key = s.cardId || s.mode;
+      const prev = cardSummaryMap.get(key) || { total: 0, hits: 0 };
+      cardSummaryMap.set(key, {
+        total: prev.total + s.totalCount,
+        hits: prev.hits + s.hitCount,
+      });
+    }
+
+    return (Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((ch) => {
+      const matchingCards = registry.queryCards({ challenges: [ch] });
+      let chTotal = 0;
+      let chHits = 0;
+
+      for (const card of matchingCards) {
+        const item = cardSummaryMap.get(card.id);
+        if (item) {
+          chTotal += item.total;
+          chHits += item.hits;
+        }
+      }
+
+      const acc = chTotal > 0 ? Math.round((chHits / chTotal) * 100) : 0;
+      return {
+        challenge: ch,
+        label: CHALLENGE_TAG_LABELS[ch],
+        total: chTotal,
+        hits: chHits,
         accuracy: acc,
         cardCount: matchingCards.length,
       };
@@ -243,10 +308,26 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   ))}
                 </optgroup>
 
-                <optgroup label="—— 认知技能 (Skills) ——">
-                  {(Object.keys(SKILL_TAG_LABELS) as CognitiveSkillTag[]).map((skill) => (
-                    <option key={`skill:${skill}`} value={`skill:${skill}`}>
-                      {SKILL_TAG_LABELS[skill]}
+                <optgroup label="—— 基础视觉域 (Domains) ——">
+                  {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((domain) => (
+                    <option key={`domain:${domain}`} value={`domain:${domain}`}>
+                      {DOMAIN_TAG_LABELS[domain]}
+                    </option>
+                  ))}
+                </optgroup>
+
+                <optgroup label="—— 认知推演路径 (Paths) ——">
+                  {(Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((path) => (
+                    <option key={`path:${path}`} value={`path:${path}`}>
+                      {PATH_TAG_LABELS[path]}
+                    </option>
+                  ))}
+                </optgroup>
+
+                <optgroup label="—— 核心心智抗性 (Challenges) ——">
+                  {(Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((ch) => (
+                    <option key={`challenge:${ch}`} value={`challenge:${ch}`}>
+                      {CHALLENGE_TAG_LABELS[ch]}
                     </option>
                   ))}
                 </optgroup>
@@ -342,41 +423,82 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
               </div>
             </div>
 
-            {/* 认知技能掌握度分布矩阵 */}
+            {/* 认知路径推演能力矩阵 */}
             <div className="bg-slate-50/70 p-5 rounded-2xl border border-slate-200/80 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Compass className="w-4 h-4 text-indigo-600" />
-                  认知知觉技能掌握度矩阵 (Cognitive Skills Mastery)
+                  <Compass className="w-4 h-4 text-emerald-600" />
+                  认知推演路径掌握度 (Cognitive Path Mastery)
                 </div>
                 <span className="text-[10px] text-slate-400 font-mono">基于全部历史试炼聚合</span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {skillMasteryList.map((sm) => (
+                {pathMasteryList.map((pm) => (
                   <div
-                    key={sm.skill}
+                    key={pm.path}
                     className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-sm space-y-1"
                   >
                     <div className="flex items-center justify-between text-xs font-bold text-slate-700">
-                      <span>{sm.label}</span>
+                      <span className="truncate">{pm.label}</span>
                       <span
                         className={`font-mono text-[11px] px-1.5 py-0.5 rounded ${
-                          sm.total === 0
+                          pm.total === 0
                             ? 'bg-slate-100 text-slate-400'
-                            : sm.accuracy >= 80
+                            : pm.accuracy >= 80
                               ? 'bg-emerald-50 text-emerald-700 font-black'
-                              : sm.accuracy >= 60
+                              : pm.accuracy >= 60
                                 ? 'bg-amber-50 text-amber-700 font-black'
                                 : 'bg-rose-50 text-rose-700 font-black'
                         }`}
                       >
-                        {sm.total > 0 ? `${sm.accuracy}%` : '--'}
+                        {pm.total > 0 ? `${pm.accuracy}%` : '--'}
                       </span>
                     </div>
                     <div className="text-[10px] text-slate-400 flex items-center justify-between">
-                      <span>已练 {sm.total} 题</span>
-                      <span>{sm.cardCount} 模块</span>
+                      <span>已练 {pm.total} 题</span>
+                      <span>{pm.cardCount} 模块</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 核心心智抗性矩阵 */}
+            <div className="bg-slate-50/70 p-5 rounded-2xl border border-slate-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Brain className="w-4 h-4 text-rose-500" />
+                  核心心智抗性与错觉克服 (Mental Challenge Index)
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">抗错觉 / 图底反转得分</span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {challengeMasteryList.map((cm) => (
+                  <div
+                    key={cm.challenge}
+                    className="bg-white p-3 rounded-xl border border-slate-200/90 shadow-sm space-y-1"
+                  >
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                      <span className="truncate">{cm.label.split(' ')[0]}</span>
+                      <span
+                        className={`font-mono text-[11px] px-1.5 py-0.5 rounded ${
+                          cm.total === 0
+                            ? 'bg-slate-100 text-slate-400'
+                            : cm.accuracy >= 80
+                              ? 'bg-rose-50 text-rose-700 font-black'
+                              : cm.accuracy >= 60
+                                ? 'bg-amber-50 text-amber-700 font-black'
+                                : 'bg-slate-100 text-slate-600 font-black'
+                        }`}
+                      >
+                        {cm.total > 0 ? `${cm.accuracy}%` : '--'}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-400 flex items-center justify-between">
+                      <span>已练 {cm.total} 题</span>
+                      <span>{cm.cardCount} 模块</span>
                     </div>
                   </div>
                 ))}

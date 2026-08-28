@@ -3,23 +3,26 @@ import type {
   CardDefinition,
   CardQueryOptions,
   CardStatusTag,
-  CognitiveSkillTag,
+  CognitivePathTag,
   InteractionTag,
+  MentalChallengeTag,
   PackMeta,
-  SensoryTargetTag,
+  VisualDomainTag,
 } from '../types/card';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 
 class InvertedCardIndex {
-  private targetMap = new Map<SensoryTargetTag, Set<string>>();
-  private skillMap = new Map<CognitiveSkillTag, Set<string>>();
+  private domainMap = new Map<VisualDomainTag, Set<string>>();
+  private pathMap = new Map<CognitivePathTag, Set<string>>();
+  private challengeMap = new Map<MentalChallengeTag, Set<string>>();
   private interactionMap = new Map<InteractionTag, Set<string>>();
   private statusMap = new Map<CardStatusTag, Set<string>>();
   private packMap = new Map<string, Set<string>>();
 
   public clear(): void {
-    this.targetMap.clear();
-    this.skillMap.clear();
+    this.domainMap.clear();
+    this.pathMap.clear();
+    this.challengeMap.clear();
     this.interactionMap.clear();
     this.statusMap.clear();
     this.packMap.clear();
@@ -38,20 +41,29 @@ class InvertedCardIndex {
     }
 
     if (card.tags) {
-      for (const t of card.tags.target || []) {
-        let set = this.targetMap.get(t);
+      for (const d of card.tags.domain || []) {
+        let set = this.domainMap.get(d);
         if (!set) {
           set = new Set();
-          this.targetMap.set(t, set);
+          this.domainMap.set(d, set);
         }
         set.add(id);
       }
 
-      for (const s of card.tags.skill || []) {
-        let set = this.skillMap.get(s);
+      for (const p of card.tags.path || []) {
+        let set = this.pathMap.get(p);
         if (!set) {
           set = new Set();
-          this.skillMap.set(s, set);
+          this.pathMap.set(p, set);
+        }
+        set.add(id);
+      }
+
+      for (const c of card.tags.challenge || []) {
+        let set = this.challengeMap.get(c);
+        if (!set) {
+          set = new Set();
+          this.challengeMap.set(c, set);
         }
         set.add(id);
       }
@@ -75,12 +87,16 @@ class InvertedCardIndex {
     }
   }
 
-  public getCardIdsByTarget(target: SensoryTargetTag): Set<string> {
-    return this.targetMap.get(target) || new Set();
+  public getCardIdsByDomain(domain: VisualDomainTag): Set<string> {
+    return this.domainMap.get(domain) || new Set();
   }
 
-  public getCardIdsBySkill(skill: CognitiveSkillTag): Set<string> {
-    return this.skillMap.get(skill) || new Set();
+  public getCardIdsByPath(path: CognitivePathTag): Set<string> {
+    return this.pathMap.get(path) || new Set();
+  }
+
+  public getCardIdsByChallenge(challenge: MentalChallengeTag): Set<string> {
+    return this.challengeMap.get(challenge) || new Set();
   }
 
   public getCardIdsByInteraction(interaction: InteractionTag): Set<string> {
@@ -164,24 +180,34 @@ class SystemDomainRegistry {
       intersect(this.invertedIndex.getCardIdsByPack(options.packId));
     }
 
-    if (options.targets && options.targets.length > 0) {
-      const targetUnion = new Set<string>();
-      for (const t of options.targets) {
-        for (const id of this.invertedIndex.getCardIdsByTarget(t)) {
-          targetUnion.add(id);
+    if (options.domains && options.domains.length > 0) {
+      const domainUnion = new Set<string>();
+      for (const d of options.domains) {
+        for (const id of this.invertedIndex.getCardIdsByDomain(d)) {
+          domainUnion.add(id);
         }
       }
-      intersect(targetUnion);
+      intersect(domainUnion);
     }
 
-    if (options.skills && options.skills.length > 0) {
-      const skillUnion = new Set<string>();
-      for (const s of options.skills) {
-        for (const id of this.invertedIndex.getCardIdsBySkill(s)) {
-          skillUnion.add(id);
+    if (options.paths && options.paths.length > 0) {
+      const pathUnion = new Set<string>();
+      for (const p of options.paths) {
+        for (const id of this.invertedIndex.getCardIdsByPath(p)) {
+          pathUnion.add(id);
         }
       }
-      intersect(skillUnion);
+      intersect(pathUnion);
+    }
+
+    if (options.challenges && options.challenges.length > 0) {
+      const challengeUnion = new Set<string>();
+      for (const c of options.challenges) {
+        for (const id of this.invertedIndex.getCardIdsByChallenge(c)) {
+          challengeUnion.add(id);
+        }
+      }
+      intersect(challengeUnion);
     }
 
     if (options.interactions && options.interactions.length > 0) {

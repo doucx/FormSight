@@ -1,8 +1,8 @@
 import { Plus, Search, Sparkles, X } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
 import { registry } from '../../../core/registry';
-import type { CardQueryOptions, CognitiveSkillTag } from '../../../types/card';
-import { SKILL_TAG_LABELS } from '../../discovery/FilterEngine';
+import type { CardQueryOptions, VisualDomainTag } from '../../../types/card';
+import { DOMAIN_TAG_LABELS } from '../../discovery/FilterEngine';
 
 interface CardPickerPanelProps {
   isAddingCard: boolean;
@@ -12,7 +12,7 @@ interface CardPickerPanelProps {
 
 export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: CardPickerPanelProps) {
   const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [selectedSkill, setSelectedSkill] = useState<CognitiveSkillTag | 'all'>('all');
+  const [selectedDomain, setSelectedDomain] = useState<VisualDomainTag | 'all'>('all');
   const [selectedPackId, setSelectedPackId] = useState<string>('all');
 
   const packs = registry.getAllPacks();
@@ -20,10 +20,10 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
   const queryOptions: CardQueryOptions = useMemo(() => {
     return {
       searchKeyword: searchKeyword || undefined,
-      skills: selectedSkill !== 'all' ? [selectedSkill] : undefined,
+      domains: selectedDomain !== 'all' ? [selectedDomain] : undefined,
       packId: selectedPackId !== 'all' ? selectedPackId : undefined,
     };
-  }, [searchKeyword, selectedSkill, selectedPackId]);
+  }, [searchKeyword, selectedDomain, selectedPackId]);
 
   const availableCards = useMemo(() => {
     return registry.queryCards(queryOptions);
@@ -79,16 +79,16 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
         )}
       </div>
 
-      {/* Pack 与认知技能快速筛选行 */}
+      {/* Pack 与视觉域快速筛选行 */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
         <button
           type="button"
           onClick={() => {
-            setSelectedSkill('all');
+            setSelectedDomain('all');
             setSelectedPackId('all');
           }}
           className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-            selectedSkill === 'all' && selectedPackId === 'all'
+            selectedDomain === 'all' && selectedPackId === 'all'
               ? 'bg-indigo-600 text-white'
               : 'bg-white text-slate-600 border border-slate-200'
           }`}
@@ -102,7 +102,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
             key={p.packId}
             onClick={() => {
               setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-              setSelectedSkill('all');
+              setSelectedDomain('all');
             }}
             className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
               selectedPackId === p.packId
@@ -114,21 +114,21 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
           </button>
         ))}
 
-        {(Object.keys(SKILL_TAG_LABELS) as CognitiveSkillTag[]).map((skill) => (
+        {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((domain) => (
           <button
             type="button"
-            key={skill}
+            key={domain}
             onClick={() => {
-              setSelectedSkill(selectedSkill === skill ? 'all' : skill);
+              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
               setSelectedPackId('all');
             }}
             className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-              selectedSkill === skill
-                ? 'bg-emerald-600 text-white'
+              selectedDomain === domain
+                ? 'bg-indigo-600 text-white'
                 : 'bg-white text-slate-600 border border-slate-200'
             }`}
           >
-            {SKILL_TAG_LABELS[skill]}
+            {DOMAIN_TAG_LABELS[domain]}
           </button>
         ))}
       </div>
