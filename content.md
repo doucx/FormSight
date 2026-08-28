@@ -1,157 +1,113 @@
-拉伸的根本原因在于：`setupHiDpiCanvas` 原先直接设置了固定的 inline `style.width = '500px'` 和 `style.height = '500px'`，配合 `max-width: 100%` 时，宽度随父容器收缩但高度被固定在 500px，导致 Canvas 纵向严重变形拉伸。
+我已定位到 `negative_space`（正负形空间感知）包中的点阵定点模块（`VertexFittingView.tsx`）。
 
-我将生成一个修复计划，优化 `setupHiDpiCanvas` 的宽高比与样式自适应规则，并为左右卡片及内部画布设置严格等比的正方形（`aspect-square`）约束。
+其左右两窗格包装容器缺少统一的 `w-full max-w-[300px] aspect-square` 尺寸锁定和弹性对齐，导致左右两个卡片在布局计算时不完全等大，且容易引起尺寸偏差。
 
-## [WIP] fix: 消除点阵视口拉伸变形并强制保持正方形宽高比
+我将生成一个修复计划，为 `VertexFittingView.tsx` 应用统一的 1:1 正方形卡片容器与画布尺寸约束。
+
+## [WIP] fix: 统一正负形反切定点左右窗格为等大正方形
 
 ### 错误分析
 
-1. **Inline 样式覆盖 `aspect-ratio`**：`setupHiDpiCanvas` 原本将 `style.height` 显式设为逻辑像素高度（如 `500px`），当容器宽度受限时，`max-width: 100%` 缩小了宽度，但高度依然为 `500px`，导致绘制内容被强制纵向拉伸为非正方形。
-2. **容器宽高比未锁定**：外层卡片容器仅限制了宽度，未声明 `aspect-square`，导致外框与内部画布在 Flex 布局下未能按 1:1 锁定。
+在 `VertexFittingView.tsx` 中，`DualViewportContainer` 的 `leftContent` 与 `rightContent` 外部卡片容器仅设置了 `bg-white p-3 rounded-2xl ...`，未声明 `w-full max-w-[300px] aspect-square flex items-center justify-center`。右侧 `PointClickCanvas` 的 `maxDisplayWidth` 未适配容器填满规则，导致左右两侧视图在不同宽度下无法严格锁定为相同的 1:1 正方形。
 
 ### 用户需求
 
-确保寻星点阵左右两个视口及其外部卡片均为严格的 1:1 正方形，杜绝任何拉伸与失真。
+修复正负形反切定点（`neg_vertex_fitting`）中的点阵视图，确保左右两窗格均为严格等大的正方形，内容无拉伸。
 
 ### 评论
 
-对于空间方位感知与距离估计训练而言，保持 1:1 真实正方形比例至关重要，否则会破坏用户的距离与角度直觉。
+顶点反切（Vertex Fitting）高度依赖负形几何轮廓的 1:1 视觉对齐，左右两视口保持严格等大和正方形对于形状比例的精确推演必不可少。
 
 ### 目标
 
-1. 改造 `src/core/canvas/hidpi.ts` 中的 `setupHiDpiCanvas`，将固定像素 height 调整为 `aspectRatio` + `height: auto`，确保所有 Canvas 响应式缩放时严格保持正方形。
-2. 更新 `src/packs/star/views/StarCanvas.tsx`，将左右卡片及其子元素设置为严格对称的 `w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square`。
+1. 统一 `VertexFittingView.tsx` 中左右两卡片容器类名，均设置为 `w-full max-w-[300px] aspect-square bg-white p-3 rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center`。
+2. 为左侧 `canvas` 设置 `w-full h-full aspect-square block`。
+3. 为右侧 `PointClickCanvas` 传入 `maxDisplayWidth="w-full h-full aspect-square"`。
 
 ### 基本原理
 
-通过 CSS `aspectRatio: `${logicalWidth} / ${logicalHeight}`` 和 `height: 'auto'`，使得不论画布处于何种父容器宽度下，其高度都将严格按比例由宽度决定，从而在任何分辨率下均保持绝对无畸变的正方形。
+通过给双视口容器与子 Canvas 赋予统一的 `aspect-square`（1:1 宽高比）和最大尺寸限制，结合已重构的 `setupHiDpiCanvas` 自适应渲染，左右两窗格在任何视口尺寸下都将保持完全相同的像素尺寸和正方形结构。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/canvas-aspect-ratio #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/negative-space-canvas #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `hidpi.ts` 中的画布宽高比机制
+#### Acts 1: 修复 `VertexFittingView.tsx` 左右窗格正方形尺寸约束
 
 ~~~~~act
 patch_file
-src/core/canvas/hidpi.ts
+src/packs/negative_space/components/VertexFittingView.tsx
 ~~~~~
 ~~~~~typescript.old
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = `${logicalWidth}px`;
-  canvas.style.height = `${logicalHeight}px`;
-  canvas.style.maxWidth = '100%';
-
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
-
-  return ctx;
-}
+      <DualViewportContainer
+        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
+        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
+        leftContent={
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <canvas
+              ref={leftFittingRef}
+              width={FITTING_CANVAS_SIZE}
+              height={FITTING_CANVAS_SIZE}
+              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
+            />
+          </div>
+        }
+        rightContent={
+          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+            <PointClickCanvas
+              canvasSize={FITTING_CANVAS_SIZE}
+              gridPoints={question.distractorPoints || []}
+              targetPoint={question.targetPoint}
+              userNearestPoint={userAnswer?.nearestGridPoint}
+              showAnswer={showAnswer}
+              isHit={userAnswer?.isHit}
+              disabled={disabled}
+              maxDisplayWidth="max-w-[300px]"
+              customOverlayRender={handleCustomOverlayRender}
+              onCommitPoint={onAnswer}
+            />
+          </div>
+        }
+      />
 ~~~~~
 ~~~~~typescript.new
-export function setupHiDpiCanvas(
-  canvas: HTMLCanvasElement,
-  logicalWidth: number,
-  logicalHeight: number,
-): CanvasRenderingContext2D | null {
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
-  canvas.style.width = '100%';
-  canvas.style.maxWidth = `${logicalWidth}px`;
-  canvas.style.aspectRatio = `${logicalWidth} / ${logicalHeight}`;
-  canvas.style.height = 'auto';
-
-  ctx.resetTransform?.();
-  ctx.scale(dpr, dpr);
-
-  return ctx;
-}
-~~~~~
-
-#### Acts 2: 调整 `StarCanvas.tsx` 左右窗格卡片为严格等大正方形
-
-~~~~~act
-patch_file
-src/packs/star/views/StarCanvas.tsx
-~~~~~
-~~~~~typescript.old
-  return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[380px] lg:max-w-[420px] bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
-        />
-      </div>
-
-      <div className="flex-1 w-full max-w-[380px] lg:max-w-[420px] bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex flex-col items-center justify-center">
-        <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
-          showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
-          disabled={disabled}
-          maxDisplayWidth="w-full"
-          onCommitPoint={handleCommitPoint}
-        />
-      </div>
-    </div>
-  );
-~~~~~
-~~~~~typescript.new
-  return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
-      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
-        />
-      </div>
-
-      <div className="w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
-        <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
-          showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
-          disabled={disabled}
-          maxDisplayWidth="w-full h-full aspect-square"
-          onCommitPoint={handleCommitPoint}
-        />
-      </div>
-    </div>
-  );
+      <DualViewportContainer
+        leftTitle={t('packs.negative_space.views.vertexRefTitle')}
+        rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
+        leftContent={
+          <div className="w-full max-w-[300px] aspect-square bg-white p-3 rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center">
+            <canvas
+              ref={leftFittingRef}
+              width={FITTING_CANVAS_SIZE}
+              height={FITTING_CANVAS_SIZE}
+              className="w-full h-full aspect-square rounded-xl border border-slate-100 shadow-sm block"
+            />
+          </div>
+        }
+        rightContent={
+          <div className="w-full max-w-[300px] aspect-square bg-white p-3 rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center">
+            <PointClickCanvas
+              canvasSize={FITTING_CANVAS_SIZE}
+              gridPoints={question.distractorPoints || []}
+              targetPoint={question.targetPoint}
+              userNearestPoint={userAnswer?.nearestGridPoint}
+              showAnswer={showAnswer}
+              isHit={userAnswer?.isHit}
+              disabled={disabled}
+              maxDisplayWidth="w-full h-full aspect-square"
+              customOverlayRender={handleCustomOverlayRender}
+              onCommitPoint={onAnswer}
+            />
+          </div>
+        }
+      />
 ~~~~~
 
 ### 下一步建议
 
-1. **运行代码质量检查**：执行 `npm run check` 验证格式与类型。
-2. **在浏览器中测试**：打开单锚点或双锚点寻星练习，确认左右两块区域呈现标准的 1:1 正方形，且网格圆点无任何椭圆或拉伸形变。
+1. **执行构建和测试**：运行 `npm run check` 确保代码格式与类型检查通过。
+2. **在界面中验证**：打开「负形边界反切定点（`neg_vertex_fitting`）」练习，验证左侧参考正形与右侧交互点阵是否呈现严格等大的 1:1 正方形且无形变。

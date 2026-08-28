@@ -88,17 +88,17 @@ export function VertexFittingView({
         leftTitle={t('packs.negative_space.views.vertexRefTitle')}
         rightTitle={t('packs.negative_space.views.vertexCanvasTitle')}
         leftContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+          <div className="w-full max-w-[300px] aspect-square bg-white p-3 rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center">
             <canvas
               ref={leftFittingRef}
               width={FITTING_CANVAS_SIZE}
               height={FITTING_CANVAS_SIZE}
-              className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100 shadow-sm"
+              className="w-full h-full aspect-square rounded-xl border border-slate-100 shadow-sm block"
             />
           </div>
         }
         rightContent={
-          <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-inner">
+          <div className="w-full max-w-[300px] aspect-square bg-white p-3 rounded-2xl border border-slate-200 shadow-inner flex items-center justify-center">
             <PointClickCanvas
               canvasSize={FITTING_CANVAS_SIZE}
               gridPoints={question.distractorPoints || []}
@@ -107,7 +107,7 @@ export function VertexFittingView({
               showAnswer={showAnswer}
               isHit={userAnswer?.isHit}
               disabled={disabled}
-              maxDisplayWidth="max-w-[300px]"
+              maxDisplayWidth="w-full h-full aspect-square"
               customOverlayRender={handleCustomOverlayRender}
               onCommitPoint={onAnswer}
             />
