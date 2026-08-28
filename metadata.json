@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(build): 修复 TypeScript 编译错误与未使用的图标导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787893994.7934673, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787896192.635524, "duration_ms": 0}}
