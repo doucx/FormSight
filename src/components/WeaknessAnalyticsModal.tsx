@@ -1,7 +1,7 @@
 import { BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { CardAnalyticsView } from '../core/contracts';
-import { useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db/index';
@@ -19,7 +19,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+  const cardTitle = getCardTitle(card, t);
 
   const views = plugin?.views ?? [];
   const currentView = views[activeViewIndex] || views[0];
@@ -142,13 +142,13 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
             {/* 左侧 Canvas 可视化区 */}
-            <div className="md:col-span-7 flex justify-center bg-slate-900 p-4 rounded-2xl border border-slate-800 relative">
+            <div className="md:col-span-7 flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-200/80 shadow-inner relative">
               <canvas
                 key={`${card.id}-${currentView.id}`}
                 ref={canvasRef}
                 width={320}
                 height={320}
-                className="w-full max-w-[300px] aspect-square rounded-xl"
+                className="w-full max-w-[300px] aspect-square rounded-xl border border-slate-100"
               />
             </div>
 

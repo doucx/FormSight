@@ -4,8 +4,7 @@ import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { PlanEditorModal } from './components/plan/PlanEditorModal';
-import { i18n, useTranslation } from './core/i18n';
+import { getCardTitle, i18n, useTranslation } from './core/i18n';
 import { registry } from './core/registry';
 import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
 import { useTodayStats } from './hooks/useTodayStats';
@@ -20,6 +19,7 @@ import {
 import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { Home } from './views/Home';
+import { PlanEditorView } from './views/PlanEditorView';
 import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
@@ -30,7 +30,6 @@ export function App() {
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
-  const [isPlanEditorOpen, setIsPlanEditorOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
   const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
@@ -71,13 +70,13 @@ export function App() {
     if (route.type === 'home') {
       lastHomeRouteRef.current = route;
       document.title = `${t('common.appName')} - ${t('common.appSubtitle')}`;
+    } else if (route.type === 'plan-editor') {
+      document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-train') {
       document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
-      const cardTitle = card
-        ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title
-        : t('shell.training');
+      const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
       document.title = `${cardTitle} - ${t('common.appName')}`;
     }
   }, [route, trainingPlan.name, t]);
@@ -117,10 +116,31 @@ export function App() {
           onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
           onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
           onStartPlan={() => navigate({ type: 'plan-train' })}
-          onOpenPlanEditor={() => setIsPlanEditorOpen(true)}
+          onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
           onSelectPlan={handleSelectPlanOnHome}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
           onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
+        />
+      )}
+
+      {route.type === 'plan-editor' && (
+        <PlanEditorView
+          initialPlan={trainingPlan}
+          onExit={() => navigate(lastHomeRouteRef.current)}
+          onPlanListChanged={refreshProfiles}
+          onSaveAndExit={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            setTrainingPlan(newPlan);
+            refreshProfiles();
+            showToast(t('common.planUpdatedToast'), 'success');
+            navigate(lastHomeRouteRef.current);
+          }}
+          onStartPlanDirectly={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            setTrainingPlan(newPlan);
+            refreshProfiles();
+            navigate({ type: 'plan-train' });
+          }}
         />
       )}
 
@@ -198,20 +218,6 @@ export function App() {
         <WeaknessAnalyticsModal
           card={activeAnalyticsCard}
           onClose={() => setActiveAnalyticsCardId(null)}
-        />
-      )}
-
-      {isPlanEditorOpen && (
-        <PlanEditorModal
-          initialPlan={trainingPlan}
-          onClose={() => setIsPlanEditorOpen(false)}
-          onPlanListChanged={refreshProfiles}
-          onSave={(newPlan) => {
-            saveTrainingPlan(newPlan);
-            setTrainingPlan(newPlan);
-            refreshProfiles();
-            showToast(t('common.planUpdatedToast'), 'success');
-          }}
         />
       )}
     </div>

@@ -1,4 +1,4 @@
-import { Award, BarChart2, FlaskConical, Play, Sliders, Target, TrendingUp } from 'lucide-preact';
+import { BarChart2, FlaskConical, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
 
@@ -23,6 +23,7 @@ interface ModeCardProps {
   todayTimeMs?: number;
   currentLevel: number;
   accuracy: number;
+  totalTrials?: number;
   hasAnalytics?: boolean;
   isExperimental?: boolean;
   onStartTraining: () => void;
@@ -39,6 +40,7 @@ export function ModeCard({
   todayTimeMs = 0,
   currentLevel,
   accuracy,
+  totalTrials = 0,
   hasAnalytics = false,
   isExperimental = false,
   onStartTraining,
@@ -47,18 +49,66 @@ export function ModeCard({
   onOpenAnalytics,
 }: ModeCardProps) {
   const { t } = useTranslation();
+  const isNeverPracticed = totalTrials === 0;
+
+  // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
+  const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
 
   return (
-    <div className="group bg-white border border-gray-200/80 hover:border-indigo-300 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative overflow-hidden">
+    <div
+      role="presentation"
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      className="group bg-white border border-slate-200/90 hover:border-indigo-500 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
+    >
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:scale-110 transition-transform">
-              <Icon className="w-6 h-6" />
+        {/* 顶部标题、图标与右上角状态徽章 */}
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-3 rounded-2xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-105 transition-all shadow-xs flex-shrink-0">
+              <Icon className="w-5 h-5" />
             </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-black text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
+                  {title}
+                </h3>
+                {isExperimental && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg flex-shrink-0">
+                    <FlaskConical className="w-3 h-3 text-amber-600" />
+                    {t('card.experimentalBadge')}
+                  </span>
+                )}
+              </div>
+              <div className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
+                {todayCount > 0
+                  ? `${t('card.todayTrials')}: ${todayCount} ${t('common.trialsUnit')}${
+                      todayTimeMs > 0 ? ` (${formatTodayTimeWithT(todayTimeMs, t)})` : ''
+                    }`
+                  : isNeverPracticed
+                    ? t('common.empty')
+                    : `${t('card.todayTrials')}: 0 ${t('common.trialsUnit')}`}
+              </div>
+            </div>
+          </div>
 
-            {/* 卡片级专属操作快捷入口 */}
-            <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+          {/* 右上角：等级胶囊与快捷操作 */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className="text-xs font-mono font-black bg-slate-50 group-hover:bg-indigo-50 group-hover:text-indigo-700 border border-slate-200/80 group-hover:border-indigo-200 px-2.5 py-1 rounded-xl text-slate-700 transition-colors">
+              Lvl {currentLevel}
+            </span>
+
+            <div
+              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
+            >
               {hasAnalytics && onOpenAnalytics && (
                 <button
                   type="button"
@@ -79,70 +129,94 @@ export function ModeCard({
               </button>
             </div>
           </div>
-
-          <div className="text-right">
-            <div className="text-[10px] font-semibold text-slate-400">{t('card.todayTrials')}</div>
-            <div className="text-xs font-bold text-slate-500 font-mono">
-              {todayCount} {t('common.trialsUnit')}
-              {todayCount > 0 && todayTimeMs > 0 && (
-                <span className="text-[11px] text-slate-400 font-normal ml-1">
-                  ({formatTodayTimeWithT(todayTimeMs, t)})
-                </span>
-              )}
-            </div>
-          </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-          {isExperimental && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg">
-              <FlaskConical className="w-3 h-3 text-amber-600" />
-              {t('card.experimentalBadge')}
-            </span>
-          )}
-        </div>
-        <p className="text-xs text-gray-500 mb-6 leading-relaxed h-10">{desc}</p>
-
-        {/* 核心指标 */}
-        <div className="grid grid-cols-2 gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
-              <TrendingUp className="w-3 h-3 text-indigo-500" />
-              {t('card.skillLevel')}
-            </div>
-            <div className="text-xl font-black text-slate-800">
-              {t('card.levelBadge', { level: currentLevel })}
-            </div>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-gray-400">
-              <Award className="w-3 h-3 text-emerald-500" />
-              {t('card.accuracy')}
-            </div>
-            <div className="text-xl font-black text-slate-800">{accuracy}%</div>
-          </div>
-        </div>
+        {/* 卡片描述 */}
+        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 min-h-[2.5rem] mb-5">
+          {desc}
+        </p>
       </div>
 
-      {/* 动作按钮区 */}
-      <div className="flex flex-col gap-2.5">
-        <button
-          type="button"
-          onClick={onStartTraining}
-          className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          {t('card.startAdaptive')}
-        </button>
-        <button
-          type="button"
-          onClick={onStartBenchmark}
-          className="w-full py-2.5 px-4 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 active:bg-gray-300 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <Target className="w-3.5 h-3.5 text-gray-500" />
-          {t('card.startBenchmark')}
-        </button>
+      {/* 底部指标栏与浮动操作按钮 */}
+      <div
+        className="flex items-end justify-between border-t border-slate-100 pt-4"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
+      >
+        {/* 左侧：正确率综合指示 */}
+        <div className="space-y-0.5">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            {t('card.accuracy')}
+          </div>
+          <div className="text-sm font-black text-slate-800 font-mono flex items-baseline gap-1.5">
+            <span
+              className={
+                isNeverPracticed
+                  ? 'text-slate-400'
+                  : accuracy >= 80
+                    ? 'text-emerald-600'
+                    : 'text-slate-800'
+              }
+            >
+              {isNeverPracticed ? '--' : `${accuracy}%`}
+            </span>
+            {todayCount > 0 && (
+              <span className="text-[11px] font-normal text-slate-400 font-sans">
+                ({todayCount} {t('common.trialsUnit')})
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 右侧：紧凑动作按钮组（根据 isNeverPracticed 动态倒转权重） */}
+        <div className="flex items-center gap-2">
+          {isNeverPracticed ? (
+            <>
+              {/* 次级：仅显示三角形 Play 图标的自适应训练按钮 */}
+              <button
+                type="button"
+                onClick={onStartTraining}
+                className="p-2.5 text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all cursor-pointer"
+                title={t('card.startAdaptive')}
+              >
+                <Play className="w-4 h-4 fill-current text-slate-500" />
+              </button>
+
+              {/* 主要：高亮文字「基准测试」按钮 */}
+              <button
+                type="button"
+                onClick={onStartBenchmark}
+                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>{t('card.startBenchmark')}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 次级：仅显示靶心 Target 图标的基准测试按钮 */}
+              <button
+                type="button"
+                onClick={onStartBenchmark}
+                className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all cursor-pointer"
+                title={t('card.startBenchmark')}
+              >
+                <Target className="w-4 h-4 text-slate-500" />
+              </button>
+
+              {/* 主要：高亮文字「自适应训练」按钮 */}
+              <button
+                type="button"
+                onClick={onStartTraining}
+                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{t('card.startAdaptive')}</span>
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

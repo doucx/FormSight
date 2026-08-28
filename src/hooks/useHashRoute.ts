@@ -11,7 +11,8 @@ import type {
 export type RouteLocation =
   | { type: 'home'; query?: CardQueryOptions }
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
-  | { type: 'plan-train' };
+  | { type: 'plan-train' }
+  | { type: 'plan-editor' };
 
 function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const packId = params.get('pack') || undefined;
@@ -38,6 +39,13 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
           ? (['stable'] as CardStatusTag[])
           : undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
+  const showAdvancedParam = params.get('adv');
+  const showAdvanced =
+    showAdvancedParam === '1' || showAdvancedParam === 'true'
+      ? true
+      : showAdvancedParam === '0' || showAdvancedParam === 'false'
+        ? false
+        : undefined;
 
   if (
     !packId &&
@@ -46,7 +54,8 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     (!challenges || challenges.length === 0) &&
     (!interactions || interactions.length === 0) &&
     (!statuses || statuses.length === 0) &&
-    !searchKeyword
+    !searchKeyword &&
+    showAdvanced === undefined
   ) {
     return undefined;
   }
@@ -59,6 +68,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
     statuses,
     searchKeyword,
+    showAdvanced,
   };
 }
 
@@ -72,6 +82,10 @@ function parseHash(hash: string): RouteLocation {
 
   if (segments[0] === 'plan-train') {
     return { type: 'plan-train' };
+  }
+
+  if (segments[0] === 'plan-editor') {
+    return { type: 'plan-editor' };
   }
 
   if (segments[0] === 'train' && segments[1]) {
@@ -109,10 +123,16 @@ function stringifyRoute(route: RouteLocation): string {
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());
     }
+    if (route.query.showAdvanced === true) {
+      params.set('adv', '1');
+    } else if (route.query.showAdvanced === false) {
+      params.set('adv', '0');
+    }
     const qs = params.toString();
     return qs ? `#/?${qs}` : '#/';
   }
   if (route.type === 'plan-train') return '#/plan-train';
+  if (route.type === 'plan-editor') return '#/plan-editor';
   if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
   return '#/';
 }

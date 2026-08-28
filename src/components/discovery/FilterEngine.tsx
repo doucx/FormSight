@@ -1,7 +1,6 @@
 import {
   Boxes,
   Brain,
-  Check,
   Compass,
   Eye,
   Filter,
@@ -9,11 +8,9 @@ import {
   MousePointer,
   RotateCcw,
   Search,
-  ShieldCheck,
   Sparkles,
   X,
 } from 'lucide-preact';
-import { useState } from 'preact/hooks';
 import {
   CHALLENGE_TAGS,
   DOMAIN_TAGS,
@@ -21,7 +18,7 @@ import {
   PATH_TAGS,
   STATUS_TAGS,
 } from '../../config/tags';
-import { useTranslation } from '../../core/i18n';
+import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type {
   CardQueryOptions,
@@ -31,22 +28,26 @@ import type {
   MentalChallengeTag,
   VisualDomainTag,
 } from '../../types/card';
+import { TagPill } from '../common/TagPill';
 
 interface FilterEngineProps {
   query: CardQueryOptions;
   totalMatches: number;
-  compact?: boolean;
   onChange: (newQuery: CardQueryOptions) => void;
 }
 
-export function FilterEngine({
-  query,
-  totalMatches,
-  compact = false,
-  onChange,
-}: FilterEngineProps) {
+export function FilterEngine({ query, totalMatches, onChange }: FilterEngineProps) {
   const { t } = useTranslation();
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(!compact);
+
+  // 严格以显式 showAdvanced 状态为准，默认保持折叠 (false)
+  const isAdvancedOpen = Boolean(query.showAdvanced);
+
+  const toggleAdvancedOpen = () => {
+    onChange({
+      ...query,
+      showAdvanced: !isAdvancedOpen,
+    });
+  };
 
   const packs = registry.getAllPacks();
 
@@ -103,7 +104,7 @@ export function FilterEngine({
   };
 
   const handleResetFilters = () => {
-    onChange({});
+    onChange(isAdvancedOpen ? { showAdvanced: true } : {});
   };
 
   const hasActiveFilters = Boolean(
@@ -148,22 +149,24 @@ export function FilterEngine({
 
           <button
             type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 ${
-              showAdvanced
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+            onClick={toggleAdvancedOpen}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+              isAdvancedOpen
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <Filter className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{showAdvanced ? t('home.collapseFilter') : t('home.expandFilter')}</span>
+            <span>
+              {isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}
+            </span>
           </button>
 
           {hasActiveFilters && (
             <button
               type="button"
               onClick={handleResetFilters}
-              className="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 rounded-xl transition-all flex items-center gap-1"
+              className="px-2.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
               title={t('common.clear')}
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -181,50 +184,26 @@ export function FilterEngine({
             {t('home.allPacks')}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
+            <TagPill
+              label={t('home.allPacks')}
+              selected={!query.packId}
               onClick={() => handleSelectPack(undefined)}
-              className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                !query.packId
-                  ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                  : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
-              }`}
-            >
-              {!query.packId && <Check className="w-3 h-3" />}
-              <span>{t('home.allPacks')}</span>
-            </button>
-            {packs.map((p) => {
-              const isSelected = query.packId === p.packId;
-              const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-              return (
-                <button
-                  type="button"
-                  key={p.packId}
-                  onClick={() => handleSelectPack(isSelected ? undefined : p.packId)}
-                  className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                    isSelected
-                      ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                      : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
-                  }`}
-                >
-                  {isSelected && <Check className="w-3 h-3" />}
-                  <span>{packTitle}</span>
-                  <span
-                    className={`text-[10px] font-mono px-1 rounded ${
-                      isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-200 text-slate-500'
-                    }`}
-                  >
-                    {p.cards.length}
-                  </span>
-                </button>
-              );
-            })}
+            />
+            {packs.map((p) => (
+              <TagPill
+                key={p.packId}
+                label={getPackTitle(p, t)}
+                count={p.cards.length}
+                selected={query.packId === p.packId}
+                onClick={() => handleSelectPack(query.packId === p.packId ? undefined : p.packId)}
+              />
+            ))}
           </div>
         </div>
       )}
 
-      {/* 正交四维标签矩阵折叠区 */}
-      {showAdvanced && (
+      {/* 高级五维标签矩阵折叠区 */}
+      {isAdvancedOpen && (
         <div className="space-y-3.5 pt-2 border-t border-slate-100 animate-in fade-in duration-150">
           {/* 1. 视觉域维度 (Visual Domain) */}
           <div className="space-y-1.5">
@@ -233,25 +212,15 @@ export function FilterEngine({
               {t('home.domainSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => {
-                const isSelected = query.domains?.includes(d) ?? false;
-                const tagMeta = DOMAIN_TAGS[d];
-                return (
-                  <button
-                    type="button"
-                    key={d}
-                    onClick={() => toggleDomain(d)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                        : 'bg-slate-50 hover:bg-indigo-50/60 text-slate-600 border border-slate-200/80 hover:border-indigo-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    <span>{t(tagMeta.i18nKey)}</span>
-                  </button>
-                );
-              })}
+              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => (
+                <TagPill
+                  key={d}
+                  label={t(DOMAIN_TAGS[d].i18nKey)}
+                  themeColor={DOMAIN_TAGS[d].themeColor || 'indigo'}
+                  selected={query.domains?.includes(d) ?? false}
+                  onClick={() => toggleDomain(d)}
+                />
+              ))}
             </div>
           </div>
 
@@ -262,25 +231,15 @@ export function FilterEngine({
               {t('home.pathSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => {
-                const isSelected = query.paths?.includes(p) ?? false;
-                const tagMeta = PATH_TAGS[p];
-                return (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => togglePath(p)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
-                        : 'bg-slate-50 hover:bg-emerald-50/60 text-slate-600 border border-slate-200/80 hover:border-emerald-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    <span>{t(tagMeta.i18nKey)}</span>
-                  </button>
-                );
-              })}
+              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => (
+                <TagPill
+                  key={p}
+                  label={t(PATH_TAGS[p].i18nKey)}
+                  themeColor={PATH_TAGS[p].themeColor || 'emerald'}
+                  selected={query.paths?.includes(p) ?? false}
+                  onClick={() => togglePath(p)}
+                />
+              ))}
             </div>
           </div>
 
@@ -291,25 +250,15 @@ export function FilterEngine({
               {t('home.challengeSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => {
-                const isSelected = query.challenges?.includes(c) ?? false;
-                const tagMeta = CHALLENGE_TAGS[c];
-                return (
-                  <button
-                    type="button"
-                    key={c}
-                    onClick={() => toggleChallenge(c)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? 'bg-rose-600 text-white shadow-sm shadow-rose-200'
-                        : 'bg-slate-50 hover:bg-rose-50/60 text-slate-600 border border-slate-200/80 hover:border-rose-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    <span>{t(tagMeta.i18nKey)}</span>
-                  </button>
-                );
-              })}
+              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => (
+                <TagPill
+                  key={c}
+                  label={t(CHALLENGE_TAGS[c].i18nKey)}
+                  themeColor={CHALLENGE_TAGS[c].themeColor || 'rose'}
+                  selected={query.challenges?.includes(c) ?? false}
+                  onClick={() => toggleChallenge(c)}
+                />
+              ))}
             </div>
           </div>
 
@@ -320,25 +269,15 @@ export function FilterEngine({
               {t('home.interactionSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => {
-                const isSelected = query.interactions?.includes(i) ?? false;
-                const tagMeta = INTERACTION_TAGS[i];
-                return (
-                  <button
-                    type="button"
-                    key={i}
-                    onClick={() => toggleInteraction(i)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? 'bg-amber-600 text-white shadow-sm shadow-amber-200'
-                        : 'bg-slate-50 hover:bg-amber-50/60 text-slate-600 border border-slate-200/80 hover:border-amber-300'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    <span>{t(tagMeta.i18nKey)}</span>
-                  </button>
-                );
-              })}
+              {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => (
+                <TagPill
+                  key={i}
+                  label={t(INTERACTION_TAGS[i].i18nKey)}
+                  themeColor={INTERACTION_TAGS[i].themeColor || 'amber'}
+                  selected={query.interactions?.includes(i) ?? false}
+                  onClick={() => toggleInteraction(i)}
+                />
+              ))}
             </div>
           </div>
 
@@ -349,32 +288,15 @@ export function FilterEngine({
               {t('home.statusSection')}
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(['stable', 'experimental'] as CardStatusTag[]).map((st) => {
-                const isSelected = query.statuses?.includes(st) ?? false;
-                const tagMeta = STATUS_TAGS[st];
-                return (
-                  <button
-                    type="button"
-                    key={st}
-                    onClick={() => toggleStatus(st)}
-                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
-                      isSelected
-                        ? st === 'stable'
-                          ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
-                          : 'bg-purple-600 text-white shadow-sm shadow-purple-200'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
-                    }`}
-                  >
-                    {isSelected && <Check className="w-3 h-3" />}
-                    {st === 'stable' ? (
-                      <ShieldCheck className="w-3 h-3 text-indigo-500" />
-                    ) : (
-                      <FlaskConical className="w-3 h-3 text-amber-500" />
-                    )}
-                    <span>{t(tagMeta.i18nKey)}</span>
-                  </button>
-                );
-              })}
+              {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
+                <TagPill
+                  key={st}
+                  label={t(STATUS_TAGS[st].i18nKey)}
+                  themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')}
+                  selected={query.statuses?.includes(st) ?? false}
+                  onClick={() => toggleStatus(st)}
+                />
+              ))}
             </div>
           </div>
         </div>

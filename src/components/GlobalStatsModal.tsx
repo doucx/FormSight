@@ -12,7 +12,7 @@ import {
 } from 'lucide-preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
-import { useTranslation } from '../core/i18n';
+import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
@@ -94,7 +94,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (selectedFilter === 'all') return t('stats.allModules');
     if (selectedFilter.startsWith('pack:')) {
       const pId = selectedFilter.replace('pack:', '');
-      const pTitle = t(`packs.${pId}.meta.title`) || registry.getPack(pId)?.meta.title || pId;
+      const pack = registry.getPack(pId);
+      const pTitle = pack ? getPackTitle(pack, t) : pId;
       return `${t('home.allPacks')} • ${pTitle}`;
     }
     if (selectedFilter.startsWith('domain:')) {
@@ -112,7 +113,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
     if (selectedFilter.startsWith('card:')) {
       const cardId = selectedFilter.replace('card:', '');
       const card = registry.getCardById(cardId);
-      const cTitle = card ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title : cardId;
+      const cTitle = card ? getCardTitle(card, t) : cardId;
       return `${cTitle}`;
     }
     return t('stats.allModules');
@@ -301,7 +302,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
                 <optgroup label={t('stats.optgroupPacks')}>
                   {packs.map((p) => {
-                    const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
+                    const packTitle = getPackTitle(p, t);
                     return (
                       <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
                         {packTitle}
@@ -336,8 +337,7 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
                 <optgroup label={t('stats.optgroupCards')}>
                   {allCards.map((card) => {
-                    const cardTitle =
-                      t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+                    const cardTitle = getCardTitle(card, t);
                     return (
                       <option key={`card:${card.id}`} value={`card:${card.id}`}>
                         {cardTitle}

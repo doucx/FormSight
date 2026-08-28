@@ -2,7 +2,7 @@ import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
-import { useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
 import { getProfile } from '../utils/db/index';
@@ -152,10 +152,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return null;
   }
   const cardConfig = getCardSettings(settings, currentCard.id);
-  const cardTitle =
-    t(`packs.${currentCard.packId}.cards.${currentCard.id}.title`) ||
-    currentCard.title ||
-    currentCard.id;
+  const cardTitle = getCardTitle(currentCard, t);
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60)
