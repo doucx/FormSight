@@ -1,54 +1,66 @@
-好的，我们已经完成了计划编辑器视图化升级、标签组件提取、多语言工具统一以及图表明亮主题适配等一系列重构与优化。
+已定位问题。代码分析与 Lint 规则要求：当为非原生按钮元素（如绑定了 `onClick` 的 `div`）添加鼠标点击事件时，必须同时配对键盘事件（如 `onKeyDown`），以确保无障碍访问（a11y）和纯键盘用户的可用性。
 
-现在我将生成 `[COMMIT]` 计划，将这些改动作为一个完整的逻辑单元提交到 Git 仓库。
+## [WIP] fix(accessibility): 为 ModeCard 添加 onKeyDown 键盘事件以满足 a11y 规范
 
-## [COMMIT] feat(plan): 重构计划编辑器为独立视图并优化交互与图表UI
+### 错误分析
+
+Linter（如 Biome / ESLint a11y 规则）检测到 `src/components/common/ModeCard.tsx` 中具有点击事件的卡片容器 `div`（`onClick={handleCardClick}`）缺少键盘事件监听器（`onKeyDown` / `onKeyUp`），违反了可访问性规范。键盘导航用户无法通过回车键或空格键触发卡片点击动作。
 
 ### 用户需求
-将当前的改动进行规范化提交，包括：
-1. 将 `PlanEditorModal` 弹窗重构为全屏独立视图 `PlanEditorView`，并接入 Hash 路由体系 (`#/plan-editor`)。
-2. 提取可复用的 `TagPill` 标签胶囊组件，统一主页及计划编辑器的多维筛选与标签展示交互。
-3. 统一多语言辅助函数 `getCardTitle`、`getCardDesc`、`getPackTitle`，提升卡片与扩展包标题解析一致性。
-4. 优化 `ModeCard` 首训引导逻辑与 `TrainingShell` 紧凑沉浸式状态栏。
-5. 将 Canvas 图表从深色背景统一迁移至全局明亮主题风格。
+
+修复 `ModeCard.tsx` 中缺少键盘事件处理的问题，使卡片在支持鼠标点击的同时也支持键盘交互（`Enter` 或 `Space` 键），消除 Linter 报错。
 
 ### 评论
-本次重构极大提升了应用在训练计划编排阶段的操作空间与用户体验，解决了此前弹窗空间狭窄受限的问题；同时通过抽象 `TagPill` 与多语言工具函数增强了代码可维护性与 UI 风格的一致性。
+
+这是一个标准的 Web 无障碍（a11y）与用户体验（UX）改进。为交互式卡片补充键盘支持，不仅能满足自动化静态检查规则，还能提升全键盘用户的操作体验。
 
 ### 目标
-1. 将所有涉及变更与新增的文件暂存到 Git。
-2. 生成符合 Conventional Commits 规范的结构化提交信息并执行提交。
+
+1. 在 `ModeCard.tsx` 的卡片根元素 `div` 上添加 `onKeyDown` 处理函数。
+2. 响应 `Enter` 和 `Space`（空格）按键，触发默认动作（`handleCardClick`），并阻止空格键默认的页面滚动行为。
 
 ### 基本原理
-按照 Git 规范化工作流，利用 Quipu `git_add` 和 `git_commit` 算子完成工作区暂存和提交，确保历史记录清晰可追溯。
+
+在卡片根节点上绑定 `onKeyDown` 事件处理器，当用户在卡片聚焦时按下 `Enter` 或 ` ` (Space) 时，执行 `e.preventDefault()` 阻止默认滚动并调用 `handleCardClick()`，使其行为与鼠标 `onClick` 保持一致，从而消除无障碍检查警告。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/cli #concept/history #scope/core #scope/ux #ai/instruct #task/domain/ui #task/object/plan-editor #task/action/refactor #task/state/end #task/status/completed
+
+#intent/fix #flow/ready #priority/medium #comp/common #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/mode-card #task/action/accessibility-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交代码变更
+#### Acts 1: 为 ModeCard 根容器添加 onKeyDown 处理
 
 ~~~~~act
-git_add
+patch_file
+src/components/common/ModeCard.tsx
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~typescript
+  return (
+    <div
+      role="presentation"
+      onClick={handleCardClick}
+      className="group bg-white border border-slate-200/90 hover:border-indigo-500 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
+    >
 ~~~~~
-~~~~~text
-feat(UI): migrate PlanEditor to dedicated view and polish overall UI
-
-- Refactor `PlanEditorModal` into full-page `PlanEditorView` supporting hash routing (`#/plan-editor`)
-- Introduce reusable `TagPill` component across discovery filter and plan editor
-- Unify i18n helpers (`getCardTitle`, `getCardDesc`, `getPackTitle`) for title fallbacks
-- Enhance `ModeCard` with zero-trial benchmark prioritization and refined layout
-- Compact `TrainingShell` header for immersive training experience
-- Modernize Canvas analytics charts with unified light-theme aesthetics
+~~~~~typescript
+  return (
+    <div
+      role="presentation"
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      className="group bg-white border border-slate-200/90 hover:border-indigo-500 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
+    >
 ~~~~~
 
 ### 下一步建议
-- **端到端功能验证**: 启动本地开发服务验证 `#/plan-editor` 路由跳转、计划保存与直接开练流程是否顺畅。
-- **构建测试**: 运行 `npm run build` 或 `npm run test` 确保无 TypeScript 类型错误与构建异常。
+
+- 运行 linter 或类型检查（如 `npm run check` 或 `npx biome check`）验证是否还有其他组件存在类似的 a11y 告警。
+- 确认验证通过后，可生成独立的 `[COMMIT]` 计划以提交变更。
