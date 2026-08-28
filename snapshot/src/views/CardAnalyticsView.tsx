@@ -346,7 +346,7 @@ export function CardAnalyticsView({
                       </div>
                       <div className="text-xs text-slate-700 leading-relaxed space-y-1">
                         <div className="font-bold text-slate-900">
-                          {t('analyticsModal.growthZoneTitle')}
+                          {t('analyticsModal.levelFocusSummaryTitle')}
                         </div>
                         <p className="text-slate-600">{insights.growthZoneText}</p>
                       </div>

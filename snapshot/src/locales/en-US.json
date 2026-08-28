@@ -170,14 +170,12 @@
     "satDistributionTitle": "Response Time Distribution Details",
     "paceSummaryTitle": "Response Pace Summary",
     "paceSummaryDesc": "Average response time {{avg}}s, with most trials concentrated in {{range}} ({{acc}}% accuracy)",
-    "plateauTabLabel": "Difficulty Fragility",
-    "plateauTitle": "Skill Level Decay & Plateau Analysis",
-    "plateauSubtitle": "Identifies comfort zones, growth zones, and cognitive breakdown ceilings",
-    "comfortZoneTitle": "Comfort Zone",
-    "comfortZoneDesc": "Maintains 80%+ accuracy across Level 1 ~ {{maxLevel}}.",
-    "growthZoneTitle": "Current Growth Zone",
-    "ceilingTitle": "Breakdown Ceiling",
-    "ceilingDesc": "Accuracy drops below 50% around Level {{level}}. Focus on deliberate practice near this tier."
+    "plateauTabLabel": "Level - Accuracy",
+    "plateauTitle": "Difficulty Level & Accuracy Distribution",
+    "plateauSubtitle": "Distribution of trials and accuracy across difficulty tiers",
+    "levelDistributionTitle": "Level Breakdown Details",
+    "levelFocusSummaryTitle": "Core Training Tier",
+    "levelFocusSummaryDesc": "Peak reached Lvl {{max}}, with most trials concentrated at Lvl {{focus}} ({{count}} trials, {{acc}}% accuracy)"
   },
   "settingsModal": {
     "title": "{{title}} Preferences",

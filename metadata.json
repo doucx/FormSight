@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 将反应速度与正确率分析重构为客观数据分布展示", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787918916.8502183, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将难度抗压分析重构为客观的层阶胜率直方图与明细分布", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787919057.0263832, "duration_ms": 0}}
