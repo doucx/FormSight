@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 统一折线低模卡片题目与选项三图等大正方形排版", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787922339.1020727, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M PointClickCanvas.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787922564.0213232, "duration_ms": 0}}

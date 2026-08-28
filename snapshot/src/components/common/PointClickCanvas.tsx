@@ -259,10 +259,7 @@ export function PointClickCanvas({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative block ${maxDisplayWidth} select-none`}
-    >
+    <div ref={containerRef} className={`relative block ${maxDisplayWidth} select-none`}>
       <canvas
         ref={canvasRef}
         width={canvasSize}
