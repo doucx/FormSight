@@ -206,12 +206,18 @@ export function FilterEngine({
 
       {/* 扩展包 (Pack) 快速筛选标签 */}
       {packs.length > 0 && (
-        <div className={`space-y-1.5 border-t border-slate-200/60 ${isCompact ? 'pt-2' : 'pt-3'}`}>
+        <div className={`space-y-1 border-t border-slate-200/60 ${isCompact ? 'pt-1.5' : 'pt-3'}`}>
           <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
             <Boxes className="w-3 h-3 text-indigo-500" />
             {t('home.allPacks')}
           </div>
-          <div className="flex flex-wrap gap-1">
+          <div
+            className={`flex gap-1 ${
+              isCompact
+                ? 'flex-nowrap overflow-x-auto pb-1 scrollbar-none items-center'
+                : 'flex-wrap'
+            }`}
+          >
             <TagPill
               size={tagSize}
               label={t('home.allPacks')}
