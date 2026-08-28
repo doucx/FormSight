@@ -24,7 +24,22 @@
     "clear": "清空",
     "empty": "未设置",
     "official": "官方",
-    "custom": "自定义"
+    "custom": "自定义",
+    "sec": "秒",
+    "min": "分",
+    "minFull": "分钟",
+    "trialsUnit": "题"
+  },
+  "card": {
+    "todayTrials": "今日刷题",
+    "analyticsTooltip": "{{title}} 弱点分析",
+    "settingsTooltip": "{{title}} 偏好设置",
+    "experimentalBadge": "实验性",
+    "skillLevel": "能力层阶",
+    "levelBadge": "Level {{level}}",
+    "accuracy": "正确率",
+    "startAdaptive": "开始自适应训练",
+    "startBenchmark": "20 题基准测试"
   },
   "shell": {
     "exitTraining": "退出训练 (Esc)",

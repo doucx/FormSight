@@ -24,7 +24,22 @@
     "clear": "Clear",
     "empty": "Not set",
     "official": "Official",
-    "custom": "Custom"
+    "custom": "Custom",
+    "sec": "s",
+    "min": "m ",
+    "minFull": "min",
+    "trialsUnit": "trials"
+  },
+  "card": {
+    "todayTrials": "Today",
+    "analyticsTooltip": "{{title}} Weakness Analytics",
+    "settingsTooltip": "{{title}} Preferences",
+    "experimentalBadge": "Experimental",
+    "skillLevel": "Skill Level",
+    "levelBadge": "Level {{level}}",
+    "accuracy": "Accuracy",
+    "startAdaptive": "Adaptive Training",
+    "startBenchmark": "20-Trial Benchmark"
   },
   "shell": {
     "exitTraining": "Exit Training (Esc)",
