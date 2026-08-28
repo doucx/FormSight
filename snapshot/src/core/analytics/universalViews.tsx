@@ -166,8 +166,7 @@ export function renderSpeedAccuracyVisualizer(
     const { x, y, bin } = p;
 
     if (bin.total > 0) {
-      const dotColor =
-        bin.accuracy >= 80 ? '#10B981' : bin.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
+      const dotColor = bin.accuracy >= 80 ? '#10B981' : bin.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
 
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -199,11 +198,7 @@ export function renderSpeedAccuracyVisualizer(
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = '8px sans-serif';
-    ctx.fillText(
-      `${bin.total}${i18n.t('common.trialsUnit')}`,
-      x,
-      height - padding.bottom + 18,
-    );
+    ctx.fillText(`${bin.total}${i18n.t('common.trialsUnit')}`, x, height - padding.bottom + 18);
   }
 }
 
@@ -374,8 +369,7 @@ export function renderDifficultyPlateauVisualizer(
 
   // 绘制数据节点与标签
   for (const { x, y, stat } of points) {
-    const dotColor =
-      stat.accuracy >= 80 ? '#10B981' : stat.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
+    const dotColor = stat.accuracy >= 80 ? '#10B981' : stat.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -402,11 +396,7 @@ export function renderDifficultyPlateauVisualizer(
     // 底部题量标签
     ctx.fillStyle = '#94A3B8';
     ctx.font = '8px sans-serif';
-    ctx.fillText(
-      `${stat.total}${i18n.t('common.trialsUnit')}`,
-      x,
-      height - padding.bottom + 18,
-    );
+    ctx.fillText(`${stat.total}${i18n.t('common.trialsUnit')}`, x, height - padding.bottom + 18);
   }
 }
 
