@@ -1,7 +1,6 @@
 import {
   Activity,
   ArrowLeft,
-  BarChart2,
   CheckCircle,
   Clock,
   FlaskConical,
@@ -39,7 +38,10 @@ export function CardAnalyticsView({
 }: CardAnalyticsViewProps) {
   const { t } = useTranslation();
   const card = registry.getCardById(cardId);
-  const plugin = useMemo(() => (card ? registry.getAnalyticsPluginByCardId(card.id) : null), [card]);
+  const plugin = useMemo(
+    () => (card ? registry.getAnalyticsPluginByCardId(card.id) : null),
+    [card],
+  );
   const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTabId, setActiveTabId] = useState<string>(initialTab || 'overview');

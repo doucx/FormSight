@@ -41,7 +41,6 @@ export function ModeCard({
   currentLevel,
   accuracy,
   totalTrials = 0,
-  hasAnalytics = false,
   isExperimental = false,
   onStartTraining,
   onStartBenchmark,

@@ -133,8 +133,12 @@ export function App() {
           cardId={route.cardId}
           initialTab={route.tab}
           onExit={() => navigate(lastHomeRouteRef.current)}
-          onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
-          onStartBenchmark={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })}
+          onStartTraining={(cId) =>
+            navigate({ type: 'train', cardId: cId, sessionType: 'training' })
+          }
+          onStartBenchmark={(cId) =>
+            navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })
+          }
           onOpenSettings={(cId) => setActiveSettingsCardId(cId)}
         />
       )}
