@@ -45,91 +45,99 @@ export function TopDown2AfcView({
   const renderPrompt = () => {
     if (isPoly && question.detailedPolygon) {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_polygon_decimation.promptTitle')}
           </span>
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-40 h-40 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.detailedPolygon,
-                size: ABSTRACTION_CANVAS_SIZE,
-              })
-            }
-            deps={[question.detailedPolygon]}
-          />
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={ABSTRACTION_CANVAS_SIZE}
+              height={ABSTRACTION_CANVAS_SIZE}
+              className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
+              draw={(canvas) =>
+                drawPolygonCanvas({
+                  canvas,
+                  vertices: question.detailedPolygon,
+                  size: ABSTRACTION_CANVAS_SIZE,
+                })
+              }
+              deps={[question.detailedPolygon]}
+            />
+          </div>
         </div>
       );
     }
 
     if (mode === 'TD_GESTURE_2AFC') {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_gesture_2afc.promptTitle')}
           </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawSpinePromptCanvas(canvas, question.promptSpine, ABSTRACTION_THUMB_SIZE)
-            }
-            deps={[question.promptSpine]}
-          />
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={ABSTRACTION_THUMB_SIZE}
+              height={ABSTRACTION_THUMB_SIZE}
+              className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
+              draw={(canvas) =>
+                drawSpinePromptCanvas(canvas, question.promptSpine, ABSTRACTION_THUMB_SIZE)
+              }
+              deps={[question.promptSpine]}
+            />
+          </div>
         </div>
       );
     }
 
     if (mode === 'TD_HULL_2AFC') {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_hull_2afc.promptTitle')}
           </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.promptHull,
-                size: ABSTRACTION_THUMB_SIZE,
-                fillColor: '#4F46E5',
-                strokeColor: '#3730A3',
-              })
-            }
-            deps={[question.promptHull]}
-          />
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={ABSTRACTION_THUMB_SIZE}
+              height={ABSTRACTION_THUMB_SIZE}
+              className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
+              draw={(canvas) =>
+                drawPolygonCanvas({
+                  canvas,
+                  vertices: question.promptHull,
+                  size: ABSTRACTION_THUMB_SIZE,
+                  fillColor: '#4F46E5',
+                  strokeColor: '#3730A3',
+                })
+              }
+              deps={[question.promptHull]}
+            />
+          </div>
         </div>
       );
     }
 
     if (mode === 'TD_NOTAN_2AFC' && question.promptNotanBuffer) {
       return (
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+        <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_notan_2afc.promptTitle')}
           </span>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className="w-24 h-24 rounded-xl border border-slate-200 shadow-sm"
-            draw={(canvas) =>
-              drawRawGrayscaleNoiseField(
-                canvas,
-                question.promptNotanBuffer,
-                question.notanFieldDim ?? 120,
-                ABSTRACTION_THUMB_SIZE,
-              )
-            }
-            deps={[question.promptNotanBuffer, question.notanFieldDim]}
-          />
+          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+            <CanvasView
+              width={ABSTRACTION_THUMB_SIZE}
+              height={ABSTRACTION_THUMB_SIZE}
+              className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
+              draw={(canvas) =>
+                drawRawGrayscaleNoiseField(
+                  canvas,
+                  question.promptNotanBuffer,
+                  question.notanFieldDim ?? 120,
+                  ABSTRACTION_THUMB_SIZE,
+                )
+              }
+              deps={[question.promptNotanBuffer, question.notanFieldDim]}
+            />
+          </div>
         </div>
       );
     }
@@ -144,7 +152,7 @@ export function TopDown2AfcView({
         <CanvasView
           width={ABSTRACTION_2AFC_SIZE}
           height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+          className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
           draw={(canvas) =>
             drawPolygonCanvas({
               canvas,
@@ -164,7 +172,7 @@ export function TopDown2AfcView({
         <CanvasView
           width={ABSTRACTION_2AFC_SIZE}
           height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+          className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
           draw={(canvas) => drawParticlesCanvas(canvas, particles, ABSTRACTION_2AFC_SIZE)}
           deps={[particles]}
         />
@@ -177,7 +185,7 @@ export function TopDown2AfcView({
         <CanvasView
           width={ABSTRACTION_2AFC_SIZE}
           height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+          className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
           draw={(canvas) =>
             drawPolygonCanvas({
               canvas,
@@ -196,7 +204,7 @@ export function TopDown2AfcView({
         <CanvasView
           width={ABSTRACTION_2AFC_SIZE}
           height={ABSTRACTION_2AFC_SIZE}
-          className="w-full max-w-[200px] aspect-square rounded-xl shadow-sm"
+          className="w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block"
           draw={(canvas) =>
             drawRawGrayscaleNoiseField(
               canvas,

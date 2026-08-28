@@ -7,8 +7,9 @@ export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,
   dailyData: Record<string, { total: number; maxLevel: number }>,
 ) {
-  const width = 340;
-  const height = 150;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.round(rect.width) || canvas.parentElement?.clientWidth || 480;
+  const height = 160;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
@@ -94,7 +95,8 @@ export function renderSessionTrendChartCanvas(
   canvas: HTMLCanvasElement,
   history: SessionHistoryItem[],
 ) {
-  const width = 440;
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.round(rect.width) || canvas.parentElement?.clientWidth || 440;
   const height = 160;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx || history.length === 0) return;

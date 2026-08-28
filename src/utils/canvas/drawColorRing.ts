@@ -3,8 +3,10 @@ import { hsvToHex } from '../../core/color/colorUtils';
 import type { SectorStat } from './drawCompass';
 
 export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const width = 320;
-  const height = 320;
+  const rect = canvas.getBoundingClientRect();
+  const size = Math.round(rect.width) || 340;
+  const width = size;
+  const height = size;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 

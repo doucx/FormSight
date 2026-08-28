@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
+import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { useTranslation } from '../../core/i18n';
 import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
@@ -30,7 +31,7 @@ export function PointClickCanvas({
   showAnswer,
   isHit = false,
   disabled = false,
-  maxDisplayWidth = 'max-w-[380px] lg:max-w-[420px]',
+  maxDisplayWidth = 'w-full h-full aspect-square',
   customOverlayRender,
   onCommitPoint,
 }: PointClickCanvasProps) {
@@ -48,7 +49,7 @@ export function PointClickCanvas({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = setupHiDpiCanvas(canvas, canvasSize, canvasSize);
     if (!ctx) return;
 
     renderInteractivePointGrid({
@@ -85,18 +86,20 @@ export function PointClickCanvas({
       const loupeCanvas = loupeCanvasRef.current;
       if (!mainCanvas || !loupeCanvas) return;
 
-      const loupeCtx = loupeCanvas.getContext('2d');
+      const loupeCtx = setupHiDpiCanvas(loupeCanvas, LOUPE_SIZE, LOUPE_SIZE);
       if (!loupeCtx) return;
 
       loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
-      // 主画布采样的视口区域
+      // 主画布采样的视口区域（注意考虑主画布的实际物理像素与逻辑像素对应）
+      const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
       const sampleSize = LOUPE_SIZE / ZOOM_FACTOR;
-      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2));
-      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2));
+      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2)) * dpr;
+      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2)) * dpr;
+      const sSize = sampleSize * dpr;
 
       // 绘制放大图像
-      loupeCtx.drawImage(mainCanvas, sx, sy, sampleSize, sampleSize, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+      loupeCtx.drawImage(mainCanvas, sx, sy, sSize, sSize, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
       // 绘制中心十字准星
       const center = LOUPE_SIZE / 2;
@@ -256,10 +259,7 @@ export function PointClickCanvas({
   };
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative inline-block w-full ${maxDisplayWidth} select-none`}
-    >
+    <div ref={containerRef} className={`relative block ${maxDisplayWidth} select-none`}>
       <canvas
         ref={canvasRef}
         width={canvasSize}
@@ -277,7 +277,7 @@ export function PointClickCanvas({
         tabIndex={0}
         role="button"
         aria-label={t('shell.pointGridAria')}
-        className={`w-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all ${
+        className={`w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all block ${
           disabled || showAnswer
             ? 'cursor-default'
             : hoverPoint

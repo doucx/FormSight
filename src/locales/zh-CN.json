@@ -107,7 +107,8 @@
   },
   "card": {
     "todayTrials": "今日刷题",
-    "analyticsTooltip": "{{title}} 弱点分析",
+    "analyticsTooltip": "{{title}} 统计",
+    "statsTooltip": "{{title}} 统计与认知分析",
     "settingsTooltip": "{{title}} 偏好设置",
     "experimentalBadge": "实验性",
     "skillLevel": "能力层阶",
@@ -154,10 +155,27 @@
     "trainAgain": "再练一轮"
   },
   "analyticsModal": {
+    "cardStatsTitle": "【{{title}}】答题统计与认知分析",
     "analyzing": "正在分析历史答题数据...",
     "noRecords": "暂无【{{title}}】的练习记录，先去完成几轮练习吧！",
+    "overviewTabLabel": "数据总览",
+    "overviewTitle": "答题数据总览",
+    "overviewSubtitle": "综合统计试炼题量、正确率、平均反应时间与最高层阶",
     "overallEvaluation": "总体评估",
-    "sampleSize": "样本量: {{count}} 题"
+    "sampleSize": "样本量: {{count}} 题",
+    "needMoreSamples": "当前样本量较少，多完成几轮训练后将自动生成认知诊断。",
+    "satTabLabel": "作答耗时-正确率 (SAT)",
+    "satTitle": "作答耗时与正确率分布 (SAT)",
+    "satSubtitle": "统计不同作答耗时区间的题量分布与实际命中率",
+    "satDistributionTitle": "耗时区间明细统计",
+    "paceSummaryTitle": "作答节奏分布",
+    "paceSummaryDesc": "平均作答耗时 {{avg}} 秒，作答最集中的耗时区间为 {{range}}（该区间正确率 {{acc}}%）",
+    "plateauTabLabel": "难度层阶-正确率",
+    "plateauTitle": "难度层阶与正确率分布",
+    "plateauSubtitle": "统计各难度层阶下的试炼题量分布与实际命中率",
+    "levelDistributionTitle": "各层阶训练明细",
+    "levelFocusSummaryTitle": "核心训练层阶",
+    "levelFocusSummaryDesc": "最高达到 Lvl {{max}}，试炼最集中的层阶为 Lvl {{focus}}（{{count}} 题，正确率 {{acc}}%）"
   },
   "settingsModal": {
     "title": "{{title}} 偏好设置",

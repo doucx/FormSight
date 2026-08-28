@@ -107,7 +107,8 @@
   },
   "card": {
     "todayTrials": "Today",
-    "analyticsTooltip": "{{title}} Weakness Analytics",
+    "analyticsTooltip": "{{title}} Stats",
+    "statsTooltip": "{{title}} Stats & Analytics",
     "settingsTooltip": "{{title}} Preferences",
     "experimentalBadge": "Experimental",
     "skillLevel": "Skill Level",
@@ -154,10 +155,27 @@
     "trainAgain": "Train Again"
   },
   "analyticsModal": {
+    "cardStatsTitle": "[{{title}}] Performance & Stats",
     "analyzing": "Analyzing historical trial data...",
     "noRecords": "No practice records for [{{title}}]. Complete some trials first!",
+    "overviewTabLabel": "Overview",
+    "overviewTitle": "Performance Overview",
+    "overviewSubtitle": "Overall statistics on trials, accuracy, response time, and peak level",
     "overallEvaluation": "Overall Evaluation",
-    "sampleSize": "Sample size: {{count}} trials"
+    "sampleSize": "Sample size: {{count}} trials",
+    "needMoreSamples": "Sample size is small. Cognitive diagnosis will be generated as you complete more trials.",
+    "satTabLabel": "Response Time - Accuracy",
+    "satTitle": "Response Time & Accuracy Distribution (SAT)",
+    "satSubtitle": "Objective distribution of trials and accuracy across response time tiers",
+    "satDistributionTitle": "Response Time Distribution Details",
+    "paceSummaryTitle": "Response Pace Summary",
+    "paceSummaryDesc": "Average response time {{avg}}s, with most trials concentrated in {{range}} ({{acc}}% accuracy)",
+    "plateauTabLabel": "Level - Accuracy",
+    "plateauTitle": "Difficulty Level & Accuracy Distribution",
+    "plateauSubtitle": "Distribution of trials and accuracy across difficulty tiers",
+    "levelDistributionTitle": "Level Breakdown Details",
+    "levelFocusSummaryTitle": "Core Training Tier",
+    "levelFocusSummaryDesc": "Peak reached Lvl {{max}}, with most trials concentrated at Lvl {{focus}} ({{count}} trials, {{acc}}% accuracy)"
   },
   "settingsModal": {
     "title": "{{title}} Preferences",

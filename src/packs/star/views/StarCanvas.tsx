@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { drawDot } from '../../../core/canvas/drawPointGrid';
+import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
 import {
   CANVAS_SIZE,
@@ -31,7 +32,7 @@ export function StarCanvas({
     const dotRadius = getDynamicDotRadius(question.distractorPoints);
     const leftCanvas = leftCanvasRef.current;
     if (leftCanvas) {
-      const ctx = leftCanvas.getContext('2d');
+      const ctx = setupHiDpiCanvas(leftCanvas, CANVAS_SIZE, CANVAS_SIZE);
       if (ctx) {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -54,17 +55,17 @@ export function StarCanvas({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-5xl mx-auto">
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
         <canvas
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="w-full max-w-[380px] lg:max-w-[420px] aspect-square rounded-xl border border-gray-100 bg-white shadow-inner"
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
         />
       </div>
 
-      <div className="bg-white p-3.5 rounded-2xl border border-gray-200/80 shadow-sm">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
         <PointClickCanvas
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
@@ -74,6 +75,7 @@ export function StarCanvas({
           showAnswer={showAnswer}
           isHit={userAnswer?.hitResult.isHit}
           disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}
         />
       </div>
