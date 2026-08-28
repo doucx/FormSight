@@ -23,6 +23,7 @@ interface ModeCardProps {
   todayTimeMs?: number;
   currentLevel: number;
   accuracy: number;
+  totalTrials?: number;
   hasAnalytics?: boolean;
   isExperimental?: boolean;
   onStartTraining: () => void;
@@ -39,6 +40,7 @@ export function ModeCard({
   todayTimeMs = 0,
   currentLevel,
   accuracy,
+  totalTrials = 0,
   hasAnalytics = false,
   isExperimental = false,
   onStartTraining,
@@ -47,11 +49,15 @@ export function ModeCard({
   onOpenAnalytics,
 }: ModeCardProps) {
   const { t } = useTranslation();
+  const isNeverPracticed = totalTrials === 0;
+
+  // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
+  const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
 
   return (
     <div
       role="presentation"
-      onClick={onStartTraining}
+      onClick={handleCardClick}
       className="group bg-white border border-slate-200/90 hover:border-indigo-500 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
     >
       <div>
@@ -78,7 +84,9 @@ export function ModeCard({
                   ? `${t('card.todayTrials')}: ${todayCount} ${t('common.trialsUnit')}${
                       todayTimeMs > 0 ? ` (${formatTodayTimeWithT(todayTimeMs, t)})` : ''
                     }`
-                  : t('common.empty')}
+                  : isNeverPracticed
+                    ? t('common.empty')
+                    : `${t('card.todayTrials')}: 0 ${t('common.trialsUnit')}`}
               </div>
             </div>
           </div>
@@ -136,8 +144,16 @@ export function ModeCard({
             {t('card.accuracy')}
           </div>
           <div className="text-sm font-black text-slate-800 font-mono flex items-baseline gap-1.5">
-            <span className={accuracy >= 80 ? 'text-emerald-600' : 'text-slate-800'}>
-              {accuracy}%
+            <span
+              className={
+                isNeverPracticed
+                  ? 'text-slate-400'
+                  : accuracy >= 80
+                    ? 'text-emerald-600'
+                    : 'text-slate-800'
+              }
+            >
+              {isNeverPracticed ? '--' : `${accuracy}%`}
             </span>
             {todayCount > 0 && (
               <span className="text-[11px] font-normal text-slate-400 font-sans">
@@ -147,24 +163,53 @@ export function ModeCard({
           </div>
         </div>
 
-        {/* 右侧：紧凑动作按钮组 */}
+        {/* 右侧：紧凑动作按钮组（根据 isNeverPracticed 动态倒转权重） */}
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onStartBenchmark}
-            className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all cursor-pointer"
-            title={t('card.startBenchmark')}
-          >
-            <Target className="w-4 h-4 text-slate-500" />
-          </button>
-          <button
-            type="button"
-            onClick={onStartTraining}
-            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{t('card.startAdaptive')}</span>
-          </button>
+          {isNeverPracticed ? (
+            <>
+              {/* 次级：仅显示三角形 Play 图标的自适应训练按钮 */}
+              <button
+                type="button"
+                onClick={onStartTraining}
+                className="p-2.5 text-slate-500 hover:text-indigo-600 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all cursor-pointer"
+                title={t('card.startAdaptive')}
+              >
+                <Play className="w-4 h-4 fill-current text-slate-500" />
+              </button>
+
+              {/* 主要：高亮文字「基准测试」按钮 */}
+              <button
+                type="button"
+                onClick={onStartBenchmark}
+                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>{t('card.startBenchmark')}</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* 次级：仅显示靶心 Target 图标的基准测试按钮 */}
+              <button
+                type="button"
+                onClick={onStartBenchmark}
+                className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 active:scale-95 rounded-xl transition-all cursor-pointer"
+                title={t('card.startBenchmark')}
+              >
+                <Target className="w-4 h-4 text-slate-500" />
+              </button>
+
+              {/* 主要：高亮文字「自适应训练」按钮 */}
+              <button
+                type="button"
+                onClick={onStartTraining}
+                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{t('card.startAdaptive')}</span>
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

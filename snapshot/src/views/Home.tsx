@@ -159,6 +159,7 @@ export function Home({
                 todayTimeMs={stat.timeMs}
                 currentLevel={currentLevel}
                 accuracy={accuracy}
+                totalTrials={totalTrials}
                 hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
                 isExperimental={card.tags.status === 'experimental'}
                 onStartTraining={() => onStartCard(card.id, 'training')}

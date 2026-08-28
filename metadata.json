@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(ui): 重构大盘训练卡片为方案C浮动动作流风格", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787915397.3725634, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 针对未练习卡片反转自适应与基准测试按钮权重", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787915580.4509177, "duration_ms": 0}}
