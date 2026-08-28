@@ -99,9 +99,6 @@ export function App() {
   const activeSettingsCard = activeSettingsCardId
     ? registry.getCardById(activeSettingsCardId)
     : null;
-  const activeAnalyticsCard = activeAnalyticsCardId
-    ? registry.getCardById(activeAnalyticsCardId)
-    : null;
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
