@@ -49,7 +49,6 @@ export function PlanEditorView({
 
   const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
   const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
-  const [isAddingCard, setIsAddingCard] = useState<boolean>(false);
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
@@ -142,7 +141,6 @@ export function PlanEditorView({
     setCurrentPlan(newBlank);
     setPlanNameInput(newBlank.name);
     setIsEditingName(true);
-    setIsAddingCard(true);
     setShowPlanManager(false);
     showToast(t('plan.newPlanModeToast'));
   };
@@ -439,8 +437,7 @@ export function PlanEditorView({
         {/* 右侧：模块添加与搜索挑选区 */}
         <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
           <CardPickerPanel
-            isAddingCard={isAddingCard || currentPlan.items.length === 0}
-            onToggleAdding={setIsAddingCard}
+            addedCardIds={currentPlan.items.map((it) => it.cardId)}
             onAddItem={handleAddItem}
           />
         </div>
