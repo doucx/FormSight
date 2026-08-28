@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 全面清理源码硬编码中文并补齐 i18n 查表", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787899680.5662353, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 净化 7 大 Packs 清单元数据与基础设施硬编码中文", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787899920.8041205, "duration_ms": 0}}

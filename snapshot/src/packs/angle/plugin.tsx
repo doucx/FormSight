@@ -16,15 +16,8 @@ export const anglePlugin: TrainingPlugin<
   BaseModuleSettings
 > = {
   packId: 'angle',
-  title: '角度感知',
-  getModeBadge: (mode) => {
-    const map: Record<string, string> = {
-      ANGLE_ESTIMATION: '夹角大小估算',
-      ANGLE_COMPARISON_2AFC: '角度二分对比',
-      PARALLEL_ALIGNMENT_2AFC: '平行线基准辨识',
-    };
-    return map[mode] || mode;
-  },
+  title: 'angle',
+  getModeBadge: (mode) => mode,
   generateQuestion: (mode, level) => generateAngleQuestion(mode as AngleMode, level),
   evaluateAnswer: (userVal, q) => checkAngleHit(userVal, q),
   isHit: (hitResult) => hitResult.isHit,

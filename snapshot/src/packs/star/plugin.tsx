@@ -17,7 +17,7 @@ export const starPlugin: TrainingPlugin<
   StarSettings
 > = {
   packId: 'star',
-  title: '寻星练习',
+  title: 'star',
   getModeBadge: (mode) => mode,
   isTargeting: (_mode, settings) => settings.targetingMode === 'manual',
   generateQuestion: (mode, level, settings) => {

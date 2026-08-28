@@ -51,8 +51,8 @@ export interface CardDefinition {
   id: string;
   packId: string;
   mode: string;
-  title: string;
-  desc: string;
+  title?: string;
+  desc?: string;
   instruction?: string;
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
@@ -62,9 +62,9 @@ export interface CardDefinition {
 
 export interface PackMeta {
   id: string;
-  title: string;
+  title?: string;
   subTitle?: string;
-  desc: string;
+  desc?: string;
   version?: string;
   author?: string;
   themeColor?: 'indigo' | 'amber' | 'purple' | 'emerald';

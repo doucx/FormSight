@@ -11,8 +11,8 @@ const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'toggle',
     key: 'showToleranceBand',
-    title: '显示滑块容错感应区',
-    description: '在悬停光标两侧实时显示动态容错区间',
+    title: 'packs.negative_space.settings.showToleranceBandTitle',
+    description: 'packs.negative_space.settings.showToleranceBandDesc',
   },
 ];
 
@@ -21,9 +21,6 @@ export const negativeSpaceCards: CardDefinition[] = [
     id: 'neg_ratio_estimation',
     packId: 'negative_space',
     mode: 'RATIO_ESTIMATION',
-    title: '负形占比滑块评估',
-    desc: '估计不规则几何多边形外部留白（负形）占整幅画面的面积百分比，强化空间直觉。',
-    instruction: '估计黑色主体周围的白色留白（负形）占画面总面积的百分比',
     icon: Maximize2,
     tags: {
       domain: ['form_and_proportion'],
@@ -38,9 +35,6 @@ export const negativeSpaceCards: CardDefinition[] = [
     id: 'neg_area_comparison_2afc',
     packId: 'negative_space',
     mode: 'AREA_COMPARISON_2AFC',
-    title: '负形面积二分判别',
-    desc: '快速对比两个形状各异的不规则多边形留白（负形），二选一判别哪侧留白面积更大 (2AFC)。',
-    instruction: '二选一判别哪一侧画面的白色留白（负形）面积更大',
     icon: Columns,
     tags: {
       domain: ['form_and_proportion'],
@@ -54,9 +48,6 @@ export const negativeSpaceCards: CardDefinition[] = [
     id: 'neg_vertex_fitting',
     packId: 'negative_space',
     mode: 'NEGATIVE_VERTEX_FITTING',
-    title: '负形边界反切定点',
-    desc: '观察被负形空隙挤压的转折形态，从局部点阵中精准定位被遮挡的关键顶点。',
-    instruction: '观察左侧完整参考的负形挤压轮廓，在右侧点阵中点击定位被截断的正形顶点',
     icon: Crosshair,
     tags: {
       domain: ['form_and_proportion', 'spatial_structure'],
@@ -70,9 +61,6 @@ export const negativeSpaceCards: CardDefinition[] = [
     id: 'neg_shape_match_2afc',
     packId: 'negative_space',
     mode: 'SHAPE_MATCH_2AFC',
-    title: '负形轮廓记忆匹配',
-    desc: '瞬时记忆负形空隙轮廓，在两张 1:1 等大形状中二选一辨识目标。',
-    instruction: '瞬时记忆负形空隙轮廓特征，在候选区二选一选出完全相同的形状',
     icon: Sparkles,
     tags: {
       domain: ['form_and_proportion'],
@@ -88,9 +76,6 @@ export const negativeSpacePack: PackManifest = {
   packId: 'negative_space',
   meta: {
     id: 'negative_space',
-    title: '正负形空间感知',
-    subTitle: 'Negative Space',
-    desc: '切换观察视角，通过对几何剪影周围留白（负形）面积占比的估算与反切定点，打破具象认知偏见，培养专业起形与比例感知力。',
     themeColor: 'emerald',
     icon: Maximize2,
   },

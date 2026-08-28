@@ -16,9 +16,8 @@ export const colorPlugin: TrainingPlugin<
   ColorSenseSettings
 > = {
   packId: 'color',
-  title: '色感训练',
-  getModeBadge: (mode) =>
-    mode === 'H' ? '色相' : mode === 'V' ? '明度' : mode === 'S' ? '饱和度' : '综合拾色',
+  title: 'color',
+  getModeBadge: (mode) => mode,
   isTargeting: (mode, settings) => settings.targetingMode === 'manual' && mode === 'H',
   generateQuestion: (mode, level, settings) =>
     generateColorQuestion(mode as ColorMode, level, {

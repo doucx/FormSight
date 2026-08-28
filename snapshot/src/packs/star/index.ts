@@ -47,9 +47,6 @@ export const starCards: CardDefinition[] = [
     id: 'star_single',
     packId: 'star',
     mode: 'single',
-    title: '单锚点模式',
-    desc: '单一中心锚点，评估基本极坐标方位与距离感知力',
-    instruction: '观察左侧相对中心锚点的方位与距离，在右侧点阵中盲打定位',
     icon: Target,
     tags: {
       domain: ['spatial_structure'],
@@ -63,9 +60,6 @@ export const starCards: CardDefinition[] = [
     id: 'star_double_h',
     packId: 'star',
     mode: 'double_h',
-    title: '水平双锚点',
-    desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-    instruction: '观察左侧水平双锚点几何关系，在右侧点阵中盲打定位',
     icon: Crosshair,
     tags: {
       domain: ['spatial_structure', 'form_and_proportion'],
@@ -79,9 +73,6 @@ export const starCards: CardDefinition[] = [
     id: 'star_double_r',
     packId: 'star',
     mode: 'double_r',
-    title: '旋转双锚点',
-    desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-    instruction: '观察左侧旋转倾斜双锚点几何关系，在右侧点阵中盲打定位',
     icon: RotateCw,
     tags: {
       domain: ['spatial_structure', 'form_and_proportion'],
@@ -98,18 +89,15 @@ export const starPack: PackManifest = {
   packId: 'star',
   meta: {
     id: 'star',
-    title: '寻星练习',
-    subTitle: 'Star-Hopping',
-    desc: '基于极坐标与双极透视网格，通过视线搜寻与目标盲打，训练你对空间方位、线段比例及角度旋转的视觉直觉。',
     themeColor: 'indigo',
     icon: Compass,
   },
   cards: starCards,
   trainingPlugin: starPlugin,
   analyticsPlugins: {
-    star_single: createStarAnalyticsPlugin('star_single', '单锚点'),
-    star_double_h: createStarAnalyticsPlugin('star_double_h', '水平双锚点'),
-    star_double_r: createStarAnalyticsPlugin('star_double_r', '旋转双锚点'),
+    star_single: createStarAnalyticsPlugin('star_single', 'star_single'),
+    star_double_h: createStarAnalyticsPlugin('star_double_h', 'star_double_h'),
+    star_double_r: createStarAnalyticsPlugin('star_double_r', 'star_double_r'),
   },
   locales: {
     'zh-CN': zhCN,

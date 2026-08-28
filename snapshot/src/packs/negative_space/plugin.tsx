@@ -17,15 +17,8 @@ export const negativeSpacePlugin: TrainingPlugin<
   NegativeSpaceSettings
 > = {
   packId: 'negative_space',
-  title: '正负形感知',
-  getModeBadge: (mode) =>
-    mode === 'AREA_COMPARISON_2AFC'
-      ? '负形面积二分判别'
-      : mode === 'NEGATIVE_VERTEX_FITTING'
-        ? '负形边界反切定点'
-        : mode === 'SHAPE_MATCH_2AFC'
-          ? '负形轮廓记忆匹配'
-          : '负形占比估算',
+  title: 'negative_space',
+  getModeBadge: (mode) => mode,
   generateQuestion: (mode, level) =>
     generateNegativeSpaceQuestion(mode as NegativeSpaceMode, level),
   evaluateAnswer: (userVal, q) => checkNegativeSpaceHit(userVal, q),

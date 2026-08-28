@@ -206,7 +206,7 @@ export function ProportionMigrationView({
           }}
           tabIndex={0}
           role="button"
-          aria-label="比例迁移答题画布"
+          aria-label={t('packs.perspective.cards.perspective_proportion_migration.title')}
           className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
