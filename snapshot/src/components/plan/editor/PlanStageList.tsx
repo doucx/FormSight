@@ -50,7 +50,8 @@ export function PlanStageList({
                   onClick={() => onBatchUpdateTrials(num)}
                   className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
                 >
-                  {num}{t('common.trialsUnit')}
+                  {num}
+                  {t('common.trialsUnit')}
                 </button>
               ))}
             </div>

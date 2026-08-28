@@ -379,7 +379,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.today.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">
+                    {t('common.trialsUnit')}
+                  </span>
                 </div>
                 <div className="text-xs text-indigo-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
@@ -393,7 +395,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.week.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">
+                    {t('common.trialsUnit')}
+                  </span>
                 </div>
                 <div className="text-xs text-emerald-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
@@ -407,7 +411,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.year.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">
+                    {t('common.trialsUnit')}
+                  </span>
                 </div>
                 <div className="text-xs text-amber-600 font-semibold mt-1">
                   {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
@@ -421,7 +427,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                 </div>
                 <div className="text-2xl font-black text-slate-800">
                   {stats.allTime.total}{' '}
-                  <span className="text-xs font-semibold text-slate-400 font-normal">{t('common.trialsUnit')}</span>
+                  <span className="text-xs font-semibold text-slate-400 font-normal">
+                    {t('common.trialsUnit')}
+                  </span>
                 </div>
                 <div className="text-xs text-slate-500 font-semibold mt-1">
                   {t('stats.streakDays', { days: Object.keys(dailyData).length })}

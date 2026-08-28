@@ -224,7 +224,8 @@ export function PlanHeroCard({
                 <Icon className="w-4 h-4 text-slate-600" />
                 <span className="text-xs font-bold text-slate-800">{cardTitle}</span>
                 <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
-                  {item.targetTrials}{t('common.trialsUnit')}
+                  {item.targetTrials}
+                  {t('common.trialsUnit')}
                 </span>
               </div>
               {idx < plan.items.length - 1 && (
