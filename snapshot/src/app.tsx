@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
 import { SettingsModal } from './components/SettingsModal';
-import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
 import { getCardTitle, i18n, useTranslation } from './core/i18n';
 import { registry } from './core/registry';
@@ -16,6 +15,7 @@ import {
   setActivePlan,
 } from './utils/planStorage';
 import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
+import { CardAnalyticsView } from './views/CardAnalyticsView';
 import { GenericTrainingView } from './views/GenericTrainingView';
 import { GlobalStatsView } from './views/GlobalStatsView';
 import { Home } from './views/Home';
@@ -30,7 +30,6 @@ export function App() {
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
-  const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
   const [settings, setSettings] = useState<UserSettings>(loadSettings);
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
@@ -75,6 +74,10 @@ export function App() {
       document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'stats') {
       document.title = `${t('stats.title')} - ${t('common.appName')}`;
+    } else if (route.type === 'analytics') {
+      const card = registry.getCardById(route.cardId);
+      const cardTitle = card ? getCardTitle(card, t) : t('common.stats');
+      document.title = `${cardTitle} - ${t('common.stats')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
       const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
@@ -115,7 +118,7 @@ export function App() {
           }
           onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
           onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-          onOpenCardAnalytics={(cardId) => setActiveAnalyticsCardId(cardId)}
+          onOpenCardAnalytics={(cardId) => navigate({ type: 'analytics', cardId })}
           onStartPlan={() => navigate({ type: 'plan-train' })}
           onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
           onSelectPlan={handleSelectPlanOnHome}
@@ -126,6 +129,17 @@ export function App() {
 
       {route.type === 'stats' && (
         <GlobalStatsView onExit={() => navigate(lastHomeRouteRef.current)} />
+      )}
+
+      {route.type === 'analytics' && (
+        <CardAnalyticsView
+          cardId={route.cardId}
+          initialTab={route.tab}
+          onExit={() => navigate(lastHomeRouteRef.current)}
+          onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
+          onStartBenchmark={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })}
+          onOpenSettings={(cId) => setActiveSettingsCardId(cId)}
+        />
       )}
 
       {route.type === 'plan-editor' && (
@@ -214,13 +228,6 @@ export function App() {
           settings={settings}
           onClose={() => setActiveSettingsCardId(null)}
           onSave={(newSettings) => setSettings(newSettings)}
-        />
-      )}
-
-      {activeAnalyticsCard && (
-        <WeaknessAnalyticsModal
-          card={activeAnalyticsCard}
-          onClose={() => setActiveAnalyticsCardId(null)}
         />
       )}
     </div>
