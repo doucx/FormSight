@@ -96,7 +96,7 @@ export function renderSpeedAccuracyVisualizer(
   if (!ctx) return;
 
   const bins = calculateSpeedBins(records);
-  const padding = { top: 35, right: 20, bottom: 45, left: 30 };
+  const padding = { top: 35, right: 20, bottom: 45, left: 35 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
@@ -120,40 +120,73 @@ export function renderSpeedAccuracyVisualizer(
     ctx.stroke();
 
     ctx.fillStyle = '#94A3B8';
-    ctx.fillText(`${tick}%`, padding.left - 4, y);
+    ctx.fillText(`${tick}%`, padding.left - 5, y);
   }
   ctx.setLineDash([]);
 
-  const barWidth = chartW / bins.length;
+  const slotW = chartW / bins.length;
+  const points = bins.map((bin, idx) => {
+    const x = padding.left + (idx + 0.5) * slotW;
+    const y = padding.top + (1 - bin.accuracy / 100) * chartH;
+    return { x, y, bin };
+  });
 
-  bins.forEach((bin, idx) => {
-    const x = padding.left + idx * barWidth;
-    const barH = (bin.accuracy / 100) * chartH;
-    const y = padding.top + chartH - barH;
+  const validPoints = points.filter((p) => p.bin.total > 0);
 
-    // 柱状图本体
+  // 绘制折线与渐变面积
+  if (validPoints.length > 0) {
+    const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
+    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+
+    ctx.beginPath();
+    ctx.moveTo(validPoints[0].x, validPoints[0].y);
+    for (let i = 1; i < validPoints.length; i++) {
+      ctx.lineTo(validPoints[i].x, validPoints[i].y);
+    }
+    ctx.lineTo(validPoints[validPoints.length - 1].x, height - padding.bottom);
+    ctx.lineTo(validPoints[0].x, height - padding.bottom);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.strokeStyle = '#4F46E5';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.moveTo(validPoints[0].x, validPoints[0].y);
+    for (let i = 1; i < validPoints.length; i++) {
+      ctx.lineTo(validPoints[i].x, validPoints[i].y);
+    }
+    ctx.stroke();
+  }
+
+  // 绘制数据节点与标签
+  points.forEach((p) => {
+    const { x, y, bin } = p;
+
     if (bin.total > 0) {
-      ctx.fillStyle =
-        bin.accuracy >= 80
-          ? 'rgba(16, 185, 129, 0.85)'
-          : bin.accuracy >= 60
-            ? 'rgba(245, 158, 11, 0.85)'
-            : 'rgba(244, 63, 94, 0.85)';
+      const dotColor =
+        bin.accuracy >= 80 ? '#10B981' : bin.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
 
       ctx.beginPath();
-      ctx.roundRect(x + 6, y, barWidth - 12, Math.max(3, barH), 6);
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
       ctx.fill();
+      ctx.strokeStyle = dotColor;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
 
       // 准确率标签
       ctx.fillStyle = '#1E293B';
       ctx.font = 'bold 10px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
-      ctx.fillText(`${bin.accuracy}%`, x + barWidth / 2, y - 4);
+      ctx.fillText(`${bin.accuracy}%`, x, y - 6);
     } else {
-      ctx.fillStyle = 'rgba(226, 232, 240, 0.6)';
       ctx.beginPath();
-      ctx.roundRect(x + 6, padding.top + chartH - 4, barWidth - 12, 4, 2);
+      ctx.arc(x, padding.top + chartH, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#CBD5E1';
       ctx.fill();
     }
 
@@ -162,13 +195,13 @@ export function renderSpeedAccuracyVisualizer(
     ctx.font = 'bold 9px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(bin.rangeLabel, x + barWidth / 2, height - padding.bottom + 6);
+    ctx.fillText(bin.rangeLabel, x, height - padding.bottom + 6);
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = '8px sans-serif';
     ctx.fillText(
       `${bin.total}${i18n.t('common.trialsUnit')}`,
-      x + barWidth / 2,
+      x,
       height - padding.bottom + 18,
     );
   });
@@ -305,48 +338,73 @@ export function renderDifficultyPlateauVisualizer(
   }
   ctx.setLineDash([]);
 
-  // 直方柱自适应宽度与排版
-  const barCount = levelStats.length;
-  const barWidth = chartW / barCount;
-  const barPad = Math.max(3, Math.min(8, barWidth * 0.15));
+  const slotW = chartW / levelStats.length;
+  const points = levelStats.map((stat, idx) => {
+    const x = padding.left + (idx + 0.5) * slotW;
+    const y = padding.top + (1 - stat.accuracy / 100) * chartH;
+    return { x, y, stat };
+  });
 
-  levelStats.forEach((stat, idx) => {
-    const x = padding.left + idx * barWidth;
-    const barH = (stat.accuracy / 100) * chartH;
-    const y = padding.top + chartH - barH;
+  // 渐变面积背景
+  const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
+  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
 
-    // 柱状图
-    ctx.fillStyle =
-      stat.accuracy >= 80
-        ? 'rgba(16, 185, 129, 0.85)'
-        : stat.accuracy >= 60
-          ? 'rgba(245, 158, 11, 0.85)'
-          : 'rgba(244, 63, 94, 0.85)';
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
+  ctx.lineTo(points[0].x, height - padding.bottom);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // 主折线
+  ctx.beginPath();
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.moveTo(points[0].x, points[0].y);
+  for (let i = 1; i < points.length; i++) {
+    ctx.lineTo(points[i].x, points[i].y);
+  }
+  ctx.stroke();
+
+  // 绘制数据节点与标签
+  points.forEach(({ x, y, stat }) => {
+    const dotColor =
+      stat.accuracy >= 80 ? '#10B981' : stat.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
 
     ctx.beginPath();
-    ctx.roundRect(x + barPad, y, barWidth - barPad * 2, Math.max(3, barH), 5);
+    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
     ctx.fill();
+    ctx.strokeStyle = dotColor;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
 
     // 顶部胜率文字
     ctx.fillStyle = '#1E293B';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
-    ctx.fillText(`${stat.accuracy}%`, x + barWidth / 2, y - 4);
+    ctx.fillText(`${stat.accuracy}%`, x, y - 6);
 
     // 底部 X 轴标签（Level）
     ctx.fillStyle = '#475569';
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(`L${stat.level}`, x + barWidth / 2, height - padding.bottom + 6);
+    ctx.fillText(`L${stat.level}`, x, height - padding.bottom + 6);
 
     // 底部题量标签
     ctx.fillStyle = '#94A3B8';
     ctx.font = '8px sans-serif';
     ctx.fillText(
       `${stat.total}${i18n.t('common.trialsUnit')}`,
-      x + barWidth / 2,
+      x,
       height - padding.bottom + 18,
     );
   });
