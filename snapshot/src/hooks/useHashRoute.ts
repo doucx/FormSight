@@ -123,8 +123,10 @@ function stringifyRoute(route: RouteLocation): string {
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());
     }
-    if (route.query.showAdvanced) {
+    if (route.query.showAdvanced === true) {
       params.set('adv', '1');
+    } else if (route.query.showAdvanced === false) {
+      params.set('adv', '0');
     }
     const qs = params.toString();
     return qs ? `#/?${qs}` : '#/';

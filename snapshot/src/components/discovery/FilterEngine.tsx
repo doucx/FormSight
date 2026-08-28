@@ -45,16 +45,8 @@ export function FilterEngine({
 }: FilterEngineProps) {
   const { t } = useTranslation();
 
-  // 若 query 中明确声明，或已勾选了任意高级五维标签，则保持展开状态；否则默认收起
-  const hasActiveAdvancedDimensions = Boolean(
-    (query.domains && query.domains.length > 0) ||
-      (query.paths && query.paths.length > 0) ||
-      (query.challenges && query.challenges.length > 0) ||
-      (query.interactions && query.interactions.length > 0) ||
-      (query.statuses && query.statuses.length > 0),
-  );
-
-  const isAdvancedOpen = query.showAdvanced ?? hasActiveAdvancedDimensions;
+  // 严格以显式 showAdvanced 状态为准，默认保持折叠 (false)
+  const isAdvancedOpen = Boolean(query.showAdvanced);
 
   const toggleAdvancedOpen = () => {
     onChange({
@@ -118,7 +110,11 @@ export function FilterEngine({
   };
 
   const handleResetFilters = () => {
-    onChange({});
+    onChange(
+      isAdvancedOpen
+        ? { showAdvanced: true }
+        : {}
+    );
   };
 
   const hasActiveFilters = Boolean(
