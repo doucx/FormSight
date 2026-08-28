@@ -16,11 +16,7 @@ import { registry } from '../core/registry';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../utils/db/index';
-import {
-  CHALLENGE_TAG_LABELS,
-  DOMAIN_TAG_LABELS,
-  PATH_TAG_LABELS,
-} from './discovery/FilterEngine';
+import { CHALLENGE_TAG_LABELS, DOMAIN_TAG_LABELS, PATH_TAG_LABELS } from './discovery/FilterEngine';
 
 interface GlobalStatsModalProps {
   onClose: () => void;
