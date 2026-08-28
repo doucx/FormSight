@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 精简与紧凑化 TrainingShell 顶栏以优化首屏沉浸感", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787914763.7614357, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 重构大盘训练卡片为方案C浮动动作流风格", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787915397.3725634, "duration_ms": 0}}
