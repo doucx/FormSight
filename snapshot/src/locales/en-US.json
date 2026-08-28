@@ -130,6 +130,8 @@
   "settings": {
     "title": "Global Preferences",
     "preferences": "System Preferences",
+    "languageTitle": "Display Language",
+    "languageDesc": "Choose interface language",
     "soundTitle": "Audio Feedback",
     "soundDesc": "High pitch chime on hits, subtle drop on misses",
     "hintsTitle": "Task Guide Prompts",
