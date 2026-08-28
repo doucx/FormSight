@@ -11,7 +11,6 @@ import {
   Sparkles,
   X,
 } from 'lucide-preact';
-import { TagPill } from '../common/TagPill';
 import {
   CHALLENGE_TAGS,
   DOMAIN_TAGS,
@@ -29,6 +28,7 @@ import type {
   MentalChallengeTag,
   VisualDomainTag,
 } from '../../types/card';
+import { TagPill } from '../common/TagPill';
 
 interface FilterEngineProps {
   query: CardQueryOptions;
@@ -36,11 +36,7 @@ interface FilterEngineProps {
   onChange: (newQuery: CardQueryOptions) => void;
 }
 
-export function FilterEngine({
-  query,
-  totalMatches,
-  onChange,
-}: FilterEngineProps) {
+export function FilterEngine({ query, totalMatches, onChange }: FilterEngineProps) {
   const { t } = useTranslation();
 
   // 严格以显式 showAdvanced 状态为准，默认保持折叠 (false)
@@ -108,11 +104,7 @@ export function FilterEngine({
   };
 
   const handleResetFilters = () => {
-    onChange(
-      isAdvancedOpen
-        ? { showAdvanced: true }
-        : {}
-    );
+    onChange(isAdvancedOpen ? { showAdvanced: true } : {});
   };
 
   const hasActiveFilters = Boolean(
@@ -165,7 +157,9 @@ export function FilterEngine({
             }`}
           >
             <Filter className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}</span>
+            <span>
+              {isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}
+            </span>
           </button>
 
           {hasActiveFilters && (

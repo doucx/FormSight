@@ -41,7 +41,8 @@ export function TagPill({
   onClick,
 }: TagPillProps) {
   const activeClass = THEME_ACTIVE_CLASSES[themeColor] || THEME_ACTIVE_CLASSES.indigo;
-  const activeBadgeClass = THEME_BADGE_ACTIVE_CLASSES[themeColor] || THEME_BADGE_ACTIVE_CLASSES.indigo;
+  const activeBadgeClass =
+    THEME_BADGE_ACTIVE_CLASSES[themeColor] || THEME_BADGE_ACTIVE_CLASSES.indigo;
 
   const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
 

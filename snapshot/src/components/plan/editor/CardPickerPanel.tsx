@@ -1,10 +1,10 @@
 import { Plus, Search, Sparkles, X } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
-import { TagPill } from '../../common/TagPill';
 import { DOMAIN_TAGS } from '../../../config/tags';
 import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { CardQueryOptions, VisualDomainTag } from '../../../types/card';
+import { TagPill } from '../../common/TagPill';
 
 interface CardPickerPanelProps {
   isAddingCard: boolean;
@@ -50,7 +50,9 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-extrabold text-slate-700">{t('plan.selectCardPrompt')}</span>
+          <span className="text-xs font-extrabold text-slate-700">
+            {t('plan.selectCardPrompt')}
+          </span>
         </div>
       </div>
 
