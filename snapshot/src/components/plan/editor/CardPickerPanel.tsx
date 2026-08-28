@@ -78,6 +78,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-shrink-0">
         <button
           type="button"
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => {
             setSelectedDomain('all');
             setSelectedPackId('all');
@@ -85,7 +86,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
           className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
             selectedDomain === 'all' && selectedPackId === 'all'
               ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
           }`}
         >
           {t('common.all')} ({registry.getAllCards().length})
@@ -97,6 +98,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
             <button
               type="button"
               key={p.packId}
+              onPointerDown={(e) => e.preventDefault()}
               onClick={() => {
                 setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
                 setSelectedDomain('all');
@@ -104,7 +106,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
               className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
                 selectedPackId === p.packId
                   ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
               }`}
             >
               {packTitle}
@@ -116,6 +118,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
           <button
             type="button"
             key={domain}
+            onPointerDown={(e) => e.preventDefault()}
             onClick={() => {
               setSelectedDomain(selectedDomain === domain ? 'all' : domain);
               setSelectedPackId('all');
@@ -123,7 +126,7 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
             className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
               selectedDomain === domain
                 ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
             }`}
           >
             {t(DOMAIN_TAGS[domain].i18nKey)}

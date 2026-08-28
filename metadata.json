@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(discovery): 消除标签点击时短暂闪现的焦点环与点击高亮", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787914136.6038203, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(discovery): 消除移动端触控后的标签焦点与黏滞边框残留", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787914254.1689658, "duration_ms": 0}}
