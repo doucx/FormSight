@@ -214,8 +214,10 @@
   },
   "home": {
     "matchedModules": "Matched {{count}} training modules",
-    "expandFilter": "Multi-Filter",
-    "collapseFilter": "Collapse Filter",
+    "expandFilter": "Advanced Filters",
+    "collapseFilter": "Hide Advanced Filters",
+    "advancedFilter": "Advanced Filters",
+    "collapseAdvancedFilter": "Hide Advanced Filters",
     "searchPlaceholder": "Search by module name, ID, or visual concept...",
     "noMatchTitle": "No matching modules found",
     "noMatchDesc": "Try clearing or tweaking your filter tags or search keyword to discover more modules.",

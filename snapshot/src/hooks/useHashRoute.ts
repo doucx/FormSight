@@ -39,6 +39,13 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
           ? (['stable'] as CardStatusTag[])
           : undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
+  const showAdvancedParam = params.get('adv');
+  const showAdvanced =
+    showAdvancedParam === '1' || showAdvancedParam === 'true'
+      ? true
+      : showAdvancedParam === '0' || showAdvancedParam === 'false'
+        ? false
+        : undefined;
 
   if (
     !packId &&
@@ -47,7 +54,8 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     (!challenges || challenges.length === 0) &&
     (!interactions || interactions.length === 0) &&
     (!statuses || statuses.length === 0) &&
-    !searchKeyword
+    !searchKeyword &&
+    showAdvanced === undefined
   ) {
     return undefined;
   }
@@ -60,6 +68,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
     statuses,
     searchKeyword,
+    showAdvanced,
   };
 }
 
@@ -113,6 +122,9 @@ function stringifyRoute(route: RouteLocation): string {
     }
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());
+    }
+    if (route.query.showAdvanced) {
+      params.set('adv', '1');
     }
     const qs = params.toString();
     return qs ? `#/?${qs}` : '#/';

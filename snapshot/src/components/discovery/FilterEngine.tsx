@@ -35,18 +35,33 @@ import type {
 interface FilterEngineProps {
   query: CardQueryOptions;
   totalMatches: number;
-  compact?: boolean;
   onChange: (newQuery: CardQueryOptions) => void;
 }
 
 export function FilterEngine({
   query,
   totalMatches,
-  compact = false,
   onChange,
 }: FilterEngineProps) {
   const { t } = useTranslation();
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(!compact);
+
+  // 若 query 中明确声明，或已勾选了任意高级五维标签，则保持展开状态；否则默认收起
+  const hasActiveAdvancedDimensions = Boolean(
+    (query.domains && query.domains.length > 0) ||
+      (query.paths && query.paths.length > 0) ||
+      (query.challenges && query.challenges.length > 0) ||
+      (query.interactions && query.interactions.length > 0) ||
+      (query.statuses && query.statuses.length > 0),
+  );
+
+  const isAdvancedOpen = query.showAdvanced ?? hasActiveAdvancedDimensions;
+
+  const toggleAdvancedOpen = () => {
+    onChange({
+      ...query,
+      showAdvanced: !isAdvancedOpen,
+    });
+  };
 
   const packs = registry.getAllPacks();
 
@@ -148,15 +163,15 @@ export function FilterEngine({
 
           <button
             type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 ${
-              showAdvanced
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+            onClick={toggleAdvancedOpen}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+              isAdvancedOpen
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
                 : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
             <Filter className="w-3.5 h-3.5 text-indigo-600" />
-            <span>{showAdvanced ? t('home.collapseFilter') : t('home.expandFilter')}</span>
+            <span>{isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}</span>
           </button>
 
           {hasActiveFilters && (
@@ -223,8 +238,8 @@ export function FilterEngine({
         </div>
       )}
 
-      {/* 正交四维标签矩阵折叠区 */}
-      {showAdvanced && (
+      {/* 高级五维标签矩阵折叠区 */}
+      {isAdvancedOpen && (
         <div className="space-y-3.5 pt-2 border-t border-slate-100 animate-in fade-in duration-150">
           {/* 1. 视觉域维度 (Visual Domain) */}
           <div className="space-y-1.5">

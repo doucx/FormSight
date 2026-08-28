@@ -1,990 +1,294 @@
-好的，我将为你修复阶段卡片文本溢出挤压按钮的问题，并将阶段列表与卡片挑选区自适应拉伸占满视口高度，消除底部空白。
+好的，我将为你重构 `FilterEngine.tsx`：将多维筛选改名为“高级筛选”并默认折叠隐藏，同时在 URL Hash 参数中持久化其展开/收起状态。
 
-## [WIP] fix(plan): 修复阶段列表文本溢出并实现编排视图高度自适应撑满视口
+## [WIP] feat(home): 将五维筛选重构为可由 URL 记忆状态的“高级筛选”并默认隐藏
 
 ### 用户需求
-1. **防止横向溢出**：阶段列表在长标题/长描述场景下，不能挤压右侧题量设置与操作按钮，杜绝水平滚动条。
-2. **拉伸撑满视口**：使“训练阶段列表”和“模块挑选面板”双栏自适应延伸占满屏幕高度，移除页面底部多余空白，提升大屏下的信息展示效率。
-
-### 错误分析
-1. **水平溢出原因**：`PlanStageList.tsx` 中条目的左侧文本容器与右侧操作容器在 flex 布局下缺少 `min-w-0` 与 `flex-shrink-0` 严格约束，导致长文本撑破弹性盒默认最小内容宽度（`min-width: auto`）。
-2. **底部空白原因**：`PlanEditorView.tsx` 及其内部子组件（`PlanStageList`、`CardPickerPanel`）使用了硬编码的矮固定高度（如 `max-h-72`、`max-h-52`），没有启用父子 Flex 链式 `flex-1` / `h-full` 伸展。
+1. **重命名与默认折叠**：将多维筛选命名为“高级筛选”（Advanced Filters），默认保持折叠隐藏，优先呈现清晰直观的 Pack 扩展包分类标签与搜索栏。
+2. **URL 状态保持**：当用户展开或收起高级筛选时，通过 URL Hash 参数（`adv=1`）同步记忆状态，使刷新或分享链接时能恢复展开/折叠视图。
 
 ### 目标
-1. 优化 `PlanStageList.tsx` 条目布局，左侧赋予 `min-w-0 flex-1`，右侧操作栏赋予 `flex-shrink-0`，使文本超长时平滑截断，右侧按钮始终对齐不被挤压。
-2. 改造 `PlanEditorView.tsx`、`PlanStageList.tsx` 和 `CardPickerPanel.tsx`，将内部固定高度改为 `flex-1 overflow-y-auto`，双栏卡片高度撑满视口。
+1. 在 `src/types/card.ts` 的 `CardQueryOptions` 中扩展 `showAdvanced?: boolean` 字段。
+2. 在 `src/hooks/useHashRoute.ts` 中支持对 `adv` 参数的双向解析与序列化。
+3. 更新 `zh-CN.json` 与 `en-US.json` 翻译词条，统一为“高级筛选”与“收起高级筛选”。
+4. 改造 `src/components/discovery/FilterEngine.tsx`，默认隐藏五维面板，展开/收起时实时同步至 URL。
 
 ### 基本原理
-- 遵循 CSS Flexbox 规范：在 Flex 容器内的子级文本块设置 `min-w-0`，阻断内容宽度向外无限扩散，确保 `truncate` 真正生效。
-- 采用 `h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] flex flex-col` 布局，把中间网格设置为 `flex-1 min-h-0`，内部列表随视口自适应滚动，既整洁又消除多余留白。
+- 默认隐藏高阶认知维度的选择器，避免新用户面临学术名词造成的认知负荷。
+- 通过单向数据流将 `showAdvanced` 状态存入 URL Query Params，如果检测到 URL 中带有高阶筛选标签（如 `domains`, `paths`, `challenges` 等）或显式 `adv=1`，则自动展开，保障深度用户的工作流连续性。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/plan #concept/ui #scope/ux #ai/instruct #task/domain/plan #task/object/plan-layout #task/action/bug-fix #task/state/continue
+#intent/build #flow/ready #priority/high #comp/discovery #concept/navigation #scope/ux #ai/instruct #task/domain/discovery #task/object/filter-engine #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `PlanStageList` 布局并支持高度自适应
+#### Acts 1: 扩展 `CardQueryOptions` 类型支持 `showAdvanced`
 
 ~~~~~act
 patch_file
-src/components/plan/editor/PlanStageList.tsx
+src/types/card.ts
+~~~~~
+~~~~~ts.old
+export interface CardQueryOptions {
+  packId?: string;
+  domains?: VisualDomainTag[];
+  paths?: CognitivePathTag[];
+  challenges?: MentalChallengeTag[];
+  interactions?: InteractionTag[];
+  statuses?: CardStatusTag[];
+  searchKeyword?: string;
+}
+~~~~~
+~~~~~ts.new
+export interface CardQueryOptions {
+  packId?: string;
+  domains?: VisualDomainTag[];
+  paths?: CognitivePathTag[];
+  challenges?: MentalChallengeTag[];
+  interactions?: InteractionTag[];
+  statuses?: CardStatusTag[];
+  searchKeyword?: string;
+  showAdvanced?: boolean;
+}
+~~~~~
+
+#### Acts 2: 在路由管理器中支持 `adv` 参数序列化与解析
+
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
+~~~~~
+~~~~~ts.old
+  const searchKeyword = params.get('q') || params.get('search') || undefined;
+
+  if (
+    !packId &&
+    (!domains || domains.length === 0) &&
+    (!paths || paths.length === 0) &&
+    (!challenges || challenges.length === 0) &&
+    (!interactions || interactions.length === 0) &&
+    (!statuses || statuses.length === 0) &&
+    !searchKeyword
+  ) {
+    return undefined;
+  }
+
+  return {
+    packId,
+    domains: domains && domains.length > 0 ? domains : undefined,
+    paths: paths && paths.length > 0 ? paths : undefined,
+    challenges: challenges && challenges.length > 0 ? challenges : undefined,
+    interactions: interactions && interactions.length > 0 ? interactions : undefined,
+    statuses,
+    searchKeyword,
+  };
+~~~~~
+~~~~~ts.new
+  const searchKeyword = params.get('q') || params.get('search') || undefined;
+  const showAdvancedParam = params.get('adv');
+  const showAdvanced =
+    showAdvancedParam === '1' || showAdvancedParam === 'true'
+      ? true
+      : showAdvancedParam === '0' || showAdvancedParam === 'false'
+        ? false
+        : undefined;
+
+  if (
+    !packId &&
+    (!domains || domains.length === 0) &&
+    (!paths || paths.length === 0) &&
+    (!challenges || challenges.length === 0) &&
+    (!interactions || interactions.length === 0) &&
+    (!statuses || statuses.length === 0) &&
+    !searchKeyword &&
+    showAdvanced === undefined
+  ) {
+    return undefined;
+  }
+
+  return {
+    packId,
+    domains: domains && domains.length > 0 ? domains : undefined,
+    paths: paths && paths.length > 0 ? paths : undefined,
+    challenges: challenges && challenges.length > 0 ? challenges : undefined,
+    interactions: interactions && interactions.length > 0 ? interactions : undefined,
+    statuses,
+    searchKeyword,
+    showAdvanced,
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
+~~~~~
+~~~~~ts.old
+    if (route.query.searchKeyword?.trim()) {
+      params.set('q', route.query.searchKeyword.trim());
+    }
+    const qs = params.toString();
+    return qs ? `#/?${qs}` : '#/';
+~~~~~
+~~~~~ts.new
+    if (route.query.searchKeyword?.trim()) {
+      params.set('q', route.query.searchKeyword.trim());
+    }
+    if (route.query.showAdvanced) {
+      params.set('adv', '1');
+    }
+    const qs = params.toString();
+    return qs ? `#/?${qs}` : '#/';
+~~~~~
+
+#### Acts 3: 更新国际化词条
+
+~~~~~act
+patch_file
+src/locales/zh-CN.json
+~~~~~
+~~~~~json.old
+    "matchedModules": "已匹配 {{count}} 个训练模块",
+    "expandFilter": "多维筛选",
+    "collapseFilter": "收起筛选",
+    "searchPlaceholder": "搜索训练卡片名称、编号或认知要领...",
+~~~~~
+~~~~~json.new
+    "matchedModules": "已匹配 {{count}} 个训练模块",
+    "expandFilter": "高级筛选",
+    "collapseFilter": "收起高级筛选",
+    "advancedFilter": "高级筛选",
+    "collapseAdvancedFilter": "收起高级筛选",
+    "searchPlaceholder": "搜索训练卡片名称、编号或认知要领...",
+~~~~~
+
+~~~~~act
+patch_file
+src/locales/en-US.json
+~~~~~
+~~~~~json.old
+    "matchedModules": "Matched {{count}} training modules",
+    "expandFilter": "Multi-Filter",
+    "collapseFilter": "Collapse Filter",
+    "searchPlaceholder": "Search by module name, ID, or visual concept...",
+~~~~~
+~~~~~json.new
+    "matchedModules": "Matched {{count}} training modules",
+    "expandFilter": "Advanced Filters",
+    "collapseFilter": "Hide Advanced Filters",
+    "advancedFilter": "Advanced Filters",
+    "collapseAdvancedFilter": "Hide Advanced Filters",
+    "searchPlaceholder": "Search by module name, ID, or visual concept...",
+~~~~~
+
+#### Acts 4: 重构 `FilterEngine.tsx` 逻辑与视图
+
+~~~~~act
+patch_file
+src/components/discovery/FilterEngine.tsx
 ~~~~~
 ~~~~~tsx.old
-export function PlanStageList({
-  currentPlan,
-  totalTrials,
-  estimatedMin,
-  trialPresets,
-  onBatchUpdateTrials,
-  onClearAll,
-  onUpdateTrials,
-  onMoveItem,
-  onRemoveItem,
-}: PlanStageListProps) {
+interface FilterEngineProps {
+  query: CardQueryOptions;
+  totalMatches: number;
+  compact?: boolean;
+  onChange: (newQuery: CardQueryOptions) => void;
+}
+
+export function FilterEngine({
+  query,
+  totalMatches,
+  compact = false,
+  onChange,
+}: FilterEngineProps) {
+  const { t } = useTranslation();
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(!compact);
+
+  const packs = registry.getAllPacks();
+~~~~~
+~~~~~tsx.new
+interface FilterEngineProps {
+  query: CardQueryOptions;
+  totalMatches: number;
+  onChange: (newQuery: CardQueryOptions) => void;
+}
+
+export function FilterEngine({
+  query,
+  totalMatches,
+  onChange,
+}: FilterEngineProps) {
   const { t } = useTranslation();
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-          <span className="text-slate-400 font-normal">
-            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
-            {t('plan.estimatedTime', { min: estimatedMin })}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {currentPlan.items.length > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-400">{t('plan.batchTrials')}</span>
-              {trialPresets.map((num) => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => onBatchUpdateTrials(num)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors"
-                >
-                  {num}
-                  {t('common.trialsUnit')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {currentPlan.items.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              {t('plan.clearStages')}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {currentPlan.items.length === 0 ? (
-        <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
-        <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3"
-              >
-                <div className="flex items-center gap-2.5 w-full sm:w-auto">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate max-w-[180px] sm:max-w-xs">{cardDesc}</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+  // 若 query 中明确声明，或已勾选了任意高级五维标签，则保持展开状态；否则默认收起
+  const hasActiveAdvancedDimensions = Boolean(
+    (query.domains && query.domains.length > 0) ||
+      (query.paths && query.paths.length > 0) ||
+      (query.challenges && query.challenges.length > 0) ||
+      (query.interactions && query.interactions.length > 0) ||
+      (query.statuses && query.statuses.length > 0),
   );
-}
+
+  const isAdvancedOpen = query.showAdvanced ?? hasActiveAdvancedDimensions;
+
+  const toggleAdvancedOpen = () => {
+    onChange({
+      ...query,
+      showAdvanced: !isAdvancedOpen,
+    });
+  };
+
+  const packs = registry.getAllPacks();
 ~~~~~
-~~~~~tsx.new
-export function PlanStageList({
-  currentPlan,
-  totalTrials,
-  estimatedMin,
-  trialPresets,
-  onBatchUpdateTrials,
-  onClearAll,
-  onUpdateTrials,
-  onMoveItem,
-  onRemoveItem,
-}: PlanStageListProps) {
-  const { t } = useTranslation();
-
-  return (
-    <div className="flex flex-col h-full space-y-3 min-h-0">
-      <div className="flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
-        <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
-          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-          <span className="text-slate-400 font-normal">
-            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
-            {t('plan.estimatedTime', { min: estimatedMin })}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {currentPlan.items.length > 0 && (
-            <div className="flex items-center gap-1 text-[11px] text-slate-500 bg-slate-100 px-2 py-0.5 rounded-xl">
-              <span className="text-[10px] font-bold text-slate-400">{t('plan.batchTrials')}</span>
-              {trialPresets.map((num) => (
-                <button
-                  type="button"
-                  key={num}
-                  onClick={() => onBatchUpdateTrials(num)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors cursor-pointer"
-                >
-                  {num}
-                  {t('common.trialsUnit')}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {currentPlan.items.length > 0 && (
-            <button
-              type="button"
-              onClick={onClearAll}
-              className="text-[11px] font-semibold text-rose-500 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              {t('plan.clearStages')}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {currentPlan.items.length === 0 ? (
-        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
-        <div className="flex-1 space-y-2.5 overflow-y-auto pr-1 min-h-0">
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
-              >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-
-                {/* 右侧：严格 flex-shrink-0 防挤压 */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1 cursor-pointer"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 2: 改造 `CardPickerPanel` 支持自适应满高
 
 ~~~~~act
 patch_file
-src/components/plan/editor/CardPickerPanel.tsx
+src/components/discovery/FilterEngine.tsx
 ~~~~~
 ~~~~~tsx.old
-  return (
-    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-bold text-slate-700">{t('plan.selectCardPrompt')}</span>
-        </div>
-        <button
-          type="button"
-          onClick={() => onToggleAdding(false)}
-          className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-        >
-          {t('home.collapseFilter')}
-        </button>
-      </div>
-
-      {/* 搜索框 */}
-      <div className="relative">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchKeyword}
-          onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder={t('home.searchPlaceholder')}
-          className="w-full pl-8 pr-8 py-1.5 text-xs font-bold text-slate-800 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        />
-        {searchKeyword && (
           <button
             type="button"
-            onClick={() => setSearchKeyword('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-
-      {/* Pack 与视觉域快速筛选行 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedDomain('all');
-            setSelectedPackId('all');
-          }}
-          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-            selectedDomain === 'all' && selectedPackId === 'all'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white text-slate-600 border border-slate-200'
-          }`}
-        >
-          {t('common.all')} ({registry.getAllCards().length})
-        </button>
-
-        {packs.map((p) => {
-          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-          return (
-            <button
-              type="button"
-              key={p.packId}
-              onClick={() => {
-                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-                setSelectedDomain('all');
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-                selectedPackId === p.packId
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-slate-600 border border-slate-200'
-              }`}
-            >
-              {packTitle}
-            </button>
-          );
-        })}
-
-        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <button
-            type="button"
-            key={domain}
-            onClick={() => {
-              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
-              setSelectedPackId('all');
-            }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 ${
-              selectedDomain === domain
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-slate-600 border border-slate-200'
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 ${
+              showAdvanced
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
-            {t(DOMAIN_TAGS[domain].i18nKey)}
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{showAdvanced ? t('home.collapseFilter') : t('home.expandFilter')}</span>
           </button>
-        ))}
-      </div>
-
-      {/* 模块列表 */}
-      {availableCards.length === 0 ? (
-        <div className="p-6 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
-          {t('plan.noCardMatched')}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
-          {availableCards.map((card) => {
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-            return (
-              <button
-                type="button"
-                key={card.id}
-                onClick={() => onAddItem(card.id)}
-                className="p-2.5 bg-white hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-xl text-left transition-all flex items-center justify-between gap-2 group active:scale-95 cursor-pointer"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform flex-shrink-0">
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-                <Plus className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 flex-shrink-0" />
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
 ~~~~~
 ~~~~~tsx.new
-  return (
-    <div className="flex flex-col h-full space-y-3 min-h-0">
-      <div className="flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-extrabold text-slate-700">{t('plan.selectCardPrompt')}</span>
-        </div>
-      </div>
-
-      {/* 搜索框 */}
-      <div className="relative flex-shrink-0">
-        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          value={searchKeyword}
-          onInput={(e) => setSearchKeyword((e.target as HTMLInputElement).value)}
-          placeholder={t('home.searchPlaceholder')}
-          className="w-full pl-8 pr-8 py-2 text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-        />
-        {searchKeyword && (
           <button
             type="button"
-            onClick={() => setSearchKeyword('')}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-          >
-            <X className="w-3 h-3" />
-          </button>
-        )}
-      </div>
-
-      {/* Pack 与视觉域快速筛选行 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-shrink-0">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedDomain('all');
-            setSelectedPackId('all');
-          }}
-          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-            selectedDomain === 'all' && selectedPackId === 'all'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-          }`}
-        >
-          {t('common.all')} ({registry.getAllCards().length})
-        </button>
-
-        {packs.map((p) => {
-          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-          return (
-            <button
-              type="button"
-              key={p.packId}
-              onClick={() => {
-                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-                setSelectedDomain('all');
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-                selectedPackId === p.packId
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {packTitle}
-            </button>
-          );
-        })}
-
-        {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <button
-            type="button"
-            key={domain}
-            onClick={() => {
-              setSelectedDomain(selectedDomain === domain ? 'all' : domain);
-              setSelectedPackId('all');
-            }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer ${
-              selectedDomain === domain
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+            onClick={toggleAdvancedOpen}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+              isAdvancedOpen
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
             }`}
           >
-            {t(DOMAIN_TAGS[domain].i18nKey)}
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>{isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}</span>
           </button>
-        ))}
-      </div>
-
-      {/* 模块列表：自适应拉伸并滚动 */}
-      {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[220px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-          {t('plan.noCardMatched')}
-        </div>
-      ) : (
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-1 min-h-0 content-start">
-          {availableCards.map((card) => {
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-            return (
-              <button
-                type="button"
-                key={card.id}
-                onClick={() => onAddItem(card.id)}
-                className="p-2.5 bg-slate-50 hover:bg-indigo-50/60 border border-slate-200/80 hover:border-indigo-300 rounded-2xl text-left transition-all flex items-center justify-between gap-2 group active:scale-98 cursor-pointer"
-              >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="p-1.5 rounded-xl bg-white text-indigo-600 shadow-xs group-hover:scale-105 transition-transform flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-                <Plus className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 flex-shrink-0" />
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
 ~~~~~
-
-#### Acts 3: 优化 `PlanEditorView` 页面布局，撑满屏幕高度
 
 ~~~~~act
 patch_file
-src/views/PlanEditorView.tsx
+src/components/discovery/FilterEngine.tsx
 ~~~~~
 ~~~~~tsx.old
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-1.5 w-full max-w-sm">
-                <input
-                  type="text"
-                  value={planNameInput}
-                  onInput={(e) => setPlanNameInput((e.target as HTMLInputElement).value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleNameSave();
-                    if (e.key === 'Escape') {
-                      setPlanNameInput(currentPlan.name);
-                      setIsEditingName(false);
-                    }
-                  }}
-                  maxLength={32}
-                  className="w-full px-3 py-1.5 text-sm font-black text-slate-800 bg-slate-50 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder={t('plan.nameInputPlaceholder')}
-                />
-                <button
-                  type="button"
-                  onClick={handleNameSave}
-                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('common.confirm')}
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <h1 className="text-xl font-black text-slate-900 truncate tracking-tight">
-                  {currentPlan.name}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(true)}
-                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('plan.renameTitle')}
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-
-                {isNewPlan ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex-shrink-0 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {t('common.newPlanBadge')}
-                  </span>
-                ) : currentPlan.isBuiltin ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 flex-shrink-0">
-                    {t('common.officialBadge')}
-                  </span>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 右侧全局操作区 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setShowPlanManager(!showPlanManager)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
-              showPlanManager
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-            title={t('plan.switchAndManageTitle')}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            {t('plan.planLibraryTitle', { count: storageState.plans.length })}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCloneCurrent}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.cloneCopyTitle')}
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportPlan}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.exportJsonTitle')}
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportPlan}
-            className="hidden"
-          />
-
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-          <button
-            type="button"
-            onClick={handleSaveOnly}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {t('common.save')}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveAndStart}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('plan.startPlan')}
-          </button>
-        </div>
-      </header>
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2.5 rounded-2xl animate-in fade-in">
-          {toastNotice}
-        </div>
-      )}
-
-      {/* 展开的计划库总览抽屉 */}
-      {showPlanManager && (
-        <PlanLibraryDrawer
-          storageState={storageState}
-          currentPlan={currentPlan}
-          onSelectPlan={handleSelectPlanFromList}
-          onCreateNewBlankPlan={handleCreateNewBlankPlan}
-          onClose={() => setShowPlanManager(false)}
-          onToggleFavorite={handleToggleFavoriteItem}
-          onDeletePlan={handleDeletePlanItem}
-        />
-      )}
-
-      {/* 核心双列/响应式编排区 */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* 左侧/上半部：已编排的阶段序列与调序 */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-          <PlanStageList
-            currentPlan={currentPlan}
-            totalTrials={totalTrials}
-            estimatedMin={estimatedMin}
-            trialPresets={TRIAL_PRESETS}
-            onBatchUpdateTrials={handleBatchUpdateTrials}
-            onClearAll={handleClearAll}
-            onUpdateTrials={handleUpdateTrials}
-            onMoveItem={handleMoveItem}
-            onRemoveItem={handleRemoveItem}
-          />
-        </div>
-
-        {/* 右侧/下半部：模块添加与搜索挑选区 */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-4">
-          <CardPickerPanel
-            isAddingCard={isAddingCard || currentPlan.items.length === 0}
-            onToggleAdding={setIsAddingCard}
-            onAddItem={handleAddItem}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+      {/* 正交四维标签矩阵折叠区 */}
+      {showAdvanced && (
+        <div className="space-y-3.5 pt-2 border-t border-slate-100 animate-in fade-in duration-150">
 ~~~~~
 ~~~~~tsx.new
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] gap-4 sm:gap-5 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 flex-shrink-0">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {isEditingName ? (
-              <div className="flex items-center gap-1.5 w-full max-w-sm">
-                <input
-                  type="text"
-                  value={planNameInput}
-                  onInput={(e) => setPlanNameInput((e.target as HTMLInputElement).value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleNameSave();
-                    if (e.key === 'Escape') {
-                      setPlanNameInput(currentPlan.name);
-                      setIsEditingName(false);
-                    }
-                  }}
-                  maxLength={32}
-                  className="w-full px-3 py-1.5 text-sm font-black text-slate-800 bg-slate-50 border border-indigo-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                  placeholder={t('plan.nameInputPlaceholder')}
-                />
-                <button
-                  type="button"
-                  onClick={handleNameSave}
-                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('common.confirm')}
-                >
-                  <Check className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">
-                  {currentPlan.name}
-                </h1>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(true)}
-                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                  title={t('plan.renameTitle')}
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                </button>
-
-                {isNewPlan ? (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex-shrink-0 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    {t('common.newPlanBadge')}
-                  </span>
-                ) : currentPlan.isBuiltin ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100 flex-shrink-0">
-                    {t('common.officialBadge')}
-                  </span>
-                ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* 右侧全局操作区 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end w-full sm:w-auto">
-          <button
-            type="button"
-            onClick={() => setShowPlanManager(!showPlanManager)}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
-              showPlanManager
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-            title={t('plan.switchAndManageTitle')}
-          >
-            <Layers className="w-3.5 h-3.5" />
-            {t('plan.planLibraryTitle', { count: storageState.plans.length })}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleCloneCurrent}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.cloneCopyTitle')}
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={handleExportPlan}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.exportJsonTitle')}
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImportPlan}
-            className="hidden"
-          />
-
-          <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-          <button
-            type="button"
-            onClick={handleSaveOnly}
-            disabled={currentPlan.items.length === 0}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {t('common.save')}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleSaveAndStart}
-            disabled={currentPlan.items.length === 0}
-            className="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('plan.startPlan')}
-          </button>
-        </div>
-      </header>
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
-          {toastNotice}
-        </div>
-      )}
-
-      {/* 展开的计划库总览抽屉 */}
-      {showPlanManager && (
-        <div className="flex-shrink-0">
-          <PlanLibraryDrawer
-            storageState={storageState}
-            currentPlan={currentPlan}
-            onSelectPlan={handleSelectPlanFromList}
-            onCreateNewBlankPlan={handleCreateNewBlankPlan}
-            onClose={() => setShowPlanManager(false)}
-            onToggleFavorite={handleToggleFavoriteItem}
-            onDeletePlan={handleDeletePlanItem}
-          />
-        </div>
-      )}
-
-      {/* 核心双列/响应式编排区：占满视口剩余高度 */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 min-h-0 items-stretch">
-        {/* 左侧：已编排的阶段序列与调序 */}
-        <div className="lg:col-span-7 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
-          <PlanStageList
-            currentPlan={currentPlan}
-            totalTrials={totalTrials}
-            estimatedMin={estimatedMin}
-            trialPresets={TRIAL_PRESETS}
-            onBatchUpdateTrials={handleBatchUpdateTrials}
-            onClearAll={handleClearAll}
-            onUpdateTrials={handleUpdateTrials}
-            onMoveItem={handleMoveItem}
-            onRemoveItem={handleRemoveItem}
-          />
-        </div>
-
-        {/* 右侧：模块添加与搜索挑选区 */}
-        <div className="lg:col-span-5 bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden">
-          <CardPickerPanel
-            isAddingCard={isAddingCard || currentPlan.items.length === 0}
-            onToggleAdding={setIsAddingCard}
-            onAddItem={handleAddItem}
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
+      {/* 高级五维标签矩阵折叠区 */}
+      {isAdvancedOpen && (
+        <div className="space-y-3.5 pt-2 border-t border-slate-100 animate-in fade-in duration-150">
 ~~~~~
 
 ### 下一步建议
-1. **测试验收**：可在计划编排中加入长文本卡片（如多锚点透视、负空间拟合等），验证在任何分辨率下均不再出现横向拉伸或按钮重叠。
-2. **继续实施 P1 项**：重构首页 `FilterEngine.tsx`，将学术化五维筛选降维为直观的训练目标 Tab。
+1. **测试验收**：在首页点击“高级筛选”，观察 URL 是否自动追加 `#/?adv=1`，刷新页面或在各页面跳转后返回首页时，均能保持原有的筛选与展开状态。
+2. **继续实施后续体验改进**：如优化 `TrainingShell` 在窄屏移动端的紧凑度排版与说明文案初次引导。

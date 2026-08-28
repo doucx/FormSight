@@ -79,4 +79,5 @@ export interface CardQueryOptions {
   interactions?: InteractionTag[];
   statuses?: CardStatusTag[];
   searchKeyword?: string;
+  showAdvanced?: boolean;
 }

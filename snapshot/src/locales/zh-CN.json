@@ -214,8 +214,10 @@
   },
   "home": {
     "matchedModules": "已匹配 {{count}} 个训练模块",
-    "expandFilter": "多维筛选",
-    "collapseFilter": "收起筛选",
+    "expandFilter": "高级筛选",
+    "collapseFilter": "收起高级筛选",
+    "advancedFilter": "高级筛选",
+    "collapseAdvancedFilter": "收起高级筛选",
     "searchPlaceholder": "搜索训练卡片名称、编号或认知要领...",
     "noMatchTitle": "未找到符合条件的训练模块",
     "noMatchDesc": "尝试调整或清空当前的多维筛选标签、搜索关键字，以探索更多训练模块。",
