@@ -133,3 +133,41 @@ export function useTranslation() {
     setLocale: (locale: string) => i18n.setLocale(locale),
   };
 }
+
+/**
+ * 通用：解析卡片标题多语言回退
+ */
+export function getCardTitle(
+  card: { id: string; packId?: string; title?: string },
+  t = i18n.t,
+): string {
+  const packId = card.packId || 'core';
+  const key = `packs.${packId}.cards.${card.id}.title`;
+  const translated = t(key);
+  return translated !== key ? translated : card.title || card.id;
+}
+
+/**
+ * 通用：解析卡片描述多语言回退
+ */
+export function getCardDesc(
+  card: { id: string; packId?: string; desc?: string },
+  t = i18n.t,
+): string {
+  const packId = card.packId || 'core';
+  const key = `packs.${packId}.cards.${card.id}.desc`;
+  const translated = t(key);
+  return translated !== key ? translated : card.desc || '';
+}
+
+/**
+ * 通用：解析扩展包标题多语言回退
+ */
+export function getPackTitle(
+  pack: { packId: string; meta?: { title?: string } },
+  t = i18n.t,
+): string {
+  const key = `packs.${pack.packId}.meta.title`;
+  const translated = t(key);
+  return translated !== key ? translated : pack.meta?.title || pack.packId;
+}

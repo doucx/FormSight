@@ -1,7 +1,8 @@
 import { Plus, Search, Sparkles, X } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
+import { TagPill } from '../../common/TagPill';
 import { DOMAIN_TAGS } from '../../../config/tags';
-import { useTranslation } from '../../../core/i18n';
+import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { CardQueryOptions, VisualDomainTag } from '../../../types/card';
 
@@ -76,61 +77,42 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
 
       {/* Pack 与视觉域快速筛选行 */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none flex-shrink-0">
-        <button
-          type="button"
-          onPointerDown={(e) => e.preventDefault()}
+        <TagPill
+          size="sm"
+          label={t('common.all')}
+          count={registry.getAllCards().length}
+          selected={selectedDomain === 'all' && selectedPackId === 'all'}
           onClick={() => {
             setSelectedDomain('all');
             setSelectedPackId('all');
           }}
-          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
-            selectedDomain === 'all' && selectedPackId === 'all'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-          }`}
-        >
-          {t('common.all')} ({registry.getAllCards().length})
-        </button>
+        />
 
-        {packs.map((p) => {
-          const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-          return (
-            <button
-              type="button"
-              key={p.packId}
-              onPointerDown={(e) => e.preventDefault()}
-              onClick={() => {
-                setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
-                setSelectedDomain('all');
-              }}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
-                selectedPackId === p.packId
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-              }`}
-            >
-              {packTitle}
-            </button>
-          );
-        })}
+        {packs.map((p) => (
+          <TagPill
+            key={p.packId}
+            size="sm"
+            label={getPackTitle(p, t)}
+            selected={selectedPackId === p.packId}
+            onClick={() => {
+              setSelectedPackId(selectedPackId === p.packId ? 'all' : p.packId);
+              setSelectedDomain('all');
+            }}
+          />
+        ))}
 
         {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
-          <button
-            type="button"
+          <TagPill
             key={domain}
-            onPointerDown={(e) => e.preventDefault()}
+            size="sm"
+            label={t(DOMAIN_TAGS[domain].i18nKey)}
+            themeColor={DOMAIN_TAGS[domain].themeColor || 'indigo'}
+            selected={selectedDomain === domain}
             onClick={() => {
               setSelectedDomain(selectedDomain === domain ? 'all' : domain);
               setSelectedPackId('all');
             }}
-            className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all flex-shrink-0 cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] ${
-              selectedDomain === domain
-                ? 'bg-indigo-600 text-white shadow-xs'
-                : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            {t(DOMAIN_TAGS[domain].i18nKey)}
-          </button>
+          />
         ))}
       </div>
 
@@ -143,9 +125,8 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
         <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto pr-1 min-h-0 content-start">
           {availableCards.map((card) => {
             const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
             return (
               <button
                 type="button"
