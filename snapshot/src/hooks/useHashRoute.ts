@@ -11,7 +11,8 @@ import type {
 export type RouteLocation =
   | { type: 'home'; query?: CardQueryOptions }
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
-  | { type: 'plan-train' };
+  | { type: 'plan-train' }
+  | { type: 'plan-editor' };
 
 function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const packId = params.get('pack') || undefined;
@@ -74,6 +75,10 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'plan-train' };
   }
 
+  if (segments[0] === 'plan-editor') {
+    return { type: 'plan-editor' };
+  }
+
   if (segments[0] === 'train' && segments[1]) {
     const cardId = segments[1];
     const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
@@ -113,6 +118,7 @@ function stringifyRoute(route: RouteLocation): string {
     return qs ? `#/?${qs}` : '#/';
   }
   if (route.type === 'plan-train') return '#/plan-train';
+  if (route.type === 'plan-editor') return '#/plan-editor';
   if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
   return '#/';
 }
