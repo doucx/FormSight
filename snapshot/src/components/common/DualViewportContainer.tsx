@@ -20,19 +20,19 @@ export function DualViewportContainer({
   className = '',
 }: DualViewportContainerProps) {
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 w-full ${className}`}>
-      <div className="flex flex-col items-center gap-2">
+    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 w-full items-start ${className}`}>
+      <div className="flex flex-col items-center gap-2 w-full min-w-0">
         <span className={`text-[11px] font-bold ${leftTitleColor} uppercase tracking-wider`}>
           {leftTitle}
         </span>
-        {leftContent}
+        <div className="w-full flex justify-center items-center min-w-0">{leftContent}</div>
       </div>
 
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-2 w-full min-w-0">
         <span className={`text-[11px] font-bold ${rightTitleColor} uppercase tracking-wider`}>
           {rightTitle}
         </span>
-        {rightContent}
+        <div className="w-full flex justify-center items-center min-w-0">{rightContent}</div>
       </div>
     </div>
   );
