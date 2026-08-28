@@ -36,6 +36,7 @@ export interface PackManifest {
   trainingPlugin: AnyTrainingPlugin;
   analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
   defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
+  locales?: Record<string, Record<string, unknown>>;
 }
 
 export type AnyManifest = PackManifest;

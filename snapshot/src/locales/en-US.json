@@ -1,0 +1,70 @@
+{
+  "common": {
+    "appName": "FormSight",
+    "appSubtitle": "Visual Form & Color Perception Adaptive Training System",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "complete": "Complete",
+    "exit": "Exit",
+    "nextQuestion": "Next",
+    "skip": "Skip",
+    "reset": "Reset",
+    "save": "Save",
+    "all": "All",
+    "search": "Search",
+    "stats": "Stats",
+    "settings": "Settings",
+    "globalSettings": "Global Settings",
+    "globalStats": "Cognitive Statistics",
+    "globalStatsSubtitle": "Insights into multi-dimensional visual perceptual growth",
+    "todayTrials": "Today's Trials",
+    "totalTime": "Total Time",
+    "accuracy": "Accuracy",
+    "level": "Skill Level"
+  },
+  "shell": {
+    "exitTraining": "Exit Training (Esc)",
+    "benchmark": "Benchmark",
+    "training": "Adaptive Training",
+    "targeting": "Targeted Training",
+    "experimental": "Experimental",
+    "trialsCount": "Trials Done",
+    "currentLevel": "Current Level",
+    "viewSummary": "Finish & View Summary",
+    "instructionTitle": "Instructions",
+    "idlePausedTitle": "Training Paused",
+    "idlePausedDesc": "Inactivity or tab switch detected. Session state protected.",
+    "clickToResume": "Click to Resume (or press any key)"
+  },
+  "tags": {
+    "domains": {
+      "form_and_proportion": "Form & Proportion",
+      "spatial_structure": "Space & Structure",
+      "color_and_value": "Color & Value",
+      "rhythm_and_notan": "Rhythm & Notan"
+    },
+    "paths": {
+      "extraction": "Bottom-Up: Extraction",
+      "concretization": "Top-Down: Concretization",
+      "absolute_estimation": "Absolute Estimation",
+      "relational_mapping": "Relational Mapping"
+    },
+    "challenges": {
+      "illusion_piercing": "Illusion Piercing (Anti-Assimilation)",
+      "figure_ground_reversal": "Figure-Ground Reversal",
+      "working_memory": "Working Memory",
+      "dimensional_translation": "Dimensional Translation (3D/2D)"
+    },
+    "interactions": {
+      "continuous_mod": "Continuous Modulation (Slider)",
+      "spatial_locate": "Spatial Localization (Grid Click)",
+      "binary_choice": "Binary Choice (2AFC)",
+      "multi_choice": "Multi-Choice (N-AFC)"
+    },
+    "statuses": {
+      "stable": "Stable Module",
+      "experimental": "Experimental",
+      "deprecated": "Deprecated"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "common": {
+    "appName": "FormSight",
+    "appSubtitle": "视觉造型构图与色彩感知自适应强化训练系统",
+    "confirm": "确认",
+    "cancel": "取消",
+    "complete": "完成",
+    "exit": "退出",
+    "nextQuestion": "下一题",
+    "skip": "跳过",
+    "reset": "重置",
+    "save": "保存",
+    "all": "全部",
+    "search": "搜索",
+    "stats": "统计",
+    "settings": "设置",
+    "globalSettings": "全局设置",
+    "globalStats": "全局认知数据统计",
+    "globalStatsSubtitle": "洞察多维视觉认知成长与训练足迹",
+    "todayTrials": "今日刷题",
+    "totalTime": "累计用时",
+    "accuracy": "正确率",
+    "level": "能力层阶"
+  },
+  "shell": {
+    "exitTraining": "退出训练 (Esc)",
+    "benchmark": "基准测试",
+    "training": "自适应训练",
+    "targeting": "靶向强化训练",
+    "experimental": "实验性模块",
+    "trialsCount": "已练题数",
+    "currentLevel": "当前难度",
+    "viewSummary": "完成并查看总结",
+    "instructionTitle": "玩法要领",
+    "idlePausedTitle": "训练已自动暂停",
+    "idlePausedDesc": "检测到闲置或窗口切换，已保护您的心流与统计数据",
+    "clickToResume": "点击继续训练 (或按任意键)"
+  },
+  "tags": {
+    "domains": {
+      "form_and_proportion": "形体与比例",
+      "spatial_structure": "空间与结构",
+      "color_and_value": "色彩与明度",
+      "rhythm_and_notan": "动态与图底"
+    },
+    "paths": {
+      "extraction": "自底向上：提炼概括",
+      "concretization": "自顶向下：具象寻源",
+      "absolute_estimation": "绝对估测度量",
+      "relational_mapping": "相对推移映射"
+    },
+    "challenges": {
+      "illusion_piercing": "错觉剥离 (抗同化/环境光)",
+      "figure_ground_reversal": "图底反转 (关注负空间)",
+      "working_memory": "瞬时记忆 (抗视觉遗忘)",
+      "dimensional_translation": "维次转译 (3D/2D展开)"
+    },
+    "interactions": {
+      "continuous_mod": "连续调制 (滑块)",
+      "spatial_locate": "空间定位 (点阵点击)",
+      "binary_choice": "二分对抗 (2AFC)",
+      "multi_choice": "多维检索 (N-AFC)"
+    },
+    "statuses": {
+      "stable": "稳定模块",
+      "experimental": "实验性模块",
+      "deprecated": "已废弃"
+    }
+  }
+}

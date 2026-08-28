@@ -10,6 +10,7 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
+import { i18n } from './i18n';
 
 class InvertedCardIndex {
   private domainMap = new Map<VisualDomainTag, Set<string>>();
@@ -139,6 +140,11 @@ class SystemDomainRegistry {
 
   public register(manifest: PackManifest): void {
     this.packs.set(manifest.packId, manifest);
+
+    // 自动挂载 Pack 私有语言包至 `packs.<packId>` 命名空间
+    if (manifest.locales) {
+      i18n.registerPackLocales(manifest.packId, manifest.locales);
+    }
 
     for (const card of manifest.cards) {
       const normalizedCard: CardDefinition = {
