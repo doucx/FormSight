@@ -249,15 +249,18 @@ export function calculateLevelStats(records: UnifiedTrialRecord[]): LevelBinStat
   }
 
   const levels = Array.from(levelMap.keys()).sort((a, b) => a - b);
-  return levels.map((l) => {
-    const data = levelMap.get(l)!;
-    return {
-      level: l,
-      total: data.total,
-      hits: data.hits,
-      accuracy: Math.round((data.hits / data.total) * 100),
-    };
-  });
+  return levels
+    .map((l) => {
+      const data = levelMap.get(l);
+      if (!data) return null;
+      return {
+        level: l,
+        total: data.total,
+        hits: data.hits,
+        accuracy: Math.round((data.hits / data.total) * 100),
+      };
+    })
+    .filter((item): item is LevelBinStat => item !== null);
 }
 
 export function renderDifficultyPlateauVisualizer(
