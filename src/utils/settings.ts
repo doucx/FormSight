@@ -76,7 +76,7 @@ function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
     const cardConfig: BaseModuleSettings = { ...DEFAULT_BASE_SETTINGS };
 
     // 如果卡片包含滑块交互，配置默认容错与外延感应
-    if (card.tags?.interaction?.includes('continuous_slider')) {
+    if (card.tags?.interaction?.includes('continuous_mod')) {
       cardConfig.sliderHitMargin = 12;
       cardConfig.showToleranceBand = true;
     }

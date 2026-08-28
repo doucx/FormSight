@@ -1,8 +1,9 @@
 import {
   Boxes,
+  Brain,
   Check,
   Compass,
-  Crosshair,
+  Eye,
   Filter,
   FlaskConical,
   MousePointer,
@@ -17,38 +18,38 @@ import { registry } from '../../core/registry';
 import type {
   CardQueryOptions,
   CardStatusTag,
-  CognitiveSkillTag,
+  CognitivePathTag,
   InteractionTag,
-  SensoryTargetTag,
+  MentalChallengeTag,
+  VisualDomainTag,
 } from '../../types/card';
 
-export const TARGET_TAG_LABELS: Record<SensoryTargetTag, string> = {
-  geometry: '空间几何',
-  color: '绝对色相',
-  relative_color: '环境色彩',
-  negative_space: '正负空间',
-  abstraction: '形态概括',
-  concretization: '具象构型',
-  angle: '角度感知',
-  perspective: '透视空间',
+export const DOMAIN_TAG_LABELS: Record<VisualDomainTag, string> = {
+  form_and_proportion: '形体与比例',
+  spatial_structure: '空间与结构',
+  color_and_value: '色彩与明度',
+  rhythm_and_notan: '动态与图底',
 };
 
-export const SKILL_TAG_LABELS: Record<CognitiveSkillTag, string> = {
-  spatial_orientation: '空间方位',
-  color_fidelity: '色彩保真',
-  illusion_invariance: '抗视错觉',
-  proportion: '比例度量',
-  visual_memory: '视觉记忆',
-  abstraction: '形态抽象',
-  gesture_flow: '动态势线',
-  notan_grouping: '明度归组',
+export const PATH_TAG_LABELS: Record<CognitivePathTag, string> = {
+  extraction: '自底向上：提炼概括',
+  concretization: '自顶向下：具象寻源',
+  absolute_estimation: '绝对估测度量',
+  relational_mapping: '相对推移映射',
+};
+
+export const CHALLENGE_TAG_LABELS: Record<MentalChallengeTag, string> = {
+  illusion_piercing: '错觉剥离 (抗同化/环境光)',
+  figure_ground_reversal: '图底反转 (关注负空间)',
+  working_memory: '瞬时记忆 (抗视觉遗忘)',
+  dimensional_translation: '维次转译 (3D/2D展开)',
 };
 
 export const INTERACTION_TAG_LABELS: Record<InteractionTag, string> = {
-  continuous_slider: '连续滑块',
-  point_click: '点阵点击',
-  choice_2afc: '2AFC 对抗',
-  choice_nafc: 'N-AFC 判断',
+  continuous_mod: '连续调制 (滑块)',
+  spatial_locate: '空间定位 (点阵点击)',
+  binary_choice: '二分对抗 (2AFC)',
+  multi_choice: '多维检索 (N-AFC)',
 };
 
 export const STATUS_TAG_LABELS: Record<CardStatusTag, string> = {
@@ -81,18 +82,26 @@ export function FilterEngine({
     });
   };
 
-  const toggleTarget = (target: SensoryTargetTag) => {
-    const current = query.targets || [];
-    const next = current.includes(target)
-      ? current.filter((t) => t !== target)
-      : [...current, target];
-    onChange({ ...query, targets: next.length > 0 ? next : undefined });
+  const toggleDomain = (domain: VisualDomainTag) => {
+    const current = query.domains || [];
+    const next = current.includes(domain)
+      ? current.filter((d) => d !== domain)
+      : [...current, domain];
+    onChange({ ...query, domains: next.length > 0 ? next : undefined });
   };
 
-  const toggleSkill = (skill: CognitiveSkillTag) => {
-    const current = query.skills || [];
-    const next = current.includes(skill) ? current.filter((s) => s !== skill) : [...current, skill];
-    onChange({ ...query, skills: next.length > 0 ? next : undefined });
+  const togglePath = (path: CognitivePathTag) => {
+    const current = query.paths || [];
+    const next = current.includes(path) ? current.filter((p) => p !== path) : [...current, path];
+    onChange({ ...query, paths: next.length > 0 ? next : undefined });
+  };
+
+  const toggleChallenge = (challenge: MentalChallengeTag) => {
+    const current = query.challenges || [];
+    const next = current.includes(challenge)
+      ? current.filter((c) => c !== challenge)
+      : [...current, challenge];
+    onChange({ ...query, challenges: next.length > 0 ? next : undefined });
   };
 
   const toggleInteraction = (interaction: InteractionTag) => {
@@ -125,8 +134,9 @@ export function FilterEngine({
   const hasActiveFilters = Boolean(
     query.searchKeyword ||
       query.packId ||
-      (query.targets && query.targets.length > 0) ||
-      (query.skills && query.skills.length > 0) ||
+      (query.domains && query.domains.length > 0) ||
+      (query.paths && query.paths.length > 0) ||
+      (query.challenges && query.challenges.length > 0) ||
       (query.interactions && query.interactions.length > 0) ||
       (query.statuses && query.statuses.length > 0),
   );
@@ -241,23 +251,23 @@ export function FilterEngine({
         </div>
       )}
 
-      {/* 多维标签矩阵折叠区 */}
+      {/* 正交四维标签矩阵折叠区 */}
       {showAdvanced && (
         <div className="space-y-3.5 pt-2 border-t border-slate-100 animate-in fade-in duration-150">
-          {/* 1. 感官目标维度 (Sensory Target) */}
+          {/* 1. 视觉域维度 (Visual Domain) */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Crosshair className="w-3 h-3 text-indigo-500" />
-              感官训练目标 (Sensory Target)
+              <Eye className="w-3 h-3 text-indigo-500" />
+              1. 基础视觉域 (Visual Domain)
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(TARGET_TAG_LABELS) as SensoryTargetTag[]).map((t) => {
-                const isSelected = query.targets?.includes(t) ?? false;
+              {(Object.keys(DOMAIN_TAG_LABELS) as VisualDomainTag[]).map((d) => {
+                const isSelected = query.domains?.includes(d) ?? false;
                 return (
                   <button
                     type="button"
-                    key={t}
-                    onClick={() => toggleTarget(t)}
+                    key={d}
+                    onClick={() => toggleDomain(d)}
                     className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
                       isSelected
                         ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200'
@@ -265,27 +275,27 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{TARGET_TAG_LABELS[t]}</span>
+                    <span>{DOMAIN_TAG_LABELS[d]}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 2. 认知技能维度 (Cognitive Skill) */}
+          {/* 2. 认知路径维度 (Cognitive Path) */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <Compass className="w-3 h-3 text-emerald-500" />
-              认知知觉技能 (Cognitive Skill)
+              2. 认知推演路径 (Cognitive Path)
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {(Object.keys(SKILL_TAG_LABELS) as CognitiveSkillTag[]).map((s) => {
-                const isSelected = query.skills?.includes(s) ?? false;
+              {(Object.keys(PATH_TAG_LABELS) as CognitivePathTag[]).map((p) => {
+                const isSelected = query.paths?.includes(p) ?? false;
                 return (
                   <button
                     type="button"
-                    key={s}
-                    onClick={() => toggleSkill(s)}
+                    key={p}
+                    onClick={() => togglePath(p)}
                     className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200'
@@ -293,18 +303,46 @@ export function FilterEngine({
                     }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
-                    <span>{SKILL_TAG_LABELS[s]}</span>
+                    <span>{PATH_TAG_LABELS[p]}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* 3. 交互形态维度 (Interaction Tag) */}
+          {/* 3. 心智抗性维度 (Mental Challenge) */}
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <Brain className="w-3 h-3 text-rose-500" />
+              3. 核心心智抗性 (Mental Challenge)
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {(Object.keys(CHALLENGE_TAG_LABELS) as MentalChallengeTag[]).map((c) => {
+                const isSelected = query.challenges?.includes(c) ?? false;
+                return (
+                  <button
+                    type="button"
+                    key={c}
+                    onClick={() => toggleChallenge(c)}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer ${
+                      isSelected
+                        ? 'bg-rose-600 text-white shadow-sm shadow-rose-200'
+                        : 'bg-slate-50 hover:bg-rose-50/60 text-slate-600 border border-slate-200/80 hover:border-rose-300'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3 h-3" />}
+                    <span>{CHALLENGE_TAG_LABELS[c]}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 4. 交互形态维度 (Interaction Mode) */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <MousePointer className="w-3 h-3 text-amber-500" />
-              交互评估形态 (Interaction Mode)
+              4. 交互评估形态 (Interaction Mode)
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(Object.keys(INTERACTION_TAG_LABELS) as InteractionTag[]).map((i) => {
@@ -328,11 +366,11 @@ export function FilterEngine({
             </div>
           </div>
 
-          {/* 4. 实验性与状态维度 (Status Tag) */}
+          {/* 5. 特性与发布状态 (Status Tag) */}
           <div className="space-y-1.5">
             <div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
               <FlaskConical className="w-3 h-3 text-purple-500" />
-              特性与状态 (Status Tag)
+              特性与状态 (Status)
             </div>
             <div className="flex flex-wrap gap-1.5">
               {(['stable', 'experimental'] as CardStatusTag[]).map((st) => {

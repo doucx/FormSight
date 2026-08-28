@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type {
   CardQueryOptions,
   CardStatusTag,
-  CognitiveSkillTag,
+  CognitivePathTag,
   InteractionTag,
-  SensoryTargetTag,
+  MentalChallengeTag,
+  VisualDomainTag,
 } from '../types/card';
 
 export type RouteLocation =
@@ -14,11 +15,12 @@ export type RouteLocation =
 
 function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const packId = params.get('pack') || undefined;
-  const targets = params.get('targets')?.split(',').filter(Boolean) as
-    | SensoryTargetTag[]
+  const domains = params.get('domains')?.split(',').filter(Boolean) as
+    | VisualDomainTag[]
     | undefined;
-  const skills = params.get('skills')?.split(',').filter(Boolean) as
-    | CognitiveSkillTag[]
+  const paths = params.get('paths')?.split(',').filter(Boolean) as CognitivePathTag[] | undefined;
+  const challenges = params.get('challenges')?.split(',').filter(Boolean) as
+    | MentalChallengeTag[]
     | undefined;
   const interactions = params.get('interactions')?.split(',').filter(Boolean) as
     | InteractionTag[]
@@ -39,8 +41,9 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
 
   if (
     !packId &&
-    (!targets || targets.length === 0) &&
-    (!skills || skills.length === 0) &&
+    (!domains || domains.length === 0) &&
+    (!paths || paths.length === 0) &&
+    (!challenges || challenges.length === 0) &&
     (!interactions || interactions.length === 0) &&
     (!statuses || statuses.length === 0) &&
     !searchKeyword
@@ -50,8 +53,9 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
 
   return {
     packId,
-    targets: targets && targets.length > 0 ? targets : undefined,
-    skills: skills && skills.length > 0 ? skills : undefined,
+    domains: domains && domains.length > 0 ? domains : undefined,
+    paths: paths && paths.length > 0 ? paths : undefined,
+    challenges: challenges && challenges.length > 0 ? challenges : undefined,
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
     statuses,
     searchKeyword,
@@ -87,11 +91,14 @@ function stringifyRoute(route: RouteLocation): string {
     if (route.query.packId && route.query.packId !== 'all') {
       params.set('pack', route.query.packId);
     }
-    if (route.query.targets && route.query.targets.length > 0) {
-      params.set('targets', route.query.targets.join(','));
+    if (route.query.domains && route.query.domains.length > 0) {
+      params.set('domains', route.query.domains.join(','));
     }
-    if (route.query.skills && route.query.skills.length > 0) {
-      params.set('skills', route.query.skills.join(','));
+    if (route.query.paths && route.query.paths.length > 0) {
+      params.set('paths', route.query.paths.join(','));
+    }
+    if (route.query.challenges && route.query.challenges.length > 0) {
+      params.set('challenges', route.query.challenges.join(','));
     }
     if (route.query.interactions && route.query.interactions.length > 0) {
       params.set('interactions', route.query.interactions.join(','));
