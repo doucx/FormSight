@@ -1,5 +1,6 @@
 import { Crosshair } from 'lucide-preact';
 import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { i18n } from '../../core/i18n';
 import { getTrialRecordsByCard } from '../../utils/db/index';
 
 export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
@@ -8,9 +9,9 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
   views: [
     {
       id: 'ratio_scatter',
-      tabLabel: '留白占比评估',
-      title: '负形留白占比评估分析',
-      subTitle: '洞察你对留白空间面积占比估算的直觉灵敏度',
+      tabLabel: 'packs.negative_space.analytics.ratioScatter.tabLabel',
+      title: 'packs.negative_space.analytics.ratioScatter.title',
+      subTitle: 'packs.negative_space.analytics.ratioScatter.subTitle',
       icon: Crosshair,
       renderVisualizer: (canvas, records) => {
         const ctx = canvas.getContext('2d');
@@ -54,15 +55,17 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
           <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-100 space-y-2 text-xs">
             <div className="font-bold text-emerald-900 flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-emerald-600" />
-              空间留白敏感度诊断
+              {i18n.t('packs.negative_space.analytics.ratioScatter.cardTitle')}
             </div>
             <div className="space-y-1.5 text-[11px] text-slate-700">
               <div className="flex justify-between font-mono bg-white p-2 rounded-xl border border-emerald-100">
-                <span className="text-slate-600">负形占比平均绝对误差:</span>
+                <span className="text-slate-600">
+                  {i18n.t('packs.negative_space.analytics.ratioScatter.avgError')}
+                </span>
                 <span className="font-bold text-emerald-700">±{avgRatioErr}%</span>
               </div>
               <p className="text-slate-500 leading-relaxed">
-                散点越紧贴对角线，代表对负形几何空隙的面积直觉越敏锐精准。
+                {i18n.t('packs.negative_space.analytics.ratioScatter.desc')}
               </p>
             </div>
           </div>

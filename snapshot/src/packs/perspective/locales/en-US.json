@@ -35,5 +35,17 @@
       "instruction": "Locate the 3D point in the axonometric cube grid based on the 3 views.",
       "badge": "3D Structural Rotation"
     }
+  },
+  "views": {
+    "vpHint": "Observe the existing perspective lines and adjust the slider to converge rays at the vanishing point (0°~360°)",
+    "rayAngle": "Ray Angle:",
+    "vpTrueAngle": "True Convergence Angle:",
+    "vpErrorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)",
+    "proportionDivisionHint": "Slide along the tilted segment and release to confirm proportional division (or click directly)",
+    "proportionMigrationHint": "Observe the horizontal reference above and confirm the corresponding proportion on the tilted segment below",
+    "targetRatio": "Target Proportion:",
+    "userPosition": "User Position: {{pos}}% (Error: ±{{error}}%)",
+    "gestaltHint": "Observe incoming line and identify the true collinear continuation penetrating the obstacle (Keys 1 / 2)",
+    "structureHint": "Observe the tri-view coordinates and select the corresponding 3D vertex inside the isometric grid"
   }
 }

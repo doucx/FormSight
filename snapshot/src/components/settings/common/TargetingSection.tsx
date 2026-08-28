@@ -60,6 +60,7 @@ export function TargetingSection({
           <div className={`grid ${gridCols} gap-1.5`}>
             {sectors.map((name, idx) => {
               const selected = selectedSectors.includes(idx);
+              const label = t(name) || name;
               return (
                 <button
                   type="button"
@@ -71,7 +72,7 @@ export function TargetingSection({
                       : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  {name}
+                  {label}
                 </button>
               );
             })}

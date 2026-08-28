@@ -30,13 +30,25 @@
       "badge": "负形轮廓记忆匹配"
     }
   },
+  "views": {
+    "ratioHint": "估计白色留白 (负形) 占整幅画面的面积百分比",
+    "ratioLabel": "负形空间占比估计:",
+    "areaHint": "判别哪一侧的白色留白 (负形) 面积更大 (键 1 / 2)",
+    "whiteSpace": "留白 {{ratio}}%",
+    "vertexHint": "对比左侧负形空间，在右侧点阵中点击定位被截断的顶点",
+    "vertexRefTitle": "完整剪影参考",
+    "vertexCanvasTitle": "交互定点画布 (点击定位)",
+    "memoryStimulusHint": "瞬时记忆负形轮廓特征 ({{ms}}ms)",
+    "memoryRecallHint": "匹配回忆：哪一侧与刚才展示完全相同？(键 1 / 2)"
+  },
   "analytics": {
     "ratioScatter": {
       "tabLabel": "留白占比评估",
       "title": "负形留白占比评估分析",
       "subTitle": "洞察你对留白空间面积占比估算的直觉灵敏度",
       "cardTitle": "空间留白敏感度诊断",
-      "avgError": "负形占比平均绝对误差:"
+      "avgError": "负形占比平均绝对误差:",
+      "desc": "散点越紧贴对角线，代表对负形几何空隙的面积直觉越敏锐精准。"
     }
   }
 }

@@ -29,5 +29,17 @@
       "instruction": "Identify which center square is physically brighter (Keys 1 / 2).",
       "badge": "Decontextualized"
     }
+  },
+  "views": {
+    "leftBase": "Left Anchor Reference",
+    "rightModulate": "Right Modulation (Match Perception)",
+    "rightPreview": "Right Compensated Area (Live Preview)",
+    "vectorPrompt": "Observe vector shift A➔B and pick the matching C➔D shift below",
+    "lightnessHint": "Adjust right center lightness until both center swatches appear identical",
+    "inductionHint": "Modulate right center color to counter background induction",
+    "hueSelectHint": "Observe reference and preview candidate compensations below (Keys 1-4, Space)",
+    "decontextualHint": "Pierce background illusion and identify the objectively brighter center square",
+    "physicallyBrighter": "Physically Brighter (V: {{v}}%)",
+    "physicallyDarker": "Physically Darker (V: {{v}}%)"
   }
 }

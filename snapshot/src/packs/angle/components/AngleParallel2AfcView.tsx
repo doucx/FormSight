@@ -1,6 +1,7 @@
 import { Split } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
+import { useTranslation } from '../../../core/i18n';
 import {
   ANGLE_2AFC_SIZE,
   ANGLE_PROMPT_SIZE,
@@ -25,13 +26,14 @@ export function AngleParallel2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AngleParallel2AfcViewProps) {
+  const { t } = useTranslation();
   const isAHit = question.parallelSide === 'A';
   const isBHit = question.parallelSide === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText="观察上方基准线，选出下方与它严格平行的线 (键 1 / 2)"
+      hintText={t('packs.angle.views.parallelHint')}
       hintIcon={Split}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -41,7 +43,7 @@ export function AngleParallel2AfcView({
       prompt={
         <div className="flex flex-col items-center gap-1.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            平行基准线 (Prompt)
+            {t('packs.angle.views.parallelPromptTitle')}
           </span>
           <CanvasView
             width={ANGLE_PROMPT_SIZE}
@@ -55,12 +57,12 @@ export function AngleParallel2AfcView({
         </div>
       }
       optionA={{
-        title: '选项 A',
+        title: t('common.optionA'),
         isCorrect: isAHit,
         badge: showAnswer
           ? isAHit
-            ? '绝对平行'
-            : `偏转 ${question.angularDeviation}°`
+            ? t('packs.angle.views.absoluteParallel')
+            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
@@ -77,12 +79,12 @@ export function AngleParallel2AfcView({
         ),
       }}
       optionB={{
-        title: '选项 B',
+        title: t('common.optionB'),
         isCorrect: isBHit,
         badge: showAnswer
           ? isBHit
-            ? '绝对平行'
-            : `偏转 ${question.angularDeviation}°`
+            ? t('packs.angle.views.absoluteParallel')
+            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">

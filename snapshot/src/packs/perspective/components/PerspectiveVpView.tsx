@@ -1,6 +1,8 @@
 import { Sliders } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
+import { useTranslation } from '../../../core/i18n';
 import {
   PERSPECTIVE_CANVAS_SIZE,
   type PerspectiveHitResult,
@@ -19,8 +21,6 @@ interface PerspectiveVpViewProps {
   showCanvasHints?: boolean;
 }
 
-import { useEffect, useState } from 'preact/hooks';
-
 export function PerspectiveVpView({
   question,
   showAnswer,
@@ -31,6 +31,7 @@ export function PerspectiveVpView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: PerspectiveVpViewProps) {
+  const { t } = useTranslation();
   const targetVal = question.targetAngleDeg ?? 0;
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
@@ -49,11 +50,11 @@ export function PerspectiveVpView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText="观察已有透视基准线，调制滑块旋转第三条射线使其交汇于同一灭点 (0°~360°)"
+      hintText={t('packs.perspective.views.vpHint')}
       hintIcon={Sliders}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label="射线倾角:"
+      label={t('packs.perspective.views.rayAngle')}
       max={360}
       step={0.5}
       initialValue={180}
@@ -102,10 +103,14 @@ export function PerspectiveVpView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-slate-500">
-              精准交汇角: <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
+              {t('packs.perspective.views.vpTrueAngle')}{' '}
+              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              误差: {userAnswer?.errorValue}° (容错: ±{tolerance}°)
+              {t('packs.perspective.views.vpErrorInfo', {
+                error: userAnswer?.errorValue ?? 0,
+                tolerance,
+              })}
             </span>
           </div>
         ) : null

@@ -2,6 +2,7 @@ import { Maximize2 } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
+import { useTranslation } from '../../../core/i18n';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
   type NegativeSpaceHitResult,
@@ -29,17 +30,18 @@ export function RatioEstimationView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: RatioEstimationViewProps) {
+  const { t } = useTranslation();
   const { targetNegativeRatio, tolerance } = question;
   const isHit = Boolean(userAnswer?.isHit);
 
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText="估计白色留白 (负形) 占整幅画面的面积百分比"
+      hintText={t('packs.negative_space.views.ratioHint')}
       hintIcon={Maximize2}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label="负形空间占比估计:"
+      label={t('packs.negative_space.views.ratioLabel')}
       max={100}
       step={0.1}
       initialValue={50.0}
@@ -53,7 +55,7 @@ export function RatioEstimationView({
       disabled={disabled}
       hitMargin={hitMargin}
       submitMode="button"
-      submitButtonText="确认提交 (Space)"
+      submitButtonText={t('common.confirmSpace')}
       onAnswer={onAnswer}
       preview={
         <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">

@@ -30,13 +30,25 @@
       "badge": "Shape Match"
     }
   },
+  "views": {
+    "ratioHint": "Estimate the area percentage of white negative space relative to the whole scene",
+    "ratioLabel": "Negative Space Ratio Estimation:",
+    "areaHint": "Identify which side contains larger negative white space area (Keys 1 / 2)",
+    "whiteSpace": "White Space {{ratio}}%",
+    "vertexHint": "Compare negative space and click to locate the truncated vertex on the right",
+    "vertexRefTitle": "Full Reference Silhouette",
+    "vertexCanvasTitle": "Interactive Point Grid (Click to Locate)",
+    "memoryStimulusHint": "Memorize the negative space contour ({{ms}}ms)",
+    "memoryRecallHint": "Recall Match: Which side matches the shape just shown? (Keys 1 / 2)"
+  },
   "analytics": {
     "ratioScatter": {
       "tabLabel": "Ratio Estimation",
       "title": "Negative Space Ratio Analysis",
       "subTitle": "Insights into your perceptual sensitivity for negative space area",
       "cardTitle": "Space Sensitivity Diagnostics",
-      "avgError": "Average Ratio Error:"
+      "avgError": "Average Ratio Error:",
+      "desc": "The closer points lie to the diagonal, the sharper your spatial area intuition."
     }
   }
 }

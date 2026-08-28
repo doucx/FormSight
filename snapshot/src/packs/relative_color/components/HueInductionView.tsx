@@ -3,6 +3,7 @@ import { useState } from 'preact/hooks';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface HueInductionViewProps {
@@ -21,6 +22,7 @@ export function HueInductionView({
   disabled = false,
   showCanvasHints = true,
 }: HueInductionViewProps) {
+  const { t } = useTranslation();
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
 
   const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
@@ -56,7 +58,7 @@ export function HueInductionView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText="观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)"
+      hintText={t('packs.relative_color.views.hueSelectHint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -66,7 +68,7 @@ export function HueInductionView({
       showAnswer={showAnswer}
       disabled={disabled}
       submitMode="button"
-      submitButtonText="确认提交 (Space)"
+      submitButtonText={t('common.confirmSpace')}
       onSelectIndex={(idx) => setSelectedIdx(idx)}
       onAnswer={(_idx, option) => {
         const chosen = option.value ?? activeColor;
@@ -74,8 +76,8 @@ export function HueInductionView({
       }}
       preview={
         <DualViewportContainer
-          leftTitle="左侧固定基准"
-          rightTitle="右侧环境补偿区 (实时预览)"
+          leftTitle={t('packs.relative_color.views.leftBase')}
+          rightTitle={t('packs.relative_color.views.rightPreview')}
           leftContent={
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"

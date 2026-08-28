@@ -1,10 +1,13 @@
 import { Pause } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
 
 interface IdlePauseOverlayProps {
   onResume: () => void;
 }
 
 export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
+  const { t } = useTranslation();
+
   return (
     <div
       role="presentation"
@@ -18,16 +21,16 @@ export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
         <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
           <Pause className="w-6 h-6 animate-pulse" />
         </div>
-        <div className="text-base font-bold text-slate-800">训练已自动暂停</div>
+        <div className="text-base font-bold text-slate-800">{t('common.idlePausedTitle')}</div>
         <p className="text-xs text-slate-500 leading-relaxed">
-          检测到闲置或窗口切换，已保护您的心流与统计数据
+          {t('common.idlePausedDesc')}
         </p>
         <button
           type="button"
           onClick={onResume}
           className="mt-1 w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-95"
         >
-          点击继续训练 (或按任意键)
+          {t('common.clickToResume')}
         </button>
       </div>
     </div>

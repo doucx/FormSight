@@ -8,21 +8,21 @@ import zhCN from './locales/zh-CN.json';
 import { starPlugin } from './plugin';
 
 export const STAR_SECTORS = [
-  '正东(0°)',
-  '东北(45°)',
-  '正北(90°)',
-  '西北(135°)',
-  '正西(180°)',
-  '西南(225°)',
-  '正南(270°)',
-  '东南(315°)',
+  'packs.star.sectors.e',
+  'packs.star.sectors.ne',
+  'packs.star.sectors.n',
+  'packs.star.sectors.nw',
+  'packs.star.sectors.w',
+  'packs.star.sectors.sw',
+  'packs.star.sectors.s',
+  'packs.star.sectors.se',
 ];
 
 export const STAR_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'buttonGroup',
     key: 'gridSize',
-    title: '干扰点网格大小',
+    title: 'packs.star.settings.gridSizeTitle',
     options: [
       { label: '2x2', value: 2 },
       { label: '3x3', value: 3 },
@@ -35,8 +35,8 @@ export const STAR_SCHEMAS: SettingFieldSchema[] = [
     type: 'targeting',
     modeKey: 'targetingMode',
     sectorsKey: 'manualTargetSectors',
-    title: '弱点专项靶向强化',
-    subTitle: '选择需要靶向强化的角度扇区：',
+    title: 'packs.star.settings.targetingTitle',
+    subTitle: 'packs.star.settings.targetingSubTitle',
     sectors: STAR_SECTORS,
     gridCols: 'grid-cols-4',
   },

@@ -7,27 +7,27 @@ import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import { colorPlugin } from './plugin';
 
-export const COLOR_SECTORS = [
-  '红 (0°-30°)',
-  '橙 (30°-60°)',
-  '黄 (60°-90°)',
-  '黄绿 (90°-120°)',
-  '绿 (120°-150°)',
-  '青绿 (150°-180°)',
-  '青 (180°-210°)',
-  '蓝 (210°-240°)',
-  '蓝紫 (240°-270°)',
-  '紫 (270°-300°)',
-  '品红 (300°-330°)',
-  '紫红 (330°-360°)',
+export const COLOR_SECTOR_KEYS = [
+  'packs.color.sectors.red',
+  'packs.color.sectors.orange',
+  'packs.color.sectors.yellow',
+  'packs.color.sectors.yellowGreen',
+  'packs.color.sectors.green',
+  'packs.color.sectors.cyanGreen',
+  'packs.color.sectors.cyan',
+  'packs.color.sectors.blue',
+  'packs.color.sectors.blueViolet',
+  'packs.color.sectors.violet',
+  'packs.color.sectors.magenta',
+  'packs.color.sectors.rose',
 ];
 
 export const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'toggle',
     key: 'showToleranceBand',
-    title: '显示滑块容错感应区',
-    description: '在悬停光标两侧实时显示动态容错区间',
+    title: 'packs.color.settings.showToleranceBandTitle',
+    description: 'packs.color.settings.showToleranceBandDesc',
   },
 ];
 
@@ -37,9 +37,9 @@ export const HUE_SCHEMAS: SettingFieldSchema[] = [
     type: 'targeting',
     modeKey: 'targetingMode',
     sectorsKey: 'manualTargetSectors',
-    title: '色相弱点专项靶向强化',
-    subTitle: '选择需要靶向强化的色相扇区：',
-    sectors: COLOR_SECTORS,
+    title: 'packs.color.settings.targetingTitle',
+    subTitle: 'packs.color.settings.targetingSubTitle',
+    sectors: COLOR_SECTOR_KEYS,
     gridCols: 'grid-cols-3',
   },
 ];
@@ -49,8 +49,8 @@ export const COLOR_ALL_SCHEMAS: SettingFieldSchema[] = [
   {
     type: 'toggle',
     key: 'enableHoverColorPreview',
-    title: '综合拾色悬停颜色实时联动',
-    description: '鼠标悬停滑块时右侧色块实时跟随试探预览',
+    title: 'packs.color.settings.enableHoverColorPreviewTitle',
+    description: 'packs.color.settings.enableHoverColorPreviewDesc',
   },
 ];
 

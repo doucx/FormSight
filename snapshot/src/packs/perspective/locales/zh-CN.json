@@ -35,5 +35,17 @@
       "instruction": "结合三视图坐标，在 3D 立方体点阵中点选对应点",
       "badge": "3D 结构翻转"
     }
+  },
+  "views": {
+    "vpHint": "观察已有透视基准线，调制滑块旋转第三条射线使其交汇于同一灭点 (0°~360°)",
+    "rayAngle": "射线倾角:",
+    "vpTrueAngle": "精准交汇角:",
+    "vpErrorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)",
+    "proportionDivisionHint": "在倾斜线段上滑动试探，松手确认比例位置（也可直接点击）",
+    "proportionMigrationHint": "观察上方基准线目标点，在下方倾斜线段滑动试探并松手确认",
+    "targetRatio": "目标比例:",
+    "userPosition": "作答位置: {{pos}}% (误差: ±{{error}}%)",
+    "gestaltHint": "观察穿入线段，二选一辨识哪一侧保持了绝对真实的贯穿延伸 (键 1 / 2)",
+    "structureHint": "观察左侧正交三视图标点，在右侧 3D 立方体透视点阵中选出对应空间坐标点"
   }
 }

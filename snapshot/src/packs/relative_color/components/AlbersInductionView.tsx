@@ -3,6 +3,7 @@ import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface AlbersInductionViewProps {
@@ -38,6 +39,7 @@ export function AlbersInductionView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: AlbersInductionViewProps) {
+  const { t } = useTranslation();
   const isLightnessMode = question.mode === 'LIGHTNESS_INDUCTION';
 
   const bgLeftHex = hsvToHex(...(question.bgLeft ?? [0, 0, 100]));
@@ -56,16 +58,16 @@ export function AlbersInductionView({
     <QuestionCardShell
       hintText={
         isLightnessMode
-          ? '调节右侧中心明度，使左右两块视觉感知看起来完全一致'
-          : '调节右侧中心色彩，反向补偿背景诱导达成视觉感知一致'
+          ? t('packs.relative_color.views.lightnessHint')
+          : t('packs.relative_color.views.inductionHint')
       }
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
     >
       <DualViewportContainer
-        leftTitle="左侧固定基准"
-        rightTitle="右侧调制区 (达成感知一致)"
+        leftTitle={t('packs.relative_color.views.leftBase')}
+        rightTitle={t('packs.relative_color.views.rightModulate')}
         leftContent={
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
