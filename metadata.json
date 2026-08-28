@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat: 实现全系统双语国际化支持与 i18n 自动化检查门禁", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787900415.2091463, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] style(ui): 统一 Canvas 图表浅色风格并修复全局文字选择与截断", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787911362.902084, "duration_ms": 0}}

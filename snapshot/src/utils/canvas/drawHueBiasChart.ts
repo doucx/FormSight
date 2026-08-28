@@ -25,7 +25,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   const chartH = height - padding.top - padding.bottom;
 
   // 背景填充
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = '#F8FAFC';
   ctx.fillRect(0, 0, width, height);
 
   // 计算最大纵轴范围 (默认至少 ±30°，若有更大误差则动态扩展)
@@ -63,14 +63,14 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   for (const tick of yTicks) {
     const y = getY(tick);
-    ctx.strokeStyle = tick === 0 ? 'rgba(148, 163, 184, 0.4)' : 'rgba(51, 65, 85, 0.6)';
+    ctx.strokeStyle = tick === 0 ? '#94A3B8' : '#E2E8F0';
     ctx.setLineDash(tick === 0 ? [] : [2, 2]);
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
 
-    ctx.fillStyle = tick === 0 ? '#CBD5E1' : '#64748B';
+    ctx.fillStyle = tick === 0 ? '#334155' : '#64748B';
     const label = tick > 0 ? `+${tick}°` : `${tick}°`;
     ctx.fillText(label, padding.left - 5, y);
   }
@@ -78,7 +78,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   // 2. 绘制 X 轴色相刻度竖线 (0°, 90°, 180°, 270°, 360°)
   const xTicks = [0, 90, 180, 270, 360];
-  ctx.strokeStyle = 'rgba(51, 65, 85, 0.6)';
+  ctx.strokeStyle = '#E2E8F0';
   ctx.setLineDash([2, 2]);
   for (const h of xTicks) {
     const x = getX(h);

@@ -17,25 +17,25 @@ export function renderHeatmapCanvas(
   const cy = height / 2;
   const scale = 5;
 
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = '#F8FAFC';
   ctx.fillRect(0, 0, width, height);
 
   // 1. 背景同心圆标尺
   const rings = [5, 10, 20, 30];
   ctx.lineWidth = 1;
   for (const r of rings) {
-    ctx.strokeStyle = '#334155';
+    ctx.strokeStyle = '#E2E8F0';
     ctx.beginPath();
     ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = '#64748B';
+    ctx.fillStyle = '#94A3B8';
     ctx.font = '10px monospace';
     ctx.fillText(`${r}`, cx + r * scale + 2, cy - 4);
   }
 
   // 十字辅助基准线
-  ctx.strokeStyle = '#475569';
+  ctx.strokeStyle = '#CBD5E1';
   ctx.setLineDash([2, 2]);
   ctx.beginPath();
   ctx.moveTo(0, cy);

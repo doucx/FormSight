@@ -99,11 +99,11 @@ export function renderSessionTrendChartCanvas(
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx || history.length === 0) return;
 
-  const padding = { top: 30, right: 30, bottom: 35, left: 45 };
+  const padding = { top: 25, right: 25, bottom: 30, left: 45 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = '#F8FAFC';
   ctx.fillRect(0, 0, width, height);
 
   // 构造序列
@@ -136,7 +136,7 @@ export function renderSessionTrendChartCanvas(
 
   // 背景刻度线
   ctx.lineWidth = 1;
-  ctx.strokeStyle = '#334155';
+  ctx.strokeStyle = '#E2E8F0';
   ctx.fillStyle = '#64748B';
   ctx.font = '10px monospace';
   ctx.textAlign = 'right';
@@ -157,8 +157,8 @@ export function renderSessionTrendChartCanvas(
 
   // 面积渐变背景
   const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-  gradient.addColorStop(0, 'rgba(99, 102, 241, 0.35)');
-  gradient.addColorStop(1, 'rgba(99, 102, 241, 0.02)');
+  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.18)');
+  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
 
   ctx.beginPath();
   ctx.moveTo(getX(0), getY(levelSequence[0]));
@@ -173,7 +173,7 @@ export function renderSessionTrendChartCanvas(
 
   // 主折线
   ctx.beginPath();
-  ctx.strokeStyle = '#818CF8';
+  ctx.strokeStyle = '#4F46E5';
   ctx.lineWidth = totalPoints > 60 ? 1.8 : 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(levelSequence[0]));
@@ -187,7 +187,7 @@ export function renderSessionTrendChartCanvas(
   const isSuperCrowded = totalPoints > 80;
 
   if (!isSuperCrowded) {
-    const dotRadius = isCrowded ? 2 : 3.5;
+    const dotRadius = isCrowded ? 2.5 : 3.5;
     for (let i = 0; i < sampledPoints.length; i++) {
       const p = sampledPoints[i];
       const x = getX(i);
@@ -195,12 +195,15 @@ export function renderSessionTrendChartCanvas(
 
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.fillStyle = p.isHit ? '#22C55E' : '#EF4444';
+      ctx.fillStyle = p.isHit ? '#10B981' : '#F43F5E';
       ctx.fill();
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
   }
 
-  ctx.strokeStyle = '#475569';
+  ctx.strokeStyle = '#CBD5E1';
   ctx.beginPath();
   ctx.moveTo(padding.left, height - padding.bottom);
   ctx.lineTo(width - padding.right, height - padding.bottom);
@@ -209,5 +212,5 @@ export function renderSessionTrendChartCanvas(
   ctx.fillStyle = '#94A3B8';
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(i18n.t('stats.sessionSeqNotice'), width / 2, height - 10);
+  ctx.fillText(i18n.t('stats.sessionSeqNotice'), width / 2, height - 8);
 }

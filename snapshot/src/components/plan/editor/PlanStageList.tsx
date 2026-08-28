@@ -97,9 +97,9 @@ export function PlanStageList({
                   <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600">
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400">{cardDesc.slice(0, 26)}...</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
+                    <div className="text-[10px] text-slate-400 truncate max-w-[180px] sm:max-w-xs">{cardDesc}</div>
                   </div>
                 </div>
 

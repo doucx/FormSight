@@ -159,15 +159,15 @@ export function SessionSummaryModal({
         </div>
 
         {/* 折线图 Canvas 区 */}
-        <div className="bg-slate-900 p-3 rounded-2xl border border-slate-800 w-full overflow-hidden">
+        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-400">{t('summary.curveTitle')}</span>
+            <span className="text-[11px] font-bold text-slate-600">{t('summary.curveTitle')}</span>
             <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1 text-emerald-400">
+              <span className="flex items-center gap-1 text-emerald-600 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
                 {t('summary.hitLegend')}
               </span>
-              <span className="flex items-center gap-1 text-rose-400">
+              <span className="flex items-center gap-1 text-rose-500 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />{' '}
                 {t('summary.missLegend')}
               </span>
@@ -177,7 +177,7 @@ export function SessionSummaryModal({
             ref={canvasRef}
             width={440}
             height={160}
-            className="w-full max-w-full aspect-[11/4] rounded-xl block"
+            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-slate-100 shadow-inner"
           />
         </div>
 
