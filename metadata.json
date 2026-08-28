@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 formatTotalTime 默认使用 i18n 翻译函数以通过单元测试", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787917914.5844245, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复图表与交互画布在不同分辨率与高分屏下的渲染模糊问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787918145.954558, "duration_ms": 0}}

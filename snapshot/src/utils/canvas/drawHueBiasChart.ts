@@ -14,8 +14,10 @@ export function calcSignedHueBias(targetHue: number, userHue: number): number {
  * 绘制色相偏差度散点与趋势分析图 (横轴: 色相 0°~360°, 纵轴: 偏差度 °)
  */
 export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: UnifiedTrialRecord[]) {
-  const width = 320;
-  const height = 320;
+  const rect = canvas.getBoundingClientRect();
+  const size = Math.round(rect.width) || 340;
+  const width = size;
+  const height = size;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 

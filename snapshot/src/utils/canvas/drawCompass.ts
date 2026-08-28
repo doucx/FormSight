@@ -9,8 +9,10 @@ export interface SectorStat {
 }
 
 export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const width = 320;
-  const height = 320;
+  const rect = canvas.getBoundingClientRect();
+  const size = Math.round(rect.width) || 340;
+  const width = size;
+  const height = size;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 

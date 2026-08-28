@@ -15,6 +15,8 @@ export interface DrawPolygonOptions {
 /**
  * 在 Canvas 上清屏并绘制多边形
  */
+import { setupHiDpiCanvas } from './hidpi';
+
 export function drawPolygonCanvas({
   canvas,
   vertices,
@@ -27,7 +29,7 @@ export function drawPolygonCanvas({
   highlightColor = '#22C55E',
 }: DrawPolygonOptions): void {
   if (!canvas || !vertices || vertices.length < 3) return;
-  const ctx = canvas.getContext('2d');
+  const ctx = setupHiDpiCanvas(canvas, size, size);
   if (!ctx) return;
 
   ctx.fillStyle = bgColor;
