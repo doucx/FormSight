@@ -1,463 +1,42 @@
-好的，我将为你把 `getCardTitle`、`getCardDesc` 与 `getPackTitle` 统一应用到全站核心视图与模态框组件中，彻底消除散落各处的手工多语言模板拼接与回退代码。
+用户指出在小屏幕或窄屏分屏模式下，`TrainingShell` 顶部 Header 堆叠了过多的标签和元数据，导致高度被过度撑开、产生换行并将核心 Canvas 挤出首屏。
 
-## [WIP] refactor(i18n): 在全站组件中应用统一元数据多语言解析工具
+我将重构 `TrainingShell.tsx`，精简 Header 的信息层级，移除冗余的静态标签，压缩垂直空间与内边距，打造极简、聚焦与沉浸式的训练状态栏。
+
+## [WIP] refactor: 精简与紧凑化 TrainingShell 顶栏以优化首屏沉浸感
 
 ### 用户需求
-在 `Home.tsx`、`PlanHeroCard.tsx`、`PlanStageList.tsx`、`TrainingShell.tsx`、`SessionSummaryModal.tsx`、`GlobalStatsModal.tsx` 等全站组件中全面接入 `getCardTitle` / `getCardDesc` / `getPackTitle`，消除样板代码。
+对 `TrainingShell.tsx` 的顶部 Header 进行响应式与信息密度重构，移除在做答过程中干扰视觉的次级元数据（如冗长的领域徽标、靶向/实验性标签），提升核心指标（题量进度、当前 Level、计时）的紧凑性，确保在平板、移动设备及笔记本分屏下画布不会被挤出首屏。
+
+### 评论
+在认知与反应敏捷度训练中，心流与视觉沉浸至关重要。训练界面应遵循“极简专注”原则，将静态元数据移出做答视区，仅保留必要的实时进度与反馈，大幅改善移动端和分屏场景下的操作体验。
 
 ### 目标
-1. 重构 **主页与编排相关组件**：`Home.tsx`、`PlanHeroCard.tsx`、`PlanStageList.tsx`、`PlanSummaryModal.tsx`、`PlanTrainingView.tsx`。
-2. 重构 **训练与结算相关组件**：`TrainingShell.tsx`、`SessionSummaryModal.tsx`、`SettingsModal.tsx`、`WeaknessAnalyticsModal.tsx`。
-3. 重构 **全局统计与主路由**：`GlobalStatsModal.tsx`、`App.tsx`。
+1. 精简 Header 的垂直尺寸与内边距，从 `p-4 flex-col sm:flex-row` 优化为紧凑单行自适应弹性布局。
+2. 精简左侧标题栏信息，去除冗长的大段文字徽标，将玩法说明集成在紧凑的卡片标题与帮助浮层中。
+3. 将右侧的做答题量、Level 和计时器转化为紧凑的胶囊行内指标组件。
+4. 缩小整体垂直间距，确保主流分辨率及移动端首屏完美呈现 Canvas。
 
 ### 基本原理
-- 将原本散落在 10+ 个文件中的多语言 key 拼接和 fallback 逻辑（`t('packs.${card.packId}...') || ...`）统一收敛至 `getCardTitle` / `getCardDesc` / `getPackTitle`，降低维护成本，避免 key 命名不一致的潜在 Bug。
+通过 Tailwind 的响应式类名与弹性胶囊布局，将多行堆叠的 Header 收缩为高辨识度的单行状态栏，并在窄屏下自动隐藏非核心装饰元素，使得核心 Canvas 能始终占据视口垂直黄金中心。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/common #comp/views #concept/ui #scope/dx #ai/instruct #task/domain/architecture #task/object/i18n-unification #task/action/refactor #task/state/continue
+#intent/refine #flow/ready #priority/high
+#comp/runtime #comp/ui #concept/ui #scope/ux
+#ai/instruct
+#task/domain/ui #task/object/training-shell-header #task/action/refactor
+#task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `Home.tsx` 与 `PlanHeroCard.tsx`
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~tsx.old
-import { ModeCard } from '../components/common/ModeCard';
-import { FilterEngine } from '../components/discovery/FilterEngine';
-import { PlanHeroCard } from '../components/plan/PlanHeroCard';
-import { useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CardQueryOptions } from '../types/card';
-~~~~~
-~~~~~tsx.new
-import { ModeCard } from '../components/common/ModeCard';
-import { FilterEngine } from '../components/discovery/FilterEngine';
-import { PlanHeroCard } from '../components/plan/PlanHeroCard';
-import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CardQueryOptions } from '../types/card';
-~~~~~
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~tsx.old
-          {filteredCards.map((card) => {
-            const profile = profiles[card.id];
-            const totalTrials = profile?.totalTrials || 0;
-            const accuracy =
-              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
-            const currentLevel = profile?.currentLevel || 5;
-            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <ModeCard
-                key={card.id}
-                title={cardTitle}
-                desc={cardDesc}
-                icon={card.icon}
-                todayCount={stat.count}
-                todayTimeMs={stat.timeMs}
-                currentLevel={currentLevel}
-                accuracy={accuracy}
-                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
-                isExperimental={card.tags.status === 'experimental'}
-                onStartTraining={() => onStartCard(card.id, 'training')}
-                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
-                onOpenSettings={() => onOpenCardSettings(card.id)}
-                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
-              />
-            );
-          })}
-~~~~~
-~~~~~tsx.new
-          {filteredCards.map((card) => {
-            const profile = profiles[card.id];
-            const totalTrials = profile?.totalTrials || 0;
-            const accuracy =
-              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
-            const currentLevel = profile?.currentLevel || 5;
-            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
-            const cardTitle = getCardTitle(card, t);
-            const cardDesc = getCardDesc(card, t);
-
-            return (
-              <ModeCard
-                key={card.id}
-                title={cardTitle}
-                desc={cardDesc}
-                icon={card.icon}
-                todayCount={stat.count}
-                todayTimeMs={stat.timeMs}
-                currentLevel={currentLevel}
-                accuracy={accuracy}
-                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
-                isExperimental={card.tags.status === 'experimental'}
-                onStartTraining={() => onStartCard(card.id, 'training')}
-                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
-                onOpenSettings={() => onOpenCardSettings(card.id)}
-                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
-              />
-            );
-          })}
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/PlanHeroCard.tsx
-~~~~~
-~~~~~tsx.old
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
-import type { TrainingPlan } from '../../types/plan';
-~~~~~
-~~~~~tsx.new
-import { useEffect, useRef, useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
-import type { TrainingPlan } from '../../types/plan';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/PlanHeroCard.tsx
-~~~~~
-~~~~~tsx.old
-        {plan.items.map((item, idx) => {
-          const card = registry.getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-          const cardTitle =
-            t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-
-          return (
-            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-2xl shadow-inner">
-                <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">
-                  {idx + 1}
-                </div>
-                <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">{cardTitle}</span>
-                <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
-                  {item.targetTrials}
-                  {t('common.trialsUnit')}
-                </span>
-              </div>
-              {idx < plan.items.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-              )}
-            </div>
-          );
-        })}
-~~~~~
-~~~~~tsx.new
-        {plan.items.map((item, idx) => {
-          const card = registry.getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-          const cardTitle = getCardTitle(card, t);
-
-          return (
-            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-2 rounded-2xl shadow-inner">
-                <div className="w-5 h-5 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-mono text-[10px] font-black">
-                  {idx + 1}
-                </div>
-                <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800">{cardTitle}</span>
-                <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white px-1.5 py-0.5 rounded-lg border border-slate-100 shadow-sm">
-                  {item.targetTrials}
-                  {t('common.trialsUnit')}
-                </span>
-              </div>
-              {idx < plan.items.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-              )}
-            </div>
-          );
-        })}
-~~~~~
-
-#### Acts 2: 重构 `PlanStageList.tsx`、`PlanSummaryModal.tsx` 与 `PlanTrainingView.tsx`
-
-~~~~~act
-patch_file
-src/components/plan/editor/PlanStageList.tsx
-~~~~~
-~~~~~tsx.old
-import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
-import { useTranslation } from '../../../core/i18n';
-import { registry } from '../../../core/registry';
-import type { TrainingPlan } from '../../../types/plan';
-~~~~~
-~~~~~tsx.new
-import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
-import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
-import { registry } from '../../../core/registry';
-import type { TrainingPlan } from '../../../types/plan';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/editor/PlanStageList.tsx
-~~~~~
-~~~~~tsx.old
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
-              >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-~~~~~
-~~~~~tsx.new
-          {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle = getCardTitle(card, t);
-            const cardDesc = getCardDesc(card, t);
-
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
-              >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/PlanSummaryModal.tsx
-~~~~~
-~~~~~tsx.old
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
-import { useTranslation } from '../../core/i18n';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-~~~~~
-~~~~~tsx.new
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
-import { getCardTitle, useTranslation } from '../../core/i18n';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/PlanSummaryModal.tsx
-~~~~~
-~~~~~tsx.old
-              const Icon = stage.card.icon;
-              const cardTitle =
-                t(`packs.${stage.card.packId}.cards.${stage.card.id}.title`) ||
-                stage.card.title ||
-                stage.card.id;
-
-              return (
-                <div
-                  key={`${stage.card.id}-${idx}`}
-                  className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-lg bg-slate-800 text-white font-mono text-[10px] font-black flex items-center justify-center">
-                      {idx + 1}
-                    </div>
-                    <div className="p-1.5 rounded-xl bg-white text-indigo-600 border border-slate-200/60 shadow-sm">
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {t('common.trialsCorrect', {
-                          hits: stageHits,
-                          total: stage.history.length,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-~~~~~
-~~~~~tsx.new
-              const Icon = stage.card.icon;
-              const cardTitle = getCardTitle(stage.card, t);
-
-              return (
-                <div
-                  key={`${stage.card.id}-${idx}`}
-                  className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-lg bg-slate-800 text-white font-mono text-[10px] font-black flex items-center justify-center">
-                      {idx + 1}
-                    </div>
-                    <div className="p-1.5 rounded-xl bg-white text-indigo-600 border border-slate-200/60 shadow-sm">
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">{cardTitle}</div>
-                      <div className="text-[10px] text-slate-400">
-                        {t('common.trialsCorrect', {
-                          hits: stageHits,
-                          total: stage.history.length,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/views/PlanTrainingView.tsx
-~~~~~
-~~~~~tsx.old
-import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
-import { useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { TrainingPlan } from '../types/plan';
-~~~~~
-~~~~~tsx.new
-import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
-import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { TrainingPlan } from '../types/plan';
-~~~~~
-
-~~~~~act
-patch_file
-src/views/PlanTrainingView.tsx
-~~~~~
-~~~~~tsx.old
-  const plugin = registry.getPluginByCardId(currentCard.id);
-  if (!plugin) {
-    onExit();
-    return null;
-  }
-  const cardConfig = getCardSettings(settings, currentCard.id);
-  const cardTitle =
-    t(`packs.${currentCard.packId}.cards.${currentCard.id}.title`) ||
-    currentCard.title ||
-    currentCard.id;
-
-  const formatTime = (sec: number) => {
-~~~~~
-~~~~~tsx.new
-  const plugin = registry.getPluginByCardId(currentCard.id);
-  if (!plugin) {
-    onExit();
-    return null;
-  }
-  const cardConfig = getCardSettings(settings, currentCard.id);
-  const cardTitle = getCardTitle(currentCard, t);
-
-  const formatTime = (sec: number) => {
-~~~~~
-
-#### Acts 3: 重构 `TrainingShell.tsx`、`SessionSummaryModal.tsx`、`SettingsModal.tsx`、`WeaknessAnalyticsModal.tsx`
+#### Acts 1: 重构 `TrainingShell.tsx` Header 布局与信息密度
 
 ~~~~~act
 patch_file
 src/components/training/TrainingShell.tsx
 ~~~~~
-~~~~~tsx.old
-import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-~~~~~
-~~~~~tsx.new
-import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
-import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
-import type { CardDefinition } from '../../types/card';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/training/TrainingShell.tsx
-~~~~~
-~~~~~tsx.old
-export function TrainingShell({
-  card,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  showExitButton = true,
-  showTimer = true,
-  children,
-}: TrainingShellProps) {
-  const { t } = useTranslation();
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-  const instruction =
-    t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
-  const desc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
-  const badgeKey = card.tags.domain[0] ? `tags.domains.${card.tags.domain[0]}` : '';
-  const badge = badgeKey ? t(badgeKey) : '';
-~~~~~
-~~~~~tsx.new
-export function TrainingShell({
-  card,
-  sessionType,
-  currentLevel,
-  isTargeting = false,
-  autoNext,
-  session,
-  showExitButton = true,
-  showTimer = true,
-  children,
-}: TrainingShellProps) {
+~~~~~typescript.old
   const { t } = useTranslation();
   const cardTitle = getCardTitle(card, t);
   const instruction =
@@ -465,335 +44,233 @@ export function TrainingShell({
   const desc = getCardDesc(card, t);
   const badgeKey = card.tags.domain[0] ? `tags.domains.${card.tags.domain[0]}` : '';
   const badge = badgeKey ? t(badgeKey) : '';
-~~~~~
 
-~~~~~act
-patch_file
-src/components/SessionSummaryModal.tsx
-~~~~~
-~~~~~tsx.old
-import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
-import { useEffect, useRef } from 'preact/hooks';
-import { useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-~~~~~
-~~~~~tsx.new
-import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
-import { useEffect, useRef } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
-~~~~~
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
 
-~~~~~act
-patch_file
-src/components/SessionSummaryModal.tsx
+  const {
+    totalTrials,
+    elapsedSeconds,
+    isFinished,
+    isIdle,
+    showAnswer,
+    showSummaryModal,
+    sessionHistory,
+    resumeFromIdle,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  } = session;
+
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-6">
+      {/* 统一 Header 状态栏 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {showExitButton && (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              {t('shell.exitTraining')}
+            </button>
+          )}
+          <div className="relative flex items-center">
+            <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider flex items-center gap-1.5">
+              {cardTitle} {badge ? `· ${badge}` : ''} |{' '}
+              {sessionType === 'benchmark' ? t('shell.benchmark') : t('shell.training')}
+              {(instruction || desc) && (
+                <button
+                  type="button"
+                  onClick={() => setShowHelpTooltip(!showHelpTooltip)}
+                  onMouseEnter={() => setShowHelpTooltip(true)}
+                  onMouseLeave={() => setShowHelpTooltip(false)}
+                  className="text-indigo-400 hover:text-indigo-700 transition-colors p-0.5 rounded-md"
+                  title={t('shell.instructionTitle')}
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </span>
+
+            {showHelpTooltip && (instruction || desc) && (
+              <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-slate-900 text-white p-3 rounded-2xl shadow-xl border border-slate-800 text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
+                <div className="font-bold text-indigo-300 mb-1 flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  {t('shell.instructionTitle')}
+                </div>
+                <p className="text-slate-200 text-[11px]">{instruction || desc}</p>
+              </div>
+            )}
+          </div>
+
+          {isTargeting && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <Crosshair className="w-3.5 h-3.5 text-amber-600" />
+              {t('shell.targeting')}
+            </span>
+          )}
+
+          {card.tags.status === 'experimental' && (
+            <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl flex items-center gap-1">
+              <FlaskConical className="w-3.5 h-3.5 text-amber-600" />
+              {t('shell.experimental')}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-6 text-sm">
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              {t('shell.trialsCount')}
+            </span>
+            <span className="font-black text-gray-800">
+              {totalTrials} {sessionType === 'benchmark' ? '/ 20' : ''}
+            </span>
+          </div>
+
+          <div>
+            <span className="text-[10px] font-extrabold text-gray-400 block uppercase tracking-wider">
+              {t('shell.currentLevel')}
+            </span>
+            <span className="font-black text-indigo-600">Level {currentLevel}</span>
+          </div>
+
+          {showTimer && (
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <span className="font-mono font-bold text-slate-700">
+                {formatTime(elapsedSeconds)}
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
 ~~~~~
-~~~~~tsx.old
-export function SessionSummaryModal({
-  card,
-  sessionType,
-  elapsedSeconds,
-  history,
-  onClose,
-  onRestart,
-}: SessionSummaryModalProps) {
+~~~~~typescript.new
   const { t } = useTranslation();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-
-  const totalTrials = history.length;
-~~~~~
-~~~~~tsx.new
-export function SessionSummaryModal({
-  card,
-  sessionType,
-  elapsedSeconds,
-  history,
-  onClose,
-  onRestart,
-}: SessionSummaryModalProps) {
-  const { t } = useTranslation();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const cardTitle = getCardTitle(card, t);
+  const instruction =
+    t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
+  const desc = getCardDesc(card, t);
 
-  const totalTrials = history.length;
-~~~~~
+  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
 
-~~~~~act
-patch_file
-src/components/SettingsModal.tsx
-~~~~~
-~~~~~tsx.old
-import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-~~~~~
-~~~~~tsx.new
-import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-~~~~~
+  const {
+    totalTrials,
+    elapsedSeconds,
+    isFinished,
+    isIdle,
+    showAnswer,
+    showSummaryModal,
+    sessionHistory,
+    resumeFromIdle,
+    handleNextQuestion,
+    handleRequestFinish,
+    handleFinishSession,
+    handleRestartSession,
+  } = session;
 
-~~~~~act
-patch_file
-src/components/SettingsModal.tsx
-~~~~~
-~~~~~tsx.old
-export function SettingsModal({ card, settings, onClose, onSave }: SettingsModalProps) {
-  const { t } = useTranslation();
-  const [current, setCurrent] = useState<UserSettings>({ ...settings });
-  const cardConfig = getCardSettings(current, card.id);
+  const formatTime = (sec: number) => {
+    const m = Math.floor(sec / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-4 sm:gap-6">
+      {/* 统一 Header 状态栏：极简沉浸式紧凑单行排版 */}
+      <header className="w-full bg-white border border-gray-200/80 rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-xs flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          {showExitButton && (
+            <button
+              type="button"
+              onClick={handleRequestFinish}
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer active:scale-95"
+              title={t('shell.exitTraining')}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t('shell.exitTraining')}</span>
+            </button>
+          )}
 
-  const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
-~~~~~
-~~~~~tsx.new
-export function SettingsModal({ card, settings, onClose, onSave }: SettingsModalProps) {
-  const { t } = useTranslation();
-  const [current, setCurrent] = useState<UserSettings>({ ...settings });
-  const cardConfig = getCardSettings(current, card.id);
+          <div className="relative flex items-center min-w-0">
+            <div className="text-xs font-black text-slate-800 truncate flex items-center gap-1.5">
+              <span className="truncate">{cardTitle}</span>
+              {sessionType === 'benchmark' && (
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200/60 rounded-md flex-shrink-0">
+                  {t('shell.benchmark')}
+                </span>
+              )}
+              {(instruction || desc) && (
+                <button
+                  type="button"
+                  onClick={() => setShowHelpTooltip(!showHelpTooltip)}
+                  onMouseEnter={() => setShowHelpTooltip(true)}
+                  onMouseLeave={() => setShowHelpTooltip(false)}
+                  className="text-slate-400 hover:text-indigo-600 transition-colors p-0.5 rounded-md flex-shrink-0 cursor-pointer"
+                  title={t('shell.instructionTitle')}
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
 
-  const cardTitle = getCardTitle(card, t);
+            {showHelpTooltip && (instruction || desc) && (
+              <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-slate-900 text-white p-3 rounded-2xl shadow-xl border border-slate-800 text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
+                <div className="font-bold text-indigo-300 mb-1 flex items-center gap-1">
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  {t('shell.instructionTitle')}
+                </div>
+                <p className="text-slate-200 text-[11px]">{instruction || desc}</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-  const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
-~~~~~
+        {/* 右侧：紧凑型指标胶囊 */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 text-xs">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden sm:inline">
+              {t('shell.trialsCount')}
+            </span>
+            <span className="font-mono font-black text-slate-800">
+              {totalTrials}
+              {sessionType === 'benchmark' ? ' / 20' : ` ${t('common.trialsUnit')}`}
+            </span>
+          </div>
 
-~~~~~act
-patch_file
-src/components/WeaknessAnalyticsModal.tsx
-~~~~~
-~~~~~tsx.old
-import { BarChart2, Info, X } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import type { CardAnalyticsView } from '../core/contracts';
-import { useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CardDefinition } from '../types/card';
-import type { UnifiedTrialRecord } from '../utils/db/index';
-~~~~~
-~~~~~tsx.new
-import { BarChart2, Info, X } from 'lucide-preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
-import type { CardAnalyticsView } from '../core/contracts';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CardDefinition } from '../types/card';
-import type { UnifiedTrialRecord } from '../utils/db/index';
-~~~~~
+          <div className="flex items-center gap-1 bg-indigo-50 border border-indigo-100/80 px-2.5 py-1 rounded-xl">
+            <span className="text-[10px] font-extrabold text-indigo-500 uppercase tracking-wider hidden sm:inline">
+              Lvl
+            </span>
+            <span className="font-mono font-black text-indigo-700">{currentLevel}</span>
+          </div>
 
-~~~~~act
-patch_file
-src/components/WeaknessAnalyticsModal.tsx
-~~~~~
-~~~~~tsx.old
-export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
-  const { t } = useTranslation();
-  const plugin = registry.getAnalyticsPluginByCardId(card.id);
-  const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-
-  const views = plugin?.views ?? [];
-~~~~~
-~~~~~tsx.new
-export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModalProps) {
-  const { t } = useTranslation();
-  const plugin = registry.getAnalyticsPluginByCardId(card.id);
-  const [records, setRecords] = useState<UnifiedTrialRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const cardTitle = getCardTitle(card, t);
-
-  const views = plugin?.views ?? [];
-~~~~~
-
-#### Acts 4: 重构 `GlobalStatsModal.tsx` 与 `app.tsx`
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~tsx.old
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
-import { useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
-~~~~~
-~~~~~tsx.new
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
-import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~tsx.old
-    if (selectedFilter.startsWith('pack:')) {
-      const pId = selectedFilter.replace('pack:', '');
-      const pTitle = t(`packs.${pId}.meta.title`) || registry.getPack(pId)?.meta.title || pId;
-      return `${t('home.allPacks')} • ${pTitle}`;
-    }
-    if (selectedFilter.startsWith('domain:')) {
-      const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
-      return `Domain • ${t(DOMAIN_TAGS[d]?.i18nKey || d)}`;
-    }
-    if (selectedFilter.startsWith('path:')) {
-      const p = selectedFilter.replace('path:', '') as CognitivePathTag;
-      return `Path • ${t(PATH_TAGS[p]?.i18nKey || p)}`;
-    }
-    if (selectedFilter.startsWith('challenge:')) {
-      const c = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
-      return `Challenge • ${t(CHALLENGE_TAGS[c]?.i18nKey || c)}`;
-    }
-    if (selectedFilter.startsWith('card:')) {
-      const cardId = selectedFilter.replace('card:', '');
-      const card = registry.getCardById(cardId);
-      const cTitle = card ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title : cardId;
-      return `${cTitle}`;
-    }
-~~~~~
-~~~~~tsx.new
-    if (selectedFilter.startsWith('pack:')) {
-      const pId = selectedFilter.replace('pack:', '');
-      const pack = registry.getPack(pId);
-      const pTitle = pack ? getPackTitle(pack, t) : pId;
-      return `${t('home.allPacks')} • ${pTitle}`;
-    }
-    if (selectedFilter.startsWith('domain:')) {
-      const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
-      return `Domain • ${t(DOMAIN_TAGS[d]?.i18nKey || d)}`;
-    }
-    if (selectedFilter.startsWith('path:')) {
-      const p = selectedFilter.replace('path:', '') as CognitivePathTag;
-      return `Path • ${t(PATH_TAGS[p]?.i18nKey || p)}`;
-    }
-    if (selectedFilter.startsWith('challenge:')) {
-      const c = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
-      return `Challenge • ${t(CHALLENGE_TAGS[c]?.i18nKey || c)}`;
-    }
-    if (selectedFilter.startsWith('card:')) {
-      const cardId = selectedFilter.replace('card:', '');
-      const card = registry.getCardById(cardId);
-      const cTitle = card ? getCardTitle(card, t) : cardId;
-      return `${cTitle}`;
-    }
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~tsx.old
-                <optgroup label={t('stats.optgroupPacks')}>
-                  {packs.map((p) => {
-                    const packTitle = t(`packs.${p.packId}.meta.title`) || p.meta.title || p.packId;
-                    return (
-                      <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
-                        {packTitle}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-~~~~~
-~~~~~tsx.new
-                <optgroup label={t('stats.optgroupPacks')}>
-                  {packs.map((p) => {
-                    const packTitle = getPackTitle(p, t);
-                    return (
-                      <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
-                        {packTitle}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-~~~~~
-
-~~~~~act
-patch_file
-src/components/GlobalStatsModal.tsx
-~~~~~
-~~~~~tsx.old
-                <optgroup label={t('stats.optgroupCards')}>
-                  {allCards.map((card) => {
-                    const cardTitle =
-                      t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-                    return (
-                      <option key={`card:${card.id}`} value={`card:${card.id}`}>
-                        {cardTitle}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-~~~~~
-~~~~~tsx.new
-                <optgroup label={t('stats.optgroupCards')}>
-                  {allCards.map((card) => {
-                    const cardTitle = getCardTitle(card, t);
-                    return (
-                      <option key={`card:${card.id}`} value={`card:${card.id}`}>
-                        {cardTitle}
-                      </option>
-                    );
-                  })}
-                </optgroup>
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~tsx.old
-import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { i18n, useTranslation } from './core/i18n';
-import { registry } from './core/registry';
-import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
-~~~~~
-~~~~~tsx.new
-import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { getCardTitle, i18n, useTranslation } from './core/i18n';
-import { registry } from './core/registry';
-import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~tsx.old
-    } else if (route.type === 'train') {
-      const card = registry.getCardById(route.cardId);
-      const cardTitle = card
-        ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title
-        : t('shell.training');
-      document.title = `${cardTitle} - ${t('common.appName')}`;
-    }
-~~~~~
-~~~~~tsx.new
-    } else if (route.type === 'train') {
-      const card = registry.getCardById(route.cardId);
-      const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
-      document.title = `${cardTitle} - ${t('common.appName')}`;
-    }
+          {showTimer && (
+            <div className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-100 text-slate-600">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span className="font-mono font-bold text-[11px]">
+                {formatTime(elapsedSeconds)}
+              </span>
+            </div>
+          )}
+        </div>
+      </header>
 ~~~~~
 
 ### 下一步建议
-1. **执行构建检查**：运行 `npm run check` 确保全站国际化辅助函数替换后无任何类型或导出遗漏。
-2. **提交当前工作流**：若所有改动均已验证完毕，可随时指示创建 `[COMMIT]` 提交节点。
-
+1. 在移动设备或浏览器窄屏分屏模式（<= 768px）下验证做答画布是否稳稳保持在首屏正中。
+2. 如需进一步优化视觉纯粹感，可检查并微调各卡片中下方“下一题”按钮在自动翻页模式下的高度占用。
