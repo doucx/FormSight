@@ -336,7 +336,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
 
                 <optgroup label="—— 具体训练模块 (Cards) ——">
                   {allCards.map((card) => {
-                    const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+                    const cardTitle =
+                      t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
                     return (
                       <option key={`card:${card.id}`} value={`card:${card.id}`}>
                         {cardTitle}
@@ -435,7 +436,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   <Compass className="w-4 h-4 text-emerald-600" />
                   {t('stats.pathMasteryTitle')}
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">{t('stats.pathMasterySubtitle')}</span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {t('stats.pathMasterySubtitle')}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -476,7 +479,9 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                   <Brain className="w-4 h-4 text-rose-500" />
                   {t('stats.challengeMasteryTitle')}
                 </div>
-                <span className="text-[10px] text-slate-400 font-mono">{t('stats.challengeMasterySubtitle')}</span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {t('stats.challengeMasterySubtitle')}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -520,7 +525,8 @@ export function GlobalStatsModal({ onClose }: GlobalStatsModalProps) {
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-200" />
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-400" />
                     <div className="w-2.5 h-2.5 rounded-sm bg-indigo-600" />
-                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-800" /> {t('stats.heatmapMore')}
+                    <div className="w-2.5 h-2.5 rounded-sm bg-indigo-800" />{' '}
+                    {t('stats.heatmapMore')}
                   </div>
                 </div>
                 <div className="grid grid-cols-12 gap-1.5 self-center">

@@ -74,9 +74,7 @@ export function Home({
                 v{__APP_VERSION__}
               </span>
             </h1>
-            <p className="text-xs text-slate-400 font-medium">
-              {t('common.appSubtitle')}
-            </p>
+            <p className="text-xs text-slate-400 font-medium">{t('common.appSubtitle')}</p>
           </div>
         </div>
 
@@ -129,9 +127,7 @@ export function Home({
             <Inbox className="w-8 h-8" />
           </div>
           <div className="text-base font-bold text-slate-800">{t('home.noMatchTitle')}</div>
-          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-            {t('home.noMatchDesc')}
-          </p>
+          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
           <button
             type="button"
             onClick={() => handleQueryChange({})}
@@ -150,7 +146,8 @@ export function Home({
               totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
             const currentLevel = profile?.currentLevel || 5;
             const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
-            const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardTitle =
+              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
             const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
 
             return (

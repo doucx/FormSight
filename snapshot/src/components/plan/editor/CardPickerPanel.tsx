@@ -147,7 +147,8 @@ export function CardPickerPanel({ isAddingCard, onToggleAdding, onAddItem }: Car
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-52 overflow-y-auto pr-1">
           {availableCards.map((card) => {
             const Icon = card.icon;
-            const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardTitle =
+              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
             const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
             return (
               <button

@@ -91,9 +91,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
               <BarChart2 className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">
-                {resolveText(currentView.title)}
-              </h2>
+              <h2 className="text-lg font-bold text-slate-800">{resolveText(currentView.title)}</h2>
               <p className="text-xs text-slate-400">{resolveText(currentView.subTitle)}</p>
             </div>
           </div>

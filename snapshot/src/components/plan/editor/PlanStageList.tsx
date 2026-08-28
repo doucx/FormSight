@@ -34,7 +34,8 @@ export function PlanStageList({
         <div className="text-xs font-bold text-slate-700 flex items-center gap-2">
           <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
           <span className="text-slate-400 font-normal">
-            • {t('plan.totalTrialsSummary', { trials: totalTrials })} · {t('plan.estimatedTime', { min: estimatedMin })}
+            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
+            {t('plan.estimatedTime', { min: estimatedMin })}
           </span>
         </div>
 
@@ -79,7 +80,8 @@ export function PlanStageList({
             const card = registry.getCardById(item.cardId);
             if (!card) return null;
             const Icon = card.icon;
-            const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+            const cardTitle =
+              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
             const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
 
             return (

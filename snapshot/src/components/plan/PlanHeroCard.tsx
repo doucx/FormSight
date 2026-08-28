@@ -78,9 +78,7 @@ export function PlanHeroCard({
                 {t('common.empty')}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
-              {t('plan.emptyHeroDesc')}
-            </p>
+            <p className="text-xs text-slate-500 mt-1">{t('plan.emptyHeroDesc')}</p>
           </div>
         </div>
 
@@ -126,7 +124,9 @@ export function PlanHeroCard({
                     <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-200/90 p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
                       <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 flex items-center justify-between">
                         <span>{t('plan.switchPlan')}</span>
-                        <span className="font-mono">{t('plan.availableCount', { count: favoritePlans.length })}</span>
+                        <span className="font-mono">
+                          {t('plan.availableCount', { count: favoritePlans.length })}
+                        </span>
                       </div>
 
                       <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
@@ -162,7 +162,8 @@ export function PlanHeroCard({
                                   )}
                                 </div>
                                 <div className="text-[10px] text-slate-400 mt-0.5">
-                                  {t('plan.stageCount', { count: stageCount })} • {t('plan.totalTrialsSummary', { trials: pTrials })}
+                                  {t('plan.stageCount', { count: stageCount })} •{' '}
+                                  {t('plan.totalTrialsSummary', { trials: pTrials })}
                                 </div>
                               </div>
 
@@ -211,7 +212,8 @@ export function PlanHeroCard({
           const card = registry.getCardById(item.cardId);
           if (!card) return null;
           const Icon = card.icon;
-          const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+          const cardTitle =
+            t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
 
           return (
             <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
@@ -234,9 +236,7 @@ export function PlanHeroCard({
       </div>
 
       <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-        <div className="text-xs text-slate-400 font-medium">
-          {t('plan.syncNotice')}
-        </div>
+        <div className="text-xs text-slate-400 font-medium">{t('plan.syncNotice')}</div>
 
         <button
           type="button"

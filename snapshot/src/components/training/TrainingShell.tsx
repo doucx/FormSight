@@ -48,7 +48,8 @@ export function TrainingShell({
 }: TrainingShellProps) {
   const { t } = useTranslation();
   const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-  const instruction = t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
+  const instruction =
+    t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
   const desc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
   const badgeKey = card.tags.domain[0] ? `tags.domains.${card.tags.domain[0]}` : '';
   const badge = badgeKey ? t(badgeKey) : '';
@@ -95,7 +96,8 @@ export function TrainingShell({
           )}
           <div className="relative flex items-center">
             <span className="text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl uppercase tracking-wider flex items-center gap-1.5">
-              {cardTitle} {badge ? `· ${badge}` : ''} | {sessionType === 'benchmark' ? t('shell.benchmark') : t('shell.training')}
+              {cardTitle} {badge ? `· ${badge}` : ''} |{' '}
+              {sessionType === 'benchmark' ? t('shell.benchmark') : t('shell.training')}
               {(instruction || desc) && (
                 <button
                   type="button"

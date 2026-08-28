@@ -58,9 +58,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             <div className="text-sm font-semibold text-slate-700">
               {t('settingsModal.autoNext')}
             </div>
-            <div className="text-xs text-slate-400">
-              {t('settingsModal.autoNextDesc')}
-            </div>
+            <div className="text-xs text-slate-400">{t('settingsModal.autoNextDesc')}</div>
           </div>
           <button
             type="button"

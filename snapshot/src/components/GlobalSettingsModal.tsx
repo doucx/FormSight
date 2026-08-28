@@ -128,7 +128,12 @@ export function GlobalSettingsModal({
       a.download = `formsight_data_${dateStr}_${timeStr}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast(locale === 'zh-CN' ? '全量数据已流式导出为 JSON 备份' : 'Backup exported streamingly as JSON', 'success');
+      showToast(
+        locale === 'zh-CN'
+          ? '全量数据已流式导出为 JSON 备份'
+          : 'Backup exported streamingly as JSON',
+        'success',
+      );
     } catch (e) {
       console.error('Export failed:', e);
       showToast(locale === 'zh-CN' ? '导出失败，请重试' : 'Export failed, please retry', 'error');
@@ -144,11 +149,21 @@ export function GlobalSettingsModal({
       const text = await file.text();
       const success = await importAllData(text);
       if (success) {
-        showToast(locale === 'zh-CN' ? '数据已成功分批导入并合并！' : 'Data imported and merged successfully!', 'success');
+        showToast(
+          locale === 'zh-CN'
+            ? '数据已成功分批导入并合并！'
+            : 'Data imported and merged successfully!',
+          'success',
+        );
         onDataChanged();
         onClose();
       } else {
-        showToast(locale === 'zh-CN' ? '导入失败，备份文件格式不匹配' : 'Import failed, invalid backup file format', 'error');
+        showToast(
+          locale === 'zh-CN'
+            ? '导入失败，备份文件格式不匹配'
+            : 'Import failed, invalid backup file format',
+          'error',
+        );
       }
     }
   };
@@ -181,7 +196,12 @@ export function GlobalSettingsModal({
   const handleResetPlansConfirmed = () => {
     setShowResetPlansConfirm(false);
     resetPlansToDefault();
-    showToast(locale === 'zh-CN' ? '所有训练计划已恢复为官方预设推荐' : 'Plans restored to official presets', 'success');
+    showToast(
+      locale === 'zh-CN'
+        ? '所有训练计划已恢复为官方预设推荐'
+        : 'Plans restored to official presets',
+      'success',
+    );
     onDataChanged();
   };
 
@@ -201,7 +221,9 @@ export function GlobalSettingsModal({
                 <Globe className="w-4 h-4" />
               </div>
               <div>
-                <div className="text-xs font-bold text-slate-700">{t('settings.languageTitle')}</div>
+                <div className="text-xs font-bold text-slate-700">
+                  {t('settings.languageTitle')}
+                </div>
                 <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
               </div>
             </div>
@@ -262,9 +284,7 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">{t('settings.hintsTitle')}</div>
-                <div className="text-[11px] text-slate-400">
-                  {t('settings.hintsDesc')}
-                </div>
+                <div className="text-[11px] text-slate-400">{t('settings.hintsDesc')}</div>
               </div>
             </div>
             <button
@@ -287,9 +307,7 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-slate-700">{t('settings.idleTitle')}</div>
-                <div className="text-[11px] text-slate-400">
-                  {t('settings.idleDesc')}
-                </div>
+                <div className="text-[11px] text-slate-400">{t('settings.idleDesc')}</div>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-1.5 pt-1">
@@ -364,9 +382,7 @@ export function GlobalSettingsModal({
               </div>
               <div>
                 <div className="text-xs font-bold text-indigo-900">{t('settings.pruneTitle')}</div>
-                <div className="text-[11px] text-indigo-600">
-                  {t('settings.pruneDesc')}
-                </div>
+                <div className="text-[11px] text-indigo-600">{t('settings.pruneDesc')}</div>
               </div>
             </div>
             <button
@@ -382,7 +398,9 @@ export function GlobalSettingsModal({
           <div className="pt-2 border-t border-slate-100 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-bold text-slate-700">{t('settings.resetPlansTitle')}</div>
+                <div className="text-xs font-bold text-slate-700">
+                  {t('settings.resetPlansTitle')}
+                </div>
                 <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
               </div>
               <button
@@ -397,7 +415,9 @@ export function GlobalSettingsModal({
 
             <div className="flex items-center justify-between pt-1">
               <div>
-                <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
+                <div className="text-xs font-bold text-rose-600">
+                  {t('settings.clearDataTitle')}
+                </div>
                 <div className="text-[11px] text-slate-400">{t('settings.clearDataDesc')}</div>
               </div>
               <button

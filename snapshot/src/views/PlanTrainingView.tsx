@@ -152,7 +152,10 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return null;
   }
   const cardConfig = getCardSettings(settings, currentCard.id);
-  const cardTitle = t(`packs.${currentCard.packId}.cards.${currentCard.id}.title`) || currentCard.title || currentCard.id;
+  const cardTitle =
+    t(`packs.${currentCard.packId}.cards.${currentCard.id}.title`) ||
+    currentCard.title ||
+    currentCard.id;
 
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60)

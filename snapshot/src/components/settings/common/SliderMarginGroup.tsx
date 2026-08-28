@@ -7,12 +7,7 @@ interface SliderMarginGroupProps {
   options?: { label: string; value: number }[];
 }
 
-export function SliderMarginGroup({
-  title,
-  value,
-  onChange,
-  options,
-}: SliderMarginGroupProps) {
+export function SliderMarginGroup({ title, value, onChange, options }: SliderMarginGroupProps) {
   const { t } = useTranslation();
 
   const effectiveTitle = title || t('settingsModal.sliderMarginTitle');

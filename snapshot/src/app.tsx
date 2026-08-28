@@ -75,7 +75,9 @@ export function App() {
       document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
-      const cardTitle = card ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title : t('shell.training');
+      const cardTitle = card
+        ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title
+        : t('shell.training');
       document.title = `${cardTitle} - ${t('common.appName')}`;
     }
   }, [route, trainingPlan.name, locale, t]);
