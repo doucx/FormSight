@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M planTemplates.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787900262.9687552, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TypeScript 严格类型检查与未读变量错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1787900264.3534997, "duration_ms": 0}}

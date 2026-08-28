@@ -16,7 +16,7 @@ const STAR_SECTOR_KEYS = [
   'packs.star.sectors.se',
 ];
 
-export function createStarAnalyticsPlugin(cardId: string, titleKey: string): CardAnalyticsPlugin {
+export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
   return {
     cardId,
     fetchRecords: async (id) => getTrialRecordsByCard(id),

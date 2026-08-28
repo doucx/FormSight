@@ -107,7 +107,7 @@ class I18nManager {
 
   private resolvePath(obj: unknown, path: string): unknown {
     if (!obj || typeof obj !== 'object') return undefined;
-    return path.split('.').reduce((acc, part) => {
+    return path.split('.').reduce<unknown>((acc, part) => {
       if (acc && typeof acc === 'object' && part in acc) {
         return (acc as Record<string, unknown>)[part];
       }

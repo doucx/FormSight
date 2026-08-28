@@ -23,7 +23,7 @@ import { Home } from './views/Home';
 import { PlanTrainingView } from './views/PlanTrainingView';
 
 export function App() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const { route, navigate } = useHashRoute();
   const { todayStats, refreshTodayStats } = useTodayStats();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });

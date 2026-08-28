@@ -95,9 +95,9 @@ export const starPack: PackManifest = {
   cards: starCards,
   trainingPlugin: starPlugin,
   analyticsPlugins: {
-    star_single: createStarAnalyticsPlugin('star_single', 'star_single'),
-    star_double_h: createStarAnalyticsPlugin('star_double_h', 'star_double_h'),
-    star_double_r: createStarAnalyticsPlugin('star_double_r', 'star_double_r'),
+    star_single: createStarAnalyticsPlugin('star_single'),
+    star_double_h: createStarAnalyticsPlugin('star_double_h'),
+    star_double_r: createStarAnalyticsPlugin('star_double_r'),
   },
   locales: {
     'zh-CN': zhCN,
