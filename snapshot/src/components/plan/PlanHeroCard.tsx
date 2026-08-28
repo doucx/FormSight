@@ -11,7 +11,7 @@ import {
   Zap,
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
+import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 
@@ -212,8 +212,7 @@ export function PlanHeroCard({
           const card = registry.getCardById(item.cardId);
           if (!card) return null;
           const Icon = card.icon;
-          const cardTitle =
-            t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+          const cardTitle = getCardTitle(card, t);
 
           return (
             <div key={item.id} className="flex items-center gap-2 flex-shrink-0">

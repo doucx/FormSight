@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
-import { useTranslation } from '../../../core/i18n';
+import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { TrainingPlan } from '../../../types/plan';
 
@@ -81,9 +81,8 @@ export function PlanStageList({
             const card = registry.getCardById(item.cardId);
             if (!card) return null;
             const Icon = card.icon;
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
 
             return (
               <div

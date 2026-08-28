@@ -1,5 +1,5 @@
 import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
-import { useTranslation } from '../../core/i18n';
+import { getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 
@@ -119,10 +119,7 @@ export function PlanSummaryModal({
                   ? stage.history[stage.history.length - 1].levelAfter
                   : startLvl;
               const Icon = stage.card.icon;
-              const cardTitle =
-                t(`packs.${stage.card.packId}.cards.${stage.card.id}.title`) ||
-                stage.card.title ||
-                stage.card.id;
+              const cardTitle = getCardTitle(stage.card, t);
 
               return (
                 <div

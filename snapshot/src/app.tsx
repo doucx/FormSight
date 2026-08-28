@@ -4,7 +4,7 @@ import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
-import { i18n, useTranslation } from './core/i18n';
+import { getCardTitle, i18n, useTranslation } from './core/i18n';
 import { registry } from './core/registry';
 import { type RouteLocation, useHashRoute } from './hooks/useHashRoute';
 import { useTodayStats } from './hooks/useTodayStats';
@@ -76,9 +76,7 @@ export function App() {
       document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
-      const cardTitle = card
-        ? t(`packs.${card.packId}.cards.${card.id}.title`) || card.title
-        : t('shell.training');
+      const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
       document.title = `${cardTitle} - ${t('common.appName')}`;
     }
   }, [route, trainingPlan.name, t]);

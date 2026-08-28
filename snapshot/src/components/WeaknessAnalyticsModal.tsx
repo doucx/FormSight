@@ -1,7 +1,7 @@
 import { BarChart2, Info, X } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { CardAnalyticsView } from '../core/contracts';
-import { useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardDefinition } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db/index';
@@ -19,7 +19,7 @@ export function WeaknessAnalyticsModal({ card, onClose }: WeaknessAnalyticsModal
   const [activeViewIndex, setActiveViewIndex] = useState<number>(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+  const cardTitle = getCardTitle(card, t);
 
   const views = plugin?.views ?? [];
   const currentView = views[activeViewIndex] || views[0];

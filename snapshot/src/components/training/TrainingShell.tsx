@@ -1,7 +1,7 @@
 import { ArrowLeft, ChevronRight, Clock, Crosshair, FlaskConical, HelpCircle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
+import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { SessionSummaryModal } from '../SessionSummaryModal';
@@ -47,10 +47,10 @@ export function TrainingShell({
   children,
 }: TrainingShellProps) {
   const { t } = useTranslation();
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+  const cardTitle = getCardTitle(card, t);
   const instruction =
     t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
-  const desc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
+  const desc = getCardDesc(card, t);
   const badgeKey = card.tags.domain[0] ? `tags.domains.${card.tags.domain[0]}` : '';
   const badge = badgeKey ? t(badgeKey) : '';
 

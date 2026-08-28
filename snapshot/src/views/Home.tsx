@@ -3,7 +3,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { ModeCard } from '../components/common/ModeCard';
 import { FilterEngine } from '../components/discovery/FilterEngine';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
-import { useTranslation } from '../core/i18n';
+import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardQueryOptions } from '../types/card';
 import type { TrainingPlan } from '../types/plan';
@@ -146,9 +146,8 @@ export function Home({
               totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
             const currentLevel = profile?.currentLevel || 5;
             const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
-            const cardTitle =
-              t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
-            const cardDesc = t(`packs.${card.packId}.cards.${card.id}.desc`) || card.desc || '';
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
 
             return (
               <ModeCard

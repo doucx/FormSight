@@ -1,6 +1,6 @@
 import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
-import { useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import type { CardDefinition } from '../types/card';
 import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
@@ -32,7 +32,7 @@ export function SessionSummaryModal({
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const cardTitle = t(`packs.${card.packId}.cards.${card.id}.title`) || card.title || card.id;
+  const cardTitle = getCardTitle(card, t);
 
   const totalTrials = history.length;
   const hitCount = history.filter((h) => h.isHit).length;
