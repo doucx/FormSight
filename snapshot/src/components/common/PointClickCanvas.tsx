@@ -94,17 +94,7 @@ export function PointClickCanvas({
       const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2));
 
       // 绘制放大图像
-      loupeCtx.drawImage(
-        mainCanvas,
-        sx,
-        sy,
-        sampleSize,
-        sampleSize,
-        0,
-        0,
-        LOUPE_SIZE,
-        LOUPE_SIZE,
-      );
+      loupeCtx.drawImage(mainCanvas, sx, sy, sampleSize, sampleSize, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
       // 绘制中心十字准星
       const center = LOUPE_SIZE / 2;
@@ -133,7 +123,10 @@ export function PointClickCanvas({
 
   // 3. 屏幕坐标换算为画布坐标
   const getCanvasCoordinates = useCallback(
-    (clientX: number, clientY: number): { canvasPoint: Point; relX: number; relY: number } | null => {
+    (
+      clientX: number,
+      clientY: number,
+    ): { canvasPoint: Point; relX: number; relY: number } | null => {
       const canvas = canvasRef.current;
       const container = containerRef.current;
       if (!canvas || !container) return null;
