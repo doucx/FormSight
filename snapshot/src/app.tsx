@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { GlobalSettingsModal } from './components/GlobalSettingsModal';
-import { GlobalStatsModal } from './components/GlobalStatsModal';
 import { SettingsModal } from './components/SettingsModal';
 import { WeaknessAnalyticsModal } from './components/WeaknessAnalyticsModal';
 import { ToastContainer, type ToastMessage, type ToastType } from './components/common/Toast';
@@ -18,6 +17,7 @@ import {
 } from './utils/planStorage';
 import { type UserSettings, getCardSettings, loadSettings } from './utils/settings';
 import { GenericTrainingView } from './views/GenericTrainingView';
+import { GlobalStatsView } from './views/GlobalStatsView';
 import { Home } from './views/Home';
 import { PlanEditorView } from './views/PlanEditorView';
 import { PlanTrainingView } from './views/PlanTrainingView';
@@ -29,7 +29,6 @@ export function App() {
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [isGlobalStatsOpen, setIsGlobalStatsOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
   const [activeAnalyticsCardId, setActiveAnalyticsCardId] = useState<string | null>(null);
 
@@ -74,6 +73,8 @@ export function App() {
       document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-train') {
       document.title = `${trainingPlan.name || t('plan.todayPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'stats') {
+      document.title = `${t('stats.title')} - ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
       const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
@@ -119,8 +120,12 @@ export function App() {
           onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
           onSelectPlan={handleSelectPlanOnHome}
           onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-          onOpenGlobalStats={() => setIsGlobalStatsOpen(true)}
+          onOpenGlobalStats={() => navigate({ type: 'stats' })}
         />
+      )}
+
+      {route.type === 'stats' && (
+        <GlobalStatsView onExit={() => navigate(lastHomeRouteRef.current)} />
       )}
 
       {route.type === 'plan-editor' && (
@@ -202,8 +207,6 @@ export function App() {
           showToast={showToast}
         />
       )}
-
-      {isGlobalStatsOpen && <GlobalStatsModal onClose={() => setIsGlobalStatsOpen(false)} />}
 
       {activeSettingsCard && (
         <SettingsModal
