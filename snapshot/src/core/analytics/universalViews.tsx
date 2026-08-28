@@ -14,16 +14,43 @@ interface SatBinStat {
   accuracy: number;
 }
 
-function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] {
-  const bins: Omit<SatBinStat, 'total' | 'hits' | 'accuracy'>[] = [
-    { rangeLabel: '< 1.0s', minMs: 0, maxMs: 1000 },
-    { rangeLabel: '1.0~1.8s', minMs: 1000, maxMs: 1800 },
-    { rangeLabel: '1.8~2.8s', minMs: 1800, maxMs: 2800 },
-    { rangeLabel: '2.8~4.5s', minMs: 2800, maxMs: 4500 },
-    { rangeLabel: '> 4.5s', minMs: 4500, maxMs: Number.MAX_SAFE_INTEGER },
+export function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] {
+  if (!records || records.length === 0) {
+    return [
+      { rangeLabel: '< 1.0s', minMs: 0, maxMs: 1000, total: 0, hits: 0, accuracy: 0 },
+      { rangeLabel: '1.0~2.0s', minMs: 1000, maxMs: 2000, total: 0, hits: 0, accuracy: 0 },
+      { rangeLabel: '2.0~3.5s', minMs: 2000, maxMs: 3500, total: 0, hits: 0, accuracy: 0 },
+      { rangeLabel: '3.5~6.0s', minMs: 3500, maxMs: 6000, total: 0, hits: 0, accuracy: 0 },
+      { rangeLabel: '> 6.0s', minMs: 6000, maxMs: Number.MAX_SAFE_INTEGER, total: 0, hits: 0, accuracy: 0 },
+    ];
+  }
+
+  const times = records.map((r) => Number(r.responseTimeMs) || 0).sort((a, b) => a - b);
+  const p95 = times[Math.min(times.length - 1, Math.floor(times.length * 0.95))];
+  const maxBound = Math.max(2000, Math.ceil(p95 / 1000) * 1000);
+  const step = maxBound / 5;
+
+  const thresholds = [
+    Math.round(step),
+    Math.round(step * 2),
+    Math.round(step * 3),
+    Math.round(step * 4),
   ];
 
-  return bins.map((bin) => {
+  const formatSec = (ms: number) => {
+    const s = ms / 1000;
+    return s >= 10 ? `${Math.round(s)}s` : `${s.toFixed(1)}s`;
+  };
+
+  const rawBins: { minMs: number; maxMs: number; rangeLabel: string }[] = [
+    { minMs: 0, maxMs: thresholds[0], rangeLabel: `< ${formatSec(thresholds[0])}` },
+    { minMs: thresholds[0], maxMs: thresholds[1], rangeLabel: `${formatSec(thresholds[0])}~${formatSec(thresholds[1])}` },
+    { minMs: thresholds[1], maxMs: thresholds[2], rangeLabel: `${formatSec(thresholds[1])}~${formatSec(thresholds[2])}` },
+    { minMs: thresholds[2], maxMs: thresholds[3], rangeLabel: `${formatSec(thresholds[2])}~${formatSec(thresholds[3])}` },
+    { minMs: thresholds[3], maxMs: Number.MAX_SAFE_INTEGER, rangeLabel: `> ${formatSec(thresholds[3])}` },
+  ];
+
+  return rawBins.map((bin) => {
     const matched = records.filter(
       (r) => r.responseTimeMs >= bin.minMs && r.responseTimeMs < bin.maxMs,
     );
@@ -126,8 +153,9 @@ export function renderSpeedAccuracyVisualizer(
 
 export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentChildren {
   const bins = calculateSpeedBins(records);
-  const validBins = bins.filter((b) => b.total >= 3);
-  if (validBins.length === 0) {
+  const totalTrials = records.length;
+
+  if (totalTrials === 0) {
     return (
       <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
         {i18n.t('analyticsModal.needMoreSamples')}
@@ -135,40 +163,47 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
     );
   }
 
-  // 寻找最佳反应时间区间
-  const bestBin = [...validBins].sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
-  const fastBin = bins[0];
-  const slowBin = bins[bins.length - 1];
-
-  const hasRushImpatience = fastBin.total >= 5 && fastBin.accuracy < 60;
-  const hasHesitationDrop = slowBin.total >= 5 && slowBin.accuracy < 60;
-
   return (
-    <div className="space-y-2.5">
-      <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-2.5">
-        <Zap className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-        <div className="text-xs text-indigo-900 leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.sweetSpotTitle')}: </span>
-          {i18n.t('analyticsModal.sweetSpotDesc', {
-            range: bestBin.rangeLabel,
-            acc: bestBin.accuracy,
-          })}
-        </div>
+    <div className="space-y-2">
+      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+        {i18n.t('analyticsModal.satDistributionTitle')}
       </div>
+      <div className="space-y-1.5">
+        {bins.map((bin) => {
+          const ratio = totalTrials > 0 ? Math.round((bin.total / totalTrials) * 100) : 0;
+          return (
+            <div
+              key={bin.rangeLabel}
+              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono text-xs font-bold text-slate-700 min-w-[70px]">
+                  {bin.rangeLabel}
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
+                </span>
+              </div>
 
-      {hasRushImpatience && (
-        <div className="p-3 bg-rose-50 border border-rose-100 rounded-2xl text-xs text-rose-800 leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.impatienceWarningTitle')}: </span>
-          {i18n.t('analyticsModal.impatienceWarningDesc')}
-        </div>
-      )}
-
-      {hasHesitationDrop && (
-        <div className="p-3 bg-amber-50 border border-amber-100 rounded-2xl text-xs text-amber-800 leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.hesitationWarningTitle')}: </span>
-          {i18n.t('analyticsModal.hesitationWarningDesc')}
-        </div>
-      )}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span
+                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${
+                    bin.total === 0
+                      ? 'bg-slate-100 text-slate-400'
+                      : bin.accuracy >= 80
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : bin.accuracy >= 60
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-rose-50 text-rose-700'
+                  }`}
+                >
+                  {bin.total > 0 ? `${bin.accuracy}%` : '--'}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -340,40 +375,36 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
 }
 
 export function getCognitiveOverviewInsights(records: UnifiedTrialRecord[]): {
-  sweetSpotText: string;
+  paceSummaryText: string;
   growthZoneText: string;
 } {
   if (!records || records.length === 0) {
     return {
-      sweetSpotText: i18n.t('analyticsModal.needMoreSamples'),
+      paceSummaryText: i18n.t('analyticsModal.needMoreSamples'),
       growthZoneText: i18n.t('analyticsModal.needMoreSamples'),
     };
   }
 
-  // 1. SAT 作答速度黄金甜点区计算
+  // 1. 客观作答节奏分布概括
   const bins = calculateSpeedBins(records);
-  const validBins = bins.filter((b) => b.total >= 3);
-  let sweetSpotText = '';
+  const avgSec = (
+    records.reduce((acc, r) => acc + (Number(r.responseTimeMs) || 0), 0) /
+    records.length /
+    1000
+  ).toFixed(1);
 
-  if (validBins.length > 0) {
-    const bestBin = [...validBins].sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
-    sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
-      range: bestBin.rangeLabel,
-      acc: bestBin.accuracy,
+  const populatedBins = [...bins].filter((b) => b.total > 0);
+  const mainBin = populatedBins.sort((a, b) => b.total - a.total)[0];
+
+  let paceSummaryText = '';
+  if (mainBin) {
+    paceSummaryText = i18n.t('analyticsModal.paceSummaryDesc', {
+      avg: avgSec,
+      range: mainBin.rangeLabel,
+      acc: mainBin.accuracy,
     });
-  } else if (records.length >= 3) {
-    const populatedBins = bins.filter((b) => b.total > 0);
-    const bestBin = populatedBins.sort((a, b) => b.accuracy - a.accuracy || b.total - a.total)[0];
-    if (bestBin) {
-      sweetSpotText = i18n.t('analyticsModal.sweetSpotDesc', {
-        range: bestBin.rangeLabel,
-        acc: bestBin.accuracy,
-      });
-    }
-  }
-
-  if (!sweetSpotText) {
-    sweetSpotText = i18n.t('analyticsModal.needMoreSamples');
+  } else {
+    paceSummaryText = `${avgSec} s`;
   }
 
   // 2. 难度突破区计算
@@ -391,7 +422,7 @@ export function getCognitiveOverviewInsights(records: UnifiedTrialRecord[]): {
   }
 
   return {
-    sweetSpotText,
+    paceSummaryText,
     growthZoneText,
   };
 }

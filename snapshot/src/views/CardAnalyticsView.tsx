@@ -334,9 +334,9 @@ export function CardAnalyticsView({
                       </div>
                       <div className="text-xs text-slate-700 leading-relaxed space-y-1">
                         <div className="font-bold text-slate-900">
-                          {t('analyticsModal.sweetSpotTitle')}
+                          {t('analyticsModal.paceSummaryTitle')}
                         </div>
-                        <p className="text-slate-600">{insights.sweetSpotText}</p>
+                        <p className="text-slate-600">{insights.paceSummaryText}</p>
                       </div>
                     </div>
 
