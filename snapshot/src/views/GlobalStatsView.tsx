@@ -1,4 +1,4 @@
-import { Activity, ArrowLeft, BarChart2, ChevronDown, Filter } from 'lucide-preact';
+import { Activity, BarChart2, ChevronDown, Filter } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { ActivityHeatmapCard } from '../components/stats/ActivityHeatmapCard';
 import { CognitiveMasteryGrid } from '../components/stats/CognitiveMasteryGrid';
@@ -11,7 +11,7 @@ import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../t
 import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
 interface GlobalStatsViewProps {
-  onExit: () => void;
+  onExit?: () => void;
 }
 
 export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
@@ -46,25 +46,14 @@ export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
       {/* 顶部主操作栏 */}
       <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs">
-              <BarChart2 className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-800 tracking-tight">
-                {t('stats.title')}
-              </h1>
-              <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
-            </div>
+          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs">
+            <BarChart2 className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-xl font-black text-slate-800 tracking-tight">
+              {t('stats.title')}
+            </h1>
+            <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
           </div>
         </div>
 

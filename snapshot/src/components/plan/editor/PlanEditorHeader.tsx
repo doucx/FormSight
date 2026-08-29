@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   Check,
   Copy,
   Download,
@@ -24,7 +23,7 @@ export interface PlanEditorHeaderProps {
   showPlanManager: boolean;
   plansCount: number;
   fileInputRef: RefObject<HTMLInputElement>;
-  onExit: () => void;
+  onExit?: () => void;
   onStartEditingName: () => void;
   onCancelEditingName: () => void;
   onPlanNameChange: (name: string) => void;
@@ -74,20 +73,8 @@ export function PlanEditorHeader({
 
   return (
     <header className="w-full bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2.5 flex-shrink-0">
-      {/* 左侧：返回与计划名 */}
+      {/* 左侧：计划名与重命名 */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-        <button
-          type="button"
-          onClick={onExit}
-          className="p-2 sm:px-3 sm:py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          title={t('common.exit')}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('common.exit')}</span>
-        </button>
-
-        <div className="h-5 w-px bg-slate-200 hidden sm:block flex-shrink-0" />
-
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {isEditingName ? (
             <div className="flex items-center gap-1 w-full max-w-xs">
