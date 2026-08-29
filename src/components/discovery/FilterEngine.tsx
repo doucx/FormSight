@@ -1,52 +1,9 @@
-import {
-  Boxes,
-  Brain,
-  Compass,
-  Eye,
-  Filter,
-  FlaskConical,
-  MousePointer,
-  RotateCcw,
-  Search,
-  Sparkles,
-  X,
-} from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
-import {
-  CHALLENGE_TAGS,
-  DOMAIN_TAGS,
-  INTERACTION_TAGS,
-  PATH_TAGS,
-  STATUS_TAGS,
-} from '../../config/tags';
+import { Boxes, Filter, RotateCcw, Search, Sparkles, X } from 'lucide-preact';
 import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import type {
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  VisualDomainTag,
-} from '../../types/card';
+import type { CardQueryOptions } from '../../types/card';
 import { TagPill } from '../common/TagPill';
-
-function FilterSectionHeader({
-  icon: Icon,
-  title,
-  iconColorClass = 'text-indigo-500',
-}: {
-  icon: (props: { className?: string }) => ComponentChildren;
-  title: string;
-  iconColorClass?: string;
-}) {
-  return (
-    <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-      <Icon className={`w-3 h-3 ${iconColorClass}`} />
-      {title}
-    </div>
-  );
-}
+import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
 
 interface FilterEngineProps {
   query: CardQueryOptions;
@@ -64,73 +21,16 @@ export function FilterEngine({
   onChange,
 }: FilterEngineProps) {
   const { t } = useTranslation();
-
   const isCompact = variant === 'compact';
   const isAdvancedOpen = Boolean(query.showAdvanced);
-
-  const toggleAdvancedOpen = () => {
-    onChange({
-      ...query,
-      showAdvanced: !isAdvancedOpen,
-    });
-  };
-
   const packs = registry.getAllPacks();
 
-  const handleSearchChange = (val: string) => {
-    onChange({
-      ...query,
-      searchKeyword: val || undefined,
-    });
-  };
-
-  const toggleDomain = (domain: VisualDomainTag) => {
-    const current = query.domains || [];
-    const next = current.includes(domain)
-      ? current.filter((d) => d !== domain)
-      : [...current, domain];
-    onChange({ ...query, domains: next.length > 0 ? next : undefined });
-  };
-
-  const togglePath = (path: CognitivePathTag) => {
-    const current = query.paths || [];
-    const next = current.includes(path) ? current.filter((p) => p !== path) : [...current, path];
-    onChange({ ...query, paths: next.length > 0 ? next : undefined });
-  };
-
-  const toggleChallenge = (challenge: MentalChallengeTag) => {
-    const current = query.challenges || [];
-    const next = current.includes(challenge)
-      ? current.filter((c) => c !== challenge)
-      : [...current, challenge];
-    onChange({ ...query, challenges: next.length > 0 ? next : undefined });
-  };
-
-  const toggleInteraction = (interaction: InteractionTag) => {
-    const current = query.interactions || [];
-    const next = current.includes(interaction)
-      ? current.filter((i) => i !== interaction)
-      : [...current, interaction];
-    onChange({ ...query, interactions: next.length > 0 ? next : undefined });
-  };
-
-  const toggleStatus = (status: CardStatusTag) => {
-    const current = query.statuses || [];
-    const next = current.includes(status)
-      ? current.filter((s) => s !== status)
-      : [...current, status];
-    onChange({ ...query, statuses: next.length > 0 ? next : undefined });
-  };
-
-  const handleSelectPack = (packId?: string) => {
-    onChange({
-      ...query,
-      packId: packId || undefined,
-    });
-  };
-
-  const handleResetFilters = () => {
-    onChange(isAdvancedOpen ? { showAdvanced: true } : {});
+  const toggleDimension = <T extends string>(key: keyof CardQueryOptions, value: T) => {
+    const current = (query[key] as T[] | undefined) || [];
+    const next = current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value];
+    onChange({ ...query, [key]: next.length > 0 ? next : undefined });
   };
 
   const hasActiveFilters = Boolean(
@@ -162,7 +62,12 @@ export function FilterEngine({
           <input
             type="text"
             value={query.searchKeyword || ''}
-            onInput={(e) => handleSearchChange((e.target as HTMLInputElement).value)}
+            onInput={(e) =>
+              onChange({
+                ...query,
+                searchKeyword: (e.target as HTMLInputElement).value || undefined,
+              })
+            }
             placeholder={t('home.searchPlaceholder')}
             className={`w-full ${
               isCompact
@@ -173,10 +78,8 @@ export function FilterEngine({
           {query.searchKeyword && (
             <button
               type="button"
-              onClick={() => handleSearchChange('')}
-              className={
-                'absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer'
-              }
+              onClick={() => onChange({ ...query, searchKeyword: undefined })}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -193,7 +96,7 @@ export function FilterEngine({
 
           <button
             type="button"
-            onClick={toggleAdvancedOpen}
+            onClick={() => onChange({ ...query, showAdvanced: !isAdvancedOpen })}
             className={`${
               isCompact ? 'px-2.5 py-1.5 text-[11px] rounded-lg' : 'px-3 py-2 text-xs rounded-xl'
             } font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
@@ -211,7 +114,7 @@ export function FilterEngine({
           {hasActiveFilters && (
             <button
               type="button"
-              onClick={handleResetFilters}
+              onClick={() => onChange(isAdvancedOpen ? { showAdvanced: true } : {})}
               className={`${
                 isCompact ? 'px-2 py-1.5 text-[11px] rounded-lg' : 'px-2.5 py-2 text-xs rounded-xl'
               } font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 transition-all flex items-center gap-1 cursor-pointer`}
@@ -237,7 +140,7 @@ export function FilterEngine({
               size={tagSize}
               label={t('home.allPacks')}
               selected={!query.packId}
-              onClick={() => handleSelectPack(undefined)}
+              onClick={() => onChange({ ...query, packId: undefined })}
             />
             {packs.map((p) => (
               <TagPill
@@ -246,7 +149,9 @@ export function FilterEngine({
                 label={getPackTitle(p, t)}
                 count={p.cards.length}
                 selected={query.packId === p.packId}
-                onClick={() => handleSelectPack(query.packId === p.packId ? undefined : p.packId)}
+                onClick={() =>
+                  onChange({ ...query, packId: query.packId === p.packId ? undefined : p.packId })
+                }
               />
             ))}
           </div>
@@ -255,112 +160,16 @@ export function FilterEngine({
 
       {/* 高级五维标签矩阵折叠区 */}
       {isAdvancedOpen && (
-        <div
-          className={`space-y-2.5 border-t border-slate-200/60 ${
-            isCompact ? 'pt-2 max-h-52 overflow-y-auto pr-1' : 'pt-3.5 space-y-3.5'
-          } animate-in fade-in duration-150`}
-        >
-          {/* 1. 视觉域维度 (Visual Domain) */}
-          <div className="space-y-1">
-            <FilterSectionHeader icon={Eye} title={t('home.domainSection')} />
-            <div className="flex flex-wrap gap-1">
-              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => (
-                <TagPill
-                  key={d}
-                  size={tagSize}
-                  label={t(DOMAIN_TAGS[d].i18nKey)}
-                  themeColor={DOMAIN_TAGS[d].themeColor || 'indigo'}
-                  selected={query.domains?.includes(d) ?? false}
-                  onClick={() => toggleDomain(d)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 2. 认知路径维度 (Cognitive Path) */}
-          <div className="space-y-1">
-            <FilterSectionHeader
-              icon={Compass}
-              title={t('home.pathSection')}
-              iconColorClass="text-emerald-500"
-            />
-            <div className="flex flex-wrap gap-1">
-              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => (
-                <TagPill
-                  key={p}
-                  size={tagSize}
-                  label={t(PATH_TAGS[p].i18nKey)}
-                  themeColor={PATH_TAGS[p].themeColor || 'emerald'}
-                  selected={query.paths?.includes(p) ?? false}
-                  onClick={() => togglePath(p)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 3. 心智抗性维度 (Mental Challenge) */}
-          <div className="space-y-1">
-            <FilterSectionHeader
-              icon={Brain}
-              title={t('home.challengeSection')}
-              iconColorClass="text-rose-500"
-            />
-            <div className="flex flex-wrap gap-1">
-              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => (
-                <TagPill
-                  key={c}
-                  size={tagSize}
-                  label={t(CHALLENGE_TAGS[c].i18nKey)}
-                  themeColor={CHALLENGE_TAGS[c].themeColor || 'rose'}
-                  selected={query.challenges?.includes(c) ?? false}
-                  onClick={() => toggleChallenge(c)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 4. 交互形态维度 (Interaction Mode) */}
-          <div className="space-y-1">
-            <FilterSectionHeader
-              icon={MousePointer}
-              title={t('home.interactionSection')}
-              iconColorClass="text-amber-500"
-            />
-            <div className="flex flex-wrap gap-1">
-              {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => (
-                <TagPill
-                  key={i}
-                  size={tagSize}
-                  label={t(INTERACTION_TAGS[i].i18nKey)}
-                  themeColor={INTERACTION_TAGS[i].themeColor || 'amber'}
-                  selected={query.interactions?.includes(i) ?? false}
-                  onClick={() => toggleInteraction(i)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* 5. 特性与发布状态 (Status Tag) */}
-          <div className="space-y-1">
-            <FilterSectionHeader
-              icon={FlaskConical}
-              title={t('home.statusSection')}
-              iconColorClass="text-purple-500"
-            />
-            <div className="flex flex-wrap gap-1">
-              {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
-                <TagPill
-                  key={st}
-                  size={tagSize}
-                  label={t(STATUS_TAGS[st].i18nKey)}
-                  themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')}
-                  selected={query.statuses?.includes(st) ?? false}
-                  onClick={() => toggleStatus(st)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
+        <AdvancedTagMatrix
+          query={query}
+          tagSize={tagSize}
+          isCompact={isCompact}
+          onToggleDomain={(d) => toggleDimension('domains', d)}
+          onTogglePath={(p) => toggleDimension('paths', p)}
+          onToggleChallenge={(c) => toggleDimension('challenges', c)}
+          onToggleInteraction={(i) => toggleDimension('interactions', i)}
+          onToggleStatus={(st) => toggleDimension('statuses', st)}
+        />
       )}
     </div>
   );
