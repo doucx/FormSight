@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 将全局导航顶栏重构为响应式侧边栏", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788006418.8256333, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(ui): 在侧边栏底部添加 GitHub 与爱发电外链", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788006796.5255082, "duration_ms": 0}}

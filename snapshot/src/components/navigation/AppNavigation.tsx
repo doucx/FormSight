@@ -1,4 +1,4 @@
-import { BarChart2, Compass, Layers, Settings, Sparkles, Target } from 'lucide-preact';
+import { BarChart2, Compass, Github, Layers, Settings, Sparkles, Target } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 
@@ -6,6 +6,15 @@ interface AppNavigationProps {
   currentRoute: RouteLocation;
   onNavigate: (route: RouteLocation) => void;
   onOpenSettings: () => void;
+}
+
+/** 爱发电 (Afdian) 专属矢量图标 */
+function AfdianIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.4 15.6l-1-4.6h3.4l-6.8 7 1.2-5.4H7.2l6.2-7-.6 4.6h3.4l-4.4 5.4z" />
+    </svg>
+  );
 }
 
 export function AppNavigation({
@@ -105,16 +114,41 @@ export function AppNavigation({
           </nav>
         </div>
 
-        {/* 侧边栏底部设置入口 */}
-        <div className="pt-4 border-t border-slate-100">
+        {/* 侧边栏底部：设置与社区外链 */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
           <button
             type="button"
             onClick={onOpenSettings}
-            className="w-full py-2.5 px-3.5 rounded-2xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center gap-3 cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center gap-2.5 cursor-pointer"
           >
             <Settings className="w-4 h-4 text-slate-400" />
             <span className="truncate">{t('common.globalSettings')}</span>
           </button>
+
+          {/* GitHub & 爱发电外链按钮组 */}
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <a
+              href="https://github.com/doucx/FormSight"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              title="GitHub 开源仓库"
+            >
+              <Github className="w-3.5 h-3.5" />
+              <span>GitHub</span>
+            </a>
+
+            <a
+              href="https://afdian.com/a/AyeLTesf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-2 bg-purple-50/70 hover:bg-purple-100/70 text-purple-700 hover:text-purple-900 border border-purple-200/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              title="爱发电赞助支持"
+            >
+              <AfdianIcon className="w-3.5 h-3.5 text-purple-600" />
+              <span>爱发电</span>
+            </a>
+          </div>
         </div>
       </aside>
 

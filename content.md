@@ -1,41 +1,40 @@
-我们将把全局导航栏重构为**桌面端左侧固定侧边栏（Sidebar）+ 移动端底部便携导航栏（Bottom Nav）**的响应式布局，使页面空间结构更开阔，内容区具备更佳的纵向浏览视野。
+我们将在桌面端侧边栏底部（以及设置区域下方）加入 GitHub 开源仓库与爱发电（Afdian）支持入口，配备专属矢量图标与外链安全属性。
 
-## [WIP] refactor(ui): 将全局导航顶栏重构为响应式侧边栏
+## [WIP] feat(ui): 在侧边栏底部添加 GitHub 与爱发电外链
 
 ### 用户需求
-将原先位于内容区上方的全局顶栏改为侧边栏：
-1. **桌面端 (Desktop)**：在屏幕左侧固定呈现纵向侧边栏，包含 Logo、主导航项列表与底部偏好设置按钮。
-2. **移动端 (Mobile)**：自适应转为底部悬浮/固定便携导航栏，保证单手操作便利性，同时给主内容区留出完整的垂直高度。
-3. **内容视口 (Main Viewport)**：自适应右侧区域，各子视图获得更干净且专注的展示空间。
+在侧边栏底部放置两个外部链接及其对应图标：
+1. **爱发电 (Afdian)**：`https://afdian.com/a/AyeLTesf`
+2. **GitHub**：`https://github.com/doucx/FormSight`
 
 ### 评论
-侧边栏布局是现代桌面 Web 应用（如 Linear、Notion、Figma 等）的标准交互范式。相较于顶栏，左侧固定侧边栏不会挤压主内容区的垂直高度，导航层级更直观，同时为后续拓展或状态常驻预留了良好的空间。
+将项目开源地址与创作者赞助通道固定在侧边栏底部，是开源 Web 工具的标准最佳实践（如 Excalidraw、tldraw、Vue/React 官方文档等）。这不仅增强了开源项目的透明度与社群连接，同时也为用户提供了便捷的反馈和赞助支持途径。
 
 ### 目标
-1. 重构 `src/components/navigation/AppNavigation.tsx`，实现桌面端左侧垂直固定侧栏与移动端底部栏的自适应切换。
-2. 调整 `src/components/routing/AppRouter.tsx` 的外层 Shell 容器，采用 `flex-row` 左右分栏布局。
-3. 调整 `src/app.tsx` 的顶层包装容器内边距，使侧边栏与主内容区无缝贴合。
+1. 在 `src/components/navigation/AppNavigation.tsx` 中集成 GitHub 矢量图标与爱发电专用矢量图标。
+2. 在桌面端侧边栏底部的设置项下方，优雅地平铺展示 GitHub 与爱发电的外链按钮组。
+3. 确保所有外部链接均带有 `target="_blank"` 与 `rel="noopener noreferrer"` 安全属性。
 
 ### 基本原理
-利用 Tailwind 的响应式前缀（`md:flex-col md:w-60 md:h-screen md:sticky` 与 `md:hidden fixed bottom-0`），在桌面端实现紧贴视口左侧的常驻侧边栏，在移动端自动降级为底部导航，主内容区通过 `pb-20 md:pb-8` 避免移动端遮挡，兼顾各类屏幕设备的操作体验。
+在侧边栏底部的通用操作区（设置项同级）划分出一个小型的社区支持与外链区域，使用紧凑的图标胶囊按钮排版，既不抢夺主导航注意力，又清晰易触达。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/sidebar-layout-navigation #task/action/refactor #task/state/continue
+#intent/build #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/sidebar-footer-links #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `AppNavigation.tsx` 为响应式侧边栏组件
+#### Acts 1: 在 `AppNavigation.tsx` 中增加 GitHub 与爱发电图标外链
 
-我们将 `AppNavigation.tsx` 升级为支持桌面端左侧垂直固定与移动端底部常驻的完整导航组件。
+我们将修改 `src/components/navigation/AppNavigation.tsx`，在桌面端侧栏底部嵌入精美、合规的外链按钮群。
 
 ~~~~~act
 write_file
 src/components/navigation/AppNavigation.tsx
 ~~~~~
 ~~~~~typescript
-import { BarChart2, Compass, Layers, Settings, Sparkles, Target } from 'lucide-preact';
+import { BarChart2, Compass, Github, Layers, Settings, Sparkles, Target } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 
@@ -43,6 +42,15 @@ interface AppNavigationProps {
   currentRoute: RouteLocation;
   onNavigate: (route: RouteLocation) => void;
   onOpenSettings: () => void;
+}
+
+/** 爱发电 (Afdian) 专属矢量图标 */
+function AfdianIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.4 15.6l-1-4.6h3.4l-6.8 7 1.2-5.4H7.2l6.2-7-.6 4.6h3.4l-4.4 5.4z" />
+    </svg>
+  );
 }
 
 export function AppNavigation({
@@ -142,16 +150,41 @@ export function AppNavigation({
           </nav>
         </div>
 
-        {/* 侧边栏底部设置入口 */}
-        <div className="pt-4 border-t border-slate-100">
+        {/* 侧边栏底部：设置与社区外链 */}
+        <div className="pt-4 border-t border-slate-100 space-y-2">
           <button
             type="button"
             onClick={onOpenSettings}
-            className="w-full py-2.5 px-3.5 rounded-2xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center gap-3 cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition-all flex items-center gap-2.5 cursor-pointer"
           >
             <Settings className="w-4 h-4 text-slate-400" />
             <span className="truncate">{t('common.globalSettings')}</span>
           </button>
+
+          {/* GitHub & 爱发电外链按钮组 */}
+          <div className="grid grid-cols-2 gap-1.5 pt-1">
+            <a
+              href="https://github.com/doucx/FormSight"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              title="GitHub 开源仓库"
+            >
+              <Github className="w-3.5 h-3.5" />
+              <span>GitHub</span>
+            </a>
+
+            <a
+              href="https://afdian.com/a/AyeLTesf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-1.5 px-2 bg-purple-50/70 hover:bg-purple-100/70 text-purple-700 hover:text-purple-900 border border-purple-200/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              title="爱发电赞助支持"
+            >
+              <AfdianIcon className="w-3.5 h-3.5 text-purple-600" />
+              <span>爱发电</span>
+            </a>
+          </div>
         </div>
       </aside>
 
@@ -190,94 +223,6 @@ export function AppNavigation({
 }
 ~~~~~
 
-#### Acts 2: 调整 `AppRouter.tsx` 与 `app.tsx` 页面布局容器
-
-我们将 `AppRouter.tsx` 调整为左右分栏布局，并在 `app.tsx` 中优化全局外层样式。
-
-~~~~~act
-patch_file
-src/components/routing/AppRouter.tsx
-~~~~~
-~~~~~typescript
-  if (isMainShellPage) {
-    return (
-      <div className="w-full flex flex-col gap-6">
-        <AppNavigation
-          currentRoute={route}
-          onNavigate={(target) => navigate(target)}
-          onOpenSettings={onOpenGlobalSettings}
-        />
-        {renderMainContent()}
-      </div>
-    );
-  }
-~~~~~
-~~~~~typescript
-  if (isMainShellPage) {
-    return (
-      <div className="min-h-screen flex flex-col md:flex-row w-full">
-        <AppNavigation
-          currentRoute={route}
-          onNavigate={(target) => navigate(target)}
-          onOpenSettings={onOpenGlobalSettings}
-        />
-        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 overflow-y-auto">
-          {renderMainContent()}
-        </main>
-      </div>
-    );
-  }
-~~~~~
-
-~~~~~act
-patch_file
-src/app.tsx
-~~~~~
-~~~~~typescript
-  return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 antialiased">
-      <AppRouter
-        route={route}
-        navigate={navigate}
-        lastHomeRoute={lastHomeRoute}
-        totalTimeMs={totalTimeMs}
-        todayStats={todayStats}
-        profiles={profiles}
-        trainingPlan={trainingPlan}
-        allPlans={allPlans}
-        settings={settings}
-        profilesLoaded={profilesLoaded}
-        onRefreshProfiles={refreshProfiles}
-        onSetTrainingPlan={setTrainingPlan}
-        onSelectPlanOnHome={handleSelectPlanOnHome}
-        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-        showToast={showToast}
-      />
-~~~~~
-~~~~~typescript
-  return (
-    <div className="min-h-screen bg-slate-50/70 antialiased">
-      <AppRouter
-        route={route}
-        navigate={navigate}
-        lastHomeRoute={lastHomeRoute}
-        totalTimeMs={totalTimeMs}
-        todayStats={todayStats}
-        profiles={profiles}
-        trainingPlan={trainingPlan}
-        allPlans={allPlans}
-        settings={settings}
-        profilesLoaded={profilesLoaded}
-        onRefreshProfiles={refreshProfiles}
-        onSetTrainingPlan={setTrainingPlan}
-        onSelectPlanOnHome={handleSelectPlanOnHome}
-        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-        showToast={showToast}
-      />
-~~~~~
-
 ### 下一步建议
-1. **代码检查与构建验证**：运行 `npm run check` 确保 Biome 规范校验及 TypeScript 类型无报错。
-2. **响应式断点测试**：在桌面端宽屏与移动端窄屏下分别测试侧边栏与底部导航的切换过渡是否平滑、内容区域是否居中且无遮挡。
+1. **代码检查**：运行 `npm run check` 确保无 TypeScript 或 Biome 格式问题。
+2. **链接验证**：在浏览器侧边栏底部点击 GitHub 和爱发电按钮，验证在新标签页中能够正确打开目标页面。
