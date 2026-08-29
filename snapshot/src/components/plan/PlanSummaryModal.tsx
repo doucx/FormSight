@@ -1,7 +1,9 @@
 import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
+import { formatSecondsToTimer } from '../../utils/time';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
+import { ModalShell } from '../common/ModalShell';
 
 export interface PlanStageResult {
   card: CardDefinition;
@@ -30,48 +32,20 @@ export function PlanSummaryModal({
   const hitCount = allHistory.filter((h) => h.isHit).length;
   const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
+  const subTitle = t('common.planSummaryCompleted', {
+    name: planName,
+    count: stageResults.length,
+  });
 
   return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (
-          e.target === e.currentTarget &&
-          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
-        ) {
-          onClose();
-        }
-      }}
+    <ModalShell
+      title={t('common.planSummaryTitle')}
+      subTitle={subTitle}
+      icon={Award}
+      onClose={onClose}
+      maxWidth="max-w-xl"
     >
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-100 p-6 sm:p-7 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
-              <Award className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                {t('common.planSummaryTitle')}
-              </h2>
-              <p className="text-xs text-slate-400">
-                {t('common.planSummaryCompleted', { name: planName, count: stageResults.length })}
-              </p>
-            </div>
-          </div>
-        </div>
-
+      <div className="flex flex-col gap-5">
         {/* 核心综合大盘卡片 */}
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-1">
@@ -98,7 +72,7 @@ export function PlanSummaryModal({
               {t('common.totalTimeSpent')}
             </div>
             <div className="text-2xl font-black text-slate-800 font-mono">
-              {formatTime(totalElapsedSeconds)}
+              {formatSecondsToTimer(totalElapsedSeconds)}
             </div>
           </div>
         </div>
@@ -189,6 +163,6 @@ export function PlanSummaryModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalShell>
   );
 }

@@ -1,9 +1,10 @@
 import { Gauge, Zap } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import { setupHiDpiCanvas } from '../canvas/hidpi';
+import { initSquareHiDpiCanvas } from '../canvas/hidpi';
 import type { CardAnalyticsView } from '../contracts';
 import { i18n } from '../i18n';
+import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
 
 interface SatBinStat {
   rangeLabel: string;
@@ -88,20 +89,16 @@ export function renderSpeedAccuracyVisualizer(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
 ) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
+  const init = initSquareHiDpiCanvas(canvas, 340);
+  if (!init) return;
+  const { ctx, size } = init;
   const width = size;
   const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
 
   const bins = calculateSpeedBins(records);
   const padding = { top: 35, right: 20, bottom: 45, left: 35 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
-
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(0, 0, width, height);
 
   // 参考线
   const yTicks = [100, 75, 50, 25, 0];
@@ -166,7 +163,7 @@ export function renderSpeedAccuracyVisualizer(
     const { x, y, bin } = p;
 
     if (bin.total > 0) {
-      const dotColor = bin.accuracy >= 80 ? '#10B981' : bin.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
+      const dotColor = getAccuracyColor(bin.accuracy);
 
       ctx.beginPath();
       ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -238,15 +235,10 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span
-                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${
-                    bin.total === 0
-                      ? 'bg-slate-100 text-slate-400'
-                      : bin.accuracy >= 80
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : bin.accuracy >= 60
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-rose-50 text-rose-700'
-                  }`}
+                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${getAccuracyBadgeClass(
+                    bin.accuracy,
+                    bin.total,
+                  )}`}
                 >
                   {bin.total > 0 ? `${bin.accuracy}%` : '--'}
                 </span>
@@ -295,19 +287,15 @@ export function renderDifficultyPlateauVisualizer(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
 ) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
+  const init = initSquareHiDpiCanvas(canvas, 340);
+  if (!init) return;
+  const { ctx, size } = init;
   const width = size;
   const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
 
   const padding = { top: 35, right: 20, bottom: 45, left: 35 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
-
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(0, 0, width, height);
 
   const levelStats = calculateLevelStats(records);
   if (levelStats.length === 0) return;
@@ -369,7 +357,7 @@ export function renderDifficultyPlateauVisualizer(
 
   // 绘制数据节点与标签
   for (const { x, y, stat } of points) {
-    const dotColor = stat.accuracy >= 80 ? '#10B981' : stat.accuracy >= 60 ? '#F59E0B' : '#F43F5E';
+    const dotColor = getAccuracyColor(stat.accuracy);
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
@@ -452,15 +440,10 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
 
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span
-                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${
-                    stat.total === 0
-                      ? 'bg-slate-100 text-slate-400'
-                      : stat.accuracy >= 80
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : stat.accuracy >= 60
-                          ? 'bg-amber-50 text-amber-700'
-                          : 'bg-rose-50 text-rose-700'
-                  }`}
+                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${getAccuracyBadgeClass(
+                    stat.accuracy,
+                    stat.total,
+                  )}`}
                 >
                   {stat.total > 0 ? `${stat.accuracy}%` : '--'}
                 </span>

@@ -1,4 +1,4 @@
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 
 export interface SectorStat {
   sectorIdx: number;
@@ -9,19 +9,15 @@ export interface SectorStat {
 }
 
 export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
+  const init = initSquareHiDpiCanvas(canvas, 340);
+  if (!init) return;
+  const { ctx, size } = init;
   const width = size;
   const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
 
   const cx = width / 2;
   const cy = height / 2;
   const outerRadius = Math.min(width, height) / 2 - 30;
-
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(0, 0, width, height);
 
   const sectorAngle = (Math.PI * 2) / 8;
   const startOffset = -Math.PI / 8;

@@ -6,6 +6,7 @@ import type { CardDefinition } from '../../types/card';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { SessionSummaryModal } from '../SessionSummaryModal';
 import { IdlePauseOverlay } from '../common/IdlePauseOverlay';
+import { formatSecondsToTimer } from '../../utils/time';
 
 export interface TrainingSessionHandle {
   totalTrials: number;
@@ -67,14 +68,6 @@ export function TrainingShell({
     handleFinishSession,
     handleRestartSession,
   } = session;
-
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-4 sm:gap-6">
@@ -149,7 +142,7 @@ export function TrainingShell({
           {showTimer && (
             <div className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-100 text-slate-600">
               <Clock className="w-3 h-3 text-slate-400" />
-              <span className="font-mono font-bold text-[11px]">{formatTime(elapsedSeconds)}</span>
+              <span className="font-mono font-bold text-[11px]">{formatSecondsToTimer(elapsedSeconds)}</span>
             </div>
           )}
         </div>

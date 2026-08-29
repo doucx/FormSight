@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(scripts): 微调 check_dry 规则以过滤良性噪点", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788003130.5966022, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 收敛时间格式化、Canvas初始化、正确率配色与弹窗结构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788003343.5173166, "duration_ms": 0}}

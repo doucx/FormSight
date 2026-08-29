@@ -22,3 +22,29 @@ export function setupHiDpiCanvas(
 
   return ctx;
 }
+
+export interface InitSquareCanvasResult {
+  ctx: CanvasRenderingContext2D;
+  size: number;
+}
+
+/**
+ * 快速初始化正方形高清 Canvas，自动适配容器宽度、HiDPI 缩放并填充背景色
+ */
+export function initSquareHiDpiCanvas(
+  canvas: HTMLCanvasElement,
+  fallbackSize = 340,
+  bgColor = '#F8FAFC',
+): InitSquareCanvasResult | null {
+  const rect = canvas.getBoundingClientRect();
+  const size = Math.round(rect.width) || fallbackSize;
+  const ctx = setupHiDpiCanvas(canvas, size, size);
+  if (!ctx) return null;
+
+  if (bgColor) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  return { ctx, size };
+}
