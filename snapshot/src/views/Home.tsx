@@ -133,6 +133,12 @@ export function Home({
         <div
           role="presentation"
           onClick={onNavigateToStats}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigateToStats();
+            }
+          }}
           className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer space-y-1 group"
         >
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
@@ -156,6 +162,12 @@ export function Home({
         <div
           role="presentation"
           onClick={onNavigateToDiscovery}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigateToDiscovery();
+            }
+          }}
           className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
@@ -177,6 +189,12 @@ export function Home({
         <div
           role="presentation"
           onClick={onOpenPlanEditor}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onOpenPlanEditor();
+            }
+          }}
           className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
         >
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
