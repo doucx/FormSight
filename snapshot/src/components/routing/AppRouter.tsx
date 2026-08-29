@@ -127,13 +127,15 @@ export function AppRouter({
 
   if (isMainShellPage) {
     return (
-      <div className="w-full flex flex-col gap-6">
+      <div className="min-h-screen flex flex-col md:flex-row w-full">
         <AppNavigation
           currentRoute={route}
           onNavigate={(target) => navigate(target)}
           onOpenSettings={onOpenGlobalSettings}
         />
-        {renderMainContent()}
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 overflow-y-auto">
+          {renderMainContent()}
+        </main>
       </div>
     );
   }
