@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 移除计划中心与认知档案左上角多余的退出按钮", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788007191.6702564, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M GlobalStatsView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788007310.810634, "duration_ms": 0}}
