@@ -49,7 +49,10 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
   useEffect(() => {
     if (route.type === 'home') {
       lastHomeRouteRef.current = route;
-      document.title = `${t('common.appName')} - ${t('common.appSubtitle')}`;
+      document.title = `${t('nav.dashboard')} - ${t('common.appName')}`;
+    } else if (route.type === 'discovery') {
+      lastHomeRouteRef.current = route;
+      document.title = `${t('nav.discovery')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-editor') {
       document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-train') {

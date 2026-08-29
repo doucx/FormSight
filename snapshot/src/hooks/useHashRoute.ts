@@ -9,7 +9,8 @@ import type {
 } from '../types/card';
 
 export type RouteLocation =
-  | { type: 'home'; query?: CardQueryOptions }
+  | { type: 'home' }
+  | { type: 'discovery'; query?: CardQueryOptions }
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
   | { type: 'plan-train' }
   | { type: 'plan-editor' }
@@ -86,12 +87,17 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'plan-train' };
   }
 
-  if (segments[0] === 'plan-editor') {
+  if (segments[0] === 'plan-editor' || segments[0] === 'plans') {
     return { type: 'plan-editor' };
   }
 
   if (segments[0] === 'stats') {
     return { type: 'stats' };
+  }
+
+  if (segments[0] === 'discovery') {
+    const discoveryQuery = parseHomeQuery(queryParams);
+    return { type: 'discovery', query: discoveryQuery };
   }
 
   if (segments[0] === 'analytics' && segments[1]) {
@@ -112,7 +118,10 @@ function parseHash(hash: string): RouteLocation {
 
 function stringifyRoute(route: RouteLocation): string {
   if (route.type === 'home') {
-    if (!route.query) return '#/';
+    return '#/';
+  }
+  if (route.type === 'discovery') {
+    if (!route.query) return '#/discovery';
     const params = new URLSearchParams();
     if (route.query.packId && route.query.packId !== 'all') {
       params.set('pack', route.query.packId);
@@ -141,7 +150,7 @@ function stringifyRoute(route: RouteLocation): string {
       params.set('adv', '0');
     }
     const qs = params.toString();
-    return qs ? `#/?${qs}` : '#/';
+    return qs ? `#/discovery?${qs}` : '#/discovery';
   }
   if (route.type === 'plan-train') return '#/plan-train';
   if (route.type === 'plan-editor') return '#/plan-editor';

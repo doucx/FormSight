@@ -6,12 +6,14 @@ import type { UnifiedProfileData } from '../../utils/db/schema';
 import { saveTrainingPlan } from '../../utils/planStorage';
 import { type UserSettings, getCardSettings } from '../../utils/settings';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
+import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
 import { GlobalStatsView } from '../../views/GlobalStatsView';
 import { Home } from '../../views/Home';
 import { PlanEditorView } from '../../views/PlanEditorView';
 import { PlanTrainingView } from '../../views/PlanTrainingView';
 import type { ToastType } from '../common/Toast';
+import { AppNavigation } from '../navigation/AppNavigation';
 
 interface AppRouterProps {
   route: RouteLocation;
@@ -52,30 +54,88 @@ export function AppRouter({
 }: AppRouterProps) {
   const { t } = useTranslation();
 
-  if (route.type === 'home') {
-    return (
-      <Home
-        totalTimeMs={totalTimeMs}
-        todayStats={todayStats}
-        profiles={profiles}
-        trainingPlan={trainingPlan}
-        allPlans={allPlans}
-        query={route.query}
-        onQueryChange={(newQuery) => navigate({ type: 'home', query: newQuery }, { replace: true })}
-        onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
-        onOpenCardSettings={onOpenCardSettings}
-        onOpenCardAnalytics={(cardId) => navigate({ type: 'analytics', cardId })}
-        onStartPlan={() => navigate({ type: 'plan-train' })}
-        onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
-        onSelectPlan={onSelectPlanOnHome}
-        onOpenGlobalSettings={onOpenGlobalSettings}
-        onOpenGlobalStats={() => navigate({ type: 'stats' })}
-      />
-    );
-  }
+  // 判断是否为需要呈现全局导航栏的主干页面
+  const isMainShellPage =
+    route.type === 'home' ||
+    route.type === 'discovery' ||
+    route.type === 'plan-editor' ||
+    route.type === 'stats';
 
-  if (route.type === 'stats') {
-    return <GlobalStatsView onExit={() => navigate(lastHomeRoute)} />;
+  const renderMainContent = () => {
+    if (route.type === 'home') {
+      return (
+        <Home
+          totalTimeMs={totalTimeMs}
+          todayStats={todayStats}
+          profiles={profiles}
+          trainingPlan={trainingPlan}
+          allPlans={allPlans}
+          onStartPlan={() => navigate({ type: 'plan-train' })}
+          onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
+          onSelectPlan={onSelectPlanOnHome}
+          onNavigateToDiscovery={() => navigate({ type: 'discovery' })}
+          onNavigateToStats={() => navigate({ type: 'stats' })}
+        />
+      );
+    }
+
+    if (route.type === 'discovery') {
+      return (
+        <DiscoveryView
+          todayStats={todayStats}
+          profiles={profiles}
+          query={route.query}
+          onQueryChange={(newQuery) =>
+            navigate({ type: 'discovery', query: newQuery }, { replace: true })
+          }
+          onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
+          onOpenCardSettings={onOpenCardSettings}
+          onOpenCardAnalytics={(cardId) => navigate({ type: 'analytics', cardId })}
+        />
+      );
+    }
+
+    if (route.type === 'stats') {
+      return <GlobalStatsView onExit={() => navigate(lastHomeRoute)} />;
+    }
+
+    if (route.type === 'plan-editor') {
+      return (
+        <PlanEditorView
+          initialPlan={trainingPlan}
+          onExit={() => navigate(lastHomeRoute)}
+          onPlanListChanged={onRefreshProfiles}
+          onSaveAndExit={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            showToast(t('common.planUpdatedToast'), 'success');
+            navigate(lastHomeRoute);
+          }}
+          onStartPlanDirectly={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            navigate({ type: 'plan-train' });
+          }}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  if (isMainShellPage) {
+    return (
+      <div className="w-full flex flex-col gap-6">
+        <AppNavigation
+          currentRoute={route}
+          onNavigate={(target) => navigate(target)}
+          onOpenSettings={onOpenGlobalSettings}
+        />
+        {renderMainContent()}
+      </div>
+    );
   }
 
   if (route.type === 'analytics') {
