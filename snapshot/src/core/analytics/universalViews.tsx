@@ -1,10 +1,10 @@
 import { Gauge, Zap } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import type { UnifiedTrialRecord } from '../../utils/db/schema';
+import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
 import { initSquareHiDpiCanvas } from '../canvas/hidpi';
 import type { CardAnalyticsView } from '../contracts';
 import { i18n } from '../i18n';
-import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
 
 interface SatBinStat {
   rangeLabel: string;

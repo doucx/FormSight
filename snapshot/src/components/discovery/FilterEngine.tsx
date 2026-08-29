@@ -11,6 +11,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
 import {
   CHALLENGE_TAGS,
   DOMAIN_TAGS,
@@ -20,7 +21,6 @@ import {
 } from '../../config/tags';
 import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import type { ComponentChildren } from 'preact';
 import type {
   CardQueryOptions,
   CardStatusTag,
@@ -279,7 +279,11 @@ export function FilterEngine({
 
           {/* 2. 认知路径维度 (Cognitive Path) */}
           <div className="space-y-1">
-            <FilterSectionHeader icon={Compass} title={t('home.pathSection')} iconColorClass="text-emerald-500" />
+            <FilterSectionHeader
+              icon={Compass}
+              title={t('home.pathSection')}
+              iconColorClass="text-emerald-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => (
                 <TagPill
@@ -296,7 +300,11 @@ export function FilterEngine({
 
           {/* 3. 心智抗性维度 (Mental Challenge) */}
           <div className="space-y-1">
-            <FilterSectionHeader icon={Brain} title={t('home.challengeSection')} iconColorClass="text-rose-500" />
+            <FilterSectionHeader
+              icon={Brain}
+              title={t('home.challengeSection')}
+              iconColorClass="text-rose-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => (
                 <TagPill
@@ -313,7 +321,11 @@ export function FilterEngine({
 
           {/* 4. 交互形态维度 (Interaction Mode) */}
           <div className="space-y-1">
-            <FilterSectionHeader icon={MousePointer} title={t('home.interactionSection')} iconColorClass="text-amber-500" />
+            <FilterSectionHeader
+              icon={MousePointer}
+              title={t('home.interactionSection')}
+              iconColorClass="text-amber-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => (
                 <TagPill
@@ -330,7 +342,11 @@ export function FilterEngine({
 
           {/* 5. 特性与发布状态 (Status Tag) */}
           <div className="space-y-1">
-            <FilterSectionHeader icon={FlaskConical} title={t('home.statusSection')} iconColorClass="text-purple-500" />
+            <FilterSectionHeader
+              icon={FlaskConical}
+              title={t('home.statusSection')}
+              iconColorClass="text-purple-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
                 <TagPill
