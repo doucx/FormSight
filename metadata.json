@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(plan-editor): 优化训练阶段卡片布局支持自适应换行", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788007680.5252163, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] style(views): 对齐四大主导航页面的内容总宽度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788007871.606724, "duration_ms": 0}}

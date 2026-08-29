@@ -1,183 +1,52 @@
-我将为你优化“计划中心 - 训练阶段列表 (`PlanStageList`)”中的阶段卡片布局，解决题量选择器挤压卡片标题的问题。
+通过检查四个主导航页面（今日工作台、探索大盘、计划中心、认知档案）的根容器样式：
 
-当前在双栏编辑模式（或窄屏/移动端）下，单个条目固定为单行 `flex-row justify-between`，右侧的 5 档题量切换按钮（10/15/20/30/50）加上排序/删除操作固定占据了约 260px，导致较长的模块名称（如“负空间反切定点”、“阿尔伯斯同时对比”等）被严重压缩甚至截断。
+- **今日工作台 (`Home.tsx`)**: `max-w-5xl` (1024px)
+- **探索大盘 (`DiscoveryView.tsx`)**: `max-w-6xl` (1152px)
+- **计划中心 (`PlanEditorView.tsx`)**: `max-w-6xl` (1152px)
+- **认知档案 (`GlobalStatsView.tsx`)**: `max-w-6xl` (1152px)
 
-1. 将阶段列表条目重构为**容器自适应响应式布局**：在移动端或紧凑分栏宽度下，自动拆分为“上层标题/描述”与“下层题量/操作”，保障卡片标题与说明有充裕的横向展示空间。
-2. 当容器宽度充足（如 `sm:` 及以上且无挤压时）平铺展示；在换行时，题量选择器与操作按钮整齐对齐，并保持极高的触控与点击易用性。
+四个主页面中，今日工作台为 `max-w-5xl`，其余三个页面均为 `max-w-6xl`，导致在宽屏切换导航 Tab 时页面内容宽度出现明显的跳变与不对齐。
 
-## [WIP] refactor(plan-editor): 优化训练阶段卡片布局支持自适应换行
+将今日工作台统一调整为 `max-w-6xl` 即可实现全站主干视图宽度的完全对齐。
+
+## [WIP] style(views): 对齐四大主导航页面的内容总宽度
 
 ### 用户需求
-在计划中心的训练阶段列表中，题量切换按钮组导致卡片名称被截断遮挡，需要优化排版使标题能清晰完整显示。
+检查并对齐“今日工作台”、“探索大盘”、“计划中心”与“认知档案”四个页面的内容总宽度，消除切换时的宽度不一致。
 
 ### 评论
-卡片标题是用户识别训练步骤的关键信息。通过容器自适应断点（`flex-col sm:flex-row`）与弹性对齐，不仅彻底解决了标题被挤压的问题，还提升了在移动端和中等分栏下的可读性与操作手感。
+将四个页面的最大内容宽度统一收敛至 `max-w-6xl`，能极大增强切换各主干页面时的视觉稳定性与版面呼吸感。
 
 ### 目标
-1. 修改 `PlanStageList.tsx` 中的条目布局，使其在紧凑宽度下自适应换行。
-2. 保持视觉风格一致，确保标题与描述完整清晰，操作按钮排列规整。
+将 `src/views/Home.tsx` 的外层容器宽度由 `max-w-5xl` 统一修改为 `max-w-6xl`，使四大主页面完全一致。
 
 ### 基本原理
-将阶段条目容器由固定单行改为响应式弹性布局（`flex-col sm:flex-row items-start sm:items-center`），在左侧标题部分给予完整展开宽度，右侧控制区在折行时靠右或两端自适应对齐。
+四个页面的顶层排版均嵌套在 `AppRouter` 的 `<main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 ...">` 中。通过统一各页面顶层根容器的 `max-w-6xl mx-auto` 约束，确保桌面端视口下的两侧边距与内容中心对齐线完全一致。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/plan-stage-card #task/action/refactor #task/state/begin
+#intent/tune #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/page-max-width #task/action/unify #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 优化 `PlanStageList.tsx` 中的阶段条目响应式布局
-
-修改条目容器与子项的 flex 布局，支持紧凑宽度自适应折行。
+#### Acts 1: 将 `Home.tsx` 根容器最大宽度对齐为 `max-w-6xl`
 
 ~~~~~act
 patch_file
-src/components/plan/editor/PlanStageList.tsx
+src/views/Home.tsx
 ~~~~~
 ~~~~~tsx.old
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
-              >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-
-                {/* 右侧：严格 flex-shrink-0 防挤压 */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1 cursor-pointer"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
+      {/* 顶部状态与问候信息 */}
 ~~~~~
 ~~~~~tsx.new
-            return (
-              <div
-                key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
-              >
-                {/* 模块信息区：包含序号、图标、标题与描述，在窄屏下拥有完整横向展示空间 */}
-                <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto sm:flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                    {idx + 1}
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-indigo-50 text-indigo-600 flex-shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{cardDesc}</div>
-                  </div>
-                </div>
-
-                {/* 题量选择与操作控制区：在紧凑宽度下换行并靠右/充满对齐 */}
-                <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
-                  <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
-                    {trialPresets.map((preset) => (
-                      <button
-                        type="button"
-                        key={preset}
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`px-2 py-1 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
-                          item.targetTrials === preset
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-800'
-                        }`}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveUpTitle')}
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={idx === currentPlan.items.length - 1}
-                      onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
-                      title={t('plan.moveDownTitle')}
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="p-1 text-rose-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 ml-1 cursor-pointer"
-                      title={t('plan.removeTitle')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            );
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
+      {/* 顶部状态与问候信息 */}
 ~~~~~
 
 ### 下一步建议
-1. 验证在不同视口宽度（移动端、平板、桌面端）下计划编辑器的表现，确保长标题模块清晰可见。
-2. 运行 `npm run check` 确保代码格式和 TypeScript 类型检查全部通过。
+1. 建议在浏览器中依次点击切换侧边栏的四个主导航项（今日工作台、探索大盘、计划中心、认知档案），体验平滑无抖动的视觉过渡。
+2. 运行 `npm run check` 确保代码格式和类型规范。
