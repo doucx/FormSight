@@ -1,52 +1,63 @@
-通过检查四个主导航页面（今日工作台、探索大盘、计划中心、认知档案）的根容器样式：
+好的，我们已经完成了导航系统与视图拆分的重构工作。现在将这批变更作为一个完整的逻辑单元进行 Git 提交。
 
-- **今日工作台 (`Home.tsx`)**: `max-w-5xl` (1024px)
-- **探索大盘 (`DiscoveryView.tsx`)**: `max-w-6xl` (1152px)
-- **计划中心 (`PlanEditorView.tsx`)**: `max-w-6xl` (1152px)
-- **认知档案 (`GlobalStatsView.tsx`)**: `max-w-6xl` (1152px)
-
-四个主页面中，今日工作台为 `max-w-5xl`，其余三个页面均为 `max-w-6xl`，导致在宽屏切换导航 Tab 时页面内容宽度出现明显的跳变与不对齐。
-
-将今日工作台统一调整为 `max-w-6xl` 即可实现全站主干视图宽度的完全对齐。
-
-## [WIP] style(views): 对齐四大主导航页面的内容总宽度
+## [COMMIT] feat(ui): 重构全局导航系统并独立探索大盘视图
 
 ### 用户需求
-检查并对齐“今日工作台”、“探索大盘”、“计划中心”与“认知档案”四个页面的内容总宽度，消除切换时的宽度不一致。
+将当前的导航栏抽离、重构探索大盘与今日工作台视图架构，并优化响应式布局相关的改动提交到 Git 仓库。
 
 ### 评论
-将四个页面的最大内容宽度统一收敛至 `max-w-6xl`，能极大增强切换各主干页面时的视觉稳定性与版面呼吸感。
+本次重构将应用的主体架构升级为现代化的“工作台/大盘/计划/统计”多标签页体系，大幅降低了主页的认知负荷，提升了桌面与移动端的交互体验与扩展性。
 
 ### 目标
-将 `src/views/Home.tsx` 的外层容器宽度由 `max-w-5xl` 统一修改为 `max-w-6xl`，使四大主页面完全一致。
+1. 将所有涉及全局导航、路由重构、视图拆分及多语言配置的修改文件添加到暂存区。
+2. 创建符合 Conventional Commits 规范的结构化提交记录。
 
 ### 基本原理
-四个页面的顶层排版均嵌套在 `AppRouter` 的 `<main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 ...">` 中。通过统一各页面顶层根容器的 `max-w-6xl mx-auto` 约束，确保桌面端视口下的两侧边距与内容中心对齐线完全一致。
+按照规范要求，在已验证所有修改后，通过单一的 `[COMMIT]` 计划执行 `git_add` 与 `git_commit`，保持代码仓库历史清晰且语义明确。
 
 ### 标签
-#intent/tune #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/page-max-width #task/action/unify #task/state/continue
+#intent/build #flow/ready #priority/high #comp/cli #concept/executor #scope/core #scope/ux #ai/instruct #task/domain/ui #task/object/navigation-layout #task/action/integration #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 将 `Home.tsx` 根容器最大宽度对齐为 `max-w-6xl`
+#### Acts 1: 暂存并提交变更
+
+我们将修改的文件添加到 Git 暂存区，并生成描述详尽的提交记录。
 
 ~~~~~act
-patch_file
+git_add
+src/app.tsx
+src/components/navigation/AppNavigation.tsx
+src/components/plan/editor/PlanEditorHeader.tsx
+src/components/plan/editor/PlanStageList.tsx
+src/components/routing/AppRouter.tsx
+src/hooks/useAppBootstrap.ts
+src/hooks/useHashRoute.ts
+src/locales/en-US.json
+src/locales/zh-CN.json
+src/views/DiscoveryView.tsx
+src/views/GlobalStatsView.tsx
 src/views/Home.tsx
+src/views/PlanEditorView.tsx
 ~~~~~
-~~~~~tsx.old
-  return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
-      {/* 顶部状态与问候信息 */}
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~tsx.new
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
-      {/* 顶部状态与问候信息 */}
+~~~~~text
+feat(ui): refactor global navigation and split discovery view
+
+- Introduce AppNavigation component providing desktop sidebar and mobile bottom tab bar.
+- Split module exploration and filtering out of Home into a dedicated DiscoveryView (`#/discovery`).
+- Refactor Home view to focus on daily routine overview, stage breakdowns, and quick metrics.
+- Update route definitions and document title sync in useHashRoute and useAppBootstrap.
+- Remove redundant exit buttons from subviews now integrated into main navigation shell.
+- Improve responsive layout for PlanStageList on narrower screens.
+- Add internationalization strings for navigation tabs across locales.
 ~~~~~
 
 ### 下一步建议
-1. 建议在浏览器中依次点击切换侧边栏的四个主导航项（今日工作台、探索大盘、计划中心、认知档案），体验平滑无抖动的视觉过渡。
-2. 运行 `npm run check` 确保代码格式和类型规范。
+- **端到端流程验证**: 建议在不同视口宽度（桌面宽屏与移动端模拟器）下测试路由跳转、训练流启动与筛选参数持久化。
+- **暗黑模式/主题适配**: 后续可考虑为新增的 `AppNavigation` 与全局背景容器增加主题色彩配置支持。
