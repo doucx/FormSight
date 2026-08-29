@@ -1,6 +1,6 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 import { hsvToHex } from '../../core/color/colorUtils';
-import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
+import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { renderHueRingCanvas } from '../../utils/canvas/drawColorRing';
 import type { SectorStat } from '../../utils/canvas/drawCompass';
@@ -139,7 +139,8 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
       getOverallStats: (records) => {
         const baseStats = calculateBasicOverallStats(records);
         const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError = baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
+        const avgError =
+          baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
 
         return {
           ...baseStats,
@@ -252,7 +253,8 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
       getOverallStats: (records) => {
         const baseStats = calculateBasicOverallStats(records);
         const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError = baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
+        const avgError =
+          baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
 
         return {
           ...baseStats,

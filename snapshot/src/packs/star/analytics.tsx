@@ -1,5 +1,5 @@
 import { Compass, Target } from 'lucide-preact';
-import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
+import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { type SectorStat, renderCompassCanvas } from '../../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../../utils/canvas/drawHeatmap';

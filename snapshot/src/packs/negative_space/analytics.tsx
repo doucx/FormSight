@@ -1,5 +1,5 @@
 import { Crosshair } from 'lucide-preact';
-import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
+import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { getTrialRecordsByCard } from '../../utils/db/index';
 
