@@ -22,7 +22,7 @@ from typing import List, Dict, Set, Tuple, Optional
 # ==============================================================================
 
 DEFAULT_IGNORE_DIRS = {
-    "node_modules", "dist", ".git", "coverage", ".vscode", ".idea", "public"
+    "node_modules", "dist", ".git", "coverage", ".vscode", ".idea", "public", "packs"
 }
 
 DEFAULT_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx"}
@@ -66,18 +66,20 @@ class DryAnalyzer:
         min_duplicate_lines: int = 5,
         min_tailwind_classes: int = 4,
         min_tailwind_occurrences: int = 3,
+        ignore_dirs: Optional[Set[str]] = None,
     ):
         self.root_dir = Path(root_dir)
         self.min_duplicate_lines = min_duplicate_lines
         self.min_tailwind_classes = min_tailwind_classes
         self.min_tailwind_occurrences = min_tailwind_occurrences
+        self.ignore_dirs = ignore_dirs if ignore_dirs is not None else set(DEFAULT_IGNORE_DIRS)
         self.files: List[Path] = []
         self.file_lines: Dict[str, List[str]] = {}
 
     def collect_files(self):
         for path in self.root_dir.rglob("*"):
             if path.is_file() and path.suffix in DEFAULT_EXTENSIONS:
-                if any(part in DEFAULT_IGNORE_DIRS for part in path.parts):
+                if any(part in self.ignore_dirs for part in path.parts):
                     continue
                 self.files.append(path)
 
@@ -331,15 +333,24 @@ def main():
     parser.add_argument("--min-lines", type=int, default=5, help="Minimum duplicate lines for code clones")
     parser.add_argument("--min-classes", type=int, default=4, help="Minimum Tailwind classes count in a pattern")
     parser.add_argument("--min-occurrences", type=int, default=3, help="Minimum occurrences for Tailwind style clones")
+    parser.add_argument("--include-packs", action="store_true", help="Include src/packs directory in analysis (default: ignored)")
+    parser.add_argument("--ignore-dirs", nargs="*", default=[], help="Additional directory names to ignore")
     parser.add_argument("--fail-on-smells", action="store_true", help="Exit with code 1 if smells or clones exist (for CI)")
     
     args = parser.parse_args()
+
+    ignore_dirs = set(DEFAULT_IGNORE_DIRS)
+    if args.include_packs:
+        ignore_dirs.discard("packs")
+    if args.ignore_dirs:
+        ignore_dirs.update(args.ignore_dirs)
 
     analyzer = DryAnalyzer(
         root_dir=args.src,
         min_duplicate_lines=args.min_lines,
         min_tailwind_classes=args.min_classes,
         min_tailwind_occurrences=args.min_occurrences,
+        ignore_dirs=ignore_dirs,
     )
 
     analyzer.collect_files()
