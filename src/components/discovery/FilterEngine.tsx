@@ -11,6 +11,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
 import {
   CHALLENGE_TAGS,
   DOMAIN_TAGS,
@@ -29,6 +30,23 @@ import type {
   VisualDomainTag,
 } from '../../types/card';
 import { TagPill } from '../common/TagPill';
+
+function FilterSectionHeader({
+  icon: Icon,
+  title,
+  iconColorClass = 'text-indigo-500',
+}: {
+  icon: (props: { className?: string }) => ComponentChildren;
+  title: string;
+  iconColorClass?: string;
+}) {
+  return (
+    <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+      <Icon className={`w-3 h-3 ${iconColorClass}`} />
+      {title}
+    </div>
+  );
+}
 
 interface FilterEngineProps {
   query: CardQueryOptions;
@@ -209,10 +227,7 @@ export function FilterEngine({
       {/* 扩展包 (Pack) 快速筛选标签 */}
       {packs.length > 0 && (
         <div className={`space-y-1 border-t border-slate-200/60 ${isCompact ? 'pt-1.5' : 'pt-3'}`}>
-          <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-            <Boxes className="w-3 h-3 text-indigo-500" />
-            {t('home.allPacks')}
-          </div>
+          <FilterSectionHeader icon={Boxes} title={t('home.allPacks')} />
           <div
             className={`flex gap-1 items-center ${
               isCompact ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none' : 'flex-wrap'
@@ -247,10 +262,7 @@ export function FilterEngine({
         >
           {/* 1. 视觉域维度 (Visual Domain) */}
           <div className="space-y-1">
-            <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Eye className="w-3 h-3 text-indigo-500" />
-              {t('home.domainSection')}
-            </div>
+            <FilterSectionHeader icon={Eye} title={t('home.domainSection')} />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => (
                 <TagPill
@@ -267,10 +279,11 @@ export function FilterEngine({
 
           {/* 2. 认知路径维度 (Cognitive Path) */}
           <div className="space-y-1">
-            <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Compass className="w-3 h-3 text-emerald-500" />
-              {t('home.pathSection')}
-            </div>
+            <FilterSectionHeader
+              icon={Compass}
+              title={t('home.pathSection')}
+              iconColorClass="text-emerald-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => (
                 <TagPill
@@ -287,10 +300,11 @@ export function FilterEngine({
 
           {/* 3. 心智抗性维度 (Mental Challenge) */}
           <div className="space-y-1">
-            <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Brain className="w-3 h-3 text-rose-500" />
-              {t('home.challengeSection')}
-            </div>
+            <FilterSectionHeader
+              icon={Brain}
+              title={t('home.challengeSection')}
+              iconColorClass="text-rose-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => (
                 <TagPill
@@ -307,10 +321,11 @@ export function FilterEngine({
 
           {/* 4. 交互形态维度 (Interaction Mode) */}
           <div className="space-y-1">
-            <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <MousePointer className="w-3 h-3 text-amber-500" />
-              {t('home.interactionSection')}
-            </div>
+            <FilterSectionHeader
+              icon={MousePointer}
+              title={t('home.interactionSection')}
+              iconColorClass="text-amber-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => (
                 <TagPill
@@ -327,10 +342,11 @@ export function FilterEngine({
 
           {/* 5. 特性与发布状态 (Status Tag) */}
           <div className="space-y-1">
-            <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <FlaskConical className="w-3 h-3 text-purple-500" />
-              {t('home.statusSection')}
-            </div>
+            <FilterSectionHeader
+              icon={FlaskConical}
+              title={t('home.statusSection')}
+              iconColorClass="text-purple-500"
+            />
             <div className="flex flex-wrap gap-1">
               {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
                 <TagPill

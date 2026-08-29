@@ -1,3 +1,4 @@
+import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
 
@@ -53,12 +54,9 @@ export function drawAngleCanvas(
   strokeColor = '#0F172A',
   lineWidth = 2.5,
 ): void {
-  if (!canvas || !lines) return;
-  const ctx = canvas.getContext('2d');
+  if (!lines) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   ctx.strokeStyle = strokeColor;
   ctx.lineWidth = lineWidth;
@@ -80,12 +78,9 @@ export function drawSingleLineCanvas(
   strokeColor = '#0F172A',
   lineWidth = 2.5,
 ): void {
-  if (!canvas || !line) return;
-  const ctx = canvas.getContext('2d');
+  if (!line) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   ctx.strokeStyle = strokeColor;
   ctx.lineWidth = lineWidth;

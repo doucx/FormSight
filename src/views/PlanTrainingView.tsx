@@ -7,6 +7,7 @@ import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
 import { getProfile } from '../utils/db/index';
 import { type UserSettings, getCardSettings } from '../utils/settings';
+import { formatSecondsToTimer } from '../utils/time';
 import { GenericTrainingView } from './GenericTrainingView';
 
 interface PlanTrainingViewProps {
@@ -154,14 +155,6 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
   const cardConfig = getCardSettings(settings, currentCard.id);
   const cardTitle = getCardTitle(currentCard, t);
 
-  const formatTime = (sec: number) => {
-    const m = Math.floor(sec / 60)
-      .toString()
-      .padStart(2, '0');
-    const s = (sec % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
   return (
     <div className="w-full">
       <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
@@ -191,7 +184,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
             <span className="font-mono text-xs font-bold text-slate-700">
-              {formatTime(totalElapsedSeconds)}
+              {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
           </div>
           <button

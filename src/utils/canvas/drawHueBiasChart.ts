@@ -1,4 +1,4 @@
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import { i18n } from '../../core/i18n';
 import type { UnifiedTrialRecord } from '../db/index';
 
@@ -14,21 +14,16 @@ export function calcSignedHueBias(targetHue: number, userHue: number): number {
  * 绘制色相偏差度散点与趋势分析图 (横轴: 色相 0°~360°, 纵轴: 偏差度 °)
  */
 export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: UnifiedTrialRecord[]) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
+  const init = initSquareHiDpiCanvas(canvas, 340);
+  if (!init) return;
+  const { ctx, size } = init;
   const width = size;
   const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
 
   // 画布边距
   const padding = { top: 25, right: 20, bottom: 45, left: 35 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
-
-  // 背景填充
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(0, 0, width, height);
 
   // 计算最大纵轴范围 (默认至少 ±30°，若有更大误差则动态扩展)
   let maxBiasRange = 30;

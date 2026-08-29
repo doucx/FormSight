@@ -1,3 +1,4 @@
+import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
 
@@ -88,12 +89,9 @@ export function drawVpConvergenceCanvas(
   showAnswer = false,
   targetAngleDeg?: number,
 ): void {
-  if (!canvas || !referenceLines || !anchor) return;
-  const ctx = canvas.getContext('2d');
+  if (!referenceLines || !anchor) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   // 1. 绘制两条已有参考线
   ctx.strokeStyle = '#475569';
@@ -152,12 +150,9 @@ export function drawProportionCanvas(
   showAnswer = false,
   size = PERSPECTIVE_CANVAS_SIZE,
 ): void {
-  if (!canvas || !line) return;
-  const ctx = canvas.getContext('2d');
+  if (!line) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   // 主干线段
   ctx.strokeStyle = '#0F172A';
@@ -291,12 +286,9 @@ export function drawGestaltCanvas(
   outgoingLine: LineSegment | undefined,
   size = PERSPECTIVE_2AFC_SIZE,
 ): void {
-  if (!canvas || !obstacle || !incomingLine || !outgoingLine) return;
-  const ctx = canvas.getContext('2d');
+  if (!obstacle || !incomingLine || !outgoingLine) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   // 入射与出射线段
   ctx.strokeStyle = '#0F172A';

@@ -1,4 +1,4 @@
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import type { UnifiedTrialRecord } from '../db/index';
 
 export function renderHeatmapCanvas(
@@ -8,19 +8,15 @@ export function renderHeatmapCanvas(
   avgDy: number,
   totalCount: number,
 ) {
-  const rect = canvas.getBoundingClientRect();
-  const size = Math.round(rect.width) || 340;
+  const init = initSquareHiDpiCanvas(canvas, 340);
+  if (!init) return;
+  const { ctx, size } = init;
   const width = size;
   const height = size;
-  const ctx = setupHiDpiCanvas(canvas, width, height);
-  if (!ctx) return;
 
   const cx = width / 2;
   const cy = height / 2;
   const scale = 5;
-
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(0, 0, width, height);
 
   // 1. 背景同心圆标尺
   const rings = [5, 10, 20, 30];
