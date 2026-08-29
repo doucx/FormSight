@@ -20,7 +20,9 @@ const CANVAS_OPTION_CLASS =
 function PromptFrame({ title, children }: { title: string; children: ComponentChildren }) {
   return (
     <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{title}</span>
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        {title}
+      </span>
       <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
         {children}
       </div>
