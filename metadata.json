@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构拆分 PlanEditorView 上帝组件与状态逻辑", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788004593.8320255, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 模块化拆分 GlobalSettingsModal 设置弹窗", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788004666.4805737, "duration_ms": 0}}
