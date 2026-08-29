@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "add script Capture: A check_dry.py", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788002798.595544, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M check_dry.py", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788003024.1155958, "duration_ms": 0}}

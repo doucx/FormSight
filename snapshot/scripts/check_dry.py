@@ -66,18 +66,21 @@ class DryAnalyzer:
         min_duplicate_lines: int = 5,
         min_tailwind_classes: int = 4,
         min_tailwind_occurrences: int = 3,
+        extra_ignore_dirs: Optional[Set[str]] = None, # ⬅️ 新增
     ):
         self.root_dir = Path(root_dir)
         self.min_duplicate_lines = min_duplicate_lines
         self.min_tailwind_classes = min_tailwind_classes
         self.min_tailwind_occurrences = min_tailwind_occurrences
+        self.ignore_dirs = DEFAULT_IGNORE_DIRS | (extra_ignore_dirs or set()) # ⬅️ 合并忽略目录
         self.files: List[Path] = []
         self.file_lines: Dict[str, List[str]] = {}
 
     def collect_files(self):
         for path in self.root_dir.rglob("*"):
             if path.is_file() and path.suffix in DEFAULT_EXTENSIONS:
-                if any(part in DEFAULT_IGNORE_DIRS for part in path.parts):
+                # ⬅️ 只要路径分段中包含任意一个被忽略的目录名，即跳过
+                if any(part in self.ignore_dirs for part in path.parts):
                     continue
                 self.files.append(path)
 
