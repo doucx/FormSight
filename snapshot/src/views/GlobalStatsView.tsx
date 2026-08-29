@@ -14,7 +14,7 @@ interface GlobalStatsViewProps {
   onExit?: () => void;
 }
 
-export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
+export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

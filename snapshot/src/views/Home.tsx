@@ -1,4 +1,4 @@
-import { ArrowRight, Clock, Compass, Layers, Play, Target } from 'lucide-preact';
+import { ArrowRight, Clock, Compass, Layers, Target } from 'lucide-preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';

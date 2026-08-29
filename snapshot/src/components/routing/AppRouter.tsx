@@ -155,29 +155,6 @@ export function AppRouter({
     );
   }
 
-  if (route.type === 'plan-editor') {
-    return (
-      <PlanEditorView
-        initialPlan={trainingPlan}
-        onExit={() => navigate(lastHomeRoute)}
-        onPlanListChanged={onRefreshProfiles}
-        onSaveAndExit={(newPlan) => {
-          saveTrainingPlan(newPlan);
-          onSetTrainingPlan(newPlan);
-          onRefreshProfiles();
-          showToast(t('common.planUpdatedToast'), 'success');
-          navigate(lastHomeRoute);
-        }}
-        onStartPlanDirectly={(newPlan) => {
-          saveTrainingPlan(newPlan);
-          onSetTrainingPlan(newPlan);
-          onRefreshProfiles();
-          navigate({ type: 'plan-train' });
-        }}
-      />
-    );
-  }
-
   if (route.type === 'plan-train') {
     return (
       <PlanTrainingView

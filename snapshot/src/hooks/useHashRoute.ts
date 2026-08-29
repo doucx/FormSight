@@ -112,8 +112,7 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'train', cardId, sessionType };
   }
 
-  const homeQuery = parseHomeQuery(queryParams);
-  return { type: 'home', query: homeQuery };
+  return { type: 'home' };
 }
 
 function stringifyRoute(route: RouteLocation): string {

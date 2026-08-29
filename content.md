@@ -1,222 +1,323 @@
-我们将修复 Biome 检查中报告的 4 处无障碍（a11y）规则报错：为 `AppNavigation.tsx` 中的 `AfdianIcon` SVG 元素添加 `<title>` 标签，并为 `Home.tsx` 中绑定了 `onClick` 的 3 个入口卡片添加对应的 `onKeyDown` 键盘事件处理。
+我们将修复 TypeScript 静态类型检查中报告的 5 处未使用变量与类型不兼容错误：
+1. 清理 `PlanEditorHeader.tsx` 与 `PlanEditorView.tsx` 中未使用的 `onExit` 属性与参数传递。
+2. 移除 `AppRouter.tsx` 中多余的重复 `plan-editor` 条件分支（该分支在主壳层已处理，此处类型收窄后已不可达）。
+3. 修正 `useHashRoute.ts` 中 `home` 路由对象的返回值，移除不在类型定义中的 `query` 属性。
+4. 修复 `GlobalStatsView.tsx` 中未读取的 `onExit` 参数解构。
+5. 移除 `Home.tsx` 中未使用的 `Play` 图标导入。
 
-## [WIP] fix: 修复 SVG 缺失标题与点击事件缺失键盘响应的 a11y 报错
+## [WIP] fix: 修复 TypeScript 编译错误与未使用的声明
 
 ### 错误分析
-运行 `npm run checkf` 时，Biome 报出 4 处 a11y 规则错误：
-1. `src/components/navigation/AppNavigation.tsx`: `lint/a11y/noSvgWithoutTitle` 规则检测到 `AfdianIcon` 组件内的 `<svg>` 标签缺少可访问性描述或 `<title>` 元素。
-2. `src/views/Home.tsx`: 3 处带有 `onClick` 的卡片容器（今日刷题指标卡、探索大盘入口、计划管理入口）触发了 `lint/a11y/useKeyWithClickEvents`，未提供对应的 `onKeyDown`/`onKeyUp` 键盘无障碍事件支持。
+TypeScript `tsc --noEmit` 报告了 5 处编译阻断错误：
+1. `PlanEditorHeader.tsx`: `onExit` 属性被声明在参数中但未被使用，触发 `TS6133`。
+2. `AppRouter.tsx`: `route.type === 'plan-editor'` 处于类型已收窄至 `'train' | 'plan-train'` 的代码块之后，类型比较恒为假，触发 `TS2367`。
+3. `useHashRoute.ts`: `parseHash` 返回 `{ type: 'home', query: homeQuery }`，但 `RouteLocation` 的 `home` 分支未定义 `query` 字段，触发 `TS2353`。
+4. `GlobalStatsView.tsx`: `onExit` 从 props 解构但未在组件内部使用，触发 `TS6133`。
+5. `Home.tsx`: 顶部导入了 `Play` 图标但未被引用，触发 `TS6133`。
 
 ### 用户需求
-修复这些 Biome linter 校验错误，确保项目通过 `npm run checkf` 与 CI 静态检查。
+修复这 5 处 TypeScript 编译错误，使 `npm run checkf` 与 `tsc --noEmit` 完全通过。
 
 ### 评论
-遵循 Web 无障碍规范（WCAG）与 Biome 代码质量检查是保持前端代码健壮性和可访问性的最佳实践。通过为 SVG 补充 `<title>` 并在可交互容器上补充 `Enter` / `Space` 键的响应，可以同时解决静态检查报错并改善键盘用户的交互体验。
+这些错误属于死代码残留和接口定义轻微不一致。清理无用导入与不可达分支能够保持类型系统干净清晰，提升整体可维护性。
 
 ### 目标
-1. 在 `src/components/navigation/AppNavigation.tsx` 的 `AfdianIcon` 中补充 `<title>`。
-2. 在 `src/views/Home.tsx` 的 3 个可点击 `div` 容器上添加 `onKeyDown` 键盘事件响应。
+1. 在 `PlanEditorHeader.tsx` 及 `PlanEditorView.tsx` 中移除无用 `onExit`。
+2. 删除 `AppRouter.tsx` 中多余的 `if (route.type === 'plan-editor')` 重复分支。
+3. 将 `useHashRoute.ts` 默认 `home` 路由返回值规范为 `{ type: 'home' }`。
+4. 调整 `GlobalStatsView.tsx` 的入参声明。
+5. 移除 `Home.tsx` 中的 `Play` 导入。
 
 ### 基本原理
-- 在 SVG 元素内部添加 `<title>Afdian</title>` 可以满足 `noSvgWithoutTitle` 的可访问性标准要求。
-- 在带有 `onClick` 事件的卡片元素上添加 `onKeyDown`（并在按下 `Enter` 或空格键时触发对应路由跳转），可以满足 `useKeyWithClickEvents` 的键盘可访问性要求。
+- 遵循 TypeScript 的 `noUnusedLocals` / `noUnusedParameters` 配置，及时移除死代码与未使用的参数。
+- 确保联合类型的窄化推断与返回值声明完全吻合。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/linter-a11y #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/ui #comp/runtime #scope/dx #ai/instruct #task/domain/typescript #task/object/typecheck-fixes #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `AppNavigation.tsx` 中 SVG 缺失 `<title>` 的问题
+#### Acts 1: 修复 `PlanEditorHeader.tsx` 与 `PlanEditorView.tsx` 中的 `onExit`
 
 ~~~~~act
 patch_file
-src/components/navigation/AppNavigation.tsx
+src/components/plan/editor/PlanEditorHeader.tsx
 ~~~~~
 ~~~~~typescript.old
-function AfdianIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.4 15.6l-1-4.6h3.4l-6.8 7 1.2-5.4H7.2l6.2-7-.6 4.6h3.4l-4.4 5.4z" />
-    </svg>
-  );
+export interface PlanEditorHeaderProps {
+  currentPlan: TrainingPlan;
+  isNewPlan: boolean;
+  isEditingName: boolean;
+  planNameInput: string;
+  showPlanManager: boolean;
+  plansCount: number;
+  fileInputRef: RefObject<HTMLInputElement>;
+  onExit?: () => void;
+  onStartEditingName: () => void;
+  onCancelEditingName: () => void;
+  onPlanNameChange: (name: string) => void;
+  onNameSave: () => void;
+  onTogglePlanManager: () => void;
+  onClonePlan: () => void;
+  onExportPlan: () => void;
+  onImportPlan: (e: Event) => void;
+  onSaveOnly: () => void;
+  onSaveAndStart: () => void;
+}
+
+export function PlanEditorHeader({
+  currentPlan,
+  isNewPlan,
+  isEditingName,
+  planNameInput,
+  showPlanManager,
+  plansCount,
+  fileInputRef,
+  onExit,
+  onStartEditingName,
+  onCancelEditingName,
+  onPlanNameChange,
+  onNameSave,
+  onTogglePlanManager,
+  onClonePlan,
+  onExportPlan,
+  onImportPlan,
+  onSaveOnly,
+  onSaveAndStart,
+}: PlanEditorHeaderProps) {
+~~~~~
+~~~~~typescript.new
+export interface PlanEditorHeaderProps {
+  currentPlan: TrainingPlan;
+  isNewPlan: boolean;
+  isEditingName: boolean;
+  planNameInput: string;
+  showPlanManager: boolean;
+  plansCount: number;
+  fileInputRef: RefObject<HTMLInputElement>;
+  onStartEditingName: () => void;
+  onCancelEditingName: () => void;
+  onPlanNameChange: (name: string) => void;
+  onNameSave: () => void;
+  onTogglePlanManager: () => void;
+  onClonePlan: () => void;
+  onExportPlan: () => void;
+  onImportPlan: (e: Event) => void;
+  onSaveOnly: () => void;
+  onSaveAndStart: () => void;
+}
+
+export function PlanEditorHeader({
+  currentPlan,
+  isNewPlan,
+  isEditingName,
+  planNameInput,
+  showPlanManager,
+  plansCount,
+  fileInputRef,
+  onStartEditingName,
+  onCancelEditingName,
+  onPlanNameChange,
+  onNameSave,
+  onTogglePlanManager,
+  onClonePlan,
+  onExportPlan,
+  onImportPlan,
+  onSaveOnly,
+  onSaveAndStart,
+}: PlanEditorHeaderProps) {
+~~~~~
+
+~~~~~act
+patch_file
+src/views/PlanEditorView.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 顶部单行主操作栏 */}
+      <PlanEditorHeader
+        currentPlan={currentPlan}
+        isNewPlan={isNewPlan}
+        isEditingName={isEditingName}
+        planNameInput={planNameInput}
+        showPlanManager={showPlanManager}
+        plansCount={storageState.plans.length}
+        fileInputRef={fileInputRef}
+        onExit={onExit}
+        onStartEditingName={() => setIsEditingName(true)}
+        onCancelEditingName={() => {
+          setPlanNameInput(currentPlan.name);
+          setIsEditingName(false);
+        }}
+        onPlanNameChange={setPlanNameInput}
+        onNameSave={handleNameSave}
+        onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onClonePlan={handleCloneCurrent}
+        onExportPlan={handleExportPlan}
+        onImportPlan={handleImportPlan}
+        onSaveOnly={handleSaveOnly}
+        onSaveAndStart={handleSaveAndStart}
+      />
+~~~~~
+~~~~~typescript.new
+      {/* 顶部单行主操作栏 */}
+      <PlanEditorHeader
+        currentPlan={currentPlan}
+        isNewPlan={isNewPlan}
+        isEditingName={isEditingName}
+        planNameInput={planNameInput}
+        showPlanManager={showPlanManager}
+        plansCount={storageState.plans.length}
+        fileInputRef={fileInputRef}
+        onStartEditingName={() => setIsEditingName(true)}
+        onCancelEditingName={() => {
+          setPlanNameInput(currentPlan.name);
+          setIsEditingName(false);
+        }}
+        onPlanNameChange={setPlanNameInput}
+        onNameSave={handleNameSave}
+        onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onClonePlan={handleCloneCurrent}
+        onExportPlan={handleExportPlan}
+        onImportPlan={handleImportPlan}
+        onSaveOnly={handleSaveOnly}
+        onSaveAndStart={handleSaveAndStart}
+      />
+~~~~~
+
+#### Acts 2: 移除 `AppRouter.tsx` 中的重复不可达分支
+
+~~~~~act
+patch_file
+src/components/routing/AppRouter.tsx
+~~~~~
+~~~~~typescript.old
+  if (route.type === 'analytics') {
+    return (
+      <CardAnalyticsView
+        cardId={route.cardId}
+        initialTab={route.tab}
+        onExit={() => navigate(lastHomeRoute)}
+        onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
+        onStartBenchmark={(cId) =>
+          navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })
+        }
+        onOpenSettings={onOpenCardSettings}
+      />
+    );
+  }
+
+  if (route.type === 'plan-editor') {
+    return (
+      <PlanEditorView
+        initialPlan={trainingPlan}
+        onExit={() => navigate(lastHomeRoute)}
+        onPlanListChanged={onRefreshProfiles}
+        onSaveAndExit={(newPlan) => {
+          saveTrainingPlan(newPlan);
+          onSetTrainingPlan(newPlan);
+          onRefreshProfiles();
+          showToast(t('common.planUpdatedToast'), 'success');
+          navigate(lastHomeRoute);
+        }}
+        onStartPlanDirectly={(newPlan) => {
+          saveTrainingPlan(newPlan);
+          onSetTrainingPlan(newPlan);
+          onRefreshProfiles();
+          navigate({ type: 'plan-train' });
+        }}
+      />
+    );
+  }
+
+  if (route.type === 'plan-train') {
+~~~~~
+~~~~~typescript.new
+  if (route.type === 'analytics') {
+    return (
+      <CardAnalyticsView
+        cardId={route.cardId}
+        initialTab={route.tab}
+        onExit={() => navigate(lastHomeRoute)}
+        onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
+        onStartBenchmark={(cId) =>
+          navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })
+        }
+        onOpenSettings={onOpenCardSettings}
+      />
+    );
+  }
+
+  if (route.type === 'plan-train') {
+~~~~~
+
+#### Acts 3: 修正 `useHashRoute.ts` 中的 home 路由返回对象
+
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
+~~~~~
+~~~~~typescript.old
+  if (segments[0] === 'train' && segments[1]) {
+    const cardId = segments[1];
+    const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
+    return { type: 'train', cardId, sessionType };
+  }
+
+  const homeQuery = parseHomeQuery(queryParams);
+  return { type: 'home', query: homeQuery };
 }
 ~~~~~
 ~~~~~typescript.new
-function AfdianIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
-      <title>Afdian</title>
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.4 15.6l-1-4.6h3.4l-6.8 7 1.2-5.4H7.2l6.2-7-.6 4.6h3.4l-4.4 5.4z" />
-    </svg>
-  );
+  if (segments[0] === 'train' && segments[1]) {
+    const cardId = segments[1];
+    const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
+    return { type: 'train', cardId, sessionType };
+  }
+
+  return { type: 'home' };
 }
 ~~~~~
 
-#### Acts 2: 修复 `Home.tsx` 中点击事件缺少键盘事件绑定的问题
+#### Acts 4: 修复 `GlobalStatsView.tsx` 中未使用的 `onExit`
+
+~~~~~act
+patch_file
+src/views/GlobalStatsView.tsx
+~~~~~
+~~~~~typescript.old
+interface GlobalStatsViewProps {
+  onExit?: () => void;
+}
+
+export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
+  const { t } = useTranslation();
+~~~~~
+~~~~~typescript.new
+interface GlobalStatsViewProps {
+  onExit?: () => void;
+}
+
+export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
+  const { t } = useTranslation();
+~~~~~
+
+#### Acts 5: 移除 `Home.tsx` 中未使用的 `Play` 导入
 
 ~~~~~act
 patch_file
 src/views/Home.tsx
 ~~~~~
 ~~~~~typescript.old
-        {/* 指标卡 1: 今日刷题 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToStats}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer space-y-1 group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
-              {t('common.todayTrials')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="text-2xl font-black text-slate-800 font-mono">
-            {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
-          </div>
-          <div className="text-[11px] text-slate-400 pt-0.5">
-            {t('common.accuracy')}:{' '}
-            <span className="font-bold text-slate-700 font-mono">{overallAccuracy}%</span>
-          </div>
-        </div>
-
-        {/* 快捷跳转 2: 探索大盘入口 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToDiscovery}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Compass className="w-3.5 h-3.5" />
-              {t('nav.discovery')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-slate-800">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('home.matchedModules', { count: registry.getAllCards().length })}
-            </p>
-          </div>
-        </div>
-
-        {/* 快捷跳转 3: 计划管理入口 */}
-        <div
-          role="presentation"
-          onClick={onOpenPlanEditor}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Layers className="w-3.5 h-3.5" />
-              {t('nav.plans')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-slate-800">{trainingPlan.name}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('plan.stageAndTrialsSummary', {
-                stages: validPlanItems.length,
-                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
-              })}
-            </p>
-          </div>
-        </div>
+import { ArrowRight, Clock, Compass, Layers, Play, Target } from 'lucide-preact';
+import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 ~~~~~
 ~~~~~typescript.new
-        {/* 指标卡 1: 今日刷题 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToStats}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToStats();
-            }
-          }}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer space-y-1 group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
-              {t('common.todayTrials')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="text-2xl font-black text-slate-800 font-mono">
-            {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
-          </div>
-          <div className="text-[11px] text-slate-400 pt-0.5">
-            {t('common.accuracy')}:{' '}
-            <span className="font-bold text-slate-700 font-mono">{overallAccuracy}%</span>
-          </div>
-        </div>
-
-        {/* 快捷跳转 2: 探索大盘入口 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToDiscovery}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToDiscovery();
-            }
-          }}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Compass className="w-3.5 h-3.5" />
-              {t('nav.discovery')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-slate-800">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('home.matchedModules', { count: registry.getAllCards().length })}
-            </p>
-          </div>
-        </div>
-
-        {/* 快捷跳转 3: 计划管理入口 */}
-        <div
-          role="presentation"
-          onClick={onOpenPlanEditor}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onOpenPlanEditor();
-            }
-          }}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Layers className="w-3.5 h-3.5" />
-              {t('nav.plans')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-slate-800">{trainingPlan.name}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('plan.stageAndTrialsSummary', {
-                stages: validPlanItems.length,
-                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
-              })}
-            </p>
-          </div>
-        </div>
+import { ArrowRight, Clock, Compass, Layers, Target } from 'lucide-preact';
+import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 ~~~~~
 
 ### 下一步建议
-1. 执行 `npm run check` 验证 Biome 和 TypeScript 类型检查是否全部通过。
-2. 执行 `npm test` 确认测试套件运行无异常。
+1. 运行 `npm run checkf` 校验 Biome 格式化和 TypeScript 类型检查是否已全部通过。
+2. 运行 `npm test` 确认全套单元测试通过。

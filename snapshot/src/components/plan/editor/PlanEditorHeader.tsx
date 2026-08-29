@@ -23,7 +23,6 @@ export interface PlanEditorHeaderProps {
   showPlanManager: boolean;
   plansCount: number;
   fileInputRef: RefObject<HTMLInputElement>;
-  onExit?: () => void;
   onStartEditingName: () => void;
   onCancelEditingName: () => void;
   onPlanNameChange: (name: string) => void;
@@ -44,7 +43,6 @@ export function PlanEditorHeader({
   showPlanManager,
   plansCount,
   fileInputRef,
-  onExit,
   onStartEditingName,
   onCancelEditingName,
   onPlanNameChange,
