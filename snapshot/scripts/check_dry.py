@@ -27,9 +27,25 @@ DEFAULT_IGNORE_DIRS = {
 
 DEFAULT_EXTENSIONS = {".ts", ".tsx", ".js", ".jsx"}
 
-# 忽略无实际逻辑的样板行（导入、单括号、空行等）
+# 忽略无实际逻辑的样板行（导入、多行解构、单括号、闭合标签、空行等）
 TRIVIAL_LINE_REGEX = re.compile(
-    r"^(import\s.+|export\s\*|export\s\{|\}|\{|\);\s*|//.*|/\*.*|\*.*|const\s*\{\s*t\s*\}\s*=\s*useTranslation\(\);)$"
+    r"^("
+    r"import\s.+|"
+    r"export\s\*|"
+    r"export\s\{|"
+    r"from\s+['\"].+|"
+    r"\}\s*from\s+['\"].+|"
+    r"[A-Za-z0-9_$]+,\s*|"  # 多行 import/export 的解构类型单项，如 'CardStatusTag,'
+    r"const\s*\{\s*t\s*\}\s*=\s*useTranslation\(\);|"
+    r"[\{\}\(\)\[\]\,\;\:\>\<]+|"  # 纯括号与标点
+    r"<\/[A-Za-z0-9_$.-]+>|"  # 单独的闭合标签如 </div>, </ModalShell>
+    r"(<\/[A-Za-z0-9_$.-]+>\s*)+|"  # 多个连续闭合标签如 </div></div>
+    r"\);\s*|"
+    r"\}\);\s*|"
+    r"//.*|"
+    r"/\*.*|"
+    r"\*.*"
+    r")$"
 )
 
 # ==============================================================================
@@ -97,6 +113,10 @@ class DryAnalyzer:
         if not norm or len(norm) <= 2:
             return False
         if TRIVIAL_LINE_REGEX.match(norm):
+            return False
+        # 剥离所有 JSX 闭合标签与纯标点后，如果剩余内容为空则视为非实质行
+        stripped = re.sub(r"</[A-Za-z0-9_$.-]+>|[\{\}\(\)\[\]\,\;\:\>\<\s]", "", norm)
+        if not stripped:
             return False
         return True
 

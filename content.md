@@ -1,99 +1,66 @@
-好的，我已为你设计好修改方案。我们将在 `scripts/check_dry.py` 中增加对 `packs` 目录的默认忽略支持，并提供 CLI 参数选项（`--ignore-packs` / `--include-packs` 以及 `--ignore-dirs`），以便灵活切换是否扫描 `src/packs` 扩展包。
+收到，我们将对 `scripts/check_dry.py` 进行微调，过滤掉纯 JSX 闭合标签序列（如 `</div></div>);})`）、多行解构类型导入（如 `CardStatusTag,`）以及纯括号标点等良性噪点，使 DRY 检查报告聚焦于高价值的实质性业务代码与样式克隆。
 
-## [WIP] feat(scripts): 支持忽略 src/packs 目录的 DRY 检查
+## [WIP] feat(scripts): 微调 check_dry 规则以过滤良性噪点
 
 ### 用户需求
-在运行 `scripts/check_dry.py` 时，默认或通过选项不扫描 `src/packs` 目录下的所有文件，避免各独立扩展包内部合理的特化/领域重复代码干扰核心框架的 DRY 分析。
+优化 `scripts/check_dry.py` 的行过滤规则与有效行识别逻辑，过滤多行 Import 列表和连续 JSX 闭合标签等良性噪点，降低报告中的误报率。
 
 ### 评论
-这个需求非常合理。在 FormSight 架构中，`src/packs/*` 属于独立的内容扩展包（Pack），各个 Pack 作为插件可能具有各自独立的领域配置或特定的画布渲染与工具函数，将其从核心公共代码的 DRY 检查中默认隔离出来，能够显著提升核心骨架（Core / Utils / Views / Components）的代码异味定位精度。
+在 AST/行级克隆检测中，跨文件的多行 `import { A, B, C } from '...'` 以及组件末尾连续的 `</div></div>);})` 经常由于代码行数达到滑动窗口阈值而被判定为代码克隆。通过升级词法过滤正则并增强实质性代码判定（`is_significant_line`），可以大幅提升检测精度与报告信噪比。
 
 ### 目标
-1. 在 `DEFAULT_IGNORE_DIRS` 默认忽略集合中加入 `"packs"`。
-2. 为 `DryAnalyzer` 构造函数增加动态 `ignore_dirs` 参数支持。
-3. 在 CLI 参数中增加 `--include-packs` 与 `--ignore-dirs` 选项，支持灵活开关。
+1. 增强 `TRIVIAL_LINE_REGEX`，覆盖多行导入解构条目、`from '...'`、纯闭合标签组合与纯标点符号。
+2. 增强 `is_significant_line`，自动剥离 JSX 闭合标签后判定是否包含实质性逻辑。
+3. 优化窗口有效行占比判定逻辑。
 
 ### 基本原理
-在文件搜集阶段（`collect_files`），通过 `path.parts` 判定路径中是否包含已配置的忽略目录名（如 `packs`）。同时在参数解析器中提供布尔开关，允许用户在需要时显式通过 `--include-packs` 恢复全量扫描。
+通过正则表达式在归一化阶段识别仅包含标点、闭合标签或单项类型导出的行，将其标记为非实质性行（Trivial Line）。在滑动窗口聚合时，若窗口内实质性行数量不足，则直接跳过该窗口，避免将语法闭合结构误判为业务逻辑克隆。
 
 ### 标签
-#intent/build #flow/ready #priority/medium
+#intent/tune #flow/ready #priority/medium
 #comp/tooling #concept/cli #scope/dx
 #ai/instruct
-#task/domain/tooling #task/object/dry-checker #task/action/feature-extension #task/state/begin
+#task/domain/tooling #task/object/dry-checker #task/action/rule-refinement #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `scripts/check_dry.py` 以支持忽略 packs 目录
+#### Acts 1: 微调 `scripts/check_dry.py` 的词法过滤与有效行判定
 
-我们通过 `patch_file` 修改 `scripts/check_dry.py`，配置默认忽略 `packs` 目录并完善 CLI 参数。
-
-~~~~~act
-patch_file
-scripts/check_dry.py
-~~~~~
-~~~~~python.old
-DEFAULT_IGNORE_DIRS = {
-    "node_modules", "dist", ".git", "coverage", ".vscode", ".idea", "public"
-}
-~~~~~
-~~~~~python.new
-DEFAULT_IGNORE_DIRS = {
-    "node_modules", "dist", ".git", "coverage", ".vscode", ".idea", "public", "packs"
-}
-~~~~~
+我们将更新 `TRIVIAL_LINE_REGEX` 正则与 `is_significant_line` 函数。
 
 ~~~~~act
 patch_file
 scripts/check_dry.py
 ~~~~~
 ~~~~~python.old
-    def __init__(
-        self,
-        root_dir: str = "src",
-        min_duplicate_lines: int = 5,
-        min_tailwind_classes: int = 4,
-        min_tailwind_occurrences: int = 3,
-    ):
-        self.root_dir = Path(root_dir)
-        self.min_duplicate_lines = min_duplicate_lines
-        self.min_tailwind_classes = min_tailwind_classes
-        self.min_tailwind_occurrences = min_tailwind_occurrences
-        self.files: List[Path] = []
-        self.file_lines: Dict[str, List[str]] = {}
-
-    def collect_files(self):
-        for path in self.root_dir.rglob("*"):
-            if path.is_file() and path.suffix in DEFAULT_EXTENSIONS:
-                if any(part in DEFAULT_IGNORE_DIRS for part in path.parts):
-                    continue
-                self.files.append(path)
+# 忽略无实际逻辑的样板行（导入、单括号、空行等）
+TRIVIAL_LINE_REGEX = re.compile(
+    r"^(import\s.+|export\s\*|export\s\{|\}|\{|\);\s*|//.*|/\*.*|\*.*|const\s*\{\s*t\s*\}\s*=\s*useTranslation\(\);)$"
+)
 ~~~~~
 ~~~~~python.new
-    def __init__(
-        self,
-        root_dir: str = "src",
-        min_duplicate_lines: int = 5,
-        min_tailwind_classes: int = 4,
-        min_tailwind_occurrences: int = 3,
-        ignore_dirs: Optional[Set[str]] = None,
-    ):
-        self.root_dir = Path(root_dir)
-        self.min_duplicate_lines = min_duplicate_lines
-        self.min_tailwind_classes = min_tailwind_classes
-        self.min_tailwind_occurrences = min_tailwind_occurrences
-        self.ignore_dirs = ignore_dirs if ignore_dirs is not None else set(DEFAULT_IGNORE_DIRS)
-        self.files: List[Path] = []
-        self.file_lines: Dict[str, List[str]] = {}
-
-    def collect_files(self):
-        for path in self.root_dir.rglob("*"):
-            if path.is_file() and path.suffix in DEFAULT_EXTENSIONS:
-                if any(part in self.ignore_dirs for part in path.parts):
-                    continue
-                self.files.append(path)
+# 忽略无实际逻辑的样板行（导入、多行解构、单括号、闭合标签、空行等）
+TRIVIAL_LINE_REGEX = re.compile(
+    r"^("
+    r"import\s.+|"
+    r"export\s\*|"
+    r"export\s\{|"
+    r"from\s+['\"].+|"
+    r"\}\s*from\s+['\"].+|"
+    r"[A-Za-z0-9_$]+,\s*|"  # 多行 import/export 的解构类型单项，如 'CardStatusTag,'
+    r"const\s*\{\s*t\s*\}\s*=\s*useTranslation\(\);|"
+    r"[\{\}\(\)\[\]\,\;\:\>\<]+|"  # 纯括号与标点
+    r"<\/[A-Za-z0-9_$.-]+>|"  # 单独的闭合标签如 </div>, </ModalShell>
+    r"(<\/[A-Za-z0-9_$.-]+>\s*)+|"  # 多个连续闭合标签如 </div></div>
+    r"\);\s*|"
+    r"\}\);\s*|"
+    r"//.*|"
+    r"/\*.*|"
+    r"\*.*"
+    r")$"
+)
 ~~~~~
 
 ~~~~~act
@@ -101,52 +68,29 @@ patch_file
 scripts/check_dry.py
 ~~~~~
 ~~~~~python.old
-def main():
-    parser = argparse.ArgumentParser(description="FormSight DRY Pattern & Clone Checker")
-    parser.add_argument("--src", default="src", help="Source code directory to analyze (default: src)")
-    parser.add_argument("--min-lines", type=int, default=5, help="Minimum duplicate lines for code clones")
-    parser.add_argument("--min-classes", type=int, default=4, help="Minimum Tailwind classes count in a pattern")
-    parser.add_argument("--min-occurrences", type=int, default=3, help="Minimum occurrences for Tailwind style clones")
-    parser.add_argument("--fail-on-smells", action="store_true", help="Exit with code 1 if smells or clones exist (for CI)")
-    
-    args = parser.parse_args()
-
-    analyzer = DryAnalyzer(
-        root_dir=args.src,
-        min_duplicate_lines=args.min_lines,
-        min_tailwind_classes=args.min_classes,
-        min_tailwind_occurrences=args.min_occurrences,
-    )
+    def is_significant_line(self, line: str) -> bool:
+        norm = self.normalize_line(line)
+        if not norm or len(norm) <= 2:
+            return False
+        if TRIVIAL_LINE_REGEX.match(norm):
+            return False
+        return True
 ~~~~~
 ~~~~~python.new
-def main():
-    parser = argparse.ArgumentParser(description="FormSight DRY Pattern & Clone Checker")
-    parser.add_argument("--src", default="src", help="Source code directory to analyze (default: src)")
-    parser.add_argument("--min-lines", type=int, default=5, help="Minimum duplicate lines for code clones")
-    parser.add_argument("--min-classes", type=int, default=4, help="Minimum Tailwind classes count in a pattern")
-    parser.add_argument("--min-occurrences", type=int, default=3, help="Minimum occurrences for Tailwind style clones")
-    parser.add_argument("--include-packs", action="store_true", help="Include src/packs directory in analysis (default: ignored)")
-    parser.add_argument("--ignore-dirs", nargs="*", default=[], help="Additional directory names to ignore")
-    parser.add_argument("--fail-on-smells", action="store_true", help="Exit with code 1 if smells or clones exist (for CI)")
-    
-    args = parser.parse_args()
-
-    ignore_dirs = set(DEFAULT_IGNORE_DIRS)
-    if args.include_packs:
-        ignore_dirs.discard("packs")
-    if args.ignore_dirs:
-        ignore_dirs.update(args.ignore_dirs)
-
-    analyzer = DryAnalyzer(
-        root_dir=args.src,
-        min_duplicate_lines=args.min_lines,
-        min_tailwind_classes=args.min_classes,
-        min_tailwind_occurrences=args.min_occurrences,
-        ignore_dirs=ignore_dirs,
-    )
+    def is_significant_line(self, line: str) -> bool:
+        norm = self.normalize_line(line)
+        if not norm or len(norm) <= 2:
+            return False
+        if TRIVIAL_LINE_REGEX.match(norm):
+            return False
+        # 剥离所有 JSX 闭合标签与纯标点后，如果剩余内容为空则视为非实质行
+        stripped = re.sub(r"</[A-Za-z0-9_$.-]+>|[\{\}\(\)\[\]\,\;\:\>\<\s]", "", norm)
+        if not stripped:
+            return False
+        return True
 ~~~~~
 
 ### 下一步建议
 
-1. **执行验证**：运行 `python scripts/check_dry.py`，确认已不再扫描 `src/packs` 目录下的内容。
-2. **需要时包含 Packs 扫描**：如果后续需要对 Packs 插件自身进行跨包重复检查，可运行 `python scripts/check_dry.py --include-packs`。
+1. **重新运行验证**：在终端执行 `python scripts/check_dry.py`。
+2. **观察报告变化**：确认类似 `Group #4`（连续 JSX 闭合标签）和 `Group #5, #6`（多行 Type Import）等良性噪点已被有效过滤，剩下的克隆组将全部集中在真实的业务逻辑（如 `formatTime`、Canvas 初始化等）与 Tailwind 高频重复模式上。
