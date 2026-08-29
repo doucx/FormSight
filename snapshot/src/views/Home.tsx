@@ -147,7 +147,8 @@ export function Home({
             <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
           </div>
           <div className="text-[11px] text-slate-400 pt-0.5">
-            {t('common.accuracy')}: <span className="font-bold text-slate-700 font-mono">{overallAccuracy}%</span>
+            {t('common.accuracy')}:{' '}
+            <span className="font-bold text-slate-700 font-mono">{overallAccuracy}%</span>
           </div>
         </div>
 

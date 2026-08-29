@@ -17,11 +17,7 @@ function AfdianIcon({ className = 'w-4 h-4' }: { className?: string }) {
   );
 }
 
-export function AppNavigation({
-  currentRoute,
-  onNavigate,
-  onOpenSettings,
-}: AppNavigationProps) {
+export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppNavigationProps) {
   const { t } = useTranslation();
 
   const isTabActive = (tab: 'home' | 'discovery' | 'plan-editor' | 'stats'): boolean => {
