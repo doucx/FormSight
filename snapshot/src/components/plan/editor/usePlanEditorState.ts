@@ -1,7 +1,6 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
-import { registry } from '../../../core/registry';
-import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
   clonePlan,
   deletePlan,
@@ -11,6 +10,15 @@ import {
   savePlanStorageState,
   togglePlanFavorite,
 } from '../../../utils/planStorage';
+import {
+  batchUpdateItemTrials,
+  createNewBlankPlan,
+  createPlanItem,
+  movePlanItem,
+  removePlanItem,
+  sanitizePlan,
+  updatePlanItemTrials,
+} from './planItemUtils';
 
 export interface UsePlanEditorStateOptions {
   initialPlan: TrainingPlan;
@@ -61,48 +69,28 @@ export function usePlanEditorState({
   const handleBatchUpdateTrials = (trials: number) => {
     setCurrentPlan((prev) => ({
       ...prev,
-      items: prev.items.map((item) => ({ ...item, targetTrials: trials })),
+      items: batchUpdateItemTrials(prev.items, trials),
     }));
     showToast(t('plan.batchSetTrialsToast', { trials }));
   };
 
   const handleAddItem = (cardId: string) => {
-    const newItem: PlanItem = {
-      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-      cardId,
-      targetTrials: 20,
-    };
     setCurrentPlan((prev) => ({
       ...prev,
-      items: [...prev.items, newItem],
+      items: [...prev.items, createPlanItem(cardId)],
     }));
   };
 
   const handleRemoveItem = (id: string) => {
-    setCurrentPlan((prev) => ({
-      ...prev,
-      items: prev.items.filter((item) => item.id !== id),
-    }));
+    setCurrentPlan((prev) => ({ ...prev, items: removePlanItem(prev.items, id) }));
   };
 
   const handleMoveItem = (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= currentPlan.items.length) return;
-
-    const newItems = [...currentPlan.items];
-    const [moved] = newItems.splice(index, 1);
-    newItems.splice(targetIndex, 0, moved);
-
-    setCurrentPlan((prev) => ({ ...prev, items: newItems }));
+    setCurrentPlan((prev) => ({ ...prev, items: movePlanItem(prev.items, index, direction) }));
   };
 
   const handleUpdateTrials = (id: string, trials: number) => {
-    setCurrentPlan((prev) => ({
-      ...prev,
-      items: prev.items.map((item) =>
-        item.id === id ? { ...item, targetTrials: Math.max(5, trials) } : item,
-      ),
-    }));
+    setCurrentPlan((prev) => ({ ...prev, items: updatePlanItemTrials(prev.items, id, trials) }));
   };
 
   const handleClearAll = () => {
@@ -110,15 +98,10 @@ export function usePlanEditorState({
   };
 
   const handleCreateNewBlankPlan = () => {
-    const newBlank: TrainingPlan = {
-      id: `custom_plan_${Date.now()}`,
-      name: t('plan.newBlankPlan'),
-      description: t('common.defaultCustomPlanDesc'),
-      items: [],
-      isFavorite: true,
-      isBuiltin: false,
-      updatedAt: Date.now(),
-    };
+    const newBlank = createNewBlankPlan(
+      t('plan.newBlankPlan'),
+      t('common.defaultCustomPlanDesc'),
+    );
     setCurrentPlan(newBlank);
     setPlanNameInput(newBlank.name);
     setIsEditingName(true);
@@ -196,45 +179,34 @@ export function usePlanEditorState({
     }
   };
 
-  const sanitizeAndPersist = (): TrainingPlan => {
-    const sanitizedPlan: TrainingPlan = {
-      ...currentPlan,
-      name: planNameInput.trim() || currentPlan.name,
-      items: currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId))),
-      updatedAt: Date.now(),
-    };
-
-    const updatedPlans = storageState.plans.some((p) => p.id === sanitizedPlan.id)
-      ? storageState.plans.map((p) => (p.id === sanitizedPlan.id ? sanitizedPlan : p))
-      : [sanitizedPlan, ...storageState.plans];
+  const persist = (): TrainingPlan => {
+    const sanitized = sanitizePlan(currentPlan, planNameInput);
+    const updatedPlans = storageState.plans.some((p) => p.id === sanitized.id)
+      ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
+      : [sanitized, ...storageState.plans];
 
     savePlanStorageState({
-      activePlanId: sanitizedPlan.id,
+      activePlanId: sanitized.id,
       plans: updatedPlans,
     });
 
     onPlanListChanged?.();
-    return sanitizedPlan;
+    return sanitized;
   };
 
   const handleSaveOnly = () => {
-    const saved = sanitizeAndPersist();
+    const saved = persist();
     onSaveAndExit(saved);
   };
 
   const handleSaveAndStart = () => {
-    const saved = sanitizeAndPersist();
+    const saved = persist();
     onStartPlanDirectly(saved);
   };
 
-  const validPlanItems = useMemo(
-    () => currentPlan.items.filter((item) => Boolean(registry.getCardById(item.cardId))),
-    [currentPlan.items],
-  );
-
   const totalTrials = useMemo(
-    () => validPlanItems.reduce((acc, curr) => acc + curr.targetTrials, 0),
-    [validPlanItems],
+    () => currentPlan.items.reduce((acc, curr) => acc + curr.targetTrials, 0),
+    [currentPlan.items],
   );
 
   const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
@@ -252,7 +224,6 @@ export function usePlanEditorState({
     setShowPlanManager,
     toastNotice,
     isNewPlan,
-    validPlanItems,
     totalTrials,
     estimatedMin,
     fileInputRef,
