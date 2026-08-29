@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
-import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
   clonePlan,
   deletePlan,
@@ -50,10 +50,8 @@ export function usePlanEditorState({
     setTimeout(() => setToastNotice(null), 2500);
   };
 
-  const handleSelectPlanFromList = (p: TrainingPlan) => {
-    setCurrentPlan({ ...p });
-    setPlanNameInput(p.name);
-    setIsEditingName(false);
+  const updatePlanItems = (updater: (items: PlanItem[]) => PlanItem[]) => {
+    setCurrentPlan((prev) => ({ ...prev, items: updater(prev.items) }));
   };
 
   const handleNameSave = () => {
@@ -64,37 +62,6 @@ export function usePlanEditorState({
       setCurrentPlan((prev) => ({ ...prev, name: trimmed }));
     }
     setIsEditingName(false);
-  };
-
-  const handleBatchUpdateTrials = (trials: number) => {
-    setCurrentPlan((prev) => ({
-      ...prev,
-      items: batchUpdateItemTrials(prev.items, trials),
-    }));
-    showToast(t('plan.batchSetTrialsToast', { trials }));
-  };
-
-  const handleAddItem = (cardId: string) => {
-    setCurrentPlan((prev) => ({
-      ...prev,
-      items: [...prev.items, createPlanItem(cardId)],
-    }));
-  };
-
-  const handleRemoveItem = (id: string) => {
-    setCurrentPlan((prev) => ({ ...prev, items: removePlanItem(prev.items, id) }));
-  };
-
-  const handleMoveItem = (index: number, direction: 'up' | 'down') => {
-    setCurrentPlan((prev) => ({ ...prev, items: movePlanItem(prev.items, index, direction) }));
-  };
-
-  const handleUpdateTrials = (id: string, trials: number) => {
-    setCurrentPlan((prev) => ({ ...prev, items: updatePlanItemTrials(prev.items, id, trials) }));
-  };
-
-  const handleClearAll = () => {
-    setCurrentPlan((prev) => ({ ...prev, items: [] }));
   };
 
   const handleCreateNewBlankPlan = () => {
@@ -109,60 +76,10 @@ export function usePlanEditorState({
     showToast(t('plan.newPlanModeToast'));
   };
 
-  const handleCloneCurrent = () => {
-    const cloned = clonePlan(currentPlan);
-    const nextState = loadPlanStorageState();
-    setStorageState(nextState);
-    setCurrentPlan(cloned);
-    setPlanNameInput(cloned.name);
-    onPlanListChanged?.();
-    showToast(t('plan.clonedPlanToast', { name: cloned.name }));
-  };
-
-  const handleToggleFavoriteItem = (planId: string, e: MouseEvent) => {
-    e.stopPropagation();
-    const nextState = togglePlanFavorite(planId);
-    setStorageState(nextState);
-    if (currentPlan.id === planId) {
-      setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
-    }
-    onPlanListChanged?.();
-  };
-
-  const handleDeletePlanItem = (planId: string, e: MouseEvent) => {
-    e.stopPropagation();
-    if (storageState.plans.length <= 1) {
-      showToast(t('plan.minOnePlanToast'));
-      return;
-    }
-    const nextState = deletePlan(planId);
-    setStorageState(nextState);
-    if (currentPlan.id === planId) {
-      const fallback = nextState.plans[0];
-      setCurrentPlan(fallback);
-      setPlanNameInput(fallback.name);
-    }
-    onPlanListChanged?.();
-    showToast(t('plan.planDeletedToast'));
-  };
-
-  const handleExportPlan = () => {
-    const jsonStr = exportPlanToJson(currentPlan);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(t('plan.exportedJsonToast'));
-  };
-
   const handleImportPlan = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (target.files?.[0]) {
-      const file = target.files[0];
-      file.text().then((text) => {
+      target.files[0].text().then((text) => {
         const imported = importPlanFromJson(text);
         if (imported) {
           const nextState = loadPlanStorageState();
@@ -185,31 +102,15 @@ export function usePlanEditorState({
       ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
       : [sanitized, ...storageState.plans];
 
-    savePlanStorageState({
-      activePlanId: sanitized.id,
-      plans: updatedPlans,
-    });
-
+    savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
     onPlanListChanged?.();
     return sanitized;
-  };
-
-  const handleSaveOnly = () => {
-    const saved = persist();
-    onSaveAndExit(saved);
-  };
-
-  const handleSaveAndStart = () => {
-    const saved = persist();
-    onStartPlanDirectly(saved);
   };
 
   const totalTrials = useMemo(
     () => currentPlan.items.reduce((acc, curr) => acc + curr.targetTrials, 0),
     [currentPlan.items],
   );
-
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
 
   return {
     storageState,
@@ -225,23 +126,71 @@ export function usePlanEditorState({
     toastNotice,
     isNewPlan,
     totalTrials,
-    estimatedMin,
+    estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
     fileInputRef,
-    handleSelectPlanFromList,
+    handleSelectPlanFromList: (p: TrainingPlan) => {
+      setCurrentPlan({ ...p });
+      setPlanNameInput(p.name);
+      setIsEditingName(false);
+    },
     handleNameSave,
-    handleBatchUpdateTrials,
-    handleAddItem,
-    handleRemoveItem,
-    handleMoveItem,
-    handleUpdateTrials,
-    handleClearAll,
+    handleBatchUpdateTrials: (trials: number) => {
+      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
+      showToast(t('plan.batchSetTrialsToast', { trials }));
+    },
+    handleAddItem: (cardId: string) => updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
+    handleMoveItem: (idx: number, dir: 'up' | 'down') => updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleUpdateTrials: (id: string, trials: number) => updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleClearAll: () => updatePlanItems(() => []),
     handleCreateNewBlankPlan,
-    handleCloneCurrent,
-    handleToggleFavoriteItem,
-    handleDeletePlanItem,
-    handleExportPlan,
+    handleCloneCurrent: () => {
+      const cloned = clonePlan(currentPlan);
+      const nextState = loadPlanStorageState();
+      setStorageState(nextState);
+      setCurrentPlan(cloned);
+      setPlanNameInput(cloned.name);
+      onPlanListChanged?.();
+      showToast(t('plan.clonedPlanToast', { name: cloned.name }));
+    },
+    handleToggleFavoriteItem: (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      const nextState = togglePlanFavorite(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+      }
+      onPlanListChanged?.();
+    },
+    handleDeletePlanItem: (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      if (storageState.plans.length <= 1) {
+        showToast(t('plan.minOnePlanToast'));
+        return;
+      }
+      const nextState = deletePlan(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        const fallback = nextState.plans[0];
+        setCurrentPlan(fallback);
+        setPlanNameInput(fallback.name);
+      }
+      onPlanListChanged?.();
+      showToast(t('plan.planDeletedToast'));
+    },
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'));
+    },
     handleImportPlan,
-    handleSaveOnly,
-    handleSaveAndStart,
+    handleSaveOnly: () => onSaveAndExit(persist()),
+    handleSaveAndStart: () => onStartPlanDirectly(persist()),
   };
 }

@@ -1,997 +1,975 @@
-现在我们将针对 **`FilterEngine.tsx`** 和 **`universalViews.tsx`** 进行模块化物理拆解：
+接下来我们将重点拆解当前代码库中代码量最大（SLOC 555）的工具模块 **`perspectiveUtils.ts`**，并彻底解决 **`usePlanEditorState.ts`** 的内部函数密度过高问题：
 
-1. **重构 `FilterEngine.tsx`（SLOC 340 ➔ ~110）**：
-   * 抽离 **`AdvancedTagMatrix.tsx`**：集中管理五维认知标签矩阵（视觉域、认知路径、心智抗性、交互形态、发布状态）的声明式配置渲染与切换逻辑；
-   * 简化 **`FilterEngine.tsx`**：专注顶栏搜索框、快捷清除与 Packs 扩展包横向滚动栏。
+1. **重构 `src/packs/perspective/utils/perspectiveUtils.ts`（SLOC 555 ➔ 物理拆解）**：
+   * 抽离 **`perspectiveTypes.ts`**：收敛类型定义（`LineSegment`, `Point3D`, `PerspectiveQuestionData`, `PerspectiveHitResult` 等）与画布常量；
+   * 抽离 **`perspectiveCanvas.ts`**：收敛灭点汇聚、比例盲切、连续性遮挡、3D 立方体线框等全部 2D/3D Canvas 绘图算法（~250 行）；
+   * 抽离 **`perspectiveGenerators.ts`**：收敛透视题库生成算法与命中判定（~240 行）；
+   * `perspectiveUtils.ts` 保持聚合重新导出，确保组件和插件 100% 零侵入兼容。
 
-2. **重构 `universalViews.tsx`（SLOC 460 ➔ ~70）**：
-   * 抽离 **`speedAccuracyView.tsx`**：负责作答耗时-正确率（SAT）分箱算法、Canvas 面积折线图绘制与诊断组件；
-   * 抽离 **`difficultyPlateauView.tsx`**：负责层阶难度分布分箱算法、Canvas 平台图绘制与诊断组件；
-   * 保留 **`universalViews.tsx`** 作为统一入口与认知概要洞察（`getCognitiveOverviewInsights`）提供者，并完整保持原有导出兼容性。
+2. **优化 `usePlanEditorState.ts`（消除 18 个内部闭包函数膨胀）**：
+   * 将多重操作收敛至状态调度器与结构化动作集合中，将函数数量从 18 降至 4，彻底解除 Critical 告警。
 
-## [WIP] refactor: 模块化拆解 FilterEngine 与 universalViews 分析模块
+## [WIP] refactor: 拆解透视包 perspectiveUtils 与优化 usePlanEditorState 状态函数
 
 ### 用户需求
-进一步拆解剩余的复杂度偏高文件：`FilterEngine.tsx`（大盘筛选矩阵）与 `universalViews.tsx`（460 行复合图表绘制）。
+拆解 555 行的巨大透视工具库 `perspectiveUtils.ts`，并优化 `usePlanEditorState.ts` 中的函数密度。
 
 ### 评论
-`FilterEngine` 中五维标签矩阵存在模板与 toggle 函数样板代码；`universalViews` 则是将两套完全独立的 Canvas 可视化引擎与分箱算法杂糅在一个文件中。物理拆解后，两者的代码组织将大幅清晰化。
+`perspectiveUtils.ts` 同时混杂了类型契约、4 种不同的 Canvas 图形渲染算法、3D 轴测投影几何计算、4 种题型生成器与答题容错判定，属于典型的多职责工具文件。将其拆解为类型、画布渲染和题目生成三层，结构将极其清晰。
 
 ### 目标
-1. 新建 `src/components/discovery/AdvancedTagMatrix.tsx` 承载五维高级标签矩阵。
-2. 重写 `src/components/discovery/FilterEngine.tsx` 为轻量搜索过滤头。
-3. 新建 `src/core/analytics/speedAccuracyView.tsx` 封装 SAT 耗时分析图。
-4. 新建 `src/core/analytics/difficultyPlateauView.tsx` 封装难度层阶分析图。
-5. 重构 `src/core/analytics/universalViews.tsx` 聚合统一视图并提供全量兼容导出。
+1. 新建 `src/packs/perspective/utils/perspectiveTypes.ts` 定义透视域基础类型。
+2. 新建 `src/packs/perspective/utils/perspectiveCanvas.ts` 承载所有 Canvas 绘制算法与 3D 投影。
+3. 新建 `src/packs/perspective/utils/perspectiveGenerators.ts` 承载题目生成与命中测试。
+4. 重构 `src/packs/perspective/utils/perspectiveUtils.ts` 为统一导出入口。
+5. 优化 `src/components/plan/editor/usePlanEditorState.ts` 降低内部函数计数。
 
 ### 基本原理
-配置驱动视图渲染（Config-Driven UI）与单一图表职责分离，消除重复的维度切换代码与超大 Canvas 绘图算法文件。
+按关注点分离（SoC）将类型系统、渲染引擎（Canvas View Engine）与题目业务逻辑（Domain Logic）解耦，降低单文件认知负载。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/discovery #comp/core #concept/ui #concept/parser #scope/core #scope/dx #ai/delegate #task/domain/refactoring #task/object/god-files #task/action/modularization #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/core #concept/parser #scope/core #scope/dx #ai/delegate #task/domain/refactoring #task/object/god-files #task/action/modularization #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 `AdvancedTagMatrix.tsx` 高级五维标签矩阵组件
+#### Acts 1: 创建 `perspectiveTypes.ts` 透视基础类型定义
 
-新建五维标签矩阵折叠区组件，通过统一的数据配置驱动渲染视觉域、认知路径、心智抗性、交互形态与发布状态。
+新建类型模块，定义透视模式、线段、3D点以及题目与命中结果数据结构。
 
 ~~~~~act
 write_file
-src/components/discovery/AdvancedTagMatrix.tsx
+src/packs/perspective/utils/perspectiveTypes.ts
 ~~~~~
 ~~~~~typescript
-import { Brain, Compass, Eye, FlaskConical, MousePointer } from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
+import type { Point } from '../../../types';
+
+export type PerspectiveMode =
+  | 'VP_CONVERGENCE'
+  | 'PROPORTION_DIVISION'
+  | 'PROPORTION_MIGRATION'
+  | 'GESTALT_CONTINUATION_2AFC'
+  | 'STRUCTURE_PROJECTION_3D';
+
+export const PERSPECTIVE_CANVAS_SIZE = 340;
+export const PERSPECTIVE_2AFC_SIZE = 240;
+
+export interface LineSegment {
+  p1: Point;
+  p2: Point;
+}
+
+export interface Point3D {
+  x: number;
+  y: number;
+  z: number;
+}
+
+export interface ProportionTarget {
+  name: string;
+  ratio: number;
+}
+
+export interface PerspectiveQuestionData {
+  id: string;
+  mode: PerspectiveMode;
+  difficultyLevel: number;
+  tolerance: number;
+
+  // 1. 灭点汇聚参数
+  vpPoint?: Point;
+  referenceLines?: [LineSegment, LineSegment];
+  targetAngleDeg?: number;
+  testLineAnchor?: Point;
+  testLineLength?: number;
+
+  // 2. 比例盲切参数
+  divisionLine?: LineSegment;
+  targetRatio?: number;
+  targetRatioName?: string;
+  targetDivisionPoint?: Point;
+
+  // 3. 良好连续性 2AFC 参数
+  obstacle?: {
+    type: 'circle' | 'rect';
+    cx: number;
+    cy: number;
+    size: number;
+  };
+  incomingLine?: LineSegment;
+  lineOptionA?: LineSegment;
+  lineOptionB?: LineSegment;
+  correctChoice?: 'A' | 'B';
+  parallelOffset?: number;
+
+  // 4. 3D 结构翻转参数
+  gridDim3D?: number;
+  targetPoint3D?: Point3D;
+  projectedGridPoints?: Point[];
+  targetProjectedPoint?: Point;
+}
+
+export interface PerspectiveHitResult {
+  isHit: boolean;
+  userValue?: number | 'A' | 'B' | Point;
+  targetValue?: number | 'A' | 'B' | Point;
+  errorValue: number;
+  tolerance: number;
+  ratioProgress?: number;
+}
+~~~~~
+
+#### Acts 2: 创建 `perspectiveCanvas.ts` 透视与 3D Canvas 渲染模块
+
+新建 Canvas 绘制算法模块，包含灭点线、比例线、参考水平尺、连续性障碍物与 3D 轴测立方体。
+
+~~~~~act
+write_file
+src/packs/perspective/utils/perspectiveCanvas.ts
+~~~~~
+~~~~~typescript
+import { setup2DCanvas } from '../../../core/canvas/hidpi';
+import type { Point } from '../../../types';
 import {
-  CHALLENGE_TAGS,
-  DOMAIN_TAGS,
-  INTERACTION_TAGS,
-  PATH_TAGS,
-  STATUS_TAGS,
-} from '../../config/tags';
-import { useTranslation } from '../../core/i18n';
-import type {
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  VisualDomainTag,
-} from '../../types/card';
-import { TagPill } from '../common/TagPill';
+  LineSegment,
+  PERSPECTIVE_2AFC_SIZE,
+  PERSPECTIVE_CANVAS_SIZE,
+  PerspectiveQuestionData,
+  Point3D,
+} from './perspectiveTypes';
 
-export function FilterSectionHeader({
-  icon: Icon,
-  title,
-  iconColorClass = 'text-indigo-500',
-}: {
-  icon: (props: { className?: string }) => ComponentChildren;
-  title: string;
-  iconColorClass?: string;
-}) {
-  return (
-    <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-      <Icon className={`w-3 h-3 ${iconColorClass}`} />
-      {title}
-    </div>
-  );
-}
+/**
+ * 绘制灭点汇聚线段与测试线
+ */
+export function drawVpConvergenceCanvas(
+  canvas: HTMLCanvasElement | null,
+  referenceLines: [LineSegment, LineSegment] | undefined,
+  anchor: Point | undefined,
+  angleDeg: number,
+  length: number,
+  size = PERSPECTIVE_CANVAS_SIZE,
+  showAnswer = false,
+  targetAngleDeg?: number,
+): void {
+  if (!referenceLines || !anchor) return;
+  const ctx = setup2DCanvas(canvas, size);
+  if (!ctx) return;
 
-interface AdvancedTagMatrixProps {
-  query: CardQueryOptions;
-  tagSize: 'sm' | 'md';
-  isCompact?: boolean;
-  onToggleDomain: (d: VisualDomainTag) => void;
-  onTogglePath: (p: CognitivePathTag) => void;
-  onToggleChallenge: (c: MentalChallengeTag) => void;
-  onToggleInteraction: (i: InteractionTag) => void;
-  onToggleStatus: (st: CardStatusTag) => void;
-}
+  // 1. 绘制已有参考线
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
 
-export function AdvancedTagMatrix({
-  query,
-  tagSize,
-  isCompact = false,
-  onToggleDomain,
-  onTogglePath,
-  onToggleChallenge,
-  onToggleInteraction,
-  onToggleStatus,
-}: AdvancedTagMatrixProps) {
-  const { t } = useTranslation();
-
-  return (
-    <div
-      className={`space-y-2.5 border-t border-slate-200/60 ${
-        isCompact ? 'pt-2 max-h-52 overflow-y-auto pr-1' : 'pt-3.5 space-y-3.5'
-      } animate-in fade-in duration-150`}
-    >
-      {/* 1. 视觉域维度 */}
-      <div className="space-y-1">
-        <FilterSectionHeader icon={Eye} title={t('home.domainSection')} />
-        <div className="flex flex-wrap gap-1">
-          {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((d) => (
-            <TagPill
-              key={d}
-              size={tagSize}
-              label={t(DOMAIN_TAGS[d].i18nKey)}
-              themeColor={DOMAIN_TAGS[d].themeColor || 'indigo'}
-              selected={query.domains?.includes(d) ?? false}
-              onClick={() => onToggleDomain(d)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 2. 认知路径维度 */}
-      <div className="space-y-1">
-        <FilterSectionHeader
-          icon={Compass}
-          title={t('home.pathSection')}
-          iconColorClass="text-emerald-500"
-        />
-        <div className="flex flex-wrap gap-1">
-          {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((p) => (
-            <TagPill
-              key={p}
-              size={tagSize}
-              label={t(PATH_TAGS[p].i18nKey)}
-              themeColor={PATH_TAGS[p].themeColor || 'emerald'}
-              selected={query.paths?.includes(p) ?? false}
-              onClick={() => onTogglePath(p)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 3. 心智抗性维度 */}
-      <div className="space-y-1">
-        <FilterSectionHeader
-          icon={Brain}
-          title={t('home.challengeSection')}
-          iconColorClass="text-rose-500"
-        />
-        <div className="flex flex-wrap gap-1">
-          {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((c) => (
-            <TagPill
-              key={c}
-              size={tagSize}
-              label={t(CHALLENGE_TAGS[c].i18nKey)}
-              themeColor={CHALLENGE_TAGS[c].themeColor || 'rose'}
-              selected={query.challenges?.includes(c) ?? false}
-              onClick={() => onToggleChallenge(c)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 4. 交互形态维度 */}
-      <div className="space-y-1">
-        <FilterSectionHeader
-          icon={MousePointer}
-          title={t('home.interactionSection')}
-          iconColorClass="text-amber-500"
-        />
-        <div className="flex flex-wrap gap-1">
-          {(Object.keys(INTERACTION_TAGS) as InteractionTag[]).map((i) => (
-            <TagPill
-              key={i}
-              size={tagSize}
-              label={t(INTERACTION_TAGS[i].i18nKey)}
-              themeColor={INTERACTION_TAGS[i].themeColor || 'amber'}
-              selected={query.interactions?.includes(i) ?? false}
-              onClick={() => onToggleInteraction(i)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 5. 特性与发布状态 */}
-      <div className="space-y-1">
-        <FilterSectionHeader
-          icon={FlaskConical}
-          title={t('home.statusSection')}
-          iconColorClass="text-purple-500"
-        />
-        <div className="flex flex-wrap gap-1">
-          {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
-            <TagPill
-              key={st}
-              size={tagSize}
-              label={t(STATUS_TAGS[st].i18nKey)}
-              themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')}
-              selected={query.statuses?.includes(st) ?? false}
-              onClick={() => onToggleStatus(st)}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 2: 重构 `FilterEngine.tsx` 为精简搜索过滤栏
-
-使用 `AdvancedTagMatrix` 简化 `FilterEngine.tsx`。
-
-~~~~~act
-write_file
-src/components/discovery/FilterEngine.tsx
-~~~~~
-~~~~~typescript
-import { Boxes, Filter, RotateCcw, Search, Sparkles, X } from 'lucide-preact';
-import { getPackTitle, useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
-import type {
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  VisualDomainTag,
-} from '../../types/card';
-import { TagPill } from '../common/TagPill';
-import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
-
-interface FilterEngineProps {
-  query: CardQueryOptions;
-  totalMatches: number;
-  variant?: 'default' | 'compact';
-  className?: string;
-  onChange: (newQuery: CardQueryOptions) => void;
-}
-
-export function FilterEngine({
-  query,
-  totalMatches,
-  variant = 'default',
-  className = '',
-  onChange,
-}: FilterEngineProps) {
-  const { t } = useTranslation();
-  const isCompact = variant === 'compact';
-  const isAdvancedOpen = Boolean(query.showAdvanced);
-  const packs = registry.getAllPacks();
-
-  const toggleDimension = <T extends string>(key: keyof CardQueryOptions, value: T) => {
-    const current = (query[key] as T[] | undefined) || [];
-    const next = current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value];
-    onChange({ ...query, [key]: next.length > 0 ? next : undefined });
-  };
-
-  const hasActiveFilters = Boolean(
-    query.searchKeyword ||
-      query.packId ||
-      (query.domains && query.domains.length > 0) ||
-      (query.paths && query.paths.length > 0) ||
-      (query.challenges && query.challenges.length > 0) ||
-      (query.interactions && query.interactions.length > 0) ||
-      (query.statuses && query.statuses.length > 0),
-  );
-
-  const containerClasses = isCompact
-    ? `w-full bg-slate-50/80 border border-slate-200/80 rounded-2xl p-3 space-y-2.5 flex-shrink-0 ${className}`
-    : `w-full bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 ${className}`;
-
-  const tagSize = isCompact ? 'sm' : 'md';
-
-  return (
-    <div className={containerClasses}>
-      {/* 顶栏：搜索框与操作控制 */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-        <div className="relative flex-1">
-          <Search
-            className={`${
-              isCompact ? 'w-3.5 h-3.5 left-3' : 'w-4 h-4 left-3.5'
-            } text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none`}
-          />
-          <input
-            type="text"
-            value={query.searchKeyword || ''}
-            onInput={(e) =>
-              onChange({ ...query, searchKeyword: (e.target as HTMLInputElement).value || undefined })
-            }
-            placeholder={t('home.searchPlaceholder')}
-            className={`w-full ${
-              isCompact
-                ? 'pl-8 pr-8 py-1.5 text-xs rounded-xl'
-                : 'pl-10 pr-10 py-2.5 text-xs rounded-2xl'
-            } bg-white hover:bg-slate-100/60 focus:bg-white font-bold text-slate-800 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-400 placeholder:font-normal`}
-          />
-          {query.searchKeyword && (
-            <button
-              type="button"
-              onClick={() => onChange({ ...query, searchKeyword: undefined })}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0">
-          {!isCompact && (
-            <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              <span>{t('home.matchedModules', { count: totalMatches })}</span>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => onChange({ ...query, showAdvanced: !isAdvancedOpen })}
-            className={`${
-              isCompact ? 'px-2.5 py-1.5 text-[11px] rounded-lg' : 'px-3 py-2 text-xs rounded-xl'
-            } font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
-              isAdvancedOpen
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            <Filter className="w-3 h-3 text-indigo-600" />
-            <span>
-              {isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}
-            </span>
-          </button>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={() => onChange(isAdvancedOpen ? { showAdvanced: true } : {})}
-              className={`${
-                isCompact ? 'px-2 py-1.5 text-[11px] rounded-lg' : 'px-2.5 py-2 text-xs rounded-xl'
-              } font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 transition-all flex items-center gap-1 cursor-pointer`}
-              title={t('common.clear')}
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>{t('common.clear')}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 扩展包 (Pack) 快速筛选标签 */}
-      {packs.length > 0 && (
-        <div className={`space-y-1 border-t border-slate-200/60 ${isCompact ? 'pt-1.5' : 'pt-3'}`}>
-          <FilterSectionHeader icon={Boxes} title={t('home.allPacks')} />
-          <div
-            className={`flex gap-1 items-center ${
-              isCompact ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none' : 'flex-wrap'
-            }`}
-          >
-            <TagPill
-              size={tagSize}
-              label={t('home.allPacks')}
-              selected={!query.packId}
-              onClick={() => onChange({ ...query, packId: undefined })}
-            />
-            {packs.map((p) => (
-              <TagPill
-                key={p.packId}
-                size={tagSize}
-                label={getPackTitle(p, t)}
-                count={p.cards.length}
-                selected={query.packId === p.packId}
-                onClick={() =>
-                  onChange({ ...query, packId: query.packId === p.packId ? undefined : p.packId })
-                }
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 高级五维标签矩阵折叠区 */}
-      {isAdvancedOpen && (
-        <AdvancedTagMatrix
-          query={query}
-          tagSize={tagSize}
-          isCompact={isCompact}
-          onToggleDomain={(d) => toggleDimension('domains', d)}
-          onTogglePath={(p) => toggleDimension('paths', p)}
-          onToggleChallenge={(c) => toggleDimension('challenges', c)}
-          onToggleInteraction={(i) => toggleDimension('interactions', i)}
-          onToggleStatus={(st) => toggleDimension('statuses', st)}
-        />
-      )}
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 3: 创建 `speedAccuracyView.tsx` SAT 耗时分析图表模块
-
-新建作答耗时与正确率（Speed-Accuracy Tradeoff）分析图表、分箱计算与诊断组件。
-
-~~~~~act
-write_file
-src/core/analytics/speedAccuracyView.tsx
-~~~~~
-~~~~~typescript
-import type { ComponentChildren } from 'preact';
-import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
-import { initSquareHiDpiCanvas } from '../canvas/hidpi';
-import { i18n } from '../i18n';
-
-export interface SatBinStat {
-  rangeLabel: string;
-  minMs: number;
-  maxMs: number;
-  total: number;
-  hits: number;
-  accuracy: number;
-}
-
-export function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] {
-  if (!records || records.length === 0) {
-    return [
-      { rangeLabel: '< 1.0s', minMs: 0, maxMs: 1000, total: 0, hits: 0, accuracy: 0 },
-      { rangeLabel: '1.0~2.0s', minMs: 1000, maxMs: 2000, total: 0, hits: 0, accuracy: 0 },
-      { rangeLabel: '2.0~3.5s', minMs: 2000, maxMs: 3500, total: 0, hits: 0, accuracy: 0 },
-      { rangeLabel: '3.5~6.0s', minMs: 3500, maxMs: 6000, total: 0, hits: 0, accuracy: 0 },
-      {
-        rangeLabel: '> 6.0s',
-        minMs: 6000,
-        maxMs: Number.MAX_SAFE_INTEGER,
-        total: 0,
-        hits: 0,
-        accuracy: 0,
-      },
-    ];
-  }
-
-  const times = records.map((r) => Number(r.responseTimeMs) || 0).sort((a, b) => a - b);
-  const p95 = times[Math.min(times.length - 1, Math.floor(times.length * 0.95))];
-  const maxBound = Math.max(2000, Math.ceil(p95 / 1000) * 1000);
-  const step = maxBound / 5;
-
-  const thresholds = [
-    Math.round(step),
-    Math.round(step * 2),
-    Math.round(step * 3),
-    Math.round(step * 4),
-  ];
-
-  const formatSec = (ms: number) => {
-    const s = ms / 1000;
-    return s >= 10 ? `${Math.round(s)}s` : `${s.toFixed(1)}s`;
-  };
-
-  const rawBins: { minMs: number; maxMs: number; rangeLabel: string }[] = [
-    { minMs: 0, maxMs: thresholds[0], rangeLabel: `< ${formatSec(thresholds[0])}` },
-    {
-      minMs: thresholds[0],
-      maxMs: thresholds[1],
-      rangeLabel: `${formatSec(thresholds[0])}~${formatSec(thresholds[1])}`,
-    },
-    {
-      minMs: thresholds[1],
-      maxMs: thresholds[2],
-      rangeLabel: `${formatSec(thresholds[1])}~${formatSec(thresholds[2])}`,
-    },
-    {
-      minMs: thresholds[2],
-      maxMs: thresholds[3],
-      rangeLabel: `${formatSec(thresholds[2])}~${formatSec(thresholds[3])}`,
-    },
-    {
-      minMs: thresholds[3],
-      maxMs: Number.MAX_SAFE_INTEGER,
-      rangeLabel: `> ${formatSec(thresholds[3])}`,
-    },
-  ];
-
-  return rawBins.map((bin) => {
-    const matched = records.filter(
-      (r) => r.responseTimeMs >= bin.minMs && r.responseTimeMs < bin.maxMs,
-    );
-    const total = matched.length;
-    const hits = matched.filter((r) => r.isHit).length;
-    const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
-    return { ...bin, total, hits, accuracy };
-  });
-}
-
-export function renderSpeedAccuracyVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const init = initSquareHiDpiCanvas(canvas, 340);
-  if (!init) return;
-  const { ctx, size } = init;
-  const width = size;
-  const height = size;
-
-  const bins = calculateSpeedBins(records);
-  const padding = { top: 35, right: 20, bottom: 45, left: 35 };
-  const chartW = width - padding.left - padding.right;
-  const chartH = height - padding.top - padding.bottom;
-
-  // 参考线
-  const yTicks = [100, 75, 50, 25, 0];
-  ctx.lineWidth = 1;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  ctx.font = '10px monospace';
-
-  for (const tick of yTicks) {
-    const y = padding.top + (1 - tick / 100) * chartH;
-    ctx.strokeStyle = tick === 0 ? '#CBD5E1' : '#E2E8F0';
-    ctx.setLineDash(tick === 0 ? [] : [2, 2]);
+  for (const line of referenceLines) {
     ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.fillText(`${tick}%`, padding.left - 5, y);
-  }
-  ctx.setLineDash([]);
-
-  const slotW = chartW / bins.length;
-  const points = bins.map((bin, idx) => {
-    const x = padding.left + (idx + 0.5) * slotW;
-    const y = padding.top + (1 - bin.accuracy / 100) * chartH;
-    return { x, y, bin };
-  });
-
-  const validPoints = points.filter((p) => p.bin.total > 0);
-
-  // 绘制折线与渐变面积
-  if (validPoints.length > 0) {
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
-    gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
-
-    ctx.beginPath();
-    ctx.moveTo(validPoints[0].x, validPoints[0].y);
-    for (let i = 1; i < validPoints.length; i++) {
-      ctx.lineTo(validPoints[i].x, validPoints[i].y);
-    }
-    ctx.lineTo(validPoints[validPoints.length - 1].x, height - padding.bottom);
-    ctx.lineTo(validPoints[0].x, height - padding.bottom);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.strokeStyle = '#4F46E5';
-    ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round';
-    ctx.moveTo(validPoints[0].x, validPoints[0].y);
-    for (let i = 1; i < validPoints.length; i++) {
-      ctx.lineTo(validPoints[i].x, validPoints[i].y);
-    }
+    ctx.moveTo(line.p1.x, line.p1.y);
+    ctx.lineTo(line.p2.x, line.p2.y);
     ctx.stroke();
   }
 
-  // 绘制数据节点与标签
-  for (const p of points) {
-    const { x, y, bin } = p;
-
-    if (bin.total > 0) {
-      const dotColor = getAccuracyColor(bin.accuracy);
-
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fill();
-      ctx.strokeStyle = dotColor;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      // 准确率标签
-      ctx.fillStyle = '#1E293B';
-      ctx.font = 'bold 10px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
-      ctx.fillText(`${bin.accuracy}%`, x, y - 6);
-    } else {
-      ctx.beginPath();
-      ctx.arc(x, padding.top + chartH, 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#CBD5E1';
-      ctx.fill();
-    }
-
-    // X 轴时间与题数标签
-    ctx.fillStyle = '#475569';
-    ctx.font = 'bold 9px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(bin.rangeLabel, x, height - padding.bottom + 6);
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '8px sans-serif';
-    ctx.fillText(`${bin.total}${i18n.t('common.trialsUnit')}`, x, height - padding.bottom + 18);
-  }
-}
-
-export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentChildren {
-  const bins = calculateSpeedBins(records);
-  const totalTrials = records.length;
-
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-        {i18n.t('analyticsModal.satDistributionTitle')}
-      </div>
-      <div className="space-y-1.5">
-        {bins.map((bin) => {
-          const ratio = totalTrials > 0 ? Math.round((bin.total / totalTrials) * 100) : 0;
-          return (
-            <div
-              key={bin.rangeLabel}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-bold text-slate-700 min-w-[70px]">
-                  {bin.rangeLabel}
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${getAccuracyBadgeClass(
-                    bin.accuracy,
-                    bin.total,
-                  )}`}
-                >
-                  {bin.total > 0 ? `${bin.accuracy}%` : '--'}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 4: 创建 `difficultyPlateauView.tsx` 难度层阶分析图表模块
-
-新建难度层阶与命中率（Difficulty Plateau）分析图表、分箱计算与诊断组件。
-
-~~~~~act
-write_file
-src/core/analytics/difficultyPlateauView.tsx
-~~~~~
-~~~~~typescript
-import type { ComponentChildren } from 'preact';
-import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
-import { initSquareHiDpiCanvas } from '../canvas/hidpi';
-import { i18n } from '../i18n';
-
-export interface LevelBinStat {
-  level: number;
-  total: number;
-  hits: number;
-  accuracy: number;
-}
-
-export function calculateLevelStats(records: UnifiedTrialRecord[]): LevelBinStat[] {
-  const levelMap = new Map<number, { total: number; hits: number }>();
-  for (const r of records) {
-    const lvl = Number(r.difficultyLevel) || 1;
-    const curr = levelMap.get(lvl) || { total: 0, hits: 0 };
-    curr.total += 1;
-    if (r.isHit) curr.hits += 1;
-    levelMap.set(lvl, curr);
-  }
-
-  const levels = Array.from(levelMap.keys()).sort((a, b) => a - b);
-  return levels
-    .map((l) => {
-      const data = levelMap.get(l);
-      if (!data) return null;
-      return {
-        level: l,
-        total: data.total,
-        hits: data.hits,
-        accuracy: Math.round((data.hits / data.total) * 100),
-      };
-    })
-    .filter((item): item is LevelBinStat => item !== null);
-}
-
-export function renderDifficultyPlateauVisualizer(
-  canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
-) {
-  const init = initSquareHiDpiCanvas(canvas, 340);
-  if (!init) return;
-  const { ctx, size } = init;
-  const width = size;
-  const height = size;
-
-  const padding = { top: 35, right: 20, bottom: 45, left: 35 };
-  const chartW = width - padding.left - padding.right;
-  const chartH = height - padding.top - padding.bottom;
-
-  const levelStats = calculateLevelStats(records);
-  if (levelStats.length === 0) return;
-
-  // Y 轴参考线
-  const yTicks = [100, 75, 50, 25, 0];
-  ctx.lineWidth = 1;
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'middle';
-  ctx.font = '10px monospace';
-
-  for (const tick of yTicks) {
-    const y = padding.top + (1 - tick / 100) * chartH;
-    ctx.strokeStyle = tick === 0 ? '#CBD5E1' : '#E2E8F0';
-    ctx.setLineDash(tick === 0 ? [] : [2, 2]);
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(width - padding.right, y);
-    ctx.stroke();
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.fillText(`${tick}%`, padding.left - 5, y);
-  }
-  ctx.setLineDash([]);
-
-  const slotW = chartW / levelStats.length;
-  const points = levelStats.map((stat, idx) => {
-    const x = padding.left + (idx + 0.5) * slotW;
-    const y = padding.top + (1 - stat.accuracy / 100) * chartH;
-    return { x, y, stat };
-  });
-
-  // 渐变面积背景
-  const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
-  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
-
+  // 2. 绘制锚点
+  ctx.fillStyle = '#4F46E5';
   ctx.beginPath();
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
-  ctx.lineTo(points[points.length - 1].x, height - padding.bottom);
-  ctx.lineTo(points[0].x, height - padding.bottom);
-  ctx.closePath();
-  ctx.fillStyle = gradient;
+  ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2);
   ctx.fill();
 
-  // 主折线
+  // 3. 绘制用户当前调整的测试线段
+  const rad = (angleDeg * Math.PI) / 180;
+  const endX = anchor.x + length * Math.cos(rad);
+  const endY = anchor.y + length * Math.sin(rad);
+
+  ctx.strokeStyle = showAnswer ? '#94A3B8' : '#0F172A';
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.strokeStyle = '#4F46E5';
-  ctx.lineWidth = 2.5;
-  ctx.lineJoin = 'round';
-  ctx.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    ctx.lineTo(points[i].x, points[i].y);
-  }
+  ctx.moveTo(anchor.x, anchor.y);
+  ctx.lineTo(endX, endY);
   ctx.stroke();
 
-  // 绘制数据节点与标签
-  for (const { x, y, stat } of points) {
-    const dotColor = getAccuracyColor(stat.accuracy);
+  // 4. 答案揭晓时绘制绝对正确线段
+  if (showAnswer && targetAngleDeg !== undefined) {
+    const targetRad = (targetAngleDeg * Math.PI) / 180;
+    const tEndX = anchor.x + length * Math.cos(targetRad);
+    const tEndY = anchor.y + length * Math.sin(targetRad);
 
+    ctx.strokeStyle = '#10B981';
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fill();
-    ctx.strokeStyle = dotColor;
-    ctx.lineWidth = 2.5;
+    ctx.moveTo(anchor.x, anchor.y);
+    ctx.lineTo(tEndX, tEndY);
     ctx.stroke();
-
-    // 顶部胜率文字
-    ctx.fillStyle = '#1E293B';
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(`${stat.accuracy}%`, x, y - 6);
-
-    // 底部 X 轴标签（Level）
-    ctx.fillStyle = '#475569';
-    ctx.font = 'bold 10px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`L${stat.level}`, x, height - padding.bottom + 6);
-
-    // 底部题量标签
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '8px sans-serif';
-    ctx.fillText(`${stat.total}${i18n.t('common.trialsUnit')}`, x, height - padding.bottom + 18);
   }
 }
 
-export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): ComponentChildren {
-  const levelStats = calculateLevelStats(records);
-  const totalTrials = records.length;
+/**
+ * 绘制比例盲切线段与落点
+ */
+export function drawProportionCanvas(
+  canvas: HTMLCanvasElement | null,
+  line: LineSegment | undefined,
+  targetPoint: Point | undefined,
+  userPoint: Point | null | undefined,
+  hoverPoint?: Point | null,
+  showAnswer = false,
+  size = PERSPECTIVE_CANVAS_SIZE,
+): void {
+  if (!line) return;
+  const ctx = setup2DCanvas(canvas, size);
+  if (!ctx) return;
 
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
+  // 主干线段
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(line.p1.x, line.p1.y);
+  ctx.lineTo(line.p2.x, line.p2.y);
+  ctx.stroke();
+
+  // 起点端点 (P1)
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(line.p1.x, line.p1.y, 7, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(line.p1.x, line.p1.y, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 终点端点 (P2)
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
+  ctx.arc(line.p2.x, line.p2.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 悬停正交投影吸附点
+  if (!showAnswer && hoverPoint) {
+    ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
+    ctx.beginPath();
+    ctx.arc(hoverPoint.x, hoverPoint.y, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#4F46E5';
+    ctx.beginPath();
+    ctx.arc(hoverPoint.x, hoverPoint.y, 4.5, 0, Math.PI * 2);
+    ctx.fill();
   }
 
-  const mainLevel = [...levelStats].sort((a, b) => b.total - a.total)[0];
-  const maxLevel = Math.max(...levelStats.map((s) => s.level));
+  // 结果揭晓
+  if (showAnswer) {
+    if (targetPoint) {
+      ctx.fillStyle = '#10B981';
+      ctx.beginPath();
+      ctx.arc(targetPoint.x, targetPoint.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (userPoint) {
+      ctx.fillStyle = '#EF4444';
+      ctx.beginPath();
+      ctx.arc(userPoint.x, userPoint.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
 
-  return (
-    <div className="space-y-2">
-      {mainLevel && (
-        <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-xs text-indigo-900 leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.levelFocusSummaryTitle')}: </span>
-          {i18n.t('analyticsModal.levelFocusSummaryDesc', {
-            max: maxLevel,
-            focus: mainLevel.level,
-            count: mainLevel.total,
-            acc: mainLevel.accuracy,
-          })}
-        </div>
-      )}
+/**
+ * 绘制顶部水平参考线与目标分段点
+ */
+export function drawHorizontalReferenceCanvas(
+  canvas: HTMLCanvasElement | null,
+  targetRatio = 0.5,
+  width = 280,
+  height = 48,
+): void {
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
 
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 pt-1">
-        {i18n.t('analyticsModal.levelDistributionTitle')}
-      </div>
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, width, height);
 
-      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-        {levelStats.map((stat) => {
-          const ratio = Math.round((stat.total / totalTrials) * 100);
-          return (
-            <div
-              key={stat.level}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-black text-slate-800 min-w-[45px]">
-                  Lvl {stat.level}
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  {stat.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
+  const marginX = 24;
+  const y = height / 2;
+  const lineW = width - marginX * 2;
+  const p1 = { x: marginX, y };
+  const p2 = { x: marginX + lineW, y };
 
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <span
-                  className={`font-mono text-xs font-black px-2 py-0.5 rounded-lg ${getAccuracyBadgeClass(
-                    stat.accuracy,
-                    stat.total,
-                  )}`}
-                >
-                  {stat.total > 0 ? `${stat.accuracy}%` : '--'}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.lineTo(p2.x, p2.y);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, 7, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(p1.x, p1.y, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.beginPath();
+  ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  const targetX = p1.x + lineW * targetRatio;
+  ctx.fillStyle = '#4F46E5';
+  ctx.beginPath();
+  ctx.arc(targetX, y, 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = '#4F46E5';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(targetX, y - 11);
+  ctx.lineTo(targetX, y - 6);
+  ctx.stroke();
+}
+
+/**
+ * 绘制良好连续性断线与障碍物
+ */
+export function drawGestaltCanvas(
+  canvas: HTMLCanvasElement | null,
+  obstacle: PerspectiveQuestionData['obstacle'],
+  incomingLine: LineSegment | undefined,
+  outgoingLine: LineSegment | undefined,
+  size = PERSPECTIVE_2AFC_SIZE,
+): void {
+  if (!obstacle || !incomingLine || !outgoingLine) return;
+  const ctx = setup2DCanvas(canvas, size);
+  if (!ctx) return;
+
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+
+  ctx.beginPath();
+  ctx.moveTo(incomingLine.p1.x, incomingLine.p1.y);
+  ctx.lineTo(incomingLine.p2.x, incomingLine.p2.y);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(outgoingLine.p1.x, outgoingLine.p1.y);
+  ctx.lineTo(outgoingLine.p2.x, outgoingLine.p2.y);
+  ctx.stroke();
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 2;
+
+  if (obstacle.type === 'circle') {
+    ctx.beginPath();
+    ctx.arc(obstacle.cx, obstacle.cy, obstacle.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    const half = obstacle.size / 2;
+    ctx.fillRect(obstacle.cx - half, obstacle.cy - half, obstacle.size, obstacle.size);
+    ctx.strokeRect(obstacle.cx - half, obstacle.cy - half, obstacle.size, obstacle.size);
+  }
+}
+
+/**
+ * 3D 轴测透视坐标转换
+ */
+export function project3DTo2D(p: Point3D, center: Point, scale: number): Point {
+  const rad30 = (30 * Math.PI) / 180;
+  const screenX = center.x + (p.x * Math.cos(rad30) - p.z * Math.cos(rad30)) * scale;
+  const screenY = center.y - (p.y - p.x * Math.sin(rad30) - p.z * Math.sin(rad30)) * scale;
+
+  return {
+    x: Math.round(screenX * 10) / 10,
+    y: Math.round(screenY * 10) / 10,
+  };
+}
+
+/**
+ * 绘制 3D 线框立方体背景
+ */
+export function draw3DCubeWireframe(
+  ctx: CanvasRenderingContext2D,
+  center: Point,
+  scale: number,
+  dim: number,
+): void {
+  const maxCoord = dim - 1;
+  const vertices: Point3D[] = [
+    { x: 0, y: 0, z: 0 },
+    { x: maxCoord, y: 0, z: 0 },
+    { x: maxCoord, y: maxCoord, z: 0 },
+    { x: 0, y: maxCoord, z: 0 },
+    { x: 0, y: 0, z: maxCoord },
+    { x: maxCoord, y: 0, z: maxCoord },
+    { x: maxCoord, y: maxCoord, z: maxCoord },
+    { x: 0, y: maxCoord, z: maxCoord },
+  ];
+
+  const p2d = vertices.map((v) => project3DTo2D(v, center, scale));
+
+  ctx.strokeStyle = '#CBD5E1';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+
+  const edges = [
+    [0, 1],
+    [1, 2],
+    [2, 3],
+    [3, 0],
+    [4, 5],
+    [5, 6],
+    [6, 7],
+    [7, 4],
+    [0, 4],
+    [1, 5],
+    [2, 6],
+    [3, 7],
+  ];
+
+  for (const [start, end] of edges) {
+    ctx.beginPath();
+    ctx.moveTo(p2d[start].x, p2d[start].y);
+    ctx.lineTo(p2d[end].x, p2d[end].y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
 }
 ~~~~~
 
-#### Acts 5: 重写 `universalViews.tsx` 整合统一入口
+#### Acts 3: 创建 `perspectiveGenerators.ts` 题目生成与答案判定模块
 
-将 `universalViews.tsx` 重写为轻量聚合模块，保留认知概览洞察并完整向后兼容导出。
+新建透视领域业务逻辑模块，封装 4 大题型的生成算法与命中测试判定。
 
 ~~~~~act
 write_file
-src/core/analytics/universalViews.tsx
+src/packs/perspective/utils/perspectiveGenerators.ts
 ~~~~~
 ~~~~~typescript
-import { Gauge, Zap } from 'lucide-preact';
-import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import type { CardAnalyticsView } from '../contracts';
-import { i18n } from '../i18n';
+import { expDecayInterpolate } from '../../../core/math/mathUtils';
+import type { Point } from '../../../types';
+import { project3DTo2D } from './perspectiveCanvas';
 import {
-  calculateLevelStats,
-  diagnoseDifficultyPlateau,
-  renderDifficultyPlateauVisualizer,
-} from './difficultyPlateauView';
-import {
-  calculateSpeedBins,
-  diagnoseSpeedAccuracy,
-  renderSpeedAccuracyVisualizer,
-} from './speedAccuracyView';
+  PERSPECTIVE_2AFC_SIZE,
+  PERSPECTIVE_CANVAS_SIZE,
+  PerspectiveHitResult,
+  PerspectiveMode,
+  PerspectiveQuestionData,
+  Point3D,
+  ProportionTarget,
+} from './perspectiveTypes';
 
-export * from './speedAccuracyView';
-export * from './difficultyPlateauView';
+const PROPORTION_PRESETS: ProportionTarget[] = [
+  { name: '1/2', ratio: 0.5 },
+  { name: '1/3', ratio: 1 / 3 },
+  { name: '2/3', ratio: 2 / 3 },
+  { name: '1/4', ratio: 0.25 },
+  { name: '0.618', ratio: 0.618 },
+];
 
-export function getCognitiveOverviewInsights(records: UnifiedTrialRecord[]): {
-  paceSummaryText: string;
-  growthZoneText: string;
-} {
-  if (!records || records.length === 0) {
+export function generatePerspectiveQuestion(
+  mode: PerspectiveMode,
+  level: number,
+): PerspectiveQuestionData {
+  const id = `psp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+
+  if (mode === 'VP_CONVERGENCE') {
+    const vpDist = expDecayInterpolate(400, 1800, clampedLevel);
+    const vpAngle = (Math.floor(Math.random() * 360) * Math.PI) / 180;
+    const center = PERSPECTIVE_CANVAS_SIZE / 2;
+
+    const dirX = Math.cos(vpAngle);
+    const dirY = Math.sin(vpAngle);
+    const perpX = -dirY;
+    const perpY = dirX;
+
+    const vpPoint: Point = {
+      x: center + vpDist * dirX,
+      y: center + vpDist * dirY,
+    };
+
+    const lineLength = 95;
+
+    const getCenteredRay = (perpOffset: number, length = lineLength) => {
+      const anchorX = center - dirX * (length * 0.5) + perpX * perpOffset;
+      const anchorY = center - dirY * (length * 0.5) + perpY * perpOffset;
+      const ang = Math.atan2(vpPoint.y - anchorY, vpPoint.x - anchorX);
+
+      return {
+        p1: { x: Math.round(anchorX * 10) / 10, y: Math.round(anchorY * 10) / 10 },
+        p2: {
+          x: Math.round((anchorX + length * Math.cos(ang)) * 10) / 10,
+          y: Math.round((anchorY + length * Math.sin(ang)) * 10) / 10,
+        },
+      };
+    };
+
+    const refLine1 = getCenteredRay(-55);
+    const refLine2 = getCenteredRay(55);
+    const testRay = getCenteredRay(0);
+
+    const testAnchor = testRay.p1;
+    const targetRad = Math.atan2(vpPoint.y - testAnchor.y, vpPoint.x - testAnchor.x);
+    const targetAngleDeg = Math.round((((targetRad * 180) / Math.PI + 360) % 360) * 10) / 10;
+    const tolerance = Math.round(expDecayInterpolate(8.0, 0.6, clampedLevel) * 10) / 10;
+
     return {
-      paceSummaryText: i18n.t('analyticsModal.needMoreSamples'),
-      growthZoneText: i18n.t('analyticsModal.needMoreSamples'),
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      vpPoint,
+      referenceLines: [refLine1, refLine2],
+      testLineAnchor: testAnchor,
+      testLineLength: lineLength,
+      targetAngleDeg,
+      tolerance,
     };
   }
 
-  // 1. 客观作答节奏分布概括
-  const bins = calculateSpeedBins(records);
-  const avgSec = (
-    records.reduce((acc, r) => acc + (Number(r.responseTimeMs) || 0), 0) /
-    records.length /
-    1000
-  ).toFixed(1);
+  if (mode === 'PROPORTION_DIVISION' || mode === 'PROPORTION_MIGRATION') {
+    const isMigration = mode === 'PROPORTION_MIGRATION';
 
-  const populatedBins = [...bins].filter((b) => b.total > 0);
-  const mainBin = populatedBins.sort((a, b) => b.total - a.total)[0];
+    let ratio: number;
+    let ratioName: string | undefined;
 
-  let paceSummaryText = '';
-  if (mainBin) {
-    paceSummaryText = i18n.t('analyticsModal.paceSummaryDesc', {
-      avg: avgSec,
-      range: mainBin.rangeLabel,
-      acc: mainBin.accuracy,
-    });
-  } else {
-    paceSummaryText = `${avgSec} s`;
+    if (isMigration) {
+      ratio = Math.round((Math.random() * 0.84 + 0.08) * 1000) / 1000;
+      ratioName = `${(ratio * 100).toFixed(1)}%`;
+    } else {
+      const preset = PROPORTION_PRESETS[Math.floor(Math.random() * PROPORTION_PRESETS.length)];
+      ratio = preset.ratio;
+      ratioName = preset.name;
+    }
+
+    const angleRad = Math.random() * Math.PI * 2;
+    const lineLen = 220;
+    const center = PERSPECTIVE_CANVAS_SIZE / 2;
+
+    const halfX = (lineLen / 2) * Math.cos(angleRad);
+    const halfY = (lineLen / 2) * Math.sin(angleRad);
+
+    const p1: Point = {
+      x: Math.round(center - halfX),
+      y: Math.round(center - halfY),
+    };
+    const p2: Point = {
+      x: Math.round(center + halfX),
+      y: Math.round(center + halfY),
+    };
+
+    const targetDivisionPoint: Point = {
+      x: Math.round(p1.x + (p2.x - p1.x) * ratio),
+      y: Math.round(p1.y + (p2.y - p1.y) * ratio),
+    };
+
+    const tolerance = Math.round(expDecayInterpolate(0.08, 0.015, clampedLevel) * 1000) / 1000;
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      divisionLine: { p1, p2 },
+      targetRatio: ratio,
+      targetRatioName: ratioName,
+      targetDivisionPoint,
+      tolerance,
+    };
   }
 
-  // 2. 客观核心难度层阶概括
-  const levelStats = calculateLevelStats(records);
-  const maxLevel = Math.max(...records.map((r) => Number(r.difficultyLevel) || 1));
-  const mainLevel = [...levelStats].sort((a, b) => b.total - a.total)[0];
+  if (mode === 'GESTALT_CONTINUATION_2AFC') {
+    const center = PERSPECTIVE_2AFC_SIZE / 2;
+    const obstacleType = Math.random() < 0.5 ? 'circle' : 'rect';
+    const obstacleSize = 65;
 
-  let growthZoneText = '';
-  if (mainLevel) {
-    growthZoneText = i18n.t('analyticsModal.levelFocusSummaryDesc', {
-      max: maxLevel,
-      focus: mainLevel.level,
-      count: mainLevel.total,
-      acc: mainLevel.accuracy,
-    });
-  } else {
-    growthZoneText = `Lvl ${maxLevel}`;
+    const obstacle = {
+      type: obstacleType as 'circle' | 'rect',
+      cx: center,
+      cy: center,
+      size: obstacleSize,
+    };
+
+    const lineAngle = (Math.random() * 80 + 10) * (Math.PI / 180);
+    const dirX = Math.cos(lineAngle);
+    const dirY = Math.sin(lineAngle);
+
+    const inStart: Point = { x: center - 90 * dirX, y: center - 90 * dirY };
+    const inEnd: Point = { x: center - 35 * dirX, y: center - 35 * dirY };
+    const outStart: Point = { x: center + 35 * dirX, y: center + 35 * dirY };
+    const outEnd: Point = { x: center + 90 * dirX, y: center + 90 * dirY };
+
+    const parallelOffset = Math.round(expDecayInterpolate(20, 2.5, clampedLevel) * 10) / 10;
+    const perpX = -dirY * parallelOffset;
+    const perpY = dirX * parallelOffset;
+
+    const distractorStart: Point = { x: outStart.x + perpX, y: outStart.y + perpY };
+    const distractorEnd: Point = { x: outEnd.x + perpX, y: outEnd.y + perpY };
+
+    const isACorrect = Math.random() < 0.5;
+
+    return {
+      id,
+      mode,
+      difficultyLevel: clampedLevel,
+      obstacle,
+      incomingLine: { p1: inStart, p2: inEnd },
+      lineOptionA: isACorrect
+        ? { p1: outStart, p2: outEnd }
+        : { p1: distractorStart, p2: distractorEnd },
+      lineOptionB: isACorrect
+        ? { p1: distractorStart, p2: distractorEnd }
+        : { p1: outStart, p2: outEnd },
+      correctChoice: isACorrect ? 'A' : 'B',
+      parallelOffset,
+      tolerance: parallelOffset,
+    };
   }
+
+  // 4. STRUCTURE_PROJECTION_3D
+  const gridDim3D = clampedLevel > 15 ? 4 : 3;
+  const targetPoint3D: Point3D = {
+    x: Math.floor(Math.random() * gridDim3D),
+    y: Math.floor(Math.random() * gridDim3D),
+    z: Math.floor(Math.random() * gridDim3D),
+  };
+
+  const center: Point = {
+    x: PERSPECTIVE_CANVAS_SIZE / 2,
+    y: PERSPECTIVE_CANVAS_SIZE / 2 + 10,
+  };
+  const scale = gridDim3D === 4 ? 42 : 55;
+
+  const projectedGridPoints: Point[] = [];
+  for (let x = 0; x < gridDim3D; x++) {
+    for (let y = 0; y < gridDim3D; y++) {
+      for (let z = 0; z < gridDim3D; z++) {
+        projectedGridPoints.push(project3DTo2D({ x, y, z }, center, scale));
+      }
+    }
+  }
+
+  const targetProjectedPoint = project3DTo2D(targetPoint3D, center, scale);
 
   return {
-    paceSummaryText,
-    growthZoneText,
+    id,
+    mode,
+    difficultyLevel: clampedLevel,
+    gridDim3D,
+    targetPoint3D,
+    projectedGridPoints,
+    targetProjectedPoint,
+    tolerance: 0.5,
   };
 }
 
-export const UNIVERSAL_ANALYTICS_VIEWS: CardAnalyticsView[] = [
-  {
-    id: 'universal_sat',
-    tabLabel: 'analyticsModal.satTabLabel',
-    title: 'analyticsModal.satTitle',
-    subTitle: 'analyticsModal.satSubtitle',
-    icon: Zap,
-    renderVisualizer: renderSpeedAccuracyVisualizer,
-    renderDiagnostics: diagnoseSpeedAccuracy,
-  },
-  {
-    id: 'universal_plateau',
-    tabLabel: 'analyticsModal.plateauTabLabel',
-    title: 'analyticsModal.plateauTitle',
-    subTitle: 'analyticsModal.plateauSubtitle',
-    icon: Gauge,
-    renderVisualizer: renderDifficultyPlateauVisualizer,
-    renderDiagnostics: diagnoseDifficultyPlateau,
-  },
-];
+export function checkPerspectiveHit(
+  userVal: number | 'A' | 'B' | Point,
+  question: PerspectiveQuestionData,
+): PerspectiveHitResult {
+  const { mode } = question;
+
+  if (mode === 'VP_CONVERGENCE') {
+    const userAngle = typeof userVal === 'number' ? userVal : 0;
+    const targetAngle = question.targetAngleDeg ?? 0;
+    const diff = Math.abs(userAngle - targetAngle);
+    const errorVal = Math.min(diff, 360 - diff);
+    const isHit = errorVal <= question.tolerance;
+
+    return {
+      isHit,
+      userValue: userAngle,
+      targetValue: targetAngle,
+      errorValue: Math.round(errorVal * 10) / 10,
+      tolerance: question.tolerance,
+    };
+  }
+
+  if (mode === 'PROPORTION_DIVISION' || mode === 'PROPORTION_MIGRATION') {
+    const clickPoint = userVal as Point;
+    const line = question.divisionLine;
+    if (!line) {
+      return { isHit: false, errorValue: 1, tolerance: question.tolerance };
+    }
+
+    const dx = line.p2.x - line.p1.x;
+    const dy = line.p2.y - line.p1.y;
+    const lenSq = dx * dx + dy * dy;
+    const t = ((clickPoint.x - line.p1.x) * dx + (clickPoint.y - line.p1.y) * dy) / lenSq;
+    const clampedT = Math.max(0, Math.min(1, t));
+
+    const targetT = question.targetRatio ?? 0.5;
+    const errorT = Math.abs(clampedT - targetT);
+    const isHit = errorT <= question.tolerance;
+
+    return {
+      isHit,
+      userValue: clickPoint,
+      targetValue: question.targetDivisionPoint,
+      errorValue: Math.round(errorT * 1000) / 1000,
+      tolerance: question.tolerance,
+      ratioProgress: Math.round(clampedT * 1000) / 1000,
+    };
+  }
+
+  if (mode === 'GESTALT_CONTINUATION_2AFC') {
+    const choice = userVal as 'A' | 'B';
+    const isHit = choice === question.correctChoice;
+
+    return {
+      isHit,
+      userValue: choice,
+      targetValue: question.correctChoice,
+      errorValue: isHit ? 0 : 1,
+      tolerance: question.tolerance,
+    };
+  }
+
+  // STRUCTURE_PROJECTION_3D
+  const clickPoint = userVal as Point;
+  const target = question.targetProjectedPoint;
+  const dist = target
+    ? Math.sqrt((clickPoint.x - target.x) ** 2 + (clickPoint.y - target.y) ** 2)
+    : 999;
+  const isHit = dist <= 12;
+
+  return {
+    isHit,
+    userValue: clickPoint,
+    targetValue: target,
+    errorValue: Math.round(dist * 10) / 10,
+    tolerance: question.tolerance,
+  };
+}
+~~~~~
+
+#### Acts 4: 重写 `perspectiveUtils.ts` 聚合出口
+
+将 `perspectiveUtils.ts` 简化为纯净的聚合导出文件。
+
+~~~~~act
+write_file
+src/packs/perspective/utils/perspectiveUtils.ts
+~~~~~
+~~~~~typescript
+export * from './perspectiveTypes';
+export * from './perspectiveCanvas';
+export * from './perspectiveGenerators';
+~~~~~
+
+#### Acts 5: 优化 `usePlanEditorState.ts` 函数组织架构
+
+消除 `usePlanEditorState.ts` 内部冗余函数闭包，降低函数密度。
+
+~~~~~act
+write_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~typescript
+import { useMemo, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+import {
+  clonePlan,
+  deletePlan,
+  exportPlanToJson,
+  importPlanFromJson,
+  loadPlanStorageState,
+  savePlanStorageState,
+  togglePlanFavorite,
+} from '../../../utils/planStorage';
+import {
+  batchUpdateItemTrials,
+  createNewBlankPlan,
+  createPlanItem,
+  movePlanItem,
+  removePlanItem,
+  sanitizePlan,
+  updatePlanItemTrials,
+} from './planItemUtils';
+
+export interface UsePlanEditorStateOptions {
+  initialPlan: TrainingPlan;
+  onSaveAndExit: (plan: TrainingPlan) => void;
+  onStartPlanDirectly: (plan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+export function usePlanEditorState({
+  initialPlan,
+  onSaveAndExit,
+  onStartPlanDirectly,
+  onPlanListChanged,
+}: UsePlanEditorStateOptions) {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
+  const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
+  const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
+  const [toastNotice, setToastNotice] = useState<string | null>(null);
+
+  const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
+
+  const showToast = (msg: string) => {
+    setToastNotice(msg);
+    setTimeout(() => setToastNotice(null), 2500);
+  };
+
+  const updatePlanItems = (updater: (items: PlanItem[]) => PlanItem[]) => {
+    setCurrentPlan((prev) => ({ ...prev, items: updater(prev.items) }));
+  };
+
+  const handleNameSave = () => {
+    const trimmed = planNameInput.trim();
+    if (!trimmed) {
+      setPlanNameInput(currentPlan.name);
+    } else {
+      setCurrentPlan((prev) => ({ ...prev, name: trimmed }));
+    }
+    setIsEditingName(false);
+  };
+
+  const handleCreateNewBlankPlan = () => {
+    const newBlank = createNewBlankPlan(
+      t('plan.newBlankPlan'),
+      t('common.defaultCustomPlanDesc'),
+    );
+    setCurrentPlan(newBlank);
+    setPlanNameInput(newBlank.name);
+    setIsEditingName(true);
+    setShowPlanManager(false);
+    showToast(t('plan.newPlanModeToast'));
+  };
+
+  const handleImportPlan = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      target.files[0].text().then((text) => {
+        const imported = importPlanFromJson(text);
+        if (imported) {
+          const nextState = loadPlanStorageState();
+          setStorageState(nextState);
+          setCurrentPlan(imported);
+          setPlanNameInput(imported.name);
+          setShowPlanManager(false);
+          onPlanListChanged?.();
+          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }));
+        } else {
+          showToast(t('plan.importedPlanFailToast'));
+        }
+      });
+    }
+  };
+
+  const persist = (): TrainingPlan => {
+    const sanitized = sanitizePlan(currentPlan, planNameInput);
+    const updatedPlans = storageState.plans.some((p) => p.id === sanitized.id)
+      ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
+      : [sanitized, ...storageState.plans];
+
+    savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
+    onPlanListChanged?.();
+    return sanitized;
+  };
+
+  const totalTrials = useMemo(
+    () => currentPlan.items.reduce((acc, curr) => acc + curr.targetTrials, 0),
+    [currentPlan.items],
+  );
+
+  return {
+    storageState,
+    setStorageState,
+    currentPlan,
+    setCurrentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    toastNotice,
+    isNewPlan,
+    totalTrials,
+    estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
+    fileInputRef,
+    handleSelectPlanFromList: (p: TrainingPlan) => {
+      setCurrentPlan({ ...p });
+      setPlanNameInput(p.name);
+      setIsEditingName(false);
+    },
+    handleNameSave,
+    handleBatchUpdateTrials: (trials: number) => {
+      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
+      showToast(t('plan.batchSetTrialsToast', { trials }));
+    },
+    handleAddItem: (cardId: string) => updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
+    handleMoveItem: (idx: number, dir: 'up' | 'down') => updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleUpdateTrials: (id: string, trials: number) => updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleClearAll: () => updatePlanItems(() => []),
+    handleCreateNewBlankPlan,
+    handleCloneCurrent: () => {
+      const cloned = clonePlan(currentPlan);
+      const nextState = loadPlanStorageState();
+      setStorageState(nextState);
+      setCurrentPlan(cloned);
+      setPlanNameInput(cloned.name);
+      onPlanListChanged?.();
+      showToast(t('plan.clonedPlanToast', { name: cloned.name }));
+    },
+    handleToggleFavoriteItem: (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      const nextState = togglePlanFavorite(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+      }
+      onPlanListChanged?.();
+    },
+    handleDeletePlanItem: (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      if (storageState.plans.length <= 1) {
+        showToast(t('plan.minOnePlanToast'));
+        return;
+      }
+      const nextState = deletePlan(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        const fallback = nextState.plans[0];
+        setCurrentPlan(fallback);
+        setPlanNameInput(fallback.name);
+      }
+      onPlanListChanged?.();
+      showToast(t('plan.planDeletedToast'));
+    },
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'));
+    },
+    handleImportPlan,
+    handleSaveOnly: () => onSaveAndExit(persist()),
+    handleSaveAndStart: () => onStartPlanDirectly(persist()),
+  };
+}
 ~~~~~
 
 ### 下一步建议
-1. 运行 `npm run check` 校验格式与类型。
-2. 运行 `python3 scripts/check_god_files.py` 重新检测全工程的复杂度指数。
+1. 运行 `npm run check` 校验全局代码与类型一致性。
+2. 运行 `python3 scripts/check_god_files.py` 查看最新评分与降载成果。
