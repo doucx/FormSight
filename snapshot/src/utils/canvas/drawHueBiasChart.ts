@@ -1,4 +1,4 @@
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import { i18n } from '../../core/i18n';
 import type { UnifiedTrialRecord } from '../db/index';
 
