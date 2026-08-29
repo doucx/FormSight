@@ -1,502 +1,739 @@
-现在我们对榜单第 1 名的 **`GlobalSettingsModal.tsx`**（Score: 51.8, SLOC: 425）进行拆分重构。
+接下来我们重构排行第 2 名的 **`GlobalStatsView.tsx`**（Score: 50.4, SLOC: 509）。
 
 本次实施将：
-1. 创建 **`GeneralPreferencesSection`**：封装界面语言、音效、文字指引、休眠保护与滑块边缘感应等系统常规偏好配置；
-2. 创建 **`DataGovernanceSection`**：封装流式备份导出、JSON 导入、数据库瘦身（Prune）、计划重置与全量数据清空及其对应的 3 个 `ConfirmModal` 确认逻辑；
-3. 将 **`GlobalSettingsModal.tsx`** 精简为装配容器（代码量从 425 行降至 ~60 行）。
+1. 创建 **`useGlobalStatsData`** Hook：将 84 天热力图计算、认知推演路径聚合、心智抗性聚合、四维时间段试炼统计以及多维 Filter 过滤逻辑全部下沉；
+2. 创建 **`StatsMetricCards`**：负责渲染「今日 / 近 7 天 / 本年 / 生涯」四维核心指标大卡片；
+3. 创建 **`CognitiveMasteryGrid`**：负责渲染「认知路径推演掌握度」与「核心心智抗性」两大能力矩阵；
+4. 创建 **`ActivityHeatmapCard`**：负责渲染 12 周活动热力图；
+5. 将 **`GlobalStatsView.tsx`** 精简为纯粹的展示组装层（从 509 行降至 ~120 行）。
 
-## [WIP] refactor: 模块化拆分 GlobalSettingsModal 设置弹窗
+## [WIP] refactor: 模块化拆分 GlobalStatsView 统计大盘视图
 
 ### 用户需求
-拆解 `GlobalSettingsModal.tsx` 中的两类完全不同职责的业务逻辑（常规偏好 vs 高危数据备份与治理），消除多重嵌套弹窗状态，降低单文件复杂度。
+对聚合大量物化数据与 Canvas 图表的 `GlobalStatsView.tsx` 进行模块化拆分，抽离繁杂的数据聚合计算与细分子卡片。
 
 ### 评论
-原组件在同一个视图内管理了 3 组独立的危险确认弹窗状态和深层 I/O 事件，通过按领域垂直拆解为「常规偏好」和「数据治理」两个自包含的子模块，不仅能消除过载，也便于后续独立扩充设置项。
+`GlobalStatsView` 同时承担了多维倒排过滤查询、时间桶聚类、四维掌握度加权计算以及热力图和 Canvas 图表的渲染。将纯数据聚合下沉至 Hook，将大盘各分区独立为子组件，能极大提升数据流的清晰度与可测试性。
 
 ### 目标
-1. 新建 `src/components/settings/sections/GeneralPreferencesSection.tsx` 承载常规偏好项。
-2. 新建 `src/components/settings/sections/DataGovernanceSection.tsx` 承载数据备份、修剪与清理逻辑及二次确认弹窗。
-3. 重写 `src/components/GlobalSettingsModal.tsx`，使其专注于弹窗外壳与子章节排版。
+1. 新建 `src/hooks/useGlobalStatsData.ts` 集中管理所有统计分析的数据聚合逻辑。
+2. 新建 `src/components/stats/StatsMetricCards.tsx` 承载指标统计卡片组。
+3. 新建 `src/components/stats/CognitiveMasteryGrid.tsx` 承载推演路径与心智抗性矩阵。
+4. 新建 `src/components/stats/ActivityHeatmapCard.tsx` 承载 12 周热力图网格。
+5. 重写 `src/views/GlobalStatsView.tsx`，保持精简纯粹的布局结构。
 
 ### 基本原理
-按照领域驱动与职责单一原则，将无害设置项与高危数据持久化操作进行物理隔离。各子章节就近管理自身涉及的 I/O 事件与确认状态。
+采用容器-展示（Container-Presenter）模式与自定义 Hook 结合，实现数据聚合流与视图卡片组件的解耦。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/settings #concept/config #concept/state #scope/core #scope/dx #ai/delegate #task/domain/refactoring #task/object/god-files #task/action/modularization #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/views #concept/history #scope/core #scope/dx #ai/delegate #task/domain/refactoring #task/object/god-files #task/action/modularization #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 `GeneralPreferencesSection` 常规偏好配置组件
+#### Acts 1: 创建 `useGlobalStatsData` 统计分析聚合 Hook
 
-新建常规偏好模块，处理语言切换、音效开关、指引开关、闲置休眠及滑块感应边缘。
+新建专用 Hook，封装全部数据加载、倒排过滤计算、各时间段汇总、84天热力图与双维度能力矩阵。
 
 ~~~~~act
 write_file
-src/components/settings/sections/GeneralPreferencesSection.tsx
+src/hooks/useGlobalStatsData.ts
 ~~~~~
 ~~~~~typescript
-import { Clock, Globe, HelpCircle, Volume2 } from 'lucide-preact';
-import { useTranslation } from '../../../core/i18n';
-import type { GlobalSettings, UserSettings } from '../../../utils/settings';
-import type { ToastType } from '../../common/Toast';
-import { SettingToggleItem } from '../common/SettingToggleItem';
-import { SliderMarginGroup } from '../common/SliderMarginGroup';
+import { useEffect, useMemo, useState } from 'preact/hooks';
+import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
+import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { registry } from '../core/registry';
+import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
+import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../utils/db/index';
 
-interface GeneralPreferencesSectionProps {
-  settings: UserSettings;
-  onUpdateGlobal: (patch: Partial<GlobalSettings>) => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
+export function useGlobalStatsData() {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
-export function GeneralPreferencesSection({
-  settings,
-  onUpdateGlobal,
-  showToast,
-}: GeneralPreferencesSectionProps) {
-  const { t, locale, setLocale } = useTranslation();
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
+      const data = await getDailySummaries();
+      if (isMounted) {
+        setSummaries(data);
+        setLoading(false);
+      }
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  const handleLocaleChange = (newLocale: string) => {
-    onUpdateGlobal({ locale: newLocale });
-    setLocale(newLocale);
-    showToast(t('settings.switchedLocaleToast'), 'success');
+  const filteredSummaries = useMemo(() => {
+    return summaries.filter((s) => {
+      if (selectedFilter === 'all') return true;
+
+      if (selectedFilter.startsWith('pack:')) {
+        const targetPackId = selectedFilter.replace('pack:', '');
+        const pack = registry.getPack(targetPackId);
+        const packCardIds = new Set(pack?.cards.map((c) => c.id) || []);
+        return packCardIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('domain:')) {
+        const targetDomain = selectedFilter.replace('domain:', '') as VisualDomainTag;
+        const matchedCards = registry.queryCards({ domains: [targetDomain] });
+        const matchedIds = new Set(matchedCards.map((c) => c.id));
+        return matchedIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('path:')) {
+        const targetPath = selectedFilter.replace('path:', '') as CognitivePathTag;
+        const matchedCards = registry.queryCards({ paths: [targetPath] });
+        const matchedIds = new Set(matchedCards.map((c) => c.id));
+        return matchedIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('challenge:')) {
+        const targetChallenge = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
+        const matchedCards = registry.queryCards({ challenges: [targetChallenge] });
+        const matchedIds = new Set(matchedCards.map((c) => c.id));
+        return matchedIds.has(s.cardId || s.mode);
+      }
+
+      if (selectedFilter.startsWith('card:')) {
+        const targetCardId = selectedFilter.replace('card:', '');
+        return s.cardId === targetCardId || s.mode === targetCardId;
+      }
+
+      return true;
+    });
+  }, [summaries, selectedFilter]);
+
+  const getCurrentFilterLabel = () => {
+    if (selectedFilter === 'all') return t('stats.allModules');
+    if (selectedFilter.startsWith('pack:')) {
+      const pId = selectedFilter.replace('pack:', '');
+      const pack = registry.getPack(pId);
+      const pTitle = pack ? getPackTitle(pack, t) : pId;
+      return `${t('home.allPacks')} • ${pTitle}`;
+    }
+    if (selectedFilter.startsWith('domain:')) {
+      const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
+      return `Domain • ${t(DOMAIN_TAGS[d]?.i18nKey || d)}`;
+    }
+    if (selectedFilter.startsWith('path:')) {
+      const p = selectedFilter.replace('path:', '') as CognitivePathTag;
+      return `Path • ${t(PATH_TAGS[p]?.i18nKey || p)}`;
+    }
+    if (selectedFilter.startsWith('challenge:')) {
+      const c = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
+      return `Challenge • ${t(CHALLENGE_TAGS[c]?.i18nKey || c)}`;
+    }
+    if (selectedFilter.startsWith('card:')) {
+      const cardId = selectedFilter.replace('card:', '');
+      const card = registry.getCardById(cardId);
+      const cTitle = card ? getCardTitle(card, t) : cardId;
+      return `${cTitle}`;
+    }
+    return t('stats.allModules');
   };
 
+  const now = new Date();
+  const todayStr = getLocalDateString(now.getTime());
+  const startOfWeekStr = getLocalDateString(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+  const startOfYearStr = `${now.getFullYear()}-01-01`;
+
+  const { stats, dailyData } = useMemo(() => {
+    const statsObj = {
+      today: { total: 0, hits: 0 },
+      week: { total: 0, hits: 0 },
+      year: { total: 0, hits: 0 },
+      allTime: { total: 0, hits: 0 },
+    };
+
+    const data: Record<string, { total: number; maxLevel: number }> = {};
+
+    for (const s of filteredSummaries) {
+      statsObj.allTime.total += s.totalCount;
+      statsObj.allTime.hits += s.hitCount;
+
+      if (s.date === todayStr) {
+        statsObj.today.total += s.totalCount;
+        statsObj.today.hits += s.hitCount;
+      }
+      if (s.date >= startOfWeekStr) {
+        statsObj.week.total += s.totalCount;
+        statsObj.week.hits += s.hitCount;
+      }
+      if (s.date >= startOfYearStr) {
+        statsObj.year.total += s.totalCount;
+        statsObj.year.hits += s.hitCount;
+      }
+
+      if (!data[s.date]) {
+        data[s.date] = { total: 0, maxLevel: s.maxLevel };
+      }
+      data[s.date].total += s.totalCount;
+      data[s.date].maxLevel = Math.max(data[s.date].maxLevel, s.maxLevel);
+    }
+
+    return { stats: statsObj, dailyData: data };
+  }, [filteredSummaries, todayStr, startOfWeekStr, startOfYearStr]);
+
+  const heatmapDays = 84;
+  const startOfTodayMs = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const heatmapData = useMemo(() => {
+    return Array.from({ length: heatmapDays }).map((_, i) => {
+      const dMs = startOfTodayMs - (heatmapDays - 1 - i) * 24 * 60 * 60 * 1000;
+      const dateStr = getLocalDateString(dMs);
+      return {
+        date: dateStr,
+        count: dailyData[dateStr]?.total || 0,
+      };
+    });
+  }, [startOfTodayMs, dailyData]);
+
+  // 认知推演路径聚合
+  const pathMasteryList = useMemo(() => {
+    const cardSummaryMap = new Map<string, { total: number; hits: number }>();
+    for (const s of summaries) {
+      const key = s.cardId || s.mode;
+      const prev = cardSummaryMap.get(key) || { total: 0, hits: 0 };
+      cardSummaryMap.set(key, {
+        total: prev.total + s.totalCount,
+        hits: prev.hits + s.hitCount,
+      });
+    }
+
+    return (Object.keys(PATH_TAGS) as CognitivePathTag[]).map((path) => {
+      const matchingCards = registry.queryCards({ paths: [path] });
+      let pathTotal = 0;
+      let pathHits = 0;
+
+      for (const card of matchingCards) {
+        const item = cardSummaryMap.get(card.id);
+        if (item) {
+          pathTotal += item.total;
+          pathHits += item.hits;
+        }
+      }
+
+      const acc = pathTotal > 0 ? Math.round((pathHits / pathTotal) * 100) : 0;
+      return {
+        path,
+        label: t(PATH_TAGS[path].i18nKey),
+        total: pathTotal,
+        hits: pathHits,
+        accuracy: acc,
+        cardCount: matchingCards.length,
+      };
+    });
+  }, [summaries, t]);
+
+  // 心智抗性聚合
+  const challengeMasteryList = useMemo(() => {
+    const cardSummaryMap = new Map<string, { total: number; hits: number }>();
+    for (const s of summaries) {
+      const key = s.cardId || s.mode;
+      const prev = cardSummaryMap.get(key) || { total: 0, hits: 0 };
+      cardSummaryMap.set(key, {
+        total: prev.total + s.totalCount,
+        hits: prev.hits + s.hitCount,
+      });
+    }
+
+    return (Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((ch) => {
+      const matchingCards = registry.queryCards({ challenges: [ch] });
+      let chTotal = 0;
+      let chHits = 0;
+
+      for (const card of matchingCards) {
+        const item = cardSummaryMap.get(card.id);
+        if (item) {
+          chTotal += item.total;
+          chHits += item.hits;
+        }
+      }
+
+      const acc = chTotal > 0 ? Math.round((chHits / chTotal) * 100) : 0;
+      return {
+        challenge: ch,
+        label: t(CHALLENGE_TAGS[ch].i18nKey),
+        total: chTotal,
+        hits: chHits,
+        accuracy: acc,
+        cardCount: matchingCards.length,
+      };
+    });
+  }, [summaries, t]);
+
+  return {
+    loading,
+    selectedFilter,
+    setSelectedFilter,
+    getCurrentFilterLabel,
+    stats,
+    dailyData,
+    heatmapData,
+    pathMasteryList,
+    challengeMasteryList,
+  };
+}
+~~~~~
+
+#### Acts 2: 创建 `StatsMetricCards` 四维核心指标卡片组件
+
+新建核心数据卡片组，清晰呈现今日、本周、本年与生涯总计。
+
+~~~~~act
+write_file
+src/components/stats/StatsMetricCards.tsx
+~~~~~
+~~~~~typescript
+import { Activity, Calendar, Target, TrendingUp } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
+
+interface StatsMetricCardsProps {
+  stats: {
+    today: { total: number; hits: number };
+    week: { total: number; hits: number };
+    year: { total: number; hits: number };
+    allTime: { total: number; hits: number };
+  };
+  streakDays: number;
+}
+
+export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
+  const { t } = useTranslation();
+
+  const calcAcc = (hits: number, total: number) =>
+    total === 0 ? 0 : Math.round((hits / total) * 100);
+
   return (
-    <div className="space-y-4">
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-        {t('settings.preferences')}
-      </div>
-
-      {/* 语言切换器 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Globe className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.languageTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
-          </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-white p-5 rounded-3xl border border-indigo-100 shadow-sm space-y-1">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
+          <Calendar className="w-4 h-4 text-indigo-500" />
+          {t('stats.todayTrials')}
         </div>
-
-        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl">
-          <button
-            type="button"
-            onClick={() => handleLocaleChange('zh-CN')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-              (settings.global.locale || locale) === 'zh-CN'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {t('settings.langZh')}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleLocaleChange('en-US')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-              (settings.global.locale || locale) === 'en-US'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {t('settings.langEn')}
-          </button>
+        <div className="text-3xl font-black text-slate-800">
+          {stats.today.total}{' '}
+          <span className="text-xs font-semibold text-slate-400 font-normal">
+            {t('common.trialsUnit')}
+          </span>
+        </div>
+        <div className="text-xs text-indigo-600 font-semibold mt-1">
+          {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
         </div>
       </div>
 
-      {/* 音效反馈开关 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Volume2 className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.soundTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.soundDesc')}</div>
-          </div>
+      <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm space-y-1">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
+          <Target className="w-4 h-4 text-emerald-500" />
+          {t('stats.weekTrials')}
         </div>
-        <SettingToggleItem
-          title=""
-          checked={Boolean(settings.global.soundEnabled)}
-          onChange={(checked) => onUpdateGlobal({ soundEnabled: checked })}
-        />
+        <div className="text-3xl font-black text-slate-800">
+          {stats.week.total}{' '}
+          <span className="text-xs font-semibold text-slate-400 font-normal">
+            {t('common.trialsUnit')}
+          </span>
+        </div>
+        <div className="text-xs text-emerald-600 font-semibold mt-1">
+          {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
+        </div>
       </div>
 
-      {/* 任务指引提示开关 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-            <HelpCircle className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.hintsTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.hintsDesc')}</div>
-          </div>
+      <div className="bg-white p-5 rounded-3xl border border-amber-100 shadow-sm space-y-1">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
+          <Activity className="w-4 h-4 text-amber-500" />
+          {t('stats.yearTrials')}
         </div>
-        <SettingToggleItem
-          title=""
-          checked={settings.global.showCanvasHints ?? true}
-          onChange={(checked) => onUpdateGlobal({ showCanvasHints: checked })}
-        />
+        <div className="text-3xl font-black text-slate-800">
+          {stats.year.total}{' '}
+          <span className="text-xs font-semibold text-slate-400 font-normal">
+            {t('common.trialsUnit')}
+          </span>
+        </div>
+        <div className="text-xs text-amber-600 font-semibold mt-1">
+          {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
+        </div>
       </div>
 
-      {/* 闲置休眠保护 */}
-      <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
-            <Clock className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.idleTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.idleDesc')}</div>
-          </div>
+      <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
+          <TrendingUp className="w-4 h-4 text-slate-500" />
+          {t('stats.allTimeTrials')}
         </div>
-        <div className="grid grid-cols-4 gap-1.5 pt-1">
-          {[
-            { label: t('settings.idleOff'), value: 0 },
-            { label: t('settings.idle30s'), value: 30 },
-            { label: t('settings.idle60s'), value: 60 },
-            { label: t('settings.idle120s'), value: 120 },
-          ].map((opt) => (
-            <button
-              type="button"
-              key={opt.value}
-              onClick={() => onUpdateGlobal({ idleTimeout: opt.value })}
-              className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                settings.global.idleTimeout === opt.value
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-              }`}
+        <div className="text-3xl font-black text-slate-800">
+          {stats.allTime.total}{' '}
+          <span className="text-xs font-semibold text-slate-400 font-normal">
+            {t('common.trialsUnit')}
+          </span>
+        </div>
+        <div className="text-xs text-slate-500 font-semibold mt-1">
+          {t('stats.streakDays', { days: streakDays })}
+        </div>
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 3: 创建 `CognitiveMasteryGrid` 认知矩阵卡片组件
+
+新建推演路径与心智抗性掌握度网格组件。
+
+~~~~~act
+write_file
+src/components/stats/CognitiveMasteryGrid.tsx
+~~~~~
+~~~~~typescript
+import { Brain, Compass } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
+
+export interface MasteryItem {
+  label: string;
+  total: number;
+  hits: number;
+  accuracy: number;
+  cardCount: number;
+}
+
+interface CognitiveMasteryGridProps {
+  pathMasteryList: MasteryItem[];
+  challengeMasteryList: MasteryItem[];
+}
+
+export function CognitiveMasteryGrid({
+  pathMasteryList,
+  challengeMasteryList,
+}: CognitiveMasteryGridProps) {
+  const { t } = useTranslation();
+
+  return (
+    <>
+      {/* 认知路径推演能力矩阵 */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <Compass className="w-4 h-4 text-emerald-600" />
+            {t('stats.pathMasteryTitle')}
+          </div>
+          <span className="text-xs text-slate-400 font-mono">
+            {t('stats.pathMasterySubtitle')}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {pathMasteryList.map((pm) => (
+            <div
+              key={pm.label}
+              className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-1.5"
             >
-              {opt.label}
-            </button>
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span className="truncate">{pm.label}</span>
+                <span
+                  className={`font-mono text-xs px-2 py-0.5 rounded-lg ${
+                    pm.total === 0
+                      ? 'bg-slate-100 text-slate-400'
+                      : pm.accuracy >= 80
+                        ? 'bg-emerald-50 text-emerald-700 font-black'
+                        : pm.accuracy >= 60
+                          ? 'bg-amber-50 text-amber-700 font-black'
+                          : 'bg-rose-50 text-rose-700 font-black'
+                  }`}
+                >
+                  {pm.total > 0 ? `${pm.accuracy}%` : '--'}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                <span>{t('stats.practicedTrials', { count: pm.total })}</span>
+                <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
+              </div>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* 全局滑块外延感应区 */}
-      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-        <SliderMarginGroup
-          title={t('settings.sliderHitMarginTitle')}
-          value={settings.global.sliderHitMargin ?? 12}
-          onChange={(margin) => onUpdateGlobal({ sliderHitMargin: margin })}
-        />
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-#### Acts 2: 创建 `DataGovernanceSection` 数据备份与稳态治理组件
-
-新建数据治理模块，承载备份导入导出、数据库瘦身、计划重置与清理及相关二次确认弹窗。
-
-~~~~~act
-write_file
-src/components/settings/sections/DataGovernanceSection.tsx
-~~~~~
-~~~~~typescript
-import { Download, RotateCcw, Scissors, Trash2, Upload } from 'lucide-preact';
-import { useRef, useState } from 'preact/hooks';
-import { useTranslation } from '../../../core/i18n';
-import {
-  clearAllData,
-  exportAllDataStream,
-  importAllData,
-  pruneColdRecords,
-} from '../../../utils/db/index';
-import { resetPlansToDefault } from '../../../utils/planStorage';
-import { ConfirmModal } from '../../common/ConfirmModal';
-import type { ToastType } from '../../common/Toast';
-
-interface DataGovernanceSectionProps {
-  onDataChanged: () => void;
-  onCloseModal: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-
-export function DataGovernanceSection({
-  onDataChanged,
-  onCloseModal,
-  showToast,
-}: DataGovernanceSectionProps) {
-  const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
-  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handleExport = async () => {
-    try {
-      setIsExporting(true);
-      const blob = await exportAllDataStream();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-      const timeStr = `${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-      a.download = `formsight_data_${dateStr}_${timeStr}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast(t('settings.exportSuccessToast'), 'success');
-    } catch (e) {
-      console.error('Export failed:', e);
-      showToast(t('settings.exportFailToast'), 'error');
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        showToast(t('settings.importSuccessToast'), 'success');
-        onDataChanged();
-        onCloseModal();
-      } else {
-        showToast(t('settings.importInvalidToast'), 'error');
-      }
-    }
-  };
-
-  const handlePruneConfirmed = async () => {
-    setShowPruneConfirm(false);
-    try {
-      const res = await pruneColdRecords(90);
-      showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
-      onDataChanged();
-    } catch (err) {
-      console.error('Prune failed:', err);
-      showToast(t('settings.pruneFailToast'), 'error');
-    }
-  };
-
-  const handleResetPlansConfirmed = () => {
-    setShowResetPlansConfirm(false);
-    resetPlansToDefault();
-    showToast(t('settings.resetPlansSuccessToast'), 'success');
-    onDataChanged();
-  };
-
-  const handleClearDataConfirmed = async () => {
-    setShowClearConfirm(false);
-    await clearAllData();
-    showToast(t('settings.clearDataSuccessToast'), 'info');
-    onDataChanged();
-    onCloseModal();
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-        {t('settings.dataGovernance')}
-      </div>
-
-      {/* 备份导出与导入 */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          disabled={isExporting}
-          onClick={handleExport}
-          className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
-        >
-          <Download className="w-4 h-4 text-indigo-600" />
-          {isExporting ? t('settings.exporting') : t('settings.exportStream')}
-        </button>
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
-        >
-          <Upload className="w-4 h-4 text-indigo-600" />
-          {t('settings.importBackup')}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          onChange={handleImportFile}
-          className="hidden"
-        />
-      </div>
-
-      {/* 数据库瘦身与修剪 */}
-      <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
-            <Scissors className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-indigo-900">{t('settings.pruneTitle')}</div>
-            <div className="text-[11px] text-indigo-600">{t('settings.pruneDesc')}</div>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowPruneConfirm(true)}
-          className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0 cursor-pointer"
-        >
-          {t('settings.pruneBtn')}
-        </button>
-      </div>
-
-      {/* 计划库重置与危险操作 */}
-      <div className="pt-2 border-t border-slate-100 space-y-3">
+      {/* 核心心智抗性矩阵 */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xs font-bold text-slate-700">
-              {t('settings.resetPlansTitle')}
-            </div>
-            <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
+          <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+            <Brain className="w-4 h-4 text-rose-500" />
+            {t('stats.challengeMasteryTitle')}
           </div>
-          <button
-            type="button"
-            onClick={() => setShowResetPlansConfirm(true)}
-            className="py-2 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            {t('settings.resetPlansBtn')}
-          </button>
+          <span className="text-xs text-slate-400 font-mono">
+            {t('stats.challengeMasterySubtitle')}
+          </span>
         </div>
 
-        <div className="flex items-center justify-between pt-1">
-          <div>
-            <div className="text-xs font-bold text-rose-600">
-              {t('settings.clearDataTitle')}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {challengeMasteryList.map((cm) => (
+            <div
+              key={cm.label}
+              className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-1.5"
+            >
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                <span className="truncate">{cm.label.split(' ')[0]}</span>
+                <span
+                  className={`font-mono text-xs px-2 py-0.5 rounded-lg ${
+                    cm.total === 0
+                      ? 'bg-slate-100 text-slate-400'
+                      : cm.accuracy >= 80
+                        ? 'bg-rose-50 text-rose-700 font-black'
+                        : cm.accuracy >= 60
+                          ? 'bg-amber-50 text-amber-700 font-black'
+                          : 'bg-slate-100 text-slate-600 font-black'
+                  }`}
+                >
+                  {cm.total > 0 ? `${cm.accuracy}%` : '--'}
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                <span>{t('stats.practicedTrials', { count: cm.total })}</span>
+                <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
+              </div>
             </div>
-            <div className="text-[11px] text-slate-400">{t('settings.clearDataDesc')}</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowClearConfirm(true)}
-            className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {t('settings.clearDataBtn')}
-          </button>
+          ))}
         </div>
       </div>
+    </>
+  );
+}
+~~~~~
 
-      {/* 二次确认弹窗群 */}
-      <ConfirmModal
-        isOpen={showPruneConfirm}
-        title={t('settings.pruneTitle')}
-        message={t('settings.pruneConfirmMessage')}
-        confirmText={t('settings.pruneBtn')}
-        isDangerous={false}
-        onConfirm={handlePruneConfirmed}
-        onCancel={() => setShowPruneConfirm(false)}
-      />
+#### Acts 4: 创建 `ActivityHeatmapCard` 活跃热力图组件
 
-      <ConfirmModal
-        isOpen={showResetPlansConfirm}
-        title={t('settings.resetPlansTitle')}
-        message={t('settings.resetPlansConfirmMessage')}
-        confirmText={t('settings.resetPlansBtn')}
-        isDangerous={false}
-        onConfirm={handleResetPlansConfirmed}
-        onCancel={() => setShowResetPlansConfirm(false)}
-      />
+新建 12 周活动热力图展示卡片。
 
-      <ConfirmModal
-        isOpen={showClearConfirm}
-        title={t('settings.clearDataTitle')}
-        message={t('settings.clearDataConfirmMessage')}
-        confirmText={t('settings.clearDataBtn')}
-        isDangerous={true}
-        onConfirm={handleClearDataConfirmed}
-        onCancel={() => setShowClearConfirm(false)}
-      />
+~~~~~act
+write_file
+src/components/stats/ActivityHeatmapCard.tsx
+~~~~~
+~~~~~typescript
+import { useTranslation } from '../../core/i18n';
+
+interface ActivityHeatmapCardProps {
+  heatmapData: { date: string; count: number }[];
+}
+
+export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
+  const { t } = useTranslation();
+
+  const getHeatmapColor = (count: number) => {
+    if (count === 0) return 'bg-slate-100';
+    if (count < 10) return 'bg-indigo-200';
+    if (count < 25) return 'bg-indigo-400';
+    if (count < 50) return 'bg-indigo-600';
+    return 'bg-indigo-800';
+  };
+
+  return (
+    <div className="bg-white border border-slate-200/80 shadow-sm p-6 rounded-3xl flex flex-col gap-4">
+      <div className="text-sm font-bold text-slate-800 flex items-center justify-between">
+        <span>{t('stats.heatmapTitle')}</span>
+        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-normal">
+          {t('stats.heatmapLess')} <div className="w-3 h-3 rounded-sm bg-slate-100" />
+          <div className="w-3 h-3 rounded-sm bg-indigo-200" />
+          <div className="w-3 h-3 rounded-sm bg-indigo-400" />
+          <div className="w-3 h-3 rounded-sm bg-indigo-600" />
+          <div className="w-3 h-3 rounded-sm bg-indigo-800" /> {t('stats.heatmapMore')}
+        </div>
+      </div>
+      <div className="grid grid-cols-12 gap-2 self-center py-2">
+        {heatmapData.map((day) => (
+          <div
+            key={day.date}
+            title={t('stats.heatmapTooltip', { date: day.date, count: day.count })}
+            className={`w-4 h-4 rounded-[4px] transition-transform hover:scale-125 cursor-help ${getHeatmapColor(
+              day.count,
+            )}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
 ~~~~~
 
-#### Acts 3: 重写 `GlobalSettingsModal.tsx` 主弹窗
+#### Acts 5: 重写 `GlobalStatsView.tsx` 为纯粹的装配视图
 
-将 `GlobalSettingsModal.tsx` 重构为轻量装配层。
+使用拆解后的 Hook 和子组件对 `GlobalStatsView.tsx` 进行轻量组装。
 
 ~~~~~act
 write_file
-src/components/GlobalSettingsModal.tsx
+src/views/GlobalStatsView.tsx
 ~~~~~
 ~~~~~typescript
-import { Sliders } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { useTranslation } from '../core/i18n';
-import { type GlobalSettings, type UserSettings, loadSettings, saveSettings } from '../utils/settings';
-import { ModalShell } from './common/ModalShell';
-import type { ToastType } from './common/Toast';
-import { DataGovernanceSection } from './settings/sections/DataGovernanceSection';
-import { GeneralPreferencesSection } from './settings/sections/GeneralPreferencesSection';
+import { Activity, ArrowLeft, BarChart2, ChevronDown, Filter } from 'lucide-preact';
+import { useEffect, useRef } from 'preact/hooks';
+import { ActivityHeatmapCard } from '../components/stats/ActivityHeatmapCard';
+import { CognitiveMasteryGrid } from '../components/stats/CognitiveMasteryGrid';
+import { StatsMetricCards } from '../components/stats/StatsMetricCards';
+import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
+import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { registry } from '../core/registry';
+import { useGlobalStatsData } from '../hooks/useGlobalStatsData';
+import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
+import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
-interface GlobalSettingsModalProps {
-  onClose: () => void;
-  onDataChanged: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
+interface GlobalStatsViewProps {
+  onExit: () => void;
 }
 
-export function GlobalSettingsModal({
-  onClose,
-  onDataChanged,
-  showToast,
-}: GlobalSettingsModalProps) {
+export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
-    const updated: UserSettings = {
-      ...settings,
-      global: {
-        ...settings.global,
-        ...patch,
-      },
-    };
-    saveSettings(updated);
-    setSettings(updated);
-    onDataChanged();
-  };
+  const {
+    loading,
+    selectedFilter,
+    setSelectedFilter,
+    getCurrentFilterLabel,
+    stats,
+    dailyData,
+    heatmapData,
+    pathMasteryList,
+    challengeMasteryList,
+  } = useGlobalStatsData();
+
+  const packs = registry.getAllPacks();
+  const allCards = registry.getAllCards();
+
+  useEffect(() => {
+    if (loading) return;
+    const canvas = canvasRef.current;
+    if (canvas) {
+      renderTrendChartCanvas(canvas, dailyData);
+    }
+  }, [loading, dailyData]);
 
   return (
-    <ModalShell title={t('settings.title')} icon={Sliders} onClose={onClose} maxWidth="max-w-md">
-      <GeneralPreferencesSection
-        settings={settings}
-        onUpdateGlobal={handleUpdateGlobal}
-        showToast={showToast}
-      />
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
+      {/* 顶部主操作栏 */}
+      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onExit}
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t('common.exit')}
+          </button>
+          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs">
+              <BarChart2 className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black text-slate-800 tracking-tight">
+                {t('stats.title')}
+              </h1>
+              <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
+            </div>
+          </div>
+        </div>
 
-      <DataGovernanceSection
-        onDataChanged={onDataChanged}
-        onCloseModal={onClose}
-        showToast={showToast}
-      />
+        {/* 筛选选择器 */}
+        <div className="relative flex items-center self-end sm:self-center w-full sm:w-auto">
+          <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
+          <select
+            value={selectedFilter}
+            onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
+            className="w-full sm:w-auto pl-8 pr-8 py-2 text-xs font-bold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm max-w-xs truncate"
+          >
+            <option value="all">{t('stats.allModules')}</option>
 
-      <div className="pt-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98] cursor-pointer"
-        >
-          {t('common.complete')}
-        </button>
-      </div>
-    </ModalShell>
+            <optgroup label={t('stats.optgroupPacks')}>
+              {packs.map((p) => (
+                <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
+                  {getPackTitle(p, t)}
+                </option>
+              ))}
+            </optgroup>
+
+            <optgroup label={t('stats.optgroupDomains')}>
+              {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (
+                <option key={`domain:${domain}`} value={`domain:${domain}`}>
+                  {t(DOMAIN_TAGS[domain].i18nKey)}
+                </option>
+              ))}
+            </optgroup>
+
+            <optgroup label={t('stats.optgroupPaths')}>
+              {(Object.keys(PATH_TAGS) as CognitivePathTag[]).map((path) => (
+                <option key={`path:${path}`} value={`path:${path}`}>
+                  {t(PATH_TAGS[path].i18nKey)}
+                </option>
+              ))}
+            </optgroup>
+
+            <optgroup label={t('stats.optgroupChallenges')}>
+              {(Object.keys(CHALLENGE_TAGS) as MentalChallengeTag[]).map((ch) => (
+                <option key={`challenge:${ch}`} value={`challenge:${ch}`}>
+                  {t(CHALLENGE_TAGS[ch].i18nKey)}
+                </option>
+              ))}
+            </optgroup>
+
+            <optgroup label={t('stats.optgroupCards')}>
+              {allCards.map((card) => (
+                <option key={`card:${card.id}`} value={`card:${card.id}`}>
+                  {getCardTitle(card, t)}
+                </option>
+              ))}
+            </optgroup>
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+        </div>
+      </header>
+
+      {/* 主体展示区 */}
+      {loading ? (
+        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center justify-center text-slate-400 text-sm shadow-sm">
+          {t('stats.loading')}
+        </div>
+      ) : stats.allTime.total === 0 ? (
+        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
+          <Activity className="w-10 h-10 text-slate-300" />
+          {t('stats.noRecords', { filter: getCurrentFilterLabel() })}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          <StatsMetricCards
+            stats={stats}
+            streakDays={Object.keys(dailyData).length}
+          />
+
+          <CognitiveMasteryGrid
+            pathMasteryList={pathMasteryList}
+            challengeMasteryList={challengeMasteryList}
+          />
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <ActivityHeatmapCard heatmapData={heatmapData} />
+
+            <div className="bg-white border border-slate-200/80 shadow-sm p-6 rounded-3xl flex flex-col gap-2">
+              <div className="text-sm font-bold text-slate-800 flex items-center justify-between">
+                <span>{t('stats.trendTitle')}</span>
+                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg">
+                  {t('stats.dailyMaxLevel')}
+                </span>
+              </div>
+              <canvas ref={canvasRef} width={480} height={160} className="w-full mt-2" />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 ~~~~~
 
 ### 下一步建议
-1. 运行 `npm run check` 确保 Biome 与 TypeScript 类型校验通过。
-2. 运行 `python3 scripts/check_god_files.py` 验证 `GlobalSettingsModal.tsx` 是否已成功降分至安全范围。
-3. 接着进入下一个目标：重构拆分 `GlobalStatsView.tsx`（认知统计与热力图视图）。
+1. 运行 `npm run check` 校验类型和格式。
+2. 运行 `python3 scripts/check_god_files.py` 查看全局评分，确认 `GlobalStatsView.tsx` 与前述模块已被清理出榜单。
+3. 接着可根据实际需要对 `src/app.tsx` 或 `src/core/analytics/universalViews.tsx` 进行解耦。
