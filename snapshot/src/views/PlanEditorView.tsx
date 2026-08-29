@@ -20,7 +20,6 @@ const TRIAL_PRESETS = [10, 15, 20, 30, 50];
 
 export function PlanEditorView({
   initialPlan,
-  onExit,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
