@@ -4,11 +4,11 @@ import { project3DTo2D } from './perspectiveCanvas';
 import {
   PERSPECTIVE_2AFC_SIZE,
   PERSPECTIVE_CANVAS_SIZE,
-  PerspectiveHitResult,
-  PerspectiveMode,
-  PerspectiveQuestionData,
-  Point3D,
-  ProportionTarget,
+  type PerspectiveHitResult,
+  type PerspectiveMode,
+  type PerspectiveQuestionData,
+  type Point3D,
+  type ProportionTarget,
 } from './perspectiveTypes';
 
 const PROPORTION_PRESETS: ProportionTarget[] = [

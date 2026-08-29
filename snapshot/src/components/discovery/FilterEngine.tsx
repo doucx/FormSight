@@ -1,14 +1,7 @@
 import { Boxes, Filter, RotateCcw, Search, Sparkles, X } from 'lucide-preact';
 import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import type {
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  VisualDomainTag,
-} from '../../types/card';
+import type { CardQueryOptions } from '../../types/card';
 import { TagPill } from '../common/TagPill';
 import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
 
@@ -70,7 +63,10 @@ export function FilterEngine({
             type="text"
             value={query.searchKeyword || ''}
             onInput={(e) =>
-              onChange({ ...query, searchKeyword: (e.target as HTMLInputElement).value || undefined })
+              onChange({
+                ...query,
+                searchKeyword: (e.target as HTMLInputElement).value || undefined,
+              })
             }
             placeholder={t('home.searchPlaceholder')}
             className={`w-full ${

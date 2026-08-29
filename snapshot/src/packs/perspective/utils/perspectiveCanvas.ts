@@ -1,11 +1,11 @@
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
 import {
-  LineSegment,
+  type LineSegment,
   PERSPECTIVE_2AFC_SIZE,
   PERSPECTIVE_CANVAS_SIZE,
-  PerspectiveQuestionData,
-  Point3D,
+  type PerspectiveQuestionData,
+  type Point3D,
 } from './perspectiveTypes';
 
 /**

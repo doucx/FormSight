@@ -134,10 +134,7 @@ export function GlobalStatsView({ onExit }: GlobalStatsViewProps) {
         </div>
       ) : (
         <div className="flex flex-col gap-6">
-          <StatsMetricCards
-            stats={stats}
-            streakDays={Object.keys(dailyData).length}
-          />
+          <StatsMetricCards stats={stats} streakDays={Object.keys(dailyData).length} />
 
           <CognitiveMasteryGrid
             pathMasteryList={pathMasteryList}

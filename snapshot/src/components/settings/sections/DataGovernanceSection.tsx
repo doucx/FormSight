@@ -154,9 +154,7 @@ export function DataGovernanceSection({
       <div className="pt-2 border-t border-slate-100 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-700">
-              {t('settings.resetPlansTitle')}
-            </div>
+            <div className="text-xs font-bold text-slate-700">{t('settings.resetPlansTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
           </div>
           <button
@@ -171,9 +169,7 @@ export function DataGovernanceSection({
 
         <div className="flex items-center justify-between pt-1">
           <div>
-            <div className="text-xs font-bold text-rose-600">
-              {t('settings.clearDataTitle')}
-            </div>
+            <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.clearDataDesc')}</div>
           </div>
           <button

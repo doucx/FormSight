@@ -27,11 +27,7 @@ export function movePlanItem(
   return newItems;
 }
 
-export function updatePlanItemTrials(
-  items: PlanItem[],
-  id: string,
-  trials: number,
-): PlanItem[] {
+export function updatePlanItemTrials(items: PlanItem[], id: string, trials: number): PlanItem[] {
   return items.map((item) =>
     item.id === id ? { ...item, targetTrials: Math.max(5, trials) } : item,
   );

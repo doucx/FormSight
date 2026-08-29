@@ -4,18 +4,11 @@ import { getCardTitle, i18n, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
 import { type UnifiedProfileData, repository } from '../utils/db/index';
-import {
-  loadPlanStorageState,
-  loadTrainingPlan,
-  setActivePlan,
-} from '../utils/planStorage';
+import { loadPlanStorageState, loadTrainingPlan, setActivePlan } from '../utils/planStorage';
 import { type UserSettings, loadSettings } from '../utils/settings';
 import type { RouteLocation } from './useHashRoute';
 
-export function useAppBootstrap(
-  route: RouteLocation,
-  refreshTodayStats: () => Promise<void>,
-) {
+export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => Promise<void>) {
   const { t } = useTranslation();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 

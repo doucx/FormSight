@@ -65,10 +65,7 @@ export function usePlanEditorState({
   };
 
   const handleCreateNewBlankPlan = () => {
-    const newBlank = createNewBlankPlan(
-      t('plan.newBlankPlan'),
-      t('common.defaultCustomPlanDesc'),
-    );
+    const newBlank = createNewBlankPlan(t('plan.newBlankPlan'), t('common.defaultCustomPlanDesc'));
     setCurrentPlan(newBlank);
     setPlanNameInput(newBlank.name);
     setIsEditingName(true);
@@ -138,10 +135,13 @@ export function usePlanEditorState({
       updatePlanItems((items) => batchUpdateItemTrials(items, trials));
       showToast(t('plan.batchSetTrialsToast', { trials }));
     },
-    handleAddItem: (cardId: string) => updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleAddItem: (cardId: string) =>
+      updatePlanItems((items) => [...items, createPlanItem(cardId)]),
     handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
-    handleMoveItem: (idx: number, dir: 'up' | 'down') => updatePlanItems((items) => movePlanItem(items, idx, dir)),
-    handleUpdateTrials: (id: string, trials: number) => updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleMoveItem: (idx: number, dir: 'up' | 'down') =>
+      updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleUpdateTrials: (id: string, trials: number) =>
+      updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
     handleClearAll: () => updatePlanItems(() => []),
     handleCreateNewBlankPlan,
     handleCloneCurrent: () => {

@@ -29,9 +29,7 @@ export function CognitiveMasteryGrid({
             <Compass className="w-4 h-4 text-emerald-600" />
             {t('stats.pathMasteryTitle')}
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            {t('stats.pathMasterySubtitle')}
-          </span>
+          <span className="text-xs text-slate-400 font-mono">{t('stats.pathMasterySubtitle')}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

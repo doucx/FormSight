@@ -1,4 +1,4 @@
-import { getCardTitle, useTranslation } from '../../core/i18n';
+import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 import type { TrainingPlan } from '../../types/plan';
@@ -61,9 +61,7 @@ export function AppRouter({
         trainingPlan={trainingPlan}
         allPlans={allPlans}
         query={route.query}
-        onQueryChange={(newQuery) =>
-          navigate({ type: 'home', query: newQuery }, { replace: true })
-        }
+        onQueryChange={(newQuery) => navigate({ type: 'home', query: newQuery }, { replace: true })}
         onStartCard={(cardId, sessionType) => navigate({ type: 'train', cardId, sessionType })}
         onOpenCardSettings={onOpenCardSettings}
         onOpenCardAnalytics={(cardId) => navigate({ type: 'analytics', cardId })}
