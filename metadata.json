@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 模块化解耦 App 根中枢与计划编辑器状态流", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788004925.5286496, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 模块化拆解 FilterEngine 与 universalViews 分析模块", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788004990.0162985, "duration_ms": 0}}
