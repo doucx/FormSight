@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 TopDown2AfcView 模块导出缺失与语法问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788003955.7079198, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor: 消除 Canvas 样板代码、样式克隆与重复度量计算", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788004065.1956546, "duration_ms": 0}}

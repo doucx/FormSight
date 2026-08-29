@@ -1,295 +1,70 @@
-我将为你修复 `TopDown2AfcView.tsx` 中的导出异常，使用 `write_file` 重新写入完整的组件代码。
+好的，我们已经完成了针对 DRY 与重复代码克隆的系统重构并修复了模块导出问题。现在我将为你生成一个 `[COMMIT]` 计划，将这些代码改进与清理作为一个完整的逻辑单元提交到 Git 仓库。
 
-## [WIP] fix: 修复 TopDown2AfcView 模块导出缺失与语法问题
-
-### 错误分析
-在执行上一次对 `TopDown2AfcView.tsx` 的 patch 补丁时，多段重叠的替换逻辑导致文件末尾或主函数签名未能正确闭合，使得 Vite 开发服务器在解析该模块时未找到具名导出 `TopDown2AfcView`，抛出 `Uncaught SyntaxError: The requested module ... does not provide an export named 'TopDown2AfcView'`。
+## [COMMIT] refactor: 消除 Canvas 样板代码、样式克隆与重复度量计算
 
 ### 用户需求
-修复 `src/packs/abstraction/components/TopDown2AfcView.tsx`，确保导出 `TopDown2AfcView` 命名组件且无任何语法错误。
+将本次 DRY 治理、Canvas 绘图与通用统计分析提炼、公共组件样式抽离以及时间格式化统一等重构工作提交至 Git 版本控制。
 
 ### 评论
-对于较长且嵌套较多的 TSX 组件，使用 `write_file` 全量写入可有效避免 patch 错位或重复替换带来的破坏。
+本次提交显著收敛了各扩展包及核心模块间的重复代码，消除了大量 Canvas 2D 上下文初始化、准确率聚合及 Modal/Filter 重复 UI 结构，为后续扩展打下更简洁健壮的工程基础。
 
 ### 目标
-1. 完整重写 `src/packs/abstraction/components/TopDown2AfcView.tsx`。
-2. 确保正确导出 `TopDown2AfcView` 组件并保留 `PromptFrame` 样式提炼优化。
+1. 将所有涉及重构与治理的文件加入 Git 暂存区。
+2. 创建一条语义清晰、结构完整的 Conventional Commit 提交信息。
 
 ### 基本原理
-通过 `write_file` 覆盖写入包含正确 import/export、样式抽取以及完整组件渲染生命周期的源代码，彻底恢复模块解析。
+按照系统规范，在独立的 `[COMMIT]` 计划中仅执行 Git 暂存与提交操作，确保代码变动的原子性与可追溯性。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/interfaces #concept/ui #scope/core #ai/instruct #task/domain/refactoring #task/object/topdown2afc-export #task/action/bug-fix #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/engine #comp/runtime #comp/interfaces #scope/core #scope/dx #ai/instruct #task/domain/refactoring #task/object/dry-consolidation #task/action/git-commit #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 全量写回 `TopDown2AfcView.tsx`
+#### Acts 1: 暂存并提交代码变动
 
 ~~~~~act
-write_file
+git_add
+scripts/check_dry.py
+src/components/SessionSummaryModal.tsx
+src/components/discovery/FilterEngine.tsx
+src/components/plan/PlanSummaryModal.tsx
+src/components/training/TrainingShell.tsx
+src/core/analytics/universalViews.tsx
+src/core/canvas/hidpi.ts
+src/core/contracts.ts
+src/packs/abstraction/canvas/drawPaletteTiles.ts
+src/packs/abstraction/canvas/drawParticles.ts
 src/packs/abstraction/components/TopDown2AfcView.tsx
+src/packs/angle/utils/angleUtils.ts
+src/packs/color/analytics.tsx
+src/packs/negative_space/analytics.tsx
+src/packs/perspective/utils/perspectiveUtils.ts
+src/packs/star/analytics.tsx
+src/utils/canvas/drawColorRing.ts
+src/utils/canvas/drawCompass.ts
+src/utils/canvas/drawHeatmap.ts
+src/utils/canvas/drawHueBiasChart.ts
+src/utils/theme.ts
+src/utils/time.ts
+src/views/PlanTrainingView.tsx
 ~~~~~
-~~~~~typescript
-import { Columns } from 'lucide-preact';
-import type { ComponentChildren } from 'preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { useTranslation } from '../../../core/i18n';
-import { drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
-import { drawParticlesCanvas, drawSpinePromptCanvas } from '../canvas/drawParticles';
-import {
-  ABSTRACTION_2AFC_SIZE,
-  ABSTRACTION_CANVAS_SIZE,
-  ABSTRACTION_THUMB_SIZE,
-  type AbstractionHitResult,
-  type AbstractionQuestionData,
-} from '../utils/index';
 
-const CANVAS_OPTION_CLASS =
-  'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';
+~~~~~act
+git_commit
+~~~~~
+~~~~~text
+refactor: consolidate canvas boilerplates, dry up analytics and reusable styles
 
-function PromptFrame({ title, children }: { title: string; children: ComponentChildren }) {
-  return (
-    <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-        {title}
-      </span>
-      <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-interface TopDown2AfcViewProps {
-  question: AbstractionQuestionData;
-  showAnswer: boolean;
-  userAnswer: AbstractionHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function TopDown2AfcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: TopDown2AfcViewProps) {
-  const { t } = useTranslation();
-  const { mode } = question;
-  const isPoly = mode === 'POLYGON_DECIMATION';
-
-  const isTargetA = isPoly
-    ? question.correctPolyChoice === 'A'
-    : userAnswer?.correctChoice === 'A' ||
-      question.correctParticleChoice === 'A' ||
-      question.correctHullChoice === 'A' ||
-      question.correctNotanChoice === 'A';
-  const isTargetB = !isTargetA;
-
-  const renderPrompt = () => {
-    if (isPoly && question.detailedPolygon) {
-      return (
-        <PromptFrame title={t('packs.abstraction.cards.abs_polygon_decimation.promptTitle')}>
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.detailedPolygon,
-                size: ABSTRACTION_CANVAS_SIZE,
-              })
-            }
-            deps={[question.detailedPolygon]}
-          />
-        </PromptFrame>
-      );
-    }
-
-    if (mode === 'TD_GESTURE_2AFC') {
-      return (
-        <PromptFrame title={t('packs.abstraction.cards.abs_td_gesture_2afc.promptTitle')}>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawSpinePromptCanvas(canvas, question.promptSpine, ABSTRACTION_THUMB_SIZE)
-            }
-            deps={[question.promptSpine]}
-          />
-        </PromptFrame>
-      );
-    }
-
-    if (mode === 'TD_HULL_2AFC') {
-      return (
-        <PromptFrame title={t('packs.abstraction.cards.abs_td_hull_2afc.promptTitle')}>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.promptHull,
-                size: ABSTRACTION_THUMB_SIZE,
-                fillColor: '#4F46E5',
-                strokeColor: '#3730A3',
-              })
-            }
-            deps={[question.promptHull]}
-          />
-        </PromptFrame>
-      );
-    }
-
-    if (mode === 'TD_NOTAN_2AFC' && question.promptNotanBuffer) {
-      return (
-        <PromptFrame title={t('packs.abstraction.cards.abs_td_notan_2afc.promptTitle')}>
-          <CanvasView
-            width={ABSTRACTION_THUMB_SIZE}
-            height={ABSTRACTION_THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawRawGrayscaleNoiseField(
-                canvas,
-                question.promptNotanBuffer,
-                question.notanFieldDim ?? 120,
-                ABSTRACTION_THUMB_SIZE,
-              )
-            }
-            deps={[question.promptNotanBuffer, question.notanFieldDim]}
-          />
-        </PromptFrame>
-      );
-    }
-
-    return null;
-  };
-
-  const renderOptionCanvas = (choice: 'A' | 'B') => {
-    if (isPoly && question.simplifiedOptions) {
-      const verts = choice === 'A' ? question.simplifiedOptions[0] : question.simplifiedOptions[1];
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className={CANVAS_OPTION_CLASS}
-          draw={(canvas) =>
-            drawPolygonCanvas({
-              canvas,
-              vertices: verts,
-              size: ABSTRACTION_2AFC_SIZE,
-              fillColor: '#4F46E5',
-            })
-          }
-          deps={[verts]}
-        />
-      );
-    }
-
-    if (mode === 'TD_GESTURE_2AFC') {
-      const particles = choice === 'A' ? question.particlesA : question.particlesB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className={CANVAS_OPTION_CLASS}
-          draw={(canvas) => drawParticlesCanvas(canvas, particles, ABSTRACTION_2AFC_SIZE)}
-          deps={[particles]}
-        />
-      );
-    }
-
-    if (mode === 'TD_HULL_2AFC') {
-      const verts = choice === 'A' ? question.hullDetailedA : question.hullDetailedB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className={CANVAS_OPTION_CLASS}
-          draw={(canvas) =>
-            drawPolygonCanvas({
-              canvas,
-              vertices: verts,
-              size: ABSTRACTION_2AFC_SIZE,
-            })
-          }
-          deps={[verts]}
-        />
-      );
-    }
-
-    if (mode === 'TD_NOTAN_2AFC') {
-      const buf = choice === 'A' ? question.notanSceneBufferA : question.notanSceneBufferB;
-      return (
-        <CanvasView
-          width={ABSTRACTION_2AFC_SIZE}
-          height={ABSTRACTION_2AFC_SIZE}
-          className={CANVAS_OPTION_CLASS}
-          draw={(canvas) =>
-            drawRawGrayscaleNoiseField(
-              canvas,
-              buf,
-              question.notanFieldDim ?? 120,
-              ABSTRACTION_2AFC_SIZE,
-            )
-          }
-          deps={[buf, question.notanFieldDim]}
-        />
-      );
-    }
-
-    return null;
-  };
-
-  const hint = isPoly
-    ? t('packs.abstraction.cards.abs_polygon_decimation.hint')
-    : t('packs.abstraction.cards.abs_td_gesture_2afc.hint');
-
-  return (
-    <Standard2AfcView
-      questionId={question.id}
-      hintText={hint}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
-      showAnswer={showAnswer}
-      disabled={disabled}
-      onAnswer={onAnswer}
-      prompt={renderPrompt()}
-      optionA={{
-        title: `${t('common.areaA')} (${t('common.optionA')})`,
-        isCorrect: isTargetA,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            {renderOptionCanvas('A')}
-          </div>
-        ),
-      }}
-      optionB={{
-        title: `${t('common.areaB')} (${t('common.optionB')})`,
-        isCorrect: isTargetB,
-        content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
-            {renderOptionCanvas('B')}
-          </div>
-        ),
-      }}
-    />
-  );
-}
+- Add `setup2DCanvas` helper in `src/core/canvas/hidpi.ts` for standardized canvas initialization.
+- Provide `calculateBasicOverallStats` in `src/core/contracts.ts` to deduplicate overall stats computations across pack analytics.
+- Refactor canvas utilities across packs (`abstraction`, `angle`, `perspective`) to use unified 2D canvas setup.
+- Extract `PromptFrame` and `CANVAS_OPTION_CLASS` in `TopDown2AfcView` to reduce Tailwind class set duplications.
+- Unify time formatting via `formatSecondsToTimer` and accuracy colors/badges in `src/utils/theme.ts`.
+- Integrate `ModalShell` into `SessionSummaryModal` and `PlanSummaryModal`.
 ~~~~~
 
 ### 下一步建议
-1. 刷新前端开发服务器页面，确认 `TopDown2AfcView` 导入错误消除且页面渲染正常。
-2. 运行构建与检查命令（如 `npm run build` 或 `python scripts/check_dry.py --include-packs`）验证整体代码库无任何语法与类型异常。
+- **CI 规则集成**: 可考虑将 `python scripts/check_dry.py --fail-on-smells` 配置到 Pre-commit Hook 或 GitHub Actions 工作流中，防止后续功能开发中引入新的代码克隆。
+- **性能监控**: 验证海量历史答题记录下的 Canvas 渲染帧率与分析大盘加载速度。
