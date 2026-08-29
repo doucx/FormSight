@@ -20,7 +20,6 @@ const TRIAL_PRESETS = [10, 15, 20, 30, 50];
 
 export function PlanEditorView({
   initialPlan,
-  onExit,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -78,7 +77,6 @@ export function PlanEditorView({
         showPlanManager={showPlanManager}
         plansCount={storageState.plans.length}
         fileInputRef={fileInputRef}
-        onExit={onExit}
         onStartEditingName={() => setIsEditingName(true)}
         onCancelEditingName={() => {
           setPlanNameInput(currentPlan.name);

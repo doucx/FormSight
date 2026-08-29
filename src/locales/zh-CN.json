@@ -1,4 +1,10 @@
 {
+  "nav": {
+    "dashboard": "今日工作台",
+    "discovery": "探索大盘",
+    "plans": "计划中心",
+    "stats": "认知档案"
+  },
   "common": {
     "appName": "FormSight",
     "appSubtitle": "视觉造型构图与色彩感知自适应强化训练系统",

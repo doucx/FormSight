@@ -1,11 +1,7 @@
-import { BarChart2, Clock, Inbox, RotateCcw, Sliders, Sparkles } from 'lucide-preact';
-import { useMemo, useState } from 'preact/hooks';
-import { ModeCard } from '../components/common/ModeCard';
-import { FilterEngine } from '../components/discovery/FilterEngine';
+import { ArrowRight, Clock, Compass, Layers, Target } from 'lucide-preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
-import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { CardQueryOptions } from '../types/card';
 import type { TrainingPlan } from '../types/plan';
 import { type UnifiedProfileData, formatTotalTime } from '../utils/db/index';
 
@@ -15,16 +11,11 @@ interface HomeProps {
   profiles: Record<string, UnifiedProfileData>;
   trainingPlan: TrainingPlan;
   allPlans?: TrainingPlan[];
-  query?: CardQueryOptions;
-  onQueryChange?: (query: CardQueryOptions) => void;
-  onStartCard: (cardId: string, type: 'training' | 'benchmark') => void;
-  onOpenCardSettings: (cardId: string) => void;
-  onOpenCardAnalytics: (cardId: string) => void;
   onStartPlan: () => void;
   onOpenPlanEditor: () => void;
   onSelectPlan?: (planId: string) => void;
-  onOpenGlobalSettings: () => void;
-  onOpenGlobalStats: () => void;
+  onNavigateToDiscovery: () => void;
+  onNavigateToStats: () => void;
 }
 
 export function Home({
@@ -33,78 +24,51 @@ export function Home({
   profiles,
   trainingPlan,
   allPlans = [],
-  query: externalQuery,
-  onQueryChange,
-  onStartCard,
-  onOpenCardSettings,
-  onOpenCardAnalytics,
   onStartPlan,
   onOpenPlanEditor,
   onSelectPlan,
-  onOpenGlobalSettings,
-  onOpenGlobalStats,
+  onNavigateToDiscovery,
+  onNavigateToStats,
 }: HomeProps) {
   const { t } = useTranslation();
-  const [localQuery, setLocalQuery] = useState<CardQueryOptions>(externalQuery || {});
 
-  const activeQuery = externalQuery !== undefined ? externalQuery : localQuery;
+  // 统计今日已练习题数与总题量
+  const todayTotalCount = Object.values(todayStats).reduce((acc, c) => acc + c.count, 0);
 
-  const handleQueryChange = (newQuery: CardQueryOptions) => {
-    setLocalQuery(newQuery);
-    onQueryChange?.(newQuery);
-  };
+  // 统计所有模块的平均正确率
+  const allProfilesList = Object.values(profiles);
+  const allTotalTrials = allProfilesList.reduce((acc, p) => acc + p.totalTrials, 0);
+  const allTotalHits = allProfilesList.reduce((acc, p) => acc + p.totalHits, 0);
+  const overallAccuracy =
+    allTotalTrials > 0 ? Math.round((allTotalHits / allTotalTrials) * 100) : 0;
 
-  // 结合查询条件获取过滤后的卡片
-  const filteredCards = useMemo(() => {
-    return registry.queryCards(activeQuery);
-  }, [activeQuery]);
+  // 获取当前计划的所有有效阶段卡片
+  const validPlanItems = (trainingPlan.items || []).filter((item) =>
+    Boolean(registry.getCardById(item.cardId)),
+  );
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-8">
-      {/* 品牌 Header 状态栏 */}
-      <div className="flex items-center justify-between bg-white border border-slate-200/80 px-7 py-5 sm:px-8 sm:py-6 rounded-3xl shadow-sm flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 text-white rounded-2xl shadow-md shadow-indigo-200">
-            <Sparkles className="w-7 h-7" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              {t('common.appName')}{' '}
-              <span className="text-xs font-extrabold px-2.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100">
-                v{__APP_VERSION__}
-              </span>
-            </h1>
-            <p className="text-xs text-slate-400 font-medium">{t('common.appSubtitle')}</p>
-          </div>
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
+      {/* 顶部状态与问候信息 */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            {t('nav.dashboard')}
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
+            {t('common.appSubtitle')}
+          </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold">
-            <Clock className="w-4 h-4 text-indigo-500" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-slate-700 text-xs font-semibold shadow-xs">
+            <Clock className="w-3.5 h-3.5 text-indigo-500" />
             <span>{formatTotalTime(totalTimeMs)}</span>
           </div>
-          <button
-            type="button"
-            onClick={onOpenGlobalStats}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-            title={t('common.globalStats')}
-          >
-            <BarChart2 className="w-4 h-4 text-indigo-500" />
-            {t('common.stats')}
-          </button>
-          <button
-            type="button"
-            onClick={onOpenGlobalSettings}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all text-xs font-semibold flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            title={t('common.globalSettings')}
-          >
-            <Sliders className="w-4 h-4" />
-            {t('common.settings')}
-          </button>
         </div>
       </div>
 
-      {/* 今日定制训练流 Hero 区域 */}
+      {/* 核心主角：今日训练流 Hero 卡片 */}
       <PlanHeroCard
         plan={trainingPlan}
         allPlans={allPlans}
@@ -113,64 +77,144 @@ export function Home({
         onSelectPlan={onSelectPlan}
       />
 
-      {/* 大盘发现库核心筛选引擎 */}
-      <FilterEngine
-        query={activeQuery}
-        totalMatches={filteredCards.length}
-        onChange={handleQueryChange}
-      />
-
-      {/* 大盘卡片网格流 (Discovery Hub Cards Grid) */}
-      {filteredCards.length === 0 ? (
-        <div className="w-full bg-white border border-slate-200/80 rounded-3xl p-12 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-slate-50 text-slate-400 rounded-3xl">
-            <Inbox className="w-8 h-8" />
+      {/* 当前计划阶段明细清单 (直观展示今日步骤，无需跳入计划编辑器) */}
+      {validPlanItems.length > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <Layers className="w-4 h-4 text-indigo-600" />
+              <span>{t('plan.stageBreakdown')}</span>
+            </div>
+            <span className="text-xs font-mono text-slate-400">
+              {t('plan.stageCount', { count: validPlanItems.length })}
+            </span>
           </div>
-          <div className="text-base font-bold text-slate-800">{t('home.noMatchTitle')}</div>
-          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
-          <button
-            type="button"
-            onClick={() => handleQueryChange({})}
-            className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all flex items-center gap-1.5"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            {t('home.resetFilter')}
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCards.map((card) => {
-            const profile = profiles[card.id];
-            const totalTrials = profile?.totalTrials || 0;
-            const accuracy =
-              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
-            const currentLevel = profile?.currentLevel || 5;
-            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
-            const cardTitle = getCardTitle(card, t);
-            const cardDesc = getCardDesc(card, t);
 
-            return (
-              <ModeCard
-                key={card.id}
-                title={cardTitle}
-                desc={cardDesc}
-                icon={card.icon}
-                todayCount={stat.count}
-                todayTimeMs={stat.timeMs}
-                currentLevel={currentLevel}
-                accuracy={accuracy}
-                totalTrials={totalTrials}
-                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
-                isExperimental={card.tags.status === 'experimental'}
-                onStartTraining={() => onStartCard(card.id, 'training')}
-                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
-                onOpenSettings={() => onOpenCardSettings(card.id)}
-                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
-              />
-            );
-          })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {validPlanItems.map((item, idx) => {
+              const card = registry.getCardById(item.cardId);
+              if (!card) return null;
+              const Icon = card.icon;
+              const cardTitle = getCardTitle(card, t);
+              const cardProfile = profiles[card.id];
+              const currentLvl = cardProfile?.currentLevel || 5;
+
+              return (
+                <div
+                  key={item.id}
+                  className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between gap-2.5 shadow-xs"
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                      {idx + 1}
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-white text-indigo-600 border border-slate-200/60 shadow-xs flex-shrink-0">
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-slate-800 truncate">{cardTitle}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">Lvl {currentLvl}</div>
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] font-mono font-bold text-indigo-600 bg-white border border-slate-200 px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
+                    {item.targetTrials} {t('common.trialsUnit')}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      {/* 底部概览指标与快捷探索导航 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* 指标卡 1: 今日刷题 */}
+        <div
+          role="presentation"
+          onClick={onNavigateToStats}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigateToStats();
+            }
+          }}
+          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer space-y-1 group"
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-indigo-500" />
+              {t('common.todayTrials')}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+          </div>
+          <div className="text-2xl font-black text-slate-800 font-mono">
+            {todayTotalCount}{' '}
+            <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
+          </div>
+          <div className="text-[11px] text-slate-400 pt-0.5">
+            {t('common.accuracy')}:{' '}
+            <span className="font-bold text-slate-700 font-mono">{overallAccuracy}%</span>
+          </div>
+        </div>
+
+        {/* 快捷跳转 2: 探索大盘入口 */}
+        <div
+          role="presentation"
+          onClick={onNavigateToDiscovery}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNavigateToDiscovery();
+            }
+          }}
+          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group"
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+            <span className="flex items-center gap-1.5 text-indigo-600">
+              <Compass className="w-3.5 h-3.5" />
+              {t('nav.discovery')}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+          </div>
+          <div className="mt-2">
+            <div className="text-sm font-black text-slate-800">{t('home.allPacks')}</div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {t('home.matchedModules', { count: registry.getAllCards().length })}
+            </p>
+          </div>
+        </div>
+
+        {/* 快捷跳转 3: 计划管理入口 */}
+        <div
+          role="presentation"
+          onClick={onOpenPlanEditor}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onOpenPlanEditor();
+            }
+          }}
+          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
+        >
+          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+            <span className="flex items-center gap-1.5 text-indigo-600">
+              <Layers className="w-3.5 h-3.5" />
+              {t('nav.plans')}
+            </span>
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+          </div>
+          <div className="mt-2">
+            <div className="text-sm font-black text-slate-800">{trainingPlan.name}</div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              {t('plan.stageAndTrialsSummary', {
+                stages: validPlanItems.length,
+                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
+              })}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

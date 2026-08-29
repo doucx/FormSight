@@ -1,4 +1,10 @@
 {
+  "nav": {
+    "dashboard": "Dashboard",
+    "discovery": "Discovery Hub",
+    "plans": "Routine Plans",
+    "stats": "Cognitive Stats"
+  },
   "common": {
     "appName": "FormSight",
     "appSubtitle": "Visual Form & Color Perception Adaptive Training System",
