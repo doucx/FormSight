@@ -1,3 +1,4 @@
+import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { hsvToHex } from '../../../core/color/colorUtils';
 
 export interface PaletteTile {
@@ -14,12 +15,9 @@ export function drawPaletteTilesCanvas(
   tiles?: PaletteTile[],
   size = 400,
 ) {
-  if (!canvas || !tiles) return;
-  const ctx = canvas.getContext('2d');
+  if (!tiles) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   for (const t of tiles) {
     ctx.fillStyle = hsvToHex(...t.hsv);

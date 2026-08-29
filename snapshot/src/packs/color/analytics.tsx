@@ -1,6 +1,6 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 import { hsvToHex } from '../../core/color/colorUtils';
-import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { renderHueRingCanvas } from '../../utils/canvas/drawColorRing';
 import type { SectorStat } from '../../utils/canvas/drawCompass';
@@ -137,15 +137,12 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         );
       },
       getOverallStats: (records) => {
-        const total = records.length;
-        const hits = records.filter((r) => r.isHit).length;
-        const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
+        const baseStats = calculateBasicOverallStats(records);
         const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError = total > 0 ? Math.round((sumError / total) * 10) / 10 : 0;
+        const avgError = baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
 
         return {
-          accuracy,
-          total,
+          ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
               <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
@@ -253,15 +250,12 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         );
       },
       getOverallStats: (records) => {
-        const total = records.length;
-        const hits = records.filter((r) => r.isHit).length;
-        const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
+        const baseStats = calculateBasicOverallStats(records);
         const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError = total > 0 ? Math.round((sumError / total) * 10) / 10 : 0;
+        const avgError = baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
 
         return {
-          accuracy,
-          total,
+          ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
               <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>

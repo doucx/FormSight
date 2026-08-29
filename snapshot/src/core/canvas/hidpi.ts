@@ -48,3 +48,23 @@ export function initSquareHiDpiCanvas(
 
   return { ctx, size };
 }
+
+/**
+ * 快速获取 2D 绘图上下文并填充默认背景色（轻量 2D 绘制专用）
+ */
+export function setup2DCanvas(
+  canvas: HTMLCanvasElement | null,
+  size: number,
+  bgColor = '#FFFFFF',
+): CanvasRenderingContext2D | null {
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+
+  if (bgColor) {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, size, size);
+  }
+
+  return ctx;
+}

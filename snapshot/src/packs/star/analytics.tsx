@@ -1,5 +1,5 @@
 import { Compass, Target } from 'lucide-preact';
-import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { type SectorStat, renderCompassCanvas } from '../../utils/canvas/drawCompass';
 import { renderHeatmapCanvas } from '../../utils/canvas/drawHeatmap';
@@ -99,12 +99,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
             </div>
           );
         },
-        getOverallStats: (records) => {
-          const total = records.length;
-          const hits = records.filter((r) => r.isHit).length;
-          const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
-          return { accuracy, total };
-        },
+        getOverallStats: (records) => calculateBasicOverallStats(records),
       },
       {
         id: 'directional_compass',
@@ -193,12 +188,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
             </div>
           );
         },
-        getOverallStats: (records) => {
-          const total = records.length;
-          const hits = records.filter((r) => r.isHit).length;
-          const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
-          return { accuracy, total };
-        },
+        getOverallStats: (records) => calculateBasicOverallStats(records),
       },
     ],
   };
