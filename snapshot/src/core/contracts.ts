@@ -4,6 +4,22 @@ import type { CardDefinition, PackMeta } from '../types/card';
 import type { UnifiedTrialRecord } from '../utils/db/schema';
 import type { BaseModuleSettings } from '../utils/settings';
 
+export interface BaseInteractiveCardProps {
+  disabled?: boolean;
+  hitMargin?: number;
+  showToleranceBand?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function calculateBasicOverallStats<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord>(
+  records: TRecord[],
+): { accuracy: number; total: number } {
+  const total = records.length;
+  const hits = records.filter((r) => r.isHit).length;
+  const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
+  return { accuracy, total };
+}
+
 export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord> {
   id: string;
   tabLabel: string;

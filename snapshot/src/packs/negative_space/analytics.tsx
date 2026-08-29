@@ -1,5 +1,5 @@
 import { Crosshair } from 'lucide-preact';
-import type { CardAnalyticsPlugin } from '../../core/contracts';
+import { calculateBasicOverallStats, type CardAnalyticsPlugin } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { getTrialRecordsByCard } from '../../utils/db/index';
 
@@ -71,12 +71,7 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
           </div>
         );
       },
-      getOverallStats: (records) => {
-        const total = records.length;
-        const hits = records.filter((r) => r.isHit).length;
-        const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0;
-        return { accuracy, total };
-      },
+      getOverallStats: (records) => calculateBasicOverallStats(records),
     },
   ],
 };

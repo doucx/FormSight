@@ -1,3 +1,4 @@
+import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
 
 export function drawParticlesCanvas(
@@ -9,12 +10,9 @@ export function drawParticlesCanvas(
   userAxisAngle?: number,
   isHit?: boolean,
 ) {
-  if (!canvas || !particles) return;
-  const ctx = canvas.getContext('2d');
+  if (!particles) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   // 绘制散点
   for (const p of particles) {
@@ -62,12 +60,9 @@ export function drawSpinePromptCanvas(
   spine?: Point[],
   size = 160,
 ) {
-  if (!canvas || !spine || spine.length < 2) return;
-  const ctx = canvas.getContext('2d');
+  if (!spine || spine.length < 2) return;
+  const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, size, size);
 
   const [p1, p2] = spine;
   ctx.strokeStyle = '#4F46E5';
