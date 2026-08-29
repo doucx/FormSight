@@ -87,10 +87,10 @@ export function PlanStageList({
             return (
               <div
                 key={item.id}
-                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex items-center justify-between gap-3"
+                className="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
               >
-                {/* 左侧：严格 min-w-0 弹性约束，保证超长文本必然被截断，绝不撑开容器 */}
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                {/* 模块信息区：包含序号、图标、标题与描述，在窄屏下拥有完整横向展示空间 */}
+                <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto sm:flex-1">
                   <div className="w-6 h-6 rounded-lg bg-slate-800 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
                     {idx + 1}
                   </div>
@@ -103,8 +103,8 @@ export function PlanStageList({
                   </div>
                 </div>
 
-                {/* 右侧：严格 flex-shrink-0 防挤压 */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
+                {/* 题量选择与操作控制区：在紧凑宽度下换行并靠右/充满对齐 */}
+                <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
                   <div className="flex items-center bg-slate-100 p-0.5 rounded-xl">
                     {trialPresets.map((preset) => (
                       <button
