@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] chore: 更新 piconfig.json 中的 core 预设路径配置", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788098089.5506265, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 建立 playground 原型沙盒索引中枢与标准化元数据规范", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788098568.7687418, "duration_ms": 0}}

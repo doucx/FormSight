@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D 分形截面感知 (形态渐进演化) - FormSight Prototype</title>
+
+  <!-- FormSight Prototype Standard Metadata Contract -->
+  <meta name="prototype:id" content="fractal_section" />
+  <meta name="prototype:title" content="3D 分形截面感知 (SDF 渐进演化)" />
+  <meta name="prototype:category" content="3D 空间结构" />
+  <meta name="prototype:target-pack" content="spatial_3d" />
+  <meta name="prototype:status" content="evaluating" />
+  <meta name="prototype:desc" content="形态随难度从「平滑圆润大模」演化为「多孔负空间空腔与混沌分形」，训练空间截面感知与局域曲率解析。" />
+  <meta name="prototype:tags" content="Three.js,SDF,Fractal,CrossSection,3D,Raymarching" />
+  <meta name="prototype:author" content="Claude & FormSight" />
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Three.js + OrbitControls -->
@@ -27,6 +38,9 @@
   <!-- Header -->
   <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
     <div class="flex items-center gap-3">
+      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition text-xs font-mono" title="返回沙盒大盘">
+        ← 中枢
+      </a>
       <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
         3D
       </div>
@@ -138,17 +152,12 @@
         <span class="text-xs text-slate-500 font-mono">4-AFC (按 1, 2, 3, 4 快捷作答)</span>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="options-grid">
-        <!-- 4个选项由 JS 动态生成 -->
-      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="options-grid"></div>
     </div>
 
   </main>
 
   <script>
-    // ==========================================
-    // 0. 数学与插值工具
-    // ==========================================
     function expDecayInterpolate(startVal, endVal, level, maxLevel = 35) {
       const t = Math.max(0, Math.min(1, (level - 1) / (maxLevel - 1)));
       const decayRate = 3.0;
@@ -156,9 +165,6 @@
       return endVal + (startVal - endVal) * factor;
     }
 
-    // ==========================================
-    // 1. 3D 多阶段分形势能场 (Multi-Stage Fractal SDF)
-    // ==========================================
     let seed = Math.random() * 1000;
     let currentLevel = 1;
 
@@ -186,7 +192,6 @@
       return (1-w)*y0 + w*y1;
     }
 
-    // 基础 FBM
     function fbm3D(x, y, z, octaves) {
       let val = 0;
       let amp = 0.55;
@@ -199,45 +204,29 @@
       return val;
     }
 
-    // 多阶段形态学核心 SDF 计算
     function evaluateSDF(x, y, z, level) {
-      const t = (level - 1) / 34; // 0.0 ~ 1.0
       let r = Math.sqrt(x*x + y*y + z*z);
 
-      // --- 阶段 1 (Lv 1~8): 平滑宏观大模 ---
-      // 仅有 1~2 个低频平滑波浪，形状接近椭球雕塑大切面
       let macroNoise = (smoothNoise3D(x * 0.85 + 1.2, y * 0.85 + 1.2, z * 0.85 + 1.2) - 0.5) * 0.65;
       let dist = (r - 1.15) - macroNoise;
 
-      if (level <= 8) {
-        return dist;
-      }
+      if (level <= 8) return dist;
 
-      // --- 阶段 2 (Lv 9~18): 棱角结晶与多凹面折叠 (Domain Facets) ---
-      // 引入中频折叠噪点与多面切割
       let facetWeight = Math.min(1.0, (level - 8) / 10);
       let facetNoise = Math.abs(smoothNoise3D(x * 1.6 + 3.0, y * 1.6 + 3.0, z * 1.6 + 3.0) - 0.5) * 0.85;
       dist = dist - facetWeight * facetNoise;
 
-      if (level <= 18) {
-        return dist;
-      }
+      if (level <= 18) return dist;
 
-      // --- 阶段 3 (Lv 19~28): 负空间空腔与海绵多孔 (Cavity Carving) ---
-      // 产生穿透孔洞与分裂截面
       let cavityWeight = Math.min(1.0, (level - 18) / 10);
       let cavityNoise = smoothNoise3D(x * 2.4 + 5.5, y * 2.4 + 5.5, z * 2.4 + 5.5);
       if (cavityNoise > 0.62) {
         let holeDepth = (cavityNoise - 0.62) * 2.8 * cavityWeight;
-        dist = Math.max(dist, holeDepth); // CSG 减去空洞
+        dist = Math.max(dist, holeDepth);
       }
 
-      if (level <= 28) {
-        return dist;
-      }
+      if (level <= 28) return dist;
 
-      // --- 阶段 4 (Lv 29~35): 高阶混沌分形 (High-octave Fractal Coral) ---
-      // 产生尖锐微突刺与极细碎多岛屿
       let chaosWeight = (level - 28) / 7;
       let fineNoise = (fbm3D(x * 3.2, y * 3.2, z * 3.2, 3) - 0.5) * 0.6 * chaosWeight;
       dist = dist - fineNoise;
@@ -245,9 +234,6 @@
       return dist;
     }
 
-    // ==========================================
-    // 2. 题目生成系统
-    // ==========================================
     let currentQuestion = null;
     let answered = false;
 
@@ -292,35 +278,28 @@
       const t = (level - 1) / 34;
       const meta = getMorphologyMeta(level);
 
-      // 1. 切片空间倾角自由度 (低难度近正交，高难度全角度随机)
       const tiltMax = 0.15 + t * 0.8;
       const theta = (Math.random() - 0.5) * tiltMax;
       const phi = (Math.random() - 0.5) * tiltMax;
       const normal = new THREE.Vector3(Math.sin(theta), Math.cos(theta), Math.sin(phi)).normalize();
 
-      // 2. 切片深度位置
       const offset = (Math.random() - 0.5) * (0.35 + t * 0.45);
 
-      // 3. 正交基底 (U, V)
       const tempUp = Math.abs(normal.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
       const uVec = new THREE.Vector3().crossVectors(normal, tempUp).normalize();
       const vVec = new THREE.Vector3().crossVectors(normal, uVec).normalize();
       const planeCenter = normal.clone().multiplyScalar(offset);
 
-      // 4. 对抗干扰项微差计算
       const deltaZ = expDecayInterpolate(0.55, 0.12, level);
       const deltaTiltDeg = expDecayInterpolate(50.0, 14.0, level);
       const deltaTiltRad = (deltaTiltDeg * Math.PI) / 180;
 
-      // 干扰项 A: 深度微偏
       const distOffset = offset + (offset >= 0 ? -deltaZ : deltaZ);
       const centerDistA = normal.clone().multiplyScalar(distOffset);
 
-      // 干扰项 B: 倾角微偏
       const rotNormal = normal.clone().applyAxisAngle(uVec, deltaTiltRad).normalize();
       const rotV = new THREE.Vector3().crossVectors(rotNormal, uVec).normalize();
 
-      // 干扰项 C: 复合偏置
       const centerDistC = normal.clone().multiplyScalar(offset + deltaZ * 0.6);
       const rotNormalC = normal.clone().applyAxisAngle(vVec, -deltaTiltRad * 0.8).normalize();
       const rotVC = new THREE.Vector3().crossVectors(rotNormalC, uVec).normalize();
@@ -350,9 +329,6 @@
       };
     }
 
-    // ==========================================
-    // 3. 2D 截面采样绘制
-    // ==========================================
     function renderSectionToCanvas(canvas, config, level) {
       const ctx = canvas.getContext('2d');
       const size = canvas.width;
@@ -376,14 +352,14 @@
 
           if (val <= 0) {
             let edgeDist = Math.min(1.0, -val * 3.2);
-            data[pIdx] = Math.round(99 + edgeDist * 45);     // R
-            data[pIdx + 1] = Math.round(102 + edgeDist * 65);// G
-            data[pIdx + 2] = Math.round(241 + edgeDist * 14);// B
+            data[pIdx] = Math.round(99 + edgeDist * 45);
+            data[pIdx + 1] = Math.round(102 + edgeDist * 65);
+            data[pIdx + 2] = Math.round(241 + edgeDist * 14);
             data[pIdx + 3] = 255;
           } else if (val < 0.035) {
             data[pIdx] = 52;
             data[pIdx + 1] = 211;
-            data[pIdx + 2] = 153; // Emerald border
+            data[pIdx + 2] = 153;
             data[pIdx + 3] = 255;
           } else {
             data[pIdx] = 15;
@@ -395,7 +371,6 @@
       }
       ctx.putImageData(imgData, 0, 0);
 
-      // 网格辅助
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -407,9 +382,6 @@
       ctx.strokeRect(1, 1, size - 2, size - 2);
     }
 
-    // ==========================================
-    // 4. Three.js 3D 渲染器
-    // ==========================================
     let scene, camera, renderer, controls;
     let fractalMesh = null, planeHelper = null;
 
@@ -466,11 +438,9 @@
       renderer.render(scene, camera);
     }
 
-    // 动态置换 3D Mesh 顶点
     function createFractal3DMesh(level) {
       if (fractalMesh) scene.remove(fractalMesh);
 
-      // 高阶形态需要更高细分
       const detail = level <= 8 ? 4 : 5;
       const geom = new THREE.IcosahedronGeometry(1.2, detail);
       const pos = geom.attributes.position;
@@ -485,7 +455,6 @@
         let normY = vy / r;
         let normZ = vz / r;
 
-        // 沿法线方向二分探测 SDF = 0 的真实表面半径
         let curR = 1.15;
         for (let step = 0; step < 7; step++) {
           let testX = normX * curR;
@@ -503,7 +472,7 @@
         color: 0x4f46e5,
         roughness: 0.35,
         metalness: 0.15,
-        flatShading: level > 8 // 高等级开启 flatShading 强化折角质感
+        flatShading: level > 8
       });
 
       fractalMesh = new THREE.Mesh(geom, mat);
@@ -536,14 +505,10 @@
       scene.add(planeHelper);
     }
 
-    // ==========================================
-    // 5. 视图刷新与作答
-    // ==========================================
     function setupQuestion() {
       currentQuestion = generateQuestionForLevel(currentLevel);
       answered = false;
 
-      // 更新看板与文本说明
       const meta = currentQuestion.meta;
       document.getElementById('stage-badge').textContent = meta.stage;
       document.getElementById('stage-description').textContent = meta.desc;
@@ -556,11 +521,9 @@
       badge.className = 'mt-6 hidden p-4 rounded-xl text-center font-bold text-sm transition-all duration-300';
       badge.textContent = '';
 
-      // 刷新 3D 模型与切面
       createFractal3DMesh(currentQuestion.level);
       updateCuttingPlaneVisual(currentQuestion);
 
-      // 渲染 4 个 2D 选项卡片
       const grid = document.getElementById('options-grid');
       grid.innerHTML = '';
 
@@ -626,9 +589,6 @@
       setupQuestion();
     }
 
-    // ==========================================
-    // 6. 全局事件绑定
-    // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
       initThree();
       updateLevel(1);
