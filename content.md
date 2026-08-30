@@ -7,7 +7,8 @@ add prototype card
 
 ### 📝 变更文件摘要:
 ```
-card_prototypes/fractal_section_prototype.html | 657 +++++++++++++++++++++++++
- package.json                                   |   2 +-
- 2 files changed, 658 insertions(+), 1 deletion(-)
+biome.json                                     |   2 +-
+ card_prototypes/fractal_section_prototype.html | 657 -------------------------
+ playground/fractal_section_prototype.html      | 657 +++++++++++++++++++++++++
+ 3 files changed, 658 insertions(+), 658 deletions(-)
 ```
