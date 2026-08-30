@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FormSight Prototype Sandbox - 原型中枢</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col p-4 sm:p-8">
+
+  <!-- Top Header -->
+  <header class="max-w-7xl w-full mx-auto flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-2xl bg-indigo-600 flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/30">
+        FS
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-extrabold text-white tracking-tight">FormSight 原型试验沙盒</h1>
+          <span class="text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+            Dev Sandbox
+          </span>
+        </div>
+        <p class="text-xs text-slate-400 mt-0.5">AI 敏捷实验卡片与单页原型集中营 · 动态自动索引</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <a href="/" class="px-3.5 py-2 text-xs font-bold text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-xl transition-all flex items-center gap-1.5">
+        <span>← 返回主系统</span>
+      </a>
+      <button id="btn-refresh" class="px-3.5 py-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/50 hover:bg-indigo-900/50 border border-indigo-800/50 rounded-xl transition-all">
+        刷新索引
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter & Search Toolbar -->
+  <div class="max-w-7xl w-full mx-auto mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <!-- 搜索框 -->
+    <div class="relative w-full sm:w-80">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="搜索原型标题、标签、Pack..."
+        class="w-full bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-indigo-500 transition-all font-mono"
+      />
+    </div>
+
+    <!-- 类别标签过滤 -->
+    <div class="flex items-center gap-1.5 flex-wrap w-full sm:w-auto" id="category-filters">
+      <button class="filter-btn px-3 py-1.5 text-xs font-bold rounded-xl bg-indigo-600 text-white transition cursor-pointer" data-category="ALL">
+        全部
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Grid Content -->
+  <main class="max-w-7xl w-full mx-auto mt-6 flex-1">
+    <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-4">
+      <span>发现原型卡片: <strong id="item-count" class="text-indigo-400">0</strong> 个</span>
+      <span class="text-[11px] text-slate-500">点击卡片直达 · 支持右上角快速独立窗口</span>
+    </div>
+
+    <div id="prototype-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- 动态填充 -->
+    </div>
+  </main>
+
+  <footer class="max-w-7xl w-full mx-auto mt-12 pt-6 border-t border-slate-900 text-center text-xs text-slate-600 font-mono">
+    FormSight Multi-Agent Prototyping Pipeline · Auto-scanned via Vite Glob
+  </footer>
+
+  <!-- Vite ES Module Auto Scanner -->
+  <script type="module">
+    // 利用 Vite 自动检索同级所有 HTML 文件
+    const htmlModules = import.meta.glob('./*.html', {
+      query: '?raw',
+      import: 'default',
+      eager: true,
+    });
+
+    let prototypes = [];
+    let activeCategory = 'ALL';
+    let searchQuery = '';
+
+    function parsePrototypes() {
+      const list = [];
+      const parser = new DOMParser();
+
+      for (const [path, rawHtml] of Object.entries(htmlModules)) {
+        const filename = path.replace('./', '');
+        if (filename === 'index.html') continue;
+
+        const doc = parser.parseFromString(rawHtml, 'text/html');
+
+        const getMeta = (name, fallback = '') => {
+          const el = doc.querySelector(`meta[name="${name}"], meta[property="${name}"]`);
+          return el ? el.getAttribute('content') || fallback : fallback;
+        };
+
+        const title = getMeta('prototype:title') || doc.querySelector('title')?.innerText || filename;
+        const id = getMeta('prototype:id') || filename.replace('.html', '');
+        const category = getMeta('prototype:category') || '通用实验';
+        const targetPack = getMeta('prototype:target-pack') || '待定 Pack';
+        const status = getMeta('prototype:status') || 'draft';
+        const desc = getMeta('prototype:desc') || getMeta('description') || '暂无描述信息...';
+        const tags = (getMeta('prototype:tags') || '').split(',').map(s => s.trim()).filter(Boolean);
+        const author = getMeta('prototype:author') || 'AI / Contributor';
+
+        list.push({
+          filename,
+          url: `./${filename}`,
+          id,
+          title,
+          category,
+          targetPack,
+          status,
+          desc,
+          tags,
+          author,
+        });
+      }
+
+      prototypes = list;
+    }
+
+    function renderFilters() {
+      const container = document.getElementById('category-filters');
+      const categories = ['ALL', ...new Set(prototypes.map(p => p.category))];
+
+      container.innerHTML = categories.map(cat => {
+        const isActive = activeCategory === cat;
+        return `
+          <button
+            class="filter-btn px-3 py-1.5 text-xs font-bold rounded-xl transition cursor-pointer ${
+              isActive
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'bg-slate-900 text-slate-400 hover:text-white hover:bg-slate-800 border border-slate-800/80'
+            }"
+            data-category="${cat}"
+          >
+            ${cat === 'ALL' ? '全部' : cat}
+          </button>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.onclick = () => {
+          activeCategory = btn.getAttribute('data-category');
+          renderFilters();
+          renderGrid();
+        };
+      });
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById('prototype-grid');
+      const filtered = prototypes.filter(p => {
+        const matchesCategory = activeCategory === 'ALL' || p.category === activeCategory;
+        const matchesSearch = !searchQuery ||
+          p.title.toLowerCase().includes(searchQuery) ||
+          p.desc.toLowerCase().includes(searchQuery) ||
+          p.targetPack.toLowerCase().includes(searchQuery) ||
+          p.tags.some(t => t.toLowerCase().includes(searchQuery));
+        return matchesCategory && matchesSearch;
+      });
+
+      document.getElementById('item-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-16 text-center text-slate-500 bg-slate-900/40 rounded-3xl border border-dashed border-slate-800">
+            <p class="text-sm font-medium">没有匹配的原型文件</p>
+            <p class="text-xs text-slate-600 mt-1">请尝试更换搜索关键字或检查 playground/ 目录</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(p => {
+        const statusColors = {
+          ready: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+          evaluating: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+          draft: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+          deprecated: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+        };
+        const statusClass = statusColors[p.status] || statusColors.draft;
+
+        return `
+          <div class="group relative flex flex-col justify-between bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-indigo-500/60 rounded-3xl p-5 transition-all duration-200 shadow-lg hover:shadow-indigo-950/40">
+            <div class="space-y-3">
+              <!-- Top Row: Category & Status -->
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-mono font-bold text-slate-400 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/50">
+                  ${p.category}
+                </span>
+                <span class="text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded-md border ${statusClass}">
+                  ${p.status}
+                </span>
+              </div>
+
+              <!-- Title & Target Pack -->
+              <div>
+                <a href="${p.url}" class="text-base font-bold text-white group-hover:text-indigo-400 transition-colors inline-flex items-center gap-1.5">
+                  <span>${p.title}</span>
+                </a>
+                <div class="text-[11px] font-mono text-indigo-300/80 mt-0.5">
+                  目标: <code>src/packs/${p.targetPack}</code>
+                </div>
+              </div>
+
+              <!-- Description -->
+              <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                ${p.desc}
+              </p>
+
+              <!-- Tags -->
+              ${p.tags.length > 0 ? `
+                <div class="flex flex-wrap gap-1 pt-1">
+                  ${p.tags.map(tag => `
+                    <span class="text-[10px] font-mono text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
+                      #${tag}
+                    </span>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Bottom Actions -->
+            <div class="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-[10px] font-mono text-slate-500 truncate">
+                📄 ${p.filename}
+              </span>
+              <a
+                href="${p.url}"
+                class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-600/30 inline-flex items-center gap-1"
+              >
+                <span>进入体验</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 初始化运行
+    parsePrototypes();
+    renderFilters();
+    renderGrid();
+
+    // 绑定事件
+    document.getElementById('search-input').oninput = (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      renderGrid();
+    };
+
+    document.getElementById('btn-refresh').onclick = () => {
+      parsePrototypes();
+      renderFilters();
+      renderGrid();
+    };
+  </script>
+</body>
+</html>
