@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] feat(ui): 重构全局导航系统并独立探索大盘视图", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788007993.3500357, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "add prototype card Capture: A fractal_section_prototype.html, M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788096519.7130468, "duration_ms": 0}}
