@@ -95,7 +95,7 @@ export function PlanLibraryDrawer({
                     </Badge>
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-1 font-normal">
+                <div className="text-xs text-muted-foreground mt-1 font-normal">
                   {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
                 </div>
               </Button>

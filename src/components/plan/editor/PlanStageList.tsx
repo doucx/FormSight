@@ -42,8 +42,8 @@ export function PlanStageList({
 
         <div className="flex items-center gap-2">
           {currentPlan.items.length > 0 && (
-            <div className="flex items-center gap-1 text-[11px] bg-muted px-2 py-0.5 rounded-xl border border-border/60">
-              <span className="text-[10px] font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs bg-muted px-2 py-0.5 rounded-xl border border-border/60">
+              <span className="text-xs font-bold text-muted-foreground">
                 {t('plan.batchTrials')}
               </span>
               {trialPresets.map((num) => (
@@ -52,7 +52,7 @@ export function PlanStageList({
                   variant="ghost"
                   size="sm"
                   onClick={() => onBatchUpdateTrials(num)}
-                  className="h-6 px-1.5 py-0 text-[10px] font-bold rounded-lg text-muted-foreground hover:text-foreground"
+                  className="h-6 px-1.5 py-0 text-xs font-bold rounded-lg text-muted-foreground hover:text-foreground"
                 >
                   {num}
                   {t('common.trialsUnit')}
@@ -66,7 +66,7 @@ export function PlanStageList({
               variant="ghost"
               size="sm"
               onClick={onClearAll}
-              className="h-7 text-[11px] font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 gap-1"
+              className="h-7 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 gap-1"
             >
               <RotateCcw className="w-3 h-3" />
               <span>{t('plan.clearStages')}</span>
@@ -96,7 +96,7 @@ export function PlanStageList({
               >
                 {/* 模块信息区 */}
                 <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto sm:flex-1">
-                  <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                  <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-xs font-black flex items-center justify-center flex-shrink-0">
                     {idx + 1}
                   </div>
                   <div className="p-1.5 rounded-xl bg-accent text-primary flex-shrink-0">
@@ -104,7 +104,7 @@ export function PlanStageList({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                    <div className="text-[10px] text-muted-foreground truncate">{cardDesc}</div>
+                    <div className="text-xs text-muted-foreground truncate">{cardDesc}</div>
                   </div>
                 </div>
 
@@ -117,7 +117,7 @@ export function PlanStageList({
                         variant={item.targetTrials === preset ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`h-6 px-2 py-0 text-[10px] font-bold rounded-lg ${
+                        className={`h-6 px-2 py-0 text-xs font-bold rounded-lg ${
                           item.targetTrials === preset
                             ? 'shadow-xs'
                             : 'text-muted-foreground hover:text-foreground'

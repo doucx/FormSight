@@ -60,7 +60,7 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.themeTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.themeDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.themeDesc')}</div>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.languageTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.languageDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.languageDesc')}</div>
           </div>
         </div>
 
@@ -138,7 +138,7 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.soundTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.soundDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.soundDesc')}</div>
           </div>
         </div>
         <SettingToggleItem
@@ -156,7 +156,7 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.hintsTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.hintsDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.hintsDesc')}</div>
           </div>
         </div>
         <SettingToggleItem
@@ -174,7 +174,7 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.idleTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.idleDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.idleDesc')}</div>
           </div>
         </div>
         <div className="grid grid-cols-4 gap-1.5 pt-1">

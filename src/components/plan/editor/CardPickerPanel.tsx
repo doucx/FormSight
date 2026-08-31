@@ -35,7 +35,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
             {t('plan.selectCardPrompt')}
           </span>
         </div>
-        <span className="text-[11px] font-mono text-muted-foreground">
+        <span className="text-xs font-mono text-muted-foreground">
           {t('home.matchedModules', { count: availableCards.length })}
         </span>
       </div>
@@ -93,14 +93,14 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                         {cardTitle}
                       </span>
                       {isAdded && (
-                        <span className="font-mono text-[9px] font-black bg-emerald-200/80 dark:bg-emerald-800/80 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded-md flex-shrink-0 flex items-center gap-0.5">
+                        <span className="font-mono text-xs font-black bg-emerald-200/80 dark:bg-emerald-800/80 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded-md flex-shrink-0 flex items-center gap-0.5">
                           <Check className="w-2.5 h-2.5" />
                           {addedCount > 1 ? `x${addedCount}` : ''}
                         </span>
                       )}
                     </div>
                     <div
-                      className={`text-[10px] truncate ${
+                      className={`text-xs truncate ${
                         isAdded
                           ? 'text-emerald-700/80 dark:text-emerald-300/80'
                           : 'text-muted-foreground'

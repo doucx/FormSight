@@ -88,7 +88,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
             icon={AlertCircle}
             title={i18n.t('packs.color.analytics.hueBias.cardTitle')}
           >
-            <div className="space-y-2 text-[11px] text-foreground pt-1">
+            <div className="space-y-2 text-xs text-foreground pt-1">
               <div className="flex justify-between bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs font-mono">
                 <span className="text-muted-foreground">
                   {i18n.t('packs.color.analytics.hueBias.avgSignedBias')}
@@ -135,7 +135,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-[10px]">
+                <p className="text-muted-foreground text-xs">
                   {i18n.t('packs.color.analytics.hueBias.needMoreTrials')}
                 </p>
               )}
@@ -225,7 +225,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           >
             {weakestSector ? (
               <div className="space-y-2 pt-1">
-                <p className="text-foreground text-[11px]">
+                <p className="text-foreground text-xs">
                   {i18n.t('packs.color.analytics.hueRing.weakestHint', {
                     sector: weakestSector.label,
                   })}
@@ -250,7 +250,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 </div>
               </div>
             ) : (
-              <p className="text-muted-foreground text-[11px]">
+              <p className="text-muted-foreground text-xs">
                 {i18n.t('packs.color.analytics.hueRing.needMoreTrials')}
               </p>
             )}

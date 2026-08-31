@@ -21,7 +21,7 @@ export const tagPillVariants = cva(
         false: 'bg-muted/80 hover:bg-accent text-muted-foreground border-border',
       },
       size: {
-        sm: 'px-2 py-0.5 text-[11px]',
+        sm: 'px-2 py-0.5 text-xs',
         md: 'px-2.5 py-1 text-xs',
       },
     },
@@ -40,7 +40,7 @@ export const tagPillVariants = cva(
   },
 );
 
-export const tagPillBadgeVariants = cva('text-[10px] font-mono px-1 rounded', {
+export const tagPillBadgeVariants = cva('text-xs font-mono px-1 rounded', {
   variants: {
     themeColor: {
       indigo: '',

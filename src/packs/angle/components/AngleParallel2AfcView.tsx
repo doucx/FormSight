@@ -43,7 +43,7 @@ export function AngleParallel2AfcView({
       onAnswer={onAnswer}
       prompt={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {t('packs.angle.views.parallelPromptTitle')}
           </span>
           <CanvasView

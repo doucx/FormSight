@@ -105,7 +105,7 @@ export function HomeView({
                   className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between gap-2.5 shadow-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-xs font-black flex items-center justify-center flex-shrink-0">
                       {idx + 1}
                     </div>
                     <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs flex-shrink-0">
@@ -113,13 +113,13 @@ export function HomeView({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">
+                      <div className="text-xs text-muted-foreground font-mono">
                         Lvl {currentLvl}
                       </div>
                     </div>
                   </div>
 
-                  <span className="text-[11px] font-mono font-bold text-primary bg-card border border-border px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
+                  <span className="text-xs font-mono font-bold text-primary bg-card border border-border px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
                     {item.targetTrials} {t('common.trialsUnit')}
                   </span>
                 </div>
@@ -156,7 +156,7 @@ export function HomeView({
               {t('common.trialsUnit')}
             </span>
           </div>
-          <div className="text-[11px] text-muted-foreground pt-0.5">
+          <div className="text-xs text-muted-foreground pt-0.5">
             {t('common.accuracy')}:{' '}
             <span className="font-bold text-foreground font-mono">{overallAccuracy}%</span>
           </div>
@@ -183,7 +183,7 @@ export function HomeView({
           </div>
           <div className="mt-2">
             <div className="text-sm font-black text-foreground">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {t('home.matchedModules', { count: registry.getAllCards().length })}
             </p>
           </div>
@@ -210,7 +210,7 @@ export function HomeView({
           </div>
           <div className="mt-2">
             <div className="text-sm font-black text-foreground">{trainingPlan.name}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {t('plan.stageAndTrialsSummary', {
                 stages: validPlanItems.length,
                 trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),

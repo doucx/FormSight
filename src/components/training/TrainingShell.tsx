@@ -92,7 +92,7 @@ export function TrainingShell({
             <div className="text-xs font-black text-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{cardTitle}</span>
               {sessionType === 'benchmark' && (
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
+                <span className="text-xs font-extrabold px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
                   {t('shell.benchmark')}
                 </span>
               )}
@@ -117,7 +117,7 @@ export function TrainingShell({
                   <HelpCircle className="w-3.5 h-3.5" />
                   {t('shell.instructionTitle')}
                 </div>
-                <p className="text-muted-foreground text-[11px]">{instruction || desc}</p>
+                <p className="text-muted-foreground text-xs">{instruction || desc}</p>
               </div>
             )}
           </div>
@@ -126,7 +126,7 @@ export function TrainingShell({
         {/* 右侧：紧凑型指标胶囊 */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 text-xs">
           <div className="flex items-center gap-1.5 bg-muted border border-border/60 px-2.5 py-1 rounded-xl">
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline">
+            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider hidden sm:inline">
               {t('shell.trialsCount')}
             </span>
             <span className="font-mono font-black text-foreground">
@@ -136,7 +136,7 @@ export function TrainingShell({
           </div>
 
           <div className="flex items-center gap-1 bg-accent border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
-            <span className="text-[10px] font-extrabold text-primary dark:text-primary uppercase tracking-wider hidden sm:inline">
+            <span className="text-xs font-extrabold text-primary dark:text-primary uppercase tracking-wider hidden sm:inline">
               Lvl
             </span>
             <span className="font-mono font-black text-primary">{currentLevel}</span>
@@ -145,7 +145,7 @@ export function TrainingShell({
           {showTimer && (
             <div className="flex items-center gap-1 bg-muted px-2.5 py-1 rounded-xl border border-border/60 text-muted-foreground">
               <Clock className="w-3 h-3 text-muted-foreground" />
-              <span className="font-mono font-bold text-[11px]">
+              <span className="font-mono font-bold text-xs">
                 {formatSecondsToTimer(elapsedSeconds)}
               </span>
             </div>

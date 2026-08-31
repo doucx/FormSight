@@ -86,7 +86,7 @@ export function ModeCard({
                   </Badge>
                 )}
               </div>
-              <div className="text-[11px] text-muted-foreground font-medium truncate mt-0.5">
+              <div className="text-xs text-muted-foreground font-medium truncate mt-0.5">
                 {todayCount > 0
                   ? `${t('card.todayTrials')}: ${todayCount} ${t('common.trialsUnit')}${
                       todayTimeMs > 0 ? ` (${formatTodayTimeWithT(todayTimeMs, t)})` : ''
@@ -147,7 +147,7 @@ export function ModeCard({
       >
         {/* 左侧：正确率综合指示 */}
         <div className="space-y-0.5">
-          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {t('card.accuracy')}
           </div>
           <div className="text-sm font-black text-foreground font-mono flex items-baseline gap-1.5">
@@ -163,7 +163,7 @@ export function ModeCard({
               {isNeverPracticed ? '--' : `${accuracy}%`}
             </span>
             {todayCount > 0 && (
-              <span className="text-[11px] font-normal text-muted-foreground font-sans">
+              <span className="text-xs font-normal text-muted-foreground font-sans">
                 ({todayCount} {t('common.trialsUnit')})
               </span>
             )}

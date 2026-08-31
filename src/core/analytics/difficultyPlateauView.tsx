@@ -191,7 +191,7 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
                 <span className="font-mono text-xs font-black text-foreground min-w-[45px]">
                   Lvl {stat.level}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {stat.total} {i18n.t('common.trialsUnit')} ({ratio}%)
                 </span>
               </div>

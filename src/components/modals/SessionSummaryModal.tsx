@@ -77,7 +77,7 @@ export function SessionSummaryModal({
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
           <MetricCard variant="subtle" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <Target className="w-3.5 h-3.5 text-primary" />
               {t('summary.accuracyCount')}
             </div>
@@ -90,7 +90,7 @@ export function SessionSummaryModal({
           </MetricCard>
 
           <MetricCard variant="subtle" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <Clock className="w-3.5 h-3.5 text-primary" />
               {t('summary.duration')}
             </div>
@@ -113,7 +113,7 @@ export function SessionSummaryModal({
             </div>
             <div>
               <div className="text-xs font-bold text-foreground">{t('summary.levelEvolution')}</div>
-              <div className="text-[11px] text-primary font-medium">
+              <div className="text-xs text-primary font-medium">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -137,10 +137,10 @@ export function SessionSummaryModal({
         {/* 折线图 Canvas 区 */}
         <div className="bg-muted/60 p-3.5 rounded-2xl border border-border w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-muted-foreground">
+            <span className="text-xs font-bold text-muted-foreground">
               {t('summary.curveTitle')}
             </span>
-            <div className="flex items-center gap-3 text-[10px]">
+            <div className="flex items-center gap-3 text-xs">
               <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                 <Badge
                   variant="success"
