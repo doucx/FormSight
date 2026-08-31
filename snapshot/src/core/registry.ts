@@ -1,5 +1,5 @@
 import type { AnyTrainingPlugin } from '../core/contracts';
-import { getTrialRecordsByCard } from '../storage/index';
+import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
   CardDefinition,
   CardQueryOptions,

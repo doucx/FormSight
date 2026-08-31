@@ -73,10 +73,14 @@ export const DEFAULT_BASE_SETTINGS: BaseModuleSettings = {
 
 /**
  * 纯粹基于 SystemDomainRegistry 中的卡片与 Pack 声明式定义聚合初始默认配置
- * 零特例、零硬编码分支
+ * 零特例、零硬编码分支（防御性支持模块初载阶段）
  */
-function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
+export function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
   const cards: Record<string, BaseModuleSettings> = {};
+  if (!registry || typeof registry.getAllCards !== 'function') {
+    return cards;
+  }
+
   const allCards = registry.getAllCards();
 
   for (const card of allCards) {
@@ -113,18 +117,18 @@ export const DEFAULT_SETTINGS: UserSettings = {
     sliderHitMargin: 12,
     showCanvasHints: true,
   },
-  cards: buildDefaultCardSettings(),
+  cards: {},
 };
 
 export function loadSettings(): UserSettings {
   try {
+    const defaultCards = buildDefaultCardSettings();
     const raw = localStorage.getItem(SETTINGS_KEY);
-    if (!raw) return DEFAULT_SETTINGS;
+    if (!raw) return { ...DEFAULT_SETTINGS, cards: defaultCards };
 
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return DEFAULT_SETTINGS;
+    if (!parsed || typeof parsed !== 'object') return { ...DEFAULT_SETTINGS, cards: defaultCards };
 
-    const defaultCards = buildDefaultCardSettings();
     const cards: Record<string, BaseModuleSettings> = { ...defaultCards };
 
     if (parsed.cards && typeof parsed.cards === 'object') {
