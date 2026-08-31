@@ -1,15 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { checkColorHit, generateColorQuestion, hsvToHex } from '../../core/color/colorUtils';
 import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
+import { PALETTE } from '../theme';
 
 describe('colorUtils & oklchUtils', () => {
   it('hsvToHex - should correctly convert HSV to HEX string including 360 boundary', () => {
-    expect(hsvToHex(0, 100, 100)).toBe('#FF0000'); // Red
-    expect(hsvToHex(360, 100, 100)).toBe('#FF0000'); // Red 360 boundary
-    expect(hsvToHex(120, 100, 100)).toBe('#00FF00'); // Green
-    expect(hsvToHex(240, 100, 100)).toBe('#0000FF'); // Blue
-    expect(hsvToHex(0, 0, 100)).toBe('#FFFFFF'); // White
-    expect(hsvToHex(0, 0, 0)).toBe('#000000'); // Black
+    expect(hsvToHex(0, 100, 100)).toBe(PALETTE.spectrum.red);
+    expect(hsvToHex(360, 100, 100)).toBe(PALETTE.spectrum.red);
+    expect(hsvToHex(120, 100, 100)).toBe(PALETTE.spectrum.green);
+    expect(hsvToHex(240, 100, 100)).toBe(PALETTE.spectrum.blue);
+    expect(hsvToHex(0, 0, 100)).toBe(PALETTE.white);
+    expect(hsvToHex(0, 0, 0)).toBe(PALETTE.black);
   });
 
   it('oklchUtils - should accurately convert HSV to OKLab and calculate perceptually uniform delta E', () => {

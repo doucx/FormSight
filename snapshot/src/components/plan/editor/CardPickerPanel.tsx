@@ -4,6 +4,7 @@ import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { CardQueryOptions } from '../../../types/card';
 import { FilterEngine } from '../../discovery/FilterEngine';
+import { Button } from '../../ui/button';
 
 interface CardPickerPanelProps {
   addedCardIds?: string[];
@@ -70,11 +71,11 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
               : 'bg-card text-primary shadow-xs group-hover:scale-105';
 
             return (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 key={card.id}
                 onClick={() => onAddItem(card.id)}
-                className={`p-2.5 rounded-2xl text-left transition-all flex items-center justify-between gap-2 group active:scale-[0.98] border cursor-pointer ${cardBgStyle}`}
+                className={`p-2.5 h-auto rounded-2xl text-left transition-all flex items-center justify-between gap-2 group border ${cardBgStyle}`}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div
@@ -87,7 +88,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                       <span
                         className={`text-xs font-bold truncate ${
                           isAdded
-                            ? 'text-emerald-800 dark:text-emerald-200 dark:text-emerald-200'
+                            ? 'text-emerald-800 dark:text-emerald-200'
                             : 'text-foreground'
                         }`}
                       >
@@ -121,7 +122,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

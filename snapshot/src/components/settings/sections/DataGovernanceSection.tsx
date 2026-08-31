@@ -11,6 +11,7 @@ import { resetPlansToDefault } from '../../../utils/planStorage';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
 import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 
 interface DataGovernanceSectionProps {
   onDataChanged: () => void;
@@ -122,7 +123,7 @@ export function DataGovernanceSection({
           <Upload className="w-4 h-4 text-primary" />
           {t('settings.importBackup')}
         </Button>
-        <input
+        <Input
           ref={fileInputRef}
           type="file"
           accept=".json"

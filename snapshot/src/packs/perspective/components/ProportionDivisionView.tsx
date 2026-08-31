@@ -1,6 +1,7 @@
 import { Disc } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { Badge } from '../../../components/ui/badge';
 import { useTranslation } from '../../../core/i18n';
 import type { Point } from '../../../types';
 import {
@@ -206,12 +207,12 @@ export function ProportionDivisionView({
         />
         <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
+            <Badge variant="accent" size="sm" className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600" />
             <span>{t('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+            <Badge variant="secondary" size="sm" className="w-2 h-2 p-0 rounded-full border-none bg-slate-400" />
             <span>{t('common.endPercent')}</span>
           </span>
         </div>

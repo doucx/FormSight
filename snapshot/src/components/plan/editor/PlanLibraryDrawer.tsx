@@ -82,10 +82,10 @@ export function PlanLibraryDrawer({
                   : 'bg-card/80 border-border hover:bg-card hover:border-primary/60 shadow-xs'
               }`}
             >
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => onSelectPlan(p)}
-                className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
+                className="min-w-0 flex-1 text-left justify-start flex-col items-start p-0 h-auto"
               >
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-black text-foreground truncate">{p.name}</span>
@@ -95,10 +95,10 @@ export function PlanLibraryDrawer({
                     </Badge>
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground mt-1">
+                <div className="text-[10px] text-muted-foreground mt-1 font-normal">
                   {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
                 </div>
-              </button>
+              </Button>
 
               <div className="flex items-center gap-1 flex-shrink-0">
                 <Button

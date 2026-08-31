@@ -141,11 +141,11 @@ export function SessionSummaryModal({
             </span>
             <div className="flex items-center gap-3 text-[10px]">
               <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
+                <Badge variant="success" size="sm" className="w-2 h-2 p-0 rounded-full border-none" />{' '}
                 {t('summary.hitLegend')}
               </span>
               <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />{' '}
+                <Badge variant="destructive" size="sm" className="w-2 h-2 p-0 rounded-full border-none" />{' '}
                 {t('summary.missLegend')}
               </span>
             </div>

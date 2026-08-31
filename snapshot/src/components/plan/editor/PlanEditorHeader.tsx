@@ -269,7 +269,7 @@ export function PlanEditorHeader({
           )}
         </div>
 
-        <input
+        <Input
           ref={fileInputRef}
           type="file"
           accept=".json"

@@ -2,6 +2,7 @@ import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
+import { Badge } from '../ui/badge';
 import { ChoiceCard, getChoiceCardState } from '../ui/choice-card';
 
 export interface ChoiceNafcOption<T = unknown> {
@@ -80,9 +81,9 @@ export function ChoiceNafcContainer<T = unknown>({
           >
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
-                <span className="w-5 h-5 rounded-lg bg-muted text-foreground flex items-center justify-center font-mono text-[11px]">
+                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-[11px]">
                   {keyLabel}
-                </span>
+                </Badge>
                 {opt.title || t('common.optionN', { num: keyLabel })}
               </span>
               {showAnswer && isTarget && (

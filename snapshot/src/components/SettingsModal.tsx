@@ -11,6 +11,7 @@ import {
 import { ModalShell } from './common/ModalShell';
 import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
 import { Button } from './ui/button';
+import { Input } from './ui/input';
 import { Switch } from './ui/switch';
 
 interface SettingsModalProps {
@@ -78,7 +79,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                 {cardConfig.autoNextDelay} ms
               </span>
             </div>
-            <input
+            <Input
               type="range"
               min="100"
               max="2000"
@@ -88,7 +89,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                 const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
                 updateCardConfig({ autoNextDelay: val });
               }}
-              className="w-full accent-indigo-600 cursor-pointer"
+              className="w-full accent-indigo-600 cursor-pointer p-0 h-auto bg-transparent border-none shadow-none"
             />
           </div>
         )}

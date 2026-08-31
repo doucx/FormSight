@@ -2,6 +2,7 @@ import { BarChart2, Compass, Github, Layers, Settings, Sparkles, Target } from '
 import { useTranslation } from '../../core/i18n';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 interface AppNavigationProps {
   currentRoute: RouteLocation;
@@ -59,10 +60,10 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
       <aside className="hidden md:flex flex-col justify-between w-56 lg:w-64 border-r border-border bg-card h-screen sticky top-0 p-4 lg:p-5 flex-shrink-0 z-30 shadow-xs transition-colors">
         <div className="space-y-6">
           {/* 品牌标识 */}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={() => onNavigate({ type: 'home' })}
-            className="flex items-center gap-3 text-left cursor-pointer focus:outline-none group px-2 py-1 w-full"
+            className="h-auto flex items-center justify-start gap-3 text-left group px-2 py-1 w-full rounded-2xl"
           >
             <div className="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none group-hover:scale-105 transition-transform flex-shrink-0">
               <Sparkles className="w-5 h-5" />
@@ -78,7 +79,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                 {t('common.appSubtitle').slice(0, 14)}...
               </div>
             </div>
-          </button>
+          </Button>
 
           {/* 导航菜单列表 */}
           <nav className="space-y-1.5">
@@ -87,11 +88,11 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               const active = isTabActive(item.id);
 
               return (
-                <button
+                <Button
                   key={item.id}
-                  type="button"
+                  variant={active ? 'accent' : 'ghost'}
                   onClick={() => onNavigate(item.target)}
-                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer select-none text-left ${
+                  className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center justify-start gap-3 text-left ${
                     active
                       ? 'bg-accent text-primary shadow-xs'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
@@ -103,8 +104,10 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                     }`}
                   />
                   <span className="truncate flex-1">{item.label}</span>
-                  {active && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
-                </button>
+                  {active && (
+                    <Badge variant="default" size="sm" className="w-1.5 h-1.5 p-0 rounded-full flex-shrink-0" />
+                  )}
+                </Button>
               );
             })}
           </nav>
@@ -112,14 +115,14 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
 
         {/* 侧边栏底部：设置与社区外链 */}
         <div className="pt-4 border-t border-border/60 space-y-2">
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             onClick={onOpenSettings}
-            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-accent/60 transition-all flex items-center gap-2.5 cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-accent/60 transition-all flex items-center justify-start gap-2.5 h-auto"
           >
             <Settings className="w-4 h-4 text-muted-foreground" />
             <span className="truncate">{t('common.globalSettings')}</span>
-          </button>
+          </Button>
 
           {/* GitHub & 爱发电外链按钮组 */}
           <div className="grid grid-cols-2 gap-1.5 pt-1">
@@ -155,11 +158,11 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
           const active = isTabActive(item.id);
 
           return (
-            <button
+            <Button
               key={item.id}
-              type="button"
+              variant="ghost"
               onClick={() => onNavigate(item.target)}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
+              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all h-auto ${
                 active
                   ? 'text-primary font-extrabold'
                   : 'text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground'
@@ -167,18 +170,18 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
             >
               <Icon className="w-4 h-4" />
               <span>{item.label}</span>
-            </button>
+            </Button>
           );
         })}
 
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onOpenSettings}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-all cursor-pointer"
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-all h-auto"
         >
           <Settings className="w-4 h-4" />
           <span>{t('common.settings')}</span>
-        </button>
+        </Button>
       </div>
     </>
   );
