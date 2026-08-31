@@ -1,37 +1,3 @@
-我已为你制定了排版字阶自动化重构方案，将编写一个专用的 Node.js 迁移脚本 `scripts/refactor-typography.mjs`，递归扫描并安全替换 `src/` 目录下所有的极端微小字号类名（`text-[9px]`, `text-[10px]`, `text-[11px]` 及相关响应式组合），统一对齐至标准字阶（`text-xs` / `text-sm`）。
-
-## [WIP] refactor: 创建并执行排版字阶自动化重构脚本
-
-### 用户需求
-需要一个自动化脚本快速、精准地重构代码库中所有散落的微小字号（`text-[9px]`、`text-[10px]`、`text-[11px]` 等），将其批量升级至统一的 Tailwind 标准字阶（`text-xs` 及响应式 `sm:text-sm`），消除过载的信息密度与视疲劳隐患。
-
-### 评论
-通过 Node.js 脚本利用 AST/正则匹配进行批量迁移，相比手动逐文件修改更加高效且不易遗漏。脚本将集中处理组件模板（`.tsx`）与样式配置（`.ts` / `.css`），并在执行后输出详细的替换文件清单与统计信息。
-
-### 目标
-1. 编写 Node.js 自动化排版重构脚本 `scripts/refactor-typography.mjs`。
-2. 规则化匹配 `text-[9px]`, `text-[10px]`, `text-[11px]` 以及复合响应式类名（如 `text-[10px] sm:text-[11px]`）。
-3. 执行脚本，全局无损升级 `src/` 下所有相关文件。
-
-### 基本原理
-定义明确的字阶映射字典与正则替换规则，递归遍历 `src/` 目录下的所有 `.tsx`, `.ts`, `.css` 文件。在执行文本替换的同时，输出变更行数与匹配项目，保证重构过程透明可追溯。
-
-### 标签
-#intent/refine #flow/ready #priority/high #comp/ui #scope/ux #ai/delegate #task/domain/ui #task/object/typography-refactor #task/action/refactor #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建排版字阶自动化重构脚本
-
-我们将创建 `scripts/refactor-typography.mjs` 脚本，用于递归处理 `src/` 目录下的所有微小字号类名。
-
-~~~~~act
-write_file
-scripts/refactor-typography.mjs
-~~~~~
-~~~~~javascript
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -131,19 +97,3 @@ function runRefactor() {
 }
 
 runRefactor();
-~~~~~
-
-#### Acts 2: 执行重构脚本
-
-运行脚本完成全局代码库字阶升级。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-node scripts/refactor-typography.mjs
-~~~~~
-
-### 下一步建议
-1. **运行项目验证**: 启动本地开发服务（`npm run dev`）或运行测试（`npm run test`），直观验证各页面排版在浅色/深色主题下的视觉舒适度。
-2. **微调关键视图布局**: 检查 `ModeCard`、`ActivityHeatmapCard` 及 `TrainingShell`，如有个别容器由于字号放大而换行，可微调其 `padding` 或 `gap`。
