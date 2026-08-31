@@ -1,11 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { getDynamicCrosshairMetrics, getDynamicDotRadius, getGridMinSpacing } from '../../core/canvas/drawPointGrid';
+import {
+  getDynamicCrosshairMetrics,
+  getDynamicDotRadius,
+  getGridMinSpacing,
+} from '../../core/canvas/drawPointGrid';
 import { evaluatePointGridHit, findNearestGridPoint } from '../../core/geometry/pointGrid';
-import { generateBipolarGridPoints, generatePolarGridPoints } from '../../modules/star/_shared/gridGenerators';
-import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
 import { generateHorizontalDoubleQuestion } from '../../modules/star/HorizontalDoubleCard/generator';
 import { generateRotatedDoubleQuestion } from '../../modules/star/RotatedDoubleCard/generator';
 import { generateSingleAnchorQuestion } from '../../modules/star/SingleAnchorCard/generator';
+import {
+  generateBipolarGridPoints,
+  generatePolarGridPoints,
+} from '../../modules/star/_shared/gridGenerators';
+import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
 import type { StarSettings } from '../../storage/settings';
 
 const mockSettings: StarSettings = {
