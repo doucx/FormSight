@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import type { Point } from '../../../types';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import {
   FITTING_CANVAS_SIZE,
   type NegativeSpaceHitResult,
@@ -32,8 +33,8 @@ export function VertexFittingView({
       canvas: leftFittingRef.current,
       vertices: question.vertices,
       size: FITTING_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
+      fillColor: CANVAS_THEME.shape.fill,
+      strokeColor: CANVAS_THEME.shape.stroke,
     });
   }, [question.vertices]);
 
@@ -47,9 +48,9 @@ export function VertexFittingView({
           ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
         }
         ctx.closePath();
-        ctx.fillStyle = '#0F172A';
+        ctx.fillStyle = CANVAS_THEME.shape.fill;
         ctx.fill();
-        ctx.strokeStyle = '#1E293B';
+        ctx.strokeStyle = CANVAS_THEME.shape.stroke;
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -61,7 +62,7 @@ export function VertexFittingView({
           ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
         }
         ctx.closePath();
-        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.strokeStyle = hexToRgba(CANVAS_THEME.status.hit, 0.7);
         ctx.lineWidth = 2.5;
         ctx.setLineDash([4, 4]);
         ctx.stroke();
@@ -73,16 +74,16 @@ export function VertexFittingView({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm flex items-center justify-center">
         <canvas
           ref={leftFittingRef}
           width={FITTING_CANVAS_SIZE}
           height={FITTING_CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-inner block"
         />
       </div>
 
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm flex items-center justify-center">
         <PointClickCanvas
           canvasSize={FITTING_CANVAS_SIZE}
           gridPoints={question.distractorPoints || []}

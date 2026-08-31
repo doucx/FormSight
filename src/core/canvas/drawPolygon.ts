@@ -17,16 +17,18 @@ export interface DrawPolygonOptions {
  */
 import { setupHiDpiCanvas } from './hidpi';
 
+import { CANVAS_THEME } from '../../utils/theme';
+
 export function drawPolygonCanvas({
   canvas,
   vertices,
   size,
-  fillColor = '#0F172A',
-  strokeColor = '#1E293B',
+  fillColor = CANVAS_THEME.shape.fill,
+  strokeColor = CANVAS_THEME.shape.stroke,
   lineWidth = 2,
-  bgColor = '#FFFFFF',
+  bgColor = CANVAS_THEME.bg.primary,
   isHighlighted = false,
-  highlightColor = '#22C55E',
+  highlightColor = CANVAS_THEME.shape.highlight,
 }: DrawPolygonOptions): void {
   if (!canvas || !vertices || vertices.length < 3) return;
   const ctx = setupHiDpiCanvas(canvas, size, size);

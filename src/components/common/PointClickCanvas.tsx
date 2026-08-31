@@ -4,6 +4,7 @@ import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { useTranslation } from '../../core/i18n';
 import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
+import { CANVAS_THEME } from '../../utils/theme';
 
 export interface PointClickCanvasProps {
   canvasSize: number;
@@ -114,7 +115,7 @@ export function PointClickCanvas({
       if (!loupeCtx) return;
 
       loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
-      loupeCtx.fillStyle = '#FFFFFF';
+      loupeCtx.fillStyle = CANVAS_THEME.bg.primary;
       loupeCtx.fillRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
       // 主画布采样的视口区域（直接以触控点为中心，不进行强制边界或网格吸附）
@@ -129,7 +130,7 @@ export function PointClickCanvas({
 
       // 绘制中心十字准星
       const center = LOUPE_SIZE / 2;
-      loupeCtx.strokeStyle = '#4F46E5';
+      loupeCtx.strokeStyle = CANVAS_THEME.status.accent;
       loupeCtx.lineWidth = 1.5;
 
       // 环形中心靶心
@@ -302,19 +303,19 @@ export function PointClickCanvas({
         tabIndex={0}
         role="button"
         aria-label={t('shell.pointGridAria')}
-        className={`w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner touch-none transition-all block ${
+        className={`w-full h-full aspect-square rounded-xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner touch-none transition-all block ${
           disabled || showAnswer
             ? 'cursor-default'
             : hoverPoint
-              ? 'cursor-none hover:border-indigo-300 hover:shadow-indigo-50/50'
-              : 'cursor-crosshair hover:border-indigo-300 hover:shadow-indigo-50/50'
+              ? 'cursor-none hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-indigo-50/50'
+              : 'cursor-crosshair hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-indigo-50/50'
         }`}
       />
 
       {/* 触控浮动放大镜 (Loupe) */}
       {isTouching && loupePos && (
         <div
-          className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 shadow-2xl bg-white ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
+          className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-white dark:bg-slate-900 ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
           style={{
             left: `${loupePos.x}px`,
             top: `${loupePos.y}px`,

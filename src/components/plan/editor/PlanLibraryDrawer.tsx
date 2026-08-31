@@ -37,9 +37,9 @@ export function PlanLibraryDrawer({
   };
 
   return (
-    <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-3 animate-in fade-in">
+    <div className="p-4 bg-slate-50 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 rounded-2xl space-y-3 animate-in fade-in">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-extrabold text-slate-700 tracking-tight">
+        <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200 tracking-tight">
           {t('plan.switchEditingPlan')}
         </span>
         <div className="flex items-center gap-3">
@@ -74,8 +74,8 @@ export function PlanLibraryDrawer({
               key={p.id}
               className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-2 ${
                 isActive
-                  ? 'bg-white border-indigo-500 shadow-sm ring-2 ring-indigo-500/20'
-                  : 'bg-white/80 border-slate-200 hover:bg-white hover:border-slate-300 shadow-xs'
+                  ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-sm ring-2 ring-indigo-500/20'
+                  : 'bg-white/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 shadow-xs'
               }`}
             >
               <button
@@ -84,14 +84,16 @@ export function PlanLibraryDrawer({
                 className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
               >
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-slate-800 truncate">{p.name}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">
+                    {p.name}
+                  </span>
                   {p.isBuiltin && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-900">
                       {t('plan.officialTag')}
                     </span>
                   )}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                   {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
                 </div>
               </button>
@@ -102,8 +104,8 @@ export function PlanLibraryDrawer({
                   onClick={(e) => onToggleFavorite(p.id, e)}
                   className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
                     isFav
-                      ? 'text-amber-500 hover:bg-amber-50'
-                      : 'text-slate-300 hover:text-slate-500'
+                      ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50'
+                      : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                   }`}
                   title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
                 >
@@ -116,7 +118,7 @@ export function PlanLibraryDrawer({
                   className={`p-1.5 rounded-xl transition-all cursor-pointer ${
                     isPendingDelete
                       ? 'bg-rose-600 text-white shadow-sm animate-pulse'
-                      : 'text-slate-300 hover:text-rose-600 hover:bg-rose-50'
+                      : 'text-slate-300 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50'
                   }`}
                   title={isPendingDelete ? t('common.confirm') : t('common.deletePlan')}
                 >

@@ -10,6 +10,7 @@ describe('settings utils with card-scoped isolation', () => {
     const settings = loadSettings();
     expect(settings).toEqual(DEFAULT_SETTINGS);
     expect(settings.global.soundEnabled).toBe(true);
+    expect(settings.global.theme).toBe('system');
     expect(settings.cards.star_single.autoNext).toBe(true);
     expect(settings.cards.color_hue.autoNext).toBe(true);
     expect(settings.cards.rel_vector_shift.autoNext).toBe(true);
@@ -49,6 +50,7 @@ describe('settings utils with card-scoped isolation', () => {
     const partialSettings = {
       global: {
         idleTimeout: 120,
+        theme: 'dark',
       },
       cards: {
         star_single: {
@@ -61,6 +63,7 @@ describe('settings utils with card-scoped isolation', () => {
 
     const loaded = loadSettings();
     expect(loaded.global.idleTimeout).toBe(120);
+    expect(loaded.global.theme).toBe('dark');
     expect(loaded.global.soundEnabled).toBe(DEFAULT_SETTINGS.global.soundEnabled);
     expect(loaded.cards.star_single.gridSize).toBe(5);
     expect(loaded.cards.star_single.autoNext).toBe(DEFAULT_SETTINGS.cards.star_single.autoNext);

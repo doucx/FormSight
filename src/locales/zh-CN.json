@@ -320,6 +320,12 @@
   "settings": {
     "title": "全局偏好设置",
     "preferences": "系统偏好",
+    "themeTitle": "外观主题模式",
+    "themeDesc": "切换浅色明亮、深色夜间或跟随系统外观",
+    "themeLight": "浅色",
+    "themeDark": "深色",
+    "themeSystem": "跟随系统",
+    "switchedThemeToast": "外观已切换为{{theme}}",
     "languageTitle": "系统界面语言",
     "languageDesc": "切换应用全局显示语言 (Language)",
     "soundTitle": "训练音效反馈",

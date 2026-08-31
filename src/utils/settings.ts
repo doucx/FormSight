@@ -3,6 +3,8 @@ import { registry } from '../core/registry';
 export type StepGranularity = 'standard' | 'fine';
 export type AdaptiveMode = 'block' | 'staircase';
 export type TargetingMode = 'off' | 'manual';
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type ResolvedTheme = 'light' | 'dark';
 
 export interface BaseModuleSettings {
   autoNext: boolean;
@@ -46,6 +48,7 @@ export interface AbstractionSettings extends BaseModuleSettings {
 
 export interface GlobalSettings {
   locale: string;
+  theme?: ThemeMode;
   idleTimeout: number;
   soundEnabled: boolean;
   sliderHitMargin: number;
@@ -104,6 +107,7 @@ function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
 export const DEFAULT_SETTINGS: UserSettings = {
   global: {
     locale: 'zh-CN',
+    theme: 'system',
     idleTimeout: 60,
     soundEnabled: true,
     sliderHitMargin: 12,

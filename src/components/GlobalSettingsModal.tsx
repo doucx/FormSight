@@ -1,5 +1,5 @@
 import { Sliders } from 'lucide-preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../core/i18n';
 import {
   type GlobalSettings,
@@ -13,18 +13,28 @@ import { DataGovernanceSection } from './settings/sections/DataGovernanceSection
 import { GeneralPreferencesSection } from './settings/sections/GeneralPreferencesSection';
 
 interface GlobalSettingsModalProps {
+  settings?: UserSettings;
   onClose: () => void;
+  onSave?: (newSettings: UserSettings) => void;
   onDataChanged: () => void;
   showToast: (msg: string, type?: ToastType) => void;
 }
 
 export function GlobalSettingsModal({
+  settings: externalSettings,
   onClose,
+  onSave,
   onDataChanged,
   showToast,
 }: GlobalSettingsModalProps) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [settings, setSettings] = useState<UserSettings>(() => externalSettings || loadSettings());
+
+  useEffect(() => {
+    if (externalSettings) {
+      setSettings(externalSettings);
+    }
+  }, [externalSettings]);
 
   const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
     const updated: UserSettings = {
@@ -36,6 +46,7 @@ export function GlobalSettingsModal({
     };
     saveSettings(updated);
     setSettings(updated);
+    onSave?.(updated);
     onDataChanged();
   };
 
@@ -57,7 +68,7 @@ export function GlobalSettingsModal({
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98] cursor-pointer"
+          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98] cursor-pointer"
         >
           {t('common.complete')}
         </button>

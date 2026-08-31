@@ -1,6 +1,7 @@
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
+import { CANVAS_THEME } from '../../../utils/theme';
 
 export type AngleMode = 'ANGLE_ESTIMATION' | 'ANGLE_COMPARISON_2AFC' | 'PARALLEL_ALIGNMENT_2AFC';
 
@@ -51,7 +52,7 @@ export function drawAngleCanvas(
   canvas: HTMLCanvasElement | null,
   lines: [LineSegment, LineSegment] | undefined,
   size = ANGLE_CANVAS_SIZE,
-  strokeColor = '#0F172A',
+  strokeColor: string = CANVAS_THEME.shape.fill,
   lineWidth = 2.5,
 ): void {
   if (!lines) return;
@@ -75,7 +76,7 @@ export function drawSingleLineCanvas(
   canvas: HTMLCanvasElement | null,
   line: LineSegment | undefined,
   size = ANGLE_2AFC_SIZE,
-  strokeColor = '#0F172A',
+  strokeColor: string = CANVAS_THEME.shape.fill,
   lineWidth = 2.5,
 ): void {
   if (!line) return;

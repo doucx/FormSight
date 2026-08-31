@@ -3,6 +3,7 @@ import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME } from '../../../utils/theme';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
   type NegativeSpaceHitResult,
@@ -58,19 +59,19 @@ export function RatioEstimationView({
       submitButtonText={t('common.confirmSpace')}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
           <CanvasView
             width={NEGATIVE_SPACE_CANVAS_SIZE}
             height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 shadow-sm"
+            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
             draw={(canvas) => {
               if (question.vertices) {
                 drawPolygonCanvas({
                   canvas,
                   vertices: question.vertices,
                   size: NEGATIVE_SPACE_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
+                  fillColor: CANVAS_THEME.shape.fill,
+                  strokeColor: CANVAS_THEME.shape.stroke,
                   isHighlighted: showAnswer && isHit,
                 });
               }

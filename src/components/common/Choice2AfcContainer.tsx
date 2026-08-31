@@ -55,18 +55,21 @@ export function Choice2AfcContainer({
     const isTarget = opt.isCorrect;
 
     let borderStyle =
-      'bg-slate-50 hover:bg-indigo-50/30 border-slate-200/90 hover:border-indigo-300 hover:shadow-md cursor-pointer active:scale-[0.98]';
+      'bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 border-slate-200/90 dark:border-slate-700/80 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer active:scale-[0.98]';
 
     if (showAnswer) {
       if (isTarget) {
-        borderStyle = 'bg-emerald-50/50 border-emerald-500 shadow-md ring-2 ring-emerald-500/20';
+        borderStyle =
+          'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20';
       } else if (isSelected) {
-        borderStyle = 'bg-rose-50/50 border-rose-400 shadow-sm';
+        borderStyle = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
       } else {
-        borderStyle = 'bg-slate-50/60 border-slate-200 opacity-60';
+        borderStyle =
+          'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60';
       }
     } else if (isSelected) {
-      borderStyle = 'border-indigo-600 bg-indigo-50/30 ring-2 ring-indigo-500/20 shadow-md';
+      borderStyle =
+        'border-indigo-600 dark:border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-md';
     }
 
     return (
@@ -77,22 +80,24 @@ export function Choice2AfcContainer({
         className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${borderStyle}`}
       >
         <div className="flex items-center justify-between w-full px-1">
-          <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 uppercase">
-            <span className="w-5 h-5 rounded-lg bg-slate-800 text-white flex items-center justify-center font-mono text-[11px]">
+          <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 dark:text-slate-200 uppercase">
+            <span className="w-5 h-5 rounded-lg bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center font-mono text-[11px]">
               {opt.keyLabel || (opt.key === 'A' ? '1' : '2')}
             </span>
             {opt.title}
           </span>
 
           {showAnswer && isTarget && (
-            <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
-              <Check className="w-4 h-4 text-emerald-600" />
+            <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               {opt.badge || t('common.trueMatch')}
             </span>
           )}
 
           {showAnswer && !isTarget && opt.badge && (
-            <span className="text-xs font-semibold text-slate-400">{opt.badge}</span>
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+              {opt.badge}
+            </span>
           )}
         </div>
 

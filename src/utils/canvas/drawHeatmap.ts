@@ -1,5 +1,6 @@
 import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import type { UnifiedTrialRecord } from '../db/index';
+import { CANVAS_THEME, hexToRgba } from '../theme';
 
 export function renderHeatmapCanvas(
   canvas: HTMLCanvasElement,
@@ -22,18 +23,18 @@ export function renderHeatmapCanvas(
   const rings = [5, 10, 20, 30];
   ctx.lineWidth = 1;
   for (const r of rings) {
-    ctx.strokeStyle = '#E2E8F0';
+    ctx.strokeStyle = CANVAS_THEME.axis.line;
     ctx.beginPath();
     ctx.arc(cx, cy, r * scale, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '10px monospace';
     ctx.fillText(`${r}`, cx + r * scale + 2, cy - 4);
   }
 
   // 十字辅助基准线
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.strokeStyle = CANVAS_THEME.axis.grid;
   ctx.setLineDash([2, 2]);
   ctx.beginPath();
   ctx.moveTo(0, cy);
@@ -60,8 +61,8 @@ export function renderHeatmapCanvas(
         ctx.beginPath();
         ctx.arc(px, py, 3.5, 0, Math.PI * 2);
         ctx.fillStyle = r.isHit
-          ? `rgba(34, 197, 94, ${alpha})`
-          : `rgba(239, 68, 68, ${alpha * 1.1})`;
+          ? hexToRgba(CANVAS_THEME.status.hit, alpha)
+          : hexToRgba(CANVAS_THEME.status.miss, Math.min(1, alpha * 1.1));
         ctx.fill();
       }
     } else {
@@ -98,7 +99,10 @@ export function renderHeatmapCanvas(
           const count = bins[r * gridSize + c];
           if (count > 0) {
             const intensity = Math.log(count + 1) / Math.log(maxBinCount + 1);
-            ctx.fillStyle = `rgba(99, 102, 241, ${Math.min(0.85, 0.15 + intensity * 0.7)})`;
+            ctx.fillStyle = hexToRgba(
+              CANVAS_THEME.status.accentHover,
+              Math.min(0.85, 0.15 + intensity * 0.7),
+            );
             ctx.fillRect(c * cellW, r * cellH, cellW + 0.5, cellH + 0.5);
           }
         }
@@ -116,18 +120,20 @@ export function renderHeatmapCanvas(
 
         ctx.beginPath();
         ctx.arc(px, py, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = r.isHit ? 'rgba(34, 197, 94, 0.75)' : 'rgba(239, 68, 68, 0.75)';
+        ctx.fillStyle = r.isHit
+          ? hexToRgba(CANVAS_THEME.status.hit, 0.75)
+          : hexToRgba(CANVAS_THEME.status.miss, 0.75);
         ctx.fill();
       }
     }
   }
 
   // 3. 绝对真理中心点
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.beginPath();
   ctx.arc(cx, cy, 4, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = '#22C55E';
+  ctx.strokeStyle = CANVAS_THEME.status.hit;
   ctx.lineWidth = 2;
   ctx.stroke();
 
@@ -136,14 +142,14 @@ export function renderHeatmapCanvas(
     const avgPx = cx + avgDx * scale;
     const avgPy = cy + avgDy * scale;
 
-    ctx.strokeStyle = '#F59E0B';
+    ctx.strokeStyle = CANVAS_THEME.status.warning;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.lineTo(avgPx, avgPy);
     ctx.stroke();
 
-    ctx.fillStyle = '#F59E0B';
+    ctx.fillStyle = CANVAS_THEME.status.warning;
     ctx.beginPath();
     ctx.arc(avgPx, avgPy, 5, 0, Math.PI * 2);
     ctx.fill();

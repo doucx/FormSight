@@ -132,7 +132,7 @@ export function StandardNafcView<T = unknown>({
           type="button"
           onClick={handleExplicitSubmit}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all cursor-pointer"
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
         >
           {effectiveSubmitButtonText}
         </button>

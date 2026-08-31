@@ -4,6 +4,7 @@ import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME } from '../../../utils/theme';
 import { drawRawGrayscaleNoiseField } from '../canvas/drawNotanField';
 import { drawParticlesCanvas, drawSpinePromptCanvas } from '../canvas/drawParticles';
 import {
@@ -19,9 +20,9 @@ const CANVAS_OPTION_CLASS =
 
 function PromptFrame({ title, children }: { title: string; children: ComponentChildren }) {
   return (
-    <div className="flex flex-col items-center gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{title}</span>
-      <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+    <div className="flex flex-col items-center gap-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
+      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{title}</span>
+      <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
         {children}
       </div>
     </div>
@@ -106,8 +107,8 @@ export function TopDown2AfcView({
                 canvas,
                 vertices: question.promptHull,
                 size: ABSTRACTION_THUMB_SIZE,
-                fillColor: '#4F46E5',
-                strokeColor: '#3730A3',
+                fillColor: CANVAS_THEME.status.accent,
+                strokeColor: CANVAS_THEME.status.accentDark,
               })
             }
             deps={[question.promptHull]}
@@ -153,7 +154,7 @@ export function TopDown2AfcView({
               canvas,
               vertices: verts,
               size: ABSTRACTION_2AFC_SIZE,
-              fillColor: '#4F46E5',
+              fillColor: CANVAS_THEME.status.accent,
             })
           }
           deps={[verts]}
@@ -235,7 +236,7 @@ export function TopDown2AfcView({
         title: `${t('common.areaA')} (${t('common.optionA')})`,
         isCorrect: isTargetA,
         content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
             {renderOptionCanvas('A')}
           </div>
         ),
@@ -244,7 +245,7 @@ export function TopDown2AfcView({
         title: `${t('common.areaB')} (${t('common.optionB')})`,
         isCorrect: isTargetB,
         content: (
-          <div className="w-full flex justify-center bg-white p-2 rounded-2xl border border-slate-200 shadow-inner">
+          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
             {renderOptionCanvas('B')}
           </div>
         ),

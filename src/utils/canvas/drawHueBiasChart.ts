@@ -1,6 +1,7 @@
 import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import { i18n } from '../../core/i18n';
 import type { UnifiedTrialRecord } from '../db/index';
+import { CANVAS_THEME, PALETTE, hexToRgba } from '../theme';
 
 /**
  * 计算带符号的角度偏差 (-180° ~ +180°)
@@ -60,14 +61,14 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   for (const tick of yTicks) {
     const y = getY(tick);
-    ctx.strokeStyle = tick === 0 ? '#94A3B8' : '#E2E8F0';
+    ctx.strokeStyle = tick === 0 ? CANVAS_THEME.axis.grid : CANVAS_THEME.axis.line;
     ctx.setLineDash(tick === 0 ? [] : [2, 2]);
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
 
-    ctx.fillStyle = tick === 0 ? '#334155' : '#64748B';
+    ctx.fillStyle = tick === 0 ? CANVAS_THEME.text.dark : CANVAS_THEME.text.secondary;
     const label = tick > 0 ? `+${tick}°` : `${tick}°`;
     ctx.fillText(label, padding.left - 5, y);
   }
@@ -75,7 +76,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
 
   // 2. 绘制 X 轴色相刻度竖线 (0°, 90°, 180°, 270°, 360°)
   const xTicks = [0, 90, 180, 270, 360];
-  ctx.strokeStyle = '#E2E8F0';
+  ctx.strokeStyle = CANVAS_THEME.axis.line;
   ctx.setLineDash([2, 2]);
   for (const h of xTicks) {
     const x = getX(h);
@@ -90,13 +91,13 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   const barY = height - padding.bottom + 8;
   const barH = 8;
   const barGradient = ctx.createLinearGradient(padding.left, 0, width - padding.right, 0);
-  barGradient.addColorStop(0 / 6, '#FF0000');
-  barGradient.addColorStop(1 / 6, '#FFFF00');
-  barGradient.addColorStop(2 / 6, '#00FF00');
-  barGradient.addColorStop(3 / 6, '#00FFFF');
-  barGradient.addColorStop(4 / 6, '#0000FF');
-  barGradient.addColorStop(5 / 6, '#FF00FF');
-  barGradient.addColorStop(6 / 6, '#FF0000');
+  barGradient.addColorStop(0 / 6, PALETTE.spectrum.red);
+  barGradient.addColorStop(1 / 6, PALETTE.spectrum.yellow);
+  barGradient.addColorStop(2 / 6, PALETTE.spectrum.green);
+  barGradient.addColorStop(3 / 6, PALETTE.spectrum.cyan);
+  barGradient.addColorStop(4 / 6, PALETTE.spectrum.blue);
+  barGradient.addColorStop(5 / 6, PALETTE.spectrum.magenta);
+  barGradient.addColorStop(6 / 6, PALETTE.spectrum.red);
 
   ctx.fillStyle = barGradient;
   ctx.beginPath();
@@ -104,7 +105,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   ctx.fill();
 
   // 底部 X 轴标签
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.font = '9px monospace';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
@@ -129,11 +130,11 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
     ctx.beginPath();
     ctx.arc(px, py, dotRadius, 0, Math.PI * 2);
     ctx.fillStyle = pt.isHit
-      ? `rgba(34, 197, 94, ${dotAlpha})`
-      : `rgba(239, 68, 68, ${dotAlpha * 1.1})`;
+      ? hexToRgba(CANVAS_THEME.status.hit, dotAlpha)
+      : hexToRgba(CANVAS_THEME.status.miss, Math.min(1, dotAlpha * 1.1));
     ctx.fill();
     if (totalCount <= 150) {
-      ctx.strokeStyle = pt.isHit ? '#15803D' : '#991B1B';
+      ctx.strokeStyle = pt.isHit ? CANVAS_THEME.status.hitDark : CANVAS_THEME.status.missDark;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
@@ -157,7 +158,7 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
   }
 
   if (trendPoints.length >= 2) {
-    ctx.strokeStyle = '#F59E0B';
+    ctx.strokeStyle = CANVAS_THEME.status.warning;
     ctx.lineWidth = 2.5;
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -170,16 +171,16 @@ export function renderHueBiasChartCanvas(canvas: HTMLCanvasElement, records: Uni
     for (const tp of trendPoints) {
       ctx.beginPath();
       ctx.arc(tp.x, tp.y, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#F59E0B';
+      ctx.fillStyle = CANVAS_THEME.status.warning;
       ctx.fill();
-      ctx.strokeStyle = '#FFFFFF';
+      ctx.strokeStyle = CANVAS_THEME.bg.primary;
       ctx.lineWidth = 1.5;
       ctx.stroke();
     }
   }
 
   // 顶部标题提示
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'left';
   ctx.fillText(i18n.t('stats.biasPositive'), padding.left, padding.top - 10);

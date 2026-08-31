@@ -31,10 +31,12 @@ export interface InitSquareCanvasResult {
 /**
  * 快速初始化正方形高清 Canvas，自动适配容器宽度、HiDPI 缩放并填充背景色
  */
+import { CANVAS_THEME } from '../../utils/theme';
+
 export function initSquareHiDpiCanvas(
   canvas: HTMLCanvasElement,
   fallbackSize = 340,
-  bgColor = '#F8FAFC',
+  bgColor: string = CANVAS_THEME.bg.secondary,
 ): InitSquareCanvasResult | null {
   const rect = canvas.getBoundingClientRect();
   const size = Math.round(rect.width) || fallbackSize;
@@ -55,7 +57,7 @@ export function initSquareHiDpiCanvas(
 export function setup2DCanvas(
   canvas: HTMLCanvasElement | null,
   size: number,
-  bgColor = '#FFFFFF',
+  bgColor: string = CANVAS_THEME.bg.primary,
 ): CanvasRenderingContext2D | null {
   if (!canvas) return null;
   const ctx = canvas.getContext('2d');

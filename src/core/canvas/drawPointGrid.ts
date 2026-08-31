@@ -72,6 +72,8 @@ export interface RenderInteractivePointGridOptions {
 /**
  * 统一渲染可交互点阵、锚点、悬停高亮与答案揭晓视觉反馈
  */
+import { CANVAS_THEME } from '../../utils/theme';
+
 export function renderInteractivePointGrid({
   ctx,
   canvasSize,
@@ -84,32 +86,32 @@ export function renderInteractivePointGrid({
   isHit = false,
   disabled = false,
 }: RenderInteractivePointGridOptions): void {
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.fillRect(0, 0, canvasSize, canvasSize);
 
   const dotRadius = getDynamicDotRadius(gridPoints);
   const hoverRadius = Math.max(2.5, dotRadius * 1.6);
 
   for (const p of gridPoints) {
-    drawDot(ctx, p.x, p.y, '#888888', dotRadius);
+    drawDot(ctx, p.x, p.y, CANVAS_THEME.pointGrid.dotDefault, dotRadius);
   }
 
   if (!disabled && !showAnswer && hoverPoint) {
-    drawDot(ctx, hoverPoint.x, hoverPoint.y, '#4F46E5', hoverRadius);
+    drawDot(ctx, hoverPoint.x, hoverPoint.y, CANVAS_THEME.pointGrid.dotHover, hoverRadius);
   }
 
   for (const anchor of anchors) {
     if (anchor) {
-      drawDot(ctx, anchor.x, anchor.y, '#000000', dotRadius);
+      drawDot(ctx, anchor.x, anchor.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
     }
   }
 
   if (showAnswer && targetPoint) {
     const { size: chSize, lineWidth: chLineWidth } = getDynamicCrosshairMetrics(gridPoints);
 
-    drawDot(ctx, targetPoint.x, targetPoint.y, '#000000', dotRadius);
+    drawDot(ctx, targetPoint.x, targetPoint.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
 
-    ctx.strokeStyle = '#00AA00';
+    ctx.strokeStyle = CANVAS_THEME.pointGrid.crosshairTarget;
     ctx.lineWidth = chLineWidth;
     ctx.beginPath();
     ctx.moveTo(targetPoint.x - chSize, targetPoint.y);
@@ -120,7 +122,7 @@ export function renderInteractivePointGrid({
 
     if (userNearestPoint && !isHit) {
       const dashLength = Math.max(2, Math.min(4, chSize * 0.4));
-      ctx.strokeStyle = '#FF0000';
+      ctx.strokeStyle = CANVAS_THEME.pointGrid.dotMiss;
       ctx.lineWidth = Math.max(1, chLineWidth * 0.85);
       ctx.setLineDash([dashLength, dashLength]);
       ctx.beginPath();
@@ -129,7 +131,13 @@ export function renderInteractivePointGrid({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      drawDot(ctx, userNearestPoint.x, userNearestPoint.y, '#FF0000', dotRadius);
+      drawDot(
+        ctx,
+        userNearestPoint.x,
+        userNearestPoint.y,
+        CANVAS_THEME.pointGrid.dotMiss,
+        dotRadius,
+      );
     }
   }
 }

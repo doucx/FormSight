@@ -1,12 +1,13 @@
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
+import { CANVAS_THEME } from '../../../utils/theme';
 
 export function drawParticlesCanvas(
   canvas: HTMLCanvasElement | null,
   particles?: Point[],
   size = 400,
   axisAngle?: number,
-  axisColor = '#22C55E',
+  axisColor: string = CANVAS_THEME.status.hit,
   userAxisAngle?: number,
   isHit?: boolean,
 ) {
@@ -18,7 +19,7 @@ export function drawParticlesCanvas(
   for (const p of particles) {
     ctx.beginPath();
     ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
+    ctx.fillStyle = CANVAS_THEME.shape.fill;
     ctx.fill();
   }
 
@@ -29,7 +30,7 @@ export function drawParticlesCanvas(
     const cy = size / 2;
     const L = size * 0.44;
 
-    ctx.strokeStyle = isHit ? '#22C55E' : '#EF4444';
+    ctx.strokeStyle = isHit ? CANVAS_THEME.status.hit : CANVAS_THEME.status.miss;
     ctx.lineWidth = 2.5;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
@@ -65,7 +66,7 @@ export function drawSpinePromptCanvas(
   if (!ctx) return;
 
   const [p1, p2] = spine;
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   ctx.beginPath();
@@ -73,7 +74,7 @@ export function drawSpinePromptCanvas(
   ctx.lineTo(p2.x, p2.y);
   ctx.stroke();
 
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.beginPath();
   ctx.arc(p1.x, p1.y, 4, 0, Math.PI * 2);
   ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);

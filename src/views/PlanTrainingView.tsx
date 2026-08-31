@@ -157,12 +157,12 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   return (
     <div className="w-full">
-      <div className="max-w-5xl mx-auto mb-4 bg-white border border-slate-200/80 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+      <div className="max-w-5xl mx-auto mb-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleRequestExit}
-            className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-200 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             title={t('plan.exitPlan')}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -170,10 +170,12 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           </button>
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-xl">
+            <span className="text-xs font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 px-2.5 py-1 rounded-xl">
               {t('plan.stageProgress', { current: currentStepIndex + 1, total: validItems.length })}
             </span>
-            <span className="text-xs font-bold text-slate-800 tracking-tight">{plan.name}</span>
+            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">
+              {plan.name}
+            </span>
           </div>
         </div>
 
@@ -181,16 +183,16 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
             {t('plan.stageGoal', { trials: currentStep.targetTrials })}
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono text-xs font-bold text-slate-700">
+            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
           </div>
           <button
             type="button"
             onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             title={t('plan.skipStage')}
           >
             <FastForward className="w-3.5 h-3.5 text-indigo-500" />
@@ -200,7 +202,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
       </div>
 
       {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
           {t('plan.loadingLevel', { title: cardTitle })}
         </div>
       ) : (

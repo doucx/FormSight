@@ -2,6 +2,7 @@ import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { i18n } from '../../core/i18n';
 import { lttbDownsample } from '../../core/math/downsample';
+import { CANVAS_THEME, hexToRgba } from '../theme';
 
 export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,
@@ -23,7 +24,7 @@ export function renderTrendChartCanvas(
   const recentDates = activeDates.slice(-30);
 
   if (recentDates.length === 0) {
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -49,7 +50,7 @@ export function renderTrendChartCanvas(
   const getX = (idx: number) =>
     padding.left + (idx / Math.max(1, sampledPoints.length - 1)) * chartW;
 
-  ctx.strokeStyle = '#E2E8F0';
+  ctx.strokeStyle = CANVAS_THEME.axis.line;
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (const l of [minLevel, Math.round(maxLevel / 2), maxLevel]) {
@@ -60,7 +61,7 @@ export function renderTrendChartCanvas(
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.strokeStyle = '#6366F1';
+  ctx.strokeStyle = CANVAS_THEME.status.accentHover;
   ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(levels[0]));
@@ -73,14 +74,14 @@ export function renderTrendChartCanvas(
   for (let i = 0; i < levels.length; i++) {
     ctx.beginPath();
     ctx.arc(getX(i), getY(levels[i]), pointRadius, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = CANVAS_THEME.bg.primary;
     ctx.fill();
-    ctx.strokeStyle = '#4F46E5';
+    ctx.strokeStyle = CANVAS_THEME.status.accent;
     ctx.lineWidth = 2;
     ctx.stroke();
   }
 
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
@@ -105,7 +106,7 @@ export function renderSessionTrendChartCanvas(
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
 
-  ctx.fillStyle = '#F8FAFC';
+  ctx.fillStyle = CANVAS_THEME.bg.secondary;
   ctx.fillRect(0, 0, width, height);
 
   // 构造序列
@@ -138,8 +139,8 @@ export function renderSessionTrendChartCanvas(
 
   // 背景刻度线
   ctx.lineWidth = 1;
-  ctx.strokeStyle = '#E2E8F0';
-  ctx.fillStyle = '#64748B';
+  ctx.strokeStyle = CANVAS_THEME.axis.line;
+  ctx.fillStyle = CANVAS_THEME.text.secondary;
   ctx.font = '10px monospace';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
@@ -159,8 +160,8 @@ export function renderSessionTrendChartCanvas(
 
   // 面积渐变背景
   const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.18)');
-  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+  gradient.addColorStop(0, hexToRgba(CANVAS_THEME.status.accent, 0.18));
+  gradient.addColorStop(1, hexToRgba(CANVAS_THEME.status.accent, 0.01));
 
   ctx.beginPath();
   ctx.moveTo(getX(0), getY(levelSequence[0]));
@@ -175,7 +176,7 @@ export function renderSessionTrendChartCanvas(
 
   // 主折线
   ctx.beginPath();
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = totalPoints > 60 ? 1.8 : 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(getX(0), getY(levelSequence[0]));
@@ -197,21 +198,21 @@ export function renderSessionTrendChartCanvas(
 
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.fillStyle = p.isHit ? '#10B981' : '#F43F5E';
+      ctx.fillStyle = p.isHit ? CANVAS_THEME.status.hit : CANVAS_THEME.status.miss;
       ctx.fill();
-      ctx.strokeStyle = '#FFFFFF';
+      ctx.strokeStyle = CANVAS_THEME.bg.primary;
       ctx.lineWidth = 1;
       ctx.stroke();
     }
   }
 
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.strokeStyle = CANVAS_THEME.axis.grid;
   ctx.beginPath();
   ctx.moveTo(padding.left, height - padding.bottom);
   ctx.lineTo(width - padding.right, height - padding.bottom);
   ctx.stroke();
 
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.font = '10px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText(i18n.t('stats.sessionSeqNotice'), width / 2, height - 8);

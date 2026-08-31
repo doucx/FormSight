@@ -55,7 +55,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         {/* 通用配置：自动翻页开关 */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-semibold text-slate-700">
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
               {t('settingsModal.autoNext')}
             </div>
             <div className="text-xs text-slate-400">{t('settingsModal.autoNextDesc')}</div>
@@ -63,19 +63,19 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           <button
             type="button"
             onClick={() => updateCardConfig({ autoNext: !cardConfig.autoNext })}
-            className="text-indigo-600 hover:opacity-80 transition-opacity"
+            className="text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity cursor-pointer"
           >
             {cardConfig.autoNext ? (
-              <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />
             ) : (
-              <ToggleLeft className="w-8 h-8 text-slate-300" />
+              <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
             )}
           </button>
         </div>
 
         {/* 通用配置：自动翻页延迟 */}
         {cardConfig.autoNext && (
-          <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+          <div className="space-y-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
             <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
               <span>{t('settingsModal.delay')}</span>
               <span className="font-mono text-indigo-600 font-bold">
@@ -99,7 +99,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
         {/* 通用配置：自适应算子模式 */}
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-slate-700">
+          <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {t('settingsModal.adaptiveMode')}
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -108,8 +108,8 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
               onClick={() => updateCardConfig({ adaptiveMode: 'block' })}
               className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                 cardConfig.adaptiveMode === 'block'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <Target className="w-3.5 h-3.5 text-indigo-600" />
@@ -120,8 +120,8 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
               onClick={() => updateCardConfig({ adaptiveMode: 'staircase' })}
               className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
                 cardConfig.adaptiveMode === 'staircase'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-sm'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <Flame className="w-3.5 h-3.5 text-amber-500" />
@@ -132,9 +132,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
         {/* 轮次评估配置 */}
         {cardConfig.adaptiveMode === 'block' && (
-          <div className="space-y-3 bg-indigo-50/50 p-3.5 rounded-2xl border border-indigo-100">
+          <div className="space-y-3 bg-indigo-50/50 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60">
             <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+              <div className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <span>{t('settingsModal.targetAcc')}</span>
                 <span className="font-bold text-indigo-600 font-mono">
                   {Math.round(cardConfig.targetAccuracy * 100)}%
@@ -149,7 +149,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                     className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
                       cardConfig.targetAccuracy === acc
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                   >
                     {Math.round(acc * 100)}%
@@ -159,7 +159,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             </div>
 
             <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between items-center text-xs font-semibold text-slate-700">
+              <div className="flex justify-between items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
                 <span>{t('settingsModal.blockSize')}</span>
                 <span className="font-bold text-indigo-600 font-mono">
                   {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
@@ -174,7 +174,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
                     className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
                       cardConfig.blockSize === size
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                     }`}
                   >
                     {t('settingsModal.trialsUnit', { size })}
@@ -187,17 +187,17 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
         {/* 难度阶梯精细度 */}
         <div className="space-y-2">
-          <div className="text-sm font-semibold text-slate-700">
+          <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
             {t('settingsModal.stepGranularity')}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                 cardConfig.stepGranularity === 'standard'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               {t('settingsModal.stepStandard')}
@@ -205,10 +205,10 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             <button
               type="button"
               onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                 cardConfig.stepGranularity === 'fine'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               {t('settingsModal.stepFine')}
@@ -230,7 +230,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
+          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98]"
         >
           {t('common.complete')}
         </button>

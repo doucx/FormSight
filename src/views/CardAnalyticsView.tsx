@@ -108,9 +108,11 @@ export function CardAnalyticsView({
 
   if (!card || !plugin) {
     return (
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
+      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-sm">
         <Info className="w-10 h-10 text-slate-400" />
-        <div className="text-sm font-bold text-slate-700">{t('home.noMatchTitle')}</div>
+        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+          {t('home.noMatchTitle')}
+        </div>
         <button
           type="button"
           onClick={onExit}
@@ -133,12 +135,12 @@ export function CardAnalyticsView({
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
       {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+      <header className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
           <button
             type="button"
             onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.exit')}
@@ -150,17 +152,17 @@ export function CardAnalyticsView({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 truncate tracking-tight">
                   {cardTitle}
                 </h1>
                 {packTitle && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md border border-slate-200/60">
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md border border-slate-200/60 dark:border-slate-700/60">
                     {packTitle}
                   </span>
                 )}
                 {card.tags.status === 'experimental' && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
-                    <FlaskConical className="w-3 h-3 text-amber-600" />
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-md">
+                    <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                     {t('card.experimentalBadge')}
                   </span>
                 )}
@@ -177,7 +179,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onOpenSettings(card.id)}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all cursor-pointer shadow-xs"
+            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all cursor-pointer shadow-xs"
             title={t('card.settingsTooltip', { title: cardTitle })}
           >
             <Sliders className="w-4 h-4" />
@@ -186,7 +188,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onStartBenchmark(card.id)}
-            className="py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
+            className="py-2.5 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
             title={t('card.startBenchmark')}
           >
             <Target className="w-3.5 h-3.5 text-slate-500" />
@@ -196,7 +198,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onStartTraining(card.id)}
-            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>{t('card.startAdaptive')}</span>
@@ -205,14 +207,14 @@ export function CardAnalyticsView({
       </header>
 
       {/* 多页 Tab 切换栏 */}
-      <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveTabId('overview')}
           className={`py-2 px-3.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTabId === 'overview'
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <LayoutDashboard className="w-3.5 h-3.5" />
@@ -242,15 +244,15 @@ export function CardAnalyticsView({
 
       {/* 主体展示区 */}
       {loading ? (
-        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center justify-center text-slate-400 text-xs shadow-sm">
+        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 flex items-center justify-center text-slate-400 text-xs shadow-sm">
           {t('analyticsModal.analyzing')}
         </div>
       ) : records.length === 0 ? (
-        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-slate-50 text-slate-400 rounded-3xl">
+        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-3xl">
             <Info className="w-8 h-8" />
           </div>
-          <div className="text-base font-bold text-slate-800">
+          <div className="text-base font-bold text-slate-800 dark:text-slate-100">
             {t('analyticsModal.noRecords', { title: cardTitle })}
           </div>
           <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
@@ -270,51 +272,53 @@ export function CardAnalyticsView({
         <div className="flex flex-col gap-6 animate-in fade-in duration-150">
           {/* 4 维核心大指标卡片 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-indigo-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-indigo-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <Target className="w-4 h-4 text-indigo-500" />
                 {t('common.accuracy')}
               </div>
-              <div className="text-3xl font-black text-slate-800">{summaryStats.accuracy}%</div>
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                {summaryStats.accuracy}%
+              </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {t('common.totalHits')}
               </div>
-              <div className="text-3xl font-black text-slate-800">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
                 {summaryStats.hits}{' '}
                 <span className="text-xs font-normal text-slate-400">/ {summaryStats.total}</span>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <Clock className="w-4 h-4 text-indigo-500" />
                 {t('summary.duration')}
               </div>
-              <div className="text-3xl font-black text-slate-800 font-mono">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100 font-mono">
                 {summaryStats.avgResponseTimeSec}
                 <span className="text-xs font-normal text-slate-400"> s</span>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-amber-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-amber-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <TrendingUp className="w-4 h-4 text-amber-500" />
                 {t('stats.dailyMaxLevel')}
               </div>
-              <div className="text-3xl font-black text-slate-800 font-mono">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100 font-mono">
                 Lvl {summaryStats.maxLevel}
               </div>
             </div>
           </div>
 
           {/* 总体评价与认知建议 */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <div className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-600" />
                 {t('analyticsModal.overallEvaluation')}
               </div>
@@ -328,27 +332,31 @@ export function CardAnalyticsView({
                 const insights = getCognitiveOverviewInsights(records);
                 return (
                   <>
-                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-700 dark:text-slate-300 flex items-start gap-3">
                       <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
                         <Zap className="w-4 h-4" />
                       </div>
-                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                        <div className="font-bold text-slate-900">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.paceSummaryTitle')}
                         </div>
-                        <p className="text-slate-600">{insights.paceSummaryText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {insights.paceSummaryText}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl flex items-start gap-3">
                       <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
                         <Gauge className="w-4 h-4" />
                       </div>
-                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                        <div className="font-bold text-slate-900">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.levelFocusSummaryTitle')}
                         </div>
-                        <p className="text-slate-600">{insights.growthZoneText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {insights.growthZoneText}
+                        </p>
                       </div>
                     </div>
                   </>
@@ -359,25 +367,25 @@ export function CardAnalyticsView({
         </div>
       ) : currentView ? (
         /* 专项分析视图 */
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
           {/* 左侧 Canvas 可视化区 */}
-          <div className="lg:col-span-7 flex justify-center bg-slate-50 p-6 rounded-3xl border border-slate-200/80 shadow-inner relative">
+          <div className="lg:col-span-7 flex justify-center bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-inner relative">
             <canvas
               key={`${card.id}-${currentView.id}`}
               ref={canvasRef}
               width={320}
               height={320}
-              className="w-full max-w-[340px] aspect-square rounded-2xl border border-slate-100 shadow-xs"
+              className="w-full max-w-[340px] aspect-square rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs"
             />
           </div>
 
           {/* 右侧数据统计与认知诊断面板 */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 {resolveText(currentView.title)}
               </div>
-              <div className="text-sm font-black text-slate-800">
+              <div className="text-sm font-black text-slate-800 dark:text-slate-100">
                 {resolveText(currentView.subTitle)}
               </div>
             </div>
