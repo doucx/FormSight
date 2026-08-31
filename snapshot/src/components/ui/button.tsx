@@ -14,8 +14,7 @@ export const buttonVariants = cva(
           'border-border bg-card hover:bg-accent hover:text-accent-foreground text-foreground',
         ghost:
           'hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground border-transparent',
-        accent:
-          'bg-accent text-primary hover:bg-accent/80 border-border/60 dark:border-indigo-900',
+        accent: 'bg-accent text-primary hover:bg-accent/80 border-border/60 dark:border-indigo-900',
         danger:
           'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-200 dark:shadow-none border-transparent',
       },

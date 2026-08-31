@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix(ui): 统一按钮边框盒模型并修复暗色模式下切换闪烁", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181387.6283169, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M button.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181394.9393456, "duration_ms": 0}}
