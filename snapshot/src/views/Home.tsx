@@ -55,14 +55,14 @@ export function Home({
           <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
             {t('nav.dashboard')}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5">
             {t('common.appSubtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-xl text-foreground text-xs font-semibold shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-indigo-500" />
+            <Clock className="w-3.5 h-3.5 text-primary" />
             <span>{formatTotalTime(totalTimeMs)}</span>
           </div>
         </div>
@@ -82,10 +82,10 @@ export function Home({
         <div className="bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-border/60 pb-3">
             <div className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-600" />
+              <Layers className="w-4 h-4 text-primary" />
               <span>{t('plan.stageBreakdown')}</span>
             </div>
-            <span className="text-xs font-mono text-slate-400">
+            <span className="text-xs font-mono text-muted-foreground">
               {t('plan.stageCount', { count: validPlanItems.length })}
             </span>
           </div>
@@ -105,7 +105,7 @@ export function Home({
                   className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between gap-2.5 shadow-xs"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-slate-800 dark:bg-slate-700 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                    <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
                       {idx + 1}
                     </div>
                     <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs flex-shrink-0">
@@ -113,7 +113,7 @@ export function Home({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Lvl {currentLvl}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">Lvl {currentLvl}</div>
                     </div>
                   </div>
 
@@ -141,18 +141,18 @@ export function Home({
           }}
           className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer space-y-1 group"
         >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
+          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
             <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
+              <Target className="w-3.5 h-3.5 text-primary" />
               {t('common.todayTrials')}
             </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
           </div>
           <div className="text-2xl font-black text-foreground font-mono">
             {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
+            <span className="text-xs font-normal text-muted-foreground">{t('common.trialsUnit')}</span>
           </div>
-          <div className="text-[11px] text-slate-400 pt-0.5">
+          <div className="text-[11px] text-muted-foreground pt-0.5">
             {t('common.accuracy')}:{' '}
             <span className="font-bold text-foreground font-mono">{overallAccuracy}%</span>
           </div>
@@ -170,16 +170,16 @@ export function Home({
           }}
           className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group"
         >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
+          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-primary">
               <Compass className="w-3.5 h-3.5" />
               {t('nav.discovery')}
             </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
           </div>
           <div className="mt-2">
             <div className="text-sm font-black text-foreground">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-muted-foreground mt-0.5">
               {t('home.matchedModules', { count: registry.getAllCards().length })}
             </p>
           </div>
@@ -197,16 +197,16 @@ export function Home({
           }}
           className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
         >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
+          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+            <span className="flex items-center gap-1.5 text-primary">
               <Layers className="w-3.5 h-3.5" />
               {t('nav.plans')}
             </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
+            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
           </div>
           <div className="mt-2">
             <div className="text-sm font-black text-foreground">{trainingPlan.name}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[11px] text-muted-foreground mt-0.5">
               {t('plan.stageAndTrialsSummary', {
                 stages: validPlanItems.length,
                 trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),

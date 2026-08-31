@@ -2,6 +2,8 @@ import { Check, Plus, Star, Trash2 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
 
 interface PlanLibraryDrawerProps {
   storageState: PlanStorageState;
@@ -37,27 +39,29 @@ export function PlanLibraryDrawer({
   };
 
   return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-900/90 border border-border rounded-2xl space-y-3 animate-in fade-in">
+    <div className="p-4 bg-muted/60 border border-border rounded-2xl space-y-3 animate-in fade-in">
       <div className="flex items-center justify-between">
         <span className="text-xs font-extrabold text-foreground tracking-tight">
           {t('plan.switchEditingPlan')}
         </span>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onCreateNewBlankPlan}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+            className="text-primary hover:text-primary gap-1"
           >
             <Plus className="w-3.5 h-3.5" />
             {t('plan.createNewBlankPlan')}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-600"
+            className="text-muted-foreground hover:text-foreground"
           >
             {t('plan.collapse')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -74,8 +78,8 @@ export function PlanLibraryDrawer({
               key={p.id}
               className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-2 ${
                 isActive
-                  ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-sm ring-2 ring-indigo-500/20'
-                  : 'bg-card/80 border-border hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 shadow-xs'
+                  ? 'bg-card border-indigo-600 shadow-sm ring-2 ring-indigo-500/20'
+                  : 'bg-card/80 border-border hover:bg-card hover:border-primary/60 shadow-xs'
               }`}
             >
               <button
@@ -86,9 +90,9 @@ export function PlanLibraryDrawer({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-xs font-black text-foreground truncate">{p.name}</span>
                   {p.isBuiltin && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-accent text-primary rounded-md border border-indigo-100 dark:border-indigo-900">
+                    <Badge variant="accent" size="sm">
                       {t('plan.officialTag')}
-                    </span>
+                    </Badge>
                   )}
                 </div>
                 <div className="text-[10px] text-muted-foreground mt-1">
@@ -97,31 +101,31 @@ export function PlanLibraryDrawer({
               </button>
 
               <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => onToggleFavorite(p.id, e)}
-                  className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                    isFav
-                      ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50'
-                      : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
+                <Button
+                  variant="ghost"
+                  size="iconSm"
+                  onClick={(e) => onToggleFavorite(p.id, e as unknown as MouseEvent)}
+                  className={`rounded-xl ${
+                    isFav ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
                   }`}
                   title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
                 >
                   <Star className={`w-4 h-4 ${isFav ? 'fill-amber-500' : ''}`} />
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteClick(p.id, e)}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
+                <Button
+                  variant={isPendingDelete ? 'danger' : 'ghost'}
+                  size="iconSm"
+                  onClick={(e) => handleDeleteClick(p.id, e as unknown as MouseEvent)}
+                  className={`rounded-xl ${
                     isPendingDelete
-                      ? 'bg-rose-600 text-white shadow-sm animate-pulse'
-                      : 'text-slate-300 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50'
+                      ? 'animate-pulse'
+                      : 'text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50'
                   }`}
                   title={isPendingDelete ? t('common.confirm') : t('common.deletePlan')}
                 >
                   {isPendingDelete ? <Check className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
-                </button>
+                </Button>
               </div>
             </div>
           );
