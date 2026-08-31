@@ -208,7 +208,7 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
 
   if (totalTrials === 0) {
     return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
+      <div className="p-3 bg-muted/60 border border-border rounded-2xl text-xs text-muted-foreground">
         {i18n.t('analyticsModal.needMoreSamples')}
       </div>
     );
@@ -216,7 +216,7 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
 
   return (
     <div className="space-y-2">
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
         {i18n.t('analyticsModal.satDistributionTitle')}
       </div>
       <div className="space-y-1.5">
@@ -225,13 +225,13 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
           return (
             <div
               key={bin.rangeLabel}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
+              className="p-2.5 bg-card border border-border rounded-xl flex items-center justify-between gap-2"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-bold text-slate-700 min-w-[70px]">
+                <span className="font-mono text-xs font-bold text-foreground min-w-[70px]">
                   {bin.rangeLabel}
                 </span>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-muted-foreground">
                   {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
                 </span>
               </div>

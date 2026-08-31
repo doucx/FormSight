@@ -49,7 +49,7 @@ export function AngleParallel2AfcView({
           <CanvasView
             width={ANGLE_PROMPT_SIZE}
             height={ANGLE_PROMPT_SIZE}
-            className="w-28 h-28 rounded-xl border border-border shadow-sm bg-white dark:bg-slate-950"
+            className="w-28 h-28 rounded-xl border border-border shadow-sm bg-card"
             draw={(canvas) =>
               drawSingleLineCanvas(
                 canvas,
@@ -76,7 +76,7 @@ export function AngleParallel2AfcView({
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawSingleLineCanvas(
                   canvas,
@@ -104,7 +104,7 @@ export function AngleParallel2AfcView({
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawSingleLineCanvas(
                   canvas,

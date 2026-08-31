@@ -48,7 +48,7 @@ export function AngleComparison2AfcView({
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
               deps={[question.linesA]}
             />
@@ -64,7 +64,7 @@ export function AngleComparison2AfcView({
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
               deps={[question.linesB]}
             />

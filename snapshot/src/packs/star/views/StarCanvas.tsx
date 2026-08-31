@@ -80,7 +80,7 @@ export function StarCanvas({
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-white dark:bg-slate-950 shadow-inner block"
+          className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
         />
       </div>
 

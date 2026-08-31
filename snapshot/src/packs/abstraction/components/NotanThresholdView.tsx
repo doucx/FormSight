@@ -65,7 +65,7 @@ export function NotanThresholdView({
               <CanvasView
                 width={ABSTRACTION_2AFC_SIZE}
                 height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-white dark:bg-slate-950"
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-card"
                 draw={(canvas) => {
                   if (question.notanBuffer) {
                     drawRawGrayscaleNoiseField(
@@ -85,7 +85,7 @@ export function NotanThresholdView({
               <CanvasView
                 width={ABSTRACTION_2AFC_SIZE}
                 height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-white dark:bg-slate-950"
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-card"
                 draw={(canvas) => {
                   if (question.notanBuffer) {
                     drawNotanNoiseField(

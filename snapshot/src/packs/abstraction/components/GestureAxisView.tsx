@@ -63,7 +63,7 @@ export function GestureAxisView({
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
+            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
             draw={(canvas) => {
               drawParticlesCanvas(
                 canvas,

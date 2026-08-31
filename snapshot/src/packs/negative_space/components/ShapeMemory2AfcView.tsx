@@ -101,7 +101,7 @@ export function ShapeMemory2AfcView({
             ref={canvasRef}
             width={NEGATIVE_SPACE_CANVAS_SIZE}
             height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-white dark:bg-slate-950"
+            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-card"
           />
           <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
             <div
@@ -126,7 +126,7 @@ export function ShapeMemory2AfcView({
                   ref={matchOptionRefA}
                   width={NEGATIVE_SPACE_CANVAS_SIZE}
                   height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
                 />
               </div>
             ),
@@ -141,7 +141,7 @@ export function ShapeMemory2AfcView({
                   ref={matchOptionRefB}
                   width={NEGATIVE_SPACE_CANVAS_SIZE}
                   height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
                 />
               </div>
             ),

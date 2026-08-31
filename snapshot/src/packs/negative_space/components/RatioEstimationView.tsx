@@ -63,7 +63,7 @@ export function RatioEstimationView({
           <CanvasView
             width={NEGATIVE_SPACE_CANVAS_SIZE}
             height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
+            className="w-full max-w-[340px] aspect-square rounded-xl border border-border shadow-sm bg-card"
             draw={(canvas) => {
               if (question.vertices) {
                 drawPolygonCanvas({

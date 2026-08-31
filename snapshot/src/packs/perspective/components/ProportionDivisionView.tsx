@@ -198,7 +198,7 @@ export function ProportionDivisionView({
           tabIndex={0}
           role="button"
           aria-label={t('packs.perspective.cards.perspective_proportion_division.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950 touch-none select-none transition-all ${
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
               : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'

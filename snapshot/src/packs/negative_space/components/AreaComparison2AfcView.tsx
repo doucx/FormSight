@@ -50,7 +50,7 @@ export function AreaComparison2AfcView({
             <CanvasView
               width={TWO_AFC_CANVAS_SIZE}
               height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawPolygonCanvas({
                   canvas,
@@ -74,7 +74,7 @@ export function AreaComparison2AfcView({
             <CanvasView
               width={TWO_AFC_CANVAS_SIZE}
               height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawPolygonCanvas({
                   canvas,

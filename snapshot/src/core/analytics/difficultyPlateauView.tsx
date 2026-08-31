@@ -152,7 +152,7 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
 
   if (totalTrials === 0) {
     return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
+      <div className="p-3 bg-muted/60 border border-border rounded-2xl text-xs text-muted-foreground">
         {i18n.t('analyticsModal.needMoreSamples')}
       </div>
     );
@@ -164,7 +164,7 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
   return (
     <div className="space-y-2">
       {mainLevel && (
-        <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-xs text-indigo-900 leading-relaxed">
+        <div className="p-3 bg-accent border border-indigo-100 dark:border-indigo-900/60 rounded-2xl text-xs text-foreground leading-relaxed">
           <span className="font-bold">{i18n.t('analyticsModal.levelFocusSummaryTitle')}: </span>
           {i18n.t('analyticsModal.levelFocusSummaryDesc', {
             max: maxLevel,
@@ -175,7 +175,7 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
         </div>
       )}
 
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 pt-1">
+      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1 pt-1">
         {i18n.t('analyticsModal.levelDistributionTitle')}
       </div>
 
@@ -185,13 +185,13 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
           return (
             <div
               key={stat.level}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
+              className="p-2.5 bg-card border border-border rounded-xl flex items-center justify-between gap-2"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-black text-slate-800 min-w-[45px]">
+                <span className="font-mono text-xs font-black text-foreground min-w-[45px]">
                   Lvl {stat.level}
                 </span>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-muted-foreground">
                   {stat.total} {i18n.t('common.trialsUnit')} ({ratio}%)
                 </span>
               </div>

@@ -47,7 +47,7 @@ export function GestaltContinuation2AfcView({
             <CanvasView
               width={PERSPECTIVE_2AFC_SIZE}
               height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawGestaltCanvas(
                   canvas,
@@ -70,7 +70,7 @@ export function GestaltContinuation2AfcView({
             <CanvasView
               width={PERSPECTIVE_2AFC_SIZE}
               height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) =>
                 drawGestaltCanvas(
                   canvas,
