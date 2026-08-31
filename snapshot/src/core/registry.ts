@@ -11,7 +11,7 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
-import type { CardAnalyticsPlugin, PackManifest } from './contracts';
+import type { AnyCardManifest, CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
 
 class InvertedCardIndex {
@@ -120,6 +120,7 @@ class SystemDomainRegistry {
   private cardMap = new Map<string, CardDefinition>();
   private cardPluginMap = new Map<string, AnyTrainingPlugin>();
   private cardAnalyticsMap = new Map<string, CardAnalyticsPlugin>();
+  private cardDefaultsMap = new Map<string, Record<string, unknown>>();
   private invertedIndex = new InvertedCardIndex();
 
   constructor() {
@@ -127,9 +128,42 @@ class SystemDomainRegistry {
   }
 
   /**
-   * 自动扫描 src/packs/*\/index.ts 零配置注册
+   * 自动扫描模块：
+   * 1. 扫描新架构 src/modules/**\/index.ts 注册单卡片 CardManifest
+   * 2. 兼容扫描存量 src/packs/**\/index.ts 注册 PackManifest
    */
   private autoDiscover(): void {
+    // 1. 扫描新版独立 CardManifest
+    const cardModules = import.meta.glob<{
+      default?: AnyCardManifest | AnyCardManifest[];
+      [key: string]: unknown;
+    }>('../modules/**/index.ts', {
+      eager: true,
+    });
+
+    for (const path in cardModules) {
+      const mod = cardModules[path];
+      if (!mod) continue;
+
+      if (mod.default) {
+        if (Array.isArray(mod.default)) {
+          for (const card of mod.default) {
+            if (card && card.id && card.training) this.registerCard(card);
+          }
+        } else if (typeof mod.default === 'object' && 'id' in mod.default && 'training' in mod.default) {
+          this.registerCard(mod.default as AnyCardManifest);
+        }
+      }
+
+      // 支持具名导出 CardManifest
+      for (const [key, value] of Object.entries(mod)) {
+        if (key !== 'default' && value && typeof value === 'object' && 'id' in value && 'training' in value) {
+          this.registerCard(value as AnyCardManifest);
+        }
+      }
+    }
+
+    // 2. 兼容扫描存量 PackManifest
     const packModules = import.meta.glob<{ default: PackManifest }>('../packs/*/index.ts', {
       eager: true,
     });
@@ -137,6 +171,74 @@ class SystemDomainRegistry {
     for (const path in packModules) {
       const manifest = packModules[path]?.default;
       if (manifest) this.register(manifest);
+    }
+  }
+
+  /**
+   * 注册独立卡片 (CardManifest 一等公民注册入口)
+   */
+  public registerCard(manifest: AnyCardManifest): void {
+    const groupId = manifest.groupId || 'core';
+    const cardMode = manifest.mode || manifest.id;
+
+    // 1. 挂载私有多语言
+    if (manifest.locales) {
+      i18n.registerCardLocales(manifest.id, manifest.locales);
+    }
+
+    // 2. 归一化为 CardDefinition 视图层描述
+    const normalizedCard: CardDefinition = {
+      id: manifest.id,
+      packId: groupId,
+      mode: cardMode,
+      icon: manifest.icon,
+      tags: manifest.tags,
+      hasWeaknessAnalytics: manifest.hasWeaknessAnalytics,
+      settingSchemas: manifest.settingSchemas,
+    };
+
+    this.cardMap.set(manifest.id, normalizedCard);
+    this.invertedIndex.indexCard(normalizedCard);
+
+    // 3. 记录卡片默认设置项
+    if (manifest.defaultSettings) {
+      this.cardDefaultsMap.set(manifest.id, manifest.defaultSettings);
+    }
+
+    // 4. 将卡片独立 training 逻辑封装为兼容的 TrainingPlugin
+    const cardPlugin: AnyTrainingPlugin = {
+      packId: groupId,
+      title: manifest.id,
+      getModeBadge: (m) => m,
+      isTargeting: manifest.training.isTargeting
+        ? (_m, settings) => Boolean(manifest.training.isTargeting?.(settings))
+        : undefined,
+      generateQuestion: (_m, level, settings) =>
+        manifest.training.generateQuestion(level, settings),
+      evaluateAnswer: (userVal, q) => manifest.training.evaluateAnswer(userVal, q),
+      isHit: (hitResult) => manifest.training.isHit(hitResult),
+      getQuestionLevel: manifest.training.getQuestionLevel
+        ? (q) => manifest.training.getQuestionLevel?.(q) ?? (q as { difficultyLevel: number })?.difficultyLevel ?? 1
+        : (q) => (q as { difficultyLevel: number })?.difficultyLevel ?? 1,
+      extractRecordDetails: manifest.training.extractRecordDetails
+        ? (q, hitResult, userVal, mode) => ({
+            mode,
+            ...(manifest.training.extractRecordDetails?.(q, hitResult, userVal) || {}),
+          })
+        : (_q, _hitResult, userVal, mode) => ({ mode, userAnswer: userVal }),
+      renderCanvas: manifest.training.renderCanvas,
+    };
+
+    this.cardPluginMap.set(manifest.id, cardPlugin);
+
+    // 5. 注册分析视图插件
+    if (manifest.analytics) {
+      const analyticsPlugin: CardAnalyticsPlugin = {
+        cardId: manifest.id,
+        fetchRecords: manifest.analytics.fetchRecords || ((id) => getTrialRecordsByCard(id)),
+        views: manifest.analytics.views || [],
+      };
+      this.cardAnalyticsMap.set(manifest.id, analyticsPlugin);
     }
   }
 
@@ -279,6 +381,10 @@ class SystemDomainRegistry {
 
   public getCardById(cardId: string): CardDefinition | undefined {
     return this.cardMap.get(cardId);
+  }
+
+  public getCardDefaultSettings(cardId: string): Record<string, unknown> | undefined {
+    return this.cardDefaultsMap.get(cardId);
   }
 
   public getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {

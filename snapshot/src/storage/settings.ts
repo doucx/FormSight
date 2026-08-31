@@ -86,10 +86,12 @@ export function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
   for (const card of allCards) {
     const pack = registry.getPack(card.packId);
     const packCardDefaults = pack?.defaultCardSettings?.[card.id] || {};
+    const directCardDefaults = registry.getCardDefaultSettings(card.id) || {};
 
     const cardConfig: BaseModuleSettings = {
       ...DEFAULT_BASE_SETTINGS,
       ...packCardDefaults,
+      ...directCardDefaults,
     };
 
     // 若声明了连续调制滑块交互，注入默认滑块偏好（若 Pack 未显式覆盖）

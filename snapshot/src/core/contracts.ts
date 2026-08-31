@@ -154,3 +154,72 @@ export interface PackManifest {
 }
 
 export type AnyManifest = PackManifest;
+
+/**
+ * 训练卡片独立自包含清单 (Card Manifest)
+ * 卡片作为系统一等公民的核心规范：涵盖元数据、设置、多语言、训练引擎逻辑与统计分析
+ */
+export interface CardManifest<
+  TQuestion = unknown,
+  THitResult = unknown,
+  TAnswerVal = unknown,
+  TSettings extends BaseModuleSettings = BaseModuleSettings,
+> {
+  /** 卡片全局唯一 ID (如 'star_single', 'color_hue') */
+  id: string;
+  /** 所属领域分类 / 文件夹分组 (如 'star', 'color', 'perspective')，用于 IDE 收纳与逻辑归类 */
+  groupId?: string;
+  /** 运行模式标识 (默认与 id 一致) */
+  mode?: string;
+  /** 卡片主矢量图标 */
+  icon: (props: { className?: string }) => ComponentChildren;
+  /** 五维本体语义标签 */
+  tags: CardTags;
+
+  /** 是否开启弱点专项分析功能 */
+  hasWeaknessAnalytics?: boolean;
+  /** 动态配置项描述列表 */
+  settingSchemas?: SettingFieldSchema[];
+  /** 卡片默认个性化设置项 */
+  defaultSettings?: Partial<TSettings>;
+
+  /** 卡片自包含的多语言词典 (可直接挂载 title, desc, instruction, hint 等) */
+  locales?: {
+    'zh-CN'?: Record<string, unknown>;
+    'en-US'?: Record<string, unknown>;
+    [lang: string]: Record<string, unknown> | undefined;
+  };
+
+  /** 卡片自闭环的训练引擎逻辑 */
+  training: {
+    /** 是否处于靶向弱点强化模式 */
+    isTargeting?: (settings: TSettings) => boolean;
+    /** 生成单道训练题目 */
+    generateQuestion: (level: number, settings: TSettings) => TQuestion;
+    /** 评估判定用户作答 */
+    evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
+    /** 判断该判定结果是否为命中 (Hit) */
+    isHit: (hitResult: THitResult) => boolean;
+    /** 获取题目的具体难度等级 (默认读取 question.difficultyLevel) */
+    getQuestionLevel?: (question: TQuestion) => number;
+    /** 提取入库持久化到 IndexedDB 的细节结构 */
+    extractRecordDetails?: (
+      question: TQuestion,
+      hitResult: THitResult,
+      userVal: TAnswerVal,
+    ) => Record<string, unknown>;
+    /** 渲染该卡片的 Canvas/交互视图 */
+    renderCanvas: (
+      props: TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
+    ) => ComponentChildren;
+  };
+
+  /** 卡片专属认知数据分析扩展 (可选) */
+  analytics?: {
+    views: CardAnalyticsView[];
+    fetchRecords?: (cardId: string) => Promise<UnifiedTrialRecord[]>;
+  };
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: type erasure for generic card manifest registry
+export type AnyCardManifest = CardManifest<any, any, any, any>;
