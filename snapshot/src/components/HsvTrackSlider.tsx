@@ -76,7 +76,9 @@ export function HsvTrackSlider({
 
   return (
     <div className="flex items-center gap-3 w-full">
-      <span className="w-5 font-bold font-mono text-muted-foreground text-sm text-center">{label}</span>
+      <span className="w-5 font-bold font-mono text-muted-foreground text-sm text-center">
+        {label}
+      </span>
 
       <div
         {...pointerProps}

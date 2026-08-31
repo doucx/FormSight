@@ -68,7 +68,9 @@ export function DiscoveryView({
             <Inbox className="w-8 h-8" />
           </div>
           <div className="text-base font-bold text-foreground">{t('home.noMatchTitle')}</div>
-          <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
+          <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
+            {t('home.noMatchDesc')}
+          </p>
           <button
             type="button"
             onClick={() => handleQueryChange({})}
