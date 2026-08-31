@@ -14,6 +14,8 @@ export const buttonVariants = cva(
           'border border-border bg-card hover:bg-accent hover:text-accent-foreground text-foreground',
         ghost:
           'hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground',
+        accent:
+          'bg-accent text-primary hover:bg-accent/80 border border-indigo-100 dark:border-indigo-900',
         danger:
           'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-200 dark:shadow-none',
       },
@@ -35,12 +37,27 @@ export const buttonVariants = cva(
 export interface ButtonProps
   extends JSX.HTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
   children?: ComponentChildren;
 }
 
-export function Button({ className, variant, size, children, ...props }: ButtonProps) {
+export function Button({
+  className,
+  variant,
+  size,
+  type = 'button',
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
   return (
-    <button className={cn(buttonVariants({ variant, size, className }))} {...props}>
+    <button
+      type={type}
+      disabled={disabled}
+      className={cn(buttonVariants({ variant, size, className }))}
+      {...props}
+    >
       {children}
     </button>
   );
