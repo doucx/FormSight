@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 执行第二轮定向清洗以彻底收敛各 Pack 画布与分析面板语义类名", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176617.9497116, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 在计划编辑器头部与计划 Hero 卡片中接入 Button 和 Badge UI 原语", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176690.5408816, "duration_ms": 0}}

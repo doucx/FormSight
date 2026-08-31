@@ -1,1067 +1,739 @@
-我已经准备好执行第二轮定向清洗。本次将系统性清除 `src/core/analytics/`、`src/components/stats/` 以及各个 Pack (`abstraction`, `angle`, `negative_space`, `perspective`, `star`) 中残留的 Canvas 背景和硬编码颜色类名（如 `border-slate-300 dark:border-slate-700`、`bg-white dark:bg-slate-950` 等），全面收敛为设计系统语义 Token。
+现在我们将推进阶段四：开始将业务层主干视图（`PlanEditorHeader.tsx`、`PlanHeroCard.tsx` 等）中的手写原生 `<button>` 与徽章容器替换为 `src/components/ui/` 导出的 `<Button>` 与 `<Badge>` 基础原语。
 
-## [WIP] refactor(ui): 执行第二轮定向清洗以彻底收敛各 Pack 画布与分析面板语义类名
+## [WIP] refactor(ui): 在计划编辑器头部与计划 Hero 卡片中接入 Button 和 Badge UI 原语
 
 ### 用户需求
-执行第二轮定向正则替换，批量消除核心分析诊断组件与各 Pack 画布容器中残留的 `bg-white dark:bg-slate-950`、`border-slate-300 dark:border-slate-700` 等硬编码类名，统一接入 Design System 语义变量。
+推进设计系统阶段四，在 `PlanEditorHeader` 和 `PlanHeroCard` 中采用统一的 `<Button>`（支持 `default`、`secondary`、`ghost`、`icon`、`iconSm` 变体）和 `<Badge>`（支持 `success`、`accent`、`secondary` 变体）原语，淘汰冗长散乱的内联按钮与标签类名。
 
 ### 评论
-本次清理是设计系统落地的关键收尾环节。消除散落在具体 Pack 与分析视图中的旧版双模类名后，整个应用的明暗模式切换将更加稳定自然，避免局部色块割裂，同时进一步减小代码体积。
+将主干业务界面的按钮和徽章统一收敛至 `<Button>` 与 `<Badge>` 原语，能让代码语义更清晰、键盘聚焦（`focus-visible:ring`）和点击形变（`active:scale-95`）等交互动效更加一致，并大幅减少手写冗余样式的代码量。
 
 ### 目标
-1. 清洗 `src/core/analytics/` 下的 `difficultyPlateauView.tsx` 与 `speedAccuracyView.tsx`，将诊断列表背景与文字收敛为 `bg-card`、`border-border`、`text-foreground` 与 `text-muted-foreground`。
-2. 清洗 `src/components/stats/ActivityHeatmapCard.tsx` 中的边框硬编码类名。
-3. 批量清洗 `abstraction`, `angle`, `negative_space`, `perspective`, `star` 等 Pack 中的 Canvas 容器样式（从 `border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950` 统一收敛为 `border-border bg-card`）。
+1. 在 `PlanEditorHeader.tsx` 中引入 `<Button>` 和 `<Badge>`，替换重命名确认、操作栏按钮组、下拉菜单触发器与主开始训练 CTA。
+2. 在 `PlanHeroCard.tsx` 中引入 `<Button>` 和 `<Badge>`，替换空计划状态 CTA、阶段徽章、编排按钮与主开始训练 CTA。
 
 ### 基本原理
-通过精确匹配并替换残余的双模类名，直接使用 Tailwind Token 配置的语义别名（如 `bg-card` 映射卡片背景、`border-border` 映射统一分界线、`bg-muted/60` 映射柔和底衬），保证 DOM 容器与 Canvas 绘制区域在明暗模式下的色值完全和谐对齐。
+利用 `cva` 驱动的 `<Button variant="..." size="...">` 与 `<Badge variant="..." size="...">` 原语，集中管理所有按钮的外观变体、状态尺寸以及深浅色暗态适配，使业务组件只关注行为逻辑与排版结构。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #comp/runtime #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/color-tokens-migration #task/action/refactor #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/ui #task/object/ui-primitives-adoption #task/action/refactor #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 清洗认知分析视图中的硬编码类名
+#### Acts 1: 在 `PlanEditorHeader.tsx` 中接入 `Button` 与 `Badge`
 
-我们将清洗 `difficultyPlateauView.tsx` 与 `speedAccuracyView.tsx` 中的容器与文字类名。
+我们将重构计划编辑器头部组件，用 UI 原语替换原生按钮与徽章。
 
 ~~~~~act
 patch_file
-src/core/analytics/difficultyPlateauView.tsx
+src/components/plan/editor/PlanEditorHeader.tsx
 ~~~~~
 ~~~~~typescript.old
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
-  }
+import {
+  Check,
+  Copy,
+  Download,
+  Edit3,
+  Layers,
+  MoreHorizontal,
+  Play,
+  Save,
+  Sparkles,
+  Upload,
+} from 'lucide-preact';
+import type { RefObject } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import type { TrainingPlan } from '../../../types/plan';
 
-  const mainLevel = [...levelStats].sort((a, b) => b.total - a.total)[0];
-  const maxLevel = Math.max(...levelStats.map((s) => s.level));
-
-  return (
-    <div className="space-y-2">
-      {mainLevel && (
-        <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl text-xs text-indigo-900 leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.levelFocusSummaryTitle')}: </span>
-          {i18n.t('analyticsModal.levelFocusSummaryDesc', {
-            max: maxLevel,
-            focus: mainLevel.level,
-            count: mainLevel.total,
-            acc: mainLevel.accuracy,
-          })}
-        </div>
-      )}
-
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1 pt-1">
-        {i18n.t('analyticsModal.levelDistributionTitle')}
-      </div>
-
-      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-        {levelStats.map((stat) => {
-          const ratio = Math.round((stat.total / totalTrials) * 100);
-          return (
-            <div
-              key={stat.level}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-black text-slate-800 min-w-[45px]">
-                  Lvl {stat.level}
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  {stat.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
+export interface PlanEditorHeaderProps {
 ~~~~~
 ~~~~~typescript.new
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-muted/60 border border-border rounded-2xl text-xs text-muted-foreground">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
-  }
+import {
+  Check,
+  Copy,
+  Download,
+  Edit3,
+  Layers,
+  MoreHorizontal,
+  Play,
+  Save,
+  Sparkles,
+  Upload,
+} from 'lucide-preact';
+import type { RefObject } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import type { TrainingPlan } from '../../../types/plan';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
 
-  const mainLevel = [...levelStats].sort((a, b) => b.total - a.total)[0];
-  const maxLevel = Math.max(...levelStats.map((s) => s.level));
-
-  return (
-    <div className="space-y-2">
-      {mainLevel && (
-        <div className="p-3 bg-accent border border-indigo-100 dark:border-indigo-900/60 rounded-2xl text-xs text-foreground leading-relaxed">
-          <span className="font-bold">{i18n.t('analyticsModal.levelFocusSummaryTitle')}: </span>
-          {i18n.t('analyticsModal.levelFocusSummaryDesc', {
-            max: maxLevel,
-            focus: mainLevel.level,
-            count: mainLevel.total,
-            acc: mainLevel.accuracy,
-          })}
-        </div>
-      )}
-
-      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1 pt-1">
-        {i18n.t('analyticsModal.levelDistributionTitle')}
-      </div>
-
-      <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-        {levelStats.map((stat) => {
-          const ratio = Math.round((stat.total / totalTrials) * 100);
-          return (
-            <div
-              key={stat.level}
-              className="p-2.5 bg-card border border-border rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-black text-foreground min-w-[45px]">
-                  Lvl {stat.level}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {stat.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
+export interface PlanEditorHeaderProps {
 ~~~~~
 
 ~~~~~act
 patch_file
-src/core/analytics/speedAccuracyView.tsx
+src/components/plan/editor/PlanEditorHeader.tsx
 ~~~~~
 ~~~~~typescript.old
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-500">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-        {i18n.t('analyticsModal.satDistributionTitle')}
-      </div>
-      <div className="space-y-1.5">
-        {bins.map((bin) => {
-          const ratio = totalTrials > 0 ? Math.round((bin.total / totalTrials) * 100) : 0;
-          return (
-            <div
-              key={bin.rangeLabel}
-              className="p-2.5 bg-white border border-slate-200/80 rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-bold text-slate-700 min-w-[70px]">
-                  {bin.rangeLabel}
-                </span>
-                <span className="text-[11px] text-slate-400">
-                  {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
-~~~~~
-~~~~~typescript.new
-  if (totalTrials === 0) {
-    return (
-      <div className="p-3 bg-muted/60 border border-border rounded-2xl text-xs text-muted-foreground">
-        {i18n.t('analyticsModal.needMoreSamples')}
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
-        {i18n.t('analyticsModal.satDistributionTitle')}
-      </div>
-      <div className="space-y-1.5">
-        {bins.map((bin) => {
-          const ratio = totalTrials > 0 ? Math.round((bin.total / totalTrials) * 100) : 0;
-          return (
-            <div
-              key={bin.rangeLabel}
-              className="p-2.5 bg-card border border-border rounded-xl flex items-center justify-between gap-2"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-xs font-bold text-foreground min-w-[70px]">
-                  {bin.rangeLabel}
-                </span>
-                <span className="text-[11px] text-muted-foreground">
-                  {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
-                </span>
-              </div>
-~~~~~
-
-#### Acts 2: 清洗统计组件中的边框样式
-
-我们将清洗 `ActivityHeatmapCard.tsx` 中的热力图单元格无记录边框。
-
-~~~~~act
-patch_file
-src/components/stats/ActivityHeatmapCard.tsx
-~~~~~
-~~~~~typescript.old
-  const getHeatmapColor = (count: number, isFuture: boolean) => {
-    if (isFuture) return 'bg-transparent border border-transparent';
-    if (count === 0) return 'bg-muted border border-slate-200/40 dark:border-slate-700/40';
-    if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
-~~~~~
-~~~~~typescript.new
-  const getHeatmapColor = (count: number, isFuture: boolean) => {
-    if (isFuture) return 'bg-transparent border border-transparent';
-    if (count === 0) return 'bg-muted border border-border/60';
-    if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
-~~~~~
-
-#### Acts 3: 清洗 Abstraction Pack 中的 Canvas 容器类名
-
-清洗 `GestureAxisView.tsx`、`NotanThresholdView.tsx`、`PaletteClusteringView.tsx`。
-
-~~~~~act
-patch_file
-src/packs/abstraction/components/GestureAxisView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) => {
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) => {
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/abstraction/components/NotanThresholdView.tsx
-~~~~~
-~~~~~typescript.old
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-white dark:bg-slate-950"
-                draw={(canvas) => {
-                  if (question.notanBuffer) {
-                    drawRawGrayscaleNoiseField(
-                      canvas,
-                      question.notanBuffer,
-                      question.notanFieldDim ?? 120,
-                      ABSTRACTION_2AFC_SIZE,
-                    );
-                  }
-                }}
-                deps={[question.notanBuffer, question.notanFieldDim]}
-              />
+              <button
+                type="button"
+                onClick={onNameSave}
+                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                title={t('common.confirm')}
+              >
+                <Check className="w-4 h-4" />
+              </button>
             </div>
-          }
-          rightContent={
-            <div className="w-full flex justify-center bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-white dark:bg-slate-950"
-                draw={(canvas) => {
-~~~~~
-~~~~~typescript.new
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-card"
-                draw={(canvas) => {
-                  if (question.notanBuffer) {
-                    drawRawGrayscaleNoiseField(
-                      canvas,
-                      question.notanBuffer,
-                      question.notanFieldDim ?? 120,
-                      ABSTRACTION_2AFC_SIZE,
-                    );
-                  }
-                }}
-                deps={[question.notanBuffer, question.notanFieldDim]}
-              />
+          ) : (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className="text-sm sm:text-lg font-black text-foreground truncate tracking-tight">
+                {currentPlan.name}
+              </h1>
+              <button
+                type="button"
+                onClick={onStartEditingName}
+                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                title={t('plan.renameTitle')}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+
+              {isNewPlan ? (
+                <span className="hidden sm:inline-flex text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-md border border-emerald-200 dark:border-emerald-800 flex-shrink-0 items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  {t('common.newPlanBadge')}
+                </span>
+              ) : currentPlan.isBuiltin ? (
+                <span className="hidden sm:inline-flex text-[10px] font-bold px-1.5 py-0.5 bg-accent text-primary rounded-md border border-indigo-100 dark:border-indigo-900 flex-shrink-0">
+                  {t('common.officialBadge')}
+                </span>
+              ) : null}
             </div>
-          }
-          rightContent={
-            <div className="w-full flex justify-center bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
-              <CanvasView
-                width={ABSTRACTION_2AFC_SIZE}
-                height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-border bg-card"
-                draw={(canvas) => {
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/abstraction/components/PaletteClusteringView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) =>
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={ABSTRACTION_CANVAS_SIZE}
-            height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) =>
-~~~~~
-
-#### Acts 4: 清洗 Angle Pack 中的 Canvas 容器类名
-
-清洗 `AngleEstimationView.tsx`、`AngleComparison2AfcView.tsx`、`AngleParallel2AfcView.tsx`。
-
-~~~~~act
-patch_file
-src/packs/angle/components/AngleEstimationView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={ANGLE_CANVAS_SIZE}
-            height={ANGLE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) => {
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={ANGLE_CANVAS_SIZE}
-            height={ANGLE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) => {
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/angle/components/AngleComparison2AfcView.tsx
-~~~~~
-~~~~~typescript.old
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
-              deps={[question.linesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.areaB'),
-        isCorrect: isBHit,
-        badge: showAnswer ? `${question.angleB}°` : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
-              deps={[question.linesB]}
-            />
-~~~~~
-~~~~~typescript.new
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
-              deps={[question.linesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.areaB'),
-        isCorrect: isBHit,
-        badge: showAnswer ? `${question.angleB}°` : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
-              deps={[question.linesB]}
-            />
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/angle/components/AngleParallel2AfcView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={ANGLE_PROMPT_SIZE}
-            height={ANGLE_PROMPT_SIZE}
-            className="w-28 h-28 rounded-xl border border-border shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) =>
-              drawSingleLineCanvas(
-                canvas,
-                question.promptLine,
-                ANGLE_PROMPT_SIZE,
-                CANVAS_THEME.status.accent,
-                3.0,
-              )
-            }
-            deps={[question.promptLine]}
-          />
+          )}
         </div>
-      }
-      optionA={{
-        title: t('common.optionA'),
-        isCorrect: isAHit,
-        badge: showAnswer
-          ? isAHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionA,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.optionB'),
-        isCorrect: isBHit,
-        badge: showAnswer
-          ? isBHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionB,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionB]}
-            />
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={ANGLE_PROMPT_SIZE}
-            height={ANGLE_PROMPT_SIZE}
-            className="w-28 h-28 rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) =>
-              drawSingleLineCanvas(
-                canvas,
-                question.promptLine,
-                ANGLE_PROMPT_SIZE,
-                CANVAS_THEME.status.accent,
-                3.0,
-              )
-            }
-            deps={[question.promptLine]}
-          />
+      </div>
+
+      {/* 右侧：桌面端平铺操作 & 移动端收纳操作 */}
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        {/* 桌面端平铺操作区 */}
+        <div className="hidden sm:flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onTogglePlanManager}
+            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
+              showPlanManager
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-muted text-foreground border-border hover:bg-accent'
+            }`}
+            title={t('plan.switchAndManageTitle')}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{t('plan.planLibraryTitle', { count: plansCount })}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onClonePlan}
+            className="p-2 text-muted-foreground hover:text-primary bg-muted hover:bg-accent border border-border rounded-xl transition-all cursor-pointer"
+            title={t('plan.cloneCopyTitle')}
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={onExportPlan}
+            className="p-2 text-muted-foreground hover:text-primary bg-muted hover:bg-accent border border-border rounded-xl transition-all cursor-pointer"
+            title={t('plan.exportJsonTitle')}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="p-2 text-muted-foreground hover:text-primary bg-muted hover:bg-accent border border-border rounded-xl transition-all cursor-pointer"
+            title={t('plan.importJsonTitle')}
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </button>
+
+          <div className="h-5 w-px bg-border mx-1" />
+
+          <button
+            type="button"
+            onClick={onSaveOnly}
+            disabled={currentPlan.items.length === 0}
+            className="px-3.5 py-2 text-xs font-bold text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{t('common.save')}</span>
+          </button>
         </div>
-      }
-      optionA={{
-        title: t('common.optionA'),
-        isCorrect: isAHit,
-        badge: showAnswer
-          ? isAHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionA,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.optionB'),
-        isCorrect: isBHit,
-        badge: showAnswer
-          ? isBHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
-          : undefined,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionB,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionB]}
-            />
-~~~~~
 
-#### Acts 5: 清洗 Negative Space Pack 中的 Canvas 容器类名
+        {/* 移动端更多操作弹层菜单 */}
+        <div ref={moreMenuRef} className="relative sm:hidden">
+          <button
+            type="button"
+            onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
+            className="p-2 text-muted-foreground bg-muted border border-border rounded-xl transition-all active:scale-95"
+            title={t('common.settings')}
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
 
-清洗 `RatioEstimationView.tsx`、`AreaComparison2AfcView.tsx`、`ShapeMemory2AfcView.tsx` 与 `VertexFittingView.tsx`。
-
-~~~~~act
-patch_file
-src/packs/negative_space/components/RatioEstimationView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full max-w-[340px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) => {
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full max-w-[340px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) => {
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/negative_space/components/AreaComparison2AfcView.tsx
-~~~~~
-~~~~~typescript.old
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesA,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.areaB'),
-        isCorrect: isBHit,
-        badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioB ?? 50 }),
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesB,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesB]}
-            />
-~~~~~
-~~~~~typescript.new
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesA,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesA]}
-            />
-          </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.areaB'),
-        isCorrect: isBHit,
-        badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioB ?? 50 }),
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesB,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesB]}
-            />
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/negative_space/components/ShapeMemory2AfcView.tsx
-~~~~~
-~~~~~typescript.old
-          <canvas
-            ref={canvasRef}
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-white dark:bg-slate-950"
-          />
-          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
-            <div
-              key={`${question.id}-${matchPhase}`}
-              className="bg-indigo-600 h-full"
-              style={{
-                width: '100%',
-                animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
-              }}
-            />
-          </div>
+          {showMobileMoreMenu && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-card rounded-2xl shadow-xl border border-border p-1.5 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onTogglePlanManager();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.libraryBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onClonePlan();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.cloneBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onExportPlan();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.exportBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.importBtn')}</span>
+              </button>
+              <div className="my-1 border-t border-border/60" />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onSaveOnly();
+                }}
+                disabled={currentPlan.items.length === 0}
+                className="w-full px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{t('common.save')}</span>
+              </button>
+            </div>
+          )}
         </div>
-      ) : (
-        <Choice2AfcContainer
-          optionA={{
-            key: 'A',
-            title: t('common.areaA'),
-            isCorrect: isTargetA,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefA}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-                />
-              </div>
-            ),
-          }}
-          optionB={{
-            key: 'B',
-            title: t('common.areaB'),
-            isCorrect: isTargetB,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefB}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-                />
-              </div>
-            ),
-          }}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={onImportPlan}
+          className="hidden"
+        />
+
+        {/* 统一开始训练主 CTA */}
+        <button
+          type="button"
+          onClick={onSaveAndStart}
+          disabled={currentPlan.items.length === 0}
+          className="px-3.5 py-2 sm:px-4 sm:py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>{t('plan.startPlan')}</span>
+        </button>
+      </div>
+    </header>
+  );
+}
 ~~~~~
 ~~~~~typescript.new
-          <canvas
-            ref={canvasRef}
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-card"
-          />
-          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
-            <div
-              key={`${question.id}-${matchPhase}`}
-              className="bg-indigo-600 h-full"
-              style={{
-                width: '100%',
-                animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
-              }}
-            />
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={onNameSave}
+                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 flex-shrink-0"
+                title={t('common.confirm')}
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 min-w-0">
+              <h1 className="text-sm sm:text-lg font-black text-foreground truncate tracking-tight">
+                {currentPlan.name}
+              </h1>
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={onStartEditingName}
+                className="flex-shrink-0 text-muted-foreground hover:text-primary"
+                title={t('plan.renameTitle')}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </Button>
+
+              {isNewPlan ? (
+                <Badge variant="success" size="sm" className="hidden sm:inline-flex flex-shrink-0">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  {t('common.newPlanBadge')}
+                </Badge>
+              ) : currentPlan.isBuiltin ? (
+                <Badge variant="accent" size="sm" className="hidden sm:inline-flex flex-shrink-0">
+                  {t('common.officialBadge')}
+                </Badge>
+              ) : null}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 右侧：桌面端平铺操作 & 移动端收纳操作 */}
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+        {/* 桌面端平铺操作区 */}
+        <div className="hidden sm:flex items-center gap-2">
+          <Button
+            variant={showPlanManager ? 'default' : 'secondary'}
+            size="sm"
+            onClick={onTogglePlanManager}
+            className={`gap-1.5 border ${showPlanManager ? 'border-indigo-600' : 'border-border'}`}
+            title={t('plan.switchAndManageTitle')}
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{t('plan.planLibraryTitle', { count: plansCount })}</span>
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onClonePlan}
+            className="border border-border"
+            title={t('plan.cloneCopyTitle')}
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={onExportPlan}
+            className="border border-border"
+            title={t('plan.exportJsonTitle')}
+          >
+            <Download className="w-3.5 h-3.5" />
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            className="border border-border"
+            title={t('plan.importJsonTitle')}
+          >
+            <Upload className="w-3.5 h-3.5" />
+          </Button>
+
+          <div className="h-5 w-px bg-border mx-1" />
+
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onSaveOnly}
+            disabled={currentPlan.items.length === 0}
+            className="gap-1.5"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{t('common.save')}</span>
+          </Button>
+        </div>
+
+        {/* 移动端更多操作弹层菜单 */}
+        <div ref={moreMenuRef} className="relative sm:hidden">
+          <Button
+            variant="secondary"
+            size="icon"
+            onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
+            className="border border-border"
+            title={t('common.settings')}
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </Button>
+
+          {showMobileMoreMenu && (
+            <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-card rounded-2xl shadow-xl border border-border p-1.5 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onTogglePlanManager();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.libraryBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onClonePlan();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.cloneBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onExportPlan();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.exportBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+              >
+                <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{t('plan.importBtn')}</span>
+              </button>
+              <div className="my-1 border-t border-border/60" />
+              <button
+                type="button"
+                onClick={() => {
+                  setShowMobileMoreMenu(false);
+                  onSaveOnly();
+                }}
+                disabled={currentPlan.items.length === 0}
+                className="w-full px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span>{t('common.save')}</span>
+              </button>
+            </div>
+          )}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={onImportPlan}
+          className="hidden"
+        />
+
+        {/* 统一开始训练主 CTA */}
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onSaveAndStart}
+          disabled={currentPlan.items.length === 0}
+          className="gap-1.5 px-3.5 sm:px-4"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>{t('plan.startPlan')}</span>
+        </Button>
+      </div>
+    </header>
+  );
+}
+~~~~~
+
+#### Acts 2: 在 `PlanHeroCard.tsx` 中接入 `Button` 与 `Badge`
+
+我们将重构首页今日训练流 Hero 卡片，使用 UI 原语替换按钮与徽章。
+
+~~~~~act
+patch_file
+src/components/plan/PlanHeroCard.tsx
+~~~~~
+~~~~~typescript.old
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Play,
+  Plus,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { TrainingPlan } from '../../types/plan';
+
+interface PlanHeroCardProps {
+~~~~~
+~~~~~typescript.new
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Play,
+  Plus,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { TrainingPlan } from '../../types/plan';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+
+interface PlanHeroCardProps {
+~~~~~
+
+~~~~~act
+patch_file
+src/components/plan/PlanHeroCard.tsx
+~~~~~
+~~~~~typescript.old
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">{t('plan.todayPlan')}</h2>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-muted text-muted-foreground rounded-full">
+                {t('common.empty')}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">{t('plan.emptyHeroDesc')}</p>
           </div>
         </div>
-      ) : (
-        <Choice2AfcContainer
-          optionA={{
-            key: 'A',
-            title: t('common.areaA'),
-            isCorrect: isTargetA,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefA}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-                />
-              </div>
-            ),
-          }}
-          optionB={{
-            key: 'B',
-            title: t('common.areaB'),
-            isCorrect: isTargetB,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefB}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-                />
-              </div>
-            ),
-          }}
-~~~~~
 
-~~~~~act
-patch_file
-src/packs/negative_space/components/VertexFittingView.tsx
-~~~~~
-~~~~~typescript.old
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftFittingRef}
-          width={FITTING_CANVAS_SIZE}
-          height={FITTING_CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-white dark:bg-slate-950 shadow-inner block"
-        />
+        <button
+          type="button"
+          onClick={onOpenEditor}
+          className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 flex-shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          {t('plan.customizeBtn')}
+        </button>
       </div>
+    );
+  }
 ~~~~~
 ~~~~~typescript.new
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftFittingRef}
-          width={FITTING_CANVAS_SIZE}
-          height={FITTING_CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
-        />
-      </div>
-~~~~~
-
-#### Acts 6: 清洗 Perspective Pack 中的 Canvas 容器类名
-
-清洗 `PerspectiveVpView.tsx`、`GestaltContinuation2AfcView.tsx`、`ProportionDivisionView.tsx` 与 `ProportionMigrationView.tsx`。
-
-~~~~~act
-patch_file
-src/packs/perspective/components/PerspectiveVpView.tsx
-~~~~~
-~~~~~typescript.old
-          <CanvasView
-            width={PERSPECTIVE_CANVAS_SIZE}
-            height={PERSPECTIVE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
-            draw={(canvas) => {
-~~~~~
-~~~~~typescript.new
-          <CanvasView
-            width={PERSPECTIVE_CANVAS_SIZE}
-            height={PERSPECTIVE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) => {
-~~~~~
-
-~~~~~act
-patch_file
-src/packs/perspective/components/GestaltContinuation2AfcView.tsx
-~~~~~
-~~~~~typescript.old
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionA,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionA]}
-            />
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">{t('plan.todayPlan')}</h2>
+              <Badge variant="secondary" size="sm">
+                {t('common.empty')}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{t('plan.emptyHeroDesc')}</p>
           </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.optionB'),
-        isCorrect: isBHit,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionB,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionB]}
-            />
+        </div>
+
+        <Button
+          variant="default"
+          onClick={onOpenEditor}
+          className="w-full sm:w-auto gap-2 flex-shrink-0 rounded-2xl"
+        >
+          <Plus className="w-4 h-4" />
+          {t('plan.customizeBtn')}
+        </Button>
+      </div>
+    );
+  }
 ~~~~~
-~~~~~typescript.new
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionA,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionA]}
-            />
+
+~~~~~act
+patch_file
+src/components/plan/PlanHeroCard.tsx
+~~~~~
+~~~~~typescript.old
+              ) : (
+                <h2 className="text-lg font-black text-foreground tracking-tight">{plan.name}</h2>
+              )}
+
+              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-accent text-primary border border-indigo-100 dark:border-indigo-900 rounded-full">
+                {t('plan.stageCount', { count: plan.items.length })}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
+              <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-slate-400" />
+                {t('plan.estimatedTime', { min: estimatedMin })}
+              </span>
+            </div>
           </div>
-        ),
-      }}
-      optionB={{
-        title: t('common.optionB'),
-        isCorrect: isBHit,
-        content: (
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionB,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionB]}
-            />
-~~~~~
+        </div>
 
-~~~~~act
-patch_file
-src/packs/perspective/components/ProportionDivisionView.tsx
-~~~~~
-~~~~~typescript.old
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('packs.perspective.cards.perspective_proportion_division.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950 touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
+        <button
+          type="button"
+          onClick={onOpenEditor}
+          className="px-3 py-1.5 text-xs font-bold bg-muted hover:bg-accent border border-border text-muted-foreground rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+          title={t('plan.editPlan')}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          {t('plan.editPlan')}
+        </button>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {plan.items.map((item, idx) => {
+          const card = registry.getCardById(item.cardId);
+          if (!card) return null;
+          const Icon = card.icon;
+          const cardTitle = getCardTitle(card, t);
+
+          return (
+            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-2 rounded-2xl shadow-inner">
+                <div className="w-5 h-5 rounded-lg bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
+                  {idx + 1}
+                </div>
+                <Icon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                <span className="text-[11px] font-mono font-bold text-primary bg-card px-1.5 py-0.5 rounded-lg border border-border/60 shadow-sm">
+                  {item.targetTrials}
+                  {t('common.trialsUnit')}
+                </span>
+              </div>
+              {idx < plan.items.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+        <div className="text-xs text-slate-400 font-medium">{t('plan.syncNotice')}</div>
+
+        <button
+          type="button"
+          onClick={onStartPlan}
+          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2 ml-auto"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {t('plan.startPlan')}
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+}
 ~~~~~
 ~~~~~typescript.new
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('packs.perspective.cards.perspective_proportion_division.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
-~~~~~
+              ) : (
+                <h2 className="text-lg font-black text-foreground tracking-tight">{plan.name}</h2>
+              )}
 
-~~~~~act
-patch_file
-src/packs/perspective/components/ProportionMigrationView.tsx
-~~~~~
-~~~~~typescript.old
-      {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-muted/60 border border-border rounded-2xl p-2.5 flex justify-center shadow-inner">
-        <CanvasView
-          width={280}
-          height={48}
-          className="w-full max-w-[280px] h-[48px] bg-white dark:bg-slate-950 rounded-xl border border-border shadow-sm"
-          draw={(canvas) => {
-            drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
-          }}
-          deps={[question.targetRatio]}
-        />
+              <Badge variant="accent" size="sm" className="rounded-full">
+                {t('plan.stageCount', { count: plan.items.length })}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-0.5">
+              <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-muted-foreground" />
+                {t('plan.estimatedTime', { min: estimatedMin })}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onOpenEditor}
+          className="gap-1.5 shadow-sm border border-border"
+          title={t('plan.editPlan')}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          {t('plan.editPlan')}
+        </Button>
       </div>
 
-      {/* 下方倾斜角度作答画布 */}
-      <div className="w-full bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex flex-col items-center gap-2">
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('packs.perspective.cards.perspective_proportion_migration.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950 touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
-~~~~~
-~~~~~typescript.new
-      {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-muted/60 border border-border rounded-2xl p-2.5 flex justify-center shadow-inner">
-        <CanvasView
-          width={280}
-          height={48}
-          className="w-full max-w-[280px] h-[48px] bg-card rounded-xl border border-border shadow-sm"
-          draw={(canvas) => {
-            drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
-          }}
-          deps={[question.targetRatio]}
-        />
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {plan.items.map((item, idx) => {
+          const card = registry.getCardById(item.cardId);
+          if (!card) return null;
+          const Icon = card.icon;
+          const cardTitle = getCardTitle(card, t);
+
+          return (
+            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-2 rounded-2xl shadow-inner">
+                <div className="w-5 h-5 rounded-lg bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
+                  {idx + 1}
+                </div>
+                <Icon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                <span className="text-[11px] font-mono font-bold text-primary bg-card px-1.5 py-0.5 rounded-lg border border-border/60 shadow-sm">
+                  {item.targetTrials}
+                  {t('common.trialsUnit')}
+                </span>
+              </div>
+              {idx < plan.items.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      {/* 下方倾斜角度作答画布 */}
-      <div className="w-full bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex flex-col items-center gap-2">
-        <canvas
-          ref={canvasRef}
-          width={PERSPECTIVE_CANVAS_SIZE}
-          height={PERSPECTIVE_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleMouseLeave}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('packs.perspective.cards.perspective_proportion_migration.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
-          }`}
-        />
-~~~~~
+      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+        <div className="text-xs text-muted-foreground font-medium">{t('plan.syncNotice')}</div>
 
-#### Acts 7: 清洗 Star Pack 中的 Canvas 容器类名
-
-清洗 `StarCanvas.tsx`。
-
-~~~~~act
-patch_file
-src/packs/star/views/StarCanvas.tsx
-~~~~~
-~~~~~typescript.old
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-white dark:bg-slate-950 shadow-inner block"
-        />
+        <Button
+          variant="default"
+          onClick={onStartPlan}
+          className="py-3 px-6 gap-2 ml-auto rounded-2xl"
+        >
+          <Play className="w-4 h-4 fill-current" />
+          {t('plan.startPlan')}
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Button>
       </div>
-~~~~~
-~~~~~typescript.new
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
-        />
-      </div>
+    </div>
+  );
+}
 ~~~~~
 
 ### 下一步建议
-1. **启动本地开发服务与构建校验**：运行 `npm run build` 或 `npx vitest run`，确认没有语法中断或类型断言问题。
-2. **提交 Git 变更**：若各模块外观在浅色和深色主题下表现一致，可通过独立的 `[COMMIT]` 计划创建 Git 提交。
-3. **推进阶段四**：逐步将 `PlanEditorHeader`、`Home` 等主干视图中的原生 `<button>` 替换为 `<Button variant="...">` 原语。
+1. **测试与交互验证**：在浏览器中打开工作台首页和计划编辑器，检查按钮点击涟漪、状态切换和键盘焦点表现。
+2. **继续推广 UI 原语至设置面板**：在 `GeneralPreferencesSection` 和 `DataGovernanceSection` 中，将备份、清理与重置操作按钮全面收敛至 `<Button>`。
+3. **提交已完成的重构**：确认变更无误后，生成包含 `git add` 和 `git commit` 的 `[COMMIT]` 计划以锁定进展。

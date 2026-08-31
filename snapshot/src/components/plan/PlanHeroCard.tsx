@@ -14,6 +14,8 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 interface PlanHeroCardProps {
   plan: TrainingPlan;
@@ -74,22 +76,22 @@ export function PlanHeroCard({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-foreground">{t('plan.todayPlan')}</h2>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-muted text-muted-foreground rounded-full">
+              <Badge variant="secondary" size="sm">
                 {t('common.empty')}
-              </span>
+              </Badge>
             </div>
-            <p className="text-xs text-slate-500 mt-1">{t('plan.emptyHeroDesc')}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('plan.emptyHeroDesc')}</p>
           </div>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={onOpenEditor}
-          className="w-full sm:w-auto px-5 py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2 flex-shrink-0"
+          className="w-full sm:w-auto gap-2 flex-shrink-0 rounded-2xl"
         >
           <Plus className="w-4 h-4" />
           {t('plan.customizeBtn')}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -183,30 +185,31 @@ export function PlanHeroCard({
                 <h2 className="text-lg font-black text-foreground tracking-tight">{plan.name}</h2>
               )}
 
-              <span className="text-[10px] font-extrabold px-2 py-0.5 bg-accent text-primary border border-indigo-100 dark:border-indigo-900 rounded-full">
+              <Badge variant="accent" size="sm" className="rounded-full">
                 {t('plan.stageCount', { count: plan.items.length })}
-              </span>
+              </Badge>
             </div>
-            <div className="flex items-center gap-3 text-xs text-slate-400 font-medium mt-0.5">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-0.5">
               <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3 text-slate-400" />
+                <Clock className="w-3 h-3 text-muted-foreground" />
                 {t('plan.estimatedTime', { min: estimatedMin })}
               </span>
             </div>
           </div>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={onOpenEditor}
-          className="px-3 py-1.5 text-xs font-bold bg-muted hover:bg-accent border border-border text-muted-foreground rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+          className="gap-1.5 shadow-sm border border-border"
           title={t('plan.editPlan')}
         >
           <Sliders className="w-3.5 h-3.5" />
           {t('plan.editPlan')}
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -238,17 +241,17 @@ export function PlanHeroCard({
       </div>
 
       <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-        <div className="text-xs text-slate-400 font-medium">{t('plan.syncNotice')}</div>
+        <div className="text-xs text-muted-foreground font-medium">{t('plan.syncNotice')}</div>
 
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={onStartPlan}
-          className="py-3 px-6 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-2 ml-auto"
+          className="py-3 px-6 gap-2 ml-auto rounded-2xl"
         >
           <Play className="w-4 h-4 fill-current" />
           {t('plan.startPlan')}
           <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       </div>
     </div>
   );
