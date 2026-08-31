@@ -21,8 +21,10 @@ export function applyThemeToDocument(themeMode: ThemeMode = 'system'): ResolvedT
 
   if (isDark) {
     document.documentElement.classList.add('dark');
+    document.documentElement.style.colorScheme = 'dark';
   } else {
     document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
   }
 
   return resolved;
