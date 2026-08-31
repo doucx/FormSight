@@ -3,7 +3,7 @@ import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
-import { type UnifiedProfileData, formatTotalTime } from '../utils/db/index';
+import { type UnifiedProfileData, formatTotalTime } from '../storage/index';
 
 interface HomeProps {
   totalTimeMs: number;
@@ -18,7 +18,7 @@ interface HomeProps {
   onNavigateToStats: () => void;
 }
 
-export function Home({
+export function HomeView({
   totalTimeMs,
   todayStats,
   profiles,

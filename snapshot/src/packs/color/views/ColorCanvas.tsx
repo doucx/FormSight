@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
+import { HsvTrackSlider } from '../../../components/common/HsvTrackSlider';
 import { Button } from '../../../components/ui/button';
 import {
   type ColorHitResult,

@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-preact';
-import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
+import { HsvTrackSlider } from '../../../components/common/HsvTrackSlider';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { Button } from '../../../components/ui/button';

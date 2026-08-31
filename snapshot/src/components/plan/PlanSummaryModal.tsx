@@ -148,7 +148,7 @@ export function PlanSummaryModal({
         {/* 底部动作按钮 */}
         <div className="grid grid-cols-2 gap-3 pt-1">
           <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
-            <Home className="w-4 h-4" />
+            <HomeView className="w-4 h-4" />
             <span>{t('common.completeAndReturnHome')}</span>
           </Button>
           <Button variant="default" onClick={onRestart} className="h-11 gap-1.5">

@@ -9,7 +9,7 @@ import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { useGlobalStatsData } from '../hooks/useGlobalStatsData';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
-import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
+import { renderTrendChartCanvas } from '../core/canvas/charts/drawTrendChart';
 
 interface GlobalStatsViewProps {
   onExit?: () => void;

@@ -13,9 +13,7 @@ export * from './color/oklchUtils';
 export * from './color/colorUtils';
 
 // 导出图形与几何计算
-export * from './canvas/hidpi';
-export * from './canvas/drawPointGrid';
-export * from './canvas/drawPolygon';
+export * from './canvas/index';
 export * from './geometry/pointGrid';
 
 // 导出引擎能力

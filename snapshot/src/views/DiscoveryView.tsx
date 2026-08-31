@@ -6,7 +6,7 @@ import { Button } from '../components/ui/button';
 import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { CardQueryOptions } from '../types/card';
-import type { UnifiedProfileData } from '../utils/db/index';
+import type { UnifiedProfileData } from '../storage/index';
 
 interface DiscoveryViewProps {
   todayStats: Record<string, { count: number; timeMs: number }>;

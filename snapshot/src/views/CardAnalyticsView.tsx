@@ -22,7 +22,7 @@ import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
 import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
 import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { UnifiedTrialRecord } from '../utils/db/index';
+import type { UnifiedTrialRecord } from '../storage/index';
 
 interface CardAnalyticsViewProps {
   cardId: string;

@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import type { UnifiedTrialRecord } from '../../utils/db/schema';
+import type { UnifiedTrialRecord } from '../../storage/schema';
 import {
   CANVAS_THEME,
   getAccuracyBadgeClass,

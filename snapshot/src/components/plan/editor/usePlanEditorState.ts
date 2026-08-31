@@ -9,7 +9,7 @@ import {
   loadPlanStorageState,
   savePlanStorageState,
   togglePlanFavorite,
-} from '../../../utils/planStorage';
+} from '../../../storage/planStorage';
 import {
   batchUpdateItemTrials,
   createNewBlankPlan,

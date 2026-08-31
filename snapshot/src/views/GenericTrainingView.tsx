@@ -1,10 +1,10 @@
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
 import { TrainingShell } from '../components/training/TrainingShell';
-import type { TrainingPlugin } from '../config/trainingPlugins';
+import type { TrainingPlugin } from '../core/contracts';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import type { CardDefinition } from '../types/card';
-import { saveSession, saveTrialRecord } from '../utils/db/index';
-import type { BaseModuleSettings, GlobalSettings } from '../utils/settings';
+import { saveSession, saveTrialRecord } from '../storage/index';
+import type { BaseModuleSettings, GlobalSettings } from '../storage/settings';
 
 export interface GenericTrainingViewProps<
   TQuestion = unknown,

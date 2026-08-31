@@ -1,7 +1,7 @@
 import { Clock, Globe, HelpCircle, Monitor, Moon, Sun, Volume2 } from 'lucide-preact';
 import { useTranslation } from '../../../core/i18n';
 import { applyThemeToDocument } from '../../../hooks/useTheme';
-import type { GlobalSettings, ThemeMode, UserSettings } from '../../../utils/settings';
+import type { GlobalSettings, ThemeMode, UserSettings } from '../../../storage/settings';
 import type { ToastType } from '../../common/Toast';
 import { Button } from '../../ui/button';
 import { SettingToggleItem } from '../common/SettingToggleItem';

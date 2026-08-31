@@ -1,6 +1,6 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
+import type { TrainingPlugin } from '../../core/contracts';
 import type { Point } from '../../types';
-import type { BaseModuleSettings } from '../../utils/settings';
+import type { BaseModuleSettings } from '../../storage/settings';
 import {
   type PerspectiveHitResult,
   type PerspectiveMode,

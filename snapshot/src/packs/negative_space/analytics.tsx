@@ -2,7 +2,7 @@ import { Crosshair } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
-import { getTrialRecordsByCard } from '../../utils/db/index';
+import { getTrialRecordsByCard } from '../../storage/index';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 
 export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {

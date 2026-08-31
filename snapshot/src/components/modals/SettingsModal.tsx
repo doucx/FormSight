@@ -7,12 +7,12 @@ import {
   type UserSettings,
   getCardSettings,
   saveSettings,
-} from '../utils/settings';
-import { ModalShell } from './common/ModalShell';
-import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Switch } from './ui/switch';
+} from '../../storage/settings';
+import { ModalShell } from '../common/ModalShell';
+import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Switch } from '../ui/switch';
 
 interface SettingsModalProps {
   card: CardDefinition;

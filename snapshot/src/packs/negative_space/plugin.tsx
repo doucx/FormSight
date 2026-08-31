@@ -1,6 +1,6 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
+import type { TrainingPlugin } from '../../core/contracts';
 import type { Point } from '../../types';
-import type { NegativeSpaceSettings } from '../../utils/settings';
+import type { NegativeSpaceSettings } from '../../storage/settings';
 import {
   type NegativeSpaceHitResult,
   type NegativeSpaceMode,

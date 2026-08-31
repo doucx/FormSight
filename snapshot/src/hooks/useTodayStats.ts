@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { getTodaySummaries } from '../utils/db/index';
+import { getTodaySummaries } from '../storage/index';
 
 export function useTodayStats() {
   const [todayStats, setTodayStats] = useState<Record<string, { count: number; timeMs: number }>>(
