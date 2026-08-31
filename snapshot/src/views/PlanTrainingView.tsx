@@ -2,6 +2,7 @@ import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
+import { Button } from '../components/ui/button';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
@@ -9,7 +10,6 @@ import { getProfile } from '../utils/db/index';
 import { type UserSettings, getCardSettings } from '../utils/settings';
 import { formatSecondsToTimer } from '../utils/time';
 import { GenericTrainingView } from './GenericTrainingView';
-import { Button } from '../components/ui/button';
 
 interface PlanTrainingViewProps {
   plan: TrainingPlan;

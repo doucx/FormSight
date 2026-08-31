@@ -2,8 +2,8 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
 import { useTrackPointer } from '../../hooks/useTrackPointer';
-import { QuestionCardShell } from './QuestionCardShell';
 import { Button } from '../ui/button';
+import { QuestionCardShell } from './QuestionCardShell';
 
 export interface StandardSliderViewProps {
   questionId: string;

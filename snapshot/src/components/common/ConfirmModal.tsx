@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
-import { ModalShell } from './ModalShell';
 import { Button } from '../ui/button';
+import { ModalShell } from './ModalShell';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -35,11 +35,7 @@ export function ConfirmModal({
         <p className="text-xs text-muted-foreground leading-relaxed">{message}</p>
 
         <div className="flex gap-2.5 pt-2">
-          <Button
-            variant="secondary"
-            onClick={onCancel}
-            className="w-full py-2.5 h-auto"
-          >
+          <Button variant="secondary" onClick={onCancel} className="w-full py-2.5 h-auto">
             {effectiveCancelText}
           </Button>
           <Button

@@ -1,9 +1,9 @@
 import type { ComponentChildren } from 'preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
+import { Button } from '../ui/button';
 import { ChoiceNafcContainer, type ChoiceNafcOption } from './ChoiceNafcContainer';
 import { QuestionCardShell } from './QuestionCardShell';
-import { Button } from '../ui/button';
 
 export interface StandardNafcViewProps<T = unknown> {
   questionId: string;

@@ -66,11 +66,7 @@ export function GlobalSettingsModal({
       />
 
       <div className="pt-2">
-        <Button
-          variant="default"
-          onClick={onClose}
-          className="w-full py-2.5 h-auto"
-        >
+        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
           {t('common.complete')}
         </Button>
       </div>

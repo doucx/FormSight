@@ -86,7 +86,9 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`text-xs font-bold truncate ${
-                          isAdded ? 'text-emerald-800 dark:text-emerald-200 dark:text-emerald-200' : 'text-foreground'
+                          isAdded
+                            ? 'text-emerald-800 dark:text-emerald-200 dark:text-emerald-200'
+                            : 'text-foreground'
                         }`}
                       >
                         {cardTitle}

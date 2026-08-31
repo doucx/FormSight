@@ -1,11 +1,11 @@
 import { ListOrdered, Sparkles } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CardPickerPanel } from '../components/plan/editor/CardPickerPanel';
-import { Button } from '../components/ui/button';
 import { PlanEditorHeader } from '../components/plan/editor/PlanEditorHeader';
 import { PlanLibraryDrawer } from '../components/plan/editor/PlanLibraryDrawer';
 import { PlanStageList } from '../components/plan/editor/PlanStageList';
 import { usePlanEditorState } from '../components/plan/editor/usePlanEditorState';
+import { Button } from '../components/ui/button';
 import { useTranslation } from '../core/i18n';
 import type { TrainingPlan } from '../types/plan';
 

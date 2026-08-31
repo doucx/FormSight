@@ -103,9 +103,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                     }`}
                   />
                   <span className="truncate flex-1">{item.label}</span>
-                  {active && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                  )}
+                  {active && <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />}
                 </button>
               );
             })}

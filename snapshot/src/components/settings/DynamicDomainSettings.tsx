@@ -1,6 +1,6 @@
 import { useTranslation } from '../../core/i18n';
-import { Button } from '../ui/button';
 import type { TargetingMode } from '../../utils/settings';
+import { Button } from '../ui/button';
 import { SettingToggleItem } from './common/SettingToggleItem';
 import { SliderMarginGroup } from './common/SliderMarginGroup';
 import { TargetingSection } from './common/TargetingSection';

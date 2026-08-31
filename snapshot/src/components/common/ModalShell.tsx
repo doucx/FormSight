@@ -1,6 +1,6 @@
 import { X } from 'lucide-preact';
-import { Button } from '../ui/button';
 import type { ComponentChildren } from 'preact';
+import { Button } from '../ui/button';
 
 interface ModalShellProps {
   title: string;

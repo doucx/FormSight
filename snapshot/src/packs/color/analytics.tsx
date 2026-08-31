@@ -105,7 +105,9 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 <div className="mt-2 space-y-1.5">
                   <p className="text-muted-foreground">
                     {i18n.t('packs.color.analytics.hueBias.maxBiasSector')}
-                    <span className="font-bold text-amber-700 dark:text-amber-300">{maxBiasSector.label}</span>
+                    <span className="font-bold text-amber-700 dark:text-amber-300">
+                      {maxBiasSector.label}
+                    </span>
                   </p>
                   <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm">
                     <div className="flex items-center gap-1.5">

@@ -1,7 +1,7 @@
 import { Crosshair } from 'lucide-preact';
 import { useTranslation } from '../../../core/i18n';
-import { Button } from '../../ui/button';
 import type { TargetingMode } from '../../../utils/settings';
+import { Button } from '../../ui/button';
 
 interface TargetingSectionProps {
   title?: string;

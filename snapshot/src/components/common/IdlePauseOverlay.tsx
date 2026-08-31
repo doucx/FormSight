@@ -26,11 +26,7 @@ export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
         <p className="text-xs text-muted-foreground leading-relaxed">
           {t('common.idlePausedDesc')}
         </p>
-        <Button
-          variant="default"
-          onClick={onResume}
-          className="mt-1 w-full py-2.5 h-auto"
-        >
+        <Button variant="default" onClick={onResume} className="mt-1 w-full py-2.5 h-auto">
           {t('common.clickToResume')}
         </Button>
       </div>
