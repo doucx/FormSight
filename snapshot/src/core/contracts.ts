@@ -1,5 +1,7 @@
 import type { ComponentChildren } from 'preact';
+import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { UnifiedTrialRecord } from '../storage/db/schema';
+import type { CardTags } from '../types/card';
 import type {
   AbstractionSettings,
   BaseModuleSettings,

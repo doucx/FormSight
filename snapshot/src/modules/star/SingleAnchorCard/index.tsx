@@ -146,7 +146,7 @@ export const starSingleCard: CardManifest<
       <SingleAnchorView
         question={question}
         showAnswer={showAnswer}
-        userAnswer={userAnswer}
+        userAnswer={userAnswer as { clickPoint: Point; hitResult: StarHitResult } | null}
         onAnswer={onAnswer}
         disabled={disabled}
       />

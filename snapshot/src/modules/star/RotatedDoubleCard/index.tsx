@@ -67,7 +67,7 @@ export const starDoubleRCard: CardManifest<
       <RotatedDoubleView
         question={question}
         showAnswer={showAnswer}
-        userAnswer={userAnswer}
+        userAnswer={userAnswer as { clickPoint: Point; hitResult: StarHitResult } | null}
         onAnswer={onAnswer}
         disabled={disabled}
       />

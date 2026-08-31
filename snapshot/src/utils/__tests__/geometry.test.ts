@@ -1,16 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calcDistance,
-  checkHit,
-  findNearestGridPoint,
-  generateBipolarGridPoints,
-  generatePolarGridPoints,
-  generateQuestion,
-  getDynamicCrosshairMetrics,
-  getDynamicDotRadius,
-  getGridMinSpacing,
-  rotatePoint,
-} from '../../packs/star/utils';
+import { evaluatePointGridHit, findNearestPointInGrid } from '../../core/geometry/pointGrid';
+import { generateBipolarGridPoints, generatePolarGridPoints } from '../../modules/star/_shared/gridGenerators';
+import { getDynamicCrosshairMetrics, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
+import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
+import { generateSingleAnchorQuestion as generateQuestion } from '../../modules/star/SingleAnchorCard/generator';
+import { getGridMinSpacing } from '../../core/canvas/drawPointGrid';
+
+const checkHit = (click: any, target: any, grid: any) => evaluatePointGridHit(click, target, grid);
+const findNearestGridPoint = (click: any, grid: any) => findNearestPointInGrid(click, grid);
 
 describe('geometry utils', () => {
   it('rotatePoint - should correctly rotate a point around center', () => {
