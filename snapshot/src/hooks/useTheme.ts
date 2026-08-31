@@ -13,60 +13,59 @@ export interface UseThemeResult {
   setTheme: (mode: ThemeMode) => void;
 }
 
+export function applyThemeToDocument(themeMode: ThemeMode = 'system'): ResolvedTheme {
+  if (typeof window === 'undefined') return 'light';
+  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const isDark = themeMode === 'dark' || (themeMode === 'system' && mediaQuery.matches);
+  const resolved: ResolvedTheme = isDark ? 'dark' : 'light';
+
+  if (isDark) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+
+  return resolved;
+}
+
 export function useTheme(externalSettings?: UserSettings): UseThemeResult {
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    return externalSettings?.global?.theme || loadSettings().global.theme || 'system';
-  });
+  const currentMode = externalSettings?.global?.theme || loadSettings().global.theme || 'system';
+  const [themeMode, setThemeMode] = useState<ThemeMode>(currentMode);
+  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
+    applyThemeToDocument(currentMode),
+  );
 
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() => {
-    if (typeof window === 'undefined') return 'light';
-    const initialMode = externalSettings?.global?.theme || loadSettings().global.theme || 'system';
-    if (initialMode === 'dark') return 'dark';
-    if (initialMode === 'light') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  // 同步外部设置传入的变更
+  // 同步外部设置传入的变更并即时应用
   useEffect(() => {
     const nextTheme = externalSettings?.global?.theme ?? 'system';
-    if (nextTheme !== themeMode) {
-      setThemeMode(nextTheme);
-    }
-  }, [externalSettings?.global?.theme, themeMode]);
+    setThemeMode(nextTheme);
+    const nextResolved = applyThemeToDocument(nextTheme);
+    setResolvedTheme(nextResolved);
+  }, [externalSettings?.global?.theme]);
 
-  // 监听 themeMode 和系统深浅色偏好变更，动态维护 <html> class="dark"
+  // 监听系统深浅色偏好变更
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const evaluateAndApplyTheme = () => {
-      const isDark = themeMode === 'dark' || (themeMode === 'system' && mediaQuery.matches);
-
-      const nextResolved: ResolvedTheme = isDark ? 'dark' : 'light';
-      setResolvedTheme(nextResolved);
-
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    evaluateAndApplyTheme();
-
     const handleMediaChange = () => {
-      if (themeMode === 'system') {
-        evaluateAndApplyTheme();
+      const activeMode = externalSettings?.global?.theme || loadSettings().global.theme || 'system';
+      if (activeMode === 'system') {
+        const nextResolved = applyThemeToDocument('system');
+        setResolvedTheme(nextResolved);
       }
     };
 
     mediaQuery.addEventListener('change', handleMediaChange);
     return () => mediaQuery.removeEventListener('change', handleMediaChange);
-  }, [themeMode]);
+  }, [externalSettings?.global?.theme]);
 
   const setTheme = useCallback((newMode: ThemeMode) => {
     setThemeMode(newMode);
+    const nextResolved = applyThemeToDocument(newMode);
+    setResolvedTheme(nextResolved);
+
     const current = loadSettings();
     const updated: UserSettings = {
       ...current,

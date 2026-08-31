@@ -33,6 +33,7 @@ export const PALETTE = {
   emerald: {
     50: '#ECFDF5',
     100: '#D1FAE5',
+    300: '#6EE7B7',
     400: '#34D399',
     500: '#10B981',
     600: '#059669',
@@ -42,6 +43,7 @@ export const PALETTE = {
   amber: {
     50: '#FFFBEB',
     100: '#FEF3C7',
+    300: '#FCD34D',
     400: '#FBBF24',
     500: '#F59E0B',
     600: '#D97706',
@@ -50,6 +52,7 @@ export const PALETTE = {
   rose: {
     50: '#FFF1F2',
     100: '#FFE4E6',
+    300: '#FDA4AF',
     400: '#FB7185',
     500: '#F43F5E',
     600: '#E11D48',
@@ -165,7 +168,48 @@ export const DARK_CANVAS_THEME = {
   },
 } as const;
 
-export type CanvasThemeTokens = typeof LIGHT_CANVAS_THEME;
+export interface CanvasThemeTokens {
+  bg: {
+    primary: string;
+    secondary: string;
+    subtle: string;
+  };
+  axis: {
+    line: string;
+    grid: string;
+    highlight: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    dark: string;
+    code: string;
+  };
+  status: {
+    hit: string;
+    hitDark: string;
+    miss: string;
+    missDark: string;
+    warning: string;
+    accent: string;
+    accentHover: string;
+    accentDark: string;
+  };
+  shape: {
+    fill: string;
+    stroke: string;
+    highlight: string;
+  };
+  pointGrid: {
+    dotDefault: string;
+    dotAnchor: string;
+    dotHover: string;
+    dotHit: string;
+    dotMiss: string;
+    crosshairTarget: string;
+  };
+}
 
 export function isDarkMode(): boolean {
   if (typeof document === 'undefined') return false;

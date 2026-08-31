@@ -1,5 +1,6 @@
 import { Clock, Globe, HelpCircle, Monitor, Moon, Sun, Volume2 } from 'lucide-preact';
 import { useTranslation } from '../../../core/i18n';
+import { applyThemeToDocument } from '../../../hooks/useTheme';
 import type { GlobalSettings, ThemeMode, UserSettings } from '../../../utils/settings';
 import type { ToastType } from '../../common/Toast';
 import { SettingToggleItem } from '../common/SettingToggleItem';
@@ -25,6 +26,7 @@ export function GeneralPreferencesSection({
   };
 
   const handleThemeChange = (newTheme: ThemeMode) => {
+    applyThemeToDocument(newTheme);
     onUpdateGlobal({ theme: newTheme });
     const themeLabel =
       newTheme === 'dark'
