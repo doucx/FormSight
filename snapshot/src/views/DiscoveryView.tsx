@@ -5,8 +5,8 @@ import { FilterEngine } from '../components/discovery/FilterEngine';
 import { Button } from '../components/ui/button';
 import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { CardQueryOptions } from '../types/card';
 import type { UnifiedProfileData } from '../storage/index';
+import type { CardQueryOptions } from '../types/card';
 
 interface DiscoveryViewProps {
   todayStats: Record<string, { count: number; timeMs: number }>;

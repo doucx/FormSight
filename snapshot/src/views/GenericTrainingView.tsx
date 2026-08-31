@@ -2,9 +2,9 @@ import type { SessionHistoryItem } from '../components/modals/SessionSummaryModa
 import { TrainingShell } from '../components/training/TrainingShell';
 import type { TrainingPlugin } from '../core/contracts';
 import { useTrainingSession } from '../hooks/useTrainingSession';
-import type { CardDefinition } from '../types/card';
 import { saveSession, saveTrialRecord } from '../storage/index';
 import type { BaseModuleSettings, GlobalSettings } from '../storage/settings';
+import type { CardDefinition } from '../types/card';
 
 export interface GenericTrainingViewProps<
   TQuestion = unknown,

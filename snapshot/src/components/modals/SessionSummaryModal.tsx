@@ -1,13 +1,13 @@
 import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
+import { renderSessionTrendChartCanvas } from '../../core/canvas/charts/drawTrendChart';
+import { ModalShell } from '../common/ModalShell';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import type { CardDefinition } from '../types/card';
-import { renderSessionTrendChartCanvas } from '../../core/canvas/charts/drawTrendChart';
-import { formatSecondsToTimer } from '../utils/time';
-import { ModalShell } from '../common/ModalShell';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { MetricCard } from '../ui/metric-card';
+import { formatSecondsToTimer } from '../utils/time';
 
 export interface SessionHistoryItem {
   trialIndex: number;

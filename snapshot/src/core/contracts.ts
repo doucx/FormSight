@@ -1,4 +1,3 @@
-import type { Point } from '../types';
 import type {
   AbstractionSettings,
   BaseModuleSettings,
@@ -7,6 +6,7 @@ import type {
   RelativeColorSettings,
   StarSettings,
 } from '../storage/settings';
+import type { Point } from '../types';
 
 export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
   question: TQuestion;
@@ -100,9 +100,9 @@ export type AnyDomainPlugin =
 export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;
 
 import type { ComponentChildren } from 'preact';
-import type { CardDefinition, PackMeta } from '../types/card';
 import type { UnifiedTrialRecord } from '../storage/schema';
 import type { BaseModuleSettings } from '../storage/settings';
+import type { CardDefinition, PackMeta } from '../types/card';
 
 export interface BaseInteractiveCardProps {
   disabled?: boolean;
@@ -156,4 +156,3 @@ export interface PackManifest {
 }
 
 export type AnyManifest = PackManifest;
-

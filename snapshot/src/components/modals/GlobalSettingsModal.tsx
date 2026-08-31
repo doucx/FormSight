@@ -1,6 +1,5 @@
 import { Sliders } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { useTranslation } from '../core/i18n';
 import {
   type GlobalSettings,
   type UserSettings,
@@ -9,6 +8,7 @@ import {
 } from '../../storage/settings';
 import { ModalShell } from '../common/ModalShell';
 import type { ToastType } from '../common/Toast';
+import { useTranslation } from '../core/i18n';
 import { DataGovernanceSection } from '../settings/sections/DataGovernanceSection';
 import { GeneralPreferencesSection } from '../settings/sections/GeneralPreferencesSection';
 import { Button } from '../ui/button';

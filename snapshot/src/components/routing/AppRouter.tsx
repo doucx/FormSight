@@ -1,10 +1,10 @@
 import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
-import type { TrainingPlan } from '../../types/plan';
-import type { UnifiedProfileData } from '../../storage/schema';
 import { saveTrainingPlan } from '../../storage/planStorage';
+import type { UnifiedProfileData } from '../../storage/schema';
 import { type UserSettings, getCardSettings } from '../../storage/settings';
+import type { TrainingPlan } from '../../types/plan';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
@@ -64,7 +64,8 @@ export function AppRouter({
   const renderMainContent = () => {
     if (route.type === 'home') {
       return (
-        <HomeView           totalTimeMs={totalTimeMs}
+        <HomeView
+          totalTimeMs={totalTimeMs}
           todayStats={todayStats}
           profiles={profiles}
           trainingPlan={trainingPlan}

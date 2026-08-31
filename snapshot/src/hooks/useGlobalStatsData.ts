@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
 import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../storage/index';
+import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 
 export function useGlobalStatsData() {
   const { t } = useTranslation();

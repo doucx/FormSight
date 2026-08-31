@@ -5,9 +5,9 @@ import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanS
 import { Button } from '../components/ui/button';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { TrainingPlan } from '../types/plan';
 import { getProfile } from '../storage/index';
 import { type UserSettings, getCardSettings } from '../storage/settings';
+import type { TrainingPlan } from '../types/plan';
 import { formatSecondsToTimer } from '../utils/time';
 import { GenericTrainingView } from './GenericTrainingView';
 

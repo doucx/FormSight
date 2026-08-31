@@ -1,4 +1,5 @@
 import type { AnyTrainingPlugin } from '../core/contracts';
+import { getTrialRecordsByCard } from '../storage/queries';
 import type {
   CardDefinition,
   CardQueryOptions,
@@ -9,7 +10,6 @@ import type {
   PackMeta,
   VisualDomainTag,
 } from '../types/card';
-import { getTrialRecordsByCard } from '../storage/queries';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';

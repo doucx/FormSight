@@ -1,11 +1,14 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
+import { renderHueRingCanvas } from '../../core/canvas/charts/drawColorRing';
+import type { SectorStat } from '../../core/canvas/charts/drawCompass';
+import {
+  calcSignedHueBias,
+  renderHueBiasChartCanvas,
+} from '../../core/canvas/charts/drawHueBiasChart';
 import { hsvToHex } from '../../core/color/colorUtils';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
-import { renderHueRingCanvas } from '../../core/canvas/charts/drawColorRing';
-import type { SectorStat } from '../../core/canvas/charts/drawCompass';
-import { calcSignedHueBias, renderHueBiasChartCanvas } from '../../core/canvas/charts/drawHueBiasChart';
 import { getTrialRecordsByCard } from '../../storage/index';
 
 const COLOR_SECTOR_KEYS = [

@@ -1,9 +1,9 @@
 import { Compass, Target } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
-import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
-import { i18n } from '../../core/i18n';
 import { type SectorStat, renderCompassCanvas } from '../../core/canvas/charts/drawCompass';
 import { renderHeatmapCanvas } from '../../core/canvas/charts/drawHeatmap';
+import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
+import { i18n } from '../../core/i18n';
 import { getTrialRecordsByCard } from '../../storage/index';
 
 const STAR_SECTOR_KEYS = [
