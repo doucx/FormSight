@@ -111,9 +111,8 @@ class I18nManager {
     }
 
     if (!params) return result as unknown as T;
-    return result.replace(
-      /\{\{(\w+)\}\}/g,
-      (_, match) => String(params[match] ?? `{{${match}}}`),
+    return result.replace(/\{\{(\w+)\}\}/g, (_, match) =>
+      String(params[match] ?? `{{${match}}}`),
     ) as unknown as T;
   };
 
