@@ -170,7 +170,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
             <ArrowLeft className="w-3.5 h-3.5" />
             {t('plan.exitPlan')}
           </Button>
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          <div className="h-4 w-px bg-border hidden sm:block" />
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-extrabold bg-accent text-primary border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
               {t('plan.stageProgress', { current: currentStepIndex + 1, total: validItems.length })}

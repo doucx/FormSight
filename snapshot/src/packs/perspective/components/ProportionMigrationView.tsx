@@ -228,7 +228,7 @@ export function ProportionMigrationView({
             <Badge
               variant="secondary"
               size="sm"
-              className="w-2 h-2 p-0 rounded-full border-none bg-slate-400"
+              className="w-2 h-2 p-0 rounded-full border-none bg-muted-foreground"
             />
             <span>{t('common.endPercent')}</span>
           </span>

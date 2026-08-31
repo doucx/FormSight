@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M Toast.tsx, M StatsMetricCards.tsx, M callout.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788179397.3658319, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 清理残留的硬编码样式类名并统一语义化令牌", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788179692.9908278, "duration_ms": 0}}
