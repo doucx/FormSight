@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 全局设置中添加外观主题切换器与单测适配", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169669.6351533, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 适配通用组件与训练交互视图的暗色模式样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169832.0356984, "duration_ms": 0}}

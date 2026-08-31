@@ -137,14 +137,14 @@ export function StandardSliderView({
     >
       {preview}
 
-      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+      <div className="w-full space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+        <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
           <span>{label}</span>
-          <span className="font-mono text-base font-black text-indigo-600">{formattedDisplay}</span>
+          <span className="font-mono text-base font-black text-indigo-600 dark:text-indigo-400">{formattedDisplay}</span>
         </div>
 
         <div className="flex items-center gap-3 w-full">
-          <span className="font-bold font-mono text-slate-400 text-xs">
+          <span className="font-bold font-mono text-slate-400 dark:text-slate-500 text-xs">
             {min}
             {unit}
           </span>
@@ -171,18 +171,18 @@ export function StandardSliderView({
           >
             <div
               ref={trackRef}
-              className="relative w-full h-7 rounded-xl bg-slate-200 border border-slate-300/80 shadow-inner flex items-center overflow-hidden"
+              className="relative w-full h-7 rounded-xl bg-slate-200 dark:bg-slate-700 border border-slate-300/80 dark:border-slate-600/80 shadow-inner flex items-center overflow-hidden"
             >
               {/* 当前激活进度条 */}
               <div
-                className="absolute top-0 bottom-0 left-0 bg-indigo-500/20"
+                className="absolute top-0 bottom-0 left-0 bg-indigo-500/20 dark:bg-indigo-400/20"
                 style={{ width: valToPercent(activeVal) }}
               />
 
               {/* 未揭晓状态下的指针 */}
               {!showAnswer && (
                 <div
-                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 -translate-x-1/2 z-20 shadow-sm"
+                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 dark:bg-indigo-400 -translate-x-1/2 z-20 shadow-sm"
                   style={{ left: valToPercent(activeVal) }}
                 />
               )}
@@ -191,11 +191,11 @@ export function StandardSliderView({
               {!showAnswer && showToleranceBand && tolerance !== undefined && tolerance > 0 && (
                 <>
                   <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 dark:bg-indigo-300/80 -translate-x-1/2"
                     style={{ left: valToPercent(activeVal - tolerance) }}
                   />
                   <div
-                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 -translate-x-1/2"
+                    className="absolute top-0 bottom-0 pointer-events-none z-10 w-0.5 bg-indigo-400/80 dark:bg-indigo-300/80 -translate-x-1/2"
                     style={{ left: valToPercent(activeVal + tolerance) }}
                   />
                 </>
@@ -205,12 +205,12 @@ export function StandardSliderView({
               {showAnswer && targetValue !== undefined && (
                 <>
                   <div
-                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white shadow-md"
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white dark:border-slate-900 shadow-md"
                     style={{ left: valToPercent(targetValue) }}
                   />
                   {userValue !== undefined && (
                     <div
-                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white shadow-md ${
+                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white dark:border-slate-900 shadow-md ${
                         isHit ? 'bg-emerald-500' : 'bg-rose-500'
                       }`}
                       style={{ left: valToPercent(userValue) }}
@@ -221,7 +221,7 @@ export function StandardSliderView({
             </div>
           </div>
 
-          <span className="font-bold font-mono text-slate-400 text-xs">
+          <span className="font-bold font-mono text-slate-400 dark:text-slate-500 text-xs">
             {max}
             {unit}
           </span>
