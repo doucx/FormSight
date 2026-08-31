@@ -4,6 +4,7 @@ import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { useTranslation } from '../../core/i18n';
 import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
+import { CANVAS_THEME } from '../../utils/theme';
 
 export interface PointClickCanvasProps {
   canvasSize: number;
@@ -114,7 +115,7 @@ export function PointClickCanvas({
       if (!loupeCtx) return;
 
       loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
-      loupeCtx.fillStyle = '#FFFFFF';
+      loupeCtx.fillStyle = CANVAS_THEME.bg.primary;
       loupeCtx.fillRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
       // 主画布采样的视口区域（直接以触控点为中心，不进行强制边界或网格吸附）
@@ -129,7 +130,7 @@ export function PointClickCanvas({
 
       // 绘制中心十字准星
       const center = LOUPE_SIZE / 2;
-      loupeCtx.strokeStyle = '#4F46E5';
+      loupeCtx.strokeStyle = CANVAS_THEME.status.accent;
       loupeCtx.lineWidth = 1.5;
 
       // 环形中心靶心

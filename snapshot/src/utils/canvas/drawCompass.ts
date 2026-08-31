@@ -1,4 +1,5 @@
 import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
+import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../theme';
 
 export interface SectorStat {
   sectorIdx: number;
@@ -36,17 +37,13 @@ export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     ctx.closePath();
 
     if (stat.total === 0) {
-      ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
-    } else if (stat.accuracy >= 80) {
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
-    } else if (stat.accuracy >= 60) {
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.fillStyle = hexToRgba(CANVAS_THEME.axis.line, 0.7);
     } else {
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
+      ctx.fillStyle = getAccuracyFillColor(stat.accuracy, stat.accuracy >= 80 ? 0.35 : stat.accuracy >= 60 ? 0.45 : 0.55);
     }
     ctx.fill();
 
-    ctx.strokeStyle = '#CBD5E1';
+    ctx.strokeStyle = CANVAS_THEME.axis.grid;
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -55,7 +52,7 @@ export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     const lx = cx + Math.cos(midA) * labelR;
     const ly = cy + Math.sin(midA) * labelR;
 
-    ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? '#E11D48' : '#64748B';
+    ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? CANVAS_THEME.status.missDark : CANVAS_THEME.text.secondary;
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -64,9 +61,9 @@ export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
 
   ctx.beginPath();
   ctx.arc(cx, cy, 10, 0, Math.PI * 2);
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
+  ctx.strokeStyle = CANVAS_THEME.bg.primary;
   ctx.lineWidth = 2;
   ctx.stroke();
 }

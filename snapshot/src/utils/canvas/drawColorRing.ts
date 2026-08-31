@@ -1,5 +1,6 @@
 import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
 import { hsvToHex } from '../../core/color/colorUtils';
+import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../theme';
 import type { SectorStat } from './drawCompass';
 
 export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
@@ -40,16 +41,12 @@ export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     ctx.closePath();
 
     if (stat.total === 0) {
-      ctx.fillStyle = 'rgba(226, 232, 240, 0.7)';
-    } else if (stat.accuracy >= 80) {
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.35)';
-    } else if (stat.accuracy >= 60) {
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+      ctx.fillStyle = hexToRgba(CANVAS_THEME.axis.line, 0.7);
     } else {
-      ctx.fillStyle = 'rgba(244, 63, 94, 0.55)';
+      ctx.fillStyle = getAccuracyFillColor(stat.accuracy, stat.accuracy >= 80 ? 0.35 : stat.accuracy >= 60 ? 0.45 : 0.55);
     }
     ctx.fill();
-    ctx.strokeStyle = '#CBD5E1';
+    ctx.strokeStyle = CANVAS_THEME.axis.grid;
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -58,7 +55,7 @@ export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     const lx = cx + Math.cos(midA) * labelR;
     const ly = cy + Math.sin(midA) * labelR;
 
-    ctx.fillStyle = stat.accuracy < 60 && stat.total >= 3 ? '#E11D48' : '#64748B';
+    ctx.fillStyle = stat.accuracy < 60 && stat.total >= 3 ? CANVAS_THEME.status.missDark : CANVAS_THEME.text.secondary;
     ctx.font = 'bold 10px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -69,16 +66,16 @@ export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
 
   ctx.beginPath();
   ctx.arc(cx, cy, innerRadius * 0.45, 0, Math.PI * 2);
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.fill();
-  ctx.strokeStyle = '#E2E8F0';
+  ctx.strokeStyle = CANVAS_THEME.axis.line;
   ctx.stroke();
 
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = CANVAS_THEME.text.primary;
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Hue', cx, cy - 5);
-  ctx.fillStyle = '#64748B';
+  ctx.fillStyle = CANVAS_THEME.text.secondary;
   ctx.font = '9px sans-serif';
   ctx.fillText('Accuracy', cx, cy + 8);
 }

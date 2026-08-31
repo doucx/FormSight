@@ -1,6 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import { getAccuracyBadgeClass, getAccuracyColor } from '../../utils/theme';
+import { CANVAS_THEME, getAccuracyBadgeClass, getAccuracyColor, hexToRgba } from '../../utils/theme';
 import { initSquareHiDpiCanvas } from '../canvas/hidpi';
 import { i18n } from '../i18n';
 
@@ -62,14 +62,14 @@ export function renderDifficultyPlateauVisualizer(
 
   for (const tick of yTicks) {
     const y = padding.top + (1 - tick / 100) * chartH;
-    ctx.strokeStyle = tick === 0 ? '#CBD5E1' : '#E2E8F0';
+    ctx.strokeStyle = tick === 0 ? CANVAS_THEME.axis.grid : CANVAS_THEME.axis.line;
     ctx.setLineDash(tick === 0 ? [] : [2, 2]);
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
     ctx.lineTo(width - padding.right, y);
     ctx.stroke();
 
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.fillText(`${tick}%`, padding.left - 5, y);
   }
   ctx.setLineDash([]);
@@ -83,8 +83,8 @@ export function renderDifficultyPlateauVisualizer(
 
   // 渐变面积背景
   const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-  gradient.addColorStop(0, 'rgba(79, 70, 229, 0.16)');
-  gradient.addColorStop(1, 'rgba(79, 70, 229, 0.01)');
+  gradient.addColorStop(0, hexToRgba(CANVAS_THEME.status.accent, 0.16));
+  gradient.addColorStop(1, hexToRgba(CANVAS_THEME.status.accent, 0.01));
 
   ctx.beginPath();
   ctx.moveTo(points[0].x, points[0].y);
@@ -99,7 +99,7 @@ export function renderDifficultyPlateauVisualizer(
 
   // 主折线
   ctx.beginPath();
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = 2.5;
   ctx.lineJoin = 'round';
   ctx.moveTo(points[0].x, points[0].y);
@@ -114,28 +114,28 @@ export function renderDifficultyPlateauVisualizer(
 
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = CANVAS_THEME.bg.primary;
     ctx.fill();
     ctx.strokeStyle = dotColor;
     ctx.lineWidth = 2.5;
     ctx.stroke();
 
     // 顶部胜率文字
-    ctx.fillStyle = '#1E293B';
+    ctx.fillStyle = CANVAS_THEME.text.primary;
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.fillText(`${stat.accuracy}%`, x, y - 6);
 
     // 底部 X 轴标签（Level）
-    ctx.fillStyle = '#475569';
+    ctx.fillStyle = CANVAS_THEME.text.secondary;
     ctx.font = 'bold 10px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(`L${stat.level}`, x, height - padding.bottom + 6);
 
     // 底部题量标签
-    ctx.fillStyle = '#94A3B8';
+    ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '8px sans-serif';
     ctx.fillText(`${stat.total}${i18n.t('common.trialsUnit')}`, x, height - padding.bottom + 18);
   }
