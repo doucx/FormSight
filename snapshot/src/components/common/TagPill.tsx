@@ -58,12 +58,16 @@ export function TagPill({
       } ${className}`}
     >
       {selected && <Check className="w-3 h-3 flex-shrink-0" />}
-      {!selected && Icon && <Icon className="w-3 h-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />}
+      {!selected && Icon && (
+        <Icon className="w-3 h-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />
+      )}
       <span>{label}</span>
       {count !== undefined && (
         <span
           className={`text-[10px] font-mono px-1 rounded ${
-            selected ? activeBadgeClass : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+            selected
+              ? activeBadgeClass
+              : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
           }`}
         >
           {count}

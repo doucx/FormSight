@@ -98,7 +98,9 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                 >
                   <Icon
                     className={`w-4 h-4 flex-shrink-0 ${
-                      active ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'
+                      active
+                        ? 'text-indigo-600 dark:text-indigo-400'
+                        : 'text-slate-400 dark:text-slate-500'
                     }`}
                   />
                   <span className="truncate flex-1">{item.label}</span>

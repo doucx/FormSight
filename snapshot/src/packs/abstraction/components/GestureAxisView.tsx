@@ -1,9 +1,9 @@
-import { CANVAS_THEME } from '../../../utils/theme';
 import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME } from '../../../utils/theme';
 import { drawParticlesCanvas } from '../canvas/drawParticles';
 import {
   ABSTRACTION_CANVAS_SIZE,

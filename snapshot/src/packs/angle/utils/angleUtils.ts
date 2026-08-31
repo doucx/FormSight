@@ -1,7 +1,7 @@
-import { CANVAS_THEME } from '../../../utils/theme';
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
+import { CANVAS_THEME } from '../../../utils/theme';
 
 export type AngleMode = 'ANGLE_ESTIMATION' | 'ANGLE_COMPARISON_2AFC' | 'PARALLEL_ALIGNMENT_2AFC';
 

@@ -1,9 +1,9 @@
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import {
   type NegativeSpaceHitResult,
   type NegativeSpaceQuestionData,

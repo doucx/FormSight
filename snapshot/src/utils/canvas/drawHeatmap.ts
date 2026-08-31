@@ -99,7 +99,10 @@ export function renderHeatmapCanvas(
           const count = bins[r * gridSize + c];
           if (count > 0) {
             const intensity = Math.log(count + 1) / Math.log(maxBinCount + 1);
-            ctx.fillStyle = hexToRgba(CANVAS_THEME.status.accentHover, Math.min(0.85, 0.15 + intensity * 0.7));
+            ctx.fillStyle = hexToRgba(
+              CANVAS_THEME.status.accentHover,
+              Math.min(0.85, 0.15 + intensity * 0.7),
+            );
             ctx.fillRect(c * cellW, r * cellH, cellW + 0.5, cellH + 0.5);
           }
         }

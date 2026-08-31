@@ -1,8 +1,8 @@
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import type { Point } from '../../../types';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import {
   FITTING_CANVAS_SIZE,
   type NegativeSpaceHitResult,

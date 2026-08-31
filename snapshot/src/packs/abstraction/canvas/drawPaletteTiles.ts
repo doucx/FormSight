@@ -1,6 +1,6 @@
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { hsvToHex } from '../../../core/color/colorUtils';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 
 export interface PaletteTile {
   x: number;

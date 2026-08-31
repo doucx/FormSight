@@ -1,6 +1,6 @@
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import {
   type LineSegment,
   PERSPECTIVE_2AFC_SIZE,

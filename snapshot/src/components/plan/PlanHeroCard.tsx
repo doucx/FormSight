@@ -73,7 +73,9 @@ export function PlanHeroCard({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{t('plan.todayPlan')}</h2>
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                {t('plan.todayPlan')}
+              </h2>
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-slate-100 text-slate-500 rounded-full">
                 {t('common.empty')}
               </span>
@@ -154,7 +156,9 @@ export function PlanHeroCard({
                             >
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-100">{p.name}</span>
+                                  <span className="text-xs font-bold truncate text-slate-800 dark:text-slate-100">
+                                    {p.name}
+                                  </span>
                                   {p.isBuiltin && (
                                     <span className="text-[9px] px-1 bg-slate-100 text-slate-500 rounded">
                                       {t('common.official')}
@@ -221,7 +225,9 @@ export function PlanHeroCard({
                   {idx + 1}
                 </div>
                 <Icon className="w-4 h-4 text-slate-600" />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{cardTitle}</span>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  {cardTitle}
+                </span>
                 <span className="text-[11px] font-mono font-bold text-indigo-600 dark:text-indigo-400 bg-white dark:bg-slate-900 px-1.5 py-0.5 rounded-lg border border-slate-100 dark:border-slate-700 shadow-sm">
                   {item.targetTrials}
                   {t('common.trialsUnit')}

@@ -79,7 +79,9 @@ export function SessionSummaryModal({
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{accuracy}%</span>
+              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
+                {accuracy}%
+              </span>
               <span className="text-xs font-semibold text-slate-400">
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>
@@ -109,7 +111,9 @@ export function SessionSummaryModal({
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">{t('summary.levelEvolution')}</div>
+              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+                {t('summary.levelEvolution')}
+              </div>
               <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
@@ -134,7 +138,9 @@ export function SessionSummaryModal({
         {/* 折线图 Canvas 区 */}
         <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{t('summary.curveTitle')}</span>
+            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+              {t('summary.curveTitle')}
+            </span>
             <div className="flex items-center gap-3 text-[10px]">
               <span className="flex items-center gap-1 text-emerald-600 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}

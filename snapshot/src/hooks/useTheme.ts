@@ -40,9 +40,7 @@ export function useTheme(externalSettings?: UserSettings): UseThemeResult {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const evaluateAndApplyTheme = () => {
-      const isDark =
-        themeMode === 'dark' ||
-        (themeMode === 'system' && mediaQuery.matches);
+      const isDark = themeMode === 'dark' || (themeMode === 'system' && mediaQuery.matches);
 
       const nextResolved: ResolvedTheme = isDark ? 'dark' : 'light';
       setResolvedTheme(nextResolved);

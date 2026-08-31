@@ -137,8 +137,12 @@ export function DataGovernanceSection({
             <Scissors className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">{t('settings.pruneTitle')}</div>
-            <div className="text-[11px] text-indigo-600 dark:text-indigo-400">{t('settings.pruneDesc')}</div>
+            <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+              {t('settings.pruneTitle')}
+            </div>
+            <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              {t('settings.pruneDesc')}
+            </div>
           </div>
         </div>
         <button

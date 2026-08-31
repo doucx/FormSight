@@ -50,7 +50,9 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
             <BarChart2 className="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{t('stats.title')}</h1>
+            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+              {t('stats.title')}
+            </h1>
             <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
           </div>
         </div>

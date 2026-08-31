@@ -39,7 +39,10 @@ export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     if (stat.total === 0) {
       ctx.fillStyle = hexToRgba(CANVAS_THEME.axis.line, 0.7);
     } else {
-      ctx.fillStyle = getAccuracyFillColor(stat.accuracy, stat.accuracy >= 80 ? 0.35 : stat.accuracy >= 60 ? 0.45 : 0.55);
+      ctx.fillStyle = getAccuracyFillColor(
+        stat.accuracy,
+        stat.accuracy >= 80 ? 0.35 : stat.accuracy >= 60 ? 0.45 : 0.55,
+      );
     }
     ctx.fill();
 
@@ -52,7 +55,10 @@ export function renderCompassCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
     const lx = cx + Math.cos(midA) * labelR;
     const ly = cy + Math.sin(midA) * labelR;
 
-    ctx.fillStyle = stat.accuracy < 60 && stat.total > 0 ? CANVAS_THEME.status.missDark : CANVAS_THEME.text.secondary;
+    ctx.fillStyle =
+      stat.accuracy < 60 && stat.total > 0
+        ? CANVAS_THEME.status.missDark
+        : CANVAS_THEME.text.secondary;
     ctx.font = 'bold 11px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

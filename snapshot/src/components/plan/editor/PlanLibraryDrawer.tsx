@@ -84,7 +84,9 @@ export function PlanLibraryDrawer({
                 className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
               >
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">{p.name}</span>
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-100 truncate">
+                    {p.name}
+                  </span>
                   {p.isBuiltin && (
                     <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
                       {t('plan.officialTag')}

@@ -1,8 +1,8 @@
-import { CANVAS_THEME } from '../../../utils/theme';
 import { Split } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME } from '../../../utils/theme';
 import {
   ANGLE_2AFC_SIZE,
   ANGLE_PROMPT_SIZE,
@@ -51,7 +51,13 @@ export function AngleParallel2AfcView({
             height={ANGLE_PROMPT_SIZE}
             className="w-28 h-28 rounded-xl border border-slate-200 shadow-sm bg-white"
             draw={(canvas) =>
-              drawSingleLineCanvas(canvas, question.promptLine, ANGLE_PROMPT_SIZE, CANVAS_THEME.status.accent, 3.0)
+              drawSingleLineCanvas(
+                canvas,
+                question.promptLine,
+                ANGLE_PROMPT_SIZE,
+                CANVAS_THEME.status.accent,
+                3.0,
+              )
             }
             deps={[question.promptLine]}
           />
@@ -72,7 +78,13 @@ export function AngleParallel2AfcView({
               height={ANGLE_2AFC_SIZE}
               className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
               draw={(canvas) =>
-                drawSingleLineCanvas(canvas, question.lineOptionA, ANGLE_2AFC_SIZE, CANVAS_THEME.shape.fill, 2.5)
+                drawSingleLineCanvas(
+                  canvas,
+                  question.lineOptionA,
+                  ANGLE_2AFC_SIZE,
+                  CANVAS_THEME.shape.fill,
+                  2.5,
+                )
               }
               deps={[question.lineOptionA]}
             />
@@ -94,7 +106,13 @@ export function AngleParallel2AfcView({
               height={ANGLE_2AFC_SIZE}
               className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white"
               draw={(canvas) =>
-                drawSingleLineCanvas(canvas, question.lineOptionB, ANGLE_2AFC_SIZE, CANVAS_THEME.shape.fill, 2.5)
+                drawSingleLineCanvas(
+                  canvas,
+                  question.lineOptionB,
+                  ANGLE_2AFC_SIZE,
+                  CANVAS_THEME.shape.fill,
+                  2.5,
+                )
               }
               deps={[question.lineOptionB]}
             />

@@ -131,7 +131,13 @@ export function renderInteractivePointGrid({
       ctx.stroke();
       ctx.setLineDash([]);
 
-      drawDot(ctx, userNearestPoint.x, userNearestPoint.y, CANVAS_THEME.pointGrid.dotMiss, dotRadius);
+      drawDot(
+        ctx,
+        userNearestPoint.x,
+        userNearestPoint.y,
+        CANVAS_THEME.pointGrid.dotMiss,
+        dotRadius,
+      );
     }
   }
 }

@@ -1,8 +1,8 @@
-import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import { Crosshair } from 'lucide-preact';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { getTrialRecordsByCard } from '../../utils/db/index';
+import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 
 export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
   cardId: 'neg_ratio_estimation',
@@ -37,7 +37,9 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
 
           ctx.beginPath();
           ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = r.isHit ? hexToRgba(CANVAS_THEME.status.hit, 0.7) : hexToRgba(CANVAS_THEME.status.miss, 0.7);
+          ctx.fillStyle = r.isHit
+            ? hexToRgba(CANVAS_THEME.status.hit, 0.7)
+            : hexToRgba(CANVAS_THEME.status.miss, 0.7);
           ctx.fill();
         }
       },

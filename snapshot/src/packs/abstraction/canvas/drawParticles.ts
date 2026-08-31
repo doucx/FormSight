@@ -1,6 +1,6 @@
-import { CANVAS_THEME } from '../../../utils/theme';
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
+import { CANVAS_THEME } from '../../../utils/theme';
 
 export function drawParticlesCanvas(
   canvas: HTMLCanvasElement | null,

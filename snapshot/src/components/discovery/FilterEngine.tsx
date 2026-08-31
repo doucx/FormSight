@@ -129,7 +129,9 @@ export function FilterEngine({
 
       {/* 扩展包 (Pack) 快速筛选标签 */}
       {packs.length > 0 && (
-        <div className={`space-y-1 border-t border-slate-200/60 dark:border-slate-800 ${isCompact ? 'pt-1.5' : 'pt-3'}`}>
+        <div
+          className={`space-y-1 border-t border-slate-200/60 dark:border-slate-800 ${isCompact ? 'pt-1.5' : 'pt-3'}`}
+        >
           <FilterSectionHeader icon={Boxes} title={t('home.allPacks')} />
           <div
             className={`flex gap-1 items-center ${

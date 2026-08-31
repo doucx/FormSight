@@ -176,7 +176,9 @@ export function getCurrentResolvedTheme(): ResolvedTheme {
   return isDarkMode() ? 'dark' : 'light';
 }
 
-export function getCanvasTheme(theme: ResolvedTheme = getCurrentResolvedTheme()): CanvasThemeTokens {
+export function getCanvasTheme(
+  theme: ResolvedTheme = getCurrentResolvedTheme(),
+): CanvasThemeTokens {
   return theme === 'dark' ? DARK_CANVAS_THEME : LIGHT_CANVAS_THEME;
 }
 
@@ -200,13 +202,13 @@ export function hexToRgba(hex: string, alpha: number): string {
   let b = 0;
 
   if (cleanHex.length === 3) {
-    r = parseInt(cleanHex[0] + cleanHex[0], 16);
-    g = parseInt(cleanHex[1] + cleanHex[1], 16);
-    b = parseInt(cleanHex[2] + cleanHex[2], 16);
+    r = Number.parseInt(cleanHex[0] + cleanHex[0], 16);
+    g = Number.parseInt(cleanHex[1] + cleanHex[1], 16);
+    b = Number.parseInt(cleanHex[2] + cleanHex[2], 16);
   } else if (cleanHex.length === 6 || cleanHex.length === 8) {
-    r = parseInt(cleanHex.substring(0, 2), 16);
-    g = parseInt(cleanHex.substring(2, 4), 16);
-    b = parseInt(cleanHex.substring(4, 6), 16);
+    r = Number.parseInt(cleanHex.substring(0, 2), 16);
+    g = Number.parseInt(cleanHex.substring(2, 4), 16);
+    b = Number.parseInt(cleanHex.substring(4, 6), 16);
   }
 
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
@@ -241,7 +243,8 @@ export function getAccuracyFillColor(accuracy: number, alpha = 0.35): string {
  */
 export function getAccuracyBadgeClass(accuracy: number, total = 1): string {
   if (total === 0) return 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500';
-  if (accuracy >= 80) return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300';
+  if (accuracy >= 80)
+    return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300';
   if (accuracy >= 60) return 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300';
   return 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300';
 }

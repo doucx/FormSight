@@ -77,7 +77,8 @@ export function ChoiceNafcContainer<T = unknown>({
           } else if (isSelected) {
             border = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
           } else {
-            border = 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-50';
+            border =
+              'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-50';
           }
         } else if (isSelected) {
           border =

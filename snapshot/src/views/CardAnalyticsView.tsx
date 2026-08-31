@@ -275,7 +275,9 @@ export function CardAnalyticsView({
                 <Target className="w-4 h-4 text-indigo-500" />
                 {t('common.accuracy')}
               </div>
-              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{summaryStats.accuracy}%</div>
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
+                {summaryStats.accuracy}%
+              </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">

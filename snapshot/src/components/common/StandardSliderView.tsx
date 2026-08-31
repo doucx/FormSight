@@ -140,7 +140,9 @@ export function StandardSliderView({
       <div className="w-full space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
           <span>{label}</span>
-          <span className="font-mono text-base font-black text-indigo-600 dark:text-indigo-400">{formattedDisplay}</span>
+          <span className="font-mono text-base font-black text-indigo-600 dark:text-indigo-400">
+            {formattedDisplay}
+          </span>
         </div>
 
         <div className="flex items-center gap-3 w-full">

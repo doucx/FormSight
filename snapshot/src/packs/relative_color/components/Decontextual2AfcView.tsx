@@ -1,8 +1,8 @@
-import { PALETTE } from '../../../utils/theme';
 import { Eye } from 'lucide-preact';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import { useTranslation } from '../../../core/i18n';
+import { PALETTE } from '../../../utils/theme';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface Decontextual2AfcViewProps {

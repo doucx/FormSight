@@ -1,6 +1,11 @@
 import type { ComponentChildren } from 'preact';
 import type { UnifiedTrialRecord } from '../../utils/db/schema';
-import { CANVAS_THEME, getAccuracyBadgeClass, getAccuracyColor, hexToRgba } from '../../utils/theme';
+import {
+  CANVAS_THEME,
+  getAccuracyBadgeClass,
+  getAccuracyColor,
+  hexToRgba,
+} from '../../utils/theme';
 import { initSquareHiDpiCanvas } from '../canvas/hidpi';
 import { i18n } from '../i18n';
 

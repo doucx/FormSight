@@ -1,167 +1,42 @@
-我们将编写一个专业的 Python 检查脚本 `scripts/check_dark_mode.py`。该脚本能够深度静态分析 `src/components` 和 `src/views` 中的所有 `.tsx` 文件，智能检测存在亮色样式（如 `bg-white`、`text-slate-800`、`border-slate-200` 等）但缺失对应 `dark:*` 变体的代码行，并输出格式化的审计报告。
+# 📸 Snapshot Capture
 
-## [WIP] feat(tooling): 添加夜间模式样式覆盖度检查脚本
+### 💬 备注:
+checkf
 
-### 用户需求
-创建一个可复用的 Python 工具脚本，用于静态扫描全站 TSX 组件并检测是否存在遗漏的亮色样式与未适配暗色变体的类名。
+检测到工作区发生变更。
 
-### 评论
-在大型前端项目中，纯人工核对往往容易遗漏偶发的嵌套类名或边缘条件分支。编写静态规则扫描脚本不仅能帮助当前阶段快速定位潜在的深色遗漏点，还可在后续 CI/CD 或新增组件时作为一致性校验工具。
-
-### 目标
-1. 在 `scripts/check_dark_mode.py` 中实现 AST/正则结合的智能暗色覆盖度审计器。
-2. 识别常见的未配对样式规则（`bg-white`、`bg-slate-50/100`、`text-slate-700/800/900`、`border-slate-100/200` 等）。
-3. 智能排除固定对比度元素（如主色实心按钮 `bg-indigo-600 text-white`、纯黑数字胶囊等）。
-4. 运行脚本并输出全量代码库的夜间模式覆盖审计报告。
-
-### 基本原理
-利用 Python 对 `src/components` 与 `src/views` 目录下的 `.tsx` 文件进行遍历，提取 `className` 属性中的所有类名 Token。针对每一个背景、文字、边框类名进行双向匹配：若存在亮色 Token 但同组上下文中未声明 `dark:` 规则，且不在白名单豁免列表中，则记录并按文件与行号汇总输出。
-
-### 标签
-#intent/tooling #flow/ready #priority/medium #comp/build #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/dark-mode-linter #task/action/scripting #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建 Python 暗色模式检查脚本
-
-在 `scripts/check_dark_mode.py` 中编写静态扫描工具。
-
-~~~~~act
-write_file
-scripts/check_dark_mode.py
-~~~~~
-~~~~~python
-#!/usr/bin/env python3
-"""
-FormSight Dark Mode Coverage Linter
-扫描 src/ 下的所有 .tsx 组件，检查是否存在有浅色背景/文字/边框但缺少 dark:* 对应的类名。
-"""
-
-import os
-import re
-import sys
-from pathlib import Path
-
-# 关注的浅色特征类名
-PATTERNS = [
-    # 1. 浅色背景 (需配对 dark:bg-*)
-    (
-        r'\b(bg-white|bg-slate-50(?:/\d+)?|bg-slate-100(?:/\d+)?)\b',
-        r'dark:bg-',
-        'Missing dark background (dark:bg-*)',
-    ),
-    # 2. 深色文字 (需配对 dark:text-*)
-    (
-        r'\b(text-slate-900|text-slate-800|text-slate-700)\b',
-        r'dark:text-',
-        'Missing dark text (dark:text-*)',
-    ),
-    # 3. 浅色边框 (需配对 dark:border-*)
-    (
-        r'\b(border-slate-200(?:/\d+)?|border-slate-100|border-gray-100|border-gray-200(?:/\d+)?)\b',
-        r'dark:border-',
-        'Missing dark border (dark:border-*)',
-    ),
-]
-
-# 允许豁免的固定对比度场景 (如强制白底主色按钮、黑底白字胶囊等)
-EXEMPT_COMBINATIONS = [
-    r'bg-slate-800\s+text-white',
-    r'bg-indigo-600\s+text-white',
-    r'bg-emerald-600\s+text-white',
-    r'bg-rose-600\s+text-white',
-    r'bg-amber-600\s+text-white',
-    r'text-white\s+bg-slate-800',
-    r'text-white\s+bg-indigo-600',
-]
-
-def scan_file(file_path: Path):
-    issues = []
-    with open(file_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-
-    for idx, line in enumerate(lines, 1):
-        # 提取 className 内容
-        class_matches = re.findall(r'className=(?:\{`([^`]+)`\}|"([^"]+)")', line)
-        for match in class_matches:
-            class_str = match[0] or match[1]
-
-            # 检查是否命中豁免组合
-            is_exempt = any(re.search(ex, class_str) for ex in EXEMPT_COMBINATIONS)
-
-            for light_regex, dark_regex, desc in PATTERNS:
-                light_match = re.search(light_regex, class_str)
-                if light_match:
-                    has_dark = bool(re.search(dark_regex, class_str))
-                    if not has_dark and not is_exempt:
-                        matched_token = light_match.group(1)
-                        issues.append({
-                            'line': idx,
-                            'token': matched_token,
-                            'desc': desc,
-                            'snippet': line.strip()[:100],
-                        })
-
-    return issues
-
-def main():
-    root_dir = Path(__file__).resolve().parent.parent / 'src'
-    target_dirs = [
-        root_dir / 'components',
-        root_dir / 'views',
-        root_dir / 'app.tsx',
-    ]
-
-    total_scanned = 0
-    total_issues = 0
-    file_reports = {}
-
-    for target in target_dirs:
-        if target.is_file() and target.suffix == '.tsx':
-            files = [target]
-        elif target.is_dir():
-            files = list(target.rglob('*.tsx'))
-        else:
-            continue
-
-        for file_path in sorted(files):
-            total_scanned += 1
-            issues = scan_file(file_path)
-            if issues:
-                rel_path = file_path.relative_to(root_dir.parent)
-                file_reports[str(rel_path)] = issues
-                total_issues += len(issues)
-
-    print("=" * 70)
-    print("🔍 FormSight 夜间模式覆盖度扫描审计")
-    print("=" * 70)
-    print(f"扫描组件总数: {total_scanned} 个 TSX 文件")
-    print(f"检测到潜在遗漏: {total_issues} 处\n")
-
-    if not file_reports:
-        print("✅ 完美！未检测到任何缺失 dark:* 变体的浅色类名，夜间模式覆盖率达到 100%！")
-        print("=" * 70)
-        sys.exit(0)
-
-    for file_name, issues in file_reports.items():
-        print(f"\n📂 {file_name} ({len(issues)} 处待核对):")
-        for iss in issues:
-            print(f"  • Line {iss['line']:3d}: [{iss['token']}] -> {iss['desc']}")
-            print(f"    代码片段: {iss['snippet']}")
-
-    print("\n" + "=" * 70)
-    print(f"⚠️  共发现 {total_issues} 处潜在需补充深色适配项。")
-
-if __name__ == '__main__':
-    main()
-~~~~~
-
-### 下一步建议
-
-检查脚本已经建立并在代码库中就绪。
-
-你可以随时在本地运行 `python3 scripts/check_dark_mode.py` 辅助核查。如果后续还有新增的扩展包（Packs）或视图组件，该脚本也可以直接作为质量与样式规范门禁。
-
-请查看扫描结果，如有需要微调的细节可随时告诉我；若对夜间模式的完整实现满意，我们即可生成最终的 `[COMMIT]` 计划！
+### 📝 变更文件摘要:
+```
+src/components/SessionSummaryModal.tsx             | 12 +++++++---
+ src/components/common/Choice2AfcContainer.tsx      |  7 ++++--
+ src/components/common/ChoiceNafcContainer.tsx      |  3 ++-
+ src/components/common/QuestionCardShell.tsx        |  4 +++-
+ src/components/common/StandardSliderView.tsx       |  4 +++-
+ src/components/common/TagPill.tsx                  |  8 +++++--
+ src/components/discovery/FilterEngine.tsx          |  4 +++-
+ src/components/navigation/AppNavigation.tsx        |  4 +++-
+ src/components/plan/PlanHeroCard.tsx               | 12 +++++++---
+ src/components/plan/PlanSummaryModal.tsx           |  8 +++++--
+ src/components/plan/editor/PlanLibraryDrawer.tsx   |  4 +++-
+ src/components/plan/editor/PlanStageList.tsx       |  4 +++-
+ .../settings/common/SliderMarginGroup.tsx          |  4 +++-
+ .../settings/sections/DataGovernanceSection.tsx    |  8 +++++--
+ src/components/stats/ActivityHeatmapCard.tsx       |  3 ++-
+ src/components/training/TrainingShell.tsx          |  4 +++-
+ src/core/analytics/difficultyPlateauView.tsx       |  7 +++++-
+ src/core/analytics/speedAccuracyView.tsx           |  7 +++++-
+ src/core/canvas/drawPointGrid.ts                   |  8 ++++++-
+ src/hooks/useTheme.ts                              |  6 ++---
+ src/packs/abstraction/canvas/drawPaletteTiles.ts   |  2 +-
+ src/packs/abstraction/canvas/drawParticles.ts      |  2 +-
+ .../abstraction/components/GestureAxisView.tsx     |  2 +-
+ .../abstraction/components/TopDown2AfcView.tsx     |  2 +-
+ .../abstraction/components/TopDownPatternView.tsx  |  2 +-
+ .../angle/components/AngleParallel2AfcView.tsx     | 26 ++++++++++++++++++----
+ src/packs/angle/utils/angleUtils.ts                |  2 +-
+ src/packs/negative_space/analytics.tsx             |  6 +++--
+ .../components/AreaComparison2AfcView.tsx          |  2 +-
+ .../components/RatioEstimationView.tsx             |  2 +-
+ ...
+ 43 files changed, 202 insertions(+), 73 deletions(-)
+```

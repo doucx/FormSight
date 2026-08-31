@@ -1,9 +1,9 @@
-import { CANVAS_THEME } from '../../../utils/theme';
 import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import { useTranslation } from '../../../core/i18n';
+import { CANVAS_THEME } from '../../../utils/theme';
 import { drawPaletteTilesCanvas } from '../canvas/drawPaletteTiles';
 import {
   ABSTRACTION_2AFC_SIZE,

@@ -64,7 +64,8 @@ export function Choice2AfcContainer({
       } else if (isSelected) {
         borderStyle = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
       } else {
-        borderStyle = 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60';
+        borderStyle =
+          'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60';
       }
     } else if (isSelected) {
       borderStyle =
@@ -94,7 +95,9 @@ export function Choice2AfcContainer({
           )}
 
           {showAnswer && !isTarget && opt.badge && (
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">{opt.badge}</span>
+            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+              {opt.badge}
+            </span>
           )}
         </div>
 

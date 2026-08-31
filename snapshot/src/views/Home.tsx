@@ -112,7 +112,9 @@ export function Home({
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">{cardTitle}</div>
+                      <div className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                        {cardTitle}
+                      </div>
                       <div className="text-[10px] text-slate-400 font-mono">Lvl {currentLvl}</div>
                     </div>
                   </div>
@@ -154,7 +156,9 @@ export function Home({
           </div>
           <div className="text-[11px] text-slate-400 pt-0.5">
             {t('common.accuracy')}:{' '}
-            <span className="font-bold text-slate-700 dark:text-slate-200 font-mono">{overallAccuracy}%</span>
+            <span className="font-bold text-slate-700 dark:text-slate-200 font-mono">
+              {overallAccuracy}%
+            </span>
           </div>
         </div>
 
@@ -178,7 +182,9 @@ export function Home({
             <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
           </div>
           <div className="mt-2">
-            <div className="text-sm font-black text-slate-800 dark:text-slate-100">{t('home.allPacks')}</div>
+            <div className="text-sm font-black text-slate-800 dark:text-slate-100">
+              {t('home.allPacks')}
+            </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {t('home.matchedModules', { count: registry.getAllCards().length })}
             </p>
