@@ -19,7 +19,7 @@ interface HeatmapWeek {
 const TOTAL_WEEKS = 53;
 
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // 1. 构建日期-答题量映射表
@@ -33,10 +33,10 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
   // 2. 解析多语言月份数组
   const monthNames = useMemo(() => {
-    const raw = t('stats.heatmapMonths');
-    if (Array.isArray(raw)) return raw as string[];
+    const raw = t<string[]>('stats.heatmapMonths');
+    if (Array.isArray(raw)) return raw;
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  }, [t]);
+  }, [t, locale]);
 
   // 3. 构建 53 周 x 7 天 (周日~周六) 矩阵
   const { weeks, totalTrialsPastYear } = useMemo(() => {
