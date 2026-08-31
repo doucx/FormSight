@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calcDistance,
-  checkHit,
-  findNearestGridPoint,
-  generateBipolarGridPoints,
-  generatePolarGridPoints,
-  generateQuestion,
-  getDynamicCrosshairMetrics,
-  getDynamicDotRadius,
-  getGridMinSpacing,
-  rotatePoint,
-} from '../../packs/star/utils';
+import { getDynamicCrosshairMetrics, getDynamicDotRadius, getGridMinSpacing } from '../../core/canvas/drawPointGrid';
+import { evaluatePointGridHit, findNearestGridPoint } from '../../core/geometry/pointGrid';
+import { generateBipolarGridPoints, generatePolarGridPoints } from '../../modules/star/_shared/gridGenerators';
+import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
+import { generateHorizontalDoubleQuestion } from '../../modules/star/HorizontalDoubleCard/generator';
+import { generateRotatedDoubleQuestion } from '../../modules/star/RotatedDoubleCard/generator';
+import { generateSingleAnchorQuestion } from '../../modules/star/SingleAnchorCard/generator';
+import type { StarSettings } from '../../storage/settings';
+
+const mockSettings: StarSettings = {
+  autoNext: true,
+  autoNextDelay: 500,
+  stepGranularity: 'standard',
+  adaptiveMode: 'block',
+  targetAccuracy: 0.8,
+  blockSize: 10,
+};
 
 describe('geometry utils', () => {
   it('rotatePoint - should correctly rotate a point around center', () => {
@@ -64,7 +69,7 @@ describe('geometry utils', () => {
       { x: 10, y: 10 },
       { x: 30, y: 30 },
     ];
-    const hitResult = checkHit({ x: 10.1, y: 10.1 }, targetB, grid);
+    const hitResult = evaluatePointGridHit({ x: 10.1, y: 10.1 }, targetB, grid);
     expect(hitResult.isHit).toBe(true);
     expect(hitResult.errorDistance).toBeLessThan(0.5);
   });
@@ -91,33 +96,31 @@ describe('geometry utils', () => {
   });
 
   it('generateQuestion - should generate valid question data for single, double_h and double_r', () => {
-    const qSingle = generateQuestion('single', 1);
-    expect(qSingle.mode).toBe('single');
+    const qSingle = generateSingleAnchorQuestion(1, mockSettings);
     expect(qSingle.anchorA).toBeDefined();
     expect(qSingle.targetB).toBeDefined();
     expect(qSingle.distractorPoints.length).toBeGreaterThan(0);
 
-    const qDoubleH = generateQuestion('double_h', 10);
-    expect(qDoubleH.mode).toBe('double_h');
+    const qDoubleH = generateHorizontalDoubleQuestion(10, mockSettings);
     expect(qDoubleH.anchorC).toBeDefined();
 
-    const qDoubleR = generateQuestion('double_r', 15);
-    expect(qDoubleR.mode).toBe('double_r');
+    const qDoubleR = generateRotatedDoubleQuestion(15, mockSettings);
     expect(qDoubleR.rotationAngle).toBeDefined();
   });
 
   it('generateQuestion with manual targeting - should generate targeted angles with higher probability', () => {
     // 锁定扇区 0 (对应 0° 正东，允许加权抖动 ±20°)
-    const options = {
-      targetingMode: 'manual' as const,
-      targetSectors: [0],
+    const options: StarSettings = {
+      ...mockSettings,
+      targetingMode: 'manual',
+      manualTargetSectors: [0],
     };
 
     let targetedCount = 0;
     const totalRuns = 200;
 
     for (let i = 0; i < totalRuns; i++) {
-      const q = generateQuestion('single', 5, options);
+      const q = generateSingleAnchorQuestion(5, options);
       // 0° ± 25° 范围 (0~25° 或 335~360°)
       if (q.angleDegree <= 25 || q.angleDegree >= 335) {
         targetedCount++;

@@ -11,7 +11,7 @@ import type { RotatedDoubleQuestion } from './generator';
 export interface RotatedDoubleViewProps {
   question: RotatedDoubleQuestion;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: StarHitResult } | null;
+  userAnswer: StarHitResult | null;
   onAnswer: (val: { clickPoint: Point; hitResult: StarHitResult }) => void;
   disabled?: boolean;
 }
@@ -80,10 +80,10 @@ export function RotatedDoubleView({
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           anchors={[question.anchorA, question.anchorC]}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}

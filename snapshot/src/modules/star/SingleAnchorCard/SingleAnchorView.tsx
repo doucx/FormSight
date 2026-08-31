@@ -11,7 +11,7 @@ import type { SingleAnchorQuestion } from './generator';
 export interface SingleAnchorViewProps {
   question: SingleAnchorQuestion;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: StarHitResult } | null;
+  userAnswer: StarHitResult | null;
   onAnswer: (val: { clickPoint: Point; hitResult: StarHitResult }) => void;
   disabled?: boolean;
 }
@@ -73,10 +73,10 @@ export function SingleAnchorView({
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           anchors={[question.anchorA]}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}

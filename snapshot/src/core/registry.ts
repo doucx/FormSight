@@ -193,7 +193,7 @@ class SystemDomainRegistry {
 
     // 1. 挂载私有多语言
     if (manifest.locales) {
-      i18n.registerCardLocales(manifest.id, manifest.locales);
+      i18n.registerCardLocales(manifest.id, manifest.locales as Record<string, Record<string, unknown>>);
     }
 
     // 2. 归一化为 CardDefinition 视图层描述
