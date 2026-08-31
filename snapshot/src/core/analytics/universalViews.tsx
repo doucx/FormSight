@@ -1,5 +1,5 @@
 import { Gauge, Zap } from 'lucide-preact';
-import type { UnifiedTrialRecord } from '../../storage/schema';
+import type { UnifiedTrialRecord } from '../../storage/db/schema';
 import type { CardAnalyticsView } from '../contracts';
 import { i18n } from '../i18n';
 import {

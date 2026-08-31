@@ -2,7 +2,7 @@ import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from '
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
+import type { SessionHistoryItem } from '../modals/SessionSummaryModal';
 import { ModalShell } from '../common/ModalShell';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';

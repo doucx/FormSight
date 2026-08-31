@@ -2,7 +2,7 @@ import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 import { saveTrainingPlan } from '../../storage/planStorage';
-import type { UnifiedProfileData } from '../../storage/schema';
+import type { UnifiedProfileData } from '../../storage/db/schema';
 import { type UserSettings, getCardSettings } from '../../storage/settings';
 import type { TrainingPlan } from '../../types/plan';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';

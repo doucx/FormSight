@@ -1,5 +1,5 @@
-import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
-import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../theme';
+import { initSquareHiDpiCanvas } from '../hidpi';
+import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../../../utils/theme';
 
 export interface SectorStat {
   sectorIdx: number;
