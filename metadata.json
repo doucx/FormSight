@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 自动化批量重构全系统视图与面板的暗色模式样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169988.2166524, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(tooling): 添加夜间模式样式覆盖度检查脚本", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788170099.3336668, "duration_ms": 0}}

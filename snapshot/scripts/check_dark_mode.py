@@ -1,38 +1,3 @@
-我们将编写一个专业的 Python 检查脚本 `scripts/check_dark_mode.py`。该脚本能够深度静态分析 `src/components` 和 `src/views` 中的所有 `.tsx` 文件，智能检测存在亮色样式（如 `bg-white`、`text-slate-800`、`border-slate-200` 等）但缺失对应 `dark:*` 变体的代码行，并输出格式化的审计报告。
-
-## [WIP] feat(tooling): 添加夜间模式样式覆盖度检查脚本
-
-### 用户需求
-创建一个可复用的 Python 工具脚本，用于静态扫描全站 TSX 组件并检测是否存在遗漏的亮色样式与未适配暗色变体的类名。
-
-### 评论
-在大型前端项目中，纯人工核对往往容易遗漏偶发的嵌套类名或边缘条件分支。编写静态规则扫描脚本不仅能帮助当前阶段快速定位潜在的深色遗漏点，还可在后续 CI/CD 或新增组件时作为一致性校验工具。
-
-### 目标
-1. 在 `scripts/check_dark_mode.py` 中实现 AST/正则结合的智能暗色覆盖度审计器。
-2. 识别常见的未配对样式规则（`bg-white`、`bg-slate-50/100`、`text-slate-700/800/900`、`border-slate-100/200` 等）。
-3. 智能排除固定对比度元素（如主色实心按钮 `bg-indigo-600 text-white`、纯黑数字胶囊等）。
-4. 运行脚本并输出全量代码库的夜间模式覆盖审计报告。
-
-### 基本原理
-利用 Python 对 `src/components` 与 `src/views` 目录下的 `.tsx` 文件进行遍历，提取 `className` 属性中的所有类名 Token。针对每一个背景、文字、边框类名进行双向匹配：若存在亮色 Token 但同组上下文中未声明 `dark:` 规则，且不在白名单豁免列表中，则记录并按文件与行号汇总输出。
-
-### 标签
-#intent/tooling #flow/ready #priority/medium #comp/build #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/dark-mode-linter #task/action/scripting #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建 Python 暗色模式检查脚本
-
-在 `scripts/check_dark_mode.py` 中编写静态扫描工具。
-
-~~~~~act
-write_file
-scripts/check_dark_mode.py
-~~~~~
-~~~~~python
 #!/usr/bin/env python3
 """
 FormSight Dark Mode Coverage Linter
@@ -156,12 +121,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-~~~~~
-
-### 下一步建议
-
-检查脚本已经建立并在代码库中就绪。
-
-你可以随时在本地运行 `python3 scripts/check_dark_mode.py` 辅助核查。如果后续还有新增的扩展包（Packs）或视图组件，该脚本也可以直接作为质量与样式规范门禁。
-
-请查看扫描结果，如有需要微调的细节可随时告诉我；若对夜间模式的完整实现满意，我们即可生成最终的 `[COMMIT]` 计划！
