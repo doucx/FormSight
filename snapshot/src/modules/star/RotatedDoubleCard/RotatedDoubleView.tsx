@@ -33,9 +33,27 @@ export function RotatedDoubleView({
       if (ctx) {
         ctx.fillStyle = CANVAS_THEME.bg.primary;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
-        drawDot(ctx, question.anchorC.x, question.anchorC.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
-        drawDot(ctx, question.targetB.x, question.targetB.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
+        drawDot(
+          ctx,
+          question.anchorA.x,
+          question.anchorA.y,
+          CANVAS_THEME.pointGrid.dotAnchor,
+          dotRadius,
+        );
+        drawDot(
+          ctx,
+          question.anchorC.x,
+          question.anchorC.y,
+          CANVAS_THEME.pointGrid.dotAnchor,
+          dotRadius,
+        );
+        drawDot(
+          ctx,
+          question.targetB.x,
+          question.targetB.y,
+          CANVAS_THEME.pointGrid.dotAnchor,
+          dotRadius,
+        );
       }
     }
   }, [question]);

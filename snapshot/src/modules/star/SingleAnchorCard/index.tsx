@@ -80,7 +80,8 @@ export const starSingleCard: CardManifest<
     'en-US': {
       title: 'Single Anchor',
       desc: 'Single central anchor to evaluate polar angle and distance estimation.',
-      instruction: 'Observe the target relative to the central anchor on the left, then locate it in the grid on the right.',
+      instruction:
+        'Observe the target relative to the central anchor on the left, then locate it in the grid on the right.',
       badge: 'Single Anchor',
       settings: {
         gridSizeTitle: 'Distractor Grid Dimensions',
@@ -101,7 +102,8 @@ export const starSingleCard: CardManifest<
         spatialBias: {
           tabLabel: 'Spatial Bias',
           title: 'Single Anchor · Spatial Bias Analysis',
-          subTitle: 'Center point represents ground truth. Point spread reveals systematic hand-eye offset.',
+          subTitle:
+            'Center point represents ground truth. Point spread reveals systematic hand-eye offset.',
           cardTitle: 'Systematic Bias',
           desc: 'Center is the ground truth. Tighter cluster indicates sharper spatial intuition.',
           avgDx: 'Avg X Offset:',
@@ -119,7 +121,8 @@ export const starSingleCard: CardManifest<
           cardTitle: 'Directional Blindspot',
           weakestHint: 'Lowest accuracy found in sector {{sector}}:',
           accuracyRate: '{{accuracy}}% accuracy',
-          needMoreTrials: 'Complete at least 3 trials in each sector to generate blindspot diagnostics.',
+          needMoreTrials:
+            'Complete at least 3 trials in each sector to generate blindspot diagnostics.',
         },
       },
     },
@@ -127,7 +130,8 @@ export const starSingleCard: CardManifest<
   training: {
     isTargeting: (settings) => settings.targetingMode === 'manual',
     generateQuestion: (level, settings) => generateSingleAnchorQuestion(level, settings),
-    evaluateAnswer: (userVal, q) => evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
+    evaluateAnswer: (userVal, q) =>
+      evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
     isHit: (hitResult) => hitResult.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult) => ({

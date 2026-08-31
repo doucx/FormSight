@@ -51,7 +51,9 @@ export function generateRotatedDoubleQuestion(
   ) {
     if (Math.random() < 0.7) {
       const chosenSector =
-        settings.manualTargetSectors[Math.floor(Math.random() * settings.manualTargetSectors.length)];
+        settings.manualTargetSectors[
+          Math.floor(Math.random() * settings.manualTargetSectors.length)
+        ];
       const sectorCenterAngle = chosenSector * 45;
 
       const targetedPairs = validPairs.filter((p) => {

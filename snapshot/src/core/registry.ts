@@ -148,16 +148,26 @@ class SystemDomainRegistry {
       if (mod.default) {
         if (Array.isArray(mod.default)) {
           for (const card of mod.default) {
-            if (card && card.id && card.training) this.registerCard(card);
+            if (card?.id && card.training) this.registerCard(card);
           }
-        } else if (typeof mod.default === 'object' && 'id' in mod.default && 'training' in mod.default) {
+        } else if (
+          typeof mod.default === 'object' &&
+          'id' in mod.default &&
+          'training' in mod.default
+        ) {
           this.registerCard(mod.default as AnyCardManifest);
         }
       }
 
       // 支持具名导出 CardManifest
       for (const [key, value] of Object.entries(mod)) {
-        if (key !== 'default' && value && typeof value === 'object' && 'id' in value && 'training' in value) {
+        if (
+          key !== 'default' &&
+          value &&
+          typeof value === 'object' &&
+          'id' in value &&
+          'training' in value
+        ) {
           this.registerCard(value as AnyCardManifest);
         }
       }
@@ -218,7 +228,10 @@ class SystemDomainRegistry {
       evaluateAnswer: (userVal, q) => manifest.training.evaluateAnswer(userVal, q),
       isHit: (hitResult) => manifest.training.isHit(hitResult),
       getQuestionLevel: manifest.training.getQuestionLevel
-        ? (q) => manifest.training.getQuestionLevel?.(q) ?? (q as { difficultyLevel: number })?.difficultyLevel ?? 1
+        ? (q) =>
+            manifest.training.getQuestionLevel?.(q) ??
+            (q as { difficultyLevel: number })?.difficultyLevel ??
+            1
         : (q) => (q as { difficultyLevel: number })?.difficultyLevel ?? 1,
       extractRecordDetails: manifest.training.extractRecordDetails
         ? (q, hitResult, userVal, mode) => ({

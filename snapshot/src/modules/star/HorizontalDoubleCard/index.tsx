@@ -40,14 +40,16 @@ export const starDoubleHCard: CardManifest<
     'en-US': {
       title: 'Horizontal Double Anchors',
       desc: 'Horizontal dual anchors to train proportion and orthogonal projection intuition.',
-      instruction: 'Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.',
+      instruction:
+        'Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.',
       badge: 'Horizontal Dual',
     },
   },
   training: {
     isTargeting: (settings) => settings.targetingMode === 'manual',
     generateQuestion: (level, settings) => generateHorizontalDoubleQuestion(level, settings),
-    evaluateAnswer: (userVal, q) => evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
+    evaluateAnswer: (userVal, q) =>
+      evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
     isHit: (hitResult) => hitResult.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult) => ({

@@ -33,7 +33,9 @@ export function generateSingleAnchorQuestion(
   ) {
     if (Math.random() < 0.7) {
       const chosenSector =
-        settings.manualTargetSectors[Math.floor(Math.random() * settings.manualTargetSectors.length)];
+        settings.manualTargetSectors[
+          Math.floor(Math.random() * settings.manualTargetSectors.length)
+        ];
       const sectorCenterAngle = chosenSector * 45;
       const jitter = (Math.random() - 0.5) * 40;
       angle = Math.floor((sectorCenterAngle + jitter + 360) % 360);

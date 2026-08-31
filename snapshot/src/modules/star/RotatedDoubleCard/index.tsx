@@ -41,14 +41,16 @@ export const starDoubleRCard: CardManifest<
     'en-US': {
       title: 'Rotated Double Anchors',
       desc: 'Tilted dual anchors to master complex rotated coordinate mapping.',
-      instruction: 'Observe the rotated dual anchors on the left, then locate the target on the right.',
+      instruction:
+        'Observe the rotated dual anchors on the left, then locate the target on the right.',
       badge: 'Rotated Dual',
     },
   },
   training: {
     isTargeting: (settings) => settings.targetingMode === 'manual',
     generateQuestion: (level, settings) => generateRotatedDoubleQuestion(level, settings),
-    evaluateAnswer: (userVal, q) => evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
+    evaluateAnswer: (userVal, q) =>
+      evaluatePointGridHit(userVal.clickPoint, q.targetB, q.distractorPoints),
     isHit: (hitResult) => hitResult.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult) => ({
