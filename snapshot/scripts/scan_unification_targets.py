@@ -3,9 +3,15 @@
 
 Scans the codebase to detect:
 1. Raw <button> usages (candidates for <Button>)
-2. Ad-hoc badge-like <span>/<div> (candidates for <Badge>)
-3. Hardcoded slate/indigo color classes (candidates for tokens: bg-card, text-foreground, etc.)
-4. Hardcoded Hex colors in UI components
+2. Raw <input> and <select> usages (candidates for <Input> / <Select>)
+3. Toggle icons used as switches (candidates for <Switch>)
+4. Ad-hoc choice card 5-state styling (candidates for <ChoiceOptionCard>)
+5. Ad-hoc badge-like <span>/<div> (candidates for <Badge>)
+6. TagPill dictionary implementations (candidates for cva compoundVariants)
+7. Ad-hoc Callout / Diagnostic alert boxes (candidates for <Callout>)
+8. Repetitive Metric/KPI card structures (candidates for <MetricCard>)
+9. Hardcoded dual-theme / slate / indigo color classes
+10. Hardcoded Hex colors in UI components
 """
 
 import argparse
@@ -22,6 +28,7 @@ GREEN = "\033[92m"
 YELLOW = "\033[93m"
 RED = "\033[91m"
 MAGENTA = "\033[95m"
+BLUE = "\033[94m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
 RESET = "\033[0m"
@@ -40,6 +47,12 @@ UI_PRIMITIVES = {
     "src/components/ui/button.tsx",
     "src/components/ui/badge.tsx",
     "src/components/ui/card.tsx",
+    "src/components/ui/choice-card.tsx",
+    "src/components/ui/input.tsx",
+    "src/components/ui/select.tsx",
+    "src/components/ui/switch.tsx",
+    "src/components/ui/callout.tsx",
+    "src/components/ui/metric-card.tsx",
     "src/components/ui/index.ts",
     "src/utils/cn.ts",
 }
@@ -69,9 +82,76 @@ RULES = [
         "category": "Raw <button> Tag",
         "pattern": re.compile(r"<button\b"),
         "suggestion": "Replace with <Button variant='...' size='...'>",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES
+        and not str(p).replace("\\", "/").endswith("TagPill.tsx"),
+    },
+    # 2. Raw Input & Select Form Controls
+    {
+        "category": "Raw Form Input (<input>)",
+        "pattern": re.compile(r"<input\s+type=[\"'](?:text|range)[\"']|<input\b"),
+        "suggestion": "Replace with <Input inputSize='...'> primitive",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES
+        and not str(p).replace("\\", "/").endswith("GeneralPreferencesSection.tsx"),
+    },
+    {
+        "category": "Raw Form Select (<select>)",
+        "pattern": re.compile(r"<select\b"),
+        "suggestion": "Replace with <Select> primitive",
         "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
     },
-    # 2. Hardcoded dark: classes that should be semantic tokens
+    # 3. Toggle Icons Used as Switches
+    {
+        "category": "Raw Switch Toggle Icon",
+        "pattern": re.compile(r"<(?:ToggleRight|ToggleLeft)\b"),
+        "suggestion": "Replace with unified <Switch checked={...} onCheckedChange={...} />",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 4. Ad-hoc Choice Card 5-State Styling Logic
+    {
+        "category": "Ad-hoc Choice Card Styling",
+        "pattern": re.compile(
+            r"\b(borderStyle\s*=|bg-emerald-50/50\s+dark:bg-emerald-950/40|bg-rose-50/50\s+dark:bg-rose-950/40)\b"
+        ),
+        "suggestion": "Use choiceCardVariants / <ChoiceOptionCard> with centralized getChoiceState()",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 5. TagPill Dictionary / Manual Variant Objects
+    {
+        "category": "TagPill Manual Dict",
+        "pattern": re.compile(
+            r"\b(THEME_ACTIVE_CLASSES|THEME_BADGE_ACTIVE_CLASSES)\b"
+        ),
+        "suggestion": "Refactor to tagPillVariants using cva and compoundVariants",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 6. Ad-hoc Callout / Diagnostic Alert Boxes
+    {
+        "category": "Ad-hoc Callout Box",
+        "pattern": re.compile(
+            r"\b(bg-(?:amber|emerald|indigo|rose)-50/60\s+p-3\.5\s+rounded-2xl\s+border)\b"
+        ),
+        "suggestion": "Replace with <Callout variant='warning|success|info|danger'>",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 7. Repetitive Metric/Stat Card Containers
+    {
+        "category": "Ad-hoc Metric Card",
+        "pattern": re.compile(
+            r"\b(bg-(?:card|muted/60|accent)\s+p-(?:3\.5|4|5|6)\s+rounded-(?:2xl|3xl)\s+border\s+(?:border-border|shadow-sm)\s+space-y-1)\b"
+        ),
+        "suggestion": "Replace with <MetricCard variant='default|subtle|accent'>",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 8. Ad-hoc Badges (inline styled spans with rounded-full/rounded-lg)
+    {
+        "category": "Ad-hoc Badge Span",
+        "pattern": re.compile(
+            r"<span\s+className=[\"'][^\"']*\b(rounded-(?:md|full|lg|xl)\s+(?:bg-\S+|border\S*))\b"
+        ),
+        "suggestion": "Replace with <Badge variant='...' size='...'>",
+        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
+    },
+    # 9. Hardcoded Dual-Theme Classes
     {
         "category": "Hardcoded Dual-Theme Color",
         "pattern": re.compile(
@@ -80,7 +160,7 @@ RULES = [
         "suggestion": "Use semantic tokens (bg-card, bg-muted, text-foreground, border-border, etc.)",
         "filter": lambda p: str(p).replace("\\", "/") not in COLOR_SYSTEM_FILES,
     },
-    # 3. Hardcoded Light Slate Grayscale Colors
+    # 10. Hardcoded Slate Grayscale Colors
     {
         "category": "Hardcoded Slate Grayscale",
         "pattern": re.compile(
@@ -90,7 +170,7 @@ RULES = [
         "filter": lambda p: str(p).replace("\\", "/") not in COLOR_SYSTEM_FILES
         and str(p).replace("\\", "/") not in UI_PRIMITIVES,
     },
-    # 4. Hardcoded Brand Indigo Colors (Interactive)
+    # 11. Hardcoded Brand Indigo Colors
     {
         "category": "Hardcoded Brand Indigo Class",
         "pattern": re.compile(
@@ -100,16 +180,7 @@ RULES = [
         "filter": lambda p: str(p).replace("\\", "/") not in COLOR_SYSTEM_FILES
         and str(p).replace("\\", "/") not in UI_PRIMITIVES,
     },
-    # 5. Ad-hoc Badges (inline styled spans with border/bg/rounded-full)
-    {
-        "category": "Ad-hoc Badge Span",
-        "pattern": re.compile(
-            r"<span\s+className=[\"'][^\"']*\b(rounded-(?:md|full|lg|xl)\s+(?:bg-\S+|border\S*))\b"
-        ),
-        "suggestion": "Replace with <Badge variant='...' size='...'>",
-        "filter": lambda p: str(p).replace("\\", "/") not in UI_PRIMITIVES,
-    },
-    # 6. Hardcoded Hex Color Literals in JSX/TSX
+    # 12. Hardcoded Hex Color Literals in JSX/TSX
     {
         "category": "Hardcoded Hex Color in Component",
         "pattern": re.compile(r"['\"]#(?:[0-9a-fA-F]{3}){1,2}['\"]"),
@@ -169,7 +240,7 @@ def main():
     parser.add_argument(
         "--category",
         "-c",
-        help="Filter by specific category keyword (e.g. 'button', 'Hex', 'Slate')",
+        help="Filter by specific category keyword (e.g. 'choice', 'input', 'switch', 'callout', 'metric', 'button', 'Hex')",
     )
     parser.add_argument(
         "--summary-only",
@@ -218,20 +289,28 @@ def main():
         for f in all_findings:
             grouped_by_file[f.file_path].append(f)
 
-        sorted_files = sorted(grouped_by_file.keys(), key=lambda k: len(grouped_by_file[k]), reverse=True)
+        sorted_files = sorted(
+            grouped_by_file.keys(), key=lambda k: len(grouped_by_file[k]), reverse=True
+        )
 
         for fpath in sorted_files:
             items = grouped_by_file[fpath]
             print(f"{BOLD}{YELLOW}📂 {fpath}{RESET} {DIM}({len(items)} issues){RESET}")
             for item in items:
-                print(f"  {DIM}Line {item.line_num:>3}:{RESET} [{CYAN}{item.category}{RESET}] {RED}{item.matched_text}{RESET}")
+                print(
+                    f"  {DIM}Line {item.line_num:>3}:{RESET} [{CYAN}{item.category}{RESET}] {RED}{item.matched_text}{RESET}"
+                )
                 print(f"    {DIM}Snippet:{RESET} {item.line_content[:95]}")
                 print(f"    {GREEN}💡 Tip:{RESET} {item.suggestion}")
             print()
 
     # Summary Section
-    print(f"{BOLD}{CYAN}─────────────────────────── Summary Statistics ───────────────────────────{RESET}")
-    print(f"Total unification opportunities detected: {BOLD}{RED if all_findings else GREEN}{len(all_findings)}{RESET}\n")
+    print(
+        f"{BOLD}{CYAN}─────────────────────────── Summary Statistics ───────────────────────────{RESET}"
+    )
+    print(
+        f"Total unification opportunities detected: {BOLD}{RED if all_findings else GREEN}{len(all_findings)}{RESET}\n"
+    )
 
     print(f"{BOLD}📊 By Category:{RESET}")
     for cat, count in sorted(category_counts.items(), key=lambda x: x[1], reverse=True):
