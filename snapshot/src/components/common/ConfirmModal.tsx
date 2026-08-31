@@ -47,7 +47,7 @@ export function ConfirmModal({
             className={`w-full py-2.5 px-3 text-xs font-bold text-white rounded-xl shadow-sm transition-all active:scale-95 ${
               isDangerous
                 ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200 dark:shadow-none'
-                : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
+                : 'bg-primary hover:bg-primary/90 shadow-indigo-200 dark:shadow-none'
             }`}
           >
             {effectiveConfirmText}

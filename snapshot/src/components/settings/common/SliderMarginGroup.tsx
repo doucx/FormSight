@@ -29,8 +29,8 @@ export function SliderMarginGroup({ title, value, onChange, options }: SliderMar
             onClick={() => onChange(opt.value)}
             className={`py-2 text-xs font-bold rounded-xl border transition-all ${
               value === opt.value
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
+                ? 'bg-primary text-white border-primary shadow-sm'
+                : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
             }`}
           >
             {opt.label}

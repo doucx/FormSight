@@ -171,7 +171,7 @@ export function AppRouter({
   if (route.type === 'train') {
     if (!profilesLoaded) {
       return (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-muted-foreground text-xs font-semibold">
           {t('common.syncingProfiles')}
         </div>
       );

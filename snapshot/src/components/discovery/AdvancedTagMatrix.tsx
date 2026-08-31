@@ -21,7 +21,7 @@ import { TagPill } from '../common/TagPill';
 export function FilterSectionHeader({
   icon: Icon,
   title,
-  iconColorClass = 'text-indigo-500',
+  iconColorClass = 'text-primary',
 }: {
   icon: (props: { className?: string }) => ComponentChildren;
   title: string;
@@ -60,7 +60,7 @@ export function AdvancedTagMatrix({
 
   return (
     <div
-      className={`space-y-2.5 border-t border-slate-200/60 dark:border-slate-800 ${
+      className={`space-y-2.5 border-t border-border/60 dark:border-border ${
         isCompact ? 'pt-2 max-h-52 overflow-y-auto pr-1' : 'pt-3.5 space-y-3.5'
       } animate-in fade-in duration-150`}
     >

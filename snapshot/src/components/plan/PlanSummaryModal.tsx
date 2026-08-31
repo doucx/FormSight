@@ -50,7 +50,7 @@ export function PlanSummaryModal({
       <div className="flex flex-col gap-5">
         {/* 核心综合大盘卡片 */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-accent p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-1">
+          <div className="bg-accent p-3.5 rounded-2xl border border-border/60 dark:border-border/60 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <Target className="w-3.5 h-3.5 text-primary" />
               {t('common.overallAccuracy')}

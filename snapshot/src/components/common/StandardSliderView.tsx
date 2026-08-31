@@ -171,7 +171,7 @@ export function StandardSliderView({
           >
             <div
               ref={trackRef}
-              className="relative w-full h-7 rounded-xl bg-border border border-slate-300/80 dark:border-slate-600/80 shadow-inner flex items-center overflow-hidden"
+              className="relative w-full h-7 rounded-xl bg-border border border-border/60 dark:border-border/60 shadow-inner flex items-center overflow-hidden"
             >
               {/* 当前激活进度条 */}
               <div
@@ -182,7 +182,7 @@ export function StandardSliderView({
               {/* 未揭晓状态下的指针 */}
               {!showAnswer && (
                 <div
-                  className="absolute top-0 bottom-0 w-1 bg-indigo-600 dark:bg-indigo-400 -translate-x-1/2 z-20 shadow-sm"
+                  className="absolute top-0 bottom-0 w-1 bg-primary dark:bg-indigo-400 -translate-x-1/2 z-20 shadow-sm"
                   style={{ left: valToPercent(activeVal) }}
                 />
               )}
@@ -205,12 +205,12 @@ export function StandardSliderView({
               {showAnswer && targetValue !== undefined && (
                 <>
                   <div
-                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white dark:border-slate-900 shadow-md"
+                    className="absolute top-0 bottom-0 w-1.5 bg-emerald-500 -translate-x-1/2 z-20 border-x border-white dark:border-border shadow-md"
                     style={{ left: valToPercent(targetValue) }}
                   />
                   {userValue !== undefined && (
                     <div
-                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white dark:border-slate-900 shadow-md ${
+                      className={`absolute top-0 bottom-0 w-1 -translate-x-1/2 z-10 border-x border-white dark:border-border shadow-md ${
                         isHit ? 'bg-emerald-500' : 'bg-rose-500'
                       }`}
                       style={{ left: valToPercent(userValue) }}
@@ -237,7 +237,7 @@ export function StandardSliderView({
             if (!disabled && !showAnswer) onAnswer(currentVal);
           }}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
+          className="w-full py-3 text-xs font-bold text-white bg-primary hover:bg-primary/90 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
         >
           {effectiveSubmitButtonText}
         </button>

@@ -78,7 +78,7 @@ export function PlanLibraryDrawer({
               key={p.id}
               className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-2 ${
                 isActive
-                  ? 'bg-card border-indigo-600 shadow-sm ring-2 ring-indigo-500/20'
+                  ? 'bg-card border-primary shadow-sm ring-2 ring-indigo-500/20'
                   : 'bg-card/80 border-border hover:bg-card hover:border-primary/60 shadow-xs'
               }`}
             >

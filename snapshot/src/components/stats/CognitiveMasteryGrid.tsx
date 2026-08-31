@@ -29,7 +29,7 @@ export function CognitiveMasteryGrid({
             <Compass className="w-4 h-4 text-emerald-600" />
             {t('stats.pathMasteryTitle')}
           </div>
-          <span className="text-xs text-slate-400 font-mono">{t('stats.pathMasterySubtitle')}</span>
+          <span className="text-xs text-muted-foreground font-mono">{t('stats.pathMasterySubtitle')}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -43,7 +43,7 @@ export function CognitiveMasteryGrid({
                 <span
                   className={`font-mono text-xs px-2 py-0.5 rounded-lg ${
                     pm.total === 0
-                      ? 'bg-slate-100 text-slate-400'
+                      ? 'bg-muted text-muted-foreground'
                       : pm.accuracy >= 80
                         ? 'bg-emerald-50 text-emerald-700 font-black'
                         : pm.accuracy >= 60
@@ -54,7 +54,7 @@ export function CognitiveMasteryGrid({
                   {pm.total > 0 ? `${pm.accuracy}%` : '--'}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="text-[11px] text-muted-foreground flex items-center justify-between">
                 <span>{t('stats.practicedTrials', { count: pm.total })}</span>
                 <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
               </div>
@@ -70,7 +70,7 @@ export function CognitiveMasteryGrid({
             <Brain className="w-4 h-4 text-rose-500" />
             {t('stats.challengeMasteryTitle')}
           </div>
-          <span className="text-xs text-slate-400 font-mono">
+          <span className="text-xs text-muted-foreground font-mono">
             {t('stats.challengeMasterySubtitle')}
           </span>
         </div>
@@ -86,18 +86,18 @@ export function CognitiveMasteryGrid({
                 <span
                   className={`font-mono text-xs px-2 py-0.5 rounded-lg ${
                     cm.total === 0
-                      ? 'bg-slate-100 text-slate-400'
+                      ? 'bg-muted text-muted-foreground'
                       : cm.accuracy >= 80
                         ? 'bg-rose-50 text-rose-700 font-black'
                         : cm.accuracy >= 60
                           ? 'bg-amber-50 text-amber-700 font-black'
-                          : 'bg-slate-100 text-slate-600 font-black'
+                          : 'bg-muted text-muted-foreground font-black'
                   }`}
                 >
                   {cm.total > 0 ? `${cm.accuracy}%` : '--'}
                 </span>
               </div>
-              <div className="text-[11px] text-slate-400 flex items-center justify-between">
+              <div className="text-[11px] text-muted-foreground flex items-center justify-between">
                 <span>{t('stats.practicedTrials', { count: cm.total })}</span>
                 <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
               </div>

@@ -99,8 +99,8 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
                     onClick={() => onChange({ [field.key]: opt.value })}
                     className={`py-2 text-xs font-bold rounded-xl border transition-all ${
                       currentVal === opt.value
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
                     }`}
                   >
                     {resolveText(opt.label)}

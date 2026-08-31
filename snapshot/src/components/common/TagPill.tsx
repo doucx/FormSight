@@ -15,7 +15,7 @@ export interface TagPillProps {
 }
 
 const THEME_ACTIVE_CLASSES: Record<TagPillThemeColor, string> = {
-  indigo: 'bg-indigo-600 text-white shadow-xs',
+  indigo: 'bg-primary text-white shadow-xs',
   emerald: 'bg-emerald-600 text-white shadow-xs',
   rose: 'bg-rose-600 text-white shadow-xs',
   amber: 'bg-amber-600 text-white shadow-xs',
@@ -23,7 +23,7 @@ const THEME_ACTIVE_CLASSES: Record<TagPillThemeColor, string> = {
 };
 
 const THEME_BADGE_ACTIVE_CLASSES: Record<TagPillThemeColor, string> = {
-  indigo: 'bg-indigo-700 text-indigo-100',
+  indigo: 'bg-primary/90 text-indigo-100',
   emerald: 'bg-emerald-700 text-emerald-100',
   rose: 'bg-rose-700 text-rose-100',
   amber: 'bg-amber-700 text-amber-100',

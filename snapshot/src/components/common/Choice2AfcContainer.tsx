@@ -68,7 +68,7 @@ export function Choice2AfcContainer({
       }
     } else if (isSelected) {
       borderStyle =
-        'border-indigo-600 dark:border-indigo-500 bg-indigo-50/30 dark:bg-indigo-950/40 ring-2 ring-indigo-500/20 shadow-md';
+        'border-primary dark:border-indigo-500 bg-accent/30 dark:bg-accent/40 ring-2 ring-indigo-500/20 shadow-md';
     }
 
     return (
@@ -80,7 +80,7 @@ export function Choice2AfcContainer({
       >
         <div className="flex items-center justify-between w-full px-1">
           <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-            <span className="w-5 h-5 rounded-lg bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center font-mono text-[11px]">
+            <span className="w-5 h-5 rounded-lg bg-muted dark:bg-slate-700 text-white flex items-center justify-center font-mono text-[11px]">
               {opt.keyLabel || (opt.key === 'A' ? '1' : '2')}
             </span>
             {opt.title}

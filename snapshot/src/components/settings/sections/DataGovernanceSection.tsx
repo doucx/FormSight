@@ -132,9 +132,9 @@ export function DataGovernanceSection({
       </div>
 
       {/* 数据库瘦身与修剪 */}
-      <div className="bg-accent p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
+      <div className="bg-accent p-3.5 rounded-2xl border border-border/60 dark:border-border/60 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-primary rounded-xl">
+          <div className="p-2 bg-accent dark:bg-accent/60 text-primary rounded-xl">
             <Scissors className="w-4 h-4" />
           </div>
           <div>

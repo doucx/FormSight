@@ -109,12 +109,12 @@ export function TrainingShell({
             </div>
 
             {showHelpTooltip && (instruction || desc) && (
-              <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-slate-900 dark:bg-slate-800 text-white p-3 rounded-2xl shadow-xl border border-slate-800 dark:border-slate-700 text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
+              <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-card dark:bg-muted text-white p-3 rounded-2xl shadow-xl border border-border dark:border-border text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
                 <div className="font-bold text-indigo-300 mb-1 flex items-center gap-1">
                   <HelpCircle className="w-3.5 h-3.5" />
                   {t('shell.instructionTitle')}
                 </div>
-                <p className="text-slate-200 text-[11px]">{instruction || desc}</p>
+                <p className="text-muted-foreground text-[11px]">{instruction || desc}</p>
               </div>
             )}
           </div>
@@ -132,8 +132,8 @@ export function TrainingShell({
             </span>
           </div>
 
-          <div className="flex items-center gap-1 bg-accent border border-indigo-100/80 dark:border-indigo-900 px-2.5 py-1 rounded-xl">
-            <span className="text-[10px] font-extrabold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider hidden sm:inline">
+          <div className="flex items-center gap-1 bg-accent border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
+            <span className="text-[10px] font-extrabold text-primary dark:text-primary uppercase tracking-wider hidden sm:inline">
               Lvl
             </span>
             <span className="font-mono font-black text-primary">{currentLevel}</span>
@@ -174,8 +174,8 @@ export function TrainingShell({
               disabled={!showAnswer}
               className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
                 showAnswer
-                  ? 'bg-indigo-600 hover:bg-indigo-700 shadow-md active:scale-95'
-                  : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                  ? 'bg-primary hover:bg-primary/90 shadow-md active:scale-95'
+                  : 'bg-slate-200 dark:bg-muted text-muted-foreground dark:text-muted-foreground cursor-not-allowed'
               }`}
             >
               {t('common.nextQuestion')}

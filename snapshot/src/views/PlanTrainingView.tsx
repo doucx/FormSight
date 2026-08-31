@@ -170,7 +170,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           </button>
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-extrabold bg-accent text-primary border border-indigo-100 dark:border-indigo-900 px-2.5 py-1 rounded-xl">
+            <span className="text-xs font-extrabold bg-accent text-primary border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
               {t('plan.stageProgress', { current: currentStepIndex + 1, total: validItems.length })}
             </span>
             <span className="text-xs font-bold text-foreground tracking-tight">{plan.name}</span>
@@ -178,11 +178,11 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+          <div className="text-xs text-muted-foreground font-mono font-semibold hidden sm:block">
             {t('plan.stageGoal', { trials: currentStep.targetTrials })}
           </div>
           <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-xl border border-border/60 text-foreground">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="font-mono text-xs font-bold text-foreground">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
@@ -193,14 +193,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
             className="px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-primary bg-muted hover:bg-accent/50 border border-border rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             title={t('plan.skipStage')}
           >
-            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
+            <FastForward className="w-3.5 h-3.5 text-primary" />
             {t('plan.skipStage')}
           </button>
         </div>
       </div>
 
       {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-card rounded-3xl border border-border shadow-sm">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-muted-foreground text-xs font-semibold bg-card rounded-3xl border border-border shadow-sm">
           {t('plan.loadingLevel', { title: cardTitle })}
         </div>
       ) : (

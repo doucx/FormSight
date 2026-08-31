@@ -17,7 +17,7 @@ export function SettingToggleItem({
     <div className="flex items-center justify-between">
       <div>
         <div className="text-sm font-semibold text-foreground">{title}</div>
-        {description && <div className="text-xs text-slate-400">{description}</div>}
+        {description && <div className="text-xs text-muted-foreground">{description}</div>}
       </div>
       <button
         type="button"
@@ -25,9 +25,9 @@ export function SettingToggleItem({
         className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
       >
         {checked ? (
-          <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />
+          <ToggleRight className="w-8 h-8 fill-indigo-600 text-primary dark:fill-indigo-500 dark:text-primary" />
         ) : (
-          <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+          <ToggleLeft className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
         )}
       </button>
     </div>

@@ -164,7 +164,7 @@ export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): Compon
   return (
     <div className="space-y-2">
       {mainLevel && (
-        <div className="p-3 bg-accent border border-indigo-100 dark:border-indigo-900/60 rounded-2xl text-xs text-foreground leading-relaxed">
+        <div className="p-3 bg-accent border border-border/60 dark:border-border/60 rounded-2xl text-xs text-foreground leading-relaxed">
           <span className="font-bold">{i18n.t('analyticsModal.levelFocusSummaryTitle')}: </span>
           {i18n.t('analyticsModal.levelFocusSummaryDesc', {
             max: maxLevel,

@@ -105,7 +105,7 @@ export function SessionSummaryModal({
         </div>
 
         {/* 层阶提升高亮卡片 */}
-        <div className="bg-accent border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-accent border border-border/60 dark:border-border/60 p-4 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-xs">
               <Zap className="w-4 h-4 fill-current" />

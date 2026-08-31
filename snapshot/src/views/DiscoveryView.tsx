@@ -48,7 +48,7 @@ export function DiscoveryView({
           <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
             {t('nav.discovery')}
           </h1>
-          <p className="text-xs text-slate-400 font-medium mt-0.5">
+          <p className="text-xs text-muted-foreground font-medium mt-0.5">
             {t('home.matchedModules', { count: filteredCards.length })}
           </p>
         </div>
@@ -68,11 +68,11 @@ export function DiscoveryView({
             <Inbox className="w-8 h-8" />
           </div>
           <div className="text-base font-bold text-foreground">{t('home.noMatchTitle')}</div>
-          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
+          <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
           <button
             type="button"
             onClick={() => handleQueryChange({})}
-            className="mt-2 px-4 py-2 text-xs font-bold text-primary bg-accent hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="mt-2 px-4 py-2 text-xs font-bold text-primary bg-accent hover:bg-accent dark:hover:bg-indigo-900/60 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t('home.resetFilter')}

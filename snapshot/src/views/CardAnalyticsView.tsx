@@ -334,7 +334,7 @@ export function CardAnalyticsView({
                     </div>
 
                     <div className="p-4 bg-muted/60 border border-border rounded-2xl flex items-start gap-3">
-                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
+                      <div className="p-2 bg-accent text-primary rounded-xl flex-shrink-0">
                         <Gauge className="w-4 h-4" />
                       </div>
                       <div className="text-xs text-foreground leading-relaxed space-y-1">

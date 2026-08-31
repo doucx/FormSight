@@ -46,20 +46,20 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
       {/* 顶部主操作栏 */}
       <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs">
-            <BarChart2 className="w-6 h-6 text-indigo-600" />
+          <div className="p-2.5 bg-accent text-primary rounded-2xl shadow-xs">
+            <BarChart2 className="w-6 h-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl font-black text-foreground tracking-tight">
               {t('stats.title')}
             </h1>
-            <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
+            <p className="text-xs text-muted-foreground font-medium">{t('stats.subTitle')}</p>
           </div>
         </div>
 
         {/* 筛选选择器 */}
         <div className="relative flex items-center self-end sm:self-center w-full sm:w-auto">
-          <Filter className="w-3.5 h-3.5 text-indigo-500 absolute left-3 pointer-events-none" />
+          <Filter className="w-3.5 h-3.5 text-primary absolute left-3 pointer-events-none" />
           <select
             value={selectedFilter}
             onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
@@ -107,18 +107,18 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
               ))}
             </optgroup>
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 pointer-events-none" />
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 pointer-events-none" />
         </div>
       </header>
 
       {/* 主体展示区 */}
       {loading ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex items-center justify-center text-slate-400 text-sm shadow-sm">
+        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex items-center justify-center text-muted-foreground text-sm shadow-sm">
           {t('stats.loading')}
         </div>
       ) : stats.allTime.total === 0 ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
-          <Activity className="w-10 h-10 text-slate-300" />
+        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex flex-col items-center justify-center text-muted-foreground text-sm gap-2 shadow-sm">
+          <Activity className="w-10 h-10 text-muted-foreground" />
           {t('stats.noRecords', { filter: getCurrentFilterLabel() })}
         </div>
       ) : (
@@ -136,7 +136,7 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
             <div className="bg-card border border-border shadow-sm p-6 rounded-3xl flex flex-col gap-2">
               <div className="text-sm font-bold text-foreground flex items-center justify-between">
                 <span>{t('stats.trendTitle')}</span>
-                <span className="text-xs font-medium text-slate-500 bg-muted text-muted-foreground px-2.5 py-0.5 rounded-lg">
+                <span className="text-xs font-medium text-muted-foreground bg-muted text-muted-foreground px-2.5 py-0.5 rounded-lg">
                   {t('stats.dailyMaxLevel')}
                 </span>
               </div>

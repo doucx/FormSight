@@ -87,7 +87,7 @@ export function PlanEditorHeader({
                   if (e.key === 'Escape') onCancelEditingName();
                 }}
                 maxLength={32}
-                className="w-full px-2.5 py-1 text-xs sm:text-sm font-black text-slate-800 bg-muted border border-indigo-300 dark:border-indigo-700 text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full px-2.5 py-1 text-xs sm:text-sm font-black text-foreground bg-muted border border-border dark:border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 placeholder={t('plan.nameInputPlaceholder')}
               />
               <Button
@@ -138,7 +138,7 @@ export function PlanEditorHeader({
             variant={showPlanManager ? 'default' : 'secondary'}
             size="sm"
             onClick={onTogglePlanManager}
-            className={`gap-1.5 border ${showPlanManager ? 'border-indigo-600' : 'border-border'}`}
+            className={`gap-1.5 border ${showPlanManager ? 'border-primary' : 'border-border'}`}
             title={t('plan.switchAndManageTitle')}
           >
             <Layers className="w-3.5 h-3.5" />
@@ -211,7 +211,7 @@ export function PlanEditorHeader({
                 }}
                 className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
               >
-                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                <Layers className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.libraryBtn')}</span>
               </button>
               <button
@@ -222,7 +222,7 @@ export function PlanEditorHeader({
                 }}
                 className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
               >
-                <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                <Copy className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.cloneBtn')}</span>
               </button>
               <button
@@ -233,7 +233,7 @@ export function PlanEditorHeader({
                 }}
                 className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
               >
-                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <Download className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.exportBtn')}</span>
               </button>
               <button
@@ -244,7 +244,7 @@ export function PlanEditorHeader({
                 }}
                 className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
               >
-                <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                <Upload className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.importBtn')}</span>
               </button>
               <div className="my-1 border-t border-border/60" />
@@ -255,7 +255,7 @@ export function PlanEditorHeader({
                   onSaveOnly();
                 }}
                 disabled={currentPlan.items.length === 0}
-                className="w-full px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
+                className="w-full px-3 py-2 text-xs font-bold text-primary hover:bg-accent rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{t('common.save')}</span>

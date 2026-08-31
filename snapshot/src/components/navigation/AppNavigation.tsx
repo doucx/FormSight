@@ -63,13 +63,13 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
             onClick={() => onNavigate({ type: 'home' })}
             className="flex items-center gap-3 text-left cursor-pointer focus:outline-none group px-2 py-1 w-full"
           >
-            <div className="w-9 h-9 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none group-hover:scale-105 transition-transform flex-shrink-0">
+            <div className="w-9 h-9 rounded-2xl bg-primary flex items-center justify-center text-white shadow-md shadow-indigo-200 dark:shadow-none group-hover:scale-105 transition-transform flex-shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
               <div className="font-black text-base text-foreground tracking-tight leading-tight flex items-center gap-1.5">
                 {t('common.appName')}
-                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-accent text-primary rounded-md border border-indigo-100 dark:border-indigo-900">
+                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-accent text-primary rounded-md border border-border/60 dark:border-border">
                   v{__APP_VERSION__}
                 </span>
               </div>
@@ -103,7 +103,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                   />
                   <span className="truncate flex-1">{item.label}</span>
                   {active && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-indigo-400 flex-shrink-0" />
                   )}
                 </button>
               );
@@ -163,7 +163,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
                 active
                   ? 'text-primary font-extrabold'
-                  : 'text-muted-foreground hover:text-slate-600 dark:hover:text-slate-300'
+                  : 'text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -175,7 +175,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-all cursor-pointer"
         >
           <Settings className="w-4 h-4" />
           <span>{t('common.settings')}</span>

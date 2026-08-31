@@ -29,12 +29,12 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
     <div className="flex flex-col h-full space-y-3 min-h-0">
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
           <span className="text-xs font-extrabold text-foreground">
             {t('plan.selectCardPrompt')}
           </span>
         </div>
-        <span className="text-[11px] font-mono text-slate-400">
+        <span className="text-[11px] font-mono text-muted-foreground">
           {t('home.matchedModules', { count: availableCards.length })}
         </span>
       </div>
@@ -49,7 +49,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
       {/* 模块列表：自适应拉伸并滚动 */}
       {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-muted/40 rounded-2xl border border-dashed border-border">
+        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-muted-foreground bg-muted/40 rounded-2xl border border-dashed border-border">
           {t('plan.noCardMatched')}
         </div>
       ) : (
@@ -114,7 +114,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                   className={`p-1 rounded-lg flex-shrink-0 transition-colors ${
                     isAdded
                       ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60'
-                      : 'text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 hover:bg-indigo-100/50 dark:hover:bg-slate-700'
+                      : 'text-indigo-400 group-hover:text-primary dark:group-hover:text-indigo-400 hover:bg-accent/50 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />

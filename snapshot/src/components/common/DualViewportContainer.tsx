@@ -13,8 +13,8 @@ interface DualViewportContainerProps {
 export function DualViewportContainer({
   leftTitle,
   rightTitle,
-  leftTitleColor = 'text-slate-400',
-  rightTitleColor = 'text-indigo-600',
+  leftTitleColor = 'text-muted-foreground',
+  rightTitleColor = 'text-primary',
   leftContent,
   rightContent,
   className = '',
