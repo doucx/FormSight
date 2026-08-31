@@ -25,7 +25,7 @@ export const calloutVariants = cva(
 );
 
 export interface CalloutProps
-  extends JSX.HTMLAttributes<HTMLDivElement>,
+  extends Omit<JSX.HTMLAttributes<HTMLDivElement>, 'title'>,
     VariantProps<typeof calloutVariants> {
   icon?: (props: { className?: string }) => ComponentChildren;
   title?: ComponentChildren;
