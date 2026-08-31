@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(arch): 重构工程目录分层结构并规范模块导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181195.1617224, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复暗色模式下按钮变体切换时的白色边框闪烁问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181316.738164, "duration_ms": 0}}
