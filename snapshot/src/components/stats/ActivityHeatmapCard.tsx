@@ -154,7 +154,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
   const getHeatmapColor = (count: number, isFuture: boolean) => {
     if (isFuture) return 'bg-transparent border border-transparent';
-    if (count === 0) return 'bg-slate-100/90 border border-slate-200/40';
+    if (count === 0) return 'bg-slate-100/90 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-700/40';
     if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
     if (count < 25) return 'bg-indigo-400 border border-indigo-500/60';
     if (count < 50) return 'bg-indigo-600 border border-indigo-600';
@@ -162,11 +162,11 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   };
 
   return (
-    <div className="bg-white border border-slate-200/80 shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
       {/* 顶栏：标题、年度总刷题数与图例 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-slate-800 tracking-tight">
+          <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">
             {t('stats.heatmapTitle')}
           </span>
           <span className="text-xs text-slate-400 font-medium">
@@ -176,7 +176,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
         <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium self-end sm:self-auto">
           <span>{t('stats.heatmapLess')}</span>
-          <div className="w-3 h-3 rounded-[3px] bg-slate-100 border border-slate-200/60" />
+          <div className="w-3 h-3 rounded-[3px] bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-200" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-400" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-600" />

@@ -23,9 +23,9 @@ export function CognitiveMasteryGrid({
   return (
     <>
       {/* 认知路径推演能力矩阵 */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
-          <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+          <div className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <Compass className="w-4 h-4 text-emerald-600" />
             {t('stats.pathMasteryTitle')}
           </div>
@@ -36,9 +36,9 @@ export function CognitiveMasteryGrid({
           {pathMasteryList.map((pm) => (
             <div
               key={pm.label}
-              className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-1.5"
+              className="bg-slate-50/70 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 space-y-1.5"
             >
-              <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                 <span className="truncate">{pm.label}</span>
                 <span
                   className={`font-mono text-xs px-2 py-0.5 rounded-lg ${

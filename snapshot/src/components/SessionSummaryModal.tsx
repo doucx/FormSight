@@ -73,13 +73,13 @@ export function SessionSummaryModal({
       <div className="flex flex-col gap-4">
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Target className="w-3.5 h-3.5 text-indigo-500" />
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800">{accuracy}%</span>
+              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">{accuracy}%</span>
               <span className="text-xs font-semibold text-slate-400">
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>
@@ -103,14 +103,14 @@ export function SessionSummaryModal({
         </div>
 
         {/* 层阶提升高亮卡片 */}
-        <div className="bg-indigo-50/70 border border-indigo-100 p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-indigo-600 text-white rounded-xl">
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900">{t('summary.levelEvolution')}</div>
-              <div className="text-[11px] text-indigo-600">
+              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">{t('summary.levelEvolution')}</div>
+              <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -121,7 +121,7 @@ export function SessionSummaryModal({
           </div>
 
           <div className="flex items-center gap-2 font-mono font-black text-slate-800 text-base">
-            <span className="bg-white px-2.5 py-1 rounded-xl border border-indigo-100 shadow-sm">
+            <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
               Lvl {startLevel}
             </span>
             <ArrowRight className="w-4 h-4 text-indigo-500" />
@@ -132,9 +132,9 @@ export function SessionSummaryModal({
         </div>
 
         {/* 折线图 Canvas 区 */}
-        <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 w-full overflow-hidden">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-600">{t('summary.curveTitle')}</span>
+            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">{t('summary.curveTitle')}</span>
             <div className="flex items-center gap-3 text-[10px]">
               <span className="flex items-center gap-1 text-emerald-600 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
@@ -159,7 +159,7 @@ export function SessionSummaryModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             {t('summary.backHome')}

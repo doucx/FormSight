@@ -117,14 +117,14 @@ export function PlanEditorView({
       )}
 
       {/* 移动端专属：双 Tab 切换栏 (只在 < lg 时渲染) */}
-      <div className="flex lg:hidden items-center bg-slate-100 p-1 rounded-2xl flex-shrink-0 border border-slate-200/60">
+      <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl flex-shrink-0 border border-slate-200/60 dark:border-slate-700/60">
         <button
           type="button"
           onClick={() => setMobileTab('stages')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             mobileTab === 'stages'
-              ? 'bg-white text-indigo-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           <ListOrdered className="w-3.5 h-3.5" />
@@ -135,8 +135,8 @@ export function PlanEditorView({
           onClick={() => setMobileTab('picker')}
           className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
             mobileTab === 'picker'
-              ? 'bg-white text-indigo-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -148,7 +148,7 @@ export function PlanEditorView({
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 min-h-0 items-stretch overflow-hidden">
         {/* 左侧：已编排的阶段序列 */}
         <div
-          className={`lg:col-span-7 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
+          className={`lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
             mobileTab === 'stages' ? 'flex' : 'hidden lg:flex'
           }`}
         >
@@ -167,7 +167,7 @@ export function PlanEditorView({
 
         {/* 右侧：模块添加与搜索挑选区 */}
         <div
-          className={`lg:col-span-5 bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
+          className={`lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
             mobileTab === 'picker' ? 'flex' : 'hidden lg:flex'
           }`}
         >

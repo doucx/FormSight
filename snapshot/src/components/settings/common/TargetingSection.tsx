@@ -29,8 +29,8 @@ export function TargetingSection({
   const effectiveSubTitle = subTitle || t('settingsModal.targetingSubTitle');
 
   return (
-    <div className="space-y-2 pt-2 border-t border-slate-100">
-      <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+    <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+      <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
         <Crosshair className="w-4 h-4 text-indigo-600" />
         {effectiveTitle}
       </div>
@@ -46,7 +46,7 @@ export function TargetingSection({
             className={`py-2 text-xs font-bold rounded-xl border transition-all ${
               mode === m.id
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
             {m.label}
@@ -55,7 +55,7 @@ export function TargetingSection({
       </div>
 
       {mode === 'manual' && (
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-2">
           <div className="text-[11px] font-semibold text-slate-500">{effectiveSubTitle}</div>
           <div className={`grid ${gridCols} gap-1.5`}>
             {sectors.map((name, idx) => {
@@ -68,8 +68,8 @@ export function TargetingSection({
                   onClick={() => onToggleSector(idx)}
                   className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
                     selected
-                      ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-sm'
-                      : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-100'
+                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-800 shadow-sm'
+                      : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
                   }`}
                 >
                   {label}

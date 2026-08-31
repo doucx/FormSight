@@ -19,12 +19,12 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-white p-5 rounded-3xl border border-indigo-100 shadow-sm space-y-1">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-indigo-100 dark:border-slate-800 shadow-sm space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
           <Calendar className="w-4 h-4 text-indigo-500" />
           {t('stats.todayTrials')}
         </div>
-        <div className="text-3xl font-black text-slate-800">
+        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
           {stats.today.total}{' '}
           <span className="text-xs font-semibold text-slate-400 font-normal">
             {t('common.trialsUnit')}
@@ -35,7 +35,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm space-y-1">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
           <Target className="w-4 h-4 text-emerald-500" />
           {t('stats.weekTrials')}
@@ -51,7 +51,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-3xl border border-amber-100 shadow-sm space-y-1">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-amber-100 dark:border-slate-800 shadow-sm space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
           <Activity className="w-4 h-4 text-amber-500" />
           {t('stats.yearTrials')}
@@ -67,7 +67,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
         </div>
       </div>
 
-      <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+      <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
           <TrendingUp className="w-4 h-4 text-slate-500" />
           {t('stats.allTimeTrials')}

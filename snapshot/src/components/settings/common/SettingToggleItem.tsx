@@ -16,7 +16,7 @@ export function SettingToggleItem({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <div className="text-sm font-semibold text-slate-700">{title}</div>
+        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</div>
         {description && <div className="text-xs text-slate-400">{description}</div>}
       </div>
       <button
@@ -27,7 +27,7 @@ export function SettingToggleItem({
         {checked ? (
           <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
         ) : (
-          <ToggleLeft className="w-8 h-8 text-slate-300" />
+          <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
         )}
       </button>
     </div>

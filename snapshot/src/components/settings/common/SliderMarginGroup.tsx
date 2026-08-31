@@ -20,7 +20,7 @@ export function SliderMarginGroup({ title, value, onChange, options }: SliderMar
 
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold text-slate-700">{effectiveTitle}</div>
+      <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{effectiveTitle}</div>
       <div className="grid grid-cols-4 gap-1.5">
         {defaultOptions.map((opt) => (
           <button
@@ -30,7 +30,7 @@ export function SliderMarginGroup({ title, value, onChange, options }: SliderMar
             className={`py-2 text-xs font-bold rounded-xl border transition-all ${
               value === opt.value
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
             }`}
           >
             {opt.label}

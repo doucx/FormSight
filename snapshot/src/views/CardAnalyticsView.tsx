@@ -133,12 +133,12 @@ export function CardAnalyticsView({
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
       {/* 顶部主操作栏 */}
-      <header className="w-full bg-white border border-slate-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+      <header className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
           <button
             type="button"
             onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
+            className="px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
             {t('common.exit')}
@@ -150,11 +150,11 @@ export function CardAnalyticsView({
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-slate-900 truncate tracking-tight">
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 truncate tracking-tight">
                   {cardTitle}
                 </h1>
                 {packTitle && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md border border-slate-200/60">
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 dark:text-slate-300 rounded-md border border-slate-200/60">
                     {packTitle}
                   </span>
                 )}
@@ -205,14 +205,14 @@ export function CardAnalyticsView({
       </header>
 
       {/* 多页 Tab 切换栏 */}
-      <div className="w-full bg-white border border-slate-200/80 rounded-2xl p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
         <button
           type="button"
           onClick={() => setActiveTabId('overview')}
           className={`py-2 px-3.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
             activeTabId === 'overview'
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800'
           }`}
         >
           <LayoutDashboard className="w-3.5 h-3.5" />
@@ -270,15 +270,15 @@ export function CardAnalyticsView({
         <div className="flex flex-col gap-6 animate-in fade-in duration-150">
           {/* 4 维核心大指标卡片 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-indigo-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-indigo-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <Target className="w-4 h-4 text-indigo-500" />
                 {t('common.accuracy')}
               </div>
-              <div className="text-3xl font-black text-slate-800">{summaryStats.accuracy}%</div>
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">{summaryStats.accuracy}%</div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-emerald-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {t('common.totalHits')}
@@ -289,7 +289,7 @@ export function CardAnalyticsView({
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <Clock className="w-4 h-4 text-indigo-500" />
                 {t('summary.duration')}
@@ -300,7 +300,7 @@ export function CardAnalyticsView({
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-amber-100 shadow-sm space-y-1">
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-amber-100 dark:border-slate-800 shadow-sm space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
                 <TrendingUp className="w-4 h-4 text-amber-500" />
                 {t('stats.dailyMaxLevel')}
@@ -312,7 +312,7 @@ export function CardAnalyticsView({
           </div>
 
           {/* 总体评价与认知建议 */}
-          <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-600" />
@@ -328,12 +328,12 @@ export function CardAnalyticsView({
                 const insights = getCognitiveOverviewInsights(records);
                 return (
                   <>
-                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl text-slate-700 dark:text-slate-300 flex items-start gap-3">
                       <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
                         <Zap className="w-4 h-4" />
                       </div>
                       <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                        <div className="font-bold text-slate-900">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.paceSummaryTitle')}
                         </div>
                         <p className="text-slate-600">{insights.paceSummaryText}</p>
@@ -359,9 +359,9 @@ export function CardAnalyticsView({
         </div>
       ) : currentView ? (
         /* 专项分析视图 */
-        <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
           {/* 左侧 Canvas 可视化区 */}
-          <div className="lg:col-span-7 flex justify-center bg-slate-50 p-6 rounded-3xl border border-slate-200/80 shadow-inner relative">
+          <div className="lg:col-span-7 flex justify-center bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-inner relative">
             <canvas
               key={`${card.id}-${currentView.id}`}
               ref={canvasRef}
@@ -373,11 +373,11 @@ export function CardAnalyticsView({
 
           {/* 右侧数据统计与认知诊断面板 */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-1">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 {resolveText(currentView.title)}
               </div>
-              <div className="text-sm font-black text-slate-800">
+              <div className="text-sm font-black text-slate-800 dark:text-slate-100">
                 {resolveText(currentView.subTitle)}
               </div>
             </div>
