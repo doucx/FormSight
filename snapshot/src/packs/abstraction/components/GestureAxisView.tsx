@@ -1,3 +1,4 @@
+import { CANVAS_THEME } from '../../../utils/theme';
 import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
@@ -69,7 +70,7 @@ export function GestureAxisView({
                 question.particles,
                 ABSTRACTION_CANVAS_SIZE,
                 showAnswer ? targetVal : activeSliderVal,
-                showAnswer ? '#22C55E' : '#6366F1',
+                showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover,
                 showAnswer ? userVal : undefined,
                 isHit,
               );

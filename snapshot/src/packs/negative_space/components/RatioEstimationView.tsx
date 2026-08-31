@@ -1,3 +1,4 @@
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { Maximize2 } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
@@ -69,8 +70,8 @@ export function RatioEstimationView({
                   canvas,
                   vertices: question.vertices,
                   size: NEGATIVE_SPACE_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
+                  fillColor: CANVAS_THEME.shape.fill,
+                  strokeColor: CANVAS_THEME.shape.stroke,
                   isHighlighted: showAnswer && isHit,
                 });
               }

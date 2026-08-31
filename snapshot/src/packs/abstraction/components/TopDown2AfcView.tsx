@@ -1,3 +1,4 @@
+import { CANVAS_THEME } from '../../../utils/theme';
 import { Columns } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { CanvasView } from '../../../components/common/CanvasView';
@@ -106,8 +107,8 @@ export function TopDown2AfcView({
                 canvas,
                 vertices: question.promptHull,
                 size: ABSTRACTION_THUMB_SIZE,
-                fillColor: '#4F46E5',
-                strokeColor: '#3730A3',
+                fillColor: CANVAS_THEME.status.accent,
+                strokeColor: CANVAS_THEME.status.accentDark,
               })
             }
             deps={[question.promptHull]}
@@ -153,7 +154,7 @@ export function TopDown2AfcView({
               canvas,
               vertices: verts,
               size: ABSTRACTION_2AFC_SIZE,
-              fillColor: '#4F46E5',
+              fillColor: CANVAS_THEME.status.accent,
             })
           }
           deps={[verts]}

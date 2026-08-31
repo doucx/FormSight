@@ -1,3 +1,4 @@
+import { CANVAS_THEME } from '../../../utils/theme';
 import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardNafcView } from '../../../components/common/StandardNafcView';
@@ -29,7 +30,7 @@ export function TopDownPatternView({
   const { t } = useTranslation();
   const promptHex = question.promptDominantColor
     ? hsvToHex(...question.promptDominantColor)
-    : '#6366F1';
+    : CANVAS_THEME.status.accentHover;
   const targetIdx = question.correctPatternIndex ?? 0;
 
   const nafcOptions = (question.palettePatternOptions || []).map((pat, idx) => {

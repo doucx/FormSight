@@ -1,3 +1,4 @@
+import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import { Crosshair } from 'lucide-preact';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
@@ -18,10 +19,10 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
         if (!ctx) return;
         const w = canvas.width;
         const h = canvas.height;
-        ctx.fillStyle = '#1E293B';
+        ctx.fillStyle = CANVAS_THEME.shape.stroke;
         ctx.fillRect(0, 0, w, h);
 
-        ctx.strokeStyle = '#475569';
+        ctx.strokeStyle = CANVAS_THEME.text.secondary;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(30, h - 30);
@@ -36,7 +37,7 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
 
           ctx.beginPath();
           ctx.arc(px, py, 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = r.isHit ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)';
+          ctx.fillStyle = r.isHit ? hexToRgba(CANVAS_THEME.status.hit, 0.7) : hexToRgba(CANVAS_THEME.status.miss, 0.7);
           ctx.fill();
         }
       },

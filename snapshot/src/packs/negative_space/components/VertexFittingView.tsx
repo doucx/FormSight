@@ -1,3 +1,4 @@
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
@@ -32,8 +33,8 @@ export function VertexFittingView({
       canvas: leftFittingRef.current,
       vertices: question.vertices,
       size: FITTING_CANVAS_SIZE,
-      fillColor: '#0F172A',
-      strokeColor: '#1E293B',
+      fillColor: CANVAS_THEME.shape.fill,
+      strokeColor: CANVAS_THEME.shape.stroke,
     });
   }, [question.vertices]);
 
@@ -47,9 +48,9 @@ export function VertexFittingView({
           ctx.lineTo(question.truncatedVertices[i].x, question.truncatedVertices[i].y);
         }
         ctx.closePath();
-        ctx.fillStyle = '#0F172A';
+        ctx.fillStyle = CANVAS_THEME.shape.fill;
         ctx.fill();
-        ctx.strokeStyle = '#1E293B';
+        ctx.strokeStyle = CANVAS_THEME.shape.stroke;
         ctx.lineWidth = 2;
         ctx.stroke();
       }
@@ -61,7 +62,7 @@ export function VertexFittingView({
           ctx.lineTo(question.vertices[i].x, question.vertices[i].y);
         }
         ctx.closePath();
-        ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';
+        ctx.strokeStyle = hexToRgba(CANVAS_THEME.status.hit, 0.7);
         ctx.lineWidth = 2.5;
         ctx.setLineDash([4, 4]);
         ctx.stroke();

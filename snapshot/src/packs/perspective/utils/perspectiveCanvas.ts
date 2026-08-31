@@ -1,3 +1,4 @@
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import type { Point } from '../../../types';
 import {
@@ -26,7 +27,7 @@ export function drawVpConvergenceCanvas(
   if (!ctx) return;
 
   // 1. 绘制已有参考线
-  ctx.strokeStyle = '#475569';
+  ctx.strokeStyle = CANVAS_THEME.text.secondary;
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
 
@@ -38,7 +39,7 @@ export function drawVpConvergenceCanvas(
   }
 
   // 2. 绘制锚点
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.beginPath();
   ctx.arc(anchor.x, anchor.y, 4, 0, Math.PI * 2);
   ctx.fill();
@@ -48,7 +49,7 @@ export function drawVpConvergenceCanvas(
   const endX = anchor.x + length * Math.cos(rad);
   const endY = anchor.y + length * Math.sin(rad);
 
-  ctx.strokeStyle = showAnswer ? '#94A3B8' : '#0F172A';
+  ctx.strokeStyle = showAnswer ? CANVAS_THEME.text.muted : CANVAS_THEME.shape.fill;
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(anchor.x, anchor.y);
@@ -61,7 +62,7 @@ export function drawVpConvergenceCanvas(
     const tEndX = anchor.x + length * Math.cos(targetRad);
     const tEndY = anchor.y + length * Math.sin(targetRad);
 
-    ctx.strokeStyle = '#10B981';
+    ctx.strokeStyle = CANVAS_THEME.status.hit;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(anchor.x, anchor.y);
@@ -87,7 +88,7 @@ export function drawProportionCanvas(
   if (!ctx) return;
 
   // 主干线段
-  ctx.strokeStyle = '#0F172A';
+  ctx.strokeStyle = CANVAS_THEME.shape.fill;
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   ctx.beginPath();
@@ -96,31 +97,31 @@ export function drawProportionCanvas(
   ctx.stroke();
 
   // 起点端点 (P1)
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(line.p1.x, line.p1.y, 7, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.beginPath();
   ctx.arc(line.p1.x, line.p1.y, 3.5, 0, Math.PI * 2);
   ctx.fill();
 
   // 终点端点 (P2)
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.beginPath();
   ctx.arc(line.p2.x, line.p2.y, 4, 0, Math.PI * 2);
   ctx.fill();
 
   // 悬停正交投影吸附点
   if (!showAnswer && hoverPoint) {
-    ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
+    ctx.fillStyle = hexToRgba(CANVAS_THEME.status.accent, 0.2);
     ctx.beginPath();
     ctx.arc(hoverPoint.x, hoverPoint.y, 8, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#4F46E5';
+    ctx.fillStyle = CANVAS_THEME.status.accent;
     ctx.beginPath();
     ctx.arc(hoverPoint.x, hoverPoint.y, 4.5, 0, Math.PI * 2);
     ctx.fill();
@@ -129,13 +130,13 @@ export function drawProportionCanvas(
   // 结果揭晓
   if (showAnswer) {
     if (targetPoint) {
-      ctx.fillStyle = '#10B981';
+      ctx.fillStyle = CANVAS_THEME.status.hit;
       ctx.beginPath();
       ctx.arc(targetPoint.x, targetPoint.y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
     if (userPoint) {
-      ctx.fillStyle = '#EF4444';
+      ctx.fillStyle = CANVAS_THEME.status.miss;
       ctx.beginPath();
       ctx.arc(userPoint.x, userPoint.y, 4, 0, Math.PI * 2);
       ctx.fill();
@@ -156,7 +157,7 @@ export function drawHorizontalReferenceCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.fillRect(0, 0, width, height);
 
   const marginX = 24;
@@ -165,7 +166,7 @@ export function drawHorizontalReferenceCanvas(
   const p1 = { x: marginX, y };
   const p2 = { x: marginX + lineW, y };
 
-  ctx.strokeStyle = '#0F172A';
+  ctx.strokeStyle = CANVAS_THEME.shape.fill;
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   ctx.beginPath();
@@ -173,29 +174,29 @@ export function drawHorizontalReferenceCanvas(
   ctx.lineTo(p2.x, p2.y);
   ctx.stroke();
 
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(p1.x, p1.y, 7, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.beginPath();
   ctx.arc(p1.x, p1.y, 3.5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = CANVAS_THEME.text.muted;
   ctx.beginPath();
   ctx.arc(p2.x, p2.y, 4, 0, Math.PI * 2);
   ctx.fill();
 
   const targetX = p1.x + lineW * targetRatio;
-  ctx.fillStyle = '#4F46E5';
+  ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.beginPath();
   ctx.arc(targetX, y, 5.5, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.strokeStyle = '#4F46E5';
+  ctx.strokeStyle = CANVAS_THEME.status.accent;
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(targetX, y - 11);
@@ -217,7 +218,7 @@ export function drawGestaltCanvas(
   const ctx = setup2DCanvas(canvas, size);
   if (!ctx) return;
 
-  ctx.strokeStyle = '#0F172A';
+  ctx.strokeStyle = CANVAS_THEME.shape.fill;
   ctx.lineWidth = 2.5;
   ctx.lineCap = 'round';
 
@@ -231,8 +232,8 @@ export function drawGestaltCanvas(
   ctx.lineTo(outgoingLine.p2.x, outgoingLine.p2.y);
   ctx.stroke();
 
-  ctx.fillStyle = '#CBD5E1';
-  ctx.strokeStyle = '#64748B';
+  ctx.fillStyle = CANVAS_THEME.axis.grid;
+  ctx.strokeStyle = CANVAS_THEME.text.secondary;
   ctx.lineWidth = 2;
 
   if (obstacle.type === 'circle') {
@@ -284,7 +285,7 @@ export function draw3DCubeWireframe(
 
   const p2d = vertices.map((v) => project3DTo2D(v, center, scale));
 
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.strokeStyle = CANVAS_THEME.axis.grid;
   ctx.lineWidth = 1.5;
   ctx.setLineDash([4, 4]);
 

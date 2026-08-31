@@ -1,37 +1,3 @@
-我们将编写一个专用的自动化迁移脚本 `scripts/migrate_pack_canvas_colors.py`，针对 `src/packs/` 下的所有扩展包组件和画布渲染函数执行批处理替换，自动补全 import 引用并将裸色值接入 `CANVAS_THEME` 和 `PALETTE`，随后执行扫描脚本进行闭环验证。
-
-## [WIP] refactor(packs): 自动化迁移 pack 内部 Canvas 硬编码色值至主题 Tokens
-
-### 用户需求
-编写自动化 Python 重构脚本，将 `src/packs/` 内部（包括 `perspective`, `abstraction`, `angle`, `negative_space`, `star`, `color`, `relative_color`）所有 Canvas 绘制和组件中的内联硬编码色值全面迁移至 `CANVAS_THEME` 与 `PALETTE`。
-
-### 评论
-通过编写专用的 AST / 模式匹配迁移脚本，能够原子化、零疏漏地将全部 20 多个 pack 内部文件中的色值统一替换，并自动处理相对路径的 `import` 语句，大幅降低人工修改带来的低级错误与语法漂移风险。
-
-### 目标
-1. 编写 `scripts/migrate_pack_canvas_colors.py` 自动化重构工具。
-2. 批量处理 `src/packs/` 下所有涉及 Canvas 与色值的组件及工具函数。
-3. 执行迁移脚本，并运行 `analyze_hardcoded_colors.py` 验证硬编码色值清零。
-
-### 基本原理
-- 脚本自动扫描目标 pack 文件，智能判断文件相对于 `src/utils/theme` 的层级并按需插入 `import { CANVAS_THEME, ... }`。
-- 将 Canvas 关键属性（`ctx.fillStyle`, `ctx.strokeStyle`, `fillColor`, `strokeColor` 等）与常见色值模式（如 `#0F172A` 映射为 `CANVAS_THEME.shape.fill`，`#4F46E5` 映射为 `CANVAS_THEME.status.accent`，`rgba(34, 197, 94, ...)` 映射为 `hexToRgba(CANVAS_THEME.status.hit, ...)` 等）进行确定性替换。
-- 迁移后即刻触发扫描分析器输出最新统计。
-
-### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #concept/ui #scope/core #scope/dx #ai/delegate #task/domain/ui #task/object/canvas-theme-tokens #task/action/refactor #task/state/continue #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 编写自动化迁移脚本 `scripts/migrate_pack_canvas_colors.py`
-
-~~~~~act
-write_file
-scripts/migrate_pack_canvas_colors.py
-~~~~~
-~~~~~python
 #!/usr/bin/env python3
 """
 自动化迁移 src/packs/ 内部 Canvas 与组件中的硬编码色值至 CANVAS_THEME / PALETTE Tokens
@@ -225,18 +191,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-~~~~~
-
-#### Acts 2: 执行迁移脚本并运行检查报告
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-python3 ./scripts/migrate_pack_canvas_colors.py
-python3 ./scripts/analyze_hardcoded_colors.py --group-by color
-~~~~~
-
-### 下一步建议
-1. **核对渐变光谱等特例**：色环、HSV 取色轨中的全光谱色标（`#FF0000`, `#FFFF00`, `#00FF00`, `#00FFFF`, `#0000FF`, `#FF00FF`）已在 `PALETTE.spectrum` 中定义，可根据需要决定是否进一步将 CSS 线性渐变字符串替换为引用常量。
-2. **测试与构建校验**：运行 `npm run check` 或测试套件确保 TypeScript 类型与 Preact 渲染全部通过。

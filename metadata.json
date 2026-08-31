@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(theme): 统一核心画布与图表渲染的 Design System 色板 Tokens", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788168750.5256102, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(packs): 自动化迁移 pack 内部 Canvas 硬编码色值至主题 Tokens", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169105.5826664, "duration_ms": 0}}

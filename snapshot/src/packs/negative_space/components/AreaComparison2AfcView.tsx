@@ -1,3 +1,4 @@
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
@@ -55,8 +56,8 @@ export function AreaComparison2AfcView({
                   canvas,
                   vertices: question.verticesA,
                   size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
+                  fillColor: CANVAS_THEME.shape.fill,
+                  strokeColor: CANVAS_THEME.shape.stroke,
                 })
               }
               deps={[question.verticesA]}
@@ -79,8 +80,8 @@ export function AreaComparison2AfcView({
                   canvas,
                   vertices: question.verticesB,
                   size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: '#0F172A',
-                  strokeColor: '#1E293B',
+                  fillColor: CANVAS_THEME.shape.fill,
+                  strokeColor: CANVAS_THEME.shape.stroke,
                 })
               }
               deps={[question.verticesB]}

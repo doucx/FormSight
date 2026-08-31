@@ -1,3 +1,4 @@
+import { PALETTE } from '../../../utils/theme';
 import { Eye } from 'lucide-preact';
 import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
 import { hsvToHex } from '../../../core/color/colorUtils';
@@ -53,7 +54,7 @@ export function Decontextual2AfcView({
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? '#808080' : hexBgA }}
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
           >
             <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
           </div>
@@ -72,7 +73,7 @@ export function Decontextual2AfcView({
         content: (
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? '#808080' : hexBgB }}
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
           >
             <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
           </div>

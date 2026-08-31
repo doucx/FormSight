@@ -1,3 +1,4 @@
+import { CANVAS_THEME } from '../../../utils/theme';
 import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
 import { drawDot } from '../../../core/canvas/drawPointGrid';
@@ -34,16 +35,16 @@ export function StarCanvas({
     if (leftCanvas) {
       const ctx = setupHiDpiCanvas(leftCanvas, CANVAS_SIZE, CANVAS_SIZE);
       if (ctx) {
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = CANVAS_THEME.bg.primary;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
 
         if (question.anchorC) {
-          drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
         }
 
-        drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', dotRadius);
+        drawDot(ctx, question.targetB.x, question.targetB.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
       }
     }
   }, [question]);
