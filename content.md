@@ -1,124 +1,82 @@
-你的定位非常精准。原先 `I18nManager.t` 仅对 `typeof text === 'string'` 进行了有效求值，当解析到 JSON 中的数组字段（如 `stats.heatmapMonths`）时，会被 `typeof text !== 'string'` 分支直接拦截至回退字符串 `key`，进而导致组件中的 `Array.isArray(raw)` 判断为假并降级为硬编码的英文月份。
+这三个问题的根源如下：
+1. **月份间空白**：此前月份标签若作为行内文本占据列宽，会因为文字长度超过单个星期列宽（约 14px）而撑开间距；
+2. **顶端文字被截断**：外层 `overflow-x-auto` 容器的顶部内边距（`pt-1`）过小，导致字体升部（Ascender）被溢出裁剪；
+3. **悬浮延迟**：浏览器原生 HTML `title` 属性存在系统级约 1 秒的唤起延迟。
 
-我将更新 `src/core/i18n.ts` 让 `t` 支持泛型以及数组项的模板插值，并让 `ActivityHeatmapCard.tsx` 联动响应语言切换。
+我将通过**绝对定位月份标签**、**加大顶部安全间距**以及**实现 0 延迟即显悬浮 Tooltip 浮窗**来彻底解决这些问题。
 
-## [WIP] fix(i18n): 扩展翻译引擎以支持数组类型键值解析与热力图月份本地化
+## [WIP] fix(stats): 优化热力图月份排版、修复顶端文字截断并实现零延迟悬浮即显提示
 
 ### 错误分析
-1. **根本原因**：在 `src/core/i18n.ts` 中，`I18nManager.prototype.t` 的实现逻辑强制要求 `text` 必须是 `string` 类型（`if (typeof text !== 'string') return key;`）。
-2. **故障链路**：当组件调用 `t('stats.heatmapMonths')` 时，底层字典虽然正确解析到了包含 12 个中文月份的数组 `["一月", "二月", ...]`，但在类型检查阶段被判定为非字符串而直接返回了原始键名字符串 `"stats.heatmapMonths"`。
-3. **表现现象**：在 `ActivityHeatmapCard.tsx` 中，`Array.isArray("stats.heatmapMonths")` 计算为 `false`，从而无条件触发了保底逻辑并返回了英文简写月份数组 `['Jan', 'Feb', ...]`。
+1. **月份空白问题**：在列布局中，如果月份文本未采用绝对定位脱离文档流，文字宽度会导致有月份标记的列被意外撑宽，造成列与列之间间距不一。
+2. **文字截断问题**：横向滚动容器为了防止内容溢出设置了 `overflow-x-auto`，配合过小的顶部 Padding（`pt-1`）直接截断了月份文字的最顶端像素。
+3. **悬浮提示延迟**：原组件依赖浏览器原生 `title="..."` 属性，其显示受到操作系统和浏览器的内置延迟（通常为 700~1200ms）限制，无法做到鼠标一移上去就即刻显示。
 
 ### 用户需求
-1. 增强 `i18n.ts` 的解析能力，使其能够识别并透传数组类型的字典值（如 `heatmapMonths`、`heatmapWeekdays` 等），同时支持对数组内字符串进行插值参数替换。
-2. 修复热力图卡片 `ActivityHeatmapCard.tsx`，确保中文环境下正确显示“一月”、“二月”等中文月份，并在切换语言时实时响应重新渲染。
+1. 消除月份之间由于文字排版产生的不自然空白，保持 53 周矩阵列间距均匀紧凑。
+2. 修复顶部月份文本被裁剪的问题，确保文字完整显示。
+3. 实现鼠标悬停在日期方块上时**立刻（0 延迟）**展示做答日期与训练题数。
 
 ### 评论
-国际化字典中存在大量序列化标签（如月份、星期、难度阶梯名、图例列表等），让 `t` 方法直接支持数组和泛型返回是标准的 i18n 基础设施规范，避免了在各业务组件中自行分拆下标和拼接 Key。
+这些细节直接决定了热力图的视觉精致度与交互顺畅感。改用 React/Preact 状态驱动的即时浮层（Instant Floating Tooltip）配合正确的 CSS 布局，可以达到完全对齐甚至超越 GitHub 原生体验的交互质感。
 
 ### 目标
-1. 重构 `I18nManager.prototype.t` 为泛型方法，新增对 `Array.isArray(result)` 的处理与遍历插值支持。
-2. 在 `ActivityHeatmapCard.tsx` 中引入 `locale` 依赖以确保月份和星期在动态切换语言时即时刷新。
+1. 月份标签改为绝对定位（`absolute whitespace-nowrap`），不再影响网格的固定列宽。
+2. 调大滚动容器顶部内边距（`pt-6`），消除文字裁切，并为 Tooltip 预留呼吸空间。
+3. 增加 `hoveredDay` 状态与 `onMouseEnter` 监听，实时计算坐标并渲染无延迟的高清悬浮卡片。
 
 ### 基本原理
-1. 在 `t` 方法中，当通过 `resolvePath` 获取到的节点为数组时，遍历处理其可能包含的 `{{param}}` 插值并返回 `T` 类型。
-2. 非字符串且非数组的其他未知结构仍保持向后兼容（返回原始 `key`）。
+- **无占位月份**：每列顶部预留固定高度槽位，月份文字以 `absolute left-0 top-0` 自然向右延伸，既不撑宽当前列，又与下方的 7 天网格严密对齐。
+- **即时 Tooltip 坐标映射**：在 `onMouseEnter` 时通过 `getBoundingClientRect()` 计算当前格相对于矩阵容器的偏移量，使浮窗毫秒级即时定位到方块正上方。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/i18n #task/object/array-localization #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/activity-heatmap #task/action/refactor #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 i18n 核心模块支持泛型与数组解析
+#### Acts 1: 重构 ActivityHeatmapCard 修复月份定位、文字截断与即显悬浮 Tooltip
 
-修改 `src/core/i18n.ts`，为 `t` 函数增加对数组类型的解析、插值与泛型类型推断。
-
-~~~~~act
-patch_file
-src/core/i18n.ts
-~~~~~
-~~~~~typescript.old
-  /** 核心翻译查表方法，支持深层路径解析与模板插值 */
-  public t = (key: string, params?: Record<string, string | number>): string => {
-    const activeDict =
-      this.dictionaries[this.currentLocale] || this.dictionaries[this.fallbackLocale] || {};
-    const text =
-      this.resolvePath(activeDict, key) ??
-      this.resolvePath(this.dictionaries[this.fallbackLocale], key);
-
-    if (typeof text !== 'string') {
-      return key;
-    }
-
-    if (!params) return text;
-    return text.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`));
-  };
-~~~~~
-~~~~~typescript.new
-  /** 核心翻译查表方法，支持深层路径解析、数组透传与模板插值 */
-  public t = <T = string>(key: string, params?: Record<string, string | number>): T => {
-    const activeDict =
-      this.dictionaries[this.currentLocale] || this.dictionaries[this.fallbackLocale] || {};
-    const result =
-      this.resolvePath(activeDict, key) ??
-      this.resolvePath(this.dictionaries[this.fallbackLocale], key);
-
-    if (Array.isArray(result)) {
-      if (!params) return result as unknown as T;
-      return result.map((item) =>
-        typeof item === 'string'
-          ? item.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`))
-          : item,
-      ) as unknown as T;
-    }
-
-    if (typeof result !== 'string') {
-      return key as unknown as T;
-    }
-
-    if (!params) return result as unknown as T;
-    return result.replace(
-      /\{\{(\w+)\}\}/g,
-      (_, match) => String(params[match] ?? `{{${match}}}`),
-    ) as unknown as T;
-  };
-~~~~~
-
-#### Acts 2: 绑定 ActivityHeatmapCard 月份计算依赖
-
-更新 `ActivityHeatmapCard.tsx`，将 `locale` 纳入 `monthNames` 的依赖计算中，确保语言切换时月份文本即时响应更新。
+更新 `ActivityHeatmapCard.tsx`，加入即显悬浮窗组件与优化的月份排版。
 
 ~~~~~act
-patch_file
+write_file
 src/components/stats/ActivityHeatmapCard.tsx
 ~~~~~
-~~~~~typescript.old
-export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
-  const { t } = useTranslation();
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+~~~~~tsx
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../core/i18n';
 
-  // 1. 构建日期-答题量映射表
-  const countMap = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const item of heatmapData) {
-      map.set(item.date, (map.get(item.date) || 0) + item.count);
-    }
-    return map;
-  }, [heatmapData]);
+interface ActivityHeatmapCardProps {
+  heatmapData: { date: string; count: number }[];
+}
 
-  // 2. 解析多语言月份数组
-  const monthNames = useMemo(() => {
-    const raw = t('stats.heatmapMonths');
-    if (Array.isArray(raw)) return raw as string[];
-    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  }, [t]);
-~~~~~
-~~~~~typescript.new
+interface HeatmapDay {
+  dateStr: string;
+  count: number;
+  isFuture: boolean;
+}
+
+interface HeatmapWeek {
+  days: HeatmapDay[];
+  monthLabel: string | null;
+}
+
+const TOTAL_WEEKS = 53;
+
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   const { t, locale } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const matrixContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // 即时响应的悬浮 Tooltip 状态 (0 延迟)
+  const [hoveredDay, setHoveredDay] = useState<{
+    dateStr: string;
+    count: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // 1. 构建日期-答题量映射表
   const countMap = useMemo(() => {
@@ -135,7 +93,189 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
     if (Array.isArray(raw)) return raw;
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   }, [t, locale]);
+
+  // 3. 构建 53 周 x 7 天 (周日~周六) 矩阵
+  const { weeks, totalTrialsPastYear } = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = today.getDay(); // 0: 周日, 1: 周一, ... 6: 周六
+
+    // 以当前周的周六作为热力图终点
+    const gridEnd = new Date(today);
+    gridEnd.setDate(today.getDate() + (6 - dayOfWeek));
+
+    // 计算起点 (共 53 周，371 天)
+    const gridStart = new Date(gridEnd);
+    gridStart.setDate(gridEnd.getDate() - (TOTAL_WEEKS * 7 - 1));
+
+    const weeksList: HeatmapWeek[] = [];
+    let lastMonth = -1;
+    let totalCount = 0;
+
+    for (let w = 0; w < TOTAL_WEEKS; w++) {
+      const days: HeatmapDay[] = [];
+      let weekMonthLabel: string | null = null;
+
+      for (let d = 0; d < 7; d++) {
+        const currentDate = new Date(gridStart);
+        currentDate.setDate(gridStart.getDate() + w * 7 + d);
+
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
+        const isFuture = currentDate > today;
+        const count = isFuture ? 0 : countMap.get(dateStr) || 0;
+
+        if (!isFuture) {
+          totalCount += count;
+        }
+
+        days.push({
+          dateStr,
+          count,
+          isFuture,
+        });
+
+        // 当月第一周标记月份
+        const currentMonthIdx = currentDate.getMonth();
+        if (
+          currentDate.getDate() >= 1 &&
+          currentDate.getDate() <= 7 &&
+          currentMonthIdx !== lastMonth
+        ) {
+          weekMonthLabel = monthNames[currentMonthIdx] || `${currentMonthIdx + 1}`;
+          lastMonth = currentMonthIdx;
+        }
+      }
+
+      weeksList.push({
+        days,
+        monthLabel: weekMonthLabel,
+      });
+    }
+
+    return { weeks: weeksList, totalTrialsPastYear: totalCount };
+  }, [countMap, monthNames]);
+
+  // 4. 默认滚动至最右侧最新周
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, []);
+
+  // 鼠标移入即时计算 Tooltip 坐标
+  const handleCellHover = (day: HeatmapDay, e: MouseEvent) => {
+    if (day.isFuture || !matrixContainerRef.current) return;
+    const target = e.currentTarget as HTMLElement;
+    const targetRect = target.getBoundingClientRect();
+    const parentRect = matrixContainerRef.current.getBoundingClientRect();
+
+    setHoveredDay({
+      dateStr: day.dateStr,
+      count: day.count,
+      x: targetRect.left - parentRect.left + targetRect.width / 2,
+      y: targetRect.top - parentRect.top,
+    });
+  };
+
+  const getHeatmapColor = (count: number, isFuture: boolean) => {
+    if (isFuture) return 'bg-transparent border border-transparent';
+    if (count === 0) return 'bg-slate-100/90 border border-slate-200/40';
+    if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
+    if (count < 25) return 'bg-indigo-400 border border-indigo-500/60';
+    if (count < 50) return 'bg-indigo-600 border border-indigo-600';
+    return 'bg-indigo-800 border border-indigo-900';
+  };
+
+  return (
+    <div className="bg-white border border-slate-200/80 shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
+      {/* 顶栏：标题、年度总刷题数与图例 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-black text-slate-800 tracking-tight">
+            {t('stats.heatmapTitle')}
+          </span>
+          <span className="text-xs text-slate-400 font-medium">
+            ({t('stats.heatmapTotalYear', { count: totalTrialsPastYear })})
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium self-end sm:self-auto">
+          <span>{t('stats.heatmapLess')}</span>
+          <div className="w-3 h-3 rounded-[3px] bg-slate-100 border border-slate-200/60" />
+          <div className="w-3 h-3 rounded-[3px] bg-indigo-200" />
+          <div className="w-3 h-3 rounded-[3px] bg-indigo-400" />
+          <div className="w-3 h-3 rounded-[3px] bg-indigo-600" />
+          <div className="w-3 h-3 rounded-[3px] bg-indigo-800" />
+          <span>{t('stats.heatmapMore')}</span>
+        </div>
+      </div>
+
+      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显 Tooltip */}
+      <div
+        ref={scrollContainerRef}
+        className="w-full overflow-x-auto pt-7 pb-2.5 px-1 scrollbar-thin select-none"
+      >
+        <div ref={matrixContainerRef} className="relative inline-flex gap-2 min-w-max">
+          {/* 即时响应的零延迟悬浮浮窗 (Instant Floating Tooltip) */}
+          {hoveredDay && (
+            <div
+              className="absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 -translate-y-full whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-800/80"
+              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y - 6}px` }}
+            >
+              <span>{hoveredDay.dateStr}</span>
+              <span className="text-indigo-300 ml-1.5 font-mono">
+                {hoveredDay.count} {t('common.trialsUnit')}
+              </span>
+            </div>
+          )}
+
+          {/* 左侧：星期标签 (周一/周三/周五 垂直对齐对应行) */}
+          <div className="flex flex-col justify-between pt-5 pb-0.5 pr-1 text-[10px] font-semibold text-slate-400 font-mono select-none h-[126px]">
+            <span className="leading-none">{t('stats.weekdayMon')}</span>
+            <span className="leading-none">{t('stats.weekdayWed')}</span>
+            <span className="leading-none">{t('stats.weekdayFri')}</span>
+          </div>
+
+          {/* 右侧：53 列按周排列的矩阵与顶部月份 */}
+          <div className="flex gap-1" onMouseLeave={() => setHoveredDay(null)}>
+            {weeks.map((week, wIdx) => (
+              <div key={`week-${wIdx}`} className="flex flex-col gap-1 flex-shrink-0">
+                {/* 顶部月份标记槽位：绝对定位避免挤占列宽，保证网格均匀紧凑 */}
+                <div className="h-5 relative text-[11px] font-bold text-slate-500">
+                  {week.monthLabel && (
+                    <span className="absolute left-0 top-0 whitespace-nowrap leading-none select-none">
+                      {week.monthLabel}
+                    </span>
+                  )}
+                </div>
+
+                {/* 竖向 7 天方块 (从周日到周六) */}
+                <div className="flex flex-col gap-1">
+                  {week.days.map((day) => (
+                    <div
+                      key={day.dateStr}
+                      onMouseEnter={(e) => handleCellHover(day, e)}
+                      className={`w-3.5 h-3.5 rounded-[3px] transition-all ${
+                        day.isFuture
+                          ? 'invisible'
+                          : 'cursor-pointer hover:scale-125 hover:z-10 hover:shadow-sm hover:ring-1 hover:ring-indigo-400'
+                      } ${getHeatmapColor(day.count, day.isFuture)}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 ~~~~~
 
 ### 下一步建议
-- **测试验证**：在全局设置中切换界面语言（中文 / English），观察热力图顶部的月份标识是否由“一月、二月”无缝切换为“Jan, Feb”，左侧周标是否由“周一、周三、周五”切换为“Mon, Wed, Fri”。
+- 移动端适配验证：在触屏设备上滑动热力图并轻点日期方格，确认即显 Tooltip 同样能够准确指向被点击的方格。

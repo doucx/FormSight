@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
 
 interface ActivityHeatmapCardProps {
@@ -21,6 +21,15 @@ const TOTAL_WEEKS = 53;
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   const { t, locale } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const matrixContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // 即时响应的悬浮 Tooltip 状态 (0 延迟)
+  const [hoveredDay, setHoveredDay] = useState<{
+    dateStr: string;
+    count: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // 1. 构建日期-答题量映射表
   const countMap = useMemo(() => {
@@ -82,7 +91,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
           isFuture,
         });
 
-        // 识别月份变更 (若该周包含当月 1~7 号，则在该列顶部显示月份标识)
+        // 当月第一周标记月份
         const currentMonthIdx = currentDate.getMonth();
         if (
           currentDate.getDate() >= 1 &&
@@ -103,12 +112,27 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
     return { weeks: weeksList, totalTrialsPastYear: totalCount };
   }, [countMap, monthNames]);
 
-  // 4. 默认将滚动条推至最右侧 (最新周)
+  // 4. 默认滚动至最右侧最新周
   useEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
     }
   }, []);
+
+  // 鼠标移入即时计算 Tooltip 坐标
+  const handleCellHover = (day: HeatmapDay, e: MouseEvent) => {
+    if (day.isFuture || !matrixContainerRef.current) return;
+    const target = e.currentTarget as HTMLElement;
+    const targetRect = target.getBoundingClientRect();
+    const parentRect = matrixContainerRef.current.getBoundingClientRect();
+
+    setHoveredDay({
+      dateStr: day.dateStr,
+      count: day.count,
+      x: targetRect.left - parentRect.left + targetRect.width / 2,
+      y: targetRect.top - parentRect.top,
+    });
+  };
 
   const getHeatmapColor = (count: number, isFuture: boolean) => {
     if (isFuture) return 'bg-transparent border border-transparent';
@@ -122,7 +146,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   return (
     <div className="bg-white border border-slate-200/80 shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
       {/* 顶栏：标题、年度总刷题数与图例 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-1 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2">
           <span className="text-sm font-black text-slate-800 tracking-tight">
             {t('stats.heatmapTitle')}
@@ -143,26 +167,43 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
         </div>
       </div>
 
-      {/* GitHub 风格矩阵主体：带横向滚动支持 */}
+      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显 Tooltip */}
       <div
         ref={scrollContainerRef}
-        className="w-full overflow-x-auto pb-2 pt-1 scrollbar-thin select-none"
+        className="w-full overflow-x-auto pt-7 pb-2.5 px-1 scrollbar-thin select-none"
       >
-        <div className="inline-flex gap-2 min-w-max">
-          {/* 左侧：星期标签 (周一/周三/周五 对齐对应行) */}
-          <div className="flex flex-col justify-between pt-5 pb-0.5 pr-1 text-[10px] font-semibold text-slate-400 font-mono select-none h-[116px]">
+        <div ref={matrixContainerRef} className="relative inline-flex gap-2 min-w-max">
+          {/* 即时响应的零延迟悬浮浮窗 (Instant Floating Tooltip) */}
+          {hoveredDay && (
+            <div
+              className="absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 -translate-y-full whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-800/80"
+              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y - 6}px` }}
+            >
+              <span>{hoveredDay.dateStr}</span>
+              <span className="text-indigo-300 ml-1.5 font-mono">
+                {hoveredDay.count} {t('common.trialsUnit')}
+              </span>
+            </div>
+          )}
+
+          {/* 左侧：星期标签 (周一/周三/周五 垂直对齐对应行) */}
+          <div className="flex flex-col justify-between pt-5 pb-0.5 pr-1 text-[10px] font-semibold text-slate-400 font-mono select-none h-[126px]">
             <span className="leading-none">{t('stats.weekdayMon')}</span>
             <span className="leading-none">{t('stats.weekdayWed')}</span>
             <span className="leading-none">{t('stats.weekdayFri')}</span>
           </div>
 
           {/* 右侧：53 列按周排列的矩阵与顶部月份 */}
-          <div className="flex gap-1">
+          <div className="flex gap-1" onMouseLeave={() => setHoveredDay(null)}>
             {weeks.map((week, wIdx) => (
               <div key={`week-${wIdx}`} className="flex flex-col gap-1 flex-shrink-0">
-                {/* 顶部月份标记槽位 (高度固定，有标签时显示) */}
-                <div className="h-4 text-[10px] font-bold text-slate-500 truncate leading-none overflow-visible">
-                  {week.monthLabel || ''}
+                {/* 顶部月份标记槽位：绝对定位避免挤占列宽，保证网格均匀紧凑 */}
+                <div className="h-5 relative text-[11px] font-bold text-slate-500">
+                  {week.monthLabel && (
+                    <span className="absolute left-0 top-0 whitespace-nowrap leading-none select-none">
+                      {week.monthLabel}
+                    </span>
+                  )}
                 </div>
 
                 {/* 竖向 7 天方块 (从周日到周六) */}
@@ -170,15 +211,11 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
                   {week.days.map((day) => (
                     <div
                       key={day.dateStr}
-                      title={
-                        day.isFuture
-                          ? undefined
-                          : `${day.dateStr}: ${day.count} ${t('common.trialsUnit')}`
-                      }
-                      className={`w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-[3px] transition-all ${
+                      onMouseEnter={(e) => handleCellHover(day, e)}
+                      className={`w-3.5 h-3.5 rounded-[3px] transition-all ${
                         day.isFuture
                           ? 'invisible'
-                          : 'cursor-pointer hover:scale-125 hover:z-10 hover:shadow-xs'
+                          : 'cursor-pointer hover:scale-125 hover:z-10 hover:shadow-sm hover:ring-1 hover:ring-indigo-400'
                       } ${getHeatmapColor(day.count, day.isFuture)}`}
                     />
                   ))}

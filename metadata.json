@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(i18n): 扩展翻译引擎以支持数组类型键值解析与热力图月份本地化", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788167329.4097605, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(stats): 优化热力图月份排版、修复顶端文字截断并实现零延迟悬浮即显提示", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788167588.1493027, "duration_ms": 0}}
