@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { evaluatePointGridHit, findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import { generateBipolarGridPoints, generatePolarGridPoints } from '../../modules/star/_shared/gridGenerators';
 import { getDynamicCrosshairMetrics, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
-import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
-import { generateSingleAnchorQuestion as generateQuestion } from '../../modules/star/SingleAnchorCard/generator';
 import { getGridMinSpacing } from '../../core/canvas/drawPointGrid';
+import { evaluatePointGridHit, findNearestPointInGrid } from '../../core/geometry/pointGrid';
+import { generateSingleAnchorQuestion as generateQuestion } from '../../modules/star/SingleAnchorCard/generator';
+import {
+  generateBipolarGridPoints,
+  generatePolarGridPoints,
+} from '../../modules/star/_shared/gridGenerators';
+import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
 
 const checkHit = (click: any, target: any, grid: any) => evaluatePointGridHit(click, target, grid);
 const findNearestGridPoint = (click: any, grid: any) => findNearestPointInGrid(click, grid);

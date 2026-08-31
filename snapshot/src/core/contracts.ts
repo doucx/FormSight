@@ -1,7 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { UnifiedTrialRecord } from '../storage/db/schema';
-import type { CardTags } from '../types/card';
 import type {
   AbstractionSettings,
   BaseModuleSettings,
@@ -11,6 +10,7 @@ import type {
   StarSettings,
 } from '../storage/settings';
 import type { Point } from '../types';
+import type { CardTags } from '../types/card';
 import type { CardDefinition, PackMeta } from '../types/card';
 
 export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
