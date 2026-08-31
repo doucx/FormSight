@@ -44,9 +44,10 @@ const switchThumbVariants = cva(
 );
 
 export interface SwitchProps
-  extends Omit<JSX.HTMLAttributes<HTMLButtonElement>, 'size'>,
+  extends Omit<JSX.ButtonHTMLAttributes<HTMLButtonElement>, 'size'>,
     VariantProps<typeof switchVariants> {
   checked: boolean;
+  disabled?: boolean;
   onCheckedChange?: (checked: boolean) => void;
 }
 

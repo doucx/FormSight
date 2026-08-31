@@ -19,7 +19,7 @@ export const inputVariants = cva(
 );
 
 export interface InputProps
-  extends Omit<JSX.HTMLAttributes<HTMLInputElement>, 'size'>,
+  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size'>,
     VariantProps<typeof inputVariants> {
   type?: string;
 }

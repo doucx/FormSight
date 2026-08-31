@@ -19,7 +19,7 @@ export const selectVariants = cva(
 );
 
 export interface SelectProps
-  extends Omit<JSX.HTMLAttributes<HTMLSelectElement>, 'size'>,
+  extends Omit<JSX.SelectHTMLAttributes<HTMLSelectElement>, 'size'>,
     VariantProps<typeof selectVariants> {
   children?: ComponentChildren;
 }
