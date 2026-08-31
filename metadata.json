@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "install_clsx_etc Capture: M package-lock.json, M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788175665.350065, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 搭建内部设计系统基础设施与核心原子 UI 组件", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176052.5727015, "duration_ms": 0}}
