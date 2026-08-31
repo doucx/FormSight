@@ -111,9 +111,7 @@ export function SessionSummaryModal({
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-foreground">
-                {t('summary.levelEvolution')}
-              </div>
+              <div className="text-xs font-bold text-foreground">{t('summary.levelEvolution')}</div>
               <div className="text-[11px] text-primary font-medium">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
@@ -162,19 +160,11 @@ export function SessionSummaryModal({
 
         {/* 底部操作按钮 */}
         <div className="grid grid-cols-2 gap-3 pt-1">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="h-11 gap-1.5"
-          >
+          <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
             <Home className="w-4 h-4" />
             <span>{t('summary.backHome')}</span>
           </Button>
-          <Button
-            variant="default"
-            onClick={onRestart}
-            className="h-11 gap-1.5"
-          >
+          <Button variant="default" onClick={onRestart} className="h-11 gap-1.5">
             <RotateCcw className="w-4 h-4" />
             <span>{t('summary.trainAgain')}</span>
           </Button>

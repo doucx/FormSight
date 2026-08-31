@@ -113,7 +113,9 @@ export function Home({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">Lvl {currentLvl}</div>
+                      <div className="text-[10px] text-muted-foreground font-mono">
+                        Lvl {currentLvl}
+                      </div>
                     </div>
                   </div>
 
@@ -150,7 +152,9 @@ export function Home({
           </div>
           <div className="text-2xl font-black text-foreground font-mono">
             {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-muted-foreground">{t('common.trialsUnit')}</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {t('common.trialsUnit')}
+            </span>
           </div>
           <div className="text-[11px] text-muted-foreground pt-0.5">
             {t('common.accuracy')}:{' '}

@@ -64,7 +64,8 @@ export function PlanSummaryModal({
               {t('common.totalHits')}
             </div>
             <div className="text-2xl font-black text-foreground">
-              {hitCount} <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
+              {hitCount}{' '}
+              <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
             </div>
           </div>
 
@@ -129,11 +130,7 @@ export function PlanSummaryModal({
 
                     <Badge
                       variant={
-                        stageAcc >= 80
-                          ? 'success'
-                          : stageAcc >= 60
-                            ? 'warning'
-                            : 'destructive'
+                        stageAcc >= 80 ? 'success' : stageAcc >= 60 ? 'warning' : 'destructive'
                       }
                       size="default"
                       className="font-mono text-xs"
@@ -149,19 +146,11 @@ export function PlanSummaryModal({
 
         {/* 底部动作按钮 */}
         <div className="grid grid-cols-2 gap-3 pt-1">
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="h-11 gap-1.5"
-          >
+          <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
             <Home className="w-4 h-4" />
             <span>{t('common.completeAndReturnHome')}</span>
           </Button>
-          <Button
-            variant="default"
-            onClick={onRestart}
-            className="h-11 gap-1.5"
-          >
+          <Button variant="default" onClick={onRestart} className="h-11 gap-1.5">
             <RotateCcw className="w-4 h-4" />
             <span>{t('common.restartPlan')}</span>
           </Button>

@@ -133,12 +133,7 @@ export function CardAnalyticsView({
       {/* 顶部主操作栏 */}
       <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5 min-w-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onExit}
-            className="gap-1.5 flex-shrink-0"
-          >
+          <Button variant="secondary" size="sm" onClick={onExit} className="gap-1.5 flex-shrink-0">
             <ArrowLeft className="w-4 h-4" />
             {t('common.exit')}
           </Button>
@@ -281,7 +276,9 @@ export function CardAnalyticsView({
               </div>
               <div className="text-3xl font-black text-foreground">
                 {summaryStats.hits}{' '}
-                <span className="text-xs font-normal text-muted-foreground">/ {summaryStats.total}</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  / {summaryStats.total}
+                </span>
               </div>
             </div>
 

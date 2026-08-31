@@ -138,9 +138,7 @@ export function DataGovernanceSection({
             <Scissors className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-foreground">
-              {t('settings.pruneTitle')}
-            </div>
+            <div className="text-xs font-bold text-foreground">{t('settings.pruneTitle')}</div>
             <div className="text-[11px] text-primary">{t('settings.pruneDesc')}</div>
           </div>
         </div>
