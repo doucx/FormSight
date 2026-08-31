@@ -22,10 +22,10 @@ export function SettingToggleItem({
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className="text-indigo-600 hover:opacity-80 transition-opacity"
+        className="text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity cursor-pointer"
       >
         {checked ? (
-          <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+          <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />
         ) : (
           <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
         )}

@@ -133,7 +133,7 @@ export function DataGovernanceSection({
       {/* 数据库瘦身与修剪 */}
       <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
             <Scissors className="w-4 h-4" />
           </div>
           <div>

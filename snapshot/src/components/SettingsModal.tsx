@@ -63,12 +63,12 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           <button
             type="button"
             onClick={() => updateCardConfig({ autoNext: !cardConfig.autoNext })}
-            className="text-indigo-600 hover:opacity-80 transition-opacity"
+            className="text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity cursor-pointer"
           >
             {cardConfig.autoNext ? (
-              <ToggleRight className="w-8 h-8 fill-indigo-600 text-white" />
+              <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />
             ) : (
-              <ToggleLeft className="w-8 h-8 text-slate-300" />
+              <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
             )}
           </button>
         </div>
@@ -194,9 +194,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             <button
               type="button"
               onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                 cardConfig.stepGranularity === 'standard'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
                   : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
@@ -205,9 +205,9 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             <button
               type="button"
               onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all ${
+              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                 cardConfig.stepGranularity === 'fine'
-                  ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                  ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-sm'
                   : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
