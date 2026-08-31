@@ -1,40 +1,3 @@
-我将为你制定一个自动化重构计划，编写 `scripts/auto_refactor_unification.py` 自动化清洗脚本，并执行它以批量替换 60+ 处重复度极高的硬编码颜色与双主题类名。
-
-## [WIP] feat(scripts): 创建设计系统自动化颜色与语义令牌清洗脚本
-
-### 用户需求
-针对扫描器报告中暴露出的 60+ 处硬编码 Grayscale (`slate-400~900`)、Dual-Theme 边框 (`dark:border-slate-800`) 和品牌色 (`indigo-50/60`, `text-indigo-600`, `border-indigo-100`) 等重复度极高的代码点，编写一个全自动清洗与重构脚本进行批量替换。
-
-### 评论
-手动逐行修改 20+ 个文件不仅费时且容易在引号、渐变与 Tailwind 透明度后缀处出现疏漏。通过建立带边界保护和豁免机制的 Python 正则批量替换器，能保证替换的字节级一致性，并使代码库快速向设计系统语义 Token 靠拢。
-
-### 目标
-1. 新建 `scripts/auto_refactor_unification.py` 脚本，内置针对复合模式、单类名模式与边界保护的精确替换规则。
-2. 自动豁免 `theme.ts`、`colorUtils.ts`、`oklchUtils.ts`、`index.css` 及单元测试文件。
-3. 执行该脚本，自动将硬编码色值升级为 `bg-card`、`bg-muted`、`bg-accent`、`text-foreground`、`text-muted-foreground`、`border-border` 等语义化 Token。
-4. 运行扫描器复检清洗结果。
-
-### 基本原理
-根据 AST 及模式分析，将硬编码类名划分为三级替换梯队：
-1. **复合容器模式**（如 `bg-indigo-50/60 ... border-indigo-100` -> `bg-accent ... border-border`）。
-2. **双主题复合边框与背景**（如 `border-slate-200/50 dark:border-slate-700/50` -> `border-border/50`，`bg-slate-50 dark:bg-slate-950` -> `bg-muted/40`）。
-3. **单项色彩原子**（`text-slate-800` -> `text-foreground`，`text-slate-500/600` -> `text-muted-foreground`，`border-slate-200/800` -> `border-border`）。
-脚本支持 `--dry-run` 预览及直接写回，并在执行后输出修改统计。
-
-### 标签
-#intent/refine #flow/ready #priority/high #comp/build #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/color-refactoring #task/action/automated-cleanup #task/state/begin #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 创建 `scripts/auto_refactor_unification.py` 自动化重构脚本
-
-~~~~~act
-write_file
-scripts/auto_refactor_unification.py
-~~~~~
-~~~~~python
 #!/usr/bin/env python3
 """FormSight Automated Design System & Token Refactoring Script.
 
@@ -318,17 +281,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-~~~~~
-
-#### Acts 2: 运行自动化重构脚本并复检
-
-我们运行自动化重构脚本，清洗代码库中的硬编码色彩类名，并使用扫描器生成重构后的对照报告。
-
-~~~~~
-python3 scripts/auto_refactor_unification.py
-python3 scripts/scan_unification_targets.py -s
-~~~~~
-
-### 下一步建议
-1. 观察执行后的统计数据，查看 `Hardcoded Slate Grayscale` 与 `Hardcoded Dual-Theme Color` 的降低情况。
-2. 接下来创建 `ChoiceOptionCard` 和 `TagPill` 的 `cva` 抽象，解决剩下的核心组件收敛问题。

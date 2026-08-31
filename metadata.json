@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(scripts): 更新设计系统统一性扫描脚本以支持 6 种目标组件检测", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788178216.9993362, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(scripts): 创建设计系统自动化颜色与语义令牌清洗脚本", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788178344.3538008, "duration_ms": 0}}
