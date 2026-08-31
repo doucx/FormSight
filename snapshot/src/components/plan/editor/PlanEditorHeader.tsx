@@ -156,7 +156,7 @@ export function PlanEditorHeader({
           <button
             type="button"
             onClick={onExportPlan}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
+            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
             title={t('plan.exportJsonTitle')}
           >
             <Download className="w-3.5 h-3.5" />
@@ -165,7 +165,7 @@ export function PlanEditorHeader({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all cursor-pointer"
+            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
             title={t('plan.importJsonTitle')}
           >
             <Upload className="w-3.5 h-3.5" />
@@ -189,7 +189,7 @@ export function PlanEditorHeader({
           <button
             type="button"
             onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
-            className="p-2 text-slate-600 bg-slate-50 border border-slate-200 rounded-xl transition-all active:scale-95"
+            className="p-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition-all active:scale-95"
             title={t('common.settings')}
           >
             <MoreHorizontal className="w-4 h-4" />
@@ -214,7 +214,7 @@ export function PlanEditorHeader({
                   setShowMobileMoreMenu(false);
                   onClonePlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded-xl flex items-center gap-2 text-left"
+                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
               >
                 <Copy className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{t('plan.cloneBtn')}</span>
@@ -225,7 +225,7 @@ export function PlanEditorHeader({
                   setShowMobileMoreMenu(false);
                   onExportPlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded-xl flex items-center gap-2 text-left"
+                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
               >
                 <Download className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{t('plan.exportBtn')}</span>
@@ -236,12 +236,12 @@ export function PlanEditorHeader({
                   setShowMobileMoreMenu(false);
                   fileInputRef.current?.click();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 rounded-xl flex items-center gap-2 text-left"
+                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
               >
                 <Upload className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{t('plan.importBtn')}</span>
               </button>
-              <div className="my-1 border-t border-slate-100" />
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
               <button
                 type="button"
                 onClick={() => {

@@ -108,9 +108,9 @@ export function CardAnalyticsView({
 
   if (!card || !plugin) {
     return (
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-sm">
+      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-sm">
         <Info className="w-10 h-10 text-slate-400" />
-        <div className="text-sm font-bold text-slate-700">{t('home.noMatchTitle')}</div>
+        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('home.noMatchTitle')}</div>
         <button
           type="button"
           onClick={onExit}
@@ -154,7 +154,7 @@ export function CardAnalyticsView({
                   {cardTitle}
                 </h1>
                 {packTitle && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-600 dark:text-slate-300 rounded-md border border-slate-200/60">
+                  <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md border border-slate-200/60 dark:border-slate-700/60">
                     {packTitle}
                   </span>
                 )}
@@ -177,7 +177,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onOpenSettings(card.id)}
-            className="p-2.5 text-slate-600 hover:text-indigo-600 bg-slate-50 hover:bg-indigo-50 border border-slate-200/80 rounded-xl transition-all cursor-pointer shadow-xs"
+            className="p-2.5 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all cursor-pointer shadow-xs"
             title={t('card.settingsTooltip', { title: cardTitle })}
           >
             <Sliders className="w-4 h-4" />
@@ -186,7 +186,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onStartBenchmark(card.id)}
-            className="py-2.5 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
+            className="py-2.5 px-3.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
             title={t('card.startBenchmark')}
           >
             <Target className="w-3.5 h-3.5 text-slate-500" />
@@ -242,15 +242,15 @@ export function CardAnalyticsView({
 
       {/* 主体展示区 */}
       {loading ? (
-        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-6 flex items-center justify-center text-slate-400 text-xs shadow-sm">
+        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 flex items-center justify-center text-slate-400 text-xs shadow-sm">
           {t('analyticsModal.analyzing')}
         </div>
       ) : records.length === 0 ? (
-        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-slate-50 text-slate-400 rounded-3xl">
+        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
+          <div className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-3xl">
             <Info className="w-8 h-8" />
           </div>
-          <div className="text-base font-bold text-slate-800">
+          <div className="text-base font-bold text-slate-800 dark:text-slate-100">
             {t('analyticsModal.noRecords', { title: cardTitle })}
           </div>
           <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
@@ -285,7 +285,7 @@ export function CardAnalyticsView({
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {t('common.totalHits')}
               </div>
-              <div className="text-3xl font-black text-slate-800">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
                 {summaryStats.hits}{' '}
                 <span className="text-xs font-normal text-slate-400">/ {summaryStats.total}</span>
               </div>
@@ -296,7 +296,7 @@ export function CardAnalyticsView({
                 <Clock className="w-4 h-4 text-indigo-500" />
                 {t('summary.duration')}
               </div>
-              <div className="text-3xl font-black text-slate-800 font-mono">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100 font-mono">
                 {summaryStats.avgResponseTimeSec}
                 <span className="text-xs font-normal text-slate-400"> s</span>
               </div>
@@ -307,7 +307,7 @@ export function CardAnalyticsView({
                 <TrendingUp className="w-4 h-4 text-amber-500" />
                 {t('stats.dailyMaxLevel')}
               </div>
-              <div className="text-3xl font-black text-slate-800 font-mono">
+              <div className="text-3xl font-black text-slate-800 dark:text-slate-100 font-mono">
                 Lvl {summaryStats.maxLevel}
               </div>
             </div>
@@ -316,7 +316,7 @@ export function CardAnalyticsView({
           {/* 总体评价与认知建议 */}
           <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+              <div className="text-xs font-black text-slate-700 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-600" />
                 {t('analyticsModal.overallEvaluation')}
               </div>
@@ -334,23 +334,23 @@ export function CardAnalyticsView({
                       <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
                         <Zap className="w-4 h-4" />
                       </div>
-                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
                         <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.paceSummaryTitle')}
                         </div>
-                        <p className="text-slate-600">{insights.paceSummaryText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">{insights.paceSummaryText}</p>
                       </div>
                     </div>
 
-                    <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3">
+                    <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 rounded-2xl flex items-start gap-3">
                       <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl flex-shrink-0">
                         <Gauge className="w-4 h-4" />
                       </div>
-                      <div className="text-xs text-slate-700 leading-relaxed space-y-1">
-                        <div className="font-bold text-slate-900">
+                      <div className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
+                        <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.levelFocusSummaryTitle')}
                         </div>
-                        <p className="text-slate-600">{insights.growthZoneText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">{insights.growthZoneText}</p>
                       </div>
                     </div>
                   </>
@@ -369,7 +369,7 @@ export function CardAnalyticsView({
               ref={canvasRef}
               width={320}
               height={320}
-              className="w-full max-w-[340px] aspect-square rounded-2xl border border-slate-100 shadow-xs"
+              className="w-full max-w-[340px] aspect-square rounded-2xl border border-slate-100 dark:border-slate-800 shadow-xs"
             />
           </div>
 

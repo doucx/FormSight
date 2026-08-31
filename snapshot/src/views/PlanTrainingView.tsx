@@ -185,7 +185,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           </div>
           <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
             <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono text-xs font-bold text-slate-700">
+            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
           </div>

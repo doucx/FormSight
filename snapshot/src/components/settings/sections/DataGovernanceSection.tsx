@@ -116,7 +116,7 @@ export function DataGovernanceSection({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 rounded-2xl text-xs font-bold text-slate-700 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          className="py-3 px-4 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
         >
           <Upload className="w-4 h-4 text-indigo-600" />
           {t('settings.importBackup')}
@@ -158,7 +158,7 @@ export function DataGovernanceSection({
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.resetPlansTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.resetPlansTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
           </div>
           <button

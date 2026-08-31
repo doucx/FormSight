@@ -88,13 +88,13 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1">
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
               {t('summary.duration')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800">
+              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
                 {formatSecondsToTimer(elapsedSeconds)}
               </span>
               <span className="text-xs font-semibold text-slate-400">
@@ -124,7 +124,7 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 font-mono font-black text-slate-800 text-base">
+          <div className="flex items-center gap-2 font-mono font-black text-slate-800 dark:text-slate-100 text-base">
             <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
               Lvl {startLevel}
             </span>
@@ -156,7 +156,7 @@ export function SessionSummaryModal({
             ref={canvasRef}
             width={440}
             height={160}
-            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-slate-100 shadow-inner"
+            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-slate-100 dark:border-slate-700 shadow-inner"
           />
         </div>
 

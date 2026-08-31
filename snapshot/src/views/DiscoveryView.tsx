@@ -45,7 +45,7 @@ export function DiscoveryView({
       {/* 顶部标题与说明栏 */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {t('nav.discovery')}
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">

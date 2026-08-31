@@ -107,25 +107,25 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 语言切换器 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <div className="flex items-center gap-2.5">
           <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
             <Globe className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.languageTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.languageTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
           </div>
         </div>
 
-        <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl">
+        <div className="flex items-center bg-slate-200/80 dark:bg-slate-900/80 p-0.5 rounded-xl">
           <button
             type="button"
             onClick={() => handleLocaleChange('zh-CN')}
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
               (settings.global.locale || locale) === 'zh-CN'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             {t('settings.langZh')}
@@ -136,7 +136,7 @@ export function GeneralPreferencesSection({
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
               (settings.global.locale || locale) === 'en-US'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
             {t('settings.langEn')}
@@ -145,13 +145,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 音效反馈开关 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <div className="flex items-center gap-2.5">
           <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
             <Volume2 className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.soundTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.soundTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.soundDesc')}</div>
           </div>
         </div>
@@ -163,13 +163,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 任务指引提示开关 */}
-      <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <div className="flex items-center gap-2.5">
           <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
             <HelpCircle className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.hintsTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.hintsTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.hintsDesc')}</div>
           </div>
         </div>
@@ -181,13 +181,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 闲置休眠保护 */}
-      <div className="space-y-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+      <div className="space-y-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <div className="flex items-center gap-2.5 mb-1">
           <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700">{t('settings.idleTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.idleTitle')}</div>
             <div className="text-[11px] text-slate-400">{t('settings.idleDesc')}</div>
           </div>
         </div>
@@ -215,7 +215,7 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 全局滑块外延感应区 */}
-      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+      <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         <SliderMarginGroup
           title={t('settings.sliderHitMarginTitle')}
           value={settings.global.sliderHitMargin ?? 12}

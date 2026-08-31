@@ -63,7 +63,7 @@ export function PlanSummaryModal({
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               {t('common.totalHits')}
             </div>
-            <div className="text-2xl font-black text-slate-800">
+            <div className="text-2xl font-black text-slate-800 dark:text-slate-100">
               {hitCount} <span className="text-xs font-normal text-slate-400">/ {totalTrials}</span>
             </div>
           </div>
@@ -73,7 +73,7 @@ export function PlanSummaryModal({
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
               {t('common.totalTimeSpent')}
             </div>
-            <div className="text-2xl font-black text-slate-800 font-mono">
+            <div className="text-2xl font-black text-slate-800 dark:text-slate-100 font-mono">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </div>
           </div>

@@ -52,7 +52,7 @@ export function Home({
       {/* 顶部状态与问候信息 */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {t('nav.dashboard')}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
@@ -172,7 +172,7 @@ export function Home({
               onNavigateToDiscovery();
             }
           }}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group"
+          className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all cursor-pointer flex flex-col justify-between group"
         >
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
             <span className="flex items-center gap-1.5 text-indigo-600">
@@ -201,7 +201,7 @@ export function Home({
               onOpenPlanEditor();
             }
           }}
-          className="bg-white p-5 rounded-3xl border border-slate-200/80 shadow-sm hover:border-indigo-300 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
+          className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-500 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
         >
           <div className="flex items-center justify-between text-xs font-bold text-slate-400">
             <span className="flex items-center gap-1.5 text-indigo-600">
@@ -211,7 +211,7 @@ export function Home({
             <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
           </div>
           <div className="mt-2">
-            <div className="text-sm font-black text-slate-800">{trainingPlan.name}</div>
+            <div className="text-sm font-black text-slate-800 dark:text-slate-100">{trainingPlan.name}</div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {t('plan.stageAndTrialsSummary', {
                 stages: validPlanItems.length,

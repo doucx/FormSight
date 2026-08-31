@@ -49,7 +49,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
       {/* 模块列表：自适应拉伸并滚动 */}
       {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
           {t('plan.noCardMatched')}
         </div>
       ) : (

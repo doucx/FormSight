@@ -48,7 +48,7 @@ export function PlanStageList({
                   type="button"
                   key={num}
                   onClick={() => onBatchUpdateTrials(num)}
-                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 rounded hover:bg-white transition-colors cursor-pointer"
+                  className="px-1.5 py-0.5 text-[10px] font-bold hover:text-indigo-600 dark:hover:text-indigo-400 rounded hover:bg-white dark:hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   {num}
                   {t('common.trialsUnit')}
@@ -106,7 +106,7 @@ export function PlanStageList({
                 </div>
 
                 {/* 题量选择与操作控制区：在紧凑宽度下换行并靠右/充满对齐 */}
-                <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
                   <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl">
                     {trialPresets.map((preset) => (
                       <button
@@ -124,12 +124,12 @@ export function PlanStageList({
                     ))}
                   </div>
 
-                  <div className="flex items-center gap-1 border-l border-slate-200 pl-1.5 ml-1">
+                  <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-700 pl-1.5 ml-1">
                     <button
                       type="button"
                       disabled={idx === 0}
                       onClick={() => onMoveItem(idx, 'up')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
+                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                       title={t('plan.moveUpTitle')}
                     >
                       <ArrowUp className="w-3.5 h-3.5" />
@@ -138,7 +138,7 @@ export function PlanStageList({
                       type="button"
                       disabled={idx === currentPlan.items.length - 1}
                       onClick={() => onMoveItem(idx, 'down')}
-                      className="p-1 text-slate-400 hover:text-slate-700 disabled:opacity-30 rounded-lg hover:bg-slate-100 cursor-pointer"
+                      className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
                       title={t('plan.moveDownTitle')}
                     >
                       <ArrowDown className="w-3.5 h-3.5" />

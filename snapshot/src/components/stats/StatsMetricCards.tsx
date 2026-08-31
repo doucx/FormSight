@@ -40,7 +40,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
           <Target className="w-4 h-4 text-emerald-500" />
           {t('stats.weekTrials')}
         </div>
-        <div className="text-3xl font-black text-slate-800">
+        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
           {stats.week.total}{' '}
           <span className="text-xs font-semibold text-slate-400 font-normal">
             {t('common.trialsUnit')}
@@ -56,7 +56,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
           <Activity className="w-4 h-4 text-amber-500" />
           {t('stats.yearTrials')}
         </div>
-        <div className="text-3xl font-black text-slate-800">
+        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
           {stats.year.total}{' '}
           <span className="text-xs font-semibold text-slate-400 font-normal">
             {t('common.trialsUnit')}
@@ -72,7 +72,7 @@ export function StatsMetricCards({ stats, streakDays }: StatsMetricCardsProps) {
           <TrendingUp className="w-4 h-4 text-slate-500" />
           {t('stats.allTimeTrials')}
         </div>
-        <div className="text-3xl font-black text-slate-800">
+        <div className="text-3xl font-black text-slate-800 dark:text-slate-100">
           {stats.allTime.total}{' '}
           <span className="text-xs font-semibold text-slate-400 font-normal">
             {t('common.trialsUnit')}

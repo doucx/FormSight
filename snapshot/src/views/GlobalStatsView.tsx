@@ -117,7 +117,7 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
           {t('stats.loading')}
         </div>
       ) : stats.allTime.total === 0 ? (
-        <div className="h-96 bg-white rounded-3xl border border-slate-200/80 p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
+        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
           <Activity className="w-10 h-10 text-slate-300" />
           {t('stats.noRecords', { filter: getCurrentFilterLabel() })}
         </div>
