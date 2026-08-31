@@ -12,6 +12,7 @@ interface HeatmapDay {
 }
 
 interface HeatmapWeek {
+  id: string;
   days: HeatmapDay[];
   monthLabel: string | null;
 }
@@ -43,6 +44,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   }, [heatmapData]);
 
   // 2. 解析多语言月份数组
+  // biome-ignore lint/correctness/useExhaustiveDependencies: recalculate month translations on locale switch
   const monthNames = useMemo(() => {
     const raw = t<string[]>('stats.heatmapMonths');
     if (Array.isArray(raw)) return raw;
@@ -106,6 +108,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
       }
 
       weeksList.push({
+        id: days[0]?.dateStr || `week-${w}`,
         days,
         monthLabel: weekMonthLabel,
       });
@@ -212,8 +215,8 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
           {/* 右侧：53 列按周排列的矩阵与顶部月份 */}
           <div className="flex gap-1" onMouseLeave={() => setHoveredDay(null)}>
-            {weeks.map((week, wIdx) => (
-              <div key={`week-${wIdx}`} className="flex flex-col gap-1 flex-shrink-0">
+            {weeks.map((week) => (
+              <div key={week.id} className="flex flex-col gap-1 flex-shrink-0">
                 {/* 顶部月份标记槽位：绝对定位避免挤占列宽，保证网格均匀紧凑 */}
                 <div className="h-5 relative text-[11px] font-bold text-slate-500">
                   {week.monthLabel && (
