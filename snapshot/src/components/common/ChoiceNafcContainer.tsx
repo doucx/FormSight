@@ -2,6 +2,7 @@ import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useEffect } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
+import { ChoiceCard, getChoiceCardState } from '../ui/choice-card';
 
 export interface ChoiceNafcOption<T = unknown> {
   key?: string | number;
@@ -67,33 +68,19 @@ export function ChoiceNafcContainer<T = unknown>({
         const isSelected = selectedIndex === idx;
         const isTarget = opt.isCorrect;
         const keyLabel = opt.keyLabel || (idx + 1).toString();
-
-        let border = 'border-border hover:border-primary/60 hover:shadow-md bg-muted/60';
-        if (showAnswer) {
-          if (isTarget) {
-            border =
-              'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
-          } else if (isSelected) {
-            border = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
-          } else {
-            border = 'bg-muted/40 border-border opacity-50';
-          }
-        } else if (isSelected) {
-          border =
-            'border-primary dark:border-indigo-500 bg-accent/30 dark:bg-accent/40 ring-2 ring-indigo-500/20 shadow-md';
-        }
+        const state = getChoiceCardState({ showAnswer, isTarget, isSelected });
 
         return (
-          <button
+          <ChoiceCard
             key={opt.key ?? `nafc-opt-${idx}`}
-            type="button"
+            state={state}
+            size="sm"
             disabled={disabled || showAnswer}
             onClick={() => onSelect(idx, opt)}
-            className={`group flex flex-col items-center gap-2.5 p-2.5 sm:p-3 rounded-2xl border transition-all duration-200 text-left active:scale-[0.98] cursor-pointer ${border}`}
           >
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
-                <span className="w-5 h-5 rounded-lg bg-muted dark:bg-muted text-foreground flex items-center justify-center font-mono text-[11px]">
+                <span className="w-5 h-5 rounded-lg bg-muted text-foreground flex items-center justify-center font-mono text-[11px]">
                   {keyLabel}
                 </span>
                 {opt.title || t('common.optionN', { num: keyLabel })}
@@ -104,7 +91,7 @@ export function ChoiceNafcContainer<T = unknown>({
             </div>
 
             {opt.content}
-          </button>
+          </ChoiceCard>
         );
       })}
     </div>
