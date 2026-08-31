@@ -1,6 +1,7 @@
 import { BarChart2, Compass, Github, Layers, Settings, Sparkles, Target } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
 import type { RouteLocation } from '../../hooks/useHashRoute';
+import { Badge } from '../ui/badge';
 
 interface AppNavigationProps {
   currentRoute: RouteLocation;
@@ -69,9 +70,9 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
             <div>
               <div className="font-black text-base text-foreground tracking-tight leading-tight flex items-center gap-1.5">
                 {t('common.appName')}
-                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-accent text-primary rounded-md border border-border/60 dark:border-border">
+                <Badge variant="accent" size="sm" className="font-mono text-[9px]">
                   v{__APP_VERSION__}
-                </span>
+                </Badge>
               </div>
               <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
                 {t('common.appSubtitle').slice(0, 14)}...
@@ -103,7 +104,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                   />
                   <span className="truncate flex-1">{item.label}</span>
                   {active && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary dark:bg-indigo-400 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                   )}
                 </button>
               );

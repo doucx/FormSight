@@ -1,5 +1,6 @@
 import { Crosshair } from 'lucide-preact';
 import { useTranslation } from '../../../core/i18n';
+import { Button } from '../../ui/button';
 import type { TargetingMode } from '../../../utils/settings';
 
 interface TargetingSectionProps {
@@ -39,18 +40,14 @@ export function TargetingSection({
           { id: 'off', label: t('settingsModal.targetingOff') },
           { id: 'manual', label: t('settingsModal.targetingManual') },
         ].map((m) => (
-          <button
-            type="button"
+          <Button
             key={m.id}
+            variant={mode === m.id ? 'default' : 'outline'}
             onClick={() => onModeChange(m.id as TargetingMode)}
-            className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-              mode === m.id
-                ? 'bg-primary text-white border-primary shadow-sm'
-                : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
-            }`}
+            className="py-2 h-auto"
           >
             {m.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -62,18 +59,15 @@ export function TargetingSection({
               const selected = selectedSectors.includes(idx);
               const label = t(name) || name;
               return (
-                <button
-                  type="button"
+                <Button
                   key={name}
+                  variant={selected ? 'accent' : 'outline'}
+                  size="sm"
                   onClick={() => onToggleSector(idx)}
-                  className={`py-1.5 px-1 text-[10px] font-bold rounded-lg border transition-all ${
-                    selected
-                      ? 'bg-accent text-primary border-border dark:border-border shadow-sm'
-                      : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
-                  }`}
+                  className="py-1.5 px-1 text-[10px] h-auto"
                 >
                   {label}
-                </button>
+                </Button>
               );
             })}
           </div>

@@ -11,6 +11,7 @@ import { ModalShell } from './common/ModalShell';
 import type { ToastType } from './common/Toast';
 import { DataGovernanceSection } from './settings/sections/DataGovernanceSection';
 import { GeneralPreferencesSection } from './settings/sections/GeneralPreferencesSection';
+import { Button } from './ui/button';
 
 interface GlobalSettingsModalProps {
   settings?: UserSettings;
@@ -65,13 +66,13 @@ export function GlobalSettingsModal({
       />
 
       <div className="pt-2">
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98] cursor-pointer"
+          className="w-full py-2.5 h-auto"
         >
           {t('common.complete')}
-        </button>
+        </Button>
       </div>
     </ModalShell>
   );

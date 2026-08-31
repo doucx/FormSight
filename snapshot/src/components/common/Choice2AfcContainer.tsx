@@ -80,7 +80,7 @@ export function Choice2AfcContainer({
       >
         <div className="flex items-center justify-between w-full px-1">
           <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-            <span className="w-5 h-5 rounded-lg bg-muted dark:bg-slate-700 text-white flex items-center justify-center font-mono text-[11px]">
+            <span className="w-5 h-5 rounded-lg bg-muted dark:bg-muted text-foreground flex items-center justify-center font-mono text-[11px]">
               {opt.keyLabel || (opt.key === 'A' ? '1' : '2')}
             </span>
             {opt.title}

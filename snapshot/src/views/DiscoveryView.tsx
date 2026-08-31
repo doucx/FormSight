@@ -1,6 +1,7 @@
 import { Inbox, RotateCcw } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
 import { ModeCard } from '../components/common/ModeCard';
+import { Button } from '../components/ui/button';
 import { FilterEngine } from '../components/discovery/FilterEngine';
 import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -71,14 +72,14 @@ export function DiscoveryView({
           <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
             {t('home.noMatchDesc')}
           </p>
-          <button
-            type="button"
+          <Button
+            variant="accent"
             onClick={() => handleQueryChange({})}
-            className="mt-2 px-4 py-2 text-xs font-bold text-primary bg-accent hover:bg-accent dark:hover:bg-indigo-900/60 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="mt-2 gap-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t('home.resetFilter')}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

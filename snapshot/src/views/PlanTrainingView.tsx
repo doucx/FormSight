@@ -9,6 +9,7 @@ import { getProfile } from '../utils/db/index';
 import { type UserSettings, getCardSettings } from '../utils/settings';
 import { formatSecondsToTimer } from '../utils/time';
 import { GenericTrainingView } from './GenericTrainingView';
+import { Button } from '../components/ui/button';
 
 interface PlanTrainingViewProps {
   plan: TrainingPlan;
@@ -159,15 +160,16 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     <div className="w-full">
       <div className="max-w-5xl mx-auto mb-4 bg-card border border-border px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleRequestExit}
-            className="px-3 py-1.5 text-xs font-bold text-foreground hover:text-rose-600 dark:hover:text-rose-400 bg-muted hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-border rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="gap-1.5 text-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-border"
             title={t('plan.exitPlan')}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             {t('plan.exitPlan')}
-          </button>
+          </Button>
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-extrabold bg-accent text-primary border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
@@ -187,15 +189,16 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
               {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-primary bg-muted hover:bg-accent/50 border border-border rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="gap-1.5 text-muted-foreground hover:text-primary border border-border"
             title={t('plan.skipStage')}
           >
             <FastForward className="w-3.5 h-3.5 text-primary" />
             {t('plan.skipStage')}
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { CardQueryOptions } from '../../types/card';
 import { TagPill } from '../common/TagPill';
+import { Button } from '../ui/button';
 import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
 
 interface FilterEngineProps {
@@ -94,35 +95,29 @@ export function FilterEngine({
             </div>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant={isAdvancedOpen ? 'accent' : 'outline'}
+            size={isCompact ? 'sm' : 'default'}
             onClick={() => onChange({ ...query, showAdvanced: !isAdvancedOpen })}
-            className={`${
-              isCompact ? 'px-2.5 py-1.5 text-[11px] rounded-lg' : 'px-3 py-2 text-xs rounded-xl'
-            } font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
-              isAdvancedOpen
-                ? 'bg-accent text-primary border-border dark:border-border shadow-xs'
-                : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent/60'
-            }`}
+            className="gap-1.5 h-auto py-2"
           >
             <Filter className="w-3 h-3 text-primary" />
             <span>
               {isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}
             </span>
-          </button>
+          </Button>
 
           {hasActiveFilters && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size={isCompact ? 'sm' : 'default'}
               onClick={() => onChange(isAdvancedOpen ? { showAdvanced: true } : {})}
-              className={`${
-                isCompact ? 'px-2 py-1.5 text-[11px] rounded-lg' : 'px-2.5 py-2 text-xs rounded-xl'
-              } font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 dark:border-rose-900/60 transition-all flex items-center gap-1 cursor-pointer`}
+              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200/60 dark:border-rose-900/60 gap-1 h-auto py-2"
               title={t('common.clear')}
             >
               <RotateCcw className="w-3 h-3" />
               <span>{t('common.clear')}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

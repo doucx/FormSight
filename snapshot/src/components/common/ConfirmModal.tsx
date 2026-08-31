@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
 import { ModalShell } from './ModalShell';
+import { Button } from '../ui/button';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -34,24 +35,20 @@ export function ConfirmModal({
         <p className="text-xs text-muted-foreground leading-relaxed">{message}</p>
 
         <div className="flex gap-2.5 pt-2">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
             onClick={onCancel}
-            className="w-full py-2.5 px-3 text-xs font-bold text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-all active:scale-95"
+            className="w-full py-2.5 h-auto"
           >
             {effectiveCancelText}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={isDangerous ? 'danger' : 'default'}
             onClick={onConfirm}
-            className={`w-full py-2.5 px-3 text-xs font-bold text-white rounded-xl shadow-sm transition-all active:scale-95 ${
-              isDangerous
-                ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200 dark:shadow-none'
-                : 'bg-primary hover:bg-primary/90 shadow-indigo-200 dark:shadow-none'
-            }`}
+            className="w-full py-2.5 h-auto"
           >
             {effectiveConfirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </ModalShell>

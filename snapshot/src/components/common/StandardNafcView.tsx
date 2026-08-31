@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
 import { ChoiceNafcContainer, type ChoiceNafcOption } from './ChoiceNafcContainer';
 import { QuestionCardShell } from './QuestionCardShell';
+import { Button } from '../ui/button';
 
 export interface StandardNafcViewProps<T = unknown> {
   questionId: string;
@@ -128,14 +129,14 @@ export function StandardNafcView<T = unknown>({
       />
 
       {submitMode === 'button' && !showAnswer && (
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={handleExplicitSubmit}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-primary hover:bg-primary/90 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
+          className="w-full py-3 h-auto rounded-2xl"
         >
           {effectiveSubmitButtonText}
-        </button>
+        </Button>
       )}
     </QuestionCardShell>
   );

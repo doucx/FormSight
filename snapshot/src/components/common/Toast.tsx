@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Info, X } from 'lucide-preact';
 import { useEffect } from 'preact/hooks';
+import { Button } from '../ui/button';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -58,13 +59,14 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
         <Icon className={`w-4 h-4 flex-shrink-0 ${iconStyle}`} />
         <span className="text-xs font-bold leading-tight">{toast.message}</span>
       </div>
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="iconSm"
         onClick={onDismiss}
-        className="p-1 rounded-lg text-muted-foreground dark:text-muted-foreground hover:text-foreground transition-colors ml-2"
+        className="text-muted-foreground hover:text-foreground ml-2 h-6 w-6"
       >
         <X className="w-3.5 h-3.5" />
-      </button>
+      </Button>
     </div>
   );
 }

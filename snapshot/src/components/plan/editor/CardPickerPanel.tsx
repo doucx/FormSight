@@ -114,7 +114,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                   className={`p-1 rounded-lg flex-shrink-0 transition-colors ${
                     isAdded
                       ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60'
-                      : 'text-indigo-400 group-hover:text-primary dark:group-hover:text-indigo-400 hover:bg-accent/50 dark:hover:bg-slate-700'
+                      : 'text-indigo-400 group-hover:text-primary dark:group-hover:text-indigo-400 hover:bg-accent/50 dark:hover:bg-muted'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />

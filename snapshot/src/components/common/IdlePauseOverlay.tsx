@@ -1,5 +1,6 @@
 import { Pause } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
+import { Button } from '../ui/button';
 
 interface IdlePauseOverlayProps {
   onResume: () => void;
@@ -25,13 +26,13 @@ export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
         <p className="text-xs text-muted-foreground leading-relaxed">
           {t('common.idlePausedDesc')}
         </p>
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={onResume}
-          className="mt-1 w-full py-2.5 px-4 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
+          className="mt-1 w-full py-2.5 h-auto"
         >
           {t('common.clickToResume')}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import { useTranslation } from '../../../core/i18n';
+import { Button } from '../../ui/button';
 
 interface SliderMarginGroupProps {
   title?: string;
@@ -23,18 +24,15 @@ export function SliderMarginGroup({ title, value, onChange, options }: SliderMar
       <div className="text-sm font-semibold text-foreground">{effectiveTitle}</div>
       <div className="grid grid-cols-4 gap-1.5">
         {defaultOptions.map((opt) => (
-          <button
-            type="button"
+          <Button
             key={opt.value}
+            variant={value === opt.value ? 'default' : 'outline'}
+            size="sm"
             onClick={() => onChange(opt.value)}
-            className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-              value === opt.value
-                ? 'bg-primary text-white border-primary shadow-sm'
-                : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
-            }`}
+            className="py-2 h-auto"
           >
             {opt.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

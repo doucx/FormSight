@@ -7,6 +7,7 @@ import { formatSecondsToTimer } from '../../utils/time';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { SessionSummaryModal } from '../SessionSummaryModal';
 import { IdlePauseOverlay } from '../common/IdlePauseOverlay';
+import { Button } from '../ui/button';
 
 export interface TrainingSessionHandle {
   totalTrials: number;
@@ -75,15 +76,16 @@ export function TrainingShell({
       <header className="w-full bg-card border border-border rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3 shadow-xs flex items-center justify-between gap-3 transition-colors">
         <div className="flex items-center gap-2.5 min-w-0">
           {showExitButton && (
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={handleRequestFinish}
-              className="px-2.5 sm:px-3 py-1.5 text-xs font-bold text-foreground hover:text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer active:scale-95"
+              className="gap-1.5 flex-shrink-0"
               title={t('shell.exitTraining')}
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t('shell.exitTraining')}</span>
-            </button>
+            </Button>
           )}
 
           <div className="relative flex items-center min-w-0">
@@ -95,16 +97,17 @@ export function TrainingShell({
                 </span>
               )}
               {(instruction || desc) && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="iconSm"
                   onClick={() => setShowHelpTooltip(!showHelpTooltip)}
                   onMouseEnter={() => setShowHelpTooltip(true)}
                   onMouseLeave={() => setShowHelpTooltip(false)}
-                  className="text-muted-foreground hover:text-primary transition-colors p-0.5 rounded-md flex-shrink-0 cursor-pointer"
+                  className="text-muted-foreground hover:text-primary p-0.5 h-6 w-6 flex-shrink-0"
                   title={t('shell.instructionTitle')}
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -160,27 +163,23 @@ export function TrainingShell({
       {!autoNext && (
         <div className="flex items-center justify-center">
           {isFinished ? (
-            <button
-              type="button"
+            <Button
+              variant="default"
               onClick={handleRequestFinish}
-              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-sm transition-all active:scale-95"
+              className="px-5 py-2.5 h-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
             >
               {t('shell.viewSummary')}
-            </button>
+            </Button>
           ) : (
-            <button
-              type="button"
+            <Button
+              variant="default"
               onClick={handleNextQuestion}
               disabled={!showAnswer}
-              className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl transition-all flex items-center gap-1 ${
-                showAnswer
-                  ? 'bg-primary hover:bg-primary/90 shadow-md active:scale-95'
-                  : 'bg-slate-200 dark:bg-muted text-muted-foreground dark:text-muted-foreground cursor-not-allowed'
-              }`}
+              className="px-5 py-2.5 h-auto gap-1"
             >
               {t('common.nextQuestion')}
               <ChevronRight className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           )}
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useTranslation } from '../../core/i18n';
+import { Button } from '../ui/button';
 import type { TargetingMode } from '../../utils/settings';
 import { SettingToggleItem } from './common/SettingToggleItem';
 import { SliderMarginGroup } from './common/SliderMarginGroup';
@@ -93,18 +94,15 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
               </div>
               <div className={`grid ${field.gridCols || 'grid-cols-4'} gap-1.5`}>
                 {field.options.map((opt) => (
-                  <button
-                    type="button"
+                  <Button
                     key={String(opt.value)}
+                    variant={currentVal === opt.value ? 'default' : 'outline'}
+                    size="sm"
                     onClick={() => onChange({ [field.key]: opt.value })}
-                    className={`py-2 text-xs font-bold rounded-xl border transition-all ${
-                      currentVal === opt.value
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white dark:bg-muted text-muted-foreground border-border hover:bg-accent'
-                    }`}
+                    className="py-2 h-auto"
                   >
                     {resolveText(opt.label)}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>

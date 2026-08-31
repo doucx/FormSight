@@ -1,6 +1,7 @@
 import { ListOrdered, Sparkles } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CardPickerPanel } from '../components/plan/editor/CardPickerPanel';
+import { Button } from '../components/ui/button';
 import { PlanEditorHeader } from '../components/plan/editor/PlanEditorHeader';
 import { PlanLibraryDrawer } from '../components/plan/editor/PlanLibraryDrawer';
 import { PlanStageList } from '../components/plan/editor/PlanStageList';
@@ -118,30 +119,24 @@ export function PlanEditorView({
 
       {/* 移动端专属：双 Tab 切换栏 (只在 < lg 时渲染) */}
       <div className="flex lg:hidden items-center bg-muted/80 p-1 rounded-2xl flex-shrink-0 border border-border/60">
-        <button
-          type="button"
+        <Button
+          variant={mobileTab === 'stages' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setMobileTab('stages')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            mobileTab === 'stages'
-              ? 'bg-card text-primary shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className="flex-1 gap-1.5 h-auto py-2"
         >
           <ListOrdered className="w-3.5 h-3.5" />
           <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant={mobileTab === 'picker' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setMobileTab('picker')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            mobileTab === 'picker'
-              ? 'bg-card text-primary shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
+          className="flex-1 gap-1.5 h-auto py-2"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{t('plan.selectCardPrompt')}</span>
-        </button>
+        </Button>
       </div>
 
       {/* 核心双列/响应式编排区 */}

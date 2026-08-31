@@ -1,4 +1,5 @@
 import { X } from 'lucide-preact';
+import { Button } from '../ui/button';
 import type { ComponentChildren } from 'preact';
 
 interface ModalShellProps {
@@ -54,13 +55,14 @@ export function ModalShell({
           </div>
           <div className="flex items-center gap-2">
             {headerAction}
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="iconSm"
               onClick={onClose}
-              className="p-1 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="text-muted-foreground hover:text-foreground"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
 
