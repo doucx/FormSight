@@ -71,7 +71,7 @@ export function PlanStageList({
       </div>
 
       {currentPlan.items.length === 0 ? (
-        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
+        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50 dark:bg-slate-800/40">
           <Zap className="w-6 h-6 text-slate-300" />
           <span>{t('plan.emptyPlanTip')}</span>
         </div>

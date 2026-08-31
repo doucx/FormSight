@@ -171,7 +171,7 @@ export function PlanEditorHeader({
             <Upload className="w-3.5 h-3.5" />
           </button>
 
-          <div className="h-5 w-px bg-slate-200 mx-1" />
+          <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
 
           <button
             type="button"

@@ -9,24 +9,24 @@ import re
 import sys
 from pathlib import Path
 
-# 关注的浅色特征类名
+# 关注的浅色特征类名（支持直接匹配以及 hover:、focus:、group-hover: 等复合前缀）
 PATTERNS = [
-    # 1. 浅色背景 (需配对 dark:bg-*)
+    # 1. 浅色背景 (需配对 dark:bg-* 或 dark:hover:bg-*)
     (
-        r'\b(bg-white|bg-slate-50(?:/\d+)?|bg-slate-100(?:/\d+)?)\b',
-        r'dark:bg-',
+        r'(?:^|\s)(?:[a-z0-9-]+:)?(bg-white|bg-slate-50(?:/\d+)?|bg-slate-100(?:/\d+)?)',
+        r'dark:(?:[a-z0-9-]+:)?bg-',
         'Missing dark background (dark:bg-*)',
     ),
-    # 2. 深色文字 (需配对 dark:text-*)
+    # 2. 深色文字 (需配对 dark:text-* 或 dark:hover:text-*)
     (
-        r'\b(text-slate-900|text-slate-800|text-slate-700)\b',
-        r'dark:text-',
+        r'(?:^|\s)(?:[a-z0-9-]+:)?(text-slate-900|text-slate-800|text-slate-700)',
+        r'dark:(?:[a-z0-9-]+:)?text-',
         'Missing dark text (dark:text-*)',
     ),
-    # 3. 浅色边框 (需配对 dark:border-*)
+    # 3. 浅色边框 (需配对 dark:border-* 或 dark:hover:border-*)
     (
-        r'\b(border-slate-200(?:/\d+)?|border-slate-100|border-gray-100|border-gray-200(?:/\d+)?)\b',
-        r'dark:border-',
+        r'(?:^|\s)(?:[a-z0-9-]+:)?(border-slate-200(?:/\d+)?|border-slate-100|border-gray-100|border-gray-200(?:/\d+)?)',
+        r'dark:(?:[a-z0-9-]+:)?border-',
         'Missing dark border (dark:border-*)',
     ),
 ]
