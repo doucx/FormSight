@@ -7,6 +7,7 @@ import { formatSecondsToTimer } from '../utils/time';
 import { ModalShell } from './common/ModalShell';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { MetricCard } from './ui/metric-card';
 
 export interface SessionHistoryItem {
   trialIndex: number;
@@ -75,7 +76,7 @@ export function SessionSummaryModal({
       <div className="flex flex-col gap-4">
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <Target className="w-3.5 h-3.5 text-primary" />
               {t('summary.accuracyCount')}
@@ -86,9 +87,9 @@ export function SessionSummaryModal({
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>
             </div>
-          </div>
+          </MetricCard>
 
-          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <Clock className="w-3.5 h-3.5 text-primary" />
               {t('summary.duration')}
@@ -101,7 +102,7 @@ export function SessionSummaryModal({
                 {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
               </span>
             </div>
-          </div>
+          </MetricCard>
         </div>
 
         {/* 层阶提升高亮卡片 */}

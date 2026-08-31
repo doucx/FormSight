@@ -6,6 +6,7 @@ import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { ModalShell } from '../common/ModalShell';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { MetricCard } from '../ui/metric-card';
 
 export interface PlanStageResult {
   card: CardDefinition;
@@ -50,15 +51,15 @@ export function PlanSummaryModal({
       <div className="flex flex-col gap-5">
         {/* 核心综合大盘卡片 */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-accent p-3.5 rounded-2xl border border-border/60 dark:border-border/60 space-y-1">
+          <MetricCard variant="accent" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <Target className="w-3.5 h-3.5 text-primary" />
               {t('common.overallAccuracy')}
             </div>
             <div className="text-2xl font-black text-foreground">{accuracy}%</div>
-          </div>
+          </MetricCard>
 
-          <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 space-y-1">
+          <MetricCard variant="success" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               {t('common.totalHits')}
@@ -67,9 +68,9 @@ export function PlanSummaryModal({
               {hitCount}{' '}
               <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
             </div>
-          </div>
+          </MetricCard>
 
-          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <Clock className="w-3.5 h-3.5 text-primary" />
               {t('common.totalTimeSpent')}
@@ -77,7 +78,7 @@ export function PlanSummaryModal({
             <div className="text-2xl font-black text-foreground font-mono">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </div>
-          </div>
+          </MetricCard>
         </div>
 
         {/* 分阶段明细成果 */}

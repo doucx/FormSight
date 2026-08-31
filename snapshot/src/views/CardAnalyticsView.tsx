@@ -16,6 +16,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { Callout } from '../components/ui/callout';
+import { MetricCard } from '../components/ui/metric-card';
 import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
 import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
 import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
@@ -261,15 +263,15 @@ export function CardAnalyticsView({
         <div className="flex flex-col gap-6 animate-in fade-in duration-150">
           {/* 4 维核心大指标卡片 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
+            <MetricCard variant="default" padding="default" className="rounded-3xl space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
                 <Target className="w-4 h-4 text-primary" />
                 {t('common.accuracy')}
               </div>
               <div className="text-3xl font-black text-foreground">{summaryStats.accuracy}%</div>
-            </div>
+            </MetricCard>
 
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
+            <MetricCard variant="default" padding="default" className="rounded-3xl space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
                 {t('common.totalHits')}
@@ -280,9 +282,9 @@ export function CardAnalyticsView({
                   / {summaryStats.total}
                 </span>
               </div>
-            </div>
+            </MetricCard>
 
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
+            <MetricCard variant="default" padding="default" className="rounded-3xl space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
                 <Clock className="w-4 h-4 text-primary" />
                 {t('summary.duration')}
@@ -291,9 +293,9 @@ export function CardAnalyticsView({
                 {summaryStats.avgResponseTimeSec}
                 <span className="text-xs font-normal text-muted-foreground"> s</span>
               </div>
-            </div>
+            </MetricCard>
 
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
+            <MetricCard variant="default" padding="default" className="rounded-3xl space-y-1">
               <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
                 <TrendingUp className="w-4 h-4 text-amber-500" />
                 {t('stats.dailyMaxLevel')}
@@ -301,7 +303,7 @@ export function CardAnalyticsView({
               <div className="text-3xl font-black text-foreground font-mono">
                 Lvl {summaryStats.maxLevel}
               </div>
-            </div>
+            </MetricCard>
           </div>
 
           {/* 总体评价与认知建议 */}
@@ -321,29 +323,21 @@ export function CardAnalyticsView({
                 const insights = getCognitiveOverviewInsights(records);
                 return (
                   <>
-                    <div className="p-4 bg-muted/60 border border-border rounded-2xl text-foreground flex items-start gap-3">
-                      <div className="p-2 bg-amber-100 text-amber-600 rounded-xl flex-shrink-0">
-                        <Zap className="w-4 h-4" />
-                      </div>
-                      <div className="text-xs text-foreground leading-relaxed space-y-1">
-                        <div className="font-bold text-foreground">
-                          {t('analyticsModal.paceSummaryTitle')}
-                        </div>
-                        <p className="text-muted-foreground">{insights.paceSummaryText}</p>
-                      </div>
-                    </div>
+                    <Callout
+                      variant="warning"
+                      icon={Zap}
+                      title={t('analyticsModal.paceSummaryTitle')}
+                    >
+                      <p className="text-muted-foreground text-xs">{insights.paceSummaryText}</p>
+                    </Callout>
 
-                    <div className="p-4 bg-muted/60 border border-border rounded-2xl flex items-start gap-3">
-                      <div className="p-2 bg-accent text-primary rounded-xl flex-shrink-0">
-                        <Gauge className="w-4 h-4" />
-                      </div>
-                      <div className="text-xs text-foreground leading-relaxed space-y-1">
-                        <div className="font-bold text-foreground">
-                          {t('analyticsModal.levelFocusSummaryTitle')}
-                        </div>
-                        <p className="text-muted-foreground">{insights.growthZoneText}</p>
-                      </div>
-                    </div>
+                    <Callout
+                      variant="accent"
+                      icon={Gauge}
+                      title={t('analyticsModal.levelFocusSummaryTitle')}
+                    >
+                      <p className="text-muted-foreground text-xs">{insights.growthZoneText}</p>
+                    </Callout>
                   </>
                 );
               })()}

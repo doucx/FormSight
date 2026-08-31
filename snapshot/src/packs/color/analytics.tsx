@@ -1,4 +1,5 @@
 import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
+import { Callout } from '../../components/ui/callout';
 import { hsvToHex } from '../../core/color/colorUtils';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
@@ -79,19 +80,20 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               : '0°';
 
         return (
-          <div className="bg-amber-50/70 dark:bg-amber-950/40 p-3.5 rounded-2xl border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 space-y-2 text-xs">
-            <div className="font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-              {i18n.t('packs.color.analytics.hueBias.cardTitle')}
-            </div>
-
-            <div className="space-y-1 text-[11px] text-foreground">
-              <div className="flex justify-between bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm font-mono">
-                <span>{i18n.t('packs.color.analytics.hueBias.avgSignedBias')}</span>
+          <Callout
+            variant="warning"
+            icon={AlertCircle}
+            title={i18n.t('packs.color.analytics.hueBias.cardTitle')}
+          >
+            <div className="space-y-2 text-[11px] text-foreground pt-1">
+              <div className="flex justify-between bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs font-mono">
+                <span className="text-muted-foreground">
+                  {i18n.t('packs.color.analytics.hueBias.avgSignedBias')}
+                </span>
                 <span
                   className={`font-bold ${
                     avgSignedBias > 0
-                      ? 'text-amber-600'
+                      ? 'text-amber-600 dark:text-amber-400'
                       : avgSignedBias < 0
                         ? 'text-primary'
                         : 'text-foreground'
@@ -102,14 +104,14 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               </div>
 
               {maxBiasSector ? (
-                <div className="mt-2 space-y-1.5">
+                <div className="space-y-1.5">
                   <p className="text-muted-foreground">
                     {i18n.t('packs.color.analytics.hueBias.maxBiasSector')}
-                    <span className="font-bold text-amber-700 dark:text-amber-300">
+                    <span className="font-bold text-amber-700 dark:text-amber-300 ml-1">
                       {maxBiasSector.label}
                     </span>
                   </p>
-                  <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm">
+                  <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs">
                     <div className="flex items-center gap-1.5">
                       <div
                         className="w-3 h-3 rounded-full border border-border"
@@ -121,7 +123,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                         {maxBiasSector.label.split(' ')[0]}
                       </span>
                     </div>
-                    <span className="font-black text-amber-700 font-mono text-xs">
+                    <span className="font-black text-amber-700 dark:text-amber-300 font-mono text-xs">
                       {i18n.t('packs.color.analytics.hueBias.avgBias')}{' '}
                       {maxBiasSector.avgBias > 0
                         ? `+${maxBiasSector.avgBias}°`
@@ -130,12 +132,12 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-[10px] mt-1">
+                <p className="text-muted-foreground text-[10px]">
                   {i18n.t('packs.color.analytics.hueBias.needMoreTrials')}
                 </p>
               )}
             </div>
-          </div>
+          </Callout>
         );
       },
       getOverallStats: (records) => {
@@ -213,19 +215,19 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
             : null;
 
         return (
-          <div className="bg-amber-50/70 dark:bg-amber-950/40 p-3.5 rounded-2xl border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 space-y-2 text-xs">
-            <div className="font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-              {i18n.t('packs.color.analytics.hueRing.cardTitle')}
-            </div>
+          <Callout
+            variant="warning"
+            icon={AlertCircle}
+            title={i18n.t('packs.color.analytics.hueRing.cardTitle')}
+          >
             {weakestSector ? (
-              <div className="space-y-2">
+              <div className="space-y-2 pt-1">
                 <p className="text-foreground text-[11px]">
                   {i18n.t('packs.color.analytics.hueRing.weakestHint', {
                     sector: weakestSector.label,
                   })}
                 </p>
-                <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm">
+                <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs">
                   <div className="flex items-center gap-1.5">
                     <div
                       className="w-3 h-3 rounded-full border border-border"
@@ -237,7 +239,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                       {weakestSector.label.split(' ')[0]}
                     </span>
                   </div>
-                  <span className="font-black text-rose-600 text-sm">
+                  <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
                     {i18n.t('packs.color.analytics.hueRing.accuracyRate', {
                       accuracy: weakestSector.accuracy,
                     })}
@@ -249,7 +251,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 {i18n.t('packs.color.analytics.hueRing.needMoreTrials')}
               </p>
             )}
-          </div>
+          </Callout>
         );
       },
       getOverallStats: (records) => {
