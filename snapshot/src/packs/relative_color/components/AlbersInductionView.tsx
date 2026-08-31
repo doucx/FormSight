@@ -70,7 +70,7 @@ export function AlbersInductionView({
         rightTitle={t('packs.relative_color.views.rightModulate')}
         leftContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
             style={{ backgroundColor: bgLeftHex }}
           >
             <div
@@ -81,7 +81,7 @@ export function AlbersInductionView({
         }
         rightContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
             style={{ backgroundColor: bgRightHex }}
           >
             <div

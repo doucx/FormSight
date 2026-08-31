@@ -79,14 +79,14 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               : '0°';
 
         return (
-          <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
-            <div className="font-bold text-amber-900 flex items-center gap-1">
+          <div className="bg-amber-50/70 dark:bg-amber-950/40 p-3.5 rounded-2xl border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 space-y-2 text-xs">
+            <div className="font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
               {i18n.t('packs.color.analytics.hueBias.cardTitle')}
             </div>
 
-            <div className="space-y-1 text-[11px] text-slate-700">
-              <div className="flex justify-between bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm font-mono">
+            <div className="space-y-1 text-[11px] text-foreground">
+              <div className="flex justify-between bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm font-mono">
                 <span>{i18n.t('packs.color.analytics.hueBias.avgSignedBias')}</span>
                 <span
                   className={`font-bold ${
@@ -94,7 +94,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                       ? 'text-amber-600'
                       : avgSignedBias < 0
                         ? 'text-indigo-600'
-                        : 'text-slate-700'
+                        : 'text-foreground'
                   }`}
                 >
                   {signedBiasText}
@@ -103,19 +103,19 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
 
               {maxBiasSector ? (
                 <div className="mt-2 space-y-1.5">
-                  <p className="text-slate-600">
+                  <p className="text-muted-foreground">
                     {i18n.t('packs.color.analytics.hueBias.maxBiasSector')}
-                    <span className="font-bold text-amber-800">{maxBiasSector.label}</span>
+                    <span className="font-bold text-amber-700 dark:text-amber-300">{maxBiasSector.label}</span>
                   </p>
-                  <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
+                  <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm">
                     <div className="flex items-center gap-1.5">
                       <div
-                        className="w-3 h-3 rounded-full border border-slate-200"
+                        className="w-3 h-3 rounded-full border border-border"
                         style={{
                           backgroundColor: hsvToHex(maxBiasSector.sectorIdx * 30 + 15, 100, 100),
                         }}
                       />
-                      <span className="font-bold text-slate-800">
+                      <span className="font-bold text-foreground">
                         {maxBiasSector.label.split(' ')[0]}
                       </span>
                     </div>
@@ -128,7 +128,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                   </div>
                 </div>
               ) : (
-                <p className="text-slate-500 text-[10px] mt-1">
+                <p className="text-muted-foreground text-[10px] mt-1">
                   {i18n.t('packs.color.analytics.hueBias.needMoreTrials')}
                 </p>
               )}
@@ -145,7 +145,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         return {
           ...baseStats,
           customSummary: (
-            <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
+            <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
               <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>
@@ -211,27 +211,27 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
             : null;
 
         return (
-          <div className="bg-amber-50/60 p-3.5 rounded-2xl border border-amber-100 space-y-2 text-xs">
-            <div className="font-bold text-amber-900 flex items-center gap-1">
+          <div className="bg-amber-50/70 dark:bg-amber-950/40 p-3.5 rounded-2xl border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 space-y-2 text-xs">
+            <div className="font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1">
               <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
               {i18n.t('packs.color.analytics.hueRing.cardTitle')}
             </div>
             {weakestSector ? (
               <div className="space-y-2">
-                <p className="text-slate-700 text-[11px]">
+                <p className="text-foreground text-[11px]">
                   {i18n.t('packs.color.analytics.hueRing.weakestHint', {
                     sector: weakestSector.label,
                   })}
                 </p>
-                <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 shadow-sm">
+                <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-sm">
                   <div className="flex items-center gap-1.5">
                     <div
-                      className="w-3 h-3 rounded-full border border-slate-200"
+                      className="w-3 h-3 rounded-full border border-border"
                       style={{
                         backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100),
                       }}
                     />
-                    <span className="font-bold text-slate-800">
+                    <span className="font-bold text-foreground">
                       {weakestSector.label.split(' ')[0]}
                     </span>
                   </div>
@@ -243,7 +243,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 </div>
               </div>
             ) : (
-              <p className="text-slate-600 text-[11px]">
+              <p className="text-muted-foreground text-[11px]">
                 {i18n.t('packs.color.analytics.hueRing.needMoreTrials')}
               </p>
             )}
@@ -259,7 +259,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         return {
           ...baseStats,
           customSummary: (
-            <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-100 pt-1 text-xs">
+            <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
               <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>

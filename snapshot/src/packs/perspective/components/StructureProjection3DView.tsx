@@ -51,7 +51,7 @@ export function StructureProjection3DView({
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
               <span className="text-muted-foreground font-bold">{t('common.topView')}</span>
               <div
-                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-slate-50 dark:bg-slate-950"
+                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
                   gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
                   gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,
@@ -73,7 +73,7 @@ export function StructureProjection3DView({
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
               <span className="text-muted-foreground font-bold">{t('common.frontView')}</span>
               <div
-                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-slate-50 dark:bg-slate-950"
+                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
                   gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
                   gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,
@@ -95,7 +95,7 @@ export function StructureProjection3DView({
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
               <span className="text-muted-foreground font-bold">{t('common.sideView')}</span>
               <div
-                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-slate-50 dark:bg-slate-950"
+                className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
                   gridTemplateColumns: `repeat(${dim}, minmax(0, 1fr))`,
                   gridTemplateRows: `repeat(${dim}, minmax(0, 1fr))`,

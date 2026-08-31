@@ -55,19 +55,19 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
             : 0;
 
         return (
-          <div className="bg-emerald-50/60 p-3.5 rounded-2xl border border-emerald-100 space-y-2 text-xs">
-            <div className="font-bold text-emerald-900 flex items-center gap-1">
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-200/60 dark:border-emerald-800/60 space-y-2 text-xs">
+            <div className="font-bold text-emerald-800 dark:text-emerald-200 flex items-center gap-1">
               <Crosshair className="w-3.5 h-3.5 text-emerald-600" />
               {i18n.t('packs.negative_space.analytics.ratioScatter.cardTitle')}
             </div>
-            <div className="space-y-1.5 text-[11px] text-slate-700">
+            <div className="space-y-1.5 text-[11px] text-foreground">
               <div className="flex justify-between font-mono bg-white p-2 rounded-xl border border-emerald-100">
-                <span className="text-slate-600">
+                <span className="text-muted-foreground">
                   {i18n.t('packs.negative_space.analytics.ratioScatter.avgError')}
                 </span>
                 <span className="font-bold text-emerald-700">±{avgRatioErr}%</span>
               </div>
-              <p className="text-slate-500 leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed">
                 {i18n.t('packs.negative_space.analytics.ratioScatter.desc')}
               </p>
             </div>

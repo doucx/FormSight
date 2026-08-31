@@ -15,7 +15,7 @@ export const buttonVariants = cva(
         ghost:
           'hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground',
         accent:
-          'bg-accent text-primary hover:bg-accent/80 border border-indigo-100 dark:border-indigo-900',
+          'bg-accent text-primary hover:bg-accent/80 border border-border/60 dark:border-indigo-900',
         danger:
           'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-200 dark:shadow-none',
       },

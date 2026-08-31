@@ -156,10 +156,10 @@ export function ProportionDivisionView({
       maxWidth="max-w-lg"
       footer={
         showAnswer ? (
-          <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
+          <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
+            <span className="text-muted-foreground">
               {t('packs.perspective.views.targetRatio')}{' '}
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
@@ -174,8 +174,8 @@ export function ProportionDivisionView({
       }
     >
       {/* 极简纯数字目标面板 */}
-      <div className="w-full bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-100/90 dark:border-indigo-900/60 rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
-        <span className="text-2xl font-black text-indigo-900 dark:text-indigo-200 font-mono tracking-widest">
+      <div className="w-full bg-accent/80 border border-border/60 dark:border-border rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
+        <span className="text-2xl font-black text-primary font-black dark:text-indigo-200 font-mono tracking-widest">
           {question.targetRatioName ?? '1/2'}
         </span>
       </div>

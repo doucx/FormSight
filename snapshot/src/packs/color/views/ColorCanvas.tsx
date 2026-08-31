@@ -104,11 +104,11 @@ export function ColorCanvas({
         {mode === 'ALL' ? (
           <div className="flex items-center justify-center gap-4 w-full">
             <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-300"
+              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
               style={{ backgroundColor: targetHex }}
             />
             <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-75"
+              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-75"
               style={{
                 backgroundColor: hsvToHex(
                   draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
@@ -126,7 +126,7 @@ export function ColorCanvas({
           </div>
         ) : (
           <div
-            className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-300"
+            className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
             style={{ backgroundColor: targetHex }}
           />
         )}

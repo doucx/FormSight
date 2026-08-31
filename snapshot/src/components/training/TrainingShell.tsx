@@ -92,7 +92,7 @@ export function TrainingShell({
             <div className="text-xs font-black text-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{cardTitle}</span>
               {sessionType === 'benchmark' && (
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
                   {t('shell.benchmark')}
                 </span>
               )}

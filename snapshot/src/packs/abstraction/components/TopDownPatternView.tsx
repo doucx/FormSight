@@ -41,7 +41,7 @@ export function TopDownPatternView({
       value: idx,
       isCorrect: isTarget,
       content: (
-        <div className="w-full aspect-square bg-white p-1 rounded-xl border border-slate-200 shadow-inner flex items-center justify-center">
+        <div className="w-full aspect-square bg-white p-1 rounded-xl border border-border shadow-inner flex items-center justify-center">
           <CanvasView
             width={ABSTRACTION_2AFC_SIZE}
             height={ABSTRACTION_2AFC_SIZE}
@@ -73,7 +73,7 @@ export function TopDownPatternView({
             {t('packs.abstraction.cards.abs_td_palette_2afc.promptTitle')}
           </span>
           <div
-            className="w-16 h-16 rounded-2xl border-4 border-white dark:border-slate-800 shadow-md ring-1 ring-slate-200 dark:ring-slate-700"
+            className="w-16 h-16 rounded-2xl border-4 border-card dark:border-border shadow-md shadow-md ring-1 ring-border/60"
             style={{ backgroundColor: promptHex }}
           />
         </div>

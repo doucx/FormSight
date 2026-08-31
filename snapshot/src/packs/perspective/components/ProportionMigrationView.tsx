@@ -158,10 +158,10 @@ export function ProportionMigrationView({
       maxWidth="max-w-lg"
       footer={
         showAnswer ? (
-          <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
+          <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
+            <span className="text-muted-foreground">
               {t('packs.perspective.views.targetRatio')}{' '}
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
