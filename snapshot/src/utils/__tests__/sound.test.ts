@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { loadSettings, saveSettings } from '../settings';
+import { loadSettings, saveSettings } from '../../storage/settings';
 import { playHitSound, playMissSound } from '../sound';
 
 describe('Web Audio Sound Manager', () => {
