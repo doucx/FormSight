@@ -52,6 +52,9 @@ export function findNearestPointInGrid(
   };
 }
 
+/** 兼容别名导出 */
+export const findNearestGridPoint = findNearestPointInGrid;
+
 export interface PointHitDetectionResult {
   isHit: boolean;
   nearestGridPoint: Point;

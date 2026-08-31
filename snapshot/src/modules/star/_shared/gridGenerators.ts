@@ -1,9 +1,7 @@
 import type { Point } from '../../../types';
-import { DEFAULT_GRID_DIM, calcDistance } from './pointMath';
+import { calcDistance } from './pointMath';
+import { DEFAULT_GRID_DIM } from './types';
 
-/**
- * 极坐标扇形网格生成器 (单锚点模式)
- */
 export function generatePolarGridPoints(
   anchorA: Point,
   targetB: Point,
@@ -19,13 +17,11 @@ export function generatePolarGridPoints(
 
   const S_MAX = 25;
   const S_MIN = 3.5;
-
   const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
   const S = S_MAX - t * (S_MAX - S_MIN);
 
   const maxAngleStepRad = (15 * Math.PI) / 180;
   const angleStepRad = Math.min(S / R, maxAngleStepRad);
-
   const rStep = S;
 
   const points: Point[] = [];
@@ -41,9 +37,6 @@ export function generatePolarGridPoints(
   return points;
 }
 
-/**
- * 双极透视网格生成器 (双锚点模式)
- */
 export function generateBipolarGridPoints(
   anchorA: Point,
   anchorC: Point,
@@ -61,7 +54,6 @@ export function generateBipolarGridPoints(
 
   const S_MAX = 20;
   const S_MIN = 3.5;
-
   const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
   const S = S_MAX - t * (S_MAX - S_MIN);
 

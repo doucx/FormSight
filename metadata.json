@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 定义 CardManifest 契约并升级 Registry 与 i18n", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788184701.823064, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 将 star 模块全面解耦重构为独立 CardManifest", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788184761.6893606, "duration_ms": 0}}

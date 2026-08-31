@@ -1,32 +1,28 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { drawDot } from '../../../core/canvas/drawPointGrid';
+import { drawDot, getDynamicDotRadius } from '../../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
+import { evaluatePointGridHit } from '../../../core/geometry/pointGrid';
 import type { Point } from '../../../types';
 import { CANVAS_THEME } from '../../../utils/theme';
-import {
-  CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-  checkHit,
-  getDynamicDotRadius,
-} from '../utils/index';
+import { CANVAS_SIZE, type StarHitResult } from '../_shared/types';
+import type { HorizontalDoubleQuestion } from './generator';
 
-export interface StarCanvasProps {
-  question: QuestionData;
+export interface HorizontalDoubleViewProps {
+  question: HorizontalDoubleQuestion;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
-  onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
+  userAnswer: { clickPoint: Point; hitResult: StarHitResult } | null;
+  onAnswer: (val: { clickPoint: Point; hitResult: StarHitResult }) => void;
   disabled?: boolean;
 }
 
-export function StarCanvas({
+export function HorizontalDoubleView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
-}: StarCanvasProps) {
+}: HorizontalDoubleViewProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -37,40 +33,17 @@ export function StarCanvas({
       if (ctx) {
         ctx.fillStyle = CANVAS_THEME.bg.primary;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-
-        drawDot(
-          ctx,
-          question.anchorA.x,
-          question.anchorA.y,
-          CANVAS_THEME.pointGrid.dotAnchor,
-          dotRadius,
-        );
-
-        if (question.anchorC) {
-          drawDot(
-            ctx,
-            question.anchorC.x,
-            question.anchorC.y,
-            CANVAS_THEME.pointGrid.dotAnchor,
-            dotRadius,
-          );
-        }
-
-        drawDot(
-          ctx,
-          question.targetB.x,
-          question.targetB.y,
-          CANVAS_THEME.pointGrid.dotAnchor,
-          dotRadius,
-        );
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
+        drawDot(ctx, question.anchorC.x, question.anchorC.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
+        drawDot(ctx, question.targetB.x, question.targetB.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
       }
     }
   }, [question]);
 
   const handleCommitPoint = (clickPoint: Point) => {
-    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
+    const hitResult = evaluatePointGridHit(clickPoint, question.targetB, question.distractorPoints);
     if (!hitResult.isWithinRange) return;
-    onAnswer(clickPoint, hitResult);
+    onAnswer({ clickPoint, hitResult });
   };
 
   return (

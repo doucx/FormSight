@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { findNearestGridPoint } from '../../core/geometry/pointGrid';
 import { useTranslation } from '../../core/i18n';
-import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
 import { CANVAS_THEME } from '../../utils/theme';
 
