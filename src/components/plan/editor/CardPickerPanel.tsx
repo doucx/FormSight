@@ -4,6 +4,7 @@ import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
 import type { CardQueryOptions } from '../../../types/card';
 import { FilterEngine } from '../../discovery/FilterEngine';
+import { Button } from '../../ui/button';
 
 interface CardPickerPanelProps {
   addedCardIds?: string[];
@@ -29,12 +30,12 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
     <div className="flex flex-col h-full space-y-3 min-h-0">
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1.5">
-          <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200">
+          <Sparkles className="w-3.5 h-3.5 text-primary" />
+          <span className="text-xs font-extrabold text-foreground">
             {t('plan.selectCardPrompt')}
           </span>
         </div>
-        <span className="text-[11px] font-mono text-slate-400">
+        <span className="text-[11px] font-mono text-muted-foreground">
           {t('home.matchedModules', { count: availableCards.length })}
         </span>
       </div>
@@ -49,7 +50,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
       {/* 模块列表：自适应拉伸并滚动 */}
       {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-muted-foreground bg-muted/40 rounded-2xl border border-dashed border-border">
           {t('plan.noCardMatched')}
         </div>
       ) : (
@@ -63,18 +64,18 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
             const cardBgStyle = isAdded
               ? 'bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 shadow-xs'
-              : 'bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border-slate-200/80 dark:border-slate-700/80 hover:border-indigo-300 dark:hover:border-indigo-500';
+              : 'bg-muted/60 hover:bg-accent/60 border-border hover:border-primary/60';
 
             const iconBgStyle = isAdded
               ? 'bg-emerald-600 text-white shadow-xs'
-              : 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs group-hover:scale-105';
+              : 'bg-card text-primary shadow-xs group-hover:scale-105';
 
             return (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 key={card.id}
                 onClick={() => onAddItem(card.id)}
-                className={`p-2.5 rounded-2xl text-left transition-all flex items-center justify-between gap-2 group active:scale-[0.98] border cursor-pointer ${cardBgStyle}`}
+                className={`p-2.5 h-auto rounded-2xl text-left transition-all flex items-center justify-between gap-2 group border ${cardBgStyle}`}
               >
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <div
@@ -86,9 +87,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`text-xs font-bold truncate ${
-                          isAdded
-                            ? 'text-emerald-900 dark:text-emerald-200'
-                            : 'text-slate-800 dark:text-slate-100'
+                          isAdded ? 'text-emerald-800 dark:text-emerald-200' : 'text-foreground'
                         }`}
                       >
                         {cardTitle}
@@ -104,7 +103,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                       className={`text-[10px] truncate ${
                         isAdded
                           ? 'text-emerald-700/80 dark:text-emerald-300/80'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {cardDesc}
@@ -116,12 +115,12 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                   className={`p-1 rounded-lg flex-shrink-0 transition-colors ${
                     isAdded
                       ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60'
-                      : 'text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 hover:bg-indigo-100/50 dark:hover:bg-slate-700'
+                      : 'text-indigo-400 group-hover:text-primary dark:group-hover:text-indigo-400 hover:bg-accent/50 dark:hover:bg-muted'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

@@ -14,6 +14,9 @@ import type { RefObject } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import type { TrainingPlan } from '../../../types/plan';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 
 export interface PlanEditorHeaderProps {
   currentPlan: TrainingPlan;
@@ -70,14 +73,14 @@ export function PlanEditorHeader({
   }, [showMobileMoreMenu]);
 
   return (
-    <header className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2.5 flex-shrink-0">
+    <header className="w-full bg-card border border-border rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2.5 flex-shrink-0">
       {/* 左侧：计划名与重命名 */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {isEditingName ? (
             <div className="flex items-center gap-1 w-full max-w-xs">
-              <input
-                type="text"
+              <Input
+                inputSize="sm"
                 value={planNameInput}
                 onInput={(e) => onPlanNameChange((e.target as HTMLInputElement).value)}
                 onKeyDown={(e) => {
@@ -85,41 +88,42 @@ export function PlanEditorHeader({
                   if (e.key === 'Escape') onCancelEditingName();
                 }}
                 maxLength={32}
-                className="w-full px-2.5 py-1 text-xs sm:text-sm font-black text-slate-800 bg-slate-50 dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 text-slate-800 dark:text-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 placeholder={t('plan.nameInputPlaceholder')}
               />
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="iconSm"
                 onClick={onNameSave}
-                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 flex-shrink-0"
                 title={t('common.confirm')}
               >
                 <Check className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="flex items-center gap-1.5 min-w-0">
-              <h1 className="text-sm sm:text-lg font-black text-slate-900 dark:text-slate-100 truncate tracking-tight">
+              <h1 className="text-sm sm:text-lg font-black text-foreground truncate tracking-tight">
                 {currentPlan.name}
               </h1>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="iconSm"
                 onClick={onStartEditingName}
-                className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                className="flex-shrink-0 text-muted-foreground hover:text-primary"
                 title={t('plan.renameTitle')}
               >
                 <Edit3 className="w-3.5 h-3.5" />
-              </button>
+              </Button>
 
               {isNewPlan ? (
-                <span className="hidden sm:inline-flex text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-md border border-emerald-200 dark:border-emerald-800 flex-shrink-0 items-center gap-1">
+                <Badge variant="success" size="sm" className="hidden sm:inline-flex flex-shrink-0">
                   <Sparkles className="w-2.5 h-2.5" />
                   {t('common.newPlanBadge')}
-                </span>
+                </Badge>
               ) : currentPlan.isBuiltin ? (
-                <span className="hidden sm:inline-flex text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-900 flex-shrink-0">
+                <Badge variant="accent" size="sm" className="hidden sm:inline-flex flex-shrink-0">
                   {t('common.officialBadge')}
-                </span>
+                </Badge>
               ) : null}
             </div>
           )}
@@ -130,135 +134,142 @@ export function PlanEditorHeader({
       <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
         {/* 桌面端平铺操作区 */}
         <div className="hidden sm:flex items-center gap-2">
-          <button
-            type="button"
+          <Button
+            variant={showPlanManager ? 'default' : 'secondary'}
+            size="sm"
             onClick={onTogglePlanManager}
-            className={`px-3 py-2 text-xs font-bold rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer ${
-              showPlanManager
-                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700'
-            }`}
+            className={`gap-1.5 border ${showPlanManager ? 'border-primary' : 'border-border'}`}
             title={t('plan.switchAndManageTitle')}
           >
             <Layers className="w-3.5 h-3.5" />
             <span>{t('plan.planLibraryTitle', { count: plansCount })}</span>
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={onClonePlan}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+            className="border border-border"
             title={t('plan.cloneCopyTitle')}
           >
             <Copy className="w-3.5 h-3.5" />
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={onExportPlan}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+            className="border border-border"
             title={t('plan.exportJsonTitle')}
           >
             <Download className="w-3.5 h-3.5" />
-          </button>
+          </Button>
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+            className="border border-border"
             title={t('plan.importJsonTitle')}
           >
             <Upload className="w-3.5 h-3.5" />
-          </button>
+          </Button>
 
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
+          <div className="h-5 w-px bg-border mx-1" />
 
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onSaveOnly}
             disabled={currentPlan.items.length === 0}
-            className="px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="gap-1.5"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{t('common.save')}</span>
-          </button>
+          </Button>
         </div>
 
         {/* 移动端更多操作弹层菜单 */}
         <div ref={moreMenuRef} className="relative sm:hidden">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             onClick={() => setShowMobileMoreMenu(!showMobileMoreMenu)}
-            className="p-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl transition-all active:scale-95"
+            className="border border-border"
             title={t('common.settings')}
           >
             <MoreHorizontal className="w-4 h-4" />
-          </button>
+          </Button>
 
           {showMobileMoreMenu && (
-            <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-1.5 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
-              <button
-                type="button"
+            <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-card rounded-2xl shadow-xl border border-border p-1.5 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onTogglePlanManager();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
-                <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                <Layers className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.libraryBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onClonePlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
-                <Copy className="w-3.5 h-3.5 text-indigo-600" />
+                <Copy className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.cloneBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onExportPlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
-                <Download className="w-3.5 h-3.5 text-indigo-600" />
+                <Download className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.exportBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   fileInputRef.current?.click();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
-                <Upload className="w-3.5 h-3.5 text-indigo-600" />
+                <Upload className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.importBtn')}</span>
-              </button>
-              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-              <button
-                type="button"
+              </Button>
+              <div className="my-1 border-t border-border/60" />
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onSaveOnly();
                 }}
                 disabled={currentPlan.items.length === 0}
-                className="w-full px-3 py-2 text-xs font-bold text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
+                className="w-full justify-start gap-2 h-auto py-2 text-primary hover:text-primary disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{t('common.save')}</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
 
-        <input
+        <Input
           ref={fileInputRef}
           type="file"
           accept=".json"
@@ -267,15 +278,16 @@ export function PlanEditorHeader({
         />
 
         {/* 统一开始训练主 CTA */}
-        <button
-          type="button"
+        <Button
+          variant="default"
+          size="sm"
           onClick={onSaveAndStart}
           disabled={currentPlan.items.length === 0}
-          className="px-3.5 py-2 sm:px-4 sm:py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+          className="gap-1.5 px-3.5 sm:px-4"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
           <span>{t('plan.startPlan')}</span>
-        </button>
+        </Button>
       </div>
     </header>
   );

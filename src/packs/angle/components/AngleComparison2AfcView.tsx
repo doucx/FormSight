@@ -44,11 +44,11 @@ export function AngleComparison2AfcView({
         isCorrect: isAHit,
         badge: showAnswer ? `${question.angleA}°` : undefined,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
               deps={[question.linesA]}
             />
@@ -60,11 +60,11 @@ export function AngleComparison2AfcView({
         isCorrect: isBHit,
         badge: showAnswer ? `${question.angleB}°` : undefined,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={ANGLE_2AFC_SIZE}
               height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-white dark:bg-slate-950"
+              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
               draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
               deps={[question.linesB]}
             />

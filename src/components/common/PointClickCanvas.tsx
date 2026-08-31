@@ -303,19 +303,19 @@ export function PointClickCanvas({
         tabIndex={0}
         role="button"
         aria-label={t('shell.pointGridAria')}
-        className={`w-full h-full aspect-square rounded-xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner touch-none transition-all block ${
+        className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
           disabled || showAnswer
             ? 'cursor-default'
             : hoverPoint
-              ? 'cursor-none hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-indigo-50/50'
-              : 'cursor-crosshair hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-indigo-50/50'
+              ? 'cursor-none hover:border-primary/60 hover:shadow-indigo-50/50'
+              : 'cursor-crosshair hover:border-primary/60 hover:shadow-indigo-50/50'
         }`}
       />
 
       {/* 触控浮动放大镜 (Loupe) */}
       {isTouching && loupePos && (
         <div
-          className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-white dark:bg-slate-900 ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
+          className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-card ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
           style={{
             left: `${loupePos.x}px`,
             top: `${loupePos.y}px`,

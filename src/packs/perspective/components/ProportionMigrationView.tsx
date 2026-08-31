@@ -2,6 +2,7 @@ import { ArrowRightLeft } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { CanvasView } from '../../../components/common/CanvasView';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { Badge } from '../../../components/ui/badge';
 import { useTranslation } from '../../../core/i18n';
 import type { Point } from '../../../types';
 import {
@@ -158,10 +159,10 @@ export function ProportionMigrationView({
       maxWidth="max-w-lg"
       footer={
         showAnswer ? (
-          <div className="w-full pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
+          <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
+            <span className="text-muted-foreground">
               {t('packs.perspective.views.targetRatio')}{' '}
-              <span className="font-bold text-slate-800 font-mono">
+              <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
@@ -176,11 +177,11 @@ export function ProportionMigrationView({
       }
     >
       {/* 顶部水平参考基准线面板 */}
-      <div className="w-full bg-slate-50 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/60 rounded-2xl p-2.5 flex justify-center shadow-inner">
+      <div className="w-full bg-muted/60 border border-border rounded-2xl p-2.5 flex justify-center shadow-inner">
         <CanvasView
           width={280}
           height={48}
-          className="w-full max-w-[280px] h-[48px] bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
+          className="w-full max-w-[280px] h-[48px] bg-card rounded-xl border border-border shadow-sm"
           draw={(canvas) => {
             drawHorizontalReferenceCanvas(canvas, question.targetRatio ?? 0.5, 280, 48);
           }}
@@ -189,7 +190,7 @@ export function ProportionMigrationView({
       </div>
 
       {/* 下方倾斜角度作答画布 */}
-      <div className="w-full bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex flex-col items-center gap-2">
+      <div className="w-full bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex flex-col items-center gap-2">
         <canvas
           ref={canvasRef}
           width={PERSPECTIVE_CANVAS_SIZE}
@@ -207,20 +208,28 @@ export function ProportionMigrationView({
           tabIndex={0}
           role="button"
           aria-label={t('packs.perspective.cards.perspective_proportion_migration.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950 touch-none select-none transition-all ${
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
               : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
-        <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-2">
+        <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
+            <Badge
+              variant="accent"
+              size="sm"
+              className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600"
+            />
             <span>{t('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-slate-400 inline-block" />
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-2 h-2 p-0 rounded-full border-none bg-muted-foreground"
+            />
             <span>{t('common.endPercent')}</span>
           </span>
         </div>

@@ -1,4 +1,5 @@
 import { Compass, Target } from 'lucide-preact';
+import { Callout } from '../../components/ui/callout';
 import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { type SectorStat, renderCompassCanvas } from '../../utils/canvas/drawCompass';
@@ -74,29 +75,33 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
                 : '0';
 
           return (
-            <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
-              <div className="font-bold text-indigo-900 flex items-center gap-1">
-                <Target className="w-3.5 h-3.5 text-indigo-600" />
-                {i18n.t('packs.star.analytics.spatialBias.cardTitle')}
-              </div>
-              <p className="text-slate-600 leading-relaxed text-[11px]">
+            <Callout
+              variant="info"
+              icon={Target}
+              title={i18n.t('packs.star.analytics.spatialBias.cardTitle')}
+            >
+              <p className="text-muted-foreground leading-relaxed text-[11px]">
                 {i18n.t('packs.star.analytics.spatialBias.desc')}
               </p>
-              <div className="pt-1 space-y-1 font-mono text-slate-700">
+              <div className="pt-1.5 space-y-1 font-mono text-foreground">
                 <div className="flex justify-between">
-                  <span>{i18n.t('packs.star.analytics.spatialBias.avgDx')}</span>
+                  <span className="text-muted-foreground">
+                    {i18n.t('packs.star.analytics.spatialBias.avgDx')}
+                  </span>
                   <span className="font-bold">{dxText}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>{i18n.t('packs.star.analytics.spatialBias.avgDy')}</span>
+                  <span className="text-muted-foreground">
+                    {i18n.t('packs.star.analytics.spatialBias.avgDy')}
+                  </span>
                   <span className="font-bold">{dyText}</span>
                 </div>
-                <div className="flex justify-between text-indigo-700 font-bold border-t border-indigo-200/60 pt-1">
+                <div className="flex justify-between text-primary font-bold border-t border-border/60 pt-1">
                   <span>{i18n.t('packs.star.analytics.spatialBias.avgDist')}</span>
                   <span>{avgDist}px</span>
                 </div>
               </div>
-            </div>
+            </Callout>
           );
         },
         getOverallStats: (records) => calculateBasicOverallStats(records),
@@ -159,21 +164,21 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
               : null;
 
           return (
-            <div className="bg-indigo-50/60 p-3.5 rounded-2xl border border-indigo-100 space-y-2 text-xs">
-              <div className="font-bold text-indigo-900 flex items-center gap-1">
-                <Compass className="w-3.5 h-3.5 text-indigo-600" />
-                {i18n.t('packs.star.analytics.directionalCompass.cardTitle')}
-              </div>
+            <Callout
+              variant="info"
+              icon={Compass}
+              title={i18n.t('packs.star.analytics.directionalCompass.cardTitle')}
+            >
               {weakest ? (
-                <div className="space-y-1.5 text-[11px] text-slate-700">
+                <div className="space-y-1.5 text-[11px] text-foreground pt-1">
                   <p>
                     {i18n.t('packs.star.analytics.directionalCompass.weakestHint', {
                       sector: weakest.label,
                     })}
                   </p>
-                  <div className="flex justify-between items-center bg-white p-2 rounded-xl border border-indigo-100 font-mono">
+                  <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-border/60 font-mono shadow-xs">
                     <span>{weakest.label}</span>
-                    <span className="font-bold text-rose-600">
+                    <span className="font-bold text-rose-600 dark:text-rose-400">
                       {i18n.t('packs.star.analytics.directionalCompass.accuracyRate', {
                         accuracy: weakest.accuracy,
                       })}
@@ -181,11 +186,11 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
                   </div>
                 </div>
               ) : (
-                <p className="text-slate-500 text-[11px]">
+                <p className="text-muted-foreground text-[11px]">
                   {i18n.t('packs.star.analytics.directionalCompass.needMoreTrials')}
                 </p>
               )}
-            </div>
+            </Callout>
           );
         },
         getOverallStats: (records) => calculateBasicOverallStats(records),

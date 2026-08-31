@@ -1,34 +1,79 @@
+import { type VariantProps, cva } from 'class-variance-authority';
 import { Check } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
+import { cn } from '../../utils/cn';
 
 export type TagPillThemeColor = 'indigo' | 'emerald' | 'rose' | 'amber' | 'purple';
 
-export interface TagPillProps {
+export const tagPillVariants = cva(
+  'inline-flex items-center gap-1 font-bold rounded-xl transition-all cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] whitespace-nowrap flex-shrink-0 border',
+  {
+    variants: {
+      themeColor: {
+        indigo: '',
+        emerald: '',
+        rose: '',
+        amber: '',
+        purple: '',
+      },
+      selected: {
+        true: 'text-white shadow-xs border-transparent',
+        false: 'bg-muted/80 hover:bg-accent text-muted-foreground border-border',
+      },
+      size: {
+        sm: 'px-2 py-0.5 text-[11px]',
+        md: 'px-2.5 py-1 text-xs',
+      },
+    },
+    compoundVariants: [
+      { themeColor: 'indigo', selected: true, className: 'bg-primary' },
+      { themeColor: 'emerald', selected: true, className: 'bg-emerald-600' },
+      { themeColor: 'rose', selected: true, className: 'bg-rose-600' },
+      { themeColor: 'amber', selected: true, className: 'bg-amber-600' },
+      { themeColor: 'purple', selected: true, className: 'bg-purple-600' },
+    ],
+    defaultVariants: {
+      themeColor: 'indigo',
+      selected: false,
+      size: 'md',
+    },
+  },
+);
+
+export const tagPillBadgeVariants = cva('text-[10px] font-mono px-1 rounded', {
+  variants: {
+    themeColor: {
+      indigo: '',
+      emerald: '',
+      rose: '',
+      amber: '',
+      purple: '',
+    },
+    selected: {
+      true: '',
+      false: 'bg-border text-muted-foreground',
+    },
+  },
+  compoundVariants: [
+    { themeColor: 'indigo', selected: true, className: 'bg-primary/90 text-indigo-100' },
+    { themeColor: 'emerald', selected: true, className: 'bg-emerald-700 text-emerald-100' },
+    { themeColor: 'rose', selected: true, className: 'bg-rose-700 text-rose-100' },
+    { themeColor: 'amber', selected: true, className: 'bg-amber-700 text-amber-100' },
+    { themeColor: 'purple', selected: true, className: 'bg-purple-700 text-purple-100' },
+  ],
+  defaultVariants: {
+    themeColor: 'indigo',
+    selected: false,
+  },
+});
+
+export interface TagPillProps extends VariantProps<typeof tagPillVariants> {
   label: string;
-  selected?: boolean;
-  themeColor?: TagPillThemeColor;
   icon?: (props: { className?: string }) => ComponentChildren;
   count?: number | string;
-  size?: 'sm' | 'md';
   className?: string;
   onClick?: () => void;
 }
-
-const THEME_ACTIVE_CLASSES: Record<TagPillThemeColor, string> = {
-  indigo: 'bg-indigo-600 text-white shadow-xs',
-  emerald: 'bg-emerald-600 text-white shadow-xs',
-  rose: 'bg-rose-600 text-white shadow-xs',
-  amber: 'bg-amber-600 text-white shadow-xs',
-  purple: 'bg-purple-600 text-white shadow-xs',
-};
-
-const THEME_BADGE_ACTIVE_CLASSES: Record<TagPillThemeColor, string> = {
-  indigo: 'bg-indigo-700 text-indigo-100',
-  emerald: 'bg-emerald-700 text-emerald-100',
-  rose: 'bg-rose-700 text-rose-100',
-  amber: 'bg-amber-700 text-amber-100',
-  purple: 'bg-purple-700 text-purple-100',
-};
 
 export function TagPill({
   label,
@@ -40,38 +85,18 @@ export function TagPill({
   className = '',
   onClick,
 }: TagPillProps) {
-  const activeClass = THEME_ACTIVE_CLASSES[themeColor] || THEME_ACTIVE_CLASSES.indigo;
-  const activeBadgeClass =
-    THEME_BADGE_ACTIVE_CLASSES[themeColor] || THEME_BADGE_ACTIVE_CLASSES.indigo;
-
-  const sizeClass = size === 'sm' ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-xs';
-
   return (
     <button
       type="button"
       onPointerDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`inline-flex items-center gap-1 font-bold rounded-xl transition-all cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] whitespace-nowrap flex-shrink-0 ${sizeClass} ${
-        selected
-          ? activeClass
-          : 'bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60'
-      } ${className}`}
+      className={cn(tagPillVariants({ themeColor, selected, size }), className)}
     >
       {selected && <Check className="w-3 h-3 flex-shrink-0" />}
-      {!selected && Icon && (
-        <Icon className="w-3 h-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />
-      )}
+      {!selected && Icon && <Icon className="w-3 h-3 flex-shrink-0 text-muted-foreground" />}
       <span>{label}</span>
       {count !== undefined && (
-        <span
-          className={`text-[10px] font-mono px-1 rounded ${
-            selected
-              ? activeBadgeClass
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-          }`}
-        >
-          {count}
-        </span>
+        <span className={cn(tagPillBadgeVariants({ themeColor, selected }))}>{count}</span>
       )}
     </button>
   );

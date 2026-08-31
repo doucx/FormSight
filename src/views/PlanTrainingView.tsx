@@ -2,6 +2,7 @@ import { ArrowLeft, Clock, FastForward } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/SessionSummaryModal';
 import { type PlanStageResult, PlanSummaryModal } from '../components/plan/PlanSummaryModal';
+import { Button } from '../components/ui/button';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { TrainingPlan } from '../types/plan';
@@ -157,52 +158,52 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
 
   return (
     <div className="w-full">
-      <div className="max-w-5xl mx-auto mb-4 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
+      <div className="max-w-5xl mx-auto mb-4 bg-card border border-border px-4 sm:px-5 py-3 rounded-2xl shadow-sm flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleRequestExit}
-            className="px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="gap-1.5 text-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-border"
             title={t('plan.exitPlan')}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             {t('plan.exitPlan')}
-          </button>
-          <div className="h-4 w-px bg-slate-200 hidden sm:block" />
+          </Button>
+          <div className="h-4 w-px bg-border hidden sm:block" />
           <div className="flex items-center gap-2.5">
-            <span className="text-xs font-extrabold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900 px-2.5 py-1 rounded-xl">
+            <span className="text-xs font-extrabold bg-accent text-primary border border-border/60 dark:border-border px-2.5 py-1 rounded-xl">
               {t('plan.stageProgress', { current: currentStepIndex + 1, total: validItems.length })}
             </span>
-            <span className="text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-              {plan.name}
-            </span>
+            <span className="text-xs font-bold text-foreground tracking-tight">{plan.name}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="text-xs text-slate-400 font-mono font-semibold hidden sm:block">
+          <div className="text-xs text-muted-foreground font-mono font-semibold hidden sm:block">
             {t('plan.stageGoal', { trials: currentStep.targetTrials })}
           </div>
-          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
-            <Clock className="w-3.5 h-3.5 text-slate-400" />
-            <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
+          <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-xl border border-border/60 text-foreground">
+            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+            <span className="font-mono text-xs font-bold text-foreground">
               {formatSecondsToTimer(totalElapsedSeconds)}
             </span>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleSkipCurrentStage}
-            className="px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border border-slate-200/80 dark:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            className="gap-1.5 text-muted-foreground hover:text-primary border border-border"
             title={t('plan.skipStage')}
           >
-            <FastForward className="w-3.5 h-3.5 text-indigo-500" />
+            <FastForward className="w-3.5 h-3.5 text-primary" />
             {t('plan.skipStage')}
-          </button>
+          </Button>
         </div>
       </div>
 
       {!isLevelLoaded ? (
-        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-slate-400 text-xs font-semibold bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm">
+        <div className="w-full max-w-5xl mx-auto flex items-center justify-center h-64 text-muted-foreground text-xs font-semibold bg-card rounded-3xl border border-border shadow-sm">
           {t('plan.loadingLevel', { title: cardTitle })}
         </div>
       ) : (

@@ -5,6 +5,9 @@ import type { CardDefinition } from '../types/card';
 import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { formatSecondsToTimer } from '../utils/time';
 import { ModalShell } from './common/ModalShell';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { MetricCard } from './ui/metric-card';
 
 export interface SessionHistoryItem {
   trialIndex: number;
@@ -73,48 +76,44 @@ export function SessionSummaryModal({
       <div className="flex flex-col gap-4">
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
-                {accuracy}%
-              </span>
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-2xl font-black text-foreground">{accuracy}%</span>
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>
             </div>
-          </div>
+          </MetricCard>
 
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
               {t('summary.duration')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
+              <span className="text-2xl font-black text-foreground">
                 {formatSecondsToTimer(elapsedSeconds)}
               </span>
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
               </span>
             </div>
-          </div>
+          </MetricCard>
         </div>
 
         {/* 层阶提升高亮卡片 */}
-        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-600 text-white rounded-xl">
+        <div className="bg-accent border border-border/60 dark:border-border/60 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-xs">
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
-                {t('summary.levelEvolution')}
-              </div>
-              <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              <div className="text-xs font-bold text-foreground">{t('summary.levelEvolution')}</div>
+              <div className="text-[11px] text-primary font-medium">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -124,30 +123,38 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 font-mono font-black text-slate-800 dark:text-slate-100 text-base">
-            <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
+          <div className="flex items-center gap-2 font-mono font-black text-foreground text-sm">
+            <Badge variant="secondary" size="default" className="font-mono">
               Lvl {startLevel}
-            </span>
-            <ArrowRight className="w-4 h-4 text-indigo-500" />
-            <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-xl shadow-sm">
+            </Badge>
+            <ArrowRight className="w-4 h-4 text-primary" />
+            <Badge variant="default" size="default" className="font-mono">
               Lvl {endLevel}
-            </span>
+            </Badge>
           </div>
         </div>
 
         {/* 折线图 Canvas 区 */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 w-full overflow-hidden">
+        <div className="bg-muted/60 p-3.5 rounded-2xl border border-border w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="text-[11px] font-bold text-muted-foreground">
               {t('summary.curveTitle')}
             </span>
             <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <Badge
+                  variant="success"
+                  size="sm"
+                  className="w-2 h-2 p-0 rounded-full border-none"
+                />{' '}
                 {t('summary.hitLegend')}
               </span>
-              <span className="flex items-center gap-1 text-rose-500 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />{' '}
+              <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400 font-semibold">
+                <Badge
+                  variant="destructive"
+                  size="sm"
+                  className="w-2 h-2 p-0 rounded-full border-none"
+                />{' '}
                 {t('summary.missLegend')}
               </span>
             </div>
@@ -156,28 +163,20 @@ export function SessionSummaryModal({
             ref={canvasRef}
             width={440}
             height={160}
-            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-slate-100 dark:border-slate-700 shadow-inner"
+            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-border/60 shadow-inner"
           />
         </div>
 
         {/* 底部操作按钮 */}
-        <div className="flex gap-3 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-          >
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
             <Home className="w-4 h-4" />
-            {t('summary.backHome')}
-          </button>
-          <button
-            type="button"
-            onClick={onRestart}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
-          >
+            <span>{t('summary.backHome')}</span>
+          </Button>
+          <Button variant="default" onClick={onRestart} className="h-11 gap-1.5">
             <RotateCcw className="w-4 h-4" />
-            {t('summary.trainAgain')}
-          </button>
+            <span>{t('summary.trainAgain')}</span>
+          </Button>
         </div>
       </div>
     </ModalShell>

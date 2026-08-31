@@ -12,9 +12,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "idb": "^8.0.0",
     "lucide-preact": "^0.344.0",
-    "preact": "^10.19.6"
+    "preact": "^10.19.6",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

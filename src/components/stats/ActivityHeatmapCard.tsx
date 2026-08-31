@@ -154,33 +154,32 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
   const getHeatmapColor = (count: number, isFuture: boolean) => {
     if (isFuture) return 'bg-transparent border border-transparent';
-    if (count === 0)
-      return 'bg-slate-100/90 dark:bg-slate-800 border border-slate-200/40 dark:border-slate-700/40';
-    if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
+    if (count === 0) return 'bg-muted border border-border/60';
+    if (count < 10) return 'bg-indigo-200 border border-border/60';
     if (count < 25) return 'bg-indigo-400 border border-indigo-500/60';
-    if (count < 50) return 'bg-indigo-600 border border-indigo-600';
+    if (count < 50) return 'bg-primary border border-primary';
     return 'bg-indigo-800 border border-indigo-900';
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
+    <div className="bg-card border border-border shadow-sm p-5 sm:p-6 rounded-3xl flex flex-col gap-4">
       {/* 顶栏：标题、年度总刷题数与图例 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2 border-b border-border/60">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">
+          <span className="text-sm font-black text-foreground tracking-tight">
             {t('stats.heatmapTitle')}
           </span>
-          <span className="text-xs text-slate-400 font-medium">
+          <span className="text-xs text-muted-foreground font-medium">
             ({t('stats.heatmapTotalYear', { count: totalTrialsPastYear })})
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium self-end sm:self-auto">
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium self-end sm:self-auto">
           <span>{t('stats.heatmapLess')}</span>
-          <div className="w-3 h-3 rounded-[3px] bg-slate-100 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60" />
+          <div className="w-3 h-3 rounded-[3px] bg-muted border border-border/60" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-200" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-400" />
-          <div className="w-3 h-3 rounded-[3px] bg-indigo-600" />
+          <div className="w-3 h-3 rounded-[3px] bg-primary" />
           <div className="w-3 h-3 rounded-[3px] bg-indigo-800" />
           <span>{t('stats.heatmapMore')}</span>
         </div>
@@ -195,7 +194,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
           {/* 即时响应且支持全向避让的悬浮浮窗 */}
           {hoveredDay && (
             <div
-              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-700/80 ${
+              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-card/95 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-border/60 ${
                 hoveredDay.isFlipped ? 'translate-y-0' : '-translate-y-full'
               }`}
               style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y}px` }}
@@ -208,7 +207,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
           )}
 
           {/* 左侧：星期标签 (周一/周三/周五 垂直对齐对应行) */}
-          <div className="flex flex-col justify-between pt-5 pb-0.5 pr-1 text-[10px] font-semibold text-slate-400 font-mono select-none h-[126px]">
+          <div className="flex flex-col justify-between pt-5 pb-0.5 pr-1 text-[10px] font-semibold text-muted-foreground font-mono select-none h-[126px]">
             <span className="leading-none">{t('stats.weekdayMon')}</span>
             <span className="leading-none">{t('stats.weekdayWed')}</span>
             <span className="leading-none">{t('stats.weekdayFri')}</span>
@@ -219,7 +218,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
             {weeks.map((week) => (
               <div key={week.id} className="flex flex-col gap-1 flex-shrink-0">
                 {/* 顶部月份标记槽位：绝对定位避免挤占列宽，保证网格均匀紧凑 */}
-                <div className="h-5 relative text-[11px] font-bold text-slate-500">
+                <div className="h-5 relative text-[11px] font-bold text-muted-foreground">
                   {week.monthLabel && (
                     <span className="absolute left-0 top-0 whitespace-nowrap leading-none select-none">
                       {week.monthLabel}

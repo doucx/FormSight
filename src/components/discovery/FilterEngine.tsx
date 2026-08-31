@@ -3,6 +3,8 @@ import { getPackTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { CardQueryOptions } from '../../types/card';
 import { TagPill } from '../common/TagPill';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
 
 interface FilterEngineProps {
@@ -44,8 +46,8 @@ export function FilterEngine({
   );
 
   const containerClasses = isCompact
-    ? `w-full bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 space-y-2.5 flex-shrink-0 ${className}`
-    : `w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 ${className}`;
+    ? `w-full bg-muted/80 border border-border rounded-2xl p-3 space-y-2.5 flex-shrink-0 ${className}`
+    : `w-full bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 ${className}`;
 
   const tagSize = isCompact ? 'sm' : 'md';
 
@@ -57,10 +59,10 @@ export function FilterEngine({
           <Search
             className={`${
               isCompact ? 'w-3.5 h-3.5 left-3' : 'w-4 h-4 left-3.5'
-            } text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none`}
+            } text-muted-foreground absolute top-1/2 -translate-y-1/2 pointer-events-none z-10`}
           />
-          <input
-            type="text"
+          <Input
+            inputSize={isCompact ? 'sm' : 'default'}
             value={query.searchKeyword || ''}
             onInput={(e) =>
               onChange({
@@ -69,60 +71,52 @@ export function FilterEngine({
               })
             }
             placeholder={t('home.searchPlaceholder')}
-            className={`w-full ${
-              isCompact
-                ? 'pl-8 pr-8 py-1.5 text-xs rounded-xl'
-                : 'pl-10 pr-10 py-2.5 text-xs rounded-2xl'
-            } bg-white dark:bg-slate-800 hover:bg-slate-100/60 dark:hover:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-800 font-bold text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal`}
+            className={isCompact ? 'pl-8 pr-8' : 'pl-10 pr-10'}
           />
           {query.searchKeyword && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="iconSm"
               onClick={() => onChange({ ...query, searchKeyword: undefined })}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-6 w-6 z-10"
+              title={t('common.clear')}
             >
               <X className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           )}
         </div>
 
         <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0">
           {!isCompact && (
-            <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 px-3 py-2 bg-muted border border-border/60 rounded-xl text-muted-foreground">
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
               <span>{t('home.matchedModules', { count: totalMatches })}</span>
             </div>
           )}
 
-          <button
-            type="button"
+          <Button
+            variant={isAdvancedOpen ? 'accent' : 'outline'}
+            size={isCompact ? 'sm' : 'default'}
             onClick={() => onChange({ ...query, showAdvanced: !isAdvancedOpen })}
-            className={`${
-              isCompact ? 'px-2.5 py-1.5 text-[11px] rounded-lg' : 'px-3 py-2 text-xs rounded-xl'
-            } font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
-              isAdvancedOpen
-                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-xs'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60'
-            }`}
+            className="gap-1.5 h-auto py-2"
           >
-            <Filter className="w-3 h-3 text-indigo-600" />
+            <Filter className="w-3 h-3 text-primary" />
             <span>
               {isAdvancedOpen ? t('home.collapseAdvancedFilter') : t('home.advancedFilter')}
             </span>
-          </button>
+          </Button>
 
           {hasActiveFilters && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size={isCompact ? 'sm' : 'default'}
               onClick={() => onChange(isAdvancedOpen ? { showAdvanced: true } : {})}
-              className={`${
-                isCompact ? 'px-2 py-1.5 text-[11px] rounded-lg' : 'px-2.5 py-2 text-xs rounded-xl'
-              } font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-100 dark:border-rose-900/60 transition-all flex items-center gap-1 cursor-pointer`}
+              className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200/60 dark:border-rose-900/60 gap-1 h-auto py-2"
               title={t('common.clear')}
             >
               <RotateCcw className="w-3 h-3" />
               <span>{t('common.clear')}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -130,7 +124,7 @@ export function FilterEngine({
       {/* 扩展包 (Pack) 快速筛选标签 */}
       {packs.length > 0 && (
         <div
-          className={`space-y-1 border-t border-slate-200/60 dark:border-slate-800 ${isCompact ? 'pt-1.5' : 'pt-3'}`}
+          className={`space-y-1 border-t border-border/60 dark:border-border ${isCompact ? 'pt-1.5' : 'pt-3'}`}
         >
           <FilterSectionHeader icon={Boxes} title={t('home.allPacks')} />
           <div

@@ -5,6 +5,7 @@ import { PlanEditorHeader } from '../components/plan/editor/PlanEditorHeader';
 import { PlanLibraryDrawer } from '../components/plan/editor/PlanLibraryDrawer';
 import { PlanStageList } from '../components/plan/editor/PlanStageList';
 import { usePlanEditorState } from '../components/plan/editor/usePlanEditorState';
+import { Button } from '../components/ui/button';
 import { useTranslation } from '../core/i18n';
 import type { TrainingPlan } from '../types/plan';
 
@@ -93,7 +94,7 @@ export function PlanEditorView({
       />
 
       {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
+        <div className="w-full text-xs font-bold text-primary bg-accent border border-border/60 dark:border-border px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
           {toastNotice}
         </div>
       )}
@@ -117,38 +118,32 @@ export function PlanEditorView({
       )}
 
       {/* 移动端专属：双 Tab 切换栏 (只在 < lg 时渲染) */}
-      <div className="flex lg:hidden items-center bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl flex-shrink-0 border border-slate-200/60 dark:border-slate-700/60">
-        <button
-          type="button"
+      <div className="flex lg:hidden items-center bg-muted/80 p-1 rounded-2xl flex-shrink-0 border border-border/60">
+        <Button
+          variant={mobileTab === 'stages' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setMobileTab('stages')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            mobileTab === 'stages'
-              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
+          className="flex-1 gap-1.5 h-auto py-2"
         >
           <ListOrdered className="w-3.5 h-3.5" />
           <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant={mobileTab === 'picker' ? 'default' : 'ghost'}
+          size="sm"
           onClick={() => setMobileTab('picker')}
-          className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-            mobileTab === 'picker'
-              ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-          }`}
+          className="flex-1 gap-1.5 h-auto py-2"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{t('plan.selectCardPrompt')}</span>
-        </button>
+        </Button>
       </div>
 
       {/* 核心双列/响应式编排区 */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 min-h-0 items-stretch overflow-hidden">
         {/* 左侧：已编排的阶段序列 */}
         <div
-          className={`lg:col-span-7 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
+          className={`lg:col-span-7 bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
             mobileTab === 'stages' ? 'flex' : 'hidden lg:flex'
           }`}
         >
@@ -167,7 +162,7 @@ export function PlanEditorView({
 
         {/* 右侧：模块添加与搜索挑选区 */}
         <div
-          className={`lg:col-span-5 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
+          className={`lg:col-span-5 bg-card border border-border rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm flex flex-col min-h-0 overflow-hidden ${
             mobileTab === 'picker' ? 'flex' : 'hidden lg:flex'
           }`}
         >
