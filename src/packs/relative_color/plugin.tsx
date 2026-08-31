@@ -1,5 +1,5 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import type { RelativeColorSettings } from '../../utils/settings';
+import type { TrainingPlugin } from '../../core/contracts';
+import type { RelativeColorSettings } from '../../storage/settings';
 import {
   type RelativeColorHitResult,
   type RelativeColorMode,

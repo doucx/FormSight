@@ -1,4 +1,4 @@
-import { loadSettings } from './settings';
+import { loadSettings } from '../storage/settings';
 
 let audioCtx: AudioContext | null = null;
 

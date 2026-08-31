@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
-import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
   clonePlan,
   deletePlan,
@@ -9,7 +8,8 @@ import {
   loadPlanStorageState,
   savePlanStorageState,
   togglePlanFavorite,
-} from '../../../utils/planStorage';
+} from '../../../storage/planStorage';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
   batchUpdateItemTrials,
   createNewBlankPlan,

@@ -5,11 +5,11 @@ import { CognitiveMasteryGrid } from '../components/stats/CognitiveMasteryGrid';
 import { StatsMetricCards } from '../components/stats/StatsMetricCards';
 import { Select } from '../components/ui/select';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
+import { renderTrendChartCanvas } from '../core/canvas/charts/drawTrendChart';
 import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { useGlobalStatsData } from '../hooks/useGlobalStatsData';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
-import { renderTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 
 interface GlobalStatsViewProps {
   onExit?: () => void;

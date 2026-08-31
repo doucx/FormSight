@@ -1,8 +1,8 @@
-import type { SessionHistoryItem } from '../../components/SessionSummaryModal';
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { i18n } from '../../core/i18n';
-import { lttbDownsample } from '../../core/math/downsample';
-import { CANVAS_THEME, hexToRgba } from '../theme';
+import type { SessionHistoryItem } from '../../../components/modals/SessionSummaryModal';
+import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
+import { i18n } from '../../i18n';
+import { lttbDownsample } from '../../math/downsample';
+import { setupHiDpiCanvas } from '../hidpi';
 
 export function renderTrendChartCanvas(
   canvas: HTMLCanvasElement,

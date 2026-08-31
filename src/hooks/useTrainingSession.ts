@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import type { SessionHistoryItem } from '../components/SessionSummaryModal';
+import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
 import { AdaptiveEngine } from '../core/engine/adaptiveEngine';
-import { type AdaptiveMode, type StepGranularity, loadSettings } from '../utils/settings';
+import { type AdaptiveMode, type StepGranularity, loadSettings } from '../storage/settings';
 import { playHitSound, playMissSound } from '../utils/sound';
 import { useIdleProtection } from './session/useIdleProtection';
 import { useTrainingKeybindings } from './session/useTrainingKeybindings';

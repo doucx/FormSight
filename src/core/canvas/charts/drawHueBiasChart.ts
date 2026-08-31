@@ -1,7 +1,7 @@
-import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
-import { i18n } from '../../core/i18n';
-import type { UnifiedTrialRecord } from '../db/index';
-import { CANVAS_THEME, PALETTE, hexToRgba } from '../theme';
+import type { UnifiedTrialRecord } from '../../../storage/db/schema';
+import { CANVAS_THEME, PALETTE, hexToRgba } from '../../../utils/theme';
+import { i18n } from '../../i18n';
+import { initSquareHiDpiCanvas } from '../hidpi';
 
 /**
  * 计算带符号的角度偏差 (-180° ~ +180°)

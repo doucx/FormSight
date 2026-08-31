@@ -1,4 +1,4 @@
-import type { AdaptiveMode } from '../../utils/settings';
+import type { AdaptiveMode } from '../../storage/settings';
 
 export const MAX_LEVEL = 35;
 

@@ -1,6 +1,6 @@
-import { initSquareHiDpiCanvas } from '../../core/canvas/hidpi';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../theme';
+import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../../../utils/theme';
+import { hsvToHex } from '../../color/colorUtils';
+import { initSquareHiDpiCanvas } from '../hidpi';
 import type { SectorStat } from './drawCompass';
 
 export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {

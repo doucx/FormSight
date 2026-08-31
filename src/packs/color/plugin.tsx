@@ -1,4 +1,3 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
 import {
   type ColorHitResult,
   type ColorMode,
@@ -6,7 +5,8 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../utils/settings';
+import type { TrainingPlugin } from '../../core/contracts';
+import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorCanvas } from './views/ColorCanvas';
 
 export const colorPlugin: TrainingPlugin<

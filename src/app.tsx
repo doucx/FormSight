@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
-import { GlobalSettingsModal } from './components/GlobalSettingsModal';
-import { SettingsModal } from './components/SettingsModal';
 import { ToastContainer } from './components/common/Toast';
+import { GlobalSettingsModal } from './components/modals/GlobalSettingsModal';
+import { SettingsModal } from './components/modals/SettingsModal';
 import { AppRouter } from './components/routing/AppRouter';
 import { registry } from './core/registry';
 import { useAppBootstrap } from './hooks/useAppBootstrap';

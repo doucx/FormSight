@@ -1,15 +1,15 @@
 import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
+import type { UnifiedProfileData } from '../../storage/db/schema';
+import { saveTrainingPlan } from '../../storage/planStorage';
+import { type UserSettings, getCardSettings } from '../../storage/settings';
 import type { TrainingPlan } from '../../types/plan';
-import type { UnifiedProfileData } from '../../utils/db/schema';
-import { saveTrainingPlan } from '../../utils/planStorage';
-import { type UserSettings, getCardSettings } from '../../utils/settings';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
 import { GlobalStatsView } from '../../views/GlobalStatsView';
-import { Home } from '../../views/Home';
+import { HomeView } from '../../views/HomeView';
 import { PlanEditorView } from '../../views/PlanEditorView';
 import { PlanTrainingView } from '../../views/PlanTrainingView';
 import type { ToastType } from '../common/Toast';
@@ -64,7 +64,7 @@ export function AppRouter({
   const renderMainContent = () => {
     if (route.type === 'home') {
       return (
-        <Home
+        <HomeView
           totalTimeMs={totalTimeMs}
           todayStats={todayStats}
           profiles={profiles}

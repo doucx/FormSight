@@ -12,8 +12,8 @@ import {
   importAllData,
   saveSession,
   saveTrialRecord,
-} from '../db';
-import type { UnifiedSessionData, UnifiedTrialRecord } from '../db/schema';
+} from '../../storage/db';
+import type { UnifiedSessionData, UnifiedTrialRecord } from '../../storage/db/schema';
 
 describe('Unified Database Layer Tests', () => {
   beforeEach(async () => {

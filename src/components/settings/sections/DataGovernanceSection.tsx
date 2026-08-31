@@ -6,8 +6,8 @@ import {
   exportAllDataStream,
   importAllData,
   pruneColdRecords,
-} from '../../../utils/db/index';
-import { resetPlansToDefault } from '../../../utils/planStorage';
+} from '../../../storage/index';
+import { resetPlansToDefault } from '../../../storage/planStorage';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
 import { Button } from '../../ui/button';

@@ -1,18 +1,18 @@
 import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
+import { getCardTitle, useTranslation } from '../../core/i18n';
 import {
   type BaseModuleSettings,
   type UserSettings,
   getCardSettings,
   saveSettings,
-} from '../utils/settings';
-import { ModalShell } from './common/ModalShell';
-import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Switch } from './ui/switch';
+} from '../../storage/settings';
+import type { CardDefinition } from '../../types/card';
+import { ModalShell } from '../common/ModalShell';
+import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Switch } from '../ui/switch';
 
 interface SettingsModalProps {
   card: CardDefinition;

@@ -1,6 +1,6 @@
 import { Eye } from 'lucide-preact';
-import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
+import { HsvTrackSlider } from '../../../components/common/HsvTrackSlider';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { Button } from '../../../components/ui/button';
 import { hsvToHex } from '../../../core/color/colorUtils';

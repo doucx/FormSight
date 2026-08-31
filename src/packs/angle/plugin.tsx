@@ -1,5 +1,5 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
-import type { BaseModuleSettings } from '../../utils/settings';
+import type { TrainingPlugin } from '../../core/contracts';
+import type { BaseModuleSettings } from '../../storage/settings';
 import {
   type AngleHitResult,
   type AngleMode,

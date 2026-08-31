@@ -2,8 +2,8 @@ import { ArrowRight, Clock, Compass, Layers, Target } from 'lucide-preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
+import { type UnifiedProfileData, formatTotalTime } from '../storage/index';
 import type { TrainingPlan } from '../types/plan';
-import { type UnifiedProfileData, formatTotalTime } from '../utils/db/index';
 
 interface HomeProps {
   totalTimeMs: number;
@@ -18,7 +18,7 @@ interface HomeProps {
   onNavigateToStats: () => void;
 }
 
-export function Home({
+export function HomeView({
   totalTimeMs,
   todayStats,
   profiles,

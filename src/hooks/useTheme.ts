@@ -5,7 +5,7 @@ import {
   type UserSettings,
   loadSettings,
   saveSettings,
-} from '../utils/settings';
+} from '../storage/settings';
 
 export interface UseThemeResult {
   themeMode: ThemeMode;

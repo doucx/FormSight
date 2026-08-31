@@ -1,6 +1,6 @@
-import type { TrainingPlugin } from '../../config/trainingPlugins';
+import type { TrainingPlugin } from '../../core/contracts';
+import type { StarSettings } from '../../storage/settings';
 import type { Point } from '../../types';
-import type { StarSettings } from '../../utils/settings';
 import {
   type HitResult,
   type QuestionData,
