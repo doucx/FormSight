@@ -1,13 +1,13 @@
 import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
 import { renderSessionTrendChartCanvas } from '../../core/canvas/charts/drawTrendChart';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import type { CardDefinition } from '../../types/card';
+import { formatSecondsToTimer } from '../../utils/time';
 import { ModalShell } from '../common/ModalShell';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { MetricCard } from '../ui/metric-card';
-import { formatSecondsToTimer } from '../utils/time';
 
 export interface SessionHistoryItem {
   trialIndex: number;
@@ -170,7 +170,7 @@ export function SessionSummaryModal({
         {/* 底部操作按钮 */}
         <div className="grid grid-cols-2 gap-3 pt-1">
           <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
-            <HomeView className="w-4 h-4" />
+            <Home className="w-4 h-4" />
             <span>{t('summary.backHome')}</span>
           </Button>
           <Button variant="default" onClick={onRestart} className="h-11 gap-1.5">

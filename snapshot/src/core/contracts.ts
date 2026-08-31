@@ -1,3 +1,5 @@
+import type { ComponentChildren } from 'preact';
+import type { UnifiedTrialRecord } from '../storage/db/schema';
 import type {
   AbstractionSettings,
   BaseModuleSettings,
@@ -7,6 +9,7 @@ import type {
   StarSettings,
 } from '../storage/settings';
 import type { Point } from '../types';
+import type { CardDefinition, PackMeta } from '../types/card';
 
 export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
   question: TQuestion;
@@ -98,11 +101,6 @@ export type AnyDomainPlugin =
 
 // biome-ignore lint/suspicious/noExplicitAny: type erasure for generic training plugin registry
 export type AnyTrainingPlugin = TrainingPlugin<any, any, any, any>;
-
-import type { ComponentChildren } from 'preact';
-import type { UnifiedTrialRecord } from '../storage/schema';
-import type { BaseModuleSettings } from '../storage/settings';
-import type { CardDefinition, PackMeta } from '../types/card';
 
 export interface BaseInteractiveCardProps {
   disabled?: boolean;

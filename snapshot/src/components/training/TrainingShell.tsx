@@ -4,9 +4,9 @@ import { useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
-import type { SessionHistoryItem } from '../SessionSummaryModal';
-import { SessionSummaryModal } from '../SessionSummaryModal';
 import { IdlePauseOverlay } from '../common/IdlePauseOverlay';
+import type { SessionHistoryItem } from '../modals/SessionSummaryModal';
+import { SessionSummaryModal } from '../modals/SessionSummaryModal';
 import { Button } from '../ui/button';
 
 export interface TrainingSessionHandle {

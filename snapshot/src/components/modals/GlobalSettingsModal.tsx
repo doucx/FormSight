@@ -6,9 +6,9 @@ import {
   loadSettings,
   saveSettings,
 } from '../../storage/settings';
+import { useTranslation } from '../../core/i18n';
 import { ModalShell } from '../common/ModalShell';
 import type { ToastType } from '../common/Toast';
-import { useTranslation } from '../core/i18n';
 import { DataGovernanceSection } from '../settings/sections/DataGovernanceSection';
 import { GeneralPreferencesSection } from '../settings/sections/GeneralPreferencesSection';
 import { Button } from '../ui/button';

@@ -7,9 +7,10 @@ import {
   saveSettings,
 } from '../../storage/settings';
 import { ModalShell } from '../common/ModalShell';
-import { getCardTitle, useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import type { CardDefinition } from '../../types/card';
+import { ModalShell } from '../common/ModalShell';
 import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
-import type { CardDefinition } from '../types/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
