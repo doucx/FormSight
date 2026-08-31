@@ -112,12 +112,12 @@ export function PlanEditorHeader({
               </button>
 
               {isNewPlan ? (
-                <span className="hidden sm:inline-flex text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-200 flex-shrink-0 items-center gap-1">
+                <span className="hidden sm:inline-flex text-[10px] font-extrabold px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 rounded-md border border-emerald-200 dark:border-emerald-800 flex-shrink-0 items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />
                   {t('common.newPlanBadge')}
                 </span>
               ) : currentPlan.isBuiltin ? (
-                <span className="hidden sm:inline-flex text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md border border-indigo-100 flex-shrink-0">
+                <span className="hidden sm:inline-flex text-[10px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-900 flex-shrink-0">
                   {t('common.officialBadge')}
                 </span>
               ) : null}
@@ -271,7 +271,7 @@ export function PlanEditorHeader({
           type="button"
           onClick={onSaveAndStart}
           disabled={currentPlan.items.length === 0}
-          className="px-3.5 py-2 sm:px-4 sm:py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
+          className="px-3.5 py-2 sm:px-4 sm:py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 disabled:opacity-50"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
           <span>{t('plan.startPlan')}</span>

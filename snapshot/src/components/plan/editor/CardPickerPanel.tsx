@@ -86,13 +86,15 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                     <div className="flex items-center gap-1.5">
                       <span
                         className={`text-xs font-bold truncate ${
-                          isAdded ? 'text-emerald-950' : 'text-slate-800 dark:text-slate-100'
+                          isAdded
+                            ? 'text-emerald-900 dark:text-emerald-200'
+                            : 'text-slate-800 dark:text-slate-100'
                         }`}
                       >
                         {cardTitle}
                       </span>
                       {isAdded && (
-                        <span className="font-mono text-[9px] font-black bg-emerald-200/80 text-emerald-800 px-1.5 py-0.2 rounded-md flex-shrink-0 flex items-center gap-0.5">
+                        <span className="font-mono text-[9px] font-black bg-emerald-200/80 dark:bg-emerald-800/80 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded-md flex-shrink-0 flex items-center gap-0.5">
                           <Check className="w-2.5 h-2.5" />
                           {addedCount > 1 ? `x${addedCount}` : ''}
                         </span>
@@ -100,7 +102,9 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                     </div>
                     <div
                       className={`text-[10px] truncate ${
-                        isAdded ? 'text-emerald-700/80' : 'text-slate-400'
+                        isAdded
+                          ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                          : 'text-slate-400 dark:text-slate-500'
                       }`}
                     >
                       {cardDesc}
@@ -111,8 +115,8 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                 <div
                   className={`p-1 rounded-lg flex-shrink-0 transition-colors ${
                     isAdded
-                      ? 'text-emerald-600 hover:bg-emerald-200/60'
-                      : 'text-indigo-400 group-hover:text-indigo-600 hover:bg-indigo-100/50'
+                      ? 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-200/60 dark:hover:bg-emerald-900/60'
+                      : 'text-indigo-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 hover:bg-indigo-100/50 dark:hover:bg-slate-700'
                   }`}
                 >
                   <Plus className="w-3.5 h-3.5" />

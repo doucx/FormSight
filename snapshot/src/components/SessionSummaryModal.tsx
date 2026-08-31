@@ -173,7 +173,7 @@ export function SessionSummaryModal({
           <button
             type="button"
             onClick={onRestart}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             {t('summary.trainAgain')}

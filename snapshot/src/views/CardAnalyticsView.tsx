@@ -161,8 +161,8 @@ export function CardAnalyticsView({
                   </span>
                 )}
                 {card.tags.status === 'experimental' && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-md">
-                    <FlaskConical className="w-3 h-3 text-amber-600" />
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-md">
+                    <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                     {t('card.experimentalBadge')}
                   </span>
                 )}
@@ -198,7 +198,7 @@ export function CardAnalyticsView({
           <button
             type="button"
             onClick={() => onStartTraining(card.id)}
-            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer"
+            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Play className="w-3.5 h-3.5 fill-current" />
             <span>{t('card.startAdaptive')}</span>

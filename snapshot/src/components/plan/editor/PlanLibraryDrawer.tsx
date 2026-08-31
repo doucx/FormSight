@@ -88,12 +88,12 @@ export function PlanLibraryDrawer({
                     {p.name}
                   </span>
                   {p.isBuiltin && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-900">
                       {t('plan.officialTag')}
                     </span>
                   )}
                 </div>
-                <div className="text-[10px] text-slate-400 mt-1">
+                <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                   {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
                 </div>
               </button>
@@ -104,8 +104,8 @@ export function PlanLibraryDrawer({
                   onClick={(e) => onToggleFavorite(p.id, e)}
                   className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
                     isFav
-                      ? 'text-amber-500 hover:bg-amber-50'
-                      : 'text-slate-300 hover:text-slate-500'
+                      ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50'
+                      : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
                   }`}
                   title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
                 >
@@ -118,7 +118,7 @@ export function PlanLibraryDrawer({
                   className={`p-1.5 rounded-xl transition-all cursor-pointer ${
                     isPendingDelete
                       ? 'bg-rose-600 text-white shadow-sm animate-pulse'
-                      : 'text-slate-300 hover:text-rose-600 hover:bg-rose-50'
+                      : 'text-slate-300 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50'
                   }`}
                   title={isPendingDelete ? t('common.confirm') : t('common.deletePlan')}
                 >

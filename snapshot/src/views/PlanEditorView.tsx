@@ -93,7 +93,7 @@ export function PlanEditorView({
       />
 
       {toastNotice && (
-        <div className="w-full text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
+        <div className="w-full text-xs font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900 px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
           {toastNotice}
         </div>
       )}

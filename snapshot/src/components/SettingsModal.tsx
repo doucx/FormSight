@@ -230,7 +230,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-[0.98]"
+          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98]"
         >
           {t('common.complete')}
         </button>

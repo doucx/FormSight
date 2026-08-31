@@ -30,7 +30,7 @@ export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
         <button
           type="button"
           onClick={onResume}
-          className="mt-1 w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition-all active:scale-95"
+          className="mt-1 w-full py-2.5 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-95"
         >
           {t('common.clickToResume')}
         </button>
