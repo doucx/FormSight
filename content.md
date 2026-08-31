@@ -1,161 +1,161 @@
-这 9 处提示是因为此前 Python 检查脚本中的正则为固定 `dark:bg-`，在匹配到带伪类变体（如 `hover:bg-slate-100` 与 `dark:hover:bg-slate-800`）时，未把 `dark:hover:` 视作有效的暗色配对。
+经过对系统设置与主题响应链路的排查，我们定位到了问题原因：`GlobalSettingsModal`（全局设置弹窗）内部维护了独立的 `settings` state，在修改主题配置后仅将数据写入了 `localStorage` 并触发了异步的 `onDataChanged`（`refreshProfiles`），但并未通过类似 `SettingsModal` 的 `onSave` 回调将最新配置即时向上同步给顶层 `App` 组件的 `settings` 状态。这导致顶层的 `useTheme(settings)` 钩子无法在点击瞬间捕获到主题变更，`document.documentElement` 上的 `dark` 类未能被即时移除，从而出现了“弹出了切换成功 Toast，但日间明亮主题未被应用”的现象。
 
-我们来：
-1. 升级 `scripts/check_dark_mode.py`，支持带伪类前缀（`hover:` / `focus:` / `group-hover:` 等）的双态匹配；
-2. 顺带精修 `PlanEditorHeader.tsx` 桌面分割线（`bg-slate-200` ➔ `dark:bg-slate-700`）与 `PlanStageList.tsx` 中的冗余类名；
-3. 运行 `check_dark_mode.py` 验证达成真正的 **0 处遗漏 (100% 覆盖)**。
+下面我们制定并执行修复计划。
 
-## [WIP] fix(tooling): 增强 Linter 伪类检测能力并微调最后剩余样式
+## [WIP] fix: 修复全局设置中日间模式切换未即时生效的主题响应链路
+
+### 错误分析
+1. **状态流转割裂**: `GlobalSettingsModal` 在调用 `handleUpdateGlobal({ theme: 'light' })` 时，仅执行了本地 state 更新和 `localStorage` 写入，未将变更实时同步至根组件 `App` 的 `settings` 状态。
+2. **异步刷新延迟与缺乏即时回调**: `GlobalSettingsModal` 仅调用了异步的 `refreshProfiles()`，导致顶层组件依赖的 `useTheme` 钩子无法在微任务周期内立即接收到最新的主题模式。
+3. **`useTheme` 回落保护缺失**: 在 `useTheme` 的同步 effect 中，当 `externalSettings?.global?.theme` 为 `undefined` 时未能统一兜底到 `'system'`，削弱了主题状态同步的稳健性。
 
 ### 用户需求
-解决 `check_dark_mode.py` 对 `hover:` / `dark:hover:` 伪类匹配的误报问题，精修遗留的桌面分割线等细节样式，并验证全站实现 0 遗漏。
+用户在全局设置面板中点击切换为日间模式（浅色模式）时，界面应即时移除暗色主题类名并渲染浅色明亮风格，确保 Toast 提示与实际视觉呈现完全一致。
 
 ### 评论
-Tailwind 支持前缀级联变体（如 `dark:hover:bg-slate-800`）。将静态审计脚本的匹配规则升级为任意合法前缀（`dark:(?:[a-z0-9-]+:)?`），能够准确识别复合伪类并确保扫描工具的长期可用性。
+主题模式的即时视觉反馈直接决定了基础用户体验与沉浸感。通过将全局设置弹窗的状态与根组件状态单向数据流打通，不仅解决了日间模式切换失效的问题，还能使语言切换、音效开关等其他全局偏好在各级组件间无缝即时响应。
 
 ### 目标
-1. 优化 `scripts/check_dark_mode.py` 的正则规则以支持复合前缀。
-2. 修复 `PlanEditorHeader.tsx` 桌面端分割线暗色样式。
-3. 清理 `PlanStageList.tsx` 空状态卡片的重复边框声明。
-4. 运行审计脚本输出 100% 通过报告。
+1. 增强 `useTheme` 钩子，使外部 `settings` 变更能以更高的容错性驱动 `themeMode` 与 `document.documentElement` 的 class 切换。
+2. 为 `GlobalSettingsModal` 增加 `settings` 与 `onSave` 属性支持，在用户切换设置项时立即通过回调更新根组件 state。
+3. 在 `app.tsx` 中向 `GlobalSettingsModal` 注入 `settings` 与 `onSave={(newSettings) => setSettings(newSettings)}`。
 
 ### 基本原理
-利用正则非捕获组 `dark:(?:[a-z0-9-]+:)?bg-` 兼容 `dark:bg-` 与 `dark:hover:bg-`、`dark:focus:text-` 等任意 Tailwind 变体组合。
+将 `GlobalSettingsModal` 与 `App` 组件的配置流调整为受控单向数据流模式。当用户在设置面板中点击“浅色”按钮时，`handleUpdateGlobal` 会在写入持久化存储的同时调用 `onSave`，直接触发 `App` 组件 state 更新；`App` 重新渲染使 `useTheme(settings)` 接收到 `theme = 'light'`，进而触发内部 effect 执行 `document.documentElement.classList.remove('dark')`，完成即时主题切换。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/build #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/dark-mode-linter #task/action/regex-enhancement #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/ui #concept/config #scope/ux #ai/instruct #task/domain/ui #task/object/theme-mode #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 Python 扫描脚本的伪类检测能力
-
-更新 `scripts/check_dark_mode.py`，准确识别 `dark:hover:*`、`dark:focus:*` 等复合前缀。
+#### Acts 1: 增强 `useTheme` 钩子中的外部设置同步稳健性
 
 ~~~~~act
 patch_file
-scripts/check_dark_mode.py
+src/hooks/useTheme.ts
 ~~~~~
-~~~~~python
-# 关注的浅色特征类名
-PATTERNS = [
-    # 1. 浅色背景 (需配对 dark:bg-*)
-    (
-        r'\b(bg-white|bg-slate-50(?:/\d+)?|bg-slate-100(?:/\d+)?)\b',
-        r'dark:bg-',
-        'Missing dark background (dark:bg-*)',
-    ),
-    # 2. 深色文字 (需配对 dark:text-*)
-    (
-        r'\b(text-slate-900|text-slate-800|text-slate-700)\b',
-        r'dark:text-',
-        'Missing dark text (dark:text-*)',
-    ),
-    # 3. 浅色边框 (需配对 dark:border-*)
-    (
-        r'\b(border-slate-200(?:/\d+)?|border-slate-100|border-gray-100|border-gray-200(?:/\d+)?)\b',
-        r'dark:border-',
-        'Missing dark border (dark:border-*)',
-    ),
-]
+~~~~~typescript
+  // 同步外部设置传入的变更
+  useEffect(() => {
+    if (externalSettings?.global?.theme && externalSettings.global.theme !== themeMode) {
+      setThemeMode(externalSettings.global.theme);
+    }
+  }, [externalSettings?.global?.theme, themeMode]);
 ~~~~~
-~~~~~python
-# 关注的浅色特征类名（支持直接匹配以及 hover:、focus:、group-hover: 等复合前缀）
-PATTERNS = [
-    # 1. 浅色背景 (需配对 dark:bg-* 或 dark:hover:bg-*)
-    (
-        r'(?:^|\s)(?:[a-z0-9-]+:)?(bg-white|bg-slate-50(?:/\d+)?|bg-slate-100(?:/\d+)?)',
-        r'dark:(?:[a-z0-9-]+:)?bg-',
-        'Missing dark background (dark:bg-*)',
-    ),
-    # 2. 深色文字 (需配对 dark:text-* 或 dark:hover:text-*)
-    (
-        r'(?:^|\s)(?:[a-z0-9-]+:)?(text-slate-900|text-slate-800|text-slate-700)',
-        r'dark:(?:[a-z0-9-]+:)?text-',
-        'Missing dark text (dark:text-*)',
-    ),
-    # 3. 浅色边框 (需配对 dark:border-* 或 dark:hover:border-*)
-    (
-        r'(?:^|\s)(?:[a-z0-9-]+:)?(border-slate-200(?:/\d+)?|border-slate-100|border-gray-100|border-gray-200(?:/\d+)?)',
-        r'dark:(?:[a-z0-9-]+:)?border-',
-        'Missing dark border (dark:border-*)',
-    ),
-]
+~~~~~typescript
+  // 同步外部设置传入的变更
+  useEffect(() => {
+    const nextTheme = externalSettings?.global?.theme ?? 'system';
+    if (nextTheme !== themeMode) {
+      setThemeMode(nextTheme);
+    }
+  }, [externalSettings?.global?.theme, themeMode]);
 ~~~~~
 
-#### Acts 2: 微调剩余细节样式
-
-更新 `PlanEditorHeader.tsx` 分割线与 `PlanStageList.tsx` 空状态样式。
+#### Acts 2: 让 `GlobalSettingsModal` 支持接收外部配置与即时 `onSave` 同步回调
 
 ~~~~~act
 patch_file
-src/components/plan/editor/PlanEditorHeader.tsx
+src/components/GlobalSettingsModal.tsx
 ~~~~~
 ~~~~~typescript
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
+interface GlobalSettingsModalProps {
+  onClose: () => void;
+  onDataChanged: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
 
-          <div className="h-5 w-px bg-slate-200 mx-1" />
+export function GlobalSettingsModal({
+  onClose,
+  onDataChanged,
+  showToast,
+}: GlobalSettingsModalProps) {
+  const { t } = useTranslation();
+  const [settings, setSettings] = useState<UserSettings>(loadSettings);
 
-          <button
-            type="button"
-            onClick={onSaveOnly}
-            disabled={currentPlan.items.length === 0}
+  const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
+    const updated: UserSettings = {
+      ...settings,
+      global: {
+        ...settings.global,
+        ...patch,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onDataChanged();
+  };
 ~~~~~
 ~~~~~typescript
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="p-2 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl transition-all cursor-pointer"
-            title={t('plan.importJsonTitle')}
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
+interface GlobalSettingsModalProps {
+  settings?: UserSettings;
+  onClose: () => void;
+  onSave?: (newSettings: UserSettings) => void;
+  onDataChanged: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
 
-          <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 mx-1" />
+export function GlobalSettingsModal({
+  settings: externalSettings,
+  onClose,
+  onSave,
+  onDataChanged,
+  showToast,
+}: GlobalSettingsModalProps) {
+  const { t } = useTranslation();
+  const [settings, setSettings] = useState<UserSettings>(() => externalSettings || loadSettings());
 
-          <button
-            type="button"
-            onClick={onSaveOnly}
-            disabled={currentPlan.items.length === 0}
+  useEffect(() => {
+    if (externalSettings) {
+      setSettings(externalSettings);
+    }
+  }, [externalSettings]);
+
+  const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
+    const updated: UserSettings = {
+      ...settings,
+      global: {
+        ...settings.global,
+        ...patch,
+      },
+    };
+    saveSettings(updated);
+    setSettings(updated);
+    onSave?.(updated);
+    onDataChanged();
+  };
 ~~~~~
+
+#### Acts 3: 在 `App` 根组件中为 `GlobalSettingsModal` 传递 `settings` 与 `onSave`
 
 ~~~~~act
 patch_file
-src/components/plan/editor/PlanStageList.tsx
+src/app.tsx
 ~~~~~
 ~~~~~typescript
-      {currentPlan.items.length === 0 ? (
-        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
+      {isGlobalSettingsOpen && (
+        <GlobalSettingsModal
+          onClose={() => setIsGlobalSettingsOpen(false)}
+          onDataChanged={refreshProfiles}
+          showToast={showToast}
+        />
+      )}
 ~~~~~
 ~~~~~typescript
-      {currentPlan.items.length === 0 ? (
-        <div className="flex-1 min-h-[220px] border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 text-xs bg-slate-50/50 dark:bg-slate-800/40">
-          <Zap className="w-6 h-6 text-slate-300" />
-          <span>{t('plan.emptyPlanTip')}</span>
-        </div>
-      ) : (
+      {isGlobalSettingsOpen && (
+        <GlobalSettingsModal
+          settings={settings}
+          onClose={() => setIsGlobalSettingsOpen(false)}
+          onSave={(newSettings) => setSettings(newSettings)}
+          onDataChanged={refreshProfiles}
+          showToast={showToast}
+        />
+      )}
 ~~~~~
 
 ### 下一步建议
-
-`check_dark_mode.py` 扫描器已正式输出 100% 全量覆盖的通过结论（0 处遗漏）。
-
-所有阶段的夜间模式改造均已完美闭环：
-- DOM 根节点 `.dark` 联动与系统 `prefers-color-scheme` 媒体查询；
-- Canvas 色彩 Token 动态 Proxy 代理；
-- 全局偏好设置三段式切换与中英文多语言词条；
-- 全站 47 个 TSX 视图与组件暗色样式无死角覆盖。
-
-请指示是否创建最终的 `[COMMIT]` 提交！
+1. **本地视觉验证**: 执行以上变更后，打开全局设置弹窗，分别点击“浅色”、“深色”以及“跟随系统”，验证页面是否能毫秒级平滑切换主题。
+2. **测试用例验证**: 运行 `npm test` 确认各模块测试通过无回归问题。
+3. **提交代码**: 验证无误后，由用户发起提交请求生成 `[COMMIT]` 计划归档此次修复。

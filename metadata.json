@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(tooling): 增强 Linter 伪类检测能力并微调最后剩余样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788170548.1643186, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复全局设置中日间模式切换未即时生效的主题响应链路", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788170729.6841078, "duration_ms": 0}}

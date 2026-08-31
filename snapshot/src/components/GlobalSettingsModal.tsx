@@ -13,18 +13,28 @@ import { DataGovernanceSection } from './settings/sections/DataGovernanceSection
 import { GeneralPreferencesSection } from './settings/sections/GeneralPreferencesSection';
 
 interface GlobalSettingsModalProps {
+  settings?: UserSettings;
   onClose: () => void;
+  onSave?: (newSettings: UserSettings) => void;
   onDataChanged: () => void;
   showToast: (msg: string, type?: ToastType) => void;
 }
 
 export function GlobalSettingsModal({
+  settings: externalSettings,
   onClose,
+  onSave,
   onDataChanged,
   showToast,
 }: GlobalSettingsModalProps) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
+  const [settings, setSettings] = useState<UserSettings>(() => externalSettings || loadSettings());
+
+  useEffect(() => {
+    if (externalSettings) {
+      setSettings(externalSettings);
+    }
+  }, [externalSettings]);
 
   const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
     const updated: UserSettings = {
@@ -36,6 +46,7 @@ export function GlobalSettingsModal({
     };
     saveSettings(updated);
     setSettings(updated);
+    onSave?.(updated);
     onDataChanged();
   };
 

@@ -28,8 +28,9 @@ export function useTheme(externalSettings?: UserSettings): UseThemeResult {
 
   // 同步外部设置传入的变更
   useEffect(() => {
-    if (externalSettings?.global?.theme && externalSettings.global.theme !== themeMode) {
-      setThemeMode(externalSettings.global.theme);
+    const nextTheme = externalSettings?.global?.theme ?? 'system';
+    if (nextTheme !== themeMode) {
+      setThemeMode(nextTheme);
     }
   }, [externalSettings?.global?.theme, themeMode]);
 

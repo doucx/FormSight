@@ -65,7 +65,9 @@ export function App() {
 
       {isGlobalSettingsOpen && (
         <GlobalSettingsModal
+          settings={settings}
           onClose={() => setIsGlobalSettingsOpen(false)}
+          onSave={(newSettings) => setSettings(newSettings)}
           onDataChanged={refreshProfiles}
           showToast={showToast}
         />
