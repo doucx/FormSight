@@ -9,7 +9,6 @@ import {
 } from '../../storage/settings';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
-import { ModalShell } from '../common/ModalShell';
 import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
