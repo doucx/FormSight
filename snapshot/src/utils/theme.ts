@@ -1,4 +1,4 @@
-import type { ResolvedTheme } from './settings';
+import type { ResolvedTheme } from '../storage/settings';
 
 /**
  * 1. 基础调色盘（与 Tailwind 标准色彩空间 100% 对齐）
