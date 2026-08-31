@@ -1,42 +1,3 @@
-我将为你创建一个功能完善、基于 Python 标准库的静态扫描工具 `scripts/scan_unification_targets.py`。该脚本能够深度分析 `src/` 源码树，自动定位并归类可被 Design System 进一步收敛的代码模式（包括原生 `<button>`、手写 Badge 容器、硬编码 Slate 灰度类名、未替换的主题交互色以及行内 Hex 颜色等）。
-
-## [WIP] feat(tooling): 添加设计系统统一性与残留硬编码静态扫描脚本
-
-### 用户需求
-创建一个 Python 脚本，自动化扫描整个项目源码，精准定位尚未接入 `<Button>` / `<Badge>` / `<Card>` UI 原语的组件，以及依然残留硬编码颜色类名的代码行，输出结构化诊断报告。
-
-### 评论
-随着设计系统演进，依赖人工代码审阅容易遗漏深层 Pack 或小众视图中的边缘类名。通过定制化的静态分析脚本，开发者可以随时直观量化重构进度，发现待优化的“孤岛”，并以指标为牵引实现 100% 语义化收敛。
-
-### 目标
-1. 新建 `scripts/scan_unification_targets.py` 扫描器脚本。
-2. 支持检测 5 大类收敛机会：
-   - 原生 `<button>` 标签检测（候选 `<Button>` 原语）
-   - 手写胶囊/徽章容器检测（候选 `<Badge>` 原语）
-   - 残留硬编码灰阶与边框（`text-slate-*`, `bg-slate-*`, `border-slate-*`, `dark:bg-slate-*` 等）
-   - 未收敛的主题色交互类名（`bg-indigo-50`, `text-indigo-600`, `dark:bg-indigo-950` 等）
-   - 业务组件中的行内硬编码十六进制色值（Hex Color Literals）
-3. 提供终端彩色格式化报告、分类统计与文件 Top 榜单。
-
-### 基本原理
-利用 Python 的 `re` 与 `pathlib`，排除 `src/components/ui/` 和底层色彩计算工具库（如 `colorUtils.ts`、`theme.ts` 等），针对 `.ts` 和 `.tsx` 文件执行多维度规则匹配，按文件与行号生成精细诊断和整体聚合评分。
-
-### 标签
-#intent/build #flow/ready #priority/medium #comp/build #concept/ui #scope/dx #ai/instruct #task/domain/tooling #task/object/unification-scanner #task/action/implementation #task/state/continue #task/status/active
-
----
-
-### Script
-
-#### Acts 1: 创建 Python 静态扫描脚本
-
-我们将在 `scripts/` 目录下创建 `scan_unification_targets.py`。
-
-~~~~~act
-write_file
-scripts/scan_unification_targets.py
-~~~~~
-~~~~~python
 #!/usr/bin/env python3
 """FormSight Design System Unification Scanner.
 
@@ -289,12 +250,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-~~~~~
-
-### 下一步建议
-1. **运行扫描脚本**：在项目根目录运行 `python3 scripts/scan_unification_targets.py`，查看当前的统计报告与待重构清单。
-2. **支持分类定向过滤**：
-   - 仅查看所有原生 `<button>`：`python3 scripts/scan_unification_targets.py -c button`
-   - 仅查看所有硬编码 Hex 色值：`python3 scripts/scan_unification_targets.py -c hex`
-   - 仅查看统计概览：`python3 scripts/scan_unification_targets.py -s`
-3. **按脚本指引推进重构**：根据 Top 5 文件榜单，继续将剩余的按钮、胶囊徽章与卡片容器逐步收敛至 `<Button>`、`<Badge>` 和 `<Card>` 原语。
