@@ -59,11 +59,11 @@ export function GestureAxisView({
       onValueChange={(_val, active) => setActiveSliderVal(active)}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm"
+            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
             draw={(canvas) => {
               drawParticlesCanvas(
                 canvas,

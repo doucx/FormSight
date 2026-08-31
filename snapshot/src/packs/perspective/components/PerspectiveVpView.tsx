@@ -71,11 +71,11 @@ export function PerspectiveVpView({
       onValueChange={(_cur, active) => setLiveAngle(active)}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex justify-center items-center">
+        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
           <CanvasView
             width={PERSPECTIVE_CANVAS_SIZE}
             height={PERSPECTIVE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white"
+            className="w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
             draw={(canvas) => {
               drawVpConvergenceCanvas(
                 canvas,
@@ -101,12 +101,12 @@ export function PerspectiveVpView({
       }
       footerDetails={
         showAnswer && userVal !== undefined ? (
-          <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500">
+          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-semibold">
+            <span className="text-slate-500 dark:text-slate-400">
               {t('packs.perspective.views.vpTrueAngle')}{' '}
-              <span className="font-bold text-slate-800 font-mono">{targetVal}°</span>
+              <span className="font-bold text-slate-800 dark:text-slate-100 font-mono">{targetVal}°</span>
             </span>
-            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+            <span className={isHit ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
               {t('packs.perspective.views.vpErrorInfo', {
                 error: userAnswer?.errorValue ?? 0,
                 tolerance,

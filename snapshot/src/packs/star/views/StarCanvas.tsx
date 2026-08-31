@@ -75,16 +75,16 @@ export function StarCanvas({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm flex items-center justify-center">
         <canvas
           ref={leftCanvasRef}
           width={CANVAS_SIZE}
           height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-gray-100 bg-white shadow-inner block"
+          className="w-full h-full aspect-square rounded-xl border border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-inner block"
         />
       </div>
 
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center justify-center">
+      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-2xl border border-gray-200/80 dark:border-slate-800 shadow-sm flex items-center justify-center">
         <PointClickCanvas
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}

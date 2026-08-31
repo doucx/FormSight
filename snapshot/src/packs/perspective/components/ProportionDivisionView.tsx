@@ -174,13 +174,13 @@ export function ProportionDivisionView({
       }
     >
       {/* 极简纯数字目标面板 */}
-      <div className="w-full bg-indigo-50/80 border border-indigo-100/90 rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
-        <span className="text-2xl font-black text-indigo-900 font-mono tracking-widest">
+      <div className="w-full bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-100/90 dark:border-indigo-900/60 rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
+        <span className="text-2xl font-black text-indigo-900 dark:text-indigo-200 font-mono tracking-widest">
           {question.targetRatioName ?? '1/2'}
         </span>
       </div>
 
-      <div className="w-full bg-slate-50 p-3 rounded-2xl border border-slate-200 shadow-inner flex flex-col items-center gap-2">
+      <div className="w-full bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex flex-col items-center gap-2">
         <canvas
           ref={canvasRef}
           width={PERSPECTIVE_CANVAS_SIZE}
@@ -198,13 +198,13 @@ export function ProportionDivisionView({
           tabIndex={0}
           role="button"
           aria-label={t('packs.perspective.cards.perspective_proportion_division.title')}
-          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 shadow-sm bg-white touch-none select-none transition-all ${
+          className={`w-full max-w-[320px] aspect-square rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950 touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
               : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
-        <div className="text-[11px] font-semibold text-slate-400 flex items-center gap-2">
+        <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
             <span>{t('common.startPercent')}</span>

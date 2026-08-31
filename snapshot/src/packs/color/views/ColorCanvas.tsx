@@ -99,16 +99,16 @@ export function ColorCanvas({
   const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
       <div className="flex flex-col items-center gap-2 w-full">
         {mode === 'ALL' ? (
           <div className="flex items-center justify-center gap-4 w-full">
             <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
+              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-300"
               style={{ backgroundColor: targetHex }}
             />
             <div
-              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-75"
+              className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-75"
               style={{
                 backgroundColor: hsvToHex(
                   draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
@@ -126,13 +126,13 @@ export function ColorCanvas({
           </div>
         ) : (
           <div
-            className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white ring-1 ring-slate-200 transition-all duration-300"
+            className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-700 transition-all duration-300"
             style={{ backgroundColor: targetHex }}
           />
         )}
       </div>
 
-      <div className="w-full space-y-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+      <div className="w-full space-y-4 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         {mode === 'ALL' ? (
           <>
             <HsvTrackSlider
@@ -273,7 +273,7 @@ export function ColorCanvas({
           type="button"
           onClick={handleSubmitAll}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
         >
           {t('common.confirmSpace')}
         </button>

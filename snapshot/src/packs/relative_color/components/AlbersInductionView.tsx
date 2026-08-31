@@ -70,7 +70,7 @@ export function AlbersInductionView({
         rightTitle={t('packs.relative_color.views.rightModulate')}
         leftContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-md relative"
             style={{ backgroundColor: bgLeftHex }}
           >
             <div
@@ -81,7 +81,7 @@ export function AlbersInductionView({
         }
         rightContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-md relative"
             style={{ backgroundColor: bgRightHex }}
           >
             <div
@@ -99,7 +99,7 @@ export function AlbersInductionView({
         }
       />
 
-      <div className="w-full space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+      <div className="w-full space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
         {!isLightnessMode && (
           <HsvTrackSlider
             label="H"
@@ -164,7 +164,7 @@ export function AlbersInductionView({
           type="button"
           onClick={onSubmit}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 transition-all"
+          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
         >
           {t('common.confirmSpace')}
         </button>

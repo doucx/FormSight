@@ -61,11 +61,11 @@ export function NotanThresholdView({
           leftTitle={t('packs.abstraction.cards.abs_notan_threshold.rawScene')}
           rightTitle={t('packs.abstraction.cards.abs_notan_threshold.notanOutput')}
           leftContent={
-            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+            <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner">
               <CanvasView
                 width={ABSTRACTION_2AFC_SIZE}
                 height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 draw={(canvas) => {
                   if (question.notanBuffer) {
                     drawRawGrayscaleNoiseField(
@@ -81,11 +81,11 @@ export function NotanThresholdView({
             </div>
           }
           rightContent={
-            <div className="w-full flex justify-center bg-slate-50 p-2.5 rounded-2xl border border-slate-200 shadow-inner">
+            <div className="w-full flex justify-center bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner">
               <CanvasView
                 width={ABSTRACTION_2AFC_SIZE}
                 height={ABSTRACTION_2AFC_SIZE}
-                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200"
+                className="w-full max-w-[240px] aspect-square rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950"
                 draw={(canvas) => {
                   if (question.notanBuffer) {
                     drawNotanNoiseField(
