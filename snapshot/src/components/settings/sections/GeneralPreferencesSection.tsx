@@ -3,6 +3,7 @@ import { useTranslation } from '../../../core/i18n';
 import { applyThemeToDocument } from '../../../hooks/useTheme';
 import type { GlobalSettings, ThemeMode, UserSettings } from '../../../utils/settings';
 import type { ToastType } from '../../common/Toast';
+import { Button } from '../../ui/button';
 import { SettingToggleItem } from '../common/SettingToggleItem';
 import { SliderMarginGroup } from '../common/SliderMarginGroup';
 
@@ -63,46 +64,37 @@ export function GeneralPreferencesSection({
           </div>
         </div>
 
-        <div className="flex items-center bg-muted p-0.5 rounded-xl">
-          <button
-            type="button"
+        <div className="flex items-center bg-muted p-0.5 rounded-xl gap-0.5">
+          <Button
+            variant={currentTheme === 'light' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleThemeChange('light')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-              currentTheme === 'light'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="gap-1 h-auto py-1 px-2.5"
             title={t('settings.themeLight')}
           >
             <Sun className="w-3 h-3" />
             <span className="hidden sm:inline">{t('settings.themeLight')}</span>
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={currentTheme === 'dark' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleThemeChange('dark')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-              currentTheme === 'dark'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="gap-1 h-auto py-1 px-2.5"
             title={t('settings.themeDark')}
           >
             <Moon className="w-3 h-3" />
             <span className="hidden sm:inline">{t('settings.themeDark')}</span>
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={currentTheme === 'system' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleThemeChange('system')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
-              currentTheme === 'system'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="gap-1 h-auto py-1 px-2.5"
             title={t('settings.themeSystem')}
           >
             <Monitor className="w-3 h-3" />
             <span className="hidden sm:inline">{t('settings.themeSystem')}</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -114,33 +106,27 @@ export function GeneralPreferencesSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.languageTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
+            <div className="text-[11px] text-muted-foreground">{t('settings.languageDesc')}</div>
           </div>
         </div>
 
-        <div className="flex items-center bg-muted p-0.5 rounded-xl">
-          <button
-            type="button"
+        <div className="flex items-center bg-muted p-0.5 rounded-xl gap-0.5">
+          <Button
+            variant={(settings.global.locale || locale) === 'zh-CN' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleLocaleChange('zh-CN')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              (settings.global.locale || locale) === 'zh-CN'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="h-auto py-1 px-2.5"
           >
             {t('settings.langZh')}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant={(settings.global.locale || locale) === 'en-US' ? 'default' : 'ghost'}
+            size="sm"
             onClick={() => handleLocaleChange('en-US')}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-              (settings.global.locale || locale) === 'en-US'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="h-auto py-1 px-2.5"
           >
             {t('settings.langEn')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -198,18 +184,15 @@ export function GeneralPreferencesSection({
             { label: t('settings.idle60s'), value: 60 },
             { label: t('settings.idle120s'), value: 120 },
           ].map((opt) => (
-            <button
-              type="button"
+            <Button
               key={opt.value}
+              variant={settings.global.idleTimeout === opt.value ? 'default' : 'outline'}
+              size="sm"
               onClick={() => onUpdateGlobal({ idleTimeout: opt.value })}
-              className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                settings.global.idleTimeout === opt.value
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-              }`}
+              className="py-2 h-auto"
             >
               {opt.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>

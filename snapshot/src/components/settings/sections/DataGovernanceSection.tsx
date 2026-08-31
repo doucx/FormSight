@@ -10,6 +10,7 @@ import {
 import { resetPlansToDefault } from '../../../utils/planStorage';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
+import { Button } from '../../ui/button';
 
 interface DataGovernanceSectionProps {
   onDataChanged: () => void;
@@ -98,29 +99,29 @@ export function DataGovernanceSection({
 
   return (
     <div className="space-y-4">
-      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+      <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
         {t('settings.dataGovernance')}
       </div>
 
       {/* 备份导出与导入 */}
       <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
+        <Button
+          variant="outline"
           disabled={isExporting}
           onClick={handleExport}
-          className="py-3 px-4 bg-muted/60 hover:bg-accent/50 hover:text-primary border border-border rounded-2xl text-xs font-bold text-foreground dark:text-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
-          <Download className="w-4 h-4 text-indigo-600" />
+          <Download className="w-4 h-4 text-primary" />
           {isExporting ? t('settings.exporting') : t('settings.exportStream')}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 bg-muted/60 hover:bg-accent/50 hover:text-primary border border-border rounded-2xl text-xs font-bold text-foreground transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
-          <Upload className="w-4 h-4 text-indigo-600" />
+          <Upload className="w-4 h-4 text-primary" />
           {t('settings.importBackup')}
-        </button>
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -131,25 +132,26 @@ export function DataGovernanceSection({
       </div>
 
       {/* 数据库瘦身与修剪 */}
-      <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
+      <div className="bg-accent p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-primary rounded-xl">
             <Scissors className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.pruneTitle')}
             </div>
             <div className="text-[11px] text-primary">{t('settings.pruneDesc')}</div>
           </div>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="default"
+          size="sm"
           onClick={() => setShowPruneConfirm(true)}
-          className="py-1.5 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95 flex-shrink-0 cursor-pointer"
+          className="flex-shrink-0"
         >
           {t('settings.pruneBtn')}
-        </button>
+        </Button>
       </div>
 
       {/* 计划库重置与危险操作 */}
@@ -157,31 +159,33 @@ export function DataGovernanceSection({
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.resetPlansTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
+            <div className="text-[11px] text-muted-foreground">{t('settings.resetPlansDesc')}</div>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => setShowResetPlansConfirm(true)}
-            className="py-2 px-3 bg-muted hover:bg-accent text-foreground border border-border rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+            className="gap-1 border border-border"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t('settings.resetPlansBtn')}
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center justify-between pt-1">
           <div>
             <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
-            <div className="text-[11px] text-slate-400">{t('settings.clearDataDesc')}</div>
+            <div className="text-[11px] text-muted-foreground">{t('settings.clearDataDesc')}</div>
           </div>
-          <button
-            type="button"
+          <Button
+            variant="danger"
+            size="sm"
             onClick={() => setShowClearConfirm(true)}
-            className="py-2 px-3 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+            className="gap-1"
           >
             <Trash2 className="w-3.5 h-3.5" />
             {t('settings.clearDataBtn')}
-          </button>
+          </Button>
         </div>
       </div>
 
