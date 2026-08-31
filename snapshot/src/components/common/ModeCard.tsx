@@ -1,6 +1,8 @@
 import { BarChart2, FlaskConical, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 export function formatTodayTimeWithT(ms: number, t: (key: string) => string): string {
   if (ms <= 0) return `0${t('common.sec')}`;
@@ -63,25 +65,25 @@ export function ModeCard({
           handleCardClick();
         }
       }}
-      className="group bg-card border border-border hover:border-indigo-500 dark:hover:border-indigo-500 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
+      className="group bg-card border border-border hover:border-primary/60 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
     >
       <div>
         {/* 顶部标题、图标与右上角状态徽章 */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-3 rounded-2xl bg-accent text-primary group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-105 transition-all shadow-xs flex-shrink-0">
+            <div className="p-3 rounded-2xl bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-105 transition-all shadow-xs flex-shrink-0">
               <Icon className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base font-black text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
+                <h3 className="text-base font-black text-foreground group-hover:text-primary transition-colors truncate">
                   {title}
                 </h3>
                 {isExperimental && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-lg flex-shrink-0">
+                  <Badge variant="warning" size="sm">
                     <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                     {t('card.experimentalBadge')}
-                  </span>
+                  </Badge>
                 )}
               </div>
               <div className="text-[11px] text-muted-foreground font-medium truncate mt-0.5">
@@ -98,34 +100,34 @@ export function ModeCard({
 
           {/* 右上角：等级胶囊与快捷操作 */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <span className="text-xs font-mono font-black bg-muted group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/60 group-hover:text-indigo-700 dark:group-hover:text-indigo-300 border border-border group-hover:border-indigo-200 dark:group-hover:border-indigo-800 px-2.5 py-1 rounded-xl text-foreground transition-colors">
+            <Badge variant="secondary" size="default" className="font-mono font-black">
               Lvl {currentLevel}
-            </span>
+            </Badge>
 
             <div
-              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1"
+              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
               role="presentation"
             >
               {onOpenAnalytics && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="iconSm"
                   onClick={onOpenAnalytics}
-                  className="p-1.5 text-muted-foreground hover:text-primary hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
                   title={t('card.statsTooltip', { title })}
                 >
                   <BarChart2 className="w-4 h-4" />
-                </button>
+                </Button>
               )}
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="iconSm"
                 onClick={onOpenSettings}
-                className="p-1.5 text-muted-foreground hover:text-primary hover:bg-indigo-50 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
                 title={t('card.settingsTooltip', { title })}
               >
                 <Sliders className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -173,46 +175,48 @@ export function ModeCard({
           {isNeverPracticed ? (
             <>
               {/* 次级：仅显示三角形 Play 图标的自适应训练按钮 */}
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="icon"
                 onClick={onStartTraining}
-                className="p-2.5 text-muted-foreground hover:text-primary bg-muted hover:bg-muted/80 active:scale-95 rounded-xl transition-all cursor-pointer"
                 title={t('card.startAdaptive')}
               >
                 <Play className="w-4 h-4 fill-current text-muted-foreground" />
-              </button>
+              </Button>
 
               {/* 主要：高亮文字「基准测试」按钮 */}
-              <button
-                type="button"
+              <Button
+                variant="default"
+                size="sm"
                 onClick={onStartBenchmark}
-                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="gap-1.5 font-bold"
               >
                 <Target className="w-3.5 h-3.5" />
                 <span>{t('card.startBenchmark')}</span>
-              </button>
+              </Button>
             </>
           ) : (
             <>
               {/* 次级：仅显示靶心 Target 图标的基准测试按钮 */}
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="icon"
                 onClick={onStartBenchmark}
-                className="p-2.5 text-muted-foreground hover:text-foreground bg-muted hover:bg-muted/80 active:scale-95 rounded-xl transition-all cursor-pointer"
                 title={t('card.startBenchmark')}
               >
                 <Target className="w-4 h-4 text-muted-foreground" />
-              </button>
+              </Button>
 
               {/* 主要：高亮文字「自适应训练」按钮 */}
-              <button
-                type="button"
+              <Button
+                variant="default"
+                size="sm"
                 onClick={onStartTraining}
-                className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none group-hover:scale-105 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="gap-1.5 font-bold"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{t('card.startAdaptive')}</span>
-              </button>
+              </Button>
             </>
           )}
         </div>

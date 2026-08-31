@@ -5,6 +5,8 @@ import type { CardDefinition } from '../types/card';
 import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
 import { formatSecondsToTimer } from '../utils/time';
 import { ModalShell } from './common/ModalShell';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 
 export interface SessionHistoryItem {
   trialIndex: number;
@@ -74,28 +76,28 @@ export function SessionSummaryModal({
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-foreground">{accuracy}%</span>
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>
             </div>
           </div>
 
           <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
               {t('summary.duration')}
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-foreground">
                 {formatSecondsToTimer(elapsedSeconds)}
               </span>
-              <span className="text-xs font-semibold text-slate-400">
+              <span className="text-xs font-semibold text-muted-foreground">
                 {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
               </span>
             </div>
@@ -103,16 +105,16 @@ export function SessionSummaryModal({
         </div>
 
         {/* 层阶提升高亮卡片 */}
-        <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-2 bg-indigo-600 text-white rounded-xl">
+        <div className="bg-accent border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-xs">
               <Zap className="w-4 h-4 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
+              <div className="text-xs font-bold text-foreground">
                 {t('summary.levelEvolution')}
               </div>
-              <div className="text-[11px] text-primary">
+              <div className="text-[11px] text-primary font-medium">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -122,14 +124,14 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 font-mono font-black text-foreground text-base">
-            <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-foreground shadow-sm">
+          <div className="flex items-center gap-2 font-mono font-black text-foreground text-sm">
+            <Badge variant="secondary" size="default" className="font-mono">
               Lvl {startLevel}
-            </span>
-            <ArrowRight className="w-4 h-4 text-indigo-500" />
-            <span className="bg-indigo-600 text-white px-2.5 py-1 rounded-xl shadow-sm">
+            </Badge>
+            <ArrowRight className="w-4 h-4 text-primary" />
+            <Badge variant="default" size="default" className="font-mono">
               Lvl {endLevel}
-            </span>
+            </Badge>
           </div>
         </div>
 
@@ -140,11 +142,11 @@ export function SessionSummaryModal({
               {t('summary.curveTitle')}
             </span>
             <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
                 {t('summary.hitLegend')}
               </span>
-              <span className="flex items-center gap-1 text-rose-500 font-semibold">
+              <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400 font-semibold">
                 <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />{' '}
                 {t('summary.missLegend')}
               </span>
@@ -159,23 +161,23 @@ export function SessionSummaryModal({
         </div>
 
         {/* 底部操作按钮 */}
-        <div className="flex gap-3 pt-1">
-          <button
-            type="button"
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-muted hover:bg-muted/80 text-foreground rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="h-11 gap-1.5"
           >
             <Home className="w-4 h-4" />
-            {t('summary.backHome')}
-          </button>
-          <button
-            type="button"
+            <span>{t('summary.backHome')}</span>
+          </Button>
+          <Button
+            variant="default"
             onClick={onRestart}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="h-11 gap-1.5"
           >
             <RotateCcw className="w-4 h-4" />
-            {t('summary.trainAgain')}
-          </button>
+            <span>{t('summary.trainAgain')}</span>
+          </Button>
         </div>
       </div>
     </ModalShell>

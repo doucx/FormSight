@@ -68,9 +68,9 @@ export function PlanHeroCard({
 
   if (!hasItems) {
     return (
-      <div className="w-full bg-gradient-to-br from-indigo-50/80 via-white to-indigo-50/30 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950/30 border-2 border-dashed border-indigo-200/80 dark:border-indigo-900/60 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
+      <div className="w-full bg-accent/40 border-2 border-dashed border-border rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
         <div className="flex items-center gap-4">
-          <div className="p-3.5 bg-indigo-100 dark:bg-indigo-950 text-primary rounded-2xl">
+          <div className="p-3.5 bg-accent text-primary rounded-2xl">
             <Sparkles className="w-6 h-6 animate-pulse" />
           </div>
           <div>
@@ -90,37 +90,38 @@ export function PlanHeroCard({
           className="w-full sm:w-auto gap-2 flex-shrink-0 rounded-2xl"
         >
           <Plus className="w-4 h-4" />
-          {t('plan.customizeBtn')}
+          <span>{t('plan.customizeBtn')}</span>
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="group w-full bg-card border border-indigo-100 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-600 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
+    <div className="group w-full bg-card border border-border hover:border-primary/60 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
       <div className="flex items-center justify-between border-b border-border/60 pb-3.5 flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-600 text-white rounded-2xl shadow-sm shadow-indigo-200 dark:shadow-none">
+          <div className="p-2.5 bg-primary text-primary-foreground rounded-2xl shadow-xs">
             <Zap className="w-5 h-5 fill-current" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               {favoritePlans.length > 1 && onSelectPlan ? (
                 <div ref={dropdownRef} className="relative inline-block text-left">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="group/btn inline-flex items-center gap-1.5 text-lg font-black text-foreground tracking-tight hover:text-primary transition-colors focus:outline-none"
+                    className="h-auto p-0 hover:bg-transparent text-lg font-black text-foreground tracking-tight hover:text-primary gap-1.5"
                   >
                     <span>{plan.name}</span>
                     <div
-                      className={`p-1 rounded-lg bg-muted group-hover/btn:bg-indigo-50 dark:group-hover/btn:bg-indigo-950 text-slate-500 group-hover/btn:text-indigo-600 dark:group-hover/btn:text-indigo-400 transition-all duration-200 ${
+                      className={`p-1 rounded-lg bg-muted text-muted-foreground group-hover:text-primary transition-all duration-200 ${
                         isDropdownOpen ? 'rotate-180 bg-accent text-primary' : ''
                       }`}
                     >
                       <ChevronDown className="w-3.5 h-3.5" />
                     </div>
-                  </button>
+                  </Button>
 
                   {isDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
@@ -141,40 +142,41 @@ export function PlanHeroCard({
                           );
 
                           return (
-                            <button
+                            <Button
                               key={p.id}
-                              type="button"
+                              variant={isSelected ? 'accent' : 'ghost'}
+                              size="sm"
                               onClick={() => {
                                 onSelectPlan(p.id);
                                 setIsDropdownOpen(false);
                               }}
-                              className={`w-full p-2.5 rounded-xl text-left transition-all flex items-center justify-between gap-2.5 ${
+                              className={`w-full h-auto p-2.5 rounded-xl text-left justify-between items-center gap-2.5 ${
                                 isSelected
-                                  ? 'bg-indigo-50/80 dark:bg-indigo-950/80 text-indigo-900 dark:text-indigo-200 font-bold border border-indigo-200/80 dark:border-indigo-900/80 shadow-sm'
-                                  : 'text-foreground hover:bg-accent border border-transparent'
+                                  ? 'shadow-xs border border-indigo-200 dark:border-indigo-900'
+                                  : 'text-foreground'
                               }`}
                             >
-                              <div className="min-w-0 flex-1">
+                              <div className="min-w-0 flex-1 text-left">
                                 <div className="flex items-center gap-1.5">
                                   <span className="text-xs font-bold truncate text-foreground">
                                     {p.name}
                                   </span>
                                   {p.isBuiltin && (
-                                    <span className="text-[9px] px-1 bg-muted text-muted-foreground rounded">
+                                    <Badge variant="secondary" size="sm">
                                       {t('common.official')}
-                                    </span>
+                                    </Badge>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                <div className="text-[10px] text-muted-foreground mt-0.5">
                                   {t('plan.stageCount', { count: stageCount })} •{' '}
                                   {t('plan.totalTrialsSummary', { trials: pTrials })}
                                 </div>
                               </div>
 
                               {isSelected && (
-                                <Check className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                                <Check className="w-4 h-4 text-primary flex-shrink-0" />
                               )}
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
@@ -204,11 +206,11 @@ export function PlanHeroCard({
           variant="secondary"
           size="sm"
           onClick={onOpenEditor}
-          className="gap-1.5 shadow-sm border border-border"
+          className="gap-1.5 shadow-xs border border-border"
           title={t('plan.editPlan')}
         >
           <Sliders className="w-3.5 h-3.5" />
-          {t('plan.editPlan')}
+          <span>{t('plan.editPlan')}</span>
         </Button>
       </div>
 
@@ -227,13 +229,13 @@ export function PlanHeroCard({
                 </div>
                 <Icon className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs font-bold text-foreground">{cardTitle}</span>
-                <span className="text-[11px] font-mono font-bold text-primary bg-card px-1.5 py-0.5 rounded-lg border border-border/60 shadow-sm">
+                <Badge variant="accent" size="sm" className="font-mono font-bold">
                   {item.targetTrials}
                   {t('common.trialsUnit')}
-                </span>
+                </Badge>
               </div>
               {idx < plan.items.length - 1 && (
-                <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
               )}
             </div>
           );
@@ -249,7 +251,7 @@ export function PlanHeroCard({
           className="py-3 px-6 gap-2 ml-auto rounded-2xl"
         >
           <Play className="w-4 h-4 fill-current" />
-          {t('plan.startPlan')}
+          <span>{t('plan.startPlan')}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </Button>
       </div>

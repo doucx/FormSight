@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 针对扫描报告 Top 5 文件执行深度设计系统语义化收敛", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176994.662328, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 推进设计系统规范化与语义化 Token 改造", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788177153.7192664, "duration_ms": 0}}

@@ -4,6 +4,8 @@ import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
 import type { SessionHistoryItem } from '../SessionSummaryModal';
 import { ModalShell } from '../common/ModalShell';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 
 export interface PlanStageResult {
   card: CardDefinition;
@@ -48,27 +50,27 @@ export function PlanSummaryModal({
       <div className="flex flex-col gap-5">
         {/* 核心综合大盘卡片 */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
+          <div className="bg-accent p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
               {t('common.overallAccuracy')}
             </div>
             <div className="text-2xl font-black text-foreground">{accuracy}%</div>
           </div>
 
           <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               {t('common.totalHits')}
             </div>
             <div className="text-2xl font-black text-foreground">
-              {hitCount} <span className="text-xs font-normal text-slate-400">/ {totalTrials}</span>
+              {hitCount} <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
             </div>
           </div>
 
           <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
-              <Clock className="w-3.5 h-3.5 text-indigo-500" />
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
               {t('common.totalTimeSpent')}
             </div>
             <div className="text-2xl font-black text-foreground font-mono">
@@ -79,7 +81,7 @@ export function PlanSummaryModal({
 
         {/* 分阶段明细成果 */}
         <div className="space-y-2.5">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {t('common.stageBreakdown')}
           </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
@@ -101,15 +103,15 @@ export function PlanSummaryModal({
                   className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-lg bg-slate-800 text-white font-mono text-[10px] font-black flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-[10px] font-black flex items-center justify-center">
                       {idx + 1}
                     </div>
-                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-sm">
+                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs">
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div>
                       <div className="text-xs font-bold text-foreground">{cardTitle}</div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="text-[10px] text-muted-foreground">
                         {t('common.trialsCorrect', {
                           hits: stageHits,
                           total: stage.history.length,
@@ -119,23 +121,25 @@ export function PlanSummaryModal({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-slate-600 bg-card px-2 py-1 rounded-xl border border-border/60 text-muted-foreground">
+                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-muted-foreground bg-card px-2 py-1 rounded-xl border border-border/60">
                       <span>L{startLvl}</span>
-                      <ArrowRight className="w-3 h-3 text-slate-400" />
-                      <span className="text-indigo-600">L{endLvl}</span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground/60" />
+                      <span className="text-primary font-black">L{endLvl}</span>
                     </div>
 
-                    <span
-                      className={`text-xs font-black font-mono px-2 py-1 rounded-xl ${
+                    <Badge
+                      variant={
                         stageAcc >= 80
-                          ? 'bg-emerald-100 text-emerald-700'
+                          ? 'success'
                           : stageAcc >= 60
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-rose-100 text-rose-700'
-                      }`}
+                            ? 'warning'
+                            : 'destructive'
+                      }
+                      size="default"
+                      className="font-mono text-xs"
                     >
                       {stageAcc}%
-                    </span>
+                    </Badge>
                   </div>
                 </div>
               );
@@ -144,23 +148,23 @@ export function PlanSummaryModal({
         </div>
 
         {/* 底部动作按钮 */}
-        <div className="flex gap-3 pt-1">
-          <button
-            type="button"
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Button
+            variant="secondary"
             onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-muted hover:bg-muted/80 text-foreground rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="h-11 gap-1.5"
           >
             <Home className="w-4 h-4" />
-            {t('common.completeAndReturnHome')}
-          </button>
-          <button
-            type="button"
+            <span>{t('common.completeAndReturnHome')}</span>
+          </Button>
+          <Button
+            variant="default"
             onClick={onRestart}
-            className="w-full py-3 px-4 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="h-11 gap-1.5"
           >
             <RotateCcw className="w-4 h-4" />
-            {t('common.restartPlan')}
-          </button>
+            <span>{t('common.restartPlan')}</span>
+          </Button>
         </div>
       </div>
     </ModalShell>

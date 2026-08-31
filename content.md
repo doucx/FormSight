@@ -1,1714 +1,1095 @@
-根据扫描脚本生成的诊断报告，这 5 个文件（`CardAnalyticsView.tsx`、`SettingsModal.tsx`、`StatsMetricCards.tsx`、`PlanLibraryDrawer.tsx`、`Home.tsx`）贡献了近 30% 的收敛需求。我们立即针对这批 Top 5 文件执行第一批深度重构。
+我们来推进这一批组件的设计系统统一与语义化重构。
 
-## [WIP] refactor(ui): 针对扫描报告 Top 5 文件执行深度设计系统语义化收敛
+本次重点重构以下 5 个核心组件：
+1. `src/components/plan/editor/PlanStageList.tsx`：将原生 `<button>` 与题量选择器全面升级为 `<Button>`，将硬编码 `slate-*` / `indigo-*` 替换为语义化色彩 Token。
+2. `src/components/SessionSummaryModal.tsx`：引入 `<Button>` 和 `<Badge>`，统一层阶演进和图例展示，规范暗色及浅色模式。
+3. `src/components/plan/PlanSummaryModal.tsx`：替换底部按钮与各阶段成绩卡，收敛色彩到 `bg-accent`, `text-primary`, `text-muted-foreground`。
+4. `src/components/common/ModeCard.tsx`：将设置、统计与开始训练按钮重构为 `<Button>`，消除多处硬编码背景与阴影。
+5. `src/components/plan/PlanHeroCard.tsx`：收敛下拉选择与阶段气泡，替换原生按钮与硬编码边框颜色。
+
+## [WIP] refactor(ui): 推进设计系统规范化与语义化 Token 改造
 
 ### 用户需求
-基于 `scan_unification_targets.py` 诊断报告，对问题最集中的 5 个核心文件（`CardAnalyticsView.tsx`、`SettingsModal.tsx`、`StatsMetricCards.tsx`、`PlanLibraryDrawer.tsx`、`Home.tsx`）进行深度清理：
-1. 替换所有原生 `<button>` 为 `<Button>` 原语。
-2. 替换所有内联胶囊为 `<Badge>` 原语。
-3. 清除所有残留的 `text-slate-*`、`border-slate-*`、`border-indigo-100` 等硬编码类名，全面收敛为 `bg-card`、`bg-muted`、`bg-accent`、`border-border`、`text-foreground`、`text-muted-foreground` 与 `text-primary`。
+针对系统扫描出的设计不一致问题，重构 `PlanStageList`、`SessionSummaryModal`、`PlanSummaryModal`、`ModeCard` 和 `PlanHeroCard`，统一使用 Design System 的 `<Button>`、`<Badge>` 组件，并替换硬编码的 `slate`、`indigo` 色值类为语义化 Tailwind Token。
 
 ### 评论
-这 5 个文件涵盖了分析图表主视图、模块专属设置弹窗、全局统计核心卡片、计划库抽屉和工作台首页。清洗这批核心文件将直接消除 100+ 项不一致项，使应用主干体验彻底统一。
+将孤立的 `<button>` 和硬编码颜色转换为统一的基础 UI 组件与语义颜色（如 `bg-accent`, `text-primary`, `text-muted-foreground`, `border-border`），能够彻底解决明暗模式下的对比度与色调割裂问题，同时大幅提升组件的可维护性。
 
 ### 目标
-1. **`src/views/CardAnalyticsView.tsx`**：重构操作栏、Tab 栏、指标卡片与提示语，接入 `<Button>` 和 `<Badge>`，清理 36 处硬编码。
-2. **`src/components/SettingsModal.tsx`**：重构算子模式选择、步幅选择、轮次选择与底部确定按钮为 `<Button>`，清理 30 处硬编码。
-3. **`src/components/stats/StatsMetricCards.tsx`**：清理 18 处边框与文本硬编码。
-4. **`src/components/plan/editor/PlanLibraryDrawer.tsx`**：重构计划切换项与操作按钮为 `<Button>` / `<Badge>`，清理 18 处硬编码。
-5. **`src/views/Home.tsx`**：收敛文本颜色与图标背景类名，清理 18 处硬编码。
+1. 规范 `PlanStageList.tsx`：替换题量预设、阶段排序与移除按钮，统一为 `<Button>`，清理 slate 颜色。
+2. 规范 `SessionSummaryModal.tsx`：升级底部控制按钮与顶部/阶段状态指示，使用 `<Button>` 与 `<Badge>`。
+3. 规范 `PlanSummaryModal.tsx`：升级完成、重启按钮与层阶标记。
+4. 规范 `ModeCard.tsx`：将统计、设置、自适应与基准测试触发器统一为 `<Button>`。
+5. 规范 `PlanHeroCard.tsx`：整理计划选择下拉框、步骤卡片与启动按钮。
 
 ### 基本原理
-通过精确的 AST 级语义化映射：
-- 将多维统计卡片的静态高亮边框统一为 `border-border`，依靠内容图标色彩传达分类。
-- 将分段选择按钮统一为 `<Button variant={active ? 'default' : 'outline'}>`。
-- 将文本统一映射为 `text-foreground`（主标题/数据数值）与 `text-muted-foreground`（次级说明/单位）。
+直接使用完整内容覆盖重构目标文件，保证所有按钮与徽章结构一致，遵循项目已有 `button.tsx` 和 `badge.tsx` 的 variant / size 规范。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/ui #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/ui #task/object/top5-files-unification #task/action/refactor #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/design-system-unification #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `src/views/CardAnalyticsView.tsx`
-
-接入 `Button` 和 `Badge`，收敛操作栏、Tab 切换与指标大盘。
+#### Acts 1: 重构 `PlanStageList.tsx`
 
 ~~~~~act
-patch_file
-src/views/CardAnalyticsView.tsx
+write_file
+src/components/plan/editor/PlanStageList.tsx
 ~~~~~
-~~~~~typescript.old
-import {
-  Activity,
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  FlaskConical,
-  Gauge,
-  Info,
-  LayoutDashboard,
-  Play,
-  Sliders,
-  Target,
-  TrendingUp,
-  Zap,
-} from 'lucide-preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
-import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
-import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { UnifiedTrialRecord } from '../utils/db/index';
+~~~~~tsx
+import { ArrowDown, ArrowUp, RotateCcw, Trash2, Zap } from 'lucide-preact';
+import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
+import { registry } from '../../../core/registry';
+import type { TrainingPlan } from '../../../types/plan';
+import { Button } from '../../ui/button';
 
-interface CardAnalyticsViewProps {
-~~~~~
-~~~~~typescript.new
-import {
-  Activity,
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  FlaskConical,
-  Gauge,
-  Info,
-  LayoutDashboard,
-  Play,
-  Sliders,
-  Target,
-  TrendingUp,
-  Zap,
-} from 'lucide-preact';
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
-import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
-import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
-import { registry } from '../core/registry';
-import type { UnifiedTrialRecord } from '../utils/db/index';
+interface PlanStageListProps {
+  currentPlan: TrainingPlan;
+  totalTrials: number;
+  estimatedMin: number;
+  trialPresets: number[];
+  onBatchUpdateTrials: (trials: number) => void;
+  onClearAll: () => void;
+  onUpdateTrials: (id: string, trials: number) => void;
+  onMoveItem: (index: number, direction: 'up' | 'down') => void;
+  onRemoveItem: (id: string) => void;
+}
 
-interface CardAnalyticsViewProps {
-~~~~~
-
-~~~~~act
-patch_file
-src/views/CardAnalyticsView.tsx
-~~~~~
-~~~~~typescript.old
-  if (!card || !plugin) {
-    return (
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-card rounded-3xl border border-border p-8 shadow-sm">
-        <Info className="w-10 h-10 text-slate-400" />
-        <div className="text-sm font-bold text-foreground">{t('home.noMatchTitle')}</div>
-        <button
-          type="button"
-          onClick={onExit}
-          className="px-4 py-2 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"
-        >
-          {t('common.completeAndReturnHome')}
-        </button>
-      </div>
-    );
-  }
-
-  const resolveText = (text?: string): string => {
-    if (!text) return '';
-    const translated = t(text);
-    return translated !== text ? translated : text;
-  };
-
-  const CardIcon = card.icon;
+export function PlanStageList({
+  currentPlan,
+  totalTrials,
+  estimatedMin,
+  trialPresets,
+  onBatchUpdateTrials,
+  onClearAll,
+  onUpdateTrials,
+  onMoveItem,
+  onRemoveItem,
+}: PlanStageListProps) {
+  const { t } = useTranslation();
 
   return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 min-w-0">
-          <button
-            type="button"
-            onClick={onExit}
-            className="px-3.5 py-2 text-xs font-bold text-foreground bg-muted hover:bg-muted/80 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 flex-shrink-0"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
-          </button>
-          <div className="h-5 w-px bg-slate-200 hidden sm:block" />
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs flex-shrink-0">
-              <CardIcon className="w-6 h-6" />
+    <div className="flex flex-col h-full space-y-3 min-h-0">
+      <div className="flex items-center justify-between flex-wrap gap-2 flex-shrink-0">
+        <div className="text-xs font-bold text-foreground flex items-center gap-2">
+          <span>{t('plan.stageCount', { count: currentPlan.items.length })}</span>
+          <span className="text-muted-foreground font-normal">
+            • {t('plan.totalTrialsSummary', { trials: totalTrials })} ·{' '}
+            {t('plan.estimatedTime', { min: estimatedMin })}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {currentPlan.items.length > 0 && (
+            <div className="flex items-center gap-1 text-[11px] bg-muted px-2 py-0.5 rounded-xl border border-border/60">
+              <span className="text-[10px] font-bold text-muted-foreground">
+                {t('plan.batchTrials')}
+              </span>
+              {trialPresets.map((num) => (
+                <Button
+                  key={num}
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onBatchUpdateTrials(num)}
+                  className="h-6 px-1.5 py-0 text-[10px] font-bold rounded-lg text-muted-foreground hover:text-foreground"
+                >
+                  {num}
+                  {t('common.trialsUnit')}
+                </Button>
+              ))}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-foreground truncate tracking-tight">
-                  {cardTitle}
-                </h1>
-                {packTitle && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-muted text-muted-foreground rounded-md border border-border/60">
-                    {packTitle}
-                  </span>
-                )}
-                {card.tags.status === 'experimental' && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/60 px-2 py-0.5 rounded-md">
-                    <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                    {t('card.experimentalBadge')}
-                  </span>
-                )}
+          )}
+
+          {currentPlan.items.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearAll}
+              className="h-7 text-[11px] font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 gap-1"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>{t('plan.clearStages')}</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {currentPlan.items.length === 0 ? (
+        <div className="flex-1 min-h-[220px] border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-2 text-muted-foreground text-xs bg-muted/40">
+          <Zap className="w-6 h-6 text-muted-foreground/60" />
+          <span>{t('plan.emptyPlanTip')}</span>
+        </div>
+      ) : (
+        <div className="flex-1 space-y-2.5 overflow-y-auto pr-1 min-h-0">
+          {currentPlan.items.map((item, idx) => {
+            const card = registry.getCardById(item.cardId);
+            if (!card) return null;
+            const Icon = card.icon;
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
+
+            return (
+              <div
+                key={item.id}
+                className="p-3 bg-card border border-border rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
+              >
+                {/* 模块信息区 */}
+                <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto sm:flex-1">
+                  <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
+                    {idx + 1}
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-accent text-primary flex-shrink-0">
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">{cardDesc}</div>
+                  </div>
+                </div>
+
+                {/* 题量选择与操作控制区 */}
+                <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/60">
+                  <div className="flex items-center bg-muted p-0.5 rounded-xl border border-border/40">
+                    {trialPresets.map((preset) => (
+                      <Button
+                        key={preset}
+                        variant={item.targetTrials === preset ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => onUpdateTrials(item.id, preset)}
+                        className={`h-6 px-2 py-0 text-[10px] font-bold rounded-lg ${
+                          item.targetTrials === preset
+                            ? 'shadow-xs'
+                            : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {preset}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-1 border-l border-border pl-1.5 ml-1">
+                    <Button
+                      variant="ghost"
+                      size="iconSm"
+                      disabled={idx === 0}
+                      onClick={() => onMoveItem(idx, 'up')}
+                      className="text-muted-foreground hover:text-foreground"
+                      title={t('plan.moveUpTitle')}
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="iconSm"
+                      disabled={idx === currentPlan.items.length - 1}
+                      onClick={() => onMoveItem(idx, 'down')}
+                      className="text-muted-foreground hover:text-foreground"
+                      title={t('plan.moveDownTitle')}
+                    >
+                      <ArrowDown className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="iconSm"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 ml-0.5"
+                      title={t('plan.removeTitle')}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-400 font-medium truncate mt-0.5">
-                {cardDesc || t('analyticsModal.cardStatsTitle', { title: cardTitle })}
-              </p>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 2: 重构 `SessionSummaryModal.tsx`
+
+~~~~~act
+write_file
+src/components/SessionSummaryModal.tsx
+~~~~~
+~~~~~tsx
+import { ArrowRight, Award, Clock, Home, RotateCcw, Target, Zap } from 'lucide-preact';
+import { useEffect, useRef } from 'preact/hooks';
+import { getCardTitle, useTranslation } from '../core/i18n';
+import type { CardDefinition } from '../types/card';
+import { renderSessionTrendChartCanvas } from '../utils/canvas/drawTrendChart';
+import { formatSecondsToTimer } from '../utils/time';
+import { ModalShell } from './common/ModalShell';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+
+export interface SessionHistoryItem {
+  trialIndex: number;
+  levelBefore: number;
+  levelAfter: number;
+  isHit: boolean;
+  responseTimeMs: number;
+}
+
+interface SessionSummaryModalProps {
+  card: CardDefinition;
+  sessionType: 'training' | 'benchmark';
+  elapsedSeconds: number;
+  history: SessionHistoryItem[];
+  onClose: () => void;
+  onRestart: () => void;
+}
+
+export function SessionSummaryModal({
+  card,
+  sessionType,
+  elapsedSeconds,
+  history,
+  onClose,
+  onRestart,
+}: SessionSummaryModalProps) {
+  const { t } = useTranslation();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const cardTitle = getCardTitle(card, t);
+
+  const totalTrials = history.length;
+  const hitCount = history.filter((h) => h.isHit).length;
+  const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
+
+  const startLevel = history.length > 0 ? history[0].levelBefore : 5;
+  const endLevel = history.length > 0 ? history[history.length - 1].levelAfter : startLevel;
+  const levelDiff = endLevel - startLevel;
+
+  const avgResponseTimeSec =
+    totalTrials > 0
+      ? (history.reduce((acc, curr) => acc + curr.responseTimeMs, 0) / totalTrials / 1000).toFixed(
+          1,
+        )
+      : '0.0';
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas && history.length > 0) {
+      renderSessionTrendChartCanvas(canvas, history);
+    }
+  }, [history]);
+
+  const subTitle = `${cardTitle} • ${
+    sessionType === 'benchmark' ? t('summary.benchmarkSubtitle') : t('summary.trainingSubtitle')
+  }`;
+
+  return (
+    <ModalShell
+      title={t('summary.title')}
+      subTitle={subTitle}
+      icon={Award}
+      onClose={onClose}
+      maxWidth="max-w-lg"
+    >
+      <div className="flex flex-col gap-4">
+        {/* 核心指标统计卡片 */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              {t('summary.accuracyCount')}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground">{accuracy}%</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              {t('summary.duration')}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground">
+                {formatSecondsToTimer(elapsedSeconds)}
+              </span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 右侧操作按钮组 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => onOpenSettings(card.id)}
-            className="p-2.5 text-muted-foreground hover:text-primary bg-muted hover:bg-accent border border-border rounded-xl transition-all cursor-pointer shadow-xs"
-            title={t('card.settingsTooltip', { title: cardTitle })}
-          >
-            <Sliders className="w-4 h-4" />
-          </button>
+        {/* 层阶提升高亮卡片 */}
+        <div className="bg-accent border border-indigo-100 dark:border-indigo-900/60 p-4 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-xs">
+              <Zap className="w-4 h-4 fill-current" />
+            </div>
+            <div>
+              <div className="text-xs font-bold text-foreground">
+                {t('summary.levelEvolution')}
+              </div>
+              <div className="text-[11px] text-primary font-medium">
+                {levelDiff > 0
+                  ? t('summary.levelUp', { diff: levelDiff })
+                  : levelDiff < 0
+                    ? t('summary.levelDown', { diff: Math.abs(levelDiff) })
+                    : t('summary.levelMaintain')}
+              </div>
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => onStartBenchmark(card.id)}
-            className="py-2.5 px-3.5 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-xs"
-            title={t('card.startBenchmark')}
-          >
-            <Target className="w-3.5 h-3.5 text-slate-500" />
-            <span>{t('card.startBenchmark')}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onStartTraining(card.id)}
-            className="py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-200 dark:shadow-none transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{t('card.startAdaptive')}</span>
-          </button>
+          <div className="flex items-center gap-2 font-mono font-black text-foreground text-sm">
+            <Badge variant="secondary" size="default" className="font-mono">
+              Lvl {startLevel}
+            </Badge>
+            <ArrowRight className="w-4 h-4 text-primary" />
+            <Badge variant="default" size="default" className="font-mono">
+              Lvl {endLevel}
+            </Badge>
+          </div>
         </div>
-      </header>
 
-      {/* 多页 Tab 切换栏 */}
-      <div className="w-full bg-card border border-border rounded-2xl p-2 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-        <button
-          type="button"
-          onClick={() => setActiveTabId('overview')}
-          className={`py-2 px-3.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
-            activeTabId === 'overview'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-          }`}
-        >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          {t('analyticsModal.overviewTabLabel')}
-        </button>
+        {/* 折线图 Canvas 区 */}
+        <div className="bg-muted/60 p-3.5 rounded-2xl border border-border w-full overflow-hidden">
+          <div className="flex justify-between items-center px-1 mb-2">
+            <span className="text-[11px] font-bold text-muted-foreground">
+              {t('summary.curveTitle')}
+            </span>
+            <div className="flex items-center gap-3 text-[10px]">
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />{' '}
+                {t('summary.hitLegend')}
+              </span>
+              <span className="flex items-center gap-1 text-rose-500 dark:text-rose-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-rose-500 inline-block" />{' '}
+                {t('summary.missLegend')}
+              </span>
+            </div>
+          </div>
+          <canvas
+            ref={canvasRef}
+            width={440}
+            height={160}
+            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-border/60 shadow-inner"
+          />
+        </div>
 
-        {views.map((v: CardAnalyticsViewContract) => {
-          const Icon = v.icon;
-          const isActive = v.id === activeTabId;
-          return (
-            <button
-              type="button"
-              key={v.id}
-              onClick={() => setActiveTabId(v.id)}
-              className={`py-2 px-3.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              {Icon && <Icon className="w-3.5 h-3.5" />}
-              {resolveText(v.tabLabel)}
-            </button>
-          );
-        })}
-      </div>
-~~~~~
-~~~~~typescript.new
-  if (!card || !plugin) {
-    return (
-      <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-card rounded-3xl border border-border p-8 shadow-sm">
-        <Info className="w-10 h-10 text-muted-foreground" />
-        <div className="text-sm font-bold text-foreground">{t('home.noMatchTitle')}</div>
-        <Button variant="secondary" onClick={onExit}>
-          {t('common.completeAndReturnHome')}
-        </Button>
-      </div>
-    );
-  }
-
-  const resolveText = (text?: string): string => {
-    if (!text) return '';
-    const translated = t(text);
-    return translated !== text ? translated : text;
-  };
-
-  const CardIcon = card.icon;
-
-  return (
-    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
-      {/* 顶部主操作栏 */}
-      <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5 min-w-0">
+        {/* 底部操作按钮 */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
           <Button
             variant="secondary"
-            size="sm"
-            onClick={onExit}
-            className="gap-1.5 flex-shrink-0"
+            onClick={onClose}
+            className="h-11 gap-1.5"
           >
-            <ArrowLeft className="w-4 h-4" />
-            {t('common.exit')}
+            <Home className="w-4 h-4" />
+            <span>{t('summary.backHome')}</span>
           </Button>
-          <div className="h-5 w-px bg-border hidden sm:block" />
+          <Button
+            variant="default"
+            onClick={onRestart}
+            className="h-11 gap-1.5"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>{t('summary.trainAgain')}</span>
+          </Button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+~~~~~
+
+#### Acts 3: 重构 `PlanSummaryModal.tsx`
+
+~~~~~act
+write_file
+src/components/plan/PlanSummaryModal.tsx
+~~~~~
+~~~~~tsx
+import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import type { CardDefinition } from '../../types/card';
+import { formatSecondsToTimer } from '../../utils/time';
+import type { SessionHistoryItem } from '../SessionSummaryModal';
+import { ModalShell } from '../common/ModalShell';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+
+export interface PlanStageResult {
+  card: CardDefinition;
+  targetTrials: number;
+  history: SessionHistoryItem[];
+}
+
+interface PlanSummaryModalProps {
+  planName: string;
+  stageResults: PlanStageResult[];
+  totalElapsedSeconds: number;
+  onClose: () => void;
+  onRestart: () => void;
+}
+
+export function PlanSummaryModal({
+  planName,
+  stageResults,
+  totalElapsedSeconds,
+  onClose,
+  onRestart,
+}: PlanSummaryModalProps) {
+  const { t } = useTranslation();
+  const allHistory = stageResults.flatMap((s) => s.history);
+  const totalTrials = allHistory.length;
+  const hitCount = allHistory.filter((h) => h.isHit).length;
+  const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
+
+  const subTitle = t('common.planSummaryCompleted', {
+    name: planName,
+    count: stageResults.length,
+  });
+
+  return (
+    <ModalShell
+      title={t('common.planSummaryTitle')}
+      subTitle={subTitle}
+      icon={Award}
+      onClose={onClose}
+      maxWidth="max-w-xl"
+    >
+      <div className="flex flex-col gap-5">
+        {/* 核心综合大盘卡片 */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-accent p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              {t('common.overallAccuracy')}
+            </div>
+            <div className="text-2xl font-black text-foreground">{accuracy}%</div>
+          </div>
+
+          <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+              {t('common.totalHits')}
+            </div>
+            <div className="text-2xl font-black text-foreground">
+              {hitCount} <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
+            </div>
+          </div>
+
+          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
+            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              {t('common.totalTimeSpent')}
+            </div>
+            <div className="text-2xl font-black text-foreground font-mono">
+              {formatSecondsToTimer(totalElapsedSeconds)}
+            </div>
+          </div>
+        </div>
+
+        {/* 分阶段明细成果 */}
+        <div className="space-y-2.5">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            {t('common.stageBreakdown')}
+          </div>
+          <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+            {stageResults.map((stage, idx) => {
+              const stageHits = stage.history.filter((h) => h.isHit).length;
+              const stageAcc =
+                stage.history.length > 0 ? Math.round((stageHits / stage.history.length) * 100) : 0;
+              const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : 5;
+              const endLvl =
+                stage.history.length > 0
+                  ? stage.history[stage.history.length - 1].levelAfter
+                  : startLvl;
+              const Icon = stage.card.icon;
+              const cardTitle = getCardTitle(stage.card, t);
+
+              return (
+                <div
+                  key={`${stage.card.id}-${idx}`}
+                  className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-[10px] font-black flex items-center justify-center">
+                      {idx + 1}
+                    </div>
+                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs">
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">{cardTitle}</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {t('common.trialsCorrect', {
+                          hits: stageHits,
+                          total: stage.history.length,
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 font-mono text-xs font-bold text-muted-foreground bg-card px-2 py-1 rounded-xl border border-border/60">
+                      <span>L{startLvl}</span>
+                      <ArrowRight className="w-3 h-3 text-muted-foreground/60" />
+                      <span className="text-primary font-black">L{endLvl}</span>
+                    </div>
+
+                    <Badge
+                      variant={
+                        stageAcc >= 80
+                          ? 'success'
+                          : stageAcc >= 60
+                            ? 'warning'
+                            : 'destructive'
+                      }
+                      size="default"
+                      className="font-mono text-xs"
+                    >
+                      {stageAcc}%
+                    </Badge>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 底部动作按钮 */}
+        <div className="grid grid-cols-2 gap-3 pt-1">
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="h-11 gap-1.5"
+          >
+            <Home className="w-4 h-4" />
+            <span>{t('common.completeAndReturnHome')}</span>
+          </Button>
+          <Button
+            variant="default"
+            onClick={onRestart}
+            className="h-11 gap-1.5"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>{t('common.restartPlan')}</span>
+          </Button>
+        </div>
+      </div>
+    </ModalShell>
+  );
+}
+~~~~~
+
+#### Acts 4: 重构 `ModeCard.tsx`
+
+~~~~~act
+write_file
+src/components/common/ModeCard.tsx
+~~~~~
+~~~~~tsx
+import { BarChart2, FlaskConical, Play, Sliders, Target } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
+import { useTranslation } from '../../core/i18n';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+
+export function formatTodayTimeWithT(ms: number, t: (key: string) => string): string {
+  if (ms <= 0) return `0${t('common.sec')}`;
+  const totalSec = Math.round(ms / 1000);
+  if (totalSec < 60) {
+    return `${totalSec}${t('common.sec')}`;
+  }
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec > 0
+    ? `${min}${t('common.min')}${sec}${t('common.sec')}`
+    : `${min}${t('common.minFull')}`;
+}
+
+interface ModeCardProps {
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+  todayCount: number;
+  todayTimeMs?: number;
+  currentLevel: number;
+  accuracy: number;
+  totalTrials?: number;
+  hasAnalytics?: boolean;
+  isExperimental?: boolean;
+  onStartTraining: () => void;
+  onStartBenchmark: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics?: () => void;
+}
+
+export function ModeCard({
+  title,
+  desc,
+  icon: Icon,
+  todayCount,
+  todayTimeMs = 0,
+  currentLevel,
+  accuracy,
+  totalTrials = 0,
+  isExperimental = false,
+  onStartTraining,
+  onStartBenchmark,
+  onOpenSettings,
+  onOpenAnalytics,
+}: ModeCardProps) {
+  const { t } = useTranslation();
+  const isNeverPracticed = totalTrials === 0;
+
+  // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
+  const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
+
+  return (
+    <div
+      role="presentation"
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      className="group bg-card border border-border hover:border-primary/60 rounded-3xl p-6 shadow-xs hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative cursor-pointer select-none"
+    >
+      <div>
+        {/* 顶部标题、图标与右上角状态徽章 */}
+        <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2.5 bg-accent text-primary rounded-2xl shadow-xs flex-shrink-0">
-              <CardIcon className="w-6 h-6" />
+            <div className="p-3 rounded-2xl bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-105 transition-all shadow-xs flex-shrink-0">
+              <Icon className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-black text-foreground truncate tracking-tight">
-                  {cardTitle}
-                </h1>
-                {packTitle && (
-                  <Badge variant="secondary" size="sm">
-                    {packTitle}
-                  </Badge>
-                )}
-                {card.tags.status === 'experimental' && (
+                <h3 className="text-base font-black text-foreground group-hover:text-primary transition-colors truncate">
+                  {title}
+                </h3>
+                {isExperimental && (
                   <Badge variant="warning" size="sm">
                     <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                     {t('card.experimentalBadge')}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground font-medium truncate mt-0.5">
-                {cardDesc || t('analyticsModal.cardStatsTitle', { title: cardTitle })}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 右侧操作按钮组 */}
-        <div className="flex items-center gap-2 flex-wrap justify-end flex-shrink-0">
-          <Button
-            variant="secondary"
-            size="icon"
-            onClick={() => onOpenSettings(card.id)}
-            className="border border-border"
-            title={t('card.settingsTooltip', { title: cardTitle })}
-          >
-            <Sliders className="w-4 h-4" />
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onStartBenchmark(card.id)}
-            className="gap-1.5"
-            title={t('card.startBenchmark')}
-          >
-            <Target className="w-3.5 h-3.5 text-muted-foreground" />
-            <span>{t('card.startBenchmark')}</span>
-          </Button>
-
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => onStartTraining(card.id)}
-            className="gap-1.5"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span>{t('card.startAdaptive')}</span>
-          </Button>
-        </div>
-      </header>
-
-      {/* 多页 Tab 切换栏 */}
-      <div className="w-full bg-card border border-border rounded-2xl p-1.5 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
-        <Button
-          variant={activeTabId === 'overview' ? 'default' : 'ghost'}
-          size="sm"
-          onClick={() => setActiveTabId('overview')}
-          className="gap-1.5 whitespace-nowrap"
-        >
-          <LayoutDashboard className="w-3.5 h-3.5" />
-          {t('analyticsModal.overviewTabLabel')}
-        </Button>
-
-        {views.map((v: CardAnalyticsViewContract) => {
-          const Icon = v.icon;
-          const isActive = v.id === activeTabId;
-          return (
-            <Button
-              key={v.id}
-              variant={isActive ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTabId(v.id)}
-              className="gap-1.5 whitespace-nowrap"
-            >
-              {Icon && <Icon className="w-3.5 h-3.5" />}
-              {resolveText(v.tabLabel)}
-            </Button>
-          );
-        })}
-      </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/views/CardAnalyticsView.tsx
-~~~~~
-~~~~~typescript.old
-      {/* 主体展示区 */}
-      {loading ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex items-center justify-center text-slate-400 text-xs shadow-sm">
-          {t('analyticsModal.analyzing')}
-        </div>
-      ) : records.length === 0 ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-muted text-muted-foreground rounded-3xl">
-            <Info className="w-8 h-8" />
-          </div>
-          <div className="text-base font-bold text-foreground">
-            {t('analyticsModal.noRecords', { title: cardTitle })}
-          </div>
-          <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
-            {t('analyticsModal.needMoreSamples')}
-          </p>
-          <button
-            type="button"
-            onClick={() => onStartTraining(card.id)}
-            className="mt-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-200 flex items-center gap-1.5"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('card.startAdaptive')}
-          </button>
-        </div>
-      ) : activeTabId === 'overview' ? (
-        /* 数据总览专属视图 */
-        <div className="flex flex-col gap-6 animate-in fade-in duration-150">
-          {/* 4 维核心大指标卡片 */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card p-5 rounded-3xl border border-indigo-100 dark:border-slate-800 shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-                <Target className="w-4 h-4 text-indigo-500" />
-                {t('common.accuracy')}
-              </div>
-              <div className="text-3xl font-black text-foreground">{summaryStats.accuracy}%</div>
-            </div>
-
-            <div className="bg-card p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                {t('common.totalHits')}
-              </div>
-              <div className="text-3xl font-black text-foreground">
-                {summaryStats.hits}{' '}
-                <span className="text-xs font-normal text-slate-400">/ {summaryStats.total}</span>
-              </div>
-            </div>
-
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-                <Clock className="w-4 h-4 text-indigo-500" />
-                {t('summary.duration')}
-              </div>
-              <div className="text-3xl font-black text-foreground font-mono">
-                {summaryStats.avgResponseTimeSec}
-                <span className="text-xs font-normal text-slate-400"> s</span>
-              </div>
-            </div>
-
-            <div className="bg-card p-5 rounded-3xl border border-amber-100 dark:border-slate-800 shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-                <TrendingUp className="w-4 h-4 text-amber-500" />
-                {t('stats.dailyMaxLevel')}
-              </div>
-              <div className="text-3xl font-black text-foreground font-mono">
-                Lvl {summaryStats.maxLevel}
+              <div className="text-[11px] text-muted-foreground font-medium truncate mt-0.5">
+                {todayCount > 0
+                  ? `${t('card.todayTrials')}: ${todayCount} ${t('common.trialsUnit')}${
+                      todayTimeMs > 0 ? ` (${formatTodayTimeWithT(todayTimeMs, t)})` : ''
+                    }`
+                  : isNeverPracticed
+                    ? t('common.empty')
+                    : `${t('card.todayTrials')}: 0 ${t('common.trialsUnit')}`}
               </div>
             </div>
           </div>
 
-          {/* 总体评价与认知建议 */}
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-2">
-                <Activity className="w-4 h-4 text-indigo-600" />
-                {t('analyticsModal.overallEvaluation')}
-              </div>
-              <span className="text-xs font-mono text-slate-400">
-                {t('analyticsModal.sampleSize', { count: summaryStats.total })}
-              </span>
-            </div>
-~~~~~
-~~~~~typescript.new
-      {/* 主体展示区 */}
-      {loading ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex items-center justify-center text-muted-foreground text-xs shadow-sm">
-          {t('analyticsModal.analyzing')}
-        </div>
-      ) : records.length === 0 ? (
-        <div className="h-96 bg-card rounded-3xl border border-border p-8 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-muted text-muted-foreground rounded-3xl">
-            <Info className="w-8 h-8" />
-          </div>
-          <div className="text-base font-bold text-foreground">
-            {t('analyticsModal.noRecords', { title: cardTitle })}
-          </div>
-          <p className="text-xs text-muted-foreground max-w-sm leading-relaxed">
-            {t('analyticsModal.needMoreSamples')}
-          </p>
-          <Button
-            variant="default"
-            onClick={() => onStartTraining(card.id)}
-            className="mt-2 gap-1.5"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            {t('card.startAdaptive')}
-          </Button>
-        </div>
-      ) : activeTabId === 'overview' ? (
-        /* 数据总览专属视图 */
-        <div className="flex flex-col gap-6 animate-in fade-in duration-150">
-          {/* 4 维核心大指标卡片 */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-                <Target className="w-4 h-4 text-primary" />
-                {t('common.accuracy')}
-              </div>
-              <div className="text-3xl font-black text-foreground">{summaryStats.accuracy}%</div>
-            </div>
+          {/* 右上角：等级胶囊与快捷操作 */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Badge variant="secondary" size="default" className="font-mono font-black">
+              Lvl {currentLevel}
+            </Badge>
 
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-                <CheckCircle className="w-4 h-4 text-emerald-500" />
-                {t('common.totalHits')}
-              </div>
-              <div className="text-3xl font-black text-foreground">
-                {summaryStats.hits}{' '}
-                <span className="text-xs font-normal text-muted-foreground">/ {summaryStats.total}</span>
-              </div>
-            </div>
-
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-                <Clock className="w-4 h-4 text-primary" />
-                {t('summary.duration')}
-              </div>
-              <div className="text-3xl font-black text-foreground font-mono">
-                {summaryStats.avgResponseTimeSec}
-                <span className="text-xs font-normal text-muted-foreground"> s</span>
-              </div>
-            </div>
-
-            <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-                <TrendingUp className="w-4 h-4 text-amber-500" />
-                {t('stats.dailyMaxLevel')}
-              </div>
-              <div className="text-3xl font-black text-foreground font-mono">
-                Lvl {summaryStats.maxLevel}
-              </div>
-            </div>
-          </div>
-
-          {/* 总体评价与认知建议 */}
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                {t('analyticsModal.overallEvaluation')}
-              </div>
-              <span className="text-xs font-mono text-muted-foreground">
-                {t('analyticsModal.sampleSize', { count: summaryStats.total })}
-              </span>
-            </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/views/CardAnalyticsView.tsx
-~~~~~
-~~~~~typescript.old
-      ) : currentView ? (
-        /* 专项分析视图 */
-        <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
-          {/* 左侧 Canvas 可视化区 */}
-          <div className="lg:col-span-7 flex justify-center bg-slate-50 dark:bg-slate-950 p-6 rounded-3xl border border-border shadow-inner relative">
-            <canvas
-              key={`${card.id}-${currentView.id}`}
-              ref={canvasRef}
-              width={320}
-              height={320}
-              className="w-full max-w-[340px] aspect-square rounded-2xl border border-border/60 shadow-xs"
-            />
-          </div>
-
-          {/* 右侧数据统计与认知诊断面板 */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 space-y-1">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                {resolveText(currentView.title)}
-              </div>
-              <div className="text-sm font-black text-foreground">
-                {resolveText(currentView.subTitle)}
-              </div>
-            </div>
-~~~~~
-~~~~~typescript.new
-      ) : currentView ? (
-        /* 专项分析视图 */
-        <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
-          {/* 左侧 Canvas 可视化区 */}
-          <div className="lg:col-span-7 flex justify-center bg-muted/40 p-6 rounded-3xl border border-border shadow-inner relative">
-            <canvas
-              key={`${card.id}-${currentView.id}`}
-              ref={canvasRef}
-              width={320}
-              height={320}
-              className="w-full max-w-[340px] aspect-square rounded-2xl border border-border/60 shadow-xs"
-            />
-          </div>
-
-          {/* 右侧数据统计与认知诊断面板 */}
-          <div className="lg:col-span-5 flex flex-col gap-4">
-            <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 space-y-1">
-              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                {resolveText(currentView.title)}
-              </div>
-              <div className="text-sm font-black text-foreground">
-                {resolveText(currentView.subTitle)}
-              </div>
-            </div>
-~~~~~
-
-#### Acts 2: 重构 `src/components/SettingsModal.tsx`
-
-替换所有原生选项按钮为 `Button`，清除 `bg-slate-800` 和 `text-indigo-600` 硬编码。
-
-~~~~~act
-patch_file
-src/components/SettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-  saveSettings,
-} from '../utils/settings';
-import { ModalShell } from './common/ModalShell';
-import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
-
-interface SettingsModalProps {
-~~~~~
-~~~~~typescript.new
-import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../core/i18n';
-import type { CardDefinition } from '../types/card';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-  saveSettings,
-} from '../utils/settings';
-import { ModalShell } from './common/ModalShell';
-import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
-import { Button } from './ui/button';
-
-interface SettingsModalProps {
-~~~~~
-
-~~~~~act
-patch_file
-src/components/SettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-        {/* 通用配置：自动翻页开关 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-foreground">
-              {t('settingsModal.autoNext')}
-            </div>
-            <div className="text-xs text-slate-400">{t('settingsModal.autoNextDesc')}</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => updateCardConfig({ autoNext: !cardConfig.autoNext })}
-            className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            {cardConfig.autoNext ? (
-              <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />
-            ) : (
-              <ToggleLeft className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-            )}
-          </button>
-        </div>
-
-        {/* 通用配置：自动翻页延迟 */}
-        {cardConfig.autoNext && (
-          <div className="space-y-2 bg-muted/60 p-3.5 rounded-2xl border border-border/60">
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
-              <span>{t('settingsModal.delay')}</span>
-              <span className="font-mono text-indigo-600 font-bold">
-                {cardConfig.autoNextDelay} ms
-              </span>
-            </div>
-            <input
-              type="range"
-              min="100"
-              max="2000"
-              step="100"
-              value={cardConfig.autoNextDelay}
-              onInput={(e) => {
-                const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
-                updateCardConfig({ autoNextDelay: val });
-              }}
-              className="w-full accent-indigo-600 cursor-pointer"
-            />
-          </div>
-        )}
-
-        {/* 通用配置：自适应算子模式 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.adaptiveMode')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => updateCardConfig({ adaptiveMode: 'block' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
-                cardConfig.adaptiveMode === 'block'
-                  ? 'bg-accent text-primary border-indigo-200 dark:border-indigo-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-              }`}
-            >
-              <Target className="w-3.5 h-3.5 text-indigo-600" />
-              {t('settingsModal.modeBlock')}
-            </button>
-            <button
-              type="button"
-              onClick={() => updateCardConfig({ adaptiveMode: 'staircase' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all flex items-center justify-center gap-1.5 ${
-                cardConfig.adaptiveMode === 'staircase'
-                  ? 'bg-accent text-primary border-indigo-200 dark:border-indigo-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-              }`}
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              {t('settingsModal.modeStaircase')}
-            </button>
-          </div>
-        </div>
-
-        {/* 轮次评估配置 */}
-        {cardConfig.adaptiveMode === 'block' && (
-          <div className="space-y-3 bg-indigo-50/50 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60">
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.targetAcc')}</span>
-                <span className="font-bold text-indigo-600 font-mono">
-                  {Math.round(cardConfig.targetAccuracy * 100)}%
-                </span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[0.7, 0.8, 0.85, 0.9].map((acc) => (
-                  <button
-                    type="button"
-                    key={acc}
-                    onClick={() => updateCardConfig({ targetAccuracy: acc })}
-                    className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                      cardConfig.targetAccuracy === acc
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-                    }`}
-                  >
-                    {Math.round(acc * 100)}%
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.blockSize')}</span>
-                <span className="font-bold text-indigo-600 font-mono">
-                  {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[10, 15, 20].map((size) => (
-                  <button
-                    type="button"
-                    key={size}
-                    onClick={() => updateCardConfig({ blockSize: size })}
-                    className={`py-1.5 text-xs font-bold rounded-lg border transition-all ${
-                      cardConfig.blockSize === size
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                        : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-                    }`}
-                  >
-                    {t('settingsModal.trialsUnit', { size })}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 难度阶梯精细度 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.stepGranularity')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
-                cardConfig.stepGranularity === 'standard'
-                  ? 'bg-accent text-primary border-indigo-200 dark:border-indigo-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-              }`}
-            >
-              {t('settingsModal.stepStandard')}
-            </button>
-            <button
-              type="button"
-              onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className={`py-2.5 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
-                cardConfig.stepGranularity === 'fine'
-                  ? 'bg-accent text-primary border-indigo-200 dark:border-indigo-900 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
-              }`}
-            >
-              {t('settingsModal.stepFine')}
-            </button>
-          </div>
-        </div>
-
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
-      </div>
-
-      <div className="pt-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 dark:shadow-none transition-all active:scale-[0.98]"
-        >
-          {t('common.complete')}
-        </button>
-      </div>
-    </ModalShell>
-  );
-}
-~~~~~
-~~~~~typescript.new
-        {/* 通用配置：自动翻页开关 */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-sm font-semibold text-foreground">
-              {t('settingsModal.autoNext')}
-            </div>
-            <div className="text-xs text-muted-foreground">{t('settingsModal.autoNextDesc')}</div>
-          </div>
-          <button
-            type="button"
-            onClick={() => updateCardConfig({ autoNext: !cardConfig.autoNext })}
-            className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            {cardConfig.autoNext ? (
-              <ToggleRight className="w-8 h-8 fill-primary text-primary" />
-            ) : (
-              <ToggleLeft className="w-8 h-8 text-muted-foreground/60" />
-            )}
-          </button>
-        </div>
-
-        {/* 通用配置：自动翻页延迟 */}
-        {cardConfig.autoNext && (
-          <div className="space-y-2 bg-muted/60 p-3.5 rounded-2xl border border-border/60">
-            <div className="flex justify-between items-center text-xs font-semibold text-muted-foreground">
-              <span>{t('settingsModal.delay')}</span>
-              <span className="font-mono text-primary font-bold">
-                {cardConfig.autoNextDelay} ms
-              </span>
-            </div>
-            <input
-              type="range"
-              min="100"
-              max="2000"
-              step="100"
-              value={cardConfig.autoNextDelay}
-              onInput={(e) => {
-                const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
-                updateCardConfig({ autoNextDelay: val });
-              }}
-              className="w-full accent-indigo-600 cursor-pointer"
-            />
-          </div>
-        )}
-
-        {/* 通用配置：自适应算子模式 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.adaptiveMode')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.adaptiveMode === 'block' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'block' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Target className="w-3.5 h-3.5 text-inherit" />
-              {t('settingsModal.modeBlock')}
-            </Button>
-            <Button
-              variant={cardConfig.adaptiveMode === 'staircase' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'staircase' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              {t('settingsModal.modeStaircase')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 轮次评估配置 */}
-        {cardConfig.adaptiveMode === 'block' && (
-          <div className="space-y-3 bg-accent p-3.5 rounded-2xl border border-border/60">
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.targetAcc')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {Math.round(cardConfig.targetAccuracy * 100)}%
-                </span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[0.7, 0.8, 0.85, 0.9].map((acc) => (
-                  <Button
-                    key={acc}
-                    variant={cardConfig.targetAccuracy === acc ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ targetAccuracy: acc })}
-                    className="h-auto py-1.5"
-                  >
-                    {Math.round(acc * 100)}%
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.blockSize')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[10, 15, 20].map((size) => (
-                  <Button
-                    key={size}
-                    variant={cardConfig.blockSize === size ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ blockSize: size })}
-                    className="h-auto py-1.5"
-                  >
-                    {t('settingsModal.trialsUnit', { size })}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 难度阶梯精细度 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.stepGranularity')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.stepGranularity === 'standard' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepStandard')}
-            </Button>
-            <Button
-              variant={cardConfig.stepGranularity === 'fine' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepFine')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
-      </div>
-
-      <div className="pt-2">
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
-          {t('common.complete')}
-        </Button>
-      </div>
-    </ModalShell>
-  );
-}
-~~~~~
-
-#### Acts 3: 重构 `src/components/stats/StatsMetricCards.tsx`
-
-清理硬编码的双模边框与 slate 文本。
-
-~~~~~act
-patch_file
-src/components/stats/StatsMetricCards.tsx
-~~~~~
-~~~~~typescript.old
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-card p-5 rounded-3xl border border-indigo-100 dark:border-slate-800 shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-          <Calendar className="w-4 h-4 text-indigo-500" />
-          {t('stats.todayTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.today.total}{' '}
-          <span className="text-xs font-semibold text-slate-400 font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-indigo-600 font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-          <Target className="w-4 h-4 text-emerald-500" />
-          {t('stats.weekTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.week.total}{' '}
-          <span className="text-xs font-semibold text-slate-400 font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-emerald-600 font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-amber-100 dark:border-slate-800 shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-          <Activity className="w-4 h-4 text-amber-500" />
-          {t('stats.yearTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.year.total}{' '}
-          <span className="text-xs font-semibold text-slate-400 font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-amber-600 font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-1">
-          <TrendingUp className="w-4 h-4 text-slate-500" />
-          {t('stats.allTimeTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.allTime.total}{' '}
-          <span className="text-xs font-semibold text-slate-400 font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-slate-500 font-semibold mt-1">
-          {t('stats.streakDays', { days: streakDays })}
-        </div>
-      </div>
-    </div>
-  );
-~~~~~
-~~~~~typescript.new
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-          <Calendar className="w-4 h-4 text-primary" />
-          {t('stats.todayTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.today.total}{' '}
-          <span className="text-xs font-semibold text-muted-foreground font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-primary font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.today.hits, stats.today.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-          <Target className="w-4 h-4 text-emerald-500" />
-          {t('stats.weekTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.week.total}{' '}
-          <span className="text-xs font-semibold text-muted-foreground font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.week.hits, stats.week.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-          <Activity className="w-4 h-4 text-amber-500" />
-          {t('stats.yearTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.year.total}{' '}
-          <span className="text-xs font-semibold text-muted-foreground font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold mt-1">
-          {t('common.accuracy')} {calcAcc(stats.year.hits, stats.year.total)}%
-        </div>
-      </div>
-
-      <div className="bg-card p-5 rounded-3xl border border-border shadow-sm space-y-1">
-        <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground mb-1">
-          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          {t('stats.allTimeTrials')}
-        </div>
-        <div className="text-3xl font-black text-foreground">
-          {stats.allTime.total}{' '}
-          <span className="text-xs font-semibold text-muted-foreground font-normal">
-            {t('common.trialsUnit')}
-          </span>
-        </div>
-        <div className="text-xs text-muted-foreground font-semibold mt-1">
-          {t('stats.streakDays', { days: streakDays })}
-        </div>
-      </div>
-    </div>
-  );
-~~~~~
-
-#### Acts 4: 重构 `src/components/plan/editor/PlanLibraryDrawer.tsx`
-
-接入 `Button` 和 `Badge`，清理双模与灰阶类名。
-
-~~~~~act
-patch_file
-src/components/plan/editor/PlanLibraryDrawer.tsx
-~~~~~
-~~~~~typescript.old
-import { Check, Plus, Star, Trash2 } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { useTranslation } from '../../../core/i18n';
-import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
-
-interface PlanLibraryDrawerProps {
-~~~~~
-~~~~~typescript.new
-import { Check, Plus, Star, Trash2 } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { useTranslation } from '../../../core/i18n';
-import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
-import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
-
-interface PlanLibraryDrawerProps {
-~~~~~
-
-~~~~~act
-patch_file
-src/components/plan/editor/PlanLibraryDrawer.tsx
-~~~~~
-~~~~~typescript.old
-  return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-900/90 border border-border rounded-2xl space-y-3 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-extrabold text-foreground tracking-tight">
-          {t('plan.switchEditingPlan')}
-        </span>
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onCreateNewBlankPlan}
-            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t('plan.createNewBlankPlan')}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs font-semibold text-slate-400 hover:text-slate-600"
-          >
-            {t('plan.collapse')}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-        {storageState.plans.map((p) => {
-          const isActive = currentPlan.id === p.id;
-          const isFav = p.isFavorite ?? true;
-          const stageCount = (p.items || []).length;
-          const totalTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
-          const isPendingDelete = confirmDeleteId === p.id;
-
-          return (
             <div
-              key={p.id}
-              className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-2 ${
-                isActive
-                  ? 'bg-white dark:bg-slate-800 border-indigo-500 shadow-sm ring-2 ring-indigo-500/20'
-                  : 'bg-card/80 border-border hover:bg-white dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 shadow-xs'
-              }`}
+              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
             >
-              <button
-                type="button"
-                onClick={() => onSelectPlan(p)}
-                className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
-              >
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-foreground truncate">{p.name}</span>
-                  {p.isBuiltin && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 bg-accent text-primary rounded-md border border-indigo-100 dark:border-indigo-900">
-                      {t('plan.officialTag')}
-                    </span>
-                  )}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-1">
-                  {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
-                </div>
-              </button>
-
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={(e) => onToggleFavorite(p.id, e)}
-                  className={`p-1.5 rounded-xl transition-colors cursor-pointer ${
-                    isFav
-                      ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/50'
-                      : 'text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400'
-                  }`}
-                  title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
-                >
-                  <Star className={`w-4 h-4 ${isFav ? 'fill-amber-500' : ''}`} />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => handleDeleteClick(p.id, e)}
-                  className={`p-1.5 rounded-xl transition-all cursor-pointer ${
-                    isPendingDelete
-                      ? 'bg-rose-600 text-white shadow-sm animate-pulse'
-                      : 'text-slate-300 dark:text-slate-600 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50'
-                  }`}
-                  title={isPendingDelete ? t('common.confirm') : t('common.deletePlan')}
-                >
-                  {isPendingDelete ? <Check className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-~~~~~
-~~~~~typescript.new
-  return (
-    <div className="p-4 bg-muted/60 border border-border rounded-2xl space-y-3 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-extrabold text-foreground tracking-tight">
-          {t('plan.switchEditingPlan')}
-        </span>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCreateNewBlankPlan}
-            className="text-primary hover:text-primary gap-1"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            {t('plan.createNewBlankPlan')}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {t('plan.collapse')}
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
-        {storageState.plans.map((p) => {
-          const isActive = currentPlan.id === p.id;
-          const isFav = p.isFavorite ?? true;
-          const stageCount = (p.items || []).length;
-          const totalTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
-          const isPendingDelete = confirmDeleteId === p.id;
-
-          return (
-            <div
-              key={p.id}
-              className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between gap-2 ${
-                isActive
-                  ? 'bg-card border-indigo-600 shadow-sm ring-2 ring-indigo-500/20'
-                  : 'bg-card/80 border-border hover:bg-card hover:border-primary/60 shadow-xs'
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => onSelectPlan(p)}
-                className="min-w-0 flex-1 text-left cursor-pointer focus:outline-none"
-              >
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-foreground truncate">{p.name}</span>
-                  {p.isBuiltin && (
-                    <Badge variant="accent" size="sm">
-                      {t('plan.officialTag')}
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-1">
-                  {t('plan.stageAndTrialsSummary', { stages: stageCount, trials: totalTrials })}
-                </div>
-              </button>
-
-              <div className="flex items-center gap-1 flex-shrink-0">
+              {onOpenAnalytics && (
                 <Button
                   variant="ghost"
                   size="iconSm"
-                  onClick={(e) => onToggleFavorite(p.id, e as unknown as MouseEvent)}
-                  className={`rounded-xl ${
-                    isFav ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                  title={isFav ? t('common.favoritedTooltip') : t('common.unfavoritedTooltip')}
+                  onClick={onOpenAnalytics}
+                  title={t('card.statsTooltip', { title })}
                 >
-                  <Star className={`w-4 h-4 ${isFav ? 'fill-amber-500' : ''}`} />
+                  <BarChart2 className="w-4 h-4" />
                 </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={onOpenSettings}
+                title={t('card.settingsTooltip', { title })}
+              >
+                <Sliders className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
 
-                <Button
-                  variant={isPendingDelete ? 'danger' : 'ghost'}
-                  size="iconSm"
-                  onClick={(e) => handleDeleteClick(p.id, e as unknown as MouseEvent)}
-                  className={`rounded-xl ${
-                    isPendingDelete
-                      ? 'animate-pulse'
-                      : 'text-muted-foreground hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50'
-                  }`}
-                  title={isPendingDelete ? t('common.confirm') : t('common.deletePlan')}
-                >
-                  {isPendingDelete ? <Check className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
-                </Button>
+        {/* 卡片描述 */}
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 min-h-[2.5rem] mb-5">
+          {desc}
+        </p>
+      </div>
+
+      {/* 底部指标栏与浮动操作按钮 */}
+      <div
+        className="flex items-end justify-between border-t border-border/60 pt-4"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        role="presentation"
+      >
+        {/* 左侧：正确率综合指示 */}
+        <div className="space-y-0.5">
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            {t('card.accuracy')}
+          </div>
+          <div className="text-sm font-black text-foreground font-mono flex items-baseline gap-1.5">
+            <span
+              className={
+                isNeverPracticed
+                  ? 'text-muted-foreground'
+                  : accuracy >= 80
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-foreground'
+              }
+            >
+              {isNeverPracticed ? '--' : `${accuracy}%`}
+            </span>
+            {todayCount > 0 && (
+              <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                ({todayCount} {t('common.trialsUnit')})
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 右侧：紧凑动作按钮组（根据 isNeverPracticed 动态倒转权重） */}
+        <div className="flex items-center gap-2">
+          {isNeverPracticed ? (
+            <>
+              {/* 次级：仅显示三角形 Play 图标的自适应训练按钮 */}
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={onStartTraining}
+                title={t('card.startAdaptive')}
+              >
+                <Play className="w-4 h-4 fill-current text-muted-foreground" />
+              </Button>
+
+              {/* 主要：高亮文字「基准测试」按钮 */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onStartBenchmark}
+                className="gap-1.5 font-bold"
+              >
+                <Target className="w-3.5 h-3.5" />
+                <span>{t('card.startBenchmark')}</span>
+              </Button>
+            </>
+          ) : (
+            <>
+              {/* 次级：仅显示靶心 Target 图标的基准测试按钮 */}
+              <Button
+                variant="secondary"
+                size="icon"
+                onClick={onStartBenchmark}
+                title={t('card.startBenchmark')}
+              >
+                <Target className="w-4 h-4 text-muted-foreground" />
+              </Button>
+
+              {/* 主要：高亮文字「自适应训练」按钮 */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={onStartTraining}
+                className="gap-1.5 font-bold"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{t('card.startAdaptive')}</span>
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 5: 重构 `PlanHeroCard.tsx`
+
+~~~~~act
+write_file
+src/components/plan/PlanHeroCard.tsx
+~~~~~
+~~~~~tsx
+import {
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Play,
+  Plus,
+  Sliders,
+  Sparkles,
+  Zap,
+} from 'lucide-preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { getCardTitle, useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { TrainingPlan } from '../../types/plan';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+
+interface PlanHeroCardProps {
+  plan: TrainingPlan;
+  allPlans?: TrainingPlan[];
+  onStartPlan: () => void;
+  onOpenEditor: () => void;
+  onSelectPlan?: (planId: string) => void;
+}
+
+export function PlanHeroCard({
+  plan,
+  allPlans = [],
+  onStartPlan,
+  onOpenEditor,
+  onSelectPlan,
+}: PlanHeroCardProps) {
+  const { t } = useTranslation();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const hasItems = plan.items && plan.items.length > 0;
+  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+
+  const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
+
+  if (!hasItems) {
+    return (
+      <div className="w-full bg-accent/40 border-2 border-dashed border-border rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row items-center justify-between gap-5 transition-all">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-accent text-primary rounded-2xl">
+            <Sparkles className="w-6 h-6 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-foreground">{t('plan.todayPlan')}</h2>
+              <Badge variant="secondary" size="sm">
+                {t('common.empty')}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{t('plan.emptyHeroDesc')}</p>
+          </div>
+        </div>
+
+        <Button
+          variant="default"
+          onClick={onOpenEditor}
+          className="w-full sm:w-auto gap-2 flex-shrink-0 rounded-2xl"
+        >
+          <Plus className="w-4 h-4" />
+          <span>{t('plan.customizeBtn')}</span>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group w-full bg-card border border-border hover:border-primary/60 rounded-3xl p-6 sm:p-7 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col gap-5 relative z-10">
+      <div className="flex items-center justify-between border-b border-border/60 pb-3.5 flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary text-primary-foreground rounded-2xl shadow-xs">
+            <Zap className="w-5 h-5 fill-current" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {favoritePlans.length > 1 && onSelectPlan ? (
+                <div ref={dropdownRef} className="relative inline-block text-left">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="h-auto p-0 hover:bg-transparent text-lg font-black text-foreground tracking-tight hover:text-primary gap-1.5"
+                  >
+                    <span>{plan.name}</span>
+                    <div
+                      className={`p-1 rounded-lg bg-muted text-muted-foreground group-hover:text-primary transition-all duration-200 ${
+                        isDropdownOpen ? 'rotate-180 bg-accent text-primary' : ''
+                      }`}
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                  </Button>
+
+                  {isDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border/60 flex items-center justify-between">
+                        <span>{t('plan.switchPlan')}</span>
+                        <span className="font-mono">
+                          {t('plan.availableCount', { count: favoritePlans.length })}
+                        </span>
+                      </div>
+
+                      <div className="max-h-60 overflow-y-auto py-1 space-y-1 pr-1">
+                        {favoritePlans.map((p) => {
+                          const isSelected = p.id === plan.id;
+                          const stageCount = (p.items || []).length;
+                          const pTrials = (p.items || []).reduce(
+                            (acc, c) => acc + c.targetTrials,
+                            0,
+                          );
+
+                          return (
+                            <Button
+                              key={p.id}
+                              variant={isSelected ? 'accent' : 'ghost'}
+                              size="sm"
+                              onClick={() => {
+                                onSelectPlan(p.id);
+                                setIsDropdownOpen(false);
+                              }}
+                              className={`w-full h-auto p-2.5 rounded-xl text-left justify-between items-center gap-2.5 ${
+                                isSelected
+                                  ? 'shadow-xs border border-indigo-200 dark:border-indigo-900'
+                                  : 'text-foreground'
+                              }`}
+                            >
+                              <div className="min-w-0 flex-1 text-left">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold truncate text-foreground">
+                                    {p.name}
+                                  </span>
+                                  {p.isBuiltin && (
+                                    <Badge variant="secondary" size="sm">
+                                      {t('common.official')}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                  {t('plan.stageCount', { count: stageCount })} •{' '}
+                                  {t('plan.totalTrialsSummary', { trials: pTrials })}
+                                </div>
+                              </div>
+
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-primary flex-shrink-0" />
+                              )}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <h2 className="text-lg font-black text-foreground tracking-tight">{plan.name}</h2>
+              )}
+
+              <Badge variant="accent" size="sm" className="rounded-full">
+                {t('plan.stageCount', { count: plan.items.length })}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-0.5">
+              <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-muted-foreground" />
+                {t('plan.estimatedTime', { min: estimatedMin })}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onOpenEditor}
+          className="gap-1.5 shadow-xs border border-border"
+          title={t('plan.editPlan')}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>{t('plan.editPlan')}</span>
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {plan.items.map((item, idx) => {
+          const card = registry.getCardById(item.cardId);
+          if (!card) return null;
+          const Icon = card.icon;
+          const cardTitle = getCardTitle(card, t);
+
+          return (
+            <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-2 rounded-2xl shadow-inner">
+                <div className="w-5 h-5 rounded-lg bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
+                  {idx + 1}
+                </div>
+                <Icon className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                <Badge variant="accent" size="sm" className="font-mono font-bold">
+                  {item.targetTrials}
+                  {t('common.trialsUnit')}
+                </Badge>
               </div>
+              {idx < plan.items.length - 1 && (
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40 flex-shrink-0" />
+              )}
             </div>
           );
         })}
       </div>
-    </div>
-  );
-~~~~~
 
-#### Acts 5: 重构 `src/views/Home.tsx`
+      <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
+        <div className="text-xs text-muted-foreground font-medium">{t('plan.syncNotice')}</div>
 
-清理文本灰度颜色与图标高亮。
-
-~~~~~act
-patch_file
-src/views/Home.tsx
-~~~~~
-~~~~~typescript.old
-      {/* 顶部状态与问候信息 */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-            {t('nav.dashboard')}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 font-medium mt-0.5">
-            {t('common.appSubtitle')}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-xl text-foreground text-xs font-semibold shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 核心主角：今日训练流 Hero 卡片 */}
-      <PlanHeroCard
-        plan={trainingPlan}
-        allPlans={allPlans}
-        onStartPlan={onStartPlan}
-        onOpenEditor={onOpenPlanEditor}
-        onSelectPlan={onSelectPlan}
-      />
-
-      {/* 当前计划阶段明细清单 (直观展示今日步骤，无需跳入计划编辑器) */}
-      {validPlanItems.length > 0 && (
-        <div className="bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
-            <div className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-600" />
-              <span>{t('plan.stageBreakdown')}</span>
-            </div>
-            <span className="text-xs font-mono text-slate-400">
-              {t('plan.stageCount', { count: validPlanItems.length })}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {validPlanItems.map((item, idx) => {
-              const card = registry.getCardById(item.cardId);
-              if (!card) return null;
-              const Icon = card.icon;
-              const cardTitle = getCardTitle(card, t);
-              const cardProfile = profiles[card.id];
-              const currentLvl = cardProfile?.currentLevel || 5;
-
-              return (
-                <div
-                  key={item.id}
-                  className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between gap-2.5 shadow-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-slate-800 dark:bg-slate-700 text-white font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                      {idx + 1}
-                    </div>
-                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs flex-shrink-0">
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-[10px] text-slate-400 font-mono">Lvl {currentLvl}</div>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] font-mono font-bold text-primary bg-card border border-border px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
-                    {item.targetTrials} {t('common.trialsUnit')}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 底部概览指标与快捷探索导航 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* 指标卡 1: 今日刷题 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToStats}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToStats();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer space-y-1 group"
+        <Button
+          variant="default"
+          onClick={onStartPlan}
+          className="py-3 px-6 gap-2 ml-auto rounded-2xl"
         >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-indigo-500" />
-              {t('common.todayTrials')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="text-2xl font-black text-foreground font-mono">
-            {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-slate-400">{t('common.trialsUnit')}</span>
-          </div>
-          <div className="text-[11px] text-slate-400 pt-0.5">
-            {t('common.accuracy')}:{' '}
-            <span className="font-bold text-foreground font-mono">{overallAccuracy}%</span>
-          </div>
-        </div>
-
-        {/* 快捷跳转 2: 探索大盘入口 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToDiscovery}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToDiscovery();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Compass className="w-3.5 h-3.5" />
-              {t('nav.discovery')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-foreground">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('home.matchedModules', { count: registry.getAllCards().length })}
-            </p>
-          </div>
-        </div>
-
-        {/* 快捷跳转 3: 计划管理入口 */}
-        <div
-          role="presentation"
-          onClick={onOpenPlanEditor}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onOpenPlanEditor();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-slate-400">
-            <span className="flex items-center gap-1.5 text-indigo-600">
-              <Layers className="w-3.5 h-3.5" />
-              {t('nav.plans')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-foreground">{trainingPlan.name}</div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              {t('plan.stageAndTrialsSummary', {
-                stages: validPlanItems.length,
-                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
-              })}
-            </p>
-          </div>
-        </div>
+          <Play className="w-4 h-4 fill-current" />
+          <span>{t('plan.startPlan')}</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Button>
       </div>
     </div>
   );
-~~~~~
-~~~~~typescript.new
-      {/* 顶部状态与问候信息 */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
-            {t('nav.dashboard')}
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium mt-0.5">
-            {t('common.appSubtitle')}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-card border border-border rounded-xl text-foreground text-xs font-semibold shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-primary" />
-            <span>{formatTotalTime(totalTimeMs)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 核心主角：今日训练流 Hero 卡片 */}
-      <PlanHeroCard
-        plan={trainingPlan}
-        allPlans={allPlans}
-        onStartPlan={onStartPlan}
-        onOpenEditor={onOpenPlanEditor}
-        onSelectPlan={onSelectPlan}
-      />
-
-      {/* 当前计划阶段明细清单 (直观展示今日步骤，无需跳入计划编辑器) */}
-      {validPlanItems.length > 0 && (
-        <div className="bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-border/60 pb-3">
-            <div className="text-xs font-black text-foreground uppercase tracking-wider flex items-center gap-2">
-              <Layers className="w-4 h-4 text-primary" />
-              <span>{t('plan.stageBreakdown')}</span>
-            </div>
-            <span className="text-xs font-mono text-muted-foreground">
-              {t('plan.stageCount', { count: validPlanItems.length })}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {validPlanItems.map((item, idx) => {
-              const card = registry.getCardById(item.cardId);
-              if (!card) return null;
-              const Icon = card.icon;
-              const cardTitle = getCardTitle(card, t);
-              const cardProfile = profiles[card.id];
-              const currentLvl = cardProfile?.currentLevel || 5;
-
-              return (
-                <div
-                  key={item.id}
-                  className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between gap-2.5 shadow-xs"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-6 h-6 rounded-lg bg-foreground text-background font-mono text-[11px] font-black flex items-center justify-center flex-shrink-0">
-                      {idx + 1}
-                    </div>
-                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs flex-shrink-0">
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-[10px] text-muted-foreground font-mono">Lvl {currentLvl}</div>
-                    </div>
-                  </div>
-
-                  <span className="text-[11px] font-mono font-bold text-primary bg-card border border-border px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
-                    {item.targetTrials} {t('common.trialsUnit')}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* 底部概览指标与快捷探索导航 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* 指标卡 1: 今日刷题 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToStats}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToStats();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer space-y-1 group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              {t('common.todayTrials')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
-          </div>
-          <div className="text-2xl font-black text-foreground font-mono">
-            {todayTotalCount}{' '}
-            <span className="text-xs font-normal text-muted-foreground">{t('common.trialsUnit')}</span>
-          </div>
-          <div className="text-[11px] text-muted-foreground pt-0.5">
-            {t('common.accuracy')}:{' '}
-            <span className="font-bold text-foreground font-mono">{overallAccuracy}%</span>
-          </div>
-        </div>
-
-        {/* 快捷跳转 2: 探索大盘入口 */}
-        <div
-          role="presentation"
-          onClick={onNavigateToDiscovery}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onNavigateToDiscovery();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-primary">
-              <Compass className="w-3.5 h-3.5" />
-              {t('nav.discovery')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-foreground">{t('home.allPacks')}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t('home.matchedModules', { count: registry.getAllCards().length })}
-            </p>
-          </div>
-        </div>
-
-        {/* 快捷跳转 3: 计划管理入口 */}
-        <div
-          role="presentation"
-          onClick={onOpenPlanEditor}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              onOpenPlanEditor();
-            }
-          }}
-          className="bg-card p-5 rounded-3xl border border-border shadow-sm hover:border-primary/60 transition-all cursor-pointer flex flex-col justify-between group sm:col-span-2 lg:col-span-1"
-        >
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-            <span className="flex items-center gap-1.5 text-primary">
-              <Layers className="w-3.5 h-3.5" />
-              {t('nav.plans')}
-            </span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
-          </div>
-          <div className="mt-2">
-            <div className="text-sm font-black text-foreground">{trainingPlan.name}</div>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t('plan.stageAndTrialsSummary', {
-                stages: validPlanItems.length,
-                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
-              })}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+}
 ~~~~~
 
 ### 下一步建议
-1. **重新运行扫描脚本**：执行 `python3 scripts/scan_unification_targets.py -s`，观察未统一指标项的大幅下降。
-2. **清理下一批文件**：针对 `PlanStageList.tsx`、`SessionSummaryModal.tsx`、`PlanSummaryModal.tsx` 与 `ModeCard.tsx` 继续推进 `<Button>` / `<Badge>` 替换。
-3. **功能与编译验证**：执行 `npm run build`，确保重构后应用构建通过且无语法错误。
+1. 运行测试套件与类型检查，确保所有 `<Button>`、`<Badge>` 迁移后的组件无 TS 类型报错或事件传递受阻问题。
+2. 针对下一个扫描批次中涉及的扩展包组件（例如 `packs/color` 与 `packs/perspective` 的定制 View）推进语义化重构。
