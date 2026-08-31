@@ -2,6 +2,7 @@ import { Eye } from 'lucide-preact';
 import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
 import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
+import { Button } from '../../../components/ui/button';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import { useTranslation } from '../../../core/i18n';
 import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../../utils/theme';
@@ -70,7 +71,7 @@ export function AlbersInductionView({
         rightTitle={t('packs.relative_color.views.rightModulate')}
         leftContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
             style={{ backgroundColor: bgLeftHex }}
           >
             <div
@@ -81,7 +82,7 @@ export function AlbersInductionView({
         }
         rightContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
             style={{ backgroundColor: bgRightHex }}
           >
             <div
@@ -160,14 +161,14 @@ export function AlbersInductionView({
       </div>
 
       {!showAnswer && (
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={onSubmit}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
+          className="w-full py-3 text-xs font-bold rounded-2xl"
         >
           {t('common.confirmSpace')}
-        </button>
+        </Button>
       )}
     </QuestionCardShell>
   );

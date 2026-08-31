@@ -1,4 +1,4 @@
-import { ToggleLeft, ToggleRight } from 'lucide-preact';
+import { Switch } from '../../ui/switch';
 
 interface SettingToggleItemProps {
   title: string;
@@ -14,22 +14,12 @@ export function SettingToggleItem({
   onChange,
 }: SettingToggleItemProps) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-3">
       <div>
         <div className="text-sm font-semibold text-foreground">{title}</div>
         {description && <div className="text-xs text-muted-foreground">{description}</div>}
       </div>
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
-        className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
-      >
-        {checked ? (
-          <ToggleRight className="w-8 h-8 fill-indigo-600 text-primary dark:fill-indigo-500 dark:text-primary" />
-        ) : (
-          <ToggleLeft className="w-8 h-8 text-muted-foreground dark:text-muted-foreground" />
-        )}
-      </button>
+      <Switch checked={checked} onCheckedChange={onChange} aria-label={title} />
     </div>
   );
 }

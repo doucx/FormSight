@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'preact/hooks';
 import { ActivityHeatmapCard } from '../components/stats/ActivityHeatmapCard';
 import { CognitiveMasteryGrid } from '../components/stats/CognitiveMasteryGrid';
 import { StatsMetricCards } from '../components/stats/StatsMetricCards';
+import { Select } from '../components/ui/select';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
 import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
@@ -59,11 +60,11 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
 
         {/* 筛选选择器 */}
         <div className="relative flex items-center self-end sm:self-center w-full sm:w-auto">
-          <Filter className="w-3.5 h-3.5 text-primary absolute left-3 pointer-events-none" />
-          <select
+          <Filter className="w-3.5 h-3.5 text-primary absolute left-3 pointer-events-none z-10" />
+          <Select
             value={selectedFilter}
             onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
-            className="w-full sm:w-auto pl-8 pr-8 py-2 text-xs font-bold text-foreground bg-muted hover:bg-accent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm max-w-xs truncate"
+            className="w-full sm:w-auto max-w-xs truncate"
           >
             <option value="all">{t('stats.allModules')}</option>
 
@@ -106,8 +107,8 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
                 </option>
               ))}
             </optgroup>
-          </select>
-          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 pointer-events-none" />
+          </Select>
+          <ChevronDown className="w-3.5 h-3.5 text-muted-foreground absolute right-2.5 pointer-events-none z-10" />
         </div>
       </header>
 

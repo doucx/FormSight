@@ -1,4 +1,4 @@
-import { Flame, Sliders, Target, ToggleLeft, ToggleRight } from 'lucide-preact';
+import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import type { CardDefinition } from '../types/card';
@@ -11,6 +11,7 @@ import {
 import { ModalShell } from './common/ModalShell';
 import { DynamicDomainSettings } from './settings/DynamicDomainSettings';
 import { Button } from './ui/button';
+import { Switch } from './ui/switch';
 
 interface SettingsModalProps {
   card: CardDefinition;
@@ -54,24 +55,18 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
     >
       <div className="space-y-5">
         {/* 通用配置：自动翻页开关 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm font-semibold text-foreground">
               {t('settingsModal.autoNext')}
             </div>
             <div className="text-xs text-muted-foreground">{t('settingsModal.autoNextDesc')}</div>
           </div>
-          <button
-            type="button"
-            onClick={() => updateCardConfig({ autoNext: !cardConfig.autoNext })}
-            className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
-          >
-            {cardConfig.autoNext ? (
-              <ToggleRight className="w-8 h-8 fill-primary text-primary" />
-            ) : (
-              <ToggleLeft className="w-8 h-8 text-muted-foreground/60" />
-            )}
-          </button>
+          <Switch
+            checked={cardConfig.autoNext}
+            onCheckedChange={(val) => updateCardConfig({ autoNext: val })}
+            aria-label={t('settingsModal.autoNext')}
+          />
         </div>
 
         {/* 通用配置：自动翻页延迟 */}

@@ -16,6 +16,7 @@ import { useTranslation } from '../../../core/i18n';
 import type { TrainingPlan } from '../../../types/plan';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 
 export interface PlanEditorHeaderProps {
   currentPlan: TrainingPlan;
@@ -78,8 +79,8 @@ export function PlanEditorHeader({
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {isEditingName ? (
             <div className="flex items-center gap-1 w-full max-w-xs">
-              <input
-                type="text"
+              <Input
+                inputSize="sm"
                 value={planNameInput}
                 onInput={(e) => onPlanNameChange((e.target as HTMLInputElement).value)}
                 onKeyDown={(e) => {
@@ -87,7 +88,6 @@ export function PlanEditorHeader({
                   if (e.key === 'Escape') onCancelEditingName();
                 }}
                 maxLength={32}
-                className="w-full px-2.5 py-1 text-xs sm:text-sm font-black text-foreground bg-muted border border-border dark:border-border text-foreground rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 placeholder={t('plan.nameInputPlaceholder')}
               />
               <Button
@@ -203,63 +203,68 @@ export function PlanEditorHeader({
 
           {showMobileMoreMenu && (
             <div className="absolute right-0 top-full mt-2 z-50 w-48 bg-card rounded-2xl shadow-xl border border-border p-1.5 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-100">
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onTogglePlanManager();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
                 <Layers className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.libraryBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onClonePlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
                 <Copy className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.cloneBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onExportPlan();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
                 <Download className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.exportBtn')}</span>
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   fileInputRef.current?.click();
                 }}
-                className="w-full px-3 py-2 text-xs font-bold text-foreground hover:bg-accent rounded-xl flex items-center gap-2 text-left"
+                className="w-full justify-start gap-2 h-auto py-2"
               >
                 <Upload className="w-3.5 h-3.5 text-primary" />
                 <span>{t('plan.importBtn')}</span>
-              </button>
+              </Button>
               <div className="my-1 border-t border-border/60" />
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setShowMobileMoreMenu(false);
                   onSaveOnly();
                 }}
                 disabled={currentPlan.items.length === 0}
-                className="w-full px-3 py-2 text-xs font-bold text-primary hover:bg-accent rounded-xl flex items-center gap-2 text-left disabled:opacity-50"
+                className="w-full justify-start gap-2 h-auto py-2 text-primary hover:text-primary disabled:opacity-50"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>{t('common.save')}</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

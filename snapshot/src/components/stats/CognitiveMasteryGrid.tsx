@@ -1,5 +1,6 @@
 import { Brain, Compass } from 'lucide-preact';
 import { useTranslation } from '../../core/i18n';
+import { MetricCard } from '../ui/metric-card';
 
 export interface MasteryItem {
   label: string;
@@ -36,9 +37,11 @@ export function CognitiveMasteryGrid({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {pathMasteryList.map((pm) => (
-            <div
+            <MetricCard
               key={pm.label}
-              className="bg-muted/60 p-4 rounded-2xl border border-border space-y-1.5"
+              variant="subtle"
+              padding="compact"
+              className="space-y-1.5"
             >
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{pm.label}</span>
@@ -60,7 +63,7 @@ export function CognitiveMasteryGrid({
                 <span>{t('stats.practicedTrials', { count: pm.total })}</span>
                 <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
               </div>
-            </div>
+            </MetricCard>
           ))}
         </div>
       </div>
@@ -79,9 +82,11 @@ export function CognitiveMasteryGrid({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {challengeMasteryList.map((cm) => (
-            <div
+            <MetricCard
               key={cm.label}
-              className="bg-muted/60 p-4 rounded-2xl border border-border space-y-1.5"
+              variant="subtle"
+              padding="compact"
+              className="space-y-1.5"
             >
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{cm.label.split(' ')[0]}</span>
@@ -103,7 +108,7 @@ export function CognitiveMasteryGrid({
                 <span>{t('stats.practicedTrials', { count: cm.total })}</span>
                 <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
               </div>
-            </div>
+            </MetricCard>
           ))}
         </div>
       </div>

@@ -93,7 +93,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                     avgSignedBias > 0
                       ? 'text-amber-600'
                       : avgSignedBias < 0
-                        ? 'text-indigo-600'
+                        ? 'text-primary'
                         : 'text-foreground'
                   }`}
                 >

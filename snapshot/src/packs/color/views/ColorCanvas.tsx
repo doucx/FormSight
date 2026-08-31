@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { HsvTrackSlider } from '../../../components/HsvTrackSlider';
+import { Button } from '../../../components/ui/button';
 import {
   type ColorHitResult,
   type ColorQuestionData,
@@ -269,14 +270,14 @@ export function ColorCanvas({
       </div>
 
       {mode === 'ALL' && !showAnswer && (
-        <button
-          type="button"
+        <Button
+          variant="default"
           onClick={handleSubmitAll}
           disabled={disabled}
-          className="w-full py-3 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] rounded-2xl shadow-md shadow-indigo-200 dark:shadow-none transition-all cursor-pointer"
+          className="w-full py-3 text-xs font-bold rounded-2xl"
         >
           {t('common.confirmSpace')}
-        </button>
+        </Button>
       )}
     </div>
   );

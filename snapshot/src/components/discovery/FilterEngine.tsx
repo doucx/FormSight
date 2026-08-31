@@ -4,6 +4,7 @@ import { registry } from '../../core/registry';
 import type { CardQueryOptions } from '../../types/card';
 import { TagPill } from '../common/TagPill';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
 
 interface FilterEngineProps {
@@ -58,10 +59,10 @@ export function FilterEngine({
           <Search
             className={`${
               isCompact ? 'w-3.5 h-3.5 left-3' : 'w-4 h-4 left-3.5'
-            } text-muted-foreground absolute top-1/2 -translate-y-1/2 pointer-events-none`}
+            } text-muted-foreground absolute top-1/2 -translate-y-1/2 pointer-events-none z-10`}
           />
-          <input
-            type="text"
+          <Input
+            inputSize={isCompact ? 'sm' : 'default'}
             value={query.searchKeyword || ''}
             onInput={(e) =>
               onChange({
@@ -70,20 +71,18 @@ export function FilterEngine({
               })
             }
             placeholder={t('home.searchPlaceholder')}
-            className={`w-full ${
-              isCompact
-                ? 'pl-8 pr-8 py-1.5 text-xs rounded-xl'
-                : 'pl-10 pr-10 py-2.5 text-xs rounded-2xl'
-            } bg-white dark:bg-muted hover:bg-muted/60 dark:hover:bg-muted/80 focus:bg-white dark:focus:bg-muted font-bold text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-muted-foreground placeholder:font-normal`}
+            className={isCompact ? 'pl-8 pr-8' : 'pl-10 pr-10'}
           />
           {query.searchKeyword && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="iconSm"
               onClick={() => onChange({ ...query, searchKeyword: undefined })}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground p-0.5 cursor-pointer"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground h-6 w-6 z-10"
+              title={t('common.clear')}
             >
               <X className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           )}
         </div>
 

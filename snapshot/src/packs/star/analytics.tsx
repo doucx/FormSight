@@ -76,7 +76,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
           return (
             <div className="bg-accent/70 p-3.5 rounded-2xl border border-border/60 dark:border-border space-y-2 text-xs">
               <div className="font-bold text-primary font-black flex items-center gap-1">
-                <Target className="w-3.5 h-3.5 text-indigo-600" />
+                <Target className="w-3.5 h-3.5 text-primary" />
                 {i18n.t('packs.star.analytics.spatialBias.cardTitle')}
               </div>
               <p className="text-muted-foreground leading-relaxed text-[11px]">
@@ -161,7 +161,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
           return (
             <div className="bg-accent/70 p-3.5 rounded-2xl border border-border/60 dark:border-border space-y-2 text-xs">
               <div className="font-bold text-primary font-black flex items-center gap-1">
-                <Compass className="w-3.5 h-3.5 text-indigo-600" />
+                <Compass className="w-3.5 h-3.5 text-primary" />
                 {i18n.t('packs.star.analytics.directionalCompass.cardTitle')}
               </div>
               {weakest ? (
