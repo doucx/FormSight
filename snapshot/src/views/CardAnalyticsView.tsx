@@ -110,7 +110,9 @@ export function CardAnalyticsView({
     return (
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-8 shadow-sm">
         <Info className="w-10 h-10 text-slate-400" />
-        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">{t('home.noMatchTitle')}</div>
+        <div className="text-sm font-bold text-slate-700 dark:text-slate-200">
+          {t('home.noMatchTitle')}
+        </div>
         <button
           type="button"
           onClick={onExit}
@@ -338,7 +340,9 @@ export function CardAnalyticsView({
                         <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.paceSummaryTitle')}
                         </div>
-                        <p className="text-slate-600 dark:text-slate-400">{insights.paceSummaryText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {insights.paceSummaryText}
+                        </p>
                       </div>
                     </div>
 
@@ -350,7 +354,9 @@ export function CardAnalyticsView({
                         <div className="font-bold text-slate-900 dark:text-slate-100">
                           {t('analyticsModal.levelFocusSummaryTitle')}
                         </div>
-                        <p className="text-slate-600 dark:text-slate-400">{insights.growthZoneText}</p>
+                        <p className="text-slate-600 dark:text-slate-400">
+                          {insights.growthZoneText}
+                        </p>
                       </div>
                     </div>
                   </>

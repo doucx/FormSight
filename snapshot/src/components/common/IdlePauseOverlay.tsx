@@ -21,8 +21,12 @@ export function IdlePauseOverlay({ onResume }: IdlePauseOverlayProps) {
         <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl">
           <Pause className="w-6 h-6 animate-pulse" />
         </div>
-        <div className="text-base font-bold text-slate-800 dark:text-slate-100">{t('common.idlePausedTitle')}</div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{t('common.idlePausedDesc')}</p>
+        <div className="text-base font-bold text-slate-800 dark:text-slate-100">
+          {t('common.idlePausedTitle')}
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          {t('common.idlePausedDesc')}
+        </p>
         <button
           type="button"
           onClick={onResume}

@@ -211,7 +211,9 @@ export function Home({
             <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-indigo-600" />
           </div>
           <div className="mt-2">
-            <div className="text-sm font-black text-slate-800 dark:text-slate-100">{trainingPlan.name}</div>
+            <div className="text-sm font-black text-slate-800 dark:text-slate-100">
+              {trainingPlan.name}
+            </div>
             <p className="text-[11px] text-slate-400 mt-0.5">
               {t('plan.stageAndTrialsSummary', {
                 stages: validPlanItems.length,

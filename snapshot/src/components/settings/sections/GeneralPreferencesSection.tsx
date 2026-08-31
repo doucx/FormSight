@@ -113,7 +113,9 @@ export function GeneralPreferencesSection({
             <Globe className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.languageTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {t('settings.languageTitle')}
+            </div>
             <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
           </div>
         </div>
@@ -151,7 +153,9 @@ export function GeneralPreferencesSection({
             <Volume2 className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.soundTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {t('settings.soundTitle')}
+            </div>
             <div className="text-[11px] text-slate-400">{t('settings.soundDesc')}</div>
           </div>
         </div>
@@ -169,7 +173,9 @@ export function GeneralPreferencesSection({
             <HelpCircle className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.hintsTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {t('settings.hintsTitle')}
+            </div>
             <div className="text-[11px] text-slate-400">{t('settings.hintsDesc')}</div>
           </div>
         </div>
@@ -187,7 +193,9 @@ export function GeneralPreferencesSection({
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.idleTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {t('settings.idleTitle')}
+            </div>
             <div className="text-[11px] text-slate-400">{t('settings.idleDesc')}</div>
           </div>
         </div>

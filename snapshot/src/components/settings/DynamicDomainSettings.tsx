@@ -88,7 +88,9 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
           const currentVal = values[field.key];
           return (
             <div key={field.key} className="space-y-2">
-              <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{resolveText(field.title)}</div>
+              <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                {resolveText(field.title)}
+              </div>
               <div className={`grid ${field.gridCols || 'grid-cols-4'} gap-1.5`}>
                 {field.options.map((opt) => (
                   <button

@@ -182,7 +182,9 @@ export function PlanHeroCard({
                   )}
                 </div>
               ) : (
-                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">{plan.name}</h2>
+                <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">
+                  {plan.name}
+                </h2>
               )}
 
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full">

@@ -158,7 +158,9 @@ export function DataGovernanceSection({
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">{t('settings.resetPlansTitle')}</div>
+            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {t('settings.resetPlansTitle')}
+            </div>
             <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
           </div>
           <button
