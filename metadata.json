@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复主题切换实时响应与 Canvas 主题类型编译错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788171413.2510715, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M AreaComparison2AfcView.tsx, M RatioEstimationView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788171478.8099294, "duration_ms": 0}}

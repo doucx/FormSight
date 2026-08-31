@@ -3,7 +3,7 @@ import { CanvasView } from '../../../components/common/CanvasView';
 import { StandardSliderView } from '../../../components/common/StandardSliderView';
 import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
 import { useTranslation } from '../../../core/i18n';
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
+import { CANVAS_THEME } from '../../../utils/theme';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
   type NegativeSpaceHitResult,
