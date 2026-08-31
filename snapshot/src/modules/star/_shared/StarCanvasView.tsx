@@ -1,32 +1,38 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { drawDot } from '../../../core/canvas/drawPointGrid';
+import { drawDot, getDynamicDotRadius } from '../../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
+import { evaluatePointGridHit } from '../../../core/geometry/pointGrid';
 import type { Point } from '../../../types';
 import { CANVAS_THEME } from '../../../utils/theme';
-import {
-  CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-  checkHit,
-  getDynamicDotRadius,
-} from '../utils/index';
+import { CANVAS_SIZE } from './pointMath';
 
-export interface StarCanvasProps {
-  question: QuestionData;
+export interface StarQuestionPayload {
+  id: string;
+  anchorA: Point;
+  anchorC?: Point | null;
+  targetB: Point;
+  distractorPoints: Point[];
+  difficultyLevel: number;
+  angleDegree?: number;
+  distanceRatio?: number;
+}
+
+export interface StarCanvasViewProps {
+  question: StarQuestionPayload;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
-  onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
+  userAnswer: { clickPoint: Point; nearestGridPoint: Point; isHit: boolean } | null;
+  onAnswer: (point: Point) => void;
   disabled?: boolean;
 }
 
-export function StarCanvas({
+export function StarCanvasView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
-}: StarCanvasProps) {
+}: StarCanvasViewProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -38,39 +44,21 @@ export function StarCanvas({
         ctx.fillStyle = CANVAS_THEME.bg.primary;
         ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-        drawDot(
-          ctx,
-          question.anchorA.x,
-          question.anchorA.y,
-          CANVAS_THEME.pointGrid.dotAnchor,
-          dotRadius,
-        );
+        drawDot(ctx, question.anchorA.x, question.anchorA.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
 
         if (question.anchorC) {
-          drawDot(
-            ctx,
-            question.anchorC.x,
-            question.anchorC.y,
-            CANVAS_THEME.pointGrid.dotAnchor,
-            dotRadius,
-          );
+          drawDot(ctx, question.anchorC.x, question.anchorC.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
         }
 
-        drawDot(
-          ctx,
-          question.targetB.x,
-          question.targetB.y,
-          CANVAS_THEME.pointGrid.dotAnchor,
-          dotRadius,
-        );
+        drawDot(ctx, question.targetB.x, question.targetB.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);
       }
     }
   }, [question]);
 
   const handleCommitPoint = (clickPoint: Point) => {
-    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
-    if (!hitResult.isWithinRange) return;
-    onAnswer(clickPoint, hitResult);
+    const hitRes = evaluatePointGridHit(clickPoint, question.targetB, question.distractorPoints);
+    if (!hitRes.isWithinRange) return;
+    onAnswer(clickPoint);
   };
 
   return (
@@ -89,10 +77,10 @@ export function StarCanvas({
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           anchors={[question.anchorA, question.anchorC]}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}

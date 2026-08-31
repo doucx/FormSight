@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(ui): 全局重构微小字体尺寸为标准 text-xs 规范", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788182210.279655, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 构建 CardManifest 核心契约并迁移 Star 与 Angle 领域卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788184211.7685554, "duration_ms": 0}}

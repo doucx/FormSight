@@ -75,7 +75,21 @@ class I18nManager {
     }
   }
 
-  /** 由 Registry 在自动扫描 Pack 时调用，将 Pack 私有词典挂载至 `packs.<packId>` 命名空间 */
+  /** 注册卡片私有词典至 `cards.<cardId>` 命名空间 */
+  public registerCardLocales(cardId: string, locales: Record<string, LocaleDictionary>): void {
+    for (const [lang, dict] of Object.entries(locales)) {
+      if (!this.dictionaries[lang]) {
+        this.dictionaries[lang] = {};
+      }
+      const root = this.dictionaries[lang];
+      if (!root.cards || typeof root.cards !== 'object') {
+        root.cards = {};
+      }
+      (root.cards as Record<string, unknown>)[cardId] = dict;
+    }
+  }
+
+  /** 遗留兼容：注册 Pack 私有词典 */
   public registerPackLocales(packId: string, locales: Record<string, LocaleDictionary>): void {
     for (const [lang, dict] of Object.entries(locales)) {
       if (!this.dictionaries[lang]) {
@@ -146,16 +160,20 @@ export function useTranslation() {
 }
 
 /**
- * 通用：解析卡片标题多语言回退
+ * 通用：解析卡片标题多语言回退 (优先查 cards.<id>.title，再查 packs.<packId>.cards.<id>.title)
  */
 export function getCardTitle(
   card: { id: string; packId?: string; title?: string },
   t = i18n.t,
 ): string {
+  const cardKey = `cards.${card.id}.title`;
+  const translatedCard = t(cardKey);
+  if (translatedCard !== cardKey) return translatedCard;
+
   const packId = card.packId || 'core';
-  const key = `packs.${packId}.cards.${card.id}.title`;
-  const translated = t(key);
-  return translated !== key ? translated : card.title || card.id;
+  const packKey = `packs.${packId}.cards.${card.id}.title`;
+  const translatedPack = t(packKey);
+  return translatedPack !== packKey ? translatedPack : card.title || card.id;
 }
 
 /**
@@ -165,14 +183,18 @@ export function getCardDesc(
   card: { id: string; packId?: string; desc?: string },
   t = i18n.t,
 ): string {
+  const cardKey = `cards.${card.id}.desc`;
+  const translatedCard = t(cardKey);
+  if (translatedCard !== cardKey) return translatedCard;
+
   const packId = card.packId || 'core';
-  const key = `packs.${packId}.cards.${card.id}.desc`;
-  const translated = t(key);
-  return translated !== key ? translated : card.desc || '';
+  const packKey = `packs.${packId}.cards.${card.id}.desc`;
+  const translatedPack = t(packKey);
+  return translatedPack !== packKey ? translatedPack : card.desc || '';
 }
 
 /**
- * 通用：解析扩展包标题多语言回退
+ * 遗留兼容：解析扩展包标题多语言回退
  */
 export function getPackTitle(
   pack: { packId: string; meta?: { title?: string } },

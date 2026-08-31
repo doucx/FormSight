@@ -1,10 +1,10 @@
 import { Compass, Target } from 'lucide-preact';
-import { Callout } from '../../components/ui/callout';
-import { type SectorStat, renderCompassCanvas } from '../../core/canvas/charts/drawCompass';
-import { renderHeatmapCanvas } from '../../core/canvas/charts/drawHeatmap';
-import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
-import { i18n } from '../../core/i18n';
-import { getTrialRecordsByCard } from '../../storage/index';
+import { Callout } from '../../../components/ui/callout';
+import { renderCompassCanvas, type SectorStat } from '../../../core/canvas/charts/drawCompass';
+import { renderHeatmapCanvas } from '../../../core/canvas/charts/drawHeatmap';
+import { calculateBasicOverallStats, type CardAnalyticsContract } from '../../../core/contracts';
+import { i18n } from '../../../core/i18n';
+import { getTrialRecordsByCard } from '../../../storage/db/queries';
 
 const STAR_SECTOR_KEYS = [
   'packs.star.sectors.e',
@@ -17,10 +17,9 @@ const STAR_SECTOR_KEYS = [
   'packs.star.sectors.se',
 ];
 
-export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
+export function createStarAnalyticsContract(cardId: string): CardAnalyticsContract {
   return {
-    cardId,
-    fetchRecords: async (id) => getTrialRecordsByCard(id),
+    fetchRecords: async (id) => getTrialRecordsByCard(id || cardId),
     views: [
       {
         id: 'spatial_bias',

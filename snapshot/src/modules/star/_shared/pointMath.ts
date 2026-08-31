@@ -3,7 +3,7 @@ import type { Point } from '../../../types';
 export const CANVAS_SIZE = 500;
 export const CX = CANVAS_SIZE / 2; // 250
 export const CY = CANVAS_SIZE / 2; // 250
-export const DEFAULT_GRID_DIM = 3; // 默认 3x3 网格
+export const DEFAULT_GRID_DIM = 3;
 
 /**
  * 将点绕指定中心旋转指定角度 (角度制)

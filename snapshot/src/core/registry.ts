@@ -1,4 +1,4 @@
-import type { AnyTrainingPlugin } from '../core/contracts';
+import type { AnyCardManifest, AnyTrainingPlugin, CardAnalyticsPlugin, PackManifest } from '../core/contracts';
 import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
   CardDefinition,
@@ -11,7 +11,6 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
-import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
 
 class InvertedCardIndex {
@@ -116,6 +115,7 @@ class InvertedCardIndex {
 }
 
 class SystemDomainRegistry {
+  private cards = new Map<string, AnyCardManifest>();
   private packs = new Map<string, PackManifest>();
   private cardMap = new Map<string, CardDefinition>();
   private cardPluginMap = new Map<string, AnyTrainingPlugin>();
@@ -127,28 +127,105 @@ class SystemDomainRegistry {
   }
 
   /**
-   * 自动扫描 src/packs/*\/index.ts 零配置注册
+   * 自动扫描：支持新版 `src/modules/**\/index.ts` (CardManifest) 与遗留 `src/packs/*\/index.ts`
    */
   private autoDiscover(): void {
-    const packModules = import.meta.glob<{ default: PackManifest }>('../packs/*/index.ts', {
-      eager: true,
-    });
+    // 1. 扫描新架构单卡片 Manifest
+    const cardModules = import.meta.glob<{ default?: AnyCardManifest | PackManifest }>(
+      '../modules/**/index.ts',
+      { eager: true },
+    );
+
+    for (const path in cardModules) {
+      const manifest = cardModules[path]?.default;
+      if (manifest && 'training' in manifest && 'id' in manifest) {
+        this.registerCard(manifest as AnyCardManifest);
+      }
+    }
+
+    // 2. 扫描遗留 PackManifest (过渡兼容)
+    const packModules = import.meta.glob<{ default?: PackManifest }>(
+      '../packs/*/index.ts',
+      { eager: true },
+    );
 
     for (const path in packModules) {
       const manifest = packModules[path]?.default;
-      if (manifest) this.register(manifest);
+      if (manifest && manifest.packId && manifest.cards) {
+        this.register(manifest);
+      }
     }
   }
 
+  /**
+   * 注册独立卡片 (一等公民架构)
+   */
+  public registerCard(manifest: AnyCardManifest): void {
+    this.cards.set(manifest.id, manifest);
+
+    // 挂载卡片私有字典
+    if (manifest.locales) {
+      i18n.registerCardLocales(manifest.id, manifest.locales);
+    }
+
+    const normalizedCard: CardDefinition = {
+      id: manifest.id,
+      packId: manifest.groupId || manifest.domain,
+      mode: manifest.id,
+      icon: manifest.icon,
+      tags: manifest.tags,
+      hasWeaknessAnalytics: Boolean(manifest.analytics && manifest.analytics.views.length > 0),
+      settingSchemas: manifest.settingSchemas,
+    };
+
+    this.cardMap.set(manifest.id, normalizedCard);
+
+    // 适配旧 TrainingPlugin 调用代理
+    const trainingAdapter: AnyTrainingPlugin = {
+      title: manifest.id,
+      getModeBadge: () => manifest.id,
+      isTargeting: (_mode, settings) =>
+        manifest.training.isTargeting ? manifest.training.isTargeting(settings) : false,
+      generateQuestion: (_mode, level, settings) =>
+        manifest.training.generateQuestion(level, settings),
+      evaluateAnswer: (userVal, q) => manifest.training.evaluateAnswer(userVal, q),
+      isHit: (res) => manifest.training.isHit(res),
+      getQuestionLevel: (q) =>
+        manifest.training.getQuestionLevel ? manifest.training.getQuestionLevel(q) : 5,
+      extractRecordDetails: (q, hitResult, userVal) =>
+        manifest.training.extractRecordDetails
+          ? manifest.training.extractRecordDetails(q, hitResult, userVal)
+          : {},
+      renderCanvas: (props) => manifest.training.renderCanvas(props),
+    };
+
+    this.cardPluginMap.set(manifest.id, trainingAdapter);
+
+    if (manifest.analytics) {
+      this.cardAnalyticsMap.set(manifest.id, {
+        cardId: manifest.id,
+        fetchRecords: manifest.analytics.fetchRecords ?? ((id) => getTrialRecordsByCard(id)),
+        views: manifest.analytics.views,
+      });
+    }
+
+    this.invertedIndex.indexCard(normalizedCard);
+  }
+
+  /**
+   * 遗留兼容：注册整包 (PackManifest)
+   */
   public register(manifest: PackManifest): void {
     this.packs.set(manifest.packId, manifest);
 
-    // 自动挂载 Pack 私有语言包至 `packs.<packId>` 命名空间
     if (manifest.locales) {
       i18n.registerPackLocales(manifest.packId, manifest.locales);
     }
 
     for (const card of manifest.cards) {
+      // 若单卡已经独立注册过，则跳过旧包内重复注册
+      if (this.cards.has(card.id)) continue;
+
       const normalizedCard: CardDefinition = {
         ...card,
         packId: manifest.packId,
@@ -161,7 +238,9 @@ class SystemDomainRegistry {
 
     if (manifest.analyticsPlugins) {
       for (const [cardId, plugin] of Object.entries(manifest.analyticsPlugins)) {
-        this.cardAnalyticsMap.set(cardId, plugin);
+        if (!this.cardAnalyticsMap.has(cardId)) {
+          this.cardAnalyticsMap.set(cardId, plugin);
+        }
       }
     }
   }
@@ -259,20 +338,11 @@ class SystemDomainRegistry {
     return results;
   }
 
-  // === Pack 访问接口 ===
-  public getAllPacks(): PackManifest[] {
-    return Array.from(this.packs.values());
+  // === 卡片访问接口 ===
+  public getCardManifest(cardId: string): AnyCardManifest | undefined {
+    return this.cards.get(cardId);
   }
 
-  public getPack(packId: string): PackManifest | undefined {
-    return this.packs.get(packId);
-  }
-
-  public getAllPackMetas(): PackMeta[] {
-    return Array.from(this.packs.values()).map((p) => p.meta);
-  }
-
-  // === 卡片直查接口 ===
   public getAllCards(): CardDefinition[] {
     return Array.from(this.cardMap.values());
   }
@@ -297,6 +367,19 @@ class SystemDomainRegistry {
       fetchRecords: domainPlugin?.fetchRecords ?? ((id) => getTrialRecordsByCard(id)),
       views: [...domainViews, ...UNIVERSAL_ANALYTICS_VIEWS],
     };
+  }
+
+  // === 遗留 Pack 兼容接口 ===
+  public getAllPacks(): PackManifest[] {
+    return Array.from(this.packs.values());
+  }
+
+  public getPack(packId: string): PackManifest | undefined {
+    return this.packs.get(packId);
+  }
+
+  public getAllPackMetas(): PackMeta[] {
+    return Array.from(this.packs.values()).map((p) => p.meta);
   }
 }
 
