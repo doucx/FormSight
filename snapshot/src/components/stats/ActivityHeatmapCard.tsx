@@ -17,18 +17,20 @@ interface HeatmapWeek {
 }
 
 const TOTAL_WEEKS = 53;
+const TOOLTIP_HALF_WIDTH = 85; // 浮窗安全半宽估算值 (px)
 
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   const { t, locale } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const matrixContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // 即时响应的悬浮 Tooltip 状态 (0 延迟)
+  // 即时响应的悬浮 Tooltip 状态 (带动态安全避让坐标)
   const [hoveredDay, setHoveredDay] = useState<{
     dateStr: string;
     count: number;
     x: number;
     y: number;
+    isFlipped: boolean;
   } | null>(null);
 
   // 1. 构建日期-答题量映射表
@@ -119,18 +121,31 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
     }
   }, []);
 
-  // 鼠标移入即时计算 Tooltip 坐标
+  // 鼠标移入即时计算 Tooltip 坐标与动态边界避让
   const handleCellHover = (day: HeatmapDay, e: MouseEvent) => {
     if (day.isFuture || !matrixContainerRef.current) return;
     const target = e.currentTarget as HTMLElement;
     const targetRect = target.getBoundingClientRect();
     const parentRect = matrixContainerRef.current.getBoundingClientRect();
 
+    const rawX = targetRect.left - parentRect.left + targetRect.width / 2;
+    const rawY = targetRect.top - parentRect.top;
+
+    // 智能左右边缘夹紧避让 (Boundary Clamping)
+    const minSafeX = TOOLTIP_HALF_WIDTH + 4;
+    const maxSafeX = Math.max(minSafeX, parentRect.width - TOOLTIP_HALF_WIDTH - 4);
+    const clampedX = Math.max(minSafeX, Math.min(maxSafeX, rawX));
+
+    // 顶部空间检测与智能翻转 (Flip)
+    const isNearTop = rawY < 30;
+    const finalY = isNearTop ? rawY + targetRect.height + 6 : rawY - 6;
+
     setHoveredDay({
       dateStr: day.dateStr,
       count: day.count,
-      x: targetRect.left - parentRect.left + targetRect.width / 2,
-      y: targetRect.top - parentRect.top,
+      x: clampedX,
+      y: finalY,
+      isFlipped: isNearTop,
     });
   };
 
@@ -167,17 +182,19 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
         </div>
       </div>
 
-      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显 Tooltip */}
+      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显与避让 Tooltip */}
       <div
         ref={scrollContainerRef}
         className="w-full overflow-x-auto pt-7 pb-2.5 px-1 scrollbar-thin select-none"
       >
         <div ref={matrixContainerRef} className="relative inline-flex gap-2 min-w-max">
-          {/* 即时响应的零延迟悬浮浮窗 (Instant Floating Tooltip) */}
+          {/* 即时响应且支持全向避让的悬浮浮窗 */}
           {hoveredDay && (
             <div
-              className="absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 -translate-y-full whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-800/80"
-              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y - 6}px` }}
+              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-700/80 ${
+                hoveredDay.isFlipped ? 'translate-y-0' : '-translate-y-full'
+              }`}
+              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y}px` }}
             >
               <span>{hoveredDay.dateStr}</span>
               <span className="text-indigo-300 ml-1.5 font-mono">

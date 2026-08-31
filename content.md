@@ -1,44 +1,38 @@
-这三个问题的根源如下：
-1. **月份间空白**：此前月份标签若作为行内文本占据列宽，会因为文字长度超过单个星期列宽（约 14px）而撑开间距；
-2. **顶端文字被截断**：外层 `overflow-x-auto` 容器的顶部内边距（`pt-1`）过小，导致字体升部（Ascender）被溢出裁剪；
-3. **悬浮延迟**：浏览器原生 HTML `title` 属性存在系统级约 1 秒的唤起延迟。
+这是因为悬浮卡片在默认居中对齐（`-translate-x-1/2`）的情况下，在最右侧或最左侧的星期列上会导致浮层的一半宽度超出容器边界，从而被外层的 `overflow-x-auto` 视口裁剪。
 
-我将通过**绝对定位月份标签**、**加大顶部安全间距**以及**实现 0 延迟即显悬浮 Tooltip 浮窗**来彻底解决这些问题。
+我将为悬浮卡片加入**动态边界夹紧（Bounding Clamp）与上下智能翻转避让逻辑**。
 
-## [WIP] fix(stats): 优化热力图月份排版、修复顶端文字截断并实现零延迟悬浮即显提示
+## [WIP] fix(stats): 增加热力图悬浮提示边界动态避让与安全视口约束
 
 ### 错误分析
-1. **月份空白问题**：在列布局中，如果月份文本未采用绝对定位脱离文档流，文字宽度会导致有月份标记的列被意外撑宽，造成列与列之间间距不一。
-2. **文字截断问题**：横向滚动容器为了防止内容溢出设置了 `overflow-x-auto`，配合过小的顶部 Padding（`pt-1`）直接截断了月份文字的最顶端像素。
-3. **悬浮提示延迟**：原组件依赖浏览器原生 `title="..."` 属性，其显示受到操作系统和浏览器的内置延迟（通常为 700~1200ms）限制，无法做到鼠标一移上去就即刻显示。
+1. **根本原因**：浮窗以当前方格的水平中心点（`rawX`）作为基准，并使用固定 CSS `transform: -translate-x-1/2` 进行居中对齐。
+2. **越界场景**：当鼠标移动至最右侧数周（如第 51~53 周）或最左侧边界时，浮窗宽度（约 140px~160px）的一半（70px~80px）会超出矩阵容器的最右/最左边缘，触发了外层 `overflow-x-auto` 的裁剪机制。
 
 ### 用户需求
-1. 消除月份之间由于文字排版产生的不自然空白，保持 53 周矩阵列间距均匀紧凑。
-2. 修复顶部月份文本被裁剪的问题，确保文字完整显示。
-3. 实现鼠标悬停在日期方块上时**立刻（0 延迟）**展示做答日期与训练题数。
+当鼠标悬浮在热力图右边缘（最新几周）或左边缘（最早几周）的日期上时，悬浮卡片应自动进行**水平贴边避让（Clamping）**与**垂直空间防溢出避让**，确保卡片内容 100% 完整显示在可视区域内。
 
 ### 评论
-这些细节直接决定了热力图的视觉精致度与交互顺畅感。改用 React/Preact 状态驱动的即时浮层（Instant Floating Tooltip）配合正确的 CSS 布局，可以达到完全对齐甚至超越 GitHub 原生体验的交互质感。
+完善的边界约束（Boundary Constraint）是高质量 UI 组件的必备要素，通过动态数学夹紧计算，可以在不引入庞大外部 Popper/Floating-UI 依赖的前提下，实现极其轻量且丝滑的贴边避让体验。
 
 ### 目标
-1. 月份标签改为绝对定位（`absolute whitespace-nowrap`），不再影响网格的固定列宽。
-2. 调大滚动容器顶部内边距（`pt-6`），消除文字裁切，并为 Tooltip 预留呼吸空间。
-3. 增加 `hoveredDay` 状态与 `onMouseEnter` 监听，实时计算坐标并渲染无延迟的高清悬浮卡片。
+1. 计算悬浮卡片相对矩阵容器边界的安全边距（预留 85px 半宽缓冲区）。
+2. 在 `handleCellHover` 中对 `x` 坐标施加 `Math.max(padding, Math.min(maxWidth - padding, rawX))` 边界夹紧。
+3. 当靠近顶部边缘时自动向下翻转（Flipping），彻底避免任何方向的文字截断。
 
 ### 基本原理
-- **无占位月份**：每列顶部预留固定高度槽位，月份文字以 `absolute left-0 top-0` 自然向右延伸，既不撑宽当前列，又与下方的 7 天网格严密对齐。
-- **即时 Tooltip 坐标映射**：在 `onMouseEnter` 时通过 `getBoundingClientRect()` 计算当前格相对于矩阵容器的偏移量，使浮窗毫秒级即时定位到方块正上方。
+- **水平防截断**：通过矩阵容器当前的 `getBoundingClientRect().width` 计算安全区间 $[85\text{px}, \text{width} - 85\text{px}]$，当悬停点超出该区间时，固定浮窗位置以紧贴边缘。
+- **垂直防溢出**：检测 `rawY` 是否过小（接近顶部），若空间不足则切换为从方块底部向下弹出（`translate-y-0`）。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/activity-heatmap #task/action/refactor #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/activity-heatmap #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 ActivityHeatmapCard 修复月份定位、文字截断与即显悬浮 Tooltip
+#### Acts 1: 更新 ActivityHeatmapCard 增加 Tooltip 边界避让与自适应翻转
 
-更新 `ActivityHeatmapCard.tsx`，加入即显悬浮窗组件与优化的月份排版。
+重构 `ActivityHeatmapCard.tsx`，加入边界夹紧计算与动态翻转。
 
 ~~~~~act
 write_file
@@ -64,18 +58,20 @@ interface HeatmapWeek {
 }
 
 const TOTAL_WEEKS = 53;
+const TOOLTIP_HALF_WIDTH = 85; // 浮窗安全半宽估算值 (px)
 
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   const { t, locale } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const matrixContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // 即时响应的悬浮 Tooltip 状态 (0 延迟)
+  // 即时响应的悬浮 Tooltip 状态 (带动态安全避让坐标)
   const [hoveredDay, setHoveredDay] = useState<{
     dateStr: string;
     count: number;
     x: number;
     y: number;
+    isFlipped: boolean;
   } | null>(null);
 
   // 1. 构建日期-答题量映射表
@@ -166,18 +162,31 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
     }
   }, []);
 
-  // 鼠标移入即时计算 Tooltip 坐标
+  // 鼠标移入即时计算 Tooltip 坐标与动态边界避让
   const handleCellHover = (day: HeatmapDay, e: MouseEvent) => {
     if (day.isFuture || !matrixContainerRef.current) return;
     const target = e.currentTarget as HTMLElement;
     const targetRect = target.getBoundingClientRect();
     const parentRect = matrixContainerRef.current.getBoundingClientRect();
 
+    const rawX = targetRect.left - parentRect.left + targetRect.width / 2;
+    const rawY = targetRect.top - parentRect.top;
+
+    // 智能左右边缘夹紧避让 (Boundary Clamping)
+    const minSafeX = TOOLTIP_HALF_WIDTH + 4;
+    const maxSafeX = Math.max(minSafeX, parentRect.width - TOOLTIP_HALF_WIDTH - 4);
+    const clampedX = Math.max(minSafeX, Math.min(maxSafeX, rawX));
+
+    // 顶部空间检测与智能翻转 (Flip)
+    const isNearTop = rawY < 30;
+    const finalY = isNearTop ? rawY + targetRect.height + 6 : rawY - 6;
+
     setHoveredDay({
       dateStr: day.dateStr,
       count: day.count,
-      x: targetRect.left - parentRect.left + targetRect.width / 2,
-      y: targetRect.top - parentRect.top,
+      x: clampedX,
+      y: finalY,
+      isFlipped: isNearTop,
     });
   };
 
@@ -214,17 +223,19 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
         </div>
       </div>
 
-      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显 Tooltip */}
+      {/* GitHub 风格矩阵主体：顶部预留充足空间，支持即显与避让 Tooltip */}
       <div
         ref={scrollContainerRef}
         className="w-full overflow-x-auto pt-7 pb-2.5 px-1 scrollbar-thin select-none"
       >
         <div ref={matrixContainerRef} className="relative inline-flex gap-2 min-w-max">
-          {/* 即时响应的零延迟悬浮浮窗 (Instant Floating Tooltip) */}
+          {/* 即时响应且支持全向避让的悬浮浮窗 */}
           {hoveredDay && (
             <div
-              className="absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 -translate-y-full whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-800/80"
-              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y - 6}px` }}
+              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-slate-700/80 ${
+                hoveredDay.isFlipped ? 'translate-y-0' : '-translate-y-full'
+              }`}
+              style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y}px` }}
             >
               <span>{hoveredDay.dateStr}</span>
               <span className="text-indigo-300 ml-1.5 font-mono">
@@ -278,4 +289,4 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 ~~~~~
 
 ### 下一步建议
-- 移动端适配验证：在触屏设备上滑动热力图并轻点日期方格，确认即显 Tooltip 同样能够准确指向被点击的方格。
+- **触控端长按体验**：如果需要在手机端获得更好体验，可进一步将 `onMouseEnter` 与 `onTouchStart` 事件结合，实现触屏轻点即时避让定位。
