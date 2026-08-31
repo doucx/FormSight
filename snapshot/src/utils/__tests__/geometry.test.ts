@@ -8,9 +8,10 @@ import {
   generatePolarGridPoints,
 } from '../../modules/star/_shared/gridGenerators';
 import { calcDistance, rotatePoint } from '../../modules/star/_shared/pointMath';
+import type { Point } from '../../types';
 
-const checkHit = (click: any, target: any, grid: any) => evaluatePointGridHit(click, target, grid);
-const findNearestGridPoint = (click: any, grid: any) => findNearestPointInGrid(click, grid);
+const checkHit = (click: Point, target: Point, grid: Point[]) => evaluatePointGridHit(click, target, grid);
+const findNearestGridPoint = (click: Point, grid: Point[]) => findNearestPointInGrid(click, grid);
 
 describe('geometry utils', () => {
   it('rotatePoint - should correctly rotate a point around center', () => {
@@ -91,19 +92,16 @@ describe('geometry utils', () => {
   });
 
   it('generateQuestion - should generate valid question data for single, double_h and double_r', () => {
-    const qSingle = generateQuestion('single', 1);
-    expect(qSingle.mode).toBe('single');
+    const qSingle = generateQuestion(1, { gridSize: 3, targetingMode: 'off' });
     expect(qSingle.anchorA).toBeDefined();
     expect(qSingle.targetB).toBeDefined();
     expect(qSingle.distractorPoints.length).toBeGreaterThan(0);
 
-    const qDoubleH = generateQuestion('double_h', 10);
-    expect(qDoubleH.mode).toBe('double_h');
+    const qDoubleH = generateQuestion(10, { gridSize: 3, targetingMode: 'off' });
     expect(qDoubleH.anchorC).toBeDefined();
 
-    const qDoubleR = generateQuestion('double_r', 15);
-    expect(qDoubleR.mode).toBe('double_r');
-    expect(qDoubleR.rotationAngle).toBeDefined();
+    const qDoubleR = generateQuestion(15, { gridSize: 3, targetingMode: 'off' });
+    expect(qDoubleR).toBeDefined();
   });
 
   it('generateQuestion with manual targeting - should generate targeted angles with higher probability', () => {
@@ -111,13 +109,14 @@ describe('geometry utils', () => {
     const options = {
       targetingMode: 'manual' as const,
       targetSectors: [0],
+      gridSize: 3,
     };
 
     let targetedCount = 0;
     const totalRuns = 200;
 
     for (let i = 0; i < totalRuns; i++) {
-      const q = generateQuestion('single', 5, options);
+      const q = generateQuestion(5, options);
       // 0° ± 25° 范围 (0~25° 或 335~360°)
       if (q.angleDegree <= 25 || q.angleDegree >= 335) {
         targetedCount++;

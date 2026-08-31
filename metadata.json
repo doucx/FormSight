@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M contracts.ts, M geometry.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788185175.3723884, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 消除 geometry.test.ts 中的 noExplicitAny 强类型违规", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788185201.8065214, "duration_ms": 0}}
