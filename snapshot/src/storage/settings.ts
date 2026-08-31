@@ -117,7 +117,17 @@ export const DEFAULT_SETTINGS: UserSettings = {
     sliderHitMargin: 12,
     showCanvasHints: true,
   },
-  cards: {},
+  get cards() {
+    return buildDefaultCardSettings();
+  },
+  set cards(v) {
+    Object.defineProperty(this, 'cards', {
+      value: v,
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+  },
 };
 
 export function loadSettings(): UserSettings {
