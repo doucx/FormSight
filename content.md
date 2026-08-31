@@ -1,143 +1,46 @@
-我们将创建一个专用的 Python 自动化重构脚本 `scripts/refactor_typography.py`，正则化扫描并精准替换 `src/` 目录下所有组件中的 `text-[9px]`、`text-[10px]`、`text-[11px]` 及复合响应式类名（如 `text-[10px] sm:text-[11px]`），然后立即执行该脚本完成全局无损升级。
+好的，我们已经完成了全局排版字号的重构升级。现在将本次变更作为一个完整的逻辑单元提交到 Git 仓库。
 
-## [WIP] refactor(ui): 自动化重构微小字体尺寸为统一 text-xs 规范
+## [COMMIT] refactor(ui): 全局重构微小字体尺寸为标准 text-xs 规范
 
 ### 用户需求
-1. 编写 Python 自动化重构脚本。
-2. 规则化匹配并替换 `text-[9px]`, `text-[10px]`, `text-[11px]` 及其带有响应式/状态前缀（如 `sm:text-[11px]`）和复合类名（如 `text-[10px] sm:text-[11px]`）。
-3. 执行脚本完成 `src/` 源码目录下所有相关文件的全局无损升级。
+将本次字体排版自动化重构所涉及的脚本与源码修改提交至 Git 仓库。
 
 ### 评论
-将过小、难以辨认的微小字号统一收敛到 Tailwind 标准基础阶梯 `text-xs` (12px)，能够彻底消除视觉感知训练中的额外阅读眼疲劳，同时通过消除代码中的任意值（arbitrary values）提升 UI 样式的一致性与可维护性。
+完成了从任意值微小字号（9px~11px）到 Tailwind 标准字阶 `text-xs` (12px) 的全局统一，提升了界面的整体可读性与无障碍对比度，消除了视觉感知训练中的额外眼疲劳。
 
 ### 目标
-1. 创建 `scripts/refactor_typography.py` 自动化重构脚本，支持多层级前缀、复合响应式类名及相邻冗余类的合并。
-2. 递归遍历 `src/` 目录下的所有 `.tsx`, `.ts`, `.css`, `.html` 文件并执行安全替换。
-3. 运行该脚本完成全局文件修改。
+1. 将重构脚本 `scripts/refactor_typography.py` 及 `src/` 目录下所有已更新的组件与视图文件添加到 Git 暂存区。
+2. 创建语义清晰且符合 Conventional Commits 规范的 Git 提交记录。
 
 ### 基本原理
-使用 Python 正则表达式：
-1. 优先捕获复合响应式结构（如 `text-[10px] sm:text-[11px]`）并归一化为 `text-xs`。
-2. 针对任意前缀（如 `sm:`, `md:`, `dark:`, `hover:`, `group-hover:`）搭配的 `text-[9px]`, `text-[10px]`, `text-[11px]`，精准替换为 `${prefix}text-xs`。
-3. 清理相邻因替换产生的冗余类名（如 `text-xs sm:text-xs` 简化为 `text-xs`），确保代码整洁无损。
+按照 Quipu 协议规范，在独立且纯粹的 `[COMMIT]` 阶段执行 `git_add` 与 `git_commit` 指令，保证所有代码变更的原子化归档与可追溯性。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/typography #task/action/refactor #task/state/begin
+#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/typography #task/action/refactor #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 创建排版重构自动化脚本
-
-编写 `scripts/refactor_typography.py` 脚本，实现针对 Tailwind 微小字号的自动化正则扫描与无损重构。
+#### Acts 1: 暂存并提交排版系统重构代码
 
 ~~~~~act
-write_file
+git_add
 scripts/refactor_typography.py
+src/
 ~~~~~
-~~~~~python
-#!/usr/bin/env python3
-"""
-FormSight Typography Refactoring Script
-Automates the replacement of micro font sizes (9px, 10px, 11px) with standard Tailwind text-xs.
-"""
-
-import os
-import re
-from pathlib import Path
-
-SRC_DIR = Path(__file__).resolve().parent.parent / "src"
-
-# 复合模式优先替换
-COMPOSITE_RULES = [
-    (re.compile(r'\btext-\[(?:9|10|11)px\]\s+sm:text-\[(?:9|10|11)px\]\b'), 'text-xs'),
-    (re.compile(r'\btext-\[(?:9|10|11)px\]\s+sm:text-xs\b'), 'text-xs'),
-    (re.compile(r'\btext-xs\s+sm:text-\[(?:9|10|11)px\]\b'), 'text-xs'),
-]
-
-# 单独类名与前缀替换
-PREFIXED_RULE = re.compile(r'(?<![\w-])((?:[a-z0-9_-]+:)*)text-\[(?:9|10|11)px\](?![\w-])')
-
-# 清理冗余重复类
-CLEANUP_RULES = [
-    (re.compile(r'\btext-xs\s+sm:text-xs\b'), 'text-xs'),
-    (re.compile(r'\btext-xs\s+text-xs\b'), 'text-xs'),
-]
-
-def refactor_content(content: str) -> tuple[str, int]:
-    modified_count = 0
-    new_content = content
-
-    # 1. 替换复合响应式类名
-    for pattern, replacement in COMPOSITE_RULES:
-        matches = len(pattern.findall(new_content))
-        if matches > 0:
-            modified_count += matches
-            new_content = pattern.sub(replacement, new_content)
-
-    # 2. 替换常规及带前缀的 text-[Xpx]
-    def replacer(match: re.Match) -> str:
-        nonlocal modified_count
-        modified_count += 1
-        prefix = match.group(1) or ""
-        return f"{prefix}text-xs"
-
-    new_content = PREFIXED_RULE.sub(replacer, new_content)
-
-    # 3. 清理替换后可能产生的冗余类名
-    for pattern, replacement in CLEANUP_RULES:
-        new_content = pattern.sub(replacement, new_content)
-
-    return new_content, modified_count
-
-def main():
-    target_extensions = {".tsx", ".ts", ".jsx", ".js", ".css", ".html"}
-    total_files_changed = 0
-    total_replacements = 0
-
-    print(f"Scanning directory: {SRC_DIR}")
-
-    for root, _, files in os.walk(SRC_DIR):
-        for file in files:
-            file_path = Path(root) / file
-            if file_path.suffix in target_extensions:
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        original_content = f.read()
-
-                    new_content, count = refactor_content(original_content)
-
-                    if count > 0 and new_content != original_content:
-                        with open(file_path, "w", encoding="utf-8") as f:
-                            f.write(new_content)
-                        rel_path = file_path.relative_to(SRC_DIR.parent)
-                        print(f"  [MODIFIED] {rel_path} ({count} replacements)")
-                        total_files_changed += 1
-                        total_replacements += count
-                except Exception as err:
-                    print(f"  [ERROR] Failed processing {file_path}: {err}")
-
-    print(f"\nRefactoring completed successfully:")
-    print(f"  - Total files modified: {total_files_changed}")
-    print(f"  - Total micro-typography classes upgraded: {total_replacements}")
-
-if __name__ == "__main__":
-    main()
-~~~~~
-
-#### Acts 2: 执行重构脚本全局升级 `src/` 下相关文件
-
-运行重构脚本，自动替换 `src/` 下所有组件和视图文件中的微小字号。
 
 ~~~~~act
-run_command
+git_commit
 ~~~~~
-~~~~~
-python3 scripts/refactor_typography.py
+~~~~~text
+refactor(ui): standardize micro font sizes to text-xs across all components
+
+- Added automated refactoring script `scripts/refactor_typography.py` to handle arbitrary micro font classes (`text-[9px]`, `text-[10px]`, `text-[11px]`).
+- Replaced micro font sizes across cards, navigation, stats, and training views with standard `text-xs` (12px).
+- Consolidated composite responsive typography classes to eliminate visual fatigue and improve typographic hierarchy.
 ~~~~~
 
 ### 下一步建议
-- **执行 UI 视觉回归检查**：启动本地开发服务验证各类卡片（如 `ModeCard`、`TagPill`、`Choice2AfcContainer`）和统计图表面板的排版渲染效果。
-- **运行测试套件**：确保重构后所有自动化测试保持通过。
-- **创建 Git Commit**：验证无误后，生成 `[COMMIT]` 计划提交排版重构改动。
+- **多端设备实机体验**：在移动端浏览器或不同缩放比例屏幕上验证更新后的排版舒适度。
+- **扩展更多主题对比度**：后续可针对深色模式下的 `text-muted-foreground` 色阶对比度做进一步的 WCAG AA 无障碍优化。
