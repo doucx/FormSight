@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { DEFAULT_SETTINGS, getCardSettings, loadSettings, saveSettings } from '../../storage/settings';
+import {
+  DEFAULT_SETTINGS,
+  getCardSettings,
+  loadSettings,
+  saveSettings,
+} from '../../storage/settings';
 
 describe('settings utils with card-scoped isolation', () => {
   beforeEach(() => {

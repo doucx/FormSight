@@ -1,6 +1,6 @@
-import { initSquareHiDpiCanvas } from '../hidpi';
 import type { UnifiedTrialRecord } from '../../../storage/db/schema';
 import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
+import { initSquareHiDpiCanvas } from '../hidpi';
 
 export function renderHeatmapCanvas(
   canvas: HTMLCanvasElement,

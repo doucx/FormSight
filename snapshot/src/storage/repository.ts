@@ -1,10 +1,5 @@
 import type { TrainingPlan } from '../types/plan';
-import {
-  clearAllData,
-  exportAllData,
-  exportAllDataStream,
-  importAllData,
-} from './db/importExport';
+import { clearAllData, exportAllData, exportAllDataStream, importAllData } from './db/importExport';
 import { pruneColdRecords } from './db/prune';
 import {
   formatTotalTime,
