@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 将 DEFAULT_SETTINGS.cards 声明为动态 Getter 兼容卡片隔离测试", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181132.955693, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(arch): 重构工程目录分层结构并规范模块导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181195.1617224, "duration_ms": 0}}

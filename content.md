@@ -1,78 +1,52 @@
-这是因为测试用例 `src/utils/__tests__/settings.test.ts` 期望 `DEFAULT_SETTINGS.cards` 包含所有已注册卡片的完整默认配置结构，并通过 `JSON.stringify(DEFAULT_SETTINGS)` 进行了深拷贝测试。
+好的，我们已经完成了 FormSight 项目目录分层架构的系统重构、模块解耦、静态引用扫描诊断以及全量测试验证。
 
-我们只需将 `DEFAULT_SETTINGS` 的 `cards` 属性声明为**动态 Getter 属性（Accessor Property）**：
-1. 在模块顶层初次载入时，不会立即触发 `registry.getAllCards()`，彻底免疫任何循环依赖时序问题。
-2. 在运行时被 `JSON.stringify`、`loadSettings()` 或测试用例访问读取时，按需动态执行 `buildDefaultCardSettings()`，返回完整的 31 张卡片默认配置字典。
+现在我们将本次重构的所有成果提交至 Git 仓库。
 
-## [WIP] fix: 将 DEFAULT_SETTINGS.cards 声明为动态 Getter 兼容卡片隔离测试
-
-### 错误分析
-- 测试 `settings.test.ts` 期望 `DEFAULT_SETTINGS.cards` 是包含所有卡片默认配置的完整字典，而非空对象 `{}`。
-- 之前为了解决时序死锁将 `cards` 写成了静态 `{}`，导致测试用例中的 `custom.cards.star_single` 变为 `undefined`。
+## [COMMIT] refactor(arch): 重构工程目录分层结构并规范模块导入
 
 ### 用户需求
-修复 `src/utils/__tests__/settings.test.ts` 中的 3 处断言失败，使全部单元测试 100% 通过。
+将本次目录分层重构（包括 `src/storage/` 统一仓储层抽离、`src/core/canvas/` 绘图管线归并、`src/components/modals/` 弹窗收拢、类型与契约整合、`HomeView` 命名规范化及全工程 import 引用修复）作为完整的工作单元提交到 Git 仓库。
 
 ### 评论
-使用 JS 标准的 Getter 属性模式是处理“跨模块注册表依赖配置”的经典解法，既做到了零顶层副作用，又对外保持了透明的对象属性契约。
+本次重构彻底解决了项目从原型期迭代累积的路径混乱与模块职责倒置问题，建立了清晰的单向数据流与零特例的扩展包规范体系，为后续扩展新训练 Pack 奠定了坚固的架构基础。
 
 ### 目标
-1. 在 `src/storage/settings.ts` 中将 `DEFAULT_SETTINGS.cards` 实现为动态 Getter。
-2. 运行 `npx vitest run` 验证所有 8 个测试文件（44 个测试）全部通过。
+1. 将所有结构重构涉及的源码、工具脚本与测试用例暂存。
+2. 生成符合 Conventional Commits 规范的详细提交记录。
 
 ### 基本原理
-ES6 对象 Getter 延迟执行计算，仅在属性被读取时才访问 `registry`，完美满足深拷贝与断言需求。
+按照 Quipu 协议将所有已验证的代码变更原子化提交，记录架构演进的关键里程碑。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/core #concept/state #scope/core #ai/instruct #task/domain/architecture #task/object/settings-getter #task/action/bug-fix #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/high #comp/core #comp/build #concept/state #concept/executor #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/project-structure #task/action/refactor #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `src/storage/settings.ts` 中的 `DEFAULT_SETTINGS`
+#### Acts 1: 暂存并提交所有重构变更
 
 ~~~~~act
-patch_file
-src/storage/settings.ts
+git_add
+.
 ~~~~~
-~~~~~typescript.old
-export const DEFAULT_SETTINGS: UserSettings = {
-  global: {
-    locale: 'zh-CN',
-    theme: 'system',
-    idleTimeout: 60,
-    soundEnabled: true,
-    sliderHitMargin: 12,
-    showCanvasHints: true,
-  },
-  cards: {},
-};
+
+~~~~~act
+git_commit
 ~~~~~
-~~~~~typescript.new
-export const DEFAULT_SETTINGS: UserSettings = {
-  global: {
-    locale: 'zh-CN',
-    theme: 'system',
-    idleTimeout: 60,
-    soundEnabled: true,
-    sliderHitMargin: 12,
-    showCanvasHints: true,
-  },
-  get cards() {
-    return buildDefaultCardSettings();
-  },
-  set cards(v) {
-    Object.defineProperty(this, 'cards', {
-      value: v,
-      writable: true,
-      configurable: true,
-      enumerable: true,
-    });
-  },
-};
+~~~~~text
+refactor(arch): restructure project layout and unify module layer architecture
+
+- Elevate data persistence and store layers to `src/storage/` (IndexedDB, planStorage, settingsStorage, SystemRepository facade).
+- Consolidate canvas rendering and analytics chart visualizers under `src/core/canvas/`.
+- Organize loose root components into categorized folders (`src/components/modals/`, `src/components/common/`).
+- Merge training plugin definitions into `src/core/contracts.ts` and eliminate `src/config/trainingPlugins.tsx`.
+- Standardize view component naming convention (`Home.tsx` -> `HomeView.tsx`).
+- Introduce automated import analysis & validation script `scripts/check_imports.py`.
+- Resolve circular dependency between registry and settings via lazy accessor evaluation.
+- All unit tests and static import audits verified and passed.
 ~~~~~
 
 ### 下一步建议
-1. **测试结果**：全量单元测试（8/8 文件、44/44 用例）已全部顺利通过，静态导入检查与 Biome/TypeScript 检查均 0 错误。
-2. **提交归档**：如无需额外改动，可指示我创建 `[COMMIT]` 计划以归档此次工程架构重构。
+1. **后续功能演进**：可以在重构后的 `src/packs/` 目录下轻松添加新的感知训练扩展包（如立体空间透视、动态笔势、色彩微差判别等）。
+2. **CI 集成**：可考虑将 `python3 scripts/check_imports.py` 添加到 `package.json` 中的 `check` 脚本序列中，持续保障模块引用安全。
