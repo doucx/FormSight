@@ -1,14 +1,14 @@
 import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
+import { getCardTitle, useTranslation } from '../../core/i18n';
 import {
   type BaseModuleSettings,
   type UserSettings,
   getCardSettings,
   saveSettings,
 } from '../../storage/settings';
-import { ModalShell } from '../common/ModalShell';
-import { getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
+import { ModalShell } from '../common/ModalShell';
 import { ModalShell } from '../common/ModalShell';
 import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
 import { Button } from '../ui/button';

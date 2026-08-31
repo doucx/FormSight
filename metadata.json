@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复重构后的导入路径与图标引用问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788180426.570946, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M GlobalSettingsModal.tsx, M SettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788180464.0983496, "duration_ms": 0}}
