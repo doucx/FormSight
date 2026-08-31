@@ -81,7 +81,11 @@ export function ChoiceNafcContainer<T = unknown>({
           >
             <div className="flex items-center justify-between w-full px-1">
               <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
-                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-[11px]">
+                <Badge
+                  variant="secondary"
+                  size="sm"
+                  className="w-5 h-5 p-0 justify-center font-mono text-[11px]"
+                >
                   {keyLabel}
                 </Badge>
                 {opt.title || t('common.optionN', { num: keyLabel })}

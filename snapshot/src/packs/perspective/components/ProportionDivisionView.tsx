@@ -207,12 +207,20 @@ export function ProportionDivisionView({
         />
         <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
-            <Badge variant="accent" size="sm" className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600" />
+            <Badge
+              variant="accent"
+              size="sm"
+              className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600"
+            />
             <span>{t('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
-            <Badge variant="secondary" size="sm" className="w-2 h-2 p-0 rounded-full border-none bg-slate-400" />
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-2 h-2 p-0 rounded-full border-none bg-slate-400"
+            />
             <span>{t('common.endPercent')}</span>
           </span>
         </div>

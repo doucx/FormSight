@@ -37,12 +37,7 @@ export function CognitiveMasteryGrid({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {pathMasteryList.map((pm) => (
-            <MetricCard
-              key={pm.label}
-              variant="subtle"
-              padding="compact"
-              className="space-y-1.5"
-            >
+            <MetricCard key={pm.label} variant="subtle" padding="compact" className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{pm.label}</span>
                 <span
@@ -82,12 +77,7 @@ export function CognitiveMasteryGrid({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {challengeMasteryList.map((cm) => (
-            <MetricCard
-              key={cm.label}
-              variant="subtle"
-              padding="compact"
-              className="space-y-1.5"
-            >
+            <MetricCard key={cm.label} variant="subtle" padding="compact" className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{cm.label.split(' ')[0]}</span>
                 <span

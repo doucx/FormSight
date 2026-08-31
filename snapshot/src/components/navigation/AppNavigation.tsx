@@ -105,7 +105,11 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                   />
                   <span className="truncate flex-1">{item.label}</span>
                   {active && (
-                    <Badge variant="default" size="sm" className="w-1.5 h-1.5 p-0 rounded-full flex-shrink-0" />
+                    <Badge
+                      variant="default"
+                      size="sm"
+                      className="w-1.5 h-1.5 p-0 rounded-full flex-shrink-0"
+                    />
                   )}
                 </Button>
               );
