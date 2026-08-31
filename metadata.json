@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(color): 将全光谱与明度渐变色值统一接入 PALETTE 与主题 Tokens", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169182.3592532, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 搭建夜间模式基础设施与双态主题响应系统", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788169619.6619842, "duration_ms": 0}}

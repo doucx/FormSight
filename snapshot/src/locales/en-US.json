@@ -320,6 +320,12 @@
   "settings": {
     "title": "Global Preferences",
     "preferences": "System Preferences",
+    "themeTitle": "Theme Appearance",
+    "themeDesc": "Switch between Light, Dark, or System mode",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "switchedThemeToast": "Switched theme to {{theme}}",
     "languageTitle": "Display Language",
     "languageDesc": "Switch application global language (界面语言)",
     "soundTitle": "Audio Feedback",
