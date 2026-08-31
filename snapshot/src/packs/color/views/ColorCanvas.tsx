@@ -6,6 +6,7 @@ import {
   hsvToHex,
 } from '../../../core/color/colorUtils';
 import { useTranslation } from '../../../core/i18n';
+import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../../utils/theme';
 
 export interface ColorCanvasProps {
   question: ColorQuestionData;
@@ -93,10 +94,9 @@ export function ColorCanvas({
   const currentH = mode === 'ALL' ? userH : targetH;
   const currentV = mode === 'ALL' ? userV : targetV;
 
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const hueGradient = HUE_SPECTRUM_GRADIENT;
   const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
-  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(currentH, 100, 100)})`;
+  const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
 
   return (
     <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">

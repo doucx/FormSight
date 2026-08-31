@@ -1,242 +1,151 @@
-我们将编写一个专用的自动化迁移脚本 `scripts/migrate_pack_canvas_colors.py`，针对 `src/packs/` 下的所有扩展包组件和画布渲染函数执行批处理替换，自动补全 import 引用并将裸色值接入 `CANVAS_THEME` 和 `PALETTE`，随后执行扫描脚本进行闭环验证。
+我们将通过在 `src/utils/theme.ts` 中导出统一的 `HUE_SPECTRUM_GRADIENT` 光谱渐变常量和 `PALETTE.black`，彻底消除 `ColorCanvas.tsx` 与 `AlbersInductionView.tsx` 中剩余的 16 处硬编码渐变色值，并在执行后运行扫描器进行最终验证。
 
-## [WIP] refactor(packs): 自动化迁移 pack 内部 Canvas 硬编码色值至主题 Tokens
+## [WIP] refactor(color): 将全光谱与明度渐变色值统一接入 PALETTE 与主题 Tokens
 
 ### 用户需求
-编写自动化 Python 重构脚本，将 `src/packs/` 内部（包括 `perspective`, `abstraction`, `angle`, `negative_space`, `star`, `color`, `relative_color`）所有 Canvas 绘制和组件中的内联硬编码色值全面迁移至 `CANVAS_THEME` 与 `PALETTE`。
+手动修复 `src/packs/color/views/ColorCanvas.tsx` 与 `src/packs/relative_color/components/AlbersInductionView.tsx` 中的内联全光谱 360° 渐变和明度纯黑渐变硬编码。
 
 ### 评论
-通过编写专用的 AST / 模式匹配迁移脚本，能够原子化、零疏漏地将全部 20 多个 pack 内部文件中的色值统一替换，并自动处理相对路径的 `import` 语句，大幅降低人工修改带来的低级错误与语法漂移风险。
+将 360° 全光谱 CSS 渐变字符串抽离为全局共享的 `HUE_SPECTRUM_GRADIENT`，不仅确保了 HSV 取色轨与色相诱导视图中的渐变完全一致，还使得项目中所有涉及色彩空间采样的基础色值百分之百收敛到 `PALETTE`。
 
 ### 目标
-1. 编写 `scripts/migrate_pack_canvas_colors.py` 自动化重构工具。
-2. 批量处理 `src/packs/` 下所有涉及 Canvas 与色值的组件及工具函数。
-3. 执行迁移脚本，并运行 `analyze_hardcoded_colors.py` 验证硬编码色值清零。
+1. 在 `src/utils/theme.ts` 中基于 `PALETTE.spectrum` 构造并导出 `HUE_SPECTRUM_GRADIENT`。
+2. 重构 `src/packs/color/views/ColorCanvas.tsx`。
+3. 重构 `src/packs/relative_color/components/AlbersInductionView.tsx`。
+4. 运行 `analyze_hardcoded_colors.py` 验证全项目硬编码色值已全部清零。
 
 ### 基本原理
-- 脚本自动扫描目标 pack 文件，智能判断文件相对于 `src/utils/theme` 的层级并按需插入 `import { CANVAS_THEME, ... }`。
-- 将 Canvas 关键属性（`ctx.fillStyle`, `ctx.strokeStyle`, `fillColor`, `strokeColor` 等）与常见色值模式（如 `#0F172A` 映射为 `CANVAS_THEME.shape.fill`，`#4F46E5` 映射为 `CANVAS_THEME.status.accent`，`rgba(34, 197, 94, ...)` 映射为 `hexToRgba(CANVAS_THEME.status.hit, ...)` 等）进行确定性替换。
-- 迁移后即刻触发扫描分析器输出最新统计。
+- 在 `theme.ts` 中组合 `PALETTE.spectrum` 与 `PALETTE.black` 构造语义化渐变常数；
+- 替换各视图中的内联字符串模版为引用常量，消除散落的 `#FF0000`、`#FFFF00`、`#000000` 等十六进制字面量。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #concept/ui #scope/core #scope/dx #ai/delegate #task/domain/ui #task/object/canvas-theme-tokens #task/action/refactor #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/medium #comp/engine #concept/ui #scope/core #ai/delegate #task/domain/ui #task/object/canvas-theme-tokens #task/action/refactor #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 编写自动化迁移脚本 `scripts/migrate_pack_canvas_colors.py`
+#### Acts 1: 在 `src/utils/theme.ts` 中导出 `HUE_SPECTRUM_GRADIENT`
 
 ~~~~~act
-write_file
-scripts/migrate_pack_canvas_colors.py
+patch_file
+src/utils/theme.ts
 ~~~~~
-~~~~~python
-#!/usr/bin/env python3
-"""
-自动化迁移 src/packs/ 内部 Canvas 与组件中的硬编码色值至 CANVAS_THEME / PALETTE Tokens
-"""
+~~~~~typescript.old
+  spectrum: {
+    red: '#FF0000',
+    yellow: '#FFFF00',
+    green: '#00FF00',
+    cyan: '#00FFFF',
+    blue: '#0000FF',
+    magenta: '#FF00FF',
+  },
+  white: '#FFFFFF',
+  black: '#000000',
+} as const;
+~~~~~
+~~~~~typescript.new
+  spectrum: {
+    red: '#FF0000',
+    yellow: '#FFFF00',
+    green: '#00FF00',
+    cyan: '#00FFFF',
+    blue: '#0000FF',
+    magenta: '#FF00FF',
+  },
+  white: '#FFFFFF',
+  black: '#000000',
+} as const;
 
-import os
-import re
-from pathlib import Path
-
-# 计算相对引用路径
-def get_theme_import_path(file_path: Path, repo_root: Path) -> str:
-    theme_file = repo_root / "src" / "utils" / "theme.ts"
-    rel_path = os.path.relpath(theme_file.parent, file_path.parent)
-    if not rel_path.startswith("."):
-        rel_path = "./" + rel_path
-    return f"{rel_path}/theme".replace("\\", "/")
-
-
-def process_perspective_canvas(content: str, theme_import: str) -> str:
-    # 1. 注入 import
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME, hexToRgba }} from '{theme_import}';\n" + content
-
-    replacements = [
-        ("ctx.strokeStyle = '#475569';", "ctx.strokeStyle = CANVAS_THEME.text.secondary;"),
-        ("ctx.fillStyle = '#4F46E5';", "ctx.fillStyle = CANVAS_THEME.status.accent;"),
-        ("ctx.strokeStyle = showAnswer ? '#94A3B8' : '#0F172A';", "ctx.strokeStyle = showAnswer ? CANVAS_THEME.text.muted : CANVAS_THEME.shape.fill;"),
-        ("ctx.strokeStyle = '#10B981';", "ctx.strokeStyle = CANVAS_THEME.status.hit;"),
-        ("ctx.strokeStyle = '#0F172A';", "ctx.strokeStyle = CANVAS_THEME.shape.fill;"),
-        ("ctx.strokeStyle = '#4F46E5';", "ctx.strokeStyle = CANVAS_THEME.status.accent;"),
-        ("ctx.fillStyle = '#94A3B8';", "ctx.fillStyle = CANVAS_THEME.text.muted;"),
-        ("ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';", "ctx.fillStyle = hexToRgba(CANVAS_THEME.status.accent, 0.2);"),
-        ("ctx.fillStyle = '#10B981';", "ctx.fillStyle = CANVAS_THEME.status.hit;"),
-        ("ctx.fillStyle = '#EF4444';", "ctx.fillStyle = CANVAS_THEME.status.miss;"),
-        ("ctx.fillStyle = '#FFFFFF';", "ctx.fillStyle = CANVAS_THEME.bg.primary;"),
-        ("ctx.fillStyle = '#CBD5E1';", "ctx.fillStyle = CANVAS_THEME.axis.grid;"),
-        ("ctx.strokeStyle = '#64748B';", "ctx.strokeStyle = CANVAS_THEME.text.secondary;"),
-        ("ctx.strokeStyle = '#CBD5E1';", "ctx.strokeStyle = CANVAS_THEME.axis.grid;"),
-    ]
-    for old, new in replacements:
-        content = content.replace(old, new)
-    return content
-
-
-def process_abstraction_particles(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-
-    replacements = [
-        ("axisColor = '#22C55E'", "axisColor: string = CANVAS_THEME.status.hit"),
-        ("ctx.fillStyle = '#0F172A';", "ctx.fillStyle = CANVAS_THEME.shape.fill;"),
-        ("ctx.strokeStyle = isHit ? '#22C55E' : '#EF4444';", "ctx.strokeStyle = isHit ? CANVAS_THEME.status.hit : CANVAS_THEME.status.miss;"),
-        ("ctx.strokeStyle = '#4F46E5';", "ctx.strokeStyle = CANVAS_THEME.status.accent;"),
-        ("ctx.fillStyle = '#4F46E5';", "ctx.fillStyle = CANVAS_THEME.status.accent;"),
-    ]
-    for old, new in replacements:
-        content = content.replace(old, new)
-    return content
-
-
-def process_abstraction_palette_tiles(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME, hexToRgba }} from '{theme_import}';\n" + content
-    return content.replace("ctx.strokeStyle = 'rgba(255,255,255,0.4)';", "ctx.strokeStyle = hexToRgba(CANVAS_THEME.bg.primary, 0.4);")
-
-
-def process_gesture_axis_view(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    return content.replace("showAnswer ? '#22C55E' : '#6366F1'", "showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover")
-
-
-def process_topdown_2afc_view(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    content = content.replace("fillColor: '#4F46E5',\n                strokeColor: '#3730A3'", "fillColor: CANVAS_THEME.status.accent,\n                strokeColor: CANVAS_THEME.status.accentDark")
-    content = content.replace("fillColor: '#4F46E5'", "fillColor: CANVAS_THEME.status.accent")
-    return content
-
-
-def process_topdown_pattern_view(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    return content.replace(": '#6366F1';", ": CANVAS_THEME.status.accentHover;")
-
-
-def process_angle_utils(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    return content.replace("strokeColor = '#0F172A'", "strokeColor: string = CANVAS_THEME.shape.fill")
-
-
-def process_angle_parallel_view(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    content = content.replace("ANGLE_PROMPT_SIZE, '#4F46E5', 3.0", "ANGLE_PROMPT_SIZE, CANVAS_THEME.status.accent, 3.0")
-    content = content.replace("ANGLE_2AFC_SIZE, '#0F172A', 2.5", "ANGLE_2AFC_SIZE, CANVAS_THEME.shape.fill, 2.5")
-    return content
-
-
-def process_negative_space_views(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME, hexToRgba }} from '{theme_import}';\n" + content
-    replacements = [
-        ("fillColor: '#0F172A',\n                  strokeColor: '#1E293B',", "fillColor: CANVAS_THEME.shape.fill,\n                  strokeColor: CANVAS_THEME.shape.stroke,"),
-        ("fillColor: '#0F172A',\n                strokeColor: '#1E293B',", "fillColor: CANVAS_THEME.shape.fill,\n                strokeColor: CANVAS_THEME.shape.stroke,"),
-        ("fillColor: '#0F172A',\n      strokeColor: '#1E293B',", "fillColor: CANVAS_THEME.shape.fill,\n      strokeColor: CANVAS_THEME.shape.stroke,"),
-        ("ctx.fillStyle = '#0F172A';", "ctx.fillStyle = CANVAS_THEME.shape.fill;"),
-        ("ctx.strokeStyle = '#1E293B';", "ctx.strokeStyle = CANVAS_THEME.shape.stroke;"),
-        ("ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)';", "ctx.strokeStyle = hexToRgba(CANVAS_THEME.status.hit, 0.7);"),
-    ]
-    for old, new in replacements:
-        content = content.replace(old, new)
-    return content
-
-
-def process_negative_space_analytics(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME, hexToRgba }} from '{theme_import}';\n" + content
-    replacements = [
-        ("ctx.fillStyle = '#1E293B';", "ctx.fillStyle = CANVAS_THEME.shape.stroke;"),
-        ("ctx.strokeStyle = '#475569';", "ctx.strokeStyle = CANVAS_THEME.text.secondary;"),
-        ("r.isHit ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'", "r.isHit ? hexToRgba(CANVAS_THEME.status.hit, 0.7) : hexToRgba(CANVAS_THEME.status.miss, 0.7)"),
-    ]
-    for old, new in replacements:
-        content = content.replace(old, new)
-    return content
-
-
-def process_star_canvas(content: str, theme_import: str) -> str:
-    if "CANVAS_THEME" not in content:
-        content = f"import {{ CANVAS_THEME }} from '{theme_import}';\n" + content
-    replacements = [
-        ("ctx.fillStyle = '#FFFFFF';", "ctx.fillStyle = CANVAS_THEME.bg.primary;"),
-        ("drawDot(ctx, question.anchorA.x, question.anchorA.y, '#000000', dotRadius);", "drawDot(ctx, question.anchorA.x, question.anchorA.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);"),
-        ("drawDot(ctx, question.anchorC.x, question.anchorC.y, '#000000', dotRadius);", "drawDot(ctx, question.anchorC.x, question.anchorC.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);"),
-        ("drawDot(ctx, question.targetB.x, question.targetB.y, '#000000', dotRadius);", "drawDot(ctx, question.targetB.x, question.targetB.y, CANVAS_THEME.pointGrid.dotAnchor, dotRadius);"),
-    ]
-    for old, new in replacements:
-        content = content.replace(old, new)
-    return content
-
-
-def process_decontextual_2afc_view(content: str, theme_import: str) -> str:
-    if "PALETTE" not in content:
-        content = f"import {{ PALETTE }} from '{theme_import}';\n" + content
-    return content.replace("showAnswer ? '#808080' : hexBgA", "showAnswer ? PALETTE.slate[500] : hexBgA").replace("showAnswer ? '#808080' : hexBgB", "showAnswer ? PALETTE.slate[500] : hexBgB")
-
-
-def main():
-    repo_root = Path(__file__).resolve().parent.parent
-
-    file_handlers = {
-        repo_root / "src/packs/perspective/utils/perspectiveCanvas.ts": process_perspective_canvas,
-        repo_root / "src/packs/abstraction/canvas/drawParticles.ts": process_abstraction_particles,
-        repo_root / "src/packs/abstraction/canvas/drawPaletteTiles.ts": process_abstraction_palette_tiles,
-        repo_root / "src/packs/abstraction/components/GestureAxisView.tsx": process_gesture_axis_view,
-        repo_root / "src/packs/abstraction/components/TopDown2AfcView.tsx": process_topdown_2afc_view,
-        repo_root / "src/packs/abstraction/components/TopDownPatternView.tsx": process_topdown_pattern_view,
-        repo_root / "src/packs/angle/utils/angleUtils.ts": process_angle_utils,
-        repo_root / "src/packs/angle/components/AngleParallel2AfcView.tsx": process_angle_parallel_view,
-        repo_root / "src/packs/negative_space/components/AreaComparison2AfcView.tsx": process_negative_space_views,
-        repo_root / "src/packs/negative_space/components/RatioEstimationView.tsx": process_negative_space_views,
-        repo_root / "src/packs/negative_space/components/VertexFittingView.tsx": process_negative_space_views,
-        repo_root / "src/packs/negative_space/analytics.tsx": process_negative_space_analytics,
-        repo_root / "src/packs/star/views/StarCanvas.tsx": process_star_canvas,
-        repo_root / "src/packs/relative_color/components/Decontextual2AfcView.tsx": process_decontextual_2afc_view,
-    }
-
-    modified_count = 0
-    for target_path, handler in file_handlers.items():
-        if not target_path.exists():
-            print(f"跳过不存在的文件: {target_path}")
-            continue
-
-        theme_import = get_theme_import_path(target_path, repo_root)
-        with open(target_path, "r", encoding="utf-8") as f:
-            original = f.read()
-
-        updated = handler(original, theme_import)
-        if updated != original:
-            with open(target_path, "w", encoding="utf-8") as f:
-                f.write(updated)
-            print(f"✅ 成功迁移: {target_path.relative_to(repo_root)}")
-            modified_count += 1
-        else:
-            print(f"➖ 无需更改: {target_path.relative_to(repo_root)}")
-
-    print(f"\n🎉 迁移完成，共更新 {modified_count} 个 Pack 模块文件。")
-
-
-if __name__ == "__main__":
-    main()
+/**
+ * 360° 全色相光谱线性渐变标准定义
+ */
+export const HUE_SPECTRUM_GRADIENT = `linear-gradient(to right, ${PALETTE.spectrum.red} 0%, ${PALETTE.spectrum.yellow} 17%, ${PALETTE.spectrum.green} 33%, ${PALETTE.spectrum.cyan} 50%, ${PALETTE.spectrum.blue} 67%, ${PALETTE.spectrum.magenta} 83%, ${PALETTE.spectrum.red} 100%)`;
 ~~~~~
 
-#### Acts 2: 执行迁移脚本并运行检查报告
+#### Acts 2: 修复 `src/packs/color/views/ColorCanvas.tsx`
+
+~~~~~act
+patch_file
+src/packs/color/views/ColorCanvas.tsx
+~~~~~
+~~~~~typescript.old
+import {
+  type ColorHitResult,
+  type ColorQuestionData,
+  hsvToHex,
+} from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
+~~~~~
+~~~~~typescript.new
+import {
+  type ColorHitResult,
+  type ColorQuestionData,
+  hsvToHex,
+} from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
+import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../../utils/theme';
+~~~~~
+
+~~~~~act
+patch_file
+src/packs/color/views/ColorCanvas.tsx
+~~~~~
+~~~~~typescript.old
+  const hueGradient =
+    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
+  const valGradient = `linear-gradient(to right, #000000, ${hsvToHex(currentH, 100, 100)})`;
+~~~~~
+~~~~~typescript.new
+  const hueGradient = HUE_SPECTRUM_GRADIENT;
+  const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
+  const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
+~~~~~
+
+#### Acts 3: 修复 `src/packs/relative_color/components/AlbersInductionView.tsx`
+
+~~~~~act
+patch_file
+src/packs/relative_color/components/AlbersInductionView.tsx
+~~~~~
+~~~~~typescript.old
+import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+~~~~~
+~~~~~typescript.new
+import { hsvToHex } from '../../../core/color/colorUtils';
+import { useTranslation } from '../../../core/i18n';
+import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../../utils/theme';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+~~~~~
+
+~~~~~act
+patch_file
+src/packs/relative_color/components/AlbersInductionView.tsx
+~~~~~
+~~~~~typescript.old
+  const rightSatGradient = `linear-gradient(to right, ${hsvToHex(userRightH, 0, userRightV)}, ${hsvToHex(userRightH, 100, userRightV)})`;
+  const rightValGradient = `linear-gradient(to right, #000000, ${hsvToHex(userRightH, 100, 100)})`;
+  const hueGradient =
+    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+~~~~~
+~~~~~typescript.new
+  const rightSatGradient = `linear-gradient(to right, ${hsvToHex(userRightH, 0, userRightV)}, ${hsvToHex(userRightH, 100, userRightV)})`;
+  const rightValGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(userRightH, 100, 100)})`;
+  const hueGradient = HUE_SPECTRUM_GRADIENT;
+~~~~~
+
+#### Acts 4: 运行扫描脚本验证硬编码色值清零
 
 ~~~~~act
 run_command
 ~~~~~
 ~~~~~
-python3 ./scripts/migrate_pack_canvas_colors.py
-python3 ./scripts/analyze_hardcoded_colors.py --group-by color
+python3 ./scripts/analyze_hardcoded_colors.py
 ~~~~~
 
 ### 下一步建议
-1. **核对渐变光谱等特例**：色环、HSV 取色轨中的全光谱色标（`#FF0000`, `#FFFF00`, `#00FF00`, `#00FFFF`, `#0000FF`, `#FF00FF`）已在 `PALETTE.spectrum` 中定义，可根据需要决定是否进一步将 CSS 线性渐变字符串替换为引用常量。
-2. **测试与构建校验**：运行 `npm run check` 或测试套件确保 TypeScript 类型与 Preact 渲染全部通过。
+1. **类型检查与测试验证**：运行 `npm run check` 确保所有 TypeScript 类型校验与打包构建正常。
+2. **提交当前工作区改动**：如果在验证中未发现任何残留与回归，可以生成完整的 `[COMMIT]` 计划提交所有关于调色盘与画布硬编码的重构。

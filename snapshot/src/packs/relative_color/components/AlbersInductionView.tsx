@@ -4,6 +4,7 @@ import { DualViewportContainer } from '../../../components/common/DualViewportCo
 import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
 import { hsvToHex } from '../../../core/color/colorUtils';
 import { useTranslation } from '../../../core/i18n';
+import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../../utils/theme';
 import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
 
 interface AlbersInductionViewProps {
@@ -50,9 +51,8 @@ export function AlbersInductionView({
   const idealRightHex = hsvToHex(...(question.idealRightCenter ?? question.targetD));
 
   const rightSatGradient = `linear-gradient(to right, ${hsvToHex(userRightH, 0, userRightV)}, ${hsvToHex(userRightH, 100, userRightV)})`;
-  const rightValGradient = `linear-gradient(to right, #000000, ${hsvToHex(userRightH, 100, 100)})`;
-  const hueGradient =
-    'linear-gradient(to right, #FF0000 0%, #FFFF00 17%, #00FF00 33%, #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%)';
+  const rightValGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(userRightH, 100, 100)})`;
+  const hueGradient = HUE_SPECTRUM_GRADIENT;
 
   return (
     <QuestionCardShell

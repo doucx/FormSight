@@ -63,6 +63,11 @@ export const PALETTE = {
 } as const;
 
 /**
+ * 360° 全色相光谱线性渐变标准定义
+ */
+export const HUE_SPECTRUM_GRADIENT = `linear-gradient(to right, ${PALETTE.spectrum.red} 0%, ${PALETTE.spectrum.yellow} 17%, ${PALETTE.spectrum.green} 33%, ${PALETTE.spectrum.cyan} 50%, ${PALETTE.spectrum.blue} 67%, ${PALETTE.spectrum.magenta} 83%, ${PALETTE.spectrum.red} 100%)`;
+
+/**
  * 2. Canvas 语义化 Token (Semantic Canvas Theme Tokens)
  */
 export const CANVAS_THEME = {
