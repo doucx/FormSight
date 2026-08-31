@@ -133,11 +133,11 @@ class SystemDomainRegistry {
    * 2. 兼容扫描存量 src/packs/**\/index.ts 注册 PackManifest
    */
   private autoDiscover(): void {
-    // 1. 扫描新版独立 CardManifest
+    // 1. 扫描新版独立 CardManifest (支持 .ts 与 .tsx)
     const cardModules = import.meta.glob<{
       default?: AnyCardManifest | AnyCardManifest[];
       [key: string]: unknown;
-    }>('../modules/**/index.ts', {
+    }>('../modules/**/index.{ts,tsx}', {
       eager: true,
     });
 
