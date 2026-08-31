@@ -140,7 +140,7 @@ export function DataGovernanceSection({
           </div>
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.pruneTitle')}</div>
-            <div className="text-[11px] text-primary">{t('settings.pruneDesc')}</div>
+            <div className="text-xs text-primary">{t('settings.pruneDesc')}</div>
           </div>
         </div>
         <Button
@@ -158,7 +158,7 @@ export function DataGovernanceSection({
         <div className="flex items-center justify-between">
           <div>
             <div className="text-xs font-bold text-foreground">{t('settings.resetPlansTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.resetPlansDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetPlansDesc')}</div>
           </div>
           <Button
             variant="secondary"
@@ -174,7 +174,7 @@ export function DataGovernanceSection({
         <div className="flex items-center justify-between pt-1">
           <div>
             <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
-            <div className="text-[11px] text-muted-foreground">{t('settings.clearDataDesc')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.clearDataDesc')}</div>
           </div>
           <Button
             variant="danger"

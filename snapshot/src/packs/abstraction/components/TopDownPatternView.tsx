@@ -69,7 +69,7 @@ export function TopDownPatternView({
       onAnswer={(idx) => onAnswer(idx)}
       preview={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_palette_2afc.promptTitle')}
           </span>
           <div

@@ -214,7 +214,7 @@ export function ProportionMigrationView({
               : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
-        <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-2">
+        <div className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
             <Badge
               variant="accent"

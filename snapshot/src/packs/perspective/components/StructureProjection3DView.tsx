@@ -46,7 +46,7 @@ export function StructureProjection3DView({
             {t('common.viewTriAxis')}
           </div>
 
-          <div className="grid grid-cols-3 gap-2 text-center text-[11px] font-semibold text-muted-foreground">
+          <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-muted-foreground">
             {/* 顶视图 (X-Z) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
               <span className="text-muted-foreground font-bold">{t('common.topView')}</span>

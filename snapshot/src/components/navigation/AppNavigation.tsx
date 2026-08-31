@@ -71,11 +71,11 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
             <div>
               <div className="font-black text-base text-foreground tracking-tight leading-tight flex items-center gap-1.5">
                 {t('common.appName')}
-                <Badge variant="accent" size="sm" className="font-mono text-[9px]">
+                <Badge variant="accent" size="sm" className="font-mono text-xs">
                   v{__APP_VERSION__}
                 </Badge>
               </div>
-              <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
+              <div className="text-xs text-muted-foreground font-medium mt-0.5">
                 {t('common.appSubtitle').slice(0, 14)}...
               </div>
             </div>
@@ -134,7 +134,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               href="https://github.com/doucx/FormSight"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1.5 px-2 bg-muted/60 hover:bg-accent text-muted-foreground hover:text-foreground border border-border/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="py-1.5 px-2 bg-muted/60 hover:bg-accent text-muted-foreground hover:text-foreground border border-border/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
               title="GitHub 开源仓库"
             >
               <Github className="w-3.5 h-3.5" />
@@ -145,7 +145,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               href="https://afdian.com/a/AyeLTesf"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1.5 px-2 bg-purple-50/70 dark:bg-purple-950/40 hover:bg-purple-100/70 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 border border-purple-200/60 dark:border-purple-800/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="py-1.5 px-2 bg-purple-50/70 dark:bg-purple-950/40 hover:bg-purple-100/70 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 border border-purple-200/60 dark:border-purple-800/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-xs font-semibold"
               title="爱发电赞助支持"
             >
               <AfdianIcon className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
@@ -166,7 +166,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               key={item.id}
               variant="ghost"
               onClick={() => onNavigate(item.target)}
-              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all h-auto ${
+              className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-xs font-bold transition-all h-auto ${
                 active
                   ? 'text-primary font-extrabold'
                   : 'text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground'
@@ -181,7 +181,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
         <Button
           variant="ghost"
           onClick={onOpenSettings}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-all h-auto"
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-muted-foreground dark:hover:text-muted-foreground transition-all h-auto"
         >
           <Settings className="w-4 h-4" />
           <span>{t('common.settings')}</span>

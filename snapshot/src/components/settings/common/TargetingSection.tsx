@@ -53,7 +53,7 @@ export function TargetingSection({
 
       {mode === 'manual' && (
         <div className="bg-muted/60 p-3 rounded-2xl border border-border/60 space-y-2">
-          <div className="text-[11px] font-semibold text-muted-foreground">{effectiveSubTitle}</div>
+          <div className="text-xs font-semibold text-muted-foreground">{effectiveSubTitle}</div>
           <div className={`grid ${gridCols} gap-1.5`}>
             {sectors.map((name, idx) => {
               const selected = selectedSectors.includes(idx);
@@ -64,7 +64,7 @@ export function TargetingSection({
                   variant={selected ? 'accent' : 'outline'}
                   size="sm"
                   onClick={() => onToggleSector(idx)}
-                  className="py-1.5 px-1 text-[10px] h-auto"
+                  className="py-1.5 px-1 text-xs h-auto"
                 >
                   {label}
                 </Button>

@@ -80,7 +80,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
               icon={Target}
               title={i18n.t('packs.star.analytics.spatialBias.cardTitle')}
             >
-              <p className="text-muted-foreground leading-relaxed text-[11px]">
+              <p className="text-muted-foreground leading-relaxed text-xs">
                 {i18n.t('packs.star.analytics.spatialBias.desc')}
               </p>
               <div className="pt-1.5 space-y-1 font-mono text-foreground">
@@ -170,7 +170,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
               title={i18n.t('packs.star.analytics.directionalCompass.cardTitle')}
             >
               {weakest ? (
-                <div className="space-y-1.5 text-[11px] text-foreground pt-1">
+                <div className="space-y-1.5 text-xs text-foreground pt-1">
                   <p>
                     {i18n.t('packs.star.analytics.directionalCompass.weakestHint', {
                       sector: weakest.label,
@@ -186,7 +186,7 @@ export function createStarAnalyticsPlugin(cardId: string): CardAnalyticsPlugin {
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-[11px]">
+                <p className="text-muted-foreground text-xs">
                   {i18n.t('packs.star.analytics.directionalCompass.needMoreTrials')}
                 </p>
               )}

@@ -231,7 +231,7 @@ export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentC
                 <span className="font-mono text-xs font-bold text-foreground min-w-[70px]">
                   {bin.rangeLabel}
                 </span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {bin.total} {i18n.t('common.trialsUnit')} ({ratio}%)
                 </span>
               </div>

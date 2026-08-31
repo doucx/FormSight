@@ -84,7 +84,7 @@ export function ChoiceNafcContainer<T = unknown>({
                 <Badge
                   variant="secondary"
                   size="sm"
-                  className="w-5 h-5 p-0 justify-center font-mono text-[11px]"
+                  className="w-5 h-5 p-0 justify-center font-mono text-xs"
                 >
                   {keyLabel}
                 </Badge>

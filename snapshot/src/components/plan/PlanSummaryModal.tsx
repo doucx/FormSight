@@ -52,7 +52,7 @@ export function PlanSummaryModal({
         {/* 核心综合大盘卡片 */}
         <div className="grid grid-cols-3 gap-3">
           <MetricCard variant="accent" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <Target className="w-3.5 h-3.5 text-primary" />
               {t('common.overallAccuracy')}
             </div>
@@ -60,7 +60,7 @@ export function PlanSummaryModal({
           </MetricCard>
 
           <MetricCard variant="success" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               {t('common.totalHits')}
             </div>
@@ -71,7 +71,7 @@ export function PlanSummaryModal({
           </MetricCard>
 
           <MetricCard variant="subtle" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted-foreground">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <Clock className="w-3.5 h-3.5 text-primary" />
               {t('common.totalTimeSpent')}
             </div>
@@ -105,7 +105,7 @@ export function PlanSummaryModal({
                   className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-[10px] font-black flex items-center justify-center">
+                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-xs font-black flex items-center justify-center">
                       {idx + 1}
                     </div>
                     <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs">
@@ -113,7 +113,7 @@ export function PlanSummaryModal({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-foreground">{cardTitle}</div>
-                      <div className="text-[10px] text-muted-foreground">
+                      <div className="text-xs text-muted-foreground">
                         {t('common.trialsCorrect', {
                           hits: stageHits,
                           total: stage.history.length,

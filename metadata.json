@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788181695.7200143, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(ui): 自动化重构微小字体尺寸为统一 text-xs 规范", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788182110.518288, "duration_ms": 0}}

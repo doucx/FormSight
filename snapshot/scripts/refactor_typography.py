@@ -1,42 +1,3 @@
-我们将创建一个专用的 Python 自动化重构脚本 `scripts/refactor_typography.py`，正则化扫描并精准替换 `src/` 目录下所有组件中的 `text-[9px]`、`text-[10px]`、`text-[11px]` 及复合响应式类名（如 `text-[10px] sm:text-[11px]`），然后立即执行该脚本完成全局无损升级。
-
-## [WIP] refactor(ui): 自动化重构微小字体尺寸为统一 text-xs 规范
-
-### 用户需求
-1. 编写 Python 自动化重构脚本。
-2. 规则化匹配并替换 `text-[9px]`, `text-[10px]`, `text-[11px]` 及其带有响应式/状态前缀（如 `sm:text-[11px]`）和复合类名（如 `text-[10px] sm:text-[11px]`）。
-3. 执行脚本完成 `src/` 源码目录下所有相关文件的全局无损升级。
-
-### 评论
-将过小、难以辨认的微小字号统一收敛到 Tailwind 标准基础阶梯 `text-xs` (12px)，能够彻底消除视觉感知训练中的额外阅读眼疲劳，同时通过消除代码中的任意值（arbitrary values）提升 UI 样式的一致性与可维护性。
-
-### 目标
-1. 创建 `scripts/refactor_typography.py` 自动化重构脚本，支持多层级前缀、复合响应式类名及相邻冗余类的合并。
-2. 递归遍历 `src/` 目录下的所有 `.tsx`, `.ts`, `.css`, `.html` 文件并执行安全替换。
-3. 运行该脚本完成全局文件修改。
-
-### 基本原理
-使用 Python 正则表达式：
-1. 优先捕获复合响应式结构（如 `text-[10px] sm:text-[11px]`）并归一化为 `text-xs`。
-2. 针对任意前缀（如 `sm:`, `md:`, `dark:`, `hover:`, `group-hover:`）搭配的 `text-[9px]`, `text-[10px]`, `text-[11px]`，精准替换为 `${prefix}text-xs`。
-3. 清理相邻因替换产生的冗余类名（如 `text-xs sm:text-xs` 简化为 `text-xs`），确保代码整洁无损。
-
-### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/typography #task/action/refactor #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建排版重构自动化脚本
-
-编写 `scripts/refactor_typography.py` 脚本，实现针对 Tailwind 微小字号的自动化正则扫描与无损重构。
-
-~~~~~act
-write_file
-scripts/refactor_typography.py
-~~~~~
-~~~~~python
 #!/usr/bin/env python3
 """
 FormSight Typography Refactoring Script
@@ -124,20 +85,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-~~~~~
-
-#### Acts 2: 执行重构脚本全局升级 `src/` 下相关文件
-
-运行重构脚本，自动替换 `src/` 下所有组件和视图文件中的微小字号。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-python3 scripts/refactor_typography.py
-~~~~~
-
-### 下一步建议
-- **执行 UI 视觉回归检查**：启动本地开发服务验证各类卡片（如 `ModeCard`、`TagPill`、`Choice2AfcContainer`）和统计图表面板的排版渲染效果。
-- **运行测试套件**：确保重构后所有自动化测试保持通过。
-- **创建 Git Commit**：验证无误后，生成 `[COMMIT]` 计划提交排版重构改动。

@@ -61,7 +61,7 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
             icon={Crosshair}
             title={i18n.t('packs.negative_space.analytics.ratioScatter.cardTitle')}
           >
-            <div className="space-y-1.5 text-[11px] text-foreground pt-1">
+            <div className="space-y-1.5 text-xs text-foreground pt-1">
               <div className="flex justify-between font-mono bg-card p-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs">
                 <span className="text-muted-foreground">
                   {i18n.t('packs.negative_space.analytics.ratioScatter.avgError')}

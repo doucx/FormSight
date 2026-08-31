@@ -54,7 +54,7 @@ export function CognitiveMasteryGrid({
                   {pm.total > 0 ? `${pm.accuracy}%` : '--'}
                 </span>
               </div>
-              <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+              <div className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>{t('stats.practicedTrials', { count: pm.total })}</span>
                 <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
               </div>
@@ -94,7 +94,7 @@ export function CognitiveMasteryGrid({
                   {cm.total > 0 ? `${cm.accuracy}%` : '--'}
                 </span>
               </div>
-              <div className="text-[11px] text-muted-foreground flex items-center justify-between">
+              <div className="text-xs text-muted-foreground flex items-center justify-between">
                 <span>{t('stats.practicedTrials', { count: cm.total })}</span>
                 <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
               </div>

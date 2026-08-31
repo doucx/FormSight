@@ -22,14 +22,14 @@ export function DualViewportContainer({
   return (
     <div className={`grid grid-cols-1 sm:grid-cols-2 gap-5 w-full ${className}`}>
       <div className="flex flex-col items-center gap-2">
-        <span className={`text-[11px] font-bold ${leftTitleColor} uppercase tracking-wider`}>
+        <span className={`text-xs font-bold ${leftTitleColor} uppercase tracking-wider`}>
           {leftTitle}
         </span>
         {leftContent}
       </div>
 
       <div className="flex flex-col items-center gap-2">
-        <span className={`text-[11px] font-bold ${rightTitleColor} uppercase tracking-wider`}>
+        <span className={`text-xs font-bold ${rightTitleColor} uppercase tracking-wider`}>
           {rightTitle}
         </span>
         {rightContent}

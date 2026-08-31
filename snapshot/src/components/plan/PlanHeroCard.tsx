@@ -125,7 +125,7 @@ export function PlanHeroCard({
 
                   {isDropdownOpen && (
                     <div className="absolute left-0 top-full mt-2 z-40 w-72 sm:w-80 bg-card/95 backdrop-blur-md rounded-2xl shadow-2xl border border-border p-1.5 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border/60 flex items-center justify-between">
+                      <div className="px-3 py-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/60 flex items-center justify-between">
                         <span>{t('plan.switchPlan')}</span>
                         <span className="font-mono">
                           {t('plan.availableCount', { count: favoritePlans.length })}
@@ -167,7 +167,7 @@ export function PlanHeroCard({
                                     </Badge>
                                   )}
                                 </div>
-                                <div className="text-[10px] text-muted-foreground mt-0.5">
+                                <div className="text-xs text-muted-foreground mt-0.5">
                                   {t('plan.stageCount', { count: stageCount })} •{' '}
                                   {t('plan.totalTrialsSummary', { trials: pTrials })}
                                 </div>
@@ -224,7 +224,7 @@ export function PlanHeroCard({
           return (
             <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
               <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-2 rounded-2xl shadow-inner">
-                <div className="w-5 h-5 rounded-lg bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
+                <div className="w-5 h-5 rounded-lg bg-accent text-primary flex items-center justify-center font-mono text-xs font-black">
                   {idx + 1}
                 </div>
                 <Icon className="w-4 h-4 text-muted-foreground" />
