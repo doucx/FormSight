@@ -89,20 +89,31 @@ class I18nManager {
     }
   }
 
-  /** 核心翻译查表方法，支持深层路径解析与模板插值 */
-  public t = (key: string, params?: Record<string, string | number>): string => {
+  /** 核心翻译查表方法，支持深层路径解析、数组透传与模板插值 */
+  public t = <T = string>(key: string, params?: Record<string, string | number>): T => {
     const activeDict =
       this.dictionaries[this.currentLocale] || this.dictionaries[this.fallbackLocale] || {};
-    const text =
+    const result =
       this.resolvePath(activeDict, key) ??
       this.resolvePath(this.dictionaries[this.fallbackLocale], key);
 
-    if (typeof text !== 'string') {
-      return key;
+    if (Array.isArray(result)) {
+      if (!params) return result as unknown as T;
+      return result.map((item) =>
+        typeof item === 'string'
+          ? item.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`))
+          : item,
+      ) as unknown as T;
     }
 
-    if (!params) return text;
-    return text.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`));
+    if (typeof result !== 'string') {
+      return key as unknown as T;
+    }
+
+    if (!params) return result as unknown as T;
+    return result.replace(/\{\{(\w+)\}\}/g, (_, match) =>
+      String(params[match] ?? `{{${match}}}`),
+    ) as unknown as T;
   };
 
   private resolvePath(obj: unknown, path: string): unknown {

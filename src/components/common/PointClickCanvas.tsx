@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { useTranslation } from '../../core/i18n';
@@ -20,7 +20,6 @@ export interface PointClickCanvasProps {
 }
 
 const LOUPE_SIZE = 104; // 放大镜直径 (px)
-const ZOOM_FACTOR = 2.5; // 放大倍率
 
 export function PointClickCanvas({
   canvasSize,
@@ -44,6 +43,31 @@ export function PointClickCanvas({
   const [isTouching, setIsTouching] = useState<boolean>(false);
   const [loupePos, setLoupePos] = useState<{ x: number; y: number } | null>(null);
   const [currentCanvasPos, setCurrentCanvasPos] = useState<Point | null>(null);
+
+  // 根据当前点阵包围盒跨度动态自适应放大倍率，确保视野至少完整容纳全部点阵
+  const dynamicZoomFactor = useMemo(() => {
+    if (!gridPoints || gridPoints.length < 2) return 2.2;
+    let minX = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+
+    for (const p of gridPoints) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+
+    const spanX = maxX - minX;
+    const spanY = maxY - minY;
+    const maxSpan = Math.max(spanX, spanY);
+
+    // 为点阵边缘保留适当边距
+    const requiredCoverage = Math.max(maxSpan * 1.3, 36);
+    const calculatedZoom = LOUPE_SIZE / requiredCoverage;
+    return Math.max(1.1, Math.min(3.2, calculatedZoom));
+  }, [gridPoints]);
 
   // 1. 渲染主画布内容
   useEffect(() => {
@@ -90,12 +114,14 @@ export function PointClickCanvas({
       if (!loupeCtx) return;
 
       loupeCtx.clearRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
+      loupeCtx.fillStyle = '#FFFFFF';
+      loupeCtx.fillRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
 
-      // 主画布采样的视口区域（注意考虑主画布的实际物理像素与逻辑像素对应）
+      // 主画布采样的视口区域（直接以触控点为中心，不进行强制边界或网格吸附）
       const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-      const sampleSize = LOUPE_SIZE / ZOOM_FACTOR;
-      const sx = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.x - sampleSize / 2)) * dpr;
-      const sy = Math.max(0, Math.min(canvasSize - sampleSize, focusPt.y - sampleSize / 2)) * dpr;
+      const sampleSize = LOUPE_SIZE / dynamicZoomFactor;
+      const sx = (focusPt.x - sampleSize / 2) * dpr;
+      const sy = (focusPt.y - sampleSize / 2) * dpr;
       const sSize = sampleSize * dpr;
 
       // 绘制放大图像
@@ -123,7 +149,7 @@ export function PointClickCanvas({
       loupeCtx.lineTo(center, center + 14);
       loupeCtx.stroke();
     },
-    [canvasSize],
+    [dynamicZoomFactor],
   );
 
   // 3. 屏幕坐标换算为画布坐标
@@ -199,16 +225,15 @@ export function PointClickCanvas({
     setIsTouching(true);
     setCurrentCanvasPos(coords.canvasPoint);
 
-    // 计算放大镜位置（默认在手指上方 72px，若超出顶部则自动翻转至下方）
-    const flipDown = coords.relY < 90;
+    // 放大镜稳定位于手指正上方 75px，不进行翻转
     setLoupePos({
       x: coords.relX,
-      y: flipDown ? coords.relY + 75 : coords.relY - 75,
+      y: coords.relY - 75,
     });
 
     const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
     setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(isWithinRange ? nearestPoint : coords.canvasPoint);
+    updateLoupeCanvas(coords.canvasPoint);
   };
 
   // 触控移动
@@ -222,15 +247,15 @@ export function PointClickCanvas({
 
     setCurrentCanvasPos(coords.canvasPoint);
 
-    const flipDown = coords.relY < 90;
+    // 放大镜稳定位于手指正上方 75px，不进行翻转
     setLoupePos({
       x: coords.relX,
-      y: flipDown ? coords.relY + 75 : coords.relY - 75,
+      y: coords.relY - 75,
     });
 
     const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
     setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(isWithinRange ? nearestPoint : coords.canvasPoint);
+    updateLoupeCanvas(coords.canvasPoint);
   };
 
   // 触控松手确认提交
