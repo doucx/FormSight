@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复全局设置中日间模式切换未即时生效的主题响应链路", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788170729.6841078, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 补全 GlobalSettingsModal 中 preact/hooks 的 useEffect 导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788170796.9398932, "duration_ms": 0}}

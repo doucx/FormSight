@@ -1,5 +1,5 @@
 import { Sliders } from 'lucide-preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../core/i18n';
 import {
   type GlobalSettings,
