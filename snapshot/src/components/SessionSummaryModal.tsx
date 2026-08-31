@@ -79,9 +79,7 @@ export function SessionSummaryModal({
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-foreground">
-                {accuracy}%
-              </span>
+              <span className="text-2xl font-black text-foreground">{accuracy}%</span>
               <span className="text-xs font-semibold text-slate-400">
                 {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
               </span>

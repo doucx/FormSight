@@ -173,9 +173,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
             <span className="text-xs font-extrabold bg-accent text-primary border border-indigo-100 dark:border-indigo-900 px-2.5 py-1 rounded-xl">
               {t('plan.stageProgress', { current: currentStepIndex + 1, total: validItems.length })}
             </span>
-            <span className="text-xs font-bold text-foreground tracking-tight">
-              {plan.name}
-            </span>
+            <span className="text-xs font-bold text-foreground tracking-tight">{plan.name}</span>
           </div>
         </div>
 

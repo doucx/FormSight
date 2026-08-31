@@ -53,9 +53,7 @@ export function PlanSummaryModal({
               <Target className="w-3.5 h-3.5 text-indigo-500" />
               {t('common.overallAccuracy')}
             </div>
-            <div className="text-2xl font-black text-foreground">
-              {accuracy}%
-            </div>
+            <div className="text-2xl font-black text-foreground">{accuracy}%</div>
           </div>
 
           <div className="bg-emerald-50/60 dark:bg-emerald-950/40 p-3.5 rounded-2xl border border-emerald-100 dark:border-emerald-900/60 space-y-1">
@@ -110,9 +108,7 @@ export function PlanSummaryModal({
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">
-                        {cardTitle}
-                      </div>
+                      <div className="text-xs font-bold text-foreground">{cardTitle}</div>
                       <div className="text-[10px] text-slate-400">
                         {t('common.trialsCorrect', {
                           hits: stageHits,

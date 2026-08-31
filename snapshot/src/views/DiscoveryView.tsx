@@ -67,9 +67,7 @@ export function DiscoveryView({
           <div className="p-4 bg-muted text-muted-foreground rounded-3xl">
             <Inbox className="w-8 h-8" />
           </div>
-          <div className="text-base font-bold text-foreground">
-            {t('home.noMatchTitle')}
-          </div>
+          <div className="text-base font-bold text-foreground">{t('home.noMatchTitle')}</div>
           <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
           <button
             type="button"

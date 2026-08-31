@@ -73,9 +73,7 @@ export function PlanHeroCard({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-foreground">
-                {t('plan.todayPlan')}
-              </h2>
+              <h2 className="text-lg font-bold text-foreground">{t('plan.todayPlan')}</h2>
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-muted text-muted-foreground rounded-full">
                 {t('common.empty')}
               </span>
@@ -182,9 +180,7 @@ export function PlanHeroCard({
                   )}
                 </div>
               ) : (
-                <h2 className="text-lg font-black text-foreground tracking-tight">
-                  {plan.name}
-                </h2>
+                <h2 className="text-lg font-black text-foreground tracking-tight">{plan.name}</h2>
               )}
 
               <span className="text-[10px] font-extrabold px-2 py-0.5 bg-accent text-primary border border-indigo-100 dark:border-indigo-900 rounded-full">
@@ -227,9 +223,7 @@ export function PlanHeroCard({
                   {idx + 1}
                 </div>
                 <Icon className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs font-bold text-foreground">
-                  {cardTitle}
-                </span>
+                <span className="text-xs font-bold text-foreground">{cardTitle}</span>
                 <span className="text-[11px] font-mono font-bold text-primary bg-card px-1.5 py-0.5 rounded-lg border border-border/60 shadow-sm">
                   {item.targetTrials}
                   {t('common.trialsUnit')}

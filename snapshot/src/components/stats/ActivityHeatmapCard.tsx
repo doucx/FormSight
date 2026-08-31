@@ -154,8 +154,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
 
   const getHeatmapColor = (count: number, isFuture: boolean) => {
     if (isFuture) return 'bg-transparent border border-transparent';
-    if (count === 0)
-      return 'bg-muted border border-slate-200/40 dark:border-slate-700/40';
+    if (count === 0) return 'bg-muted border border-slate-200/40 dark:border-slate-700/40';
     if (count < 10) return 'bg-indigo-200 border border-indigo-300/60';
     if (count < 25) return 'bg-indigo-400 border border-indigo-500/60';
     if (count < 50) return 'bg-indigo-600 border border-indigo-600';

@@ -1,165 +1,42 @@
-现在我们进入阶段三：编写并执行自动化清洗脚本，批量将项目中分散硬编码的深浅色类名替换为阶段一/二建立的语义设计令牌（Design Tokens）。
+# 📸 Snapshot Capture
 
-## [WIP] refactor: 执行自动化清洗脚本替换全站语义化设计令牌 (阶段三)
+### 💬 备注:
+checkf
 
-### 用户需求
-编写并执行自动化清洗脚本，将源码目录（`src/`）中 90+ 处硬编码的颜色样式类（如 `bg-white dark:bg-slate-900`、`text-slate-800 dark:text-slate-100` 等）批量替换为 `bg-card`、`bg-muted`、`border-border`、`text-foreground`、`text-muted-foreground` 等语义化 Token。
+检测到工作区发生变更。
 
-### 评论
-使用自动化正则表达式与 AST 替换可以消除 80% 以上的手工重复劳动，并消除人工修改可能遗漏或缩进损坏的风险，使整个代码库瞬间轻量化。
-
-### 目标
-1. 编写 `scripts/migrate-colors.mjs`，内置完整的语义类映射规则表，排除 `index.css` 和 `theme.ts` 等核心底座文件。
-2. 执行脚本完成全量 `.tsx` 与 `.ts` 文件的扫描与类名替换。
-
-### 基本原理
-通过 Node.js 原生递归遍历文件系统，针对高频出现的深浅色成对 Tailwind 类名执行安全正则替换，将具体色彩值统一收敛至 CSS 变量映射类。
-
-### 标签
-#intent/refactor #flow/ready #priority/high #comp/ui #concept/theme #scope/core #ai/instruct #task/domain/ui #task/object/token-migration #task/action/refactor #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建自动化清洗脚本
-
-编写 `scripts/migrate-colors.mjs`。
-
-~~~~~act
-write_file
-scripts/migrate-colors.mjs
-~~~~~
-~~~~~javascript
-import fs from 'node:fs';
-import path from 'node:path';
-
-// 递归获取目录下所有匹配文件
-function getFiles(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  const files = [];
-  for (const entry of entries) {
-    const fullPath = path.resolve(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...getFiles(fullPath));
-    } else if (/\.(tsx|ts)$/.test(entry.name)) {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
-
-// 语义 Token 批量映射规则表
-const REPLACEMENTS = [
-  // 1. 背景色与卡片容器
-  [/\bbg-white\s+dark:bg-slate-900\b/g, 'bg-card'],
-  [/\bbg-white\/95\s+dark:bg-slate-900\/95\b/g, 'bg-card/95'],
-  [/\bbg-white\/80\s+dark:bg-slate-800\/60\b/g, 'bg-card/80'],
-  [/\bbg-slate-50\s+dark:bg-slate-800\/60\b/g, 'bg-muted/60'],
-  [/\bbg-slate-50\s+dark:bg-slate-800\/80\b/g, 'bg-muted/80'],
-  [/\bbg-slate-50\s+dark:bg-slate-800\b/g, 'bg-muted'],
-  [/\bbg-slate-50\/50\s+dark:bg-slate-800\/40\b/g, 'bg-muted/40'],
-  [/\bbg-slate-50\/70\s+dark:bg-slate-800\/60\b/g, 'bg-muted/60'],
-  [/\bbg-slate-50\/80\s+dark:bg-slate-800\/80\b/g, 'bg-muted/80'],
-  [/\bbg-slate-50\/60\s+dark:bg-slate-800\/40\b/g, 'bg-muted/40'],
-  [/\bbg-slate-100\s+dark:bg-slate-800\b/g, 'bg-muted'],
-  [/\bbg-slate-100\/90\s+dark:bg-slate-800\b/g, 'bg-muted'],
-  [/\bbg-slate-200\s+dark:bg-slate-700\b/g, 'bg-border'],
-  [/\bbg-slate-200\/80\s+dark:bg-slate-900\/80\b/g, 'bg-muted'],
-  [/\bhover:bg-slate-100\s+dark:hover:bg-slate-800\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-slate-50\s+dark:hover:bg-slate-800\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-slate-50\s+dark:hover:bg-slate-700\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-slate-50\s+dark:hover:bg-slate-800\/60\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-slate-100\s+dark:hover:bg-slate-700\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-slate-200\s+dark:hover:bg-slate-700\b/g, 'hover:bg-muted/80'],
-
-  // 2. 边框 (Borders)
-  [/\bborder-slate-200(?:\/80|\/90)?\s+dark:border-slate-800(?:\/80|\/60)?\b/g, 'border-border'],
-  [/\bborder-slate-200(?:\/80|\/90)?\s+dark:border-slate-700(?:\/80|\/60)?\b/g, 'border-border'],
-  [/\bborder-slate-200\s+dark:border-slate-800\b/g, 'border-border'],
-  [/\bborder-slate-200\s+dark:border-slate-700\b/g, 'border-border'],
-  [/\bborder-slate-200\/60\s+dark:border-slate-700\/60\b/g, 'border-border/60'],
-  [/\bborder-slate-100\s+dark:border-slate-800\b/g, 'border-border/60'],
-  [/\bborder-slate-100\s+dark:border-slate-700(?:\/60)?\b/g, 'border-border/60'],
-  [/\bborder-gray-200\/80\s+dark:border-slate-800\b/g, 'border-border'],
-  [/\bborder-gray-100\s+dark:border-slate-800\b/g, 'border-border'],
-
-  // 3. 文字色彩 (Text Colors)
-  [/\btext-slate-900\s+dark:text-slate-100\b/g, 'text-foreground'],
-  [/\btext-slate-800\s+dark:text-slate-100\b/g, 'text-foreground'],
-  [/\btext-slate-800\s+dark:text-slate-200\b/g, 'text-foreground'],
-  [/\btext-slate-700\s+dark:text-slate-200\b/g, 'text-foreground'],
-  [/\btext-slate-700\s+dark:text-slate-300\b/g, 'text-foreground'],
-  [/\btext-slate-600\s+dark:text-slate-300\b/g, 'text-muted-foreground'],
-  [/\btext-slate-600\s+dark:text-slate-400\b/g, 'text-muted-foreground'],
-  [/\btext-slate-500\s+dark:text-slate-400\b/g, 'text-muted-foreground'],
-  [/\btext-slate-400\s+dark:text-slate-500\b/g, 'text-muted-foreground'],
-  [/\bhover:text-slate-900\s+dark:hover:text-slate-100\b/g, 'hover:text-foreground'],
-  [/\bhover:text-slate-900\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
-  [/\bhover:text-slate-700\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
-  [/\bhover:text-slate-600\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
-  [/\bplaceholder:text-slate-400\s+dark:placeholder:text-slate-500\b/g, 'placeholder:text-muted-foreground'],
-
-  // 4. 品牌与强调色 (Primary / Accent / Indigo)
-  [/\bbg-indigo-50\s+dark:bg-indigo-950\/60\b/g, 'bg-accent'],
-  [/\bbg-indigo-50\s+dark:bg-indigo-950\b/g, 'bg-accent'],
-  [/\btext-indigo-600\s+dark:text-indigo-400\b/g, 'text-primary'],
-  [/\btext-indigo-700\s+dark:text-indigo-300\b/g, 'text-primary'],
-  [/\bhover:text-indigo-600\s+dark:hover:text-indigo-400\b/g, 'hover:text-primary'],
-  [/\bhover:bg-indigo-50\s+dark:hover:bg-indigo-950\b/g, 'hover:bg-accent'],
-  [/\bhover:bg-indigo-50\/60\s+dark:hover:bg-indigo-950\/40\b/g, 'hover:bg-accent/60'],
-  [/\bhover:bg-indigo-50\/30\s+dark:hover:bg-indigo-950\/30\b/g, 'hover:bg-accent/30'],
-  [/\bhover:border-indigo-300\s+dark:hover:border-indigo-500\b/g, 'hover:border-primary/60'],
-];
-
-// 需要排除的文件 (避免修改基础定义文件)
-const EXCLUDED_FILES = new Set([
-  path.resolve('src/utils/theme.ts'),
-  path.resolve('src/utils/cn.ts'),
-  path.resolve('src/components/ui/button.tsx'),
-  path.resolve('src/components/ui/card.tsx'),
-  path.resolve('src/components/ui/badge.tsx'),
-]);
-
-const srcDir = path.resolve('src');
-const allFiles = getFiles(srcDir);
-
-let modifiedCount = 0;
-
-for (const file of allFiles) {
-  if (EXCLUDED_FILES.has(file)) continue;
-
-  let content = fs.readFileSync(file, 'utf-8');
-  let changed = false;
-
-  for (const [regex, replacement] of REPLACEMENTS) {
-    if (regex.test(content)) {
-      content = content.replace(regex, replacement);
-      changed = true;
-    }
-  }
-
-  if (changed) {
-    fs.writeFileSync(file, content, 'utf-8');
-    console.log(`[Cleaned] ${path.relative(process.cwd(), file)}`);
-    modifiedCount++;
-  }
-}
-
-console.log(`\n🎉 Refactoring Complete: Cleaned ${modifiedCount} files.`);
-~~~~~
-
-#### Acts 2: 运行清洗脚本批量替换类名
-
-执行脚本，自动遍历并清洗所有相关组件。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-node scripts/migrate-colors.mjs
-~~~~~
-
-### 下一步建议
-1. 自动化清洗脚本执行后，全站大量的 `bg-white dark:bg-slate-900` 与 `text-slate-800 dark:text-slate-100` 已被统一转化为 `bg-card`、`border-border` 与 `text-foreground` 等语义令牌。
-2. 接下来可以进入**阶段四**：选取业务核心通用组件（如 `ModalShell.tsx`、`QuestionCardShell.tsx` 等）接入 `src/components/ui/` 中的原子组件（`Card`、`Button`），进一步精简 DOM 结构。
+### 📝 变更文件摘要:
+```
+scripts/migrate-colors.mjs                           |  7 +++++--
+ src/components/SessionSummaryModal.tsx               |  4 +---
+ src/components/common/Choice2AfcContainer.tsx        |  7 ++-----
+ src/components/common/ChoiceNafcContainer.tsx        |  6 ++----
+ src/components/common/IdlePauseOverlay.tsx           |  4 +---
+ src/components/common/QuestionCardShell.tsx          |  4 +---
+ src/components/common/StandardSliderView.tsx         |  4 +---
+ src/components/common/TagPill.tsx                    |  8 ++------
+ src/components/navigation/AppNavigation.tsx          |  4 +---
+ src/components/plan/PlanHeroCard.tsx                 | 12 +++---------
+ src/components/plan/PlanSummaryModal.tsx             |  8 ++------
+ src/components/plan/editor/CardPickerPanel.tsx       |  4 +---
+ src/components/plan/editor/PlanLibraryDrawer.tsx     |  4 +---
+ src/components/plan/editor/PlanStageList.tsx         |  4 +---
+ src/components/settings/common/SliderMarginGroup.tsx |  4 +---
+ .../settings/sections/DataGovernanceSection.tsx      |  8 ++------
+ .../settings/sections/GeneralPreferencesSection.tsx  | 20 +++++---------------
+ src/components/stats/ActivityHeatmapCard.tsx         |  3 +--
+ src/components/training/TrainingShell.tsx            |  4 +---
+ src/components/ui/badge.tsx                          |  7 +++----
+ src/components/ui/button.tsx                         | 10 ++++++----
+ src/components/ui/card.tsx                           |  2 +-
+ src/components/ui/index.ts                           |  2 +-
+ src/index.css                                        |  2 +-
+ src/packs/abstraction/components/TopDown2AfcView.tsx |  4 +++-
+ src/packs/angle/components/AngleEstimationView.tsx   |  8 +++++++-
+ .../perspective/components/PerspectiveVpView.tsx     |  8 +++++++-
+ src/utils/cn.ts                                      |  2 +-
+ src/views/CardAnalyticsView.tsx                      | 16 ++++------------
+ src/views/DiscoveryView.tsx                          |  4 +---
+ ...
+ 33 files changed, 75 insertions(+), 131 deletions(-)
+```

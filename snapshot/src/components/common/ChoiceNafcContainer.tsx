@@ -68,8 +68,7 @@ export function ChoiceNafcContainer<T = unknown>({
         const isTarget = opt.isCorrect;
         const keyLabel = opt.keyLabel || (idx + 1).toString();
 
-        let border =
-          'border-border hover:border-primary/60 hover:shadow-md bg-muted/60';
+        let border = 'border-border hover:border-primary/60 hover:shadow-md bg-muted/60';
         if (showAnswer) {
           if (isTarget) {
             border =
@@ -77,8 +76,7 @@ export function ChoiceNafcContainer<T = unknown>({
           } else if (isSelected) {
             border = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
           } else {
-            border =
-              'bg-muted/40 border-border opacity-50';
+            border = 'bg-muted/40 border-border opacity-50';
           }
         } else if (isSelected) {
           border =

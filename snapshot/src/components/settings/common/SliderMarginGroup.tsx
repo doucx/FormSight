@@ -20,9 +20,7 @@ export function SliderMarginGroup({ title, value, onChange, options }: SliderMar
 
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold text-foreground">
-        {effectiveTitle}
-      </div>
+      <div className="text-sm font-semibold text-foreground">{effectiveTitle}</div>
       <div className="grid grid-cols-4 gap-1.5">
         {defaultOptions.map((opt) => (
           <button

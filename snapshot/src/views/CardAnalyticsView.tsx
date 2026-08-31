@@ -110,9 +110,7 @@ export function CardAnalyticsView({
     return (
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center justify-center h-96 gap-4 bg-card rounded-3xl border border-border p-8 shadow-sm">
         <Info className="w-10 h-10 text-slate-400" />
-        <div className="text-sm font-bold text-foreground">
-          {t('home.noMatchTitle')}
-        </div>
+        <div className="text-sm font-bold text-foreground">{t('home.noMatchTitle')}</div>
         <button
           type="button"
           onClick={onExit}
@@ -277,9 +275,7 @@ export function CardAnalyticsView({
                 <Target className="w-4 h-4 text-indigo-500" />
                 {t('common.accuracy')}
               </div>
-              <div className="text-3xl font-black text-foreground">
-                {summaryStats.accuracy}%
-              </div>
+              <div className="text-3xl font-black text-foreground">{summaryStats.accuracy}%</div>
             </div>
 
             <div className="bg-card p-5 rounded-3xl border border-emerald-100 dark:border-slate-800 shadow-sm space-y-1">
@@ -340,9 +336,7 @@ export function CardAnalyticsView({
                         <div className="font-bold text-foreground">
                           {t('analyticsModal.paceSummaryTitle')}
                         </div>
-                        <p className="text-muted-foreground">
-                          {insights.paceSummaryText}
-                        </p>
+                        <p className="text-muted-foreground">{insights.paceSummaryText}</p>
                       </div>
                     </div>
 
@@ -354,9 +348,7 @@ export function CardAnalyticsView({
                         <div className="font-bold text-foreground">
                           {t('analyticsModal.levelFocusSummaryTitle')}
                         </div>
-                        <p className="text-muted-foreground">
-                          {insights.growthZoneText}
-                        </p>
+                        <p className="text-muted-foreground">{insights.growthZoneText}</p>
                       </div>
                     </div>
                   </>

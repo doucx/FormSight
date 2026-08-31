@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority';
 import type { ComponentChildren, JSX } from 'preact';
 import { cn } from '../../utils/cn';
 
@@ -10,8 +10,7 @@ export const badgeVariants = cva(
         default: 'bg-primary text-primary-foreground',
         secondary: 'bg-muted text-muted-foreground border border-border/60',
         outline: 'border border-border text-foreground',
-        accent:
-          'bg-accent text-accent-foreground border border-indigo-200 dark:border-indigo-900',
+        accent: 'bg-accent text-accent-foreground border border-indigo-200 dark:border-indigo-900',
         success:
           'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800',
         warning:

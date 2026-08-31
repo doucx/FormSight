@@ -136,9 +136,7 @@ export function TrainingShell({
             <span className="text-[10px] font-extrabold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider hidden sm:inline">
               Lvl
             </span>
-            <span className="font-mono font-black text-primary">
-              {currentLevel}
-            </span>
+            <span className="font-mono font-black text-primary">{currentLevel}</span>
           </div>
 
           {showTimer && (

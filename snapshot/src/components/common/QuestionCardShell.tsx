@@ -25,9 +25,7 @@ export function QuestionCardShell({
     >
       {showCanvasHints && hintText && (
         <div className="text-xs font-bold text-muted-foreground flex items-center gap-1.5 bg-muted px-3.5 py-1.5 rounded-full border border-border/60 text-center">
-          {HintIcon && (
-            <HintIcon className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-          )}
+          {HintIcon && <HintIcon className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
           <span>{hintText}</span>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority';
+import { type VariantProps, cva } from 'class-variance-authority';
 import type { ComponentChildren, JSX } from 'preact';
 import { cn } from '../../utils/cn';
 
@@ -12,8 +12,10 @@ export const buttonVariants = cva(
         secondary: 'bg-muted text-foreground hover:bg-muted/80',
         outline:
           'border border-border bg-card hover:bg-accent hover:text-accent-foreground text-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground',
-        danger: 'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-200 dark:shadow-none',
+        ghost:
+          'hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-foreground',
+        danger:
+          'bg-rose-600 text-white hover:bg-rose-700 shadow-md shadow-rose-200 dark:shadow-none',
       },
       size: {
         default: 'h-10 px-4 py-2',

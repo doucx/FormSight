@@ -65,7 +65,10 @@ const REPLACEMENTS = [
   [/\bhover:text-slate-900\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
   [/\bhover:text-slate-700\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
   [/\bhover:text-slate-600\s+dark:hover:text-slate-200\b/g, 'hover:text-foreground'],
-  [/\bplaceholder:text-slate-400\s+dark:placeholder:text-slate-500\b/g, 'placeholder:text-muted-foreground'],
+  [
+    /\bplaceholder:text-slate-400\s+dark:placeholder:text-slate-500\b/g,
+    'placeholder:text-muted-foreground',
+  ],
 
   // 4. 品牌与强调色 (Primary / Accent / Indigo)
   [/\bbg-indigo-50\s+dark:bg-indigo-950\/60\b/g, 'bg-accent'],

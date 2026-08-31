@@ -106,7 +106,13 @@ export function PerspectiveVpView({
               {t('packs.perspective.views.vpTrueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
-            <span className={isHit ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
+            <span
+              className={
+                isHit
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-rose-600 dark:text-rose-400 font-bold'
+              }
+            >
               {t('packs.perspective.views.vpErrorInfo', {
                 error: userAnswer?.errorValue ?? 0,
                 tolerance,

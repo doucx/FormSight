@@ -80,7 +80,13 @@ export function AngleEstimationView({
               {t('packs.angle.views.trueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
-            <span className={isHit ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
+            <span
+              className={
+                isHit
+                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                  : 'text-rose-600 dark:text-rose-400 font-bold'
+              }
+            >
               {t('packs.angle.views.errorInfo', {
                 error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
                 tolerance,
