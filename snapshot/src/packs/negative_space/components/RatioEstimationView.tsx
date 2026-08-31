@@ -59,7 +59,7 @@ export function RatioEstimationView({
       submitButtonText={t('common.confirmSpace')}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
+        <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center">
           <CanvasView
             width={NEGATIVE_SPACE_CANVAS_SIZE}
             height={NEGATIVE_SPACE_CANVAS_SIZE}

@@ -73,13 +73,13 @@ export function SessionSummaryModal({
       <div className="flex flex-col gap-4">
         {/* 核心指标统计卡片 */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
+          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Target className="w-3.5 h-3.5 text-indigo-500" />
               {t('summary.accuracyCount')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
+              <span className="text-2xl font-black text-foreground">
                 {accuracy}%
               </span>
               <span className="text-xs font-semibold text-slate-400">
@@ -88,13 +88,13 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60 space-y-1">
+          <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60 space-y-1">
             <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400">
               <Clock className="w-3.5 h-3.5 text-indigo-500" />
               {t('summary.duration')}
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
+              <span className="text-2xl font-black text-foreground">
                 {formatSecondsToTimer(elapsedSeconds)}
               </span>
               <span className="text-xs font-semibold text-slate-400">
@@ -114,7 +114,7 @@ export function SessionSummaryModal({
               <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
                 {t('summary.levelEvolution')}
               </div>
-              <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
+              <div className="text-[11px] text-primary">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -124,8 +124,8 @@ export function SessionSummaryModal({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 font-mono font-black text-slate-800 dark:text-slate-100 text-base">
-            <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-sm">
+          <div className="flex items-center gap-2 font-mono font-black text-foreground text-base">
+            <span className="bg-white dark:bg-slate-800 px-2.5 py-1 rounded-xl border border-indigo-100 dark:border-slate-700 text-foreground shadow-sm">
               Lvl {startLevel}
             </span>
             <ArrowRight className="w-4 h-4 text-indigo-500" />
@@ -136,9 +136,9 @@ export function SessionSummaryModal({
         </div>
 
         {/* 折线图 Canvas 区 */}
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/60 w-full overflow-hidden">
+        <div className="bg-muted/60 p-3.5 rounded-2xl border border-border w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
-            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+            <span className="text-[11px] font-bold text-muted-foreground">
               {t('summary.curveTitle')}
             </span>
             <div className="flex items-center gap-3 text-[10px]">
@@ -156,7 +156,7 @@ export function SessionSummaryModal({
             ref={canvasRef}
             width={440}
             height={160}
-            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-slate-100 dark:border-slate-700 shadow-inner"
+            className="w-full max-w-full aspect-[11/4] rounded-xl block border border-border/60 shadow-inner"
           />
         </div>
 
@@ -165,7 +165,7 @@ export function SessionSummaryModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+            className="w-full py-3 px-4 text-xs font-bold text-slate-700 bg-muted hover:bg-muted/80 text-foreground rounded-xl transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             {t('summary.backHome')}

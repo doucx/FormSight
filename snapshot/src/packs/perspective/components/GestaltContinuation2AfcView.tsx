@@ -43,7 +43,7 @@ export function GestaltContinuation2AfcView({
         title: t('common.optionA'),
         isCorrect: isAHit,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={PERSPECTIVE_2AFC_SIZE}
               height={PERSPECTIVE_2AFC_SIZE}
@@ -66,7 +66,7 @@ export function GestaltContinuation2AfcView({
         title: t('common.optionB'),
         isCorrect: isBHit,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={PERSPECTIVE_2AFC_SIZE}
               height={PERSPECTIVE_2AFC_SIZE}

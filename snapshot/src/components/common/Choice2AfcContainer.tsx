@@ -55,7 +55,7 @@ export function Choice2AfcContainer({
     const isTarget = opt.isCorrect;
 
     let borderStyle =
-      'bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/30 dark:hover:bg-indigo-950/30 border-slate-200/90 dark:border-slate-700/80 hover:border-indigo-300 dark:hover:border-indigo-500 hover:shadow-md cursor-pointer active:scale-[0.98]';
+      'bg-muted/60 hover:bg-accent/30 border-border hover:border-primary/60 hover:shadow-md cursor-pointer active:scale-[0.98]';
 
     if (showAnswer) {
       if (isTarget) {
@@ -65,7 +65,7 @@ export function Choice2AfcContainer({
         borderStyle = 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm';
       } else {
         borderStyle =
-          'bg-slate-50/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-60';
+          'bg-muted/40 border-border opacity-60';
       }
     } else if (isSelected) {
       borderStyle =
@@ -80,7 +80,7 @@ export function Choice2AfcContainer({
         className={`group relative flex flex-col items-center gap-3 p-4 rounded-3xl border transition-all duration-200 text-left ${borderStyle}`}
       >
         <div className="flex items-center justify-between w-full px-1">
-          <span className="flex items-center gap-1.5 text-xs font-black text-slate-700 dark:text-slate-200 uppercase">
+          <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
             <span className="w-5 h-5 rounded-lg bg-slate-800 dark:bg-slate-700 text-white flex items-center justify-center font-mono text-[11px]">
               {opt.keyLabel || (opt.key === 'A' ? '1' : '2')}
             </span>
@@ -95,7 +95,7 @@ export function Choice2AfcContainer({
           )}
 
           {showAnswer && !isTarget && opt.badge && (
-            <span className="text-xs font-semibold text-slate-400 dark:text-slate-500">
+            <span className="text-xs font-semibold text-muted-foreground">
               {opt.badge}
             </span>
           )}

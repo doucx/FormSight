@@ -46,7 +46,7 @@ export function AreaComparison2AfcView({
         isCorrect: isAHit,
         badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioA ?? 50 }),
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={TWO_AFC_CANVAS_SIZE}
               height={TWO_AFC_CANVAS_SIZE}
@@ -70,7 +70,7 @@ export function AreaComparison2AfcView({
         isCorrect: isBHit,
         badge: t('packs.negative_space.views.whiteSpace', { ratio: question.negRatioB ?? 50 }),
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView
               width={TWO_AFC_CANVAS_SIZE}
               height={TWO_AFC_CANVAS_SIZE}

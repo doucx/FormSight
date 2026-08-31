@@ -20,9 +20,9 @@ const CANVAS_OPTION_CLASS =
 
 function PromptFrame({ title, children }: { title: string; children: ComponentChildren }) {
   return (
-    <div className="flex flex-col items-center gap-2 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{title}</span>
-      <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+    <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
+      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{title}</span>
+      <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
         {children}
       </div>
     </div>
@@ -236,7 +236,7 @@ export function TopDown2AfcView({
         title: `${t('common.areaA')} (${t('common.optionA')})`,
         isCorrect: isTargetA,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             {renderOptionCanvas('A')}
           </div>
         ),
@@ -245,7 +245,7 @@ export function TopDown2AfcView({
         title: `${t('common.areaB')} (${t('common.optionB')})`,
         isCorrect: isTargetB,
         content: (
-          <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             {renderOptionCanvas('B')}
           </div>
         ),

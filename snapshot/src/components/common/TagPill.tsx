@@ -54,12 +54,12 @@ export function TagPill({
       className={`inline-flex items-center gap-1 font-bold rounded-xl transition-all cursor-pointer select-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 [-webkit-tap-highlight-color:transparent] active:scale-[0.98] whitespace-nowrap flex-shrink-0 ${sizeClass} ${
         selected
           ? activeClass
-          : 'bg-slate-50 dark:bg-slate-800/80 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60'
+          : 'bg-muted/80 hover:bg-accent text-muted-foreground border border-border'
       } ${className}`}
     >
       {selected && <Check className="w-3 h-3 flex-shrink-0" />}
       {!selected && Icon && (
-        <Icon className="w-3 h-3 flex-shrink-0 text-slate-400 dark:text-slate-500" />
+        <Icon className="w-3 h-3 flex-shrink-0 text-muted-foreground" />
       )}
       <span>{label}</span>
       {count !== undefined && (
@@ -67,7 +67,7 @@ export function TagPill({
           className={`text-[10px] font-mono px-1 rounded ${
             selected
               ? activeBadgeClass
-              : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+              : 'bg-border text-muted-foreground'
           }`}
         >
           {count}

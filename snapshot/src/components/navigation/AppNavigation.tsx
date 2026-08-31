@@ -55,7 +55,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
   return (
     <>
       {/* 1. 桌面端垂直侧边栏 (Desktop Left Sidebar) */}
-      <aside className="hidden md:flex flex-col justify-between w-56 lg:w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 h-screen sticky top-0 p-4 lg:p-5 flex-shrink-0 z-30 shadow-xs transition-colors">
+      <aside className="hidden md:flex flex-col justify-between w-56 lg:w-64 border-r border-border bg-card h-screen sticky top-0 p-4 lg:p-5 flex-shrink-0 z-30 shadow-xs transition-colors">
         <div className="space-y-6">
           {/* 品牌标识 */}
           <button
@@ -67,13 +67,13 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="font-black text-base text-slate-900 dark:text-slate-100 tracking-tight leading-tight flex items-center gap-1.5">
+              <div className="font-black text-base text-foreground tracking-tight leading-tight flex items-center gap-1.5">
                 {t('common.appName')}
-                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-100 dark:border-indigo-900">
+                <span className="text-[9px] font-extrabold px-1.5 py-0.2 bg-accent text-primary rounded-md border border-indigo-100 dark:border-indigo-900">
                   v{__APP_VERSION__}
                 </span>
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium mt-0.5">
+              <div className="text-[10px] text-muted-foreground font-medium mt-0.5">
                 {t('common.appSubtitle').slice(0, 14)}...
               </div>
             </div>
@@ -92,15 +92,15 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
                   onClick={() => onNavigate(item.target)}
                   className={`w-full py-2.5 px-3.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-3 cursor-pointer select-none text-left ${
                     active
-                      ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      ? 'bg-accent text-primary shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
                   }`}
                 >
                   <Icon
                     className={`w-4 h-4 flex-shrink-0 ${
                       active
-                        ? 'text-indigo-600 dark:text-indigo-400'
-                        : 'text-slate-400 dark:text-slate-500'
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
                     }`}
                   />
                   <span className="truncate flex-1">{item.label}</span>
@@ -114,13 +114,13 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
         </div>
 
         {/* 侧边栏底部：设置与社区外链 */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div className="pt-4 border-t border-border/60 space-y-2">
           <button
             type="button"
             onClick={onOpenSettings}
-            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-all flex items-center gap-2.5 cursor-pointer"
+            className="w-full py-2 px-3 rounded-xl text-xs font-semibold text-muted-foreground hover:text-primary hover:bg-accent/60 transition-all flex items-center gap-2.5 cursor-pointer"
           >
-            <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+            <Settings className="w-4 h-4 text-muted-foreground" />
             <span className="truncate">{t('common.globalSettings')}</span>
           </button>
 
@@ -130,7 +130,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               href="https://github.com/doucx/FormSight"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-1.5 px-2 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/60 dark:border-slate-700/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
+              className="py-1.5 px-2 bg-muted/60 hover:bg-accent text-muted-foreground hover:text-foreground border border-border/60 rounded-xl transition-all flex items-center justify-center gap-1.5 text-[11px] font-semibold"
               title="GitHub 开源仓库"
             >
               <Github className="w-3.5 h-3.5" />
@@ -152,7 +152,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
       </aside>
 
       {/* 2. 移动端底部便携导航栏 (Mobile Bottom Tab Bar) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around shadow-lg transition-colors">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-2 py-1.5 flex items-center justify-around shadow-lg transition-colors">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isTabActive(item.id);
@@ -164,8 +164,8 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
               onClick={() => onNavigate(item.target)}
               className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold transition-all cursor-pointer ${
                 active
-                  ? 'text-indigo-600 dark:text-indigo-400 font-extrabold'
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                  ? 'text-primary font-extrabold'
+                  : 'text-muted-foreground hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -177,7 +177,7 @@ export function AppNavigation({ currentRoute, onNavigate, onOpenSettings }: AppN
         <button
           type="button"
           onClick={onOpenSettings}
-          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
+          className="flex flex-col items-center gap-0.5 py-1 px-3 rounded-xl text-[10px] font-bold text-muted-foreground hover:text-slate-600 dark:hover:text-slate-300 transition-all cursor-pointer"
         >
           <Settings className="w-4 h-4" />
           <span>{t('common.settings')}</span>

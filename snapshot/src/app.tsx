@@ -41,7 +41,7 @@ export function App() {
     : null;
 
   return (
-    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50/70 dark:bg-slate-950 text-foreground antialiased transition-colors duration-200">
       <AppRouter
         route={route}
         navigate={navigate}

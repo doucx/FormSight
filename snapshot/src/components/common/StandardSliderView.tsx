@@ -137,16 +137,16 @@ export function StandardSliderView({
     >
       {preview}
 
-      <div className="w-full space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+      <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
+        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>{label}</span>
-          <span className="font-mono text-base font-black text-indigo-600 dark:text-indigo-400">
+          <span className="font-mono text-base font-black text-primary">
             {formattedDisplay}
           </span>
         </div>
 
         <div className="flex items-center gap-3 w-full">
-          <span className="font-bold font-mono text-slate-400 dark:text-slate-500 text-xs">
+          <span className="font-bold font-mono text-muted-foreground text-xs">
             {min}
             {unit}
           </span>
@@ -173,7 +173,7 @@ export function StandardSliderView({
           >
             <div
               ref={trackRef}
-              className="relative w-full h-7 rounded-xl bg-slate-200 dark:bg-slate-700 border border-slate-300/80 dark:border-slate-600/80 shadow-inner flex items-center overflow-hidden"
+              className="relative w-full h-7 rounded-xl bg-border border border-slate-300/80 dark:border-slate-600/80 shadow-inner flex items-center overflow-hidden"
             >
               {/* 当前激活进度条 */}
               <div
@@ -223,7 +223,7 @@ export function StandardSliderView({
             </div>
           </div>
 
-          <span className="font-bold font-mono text-slate-400 dark:text-slate-500 text-xs">
+          <span className="font-bold font-mono text-muted-foreground text-xs">
             {max}
             {unit}
           </span>

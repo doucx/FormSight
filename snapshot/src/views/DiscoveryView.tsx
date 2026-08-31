@@ -45,7 +45,7 @@ export function DiscoveryView({
       {/* 顶部标题与说明栏 */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
             {t('nav.discovery')}
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-0.5">
@@ -63,18 +63,18 @@ export function DiscoveryView({
 
       {/* 模块大盘卡片列表 */}
       {filteredCards.length === 0 ? (
-        <div className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-12 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
-          <div className="p-4 bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 rounded-3xl">
+        <div className="w-full bg-card border border-border rounded-3xl p-12 flex flex-col items-center justify-center gap-3 text-center shadow-sm">
+          <div className="p-4 bg-muted text-muted-foreground rounded-3xl">
             <Inbox className="w-8 h-8" />
           </div>
-          <div className="text-base font-bold text-slate-800 dark:text-slate-100">
+          <div className="text-base font-bold text-foreground">
             {t('home.noMatchTitle')}
           </div>
           <p className="text-xs text-slate-400 max-w-sm leading-relaxed">{t('home.noMatchDesc')}</p>
           <button
             type="button"
             onClick={() => handleQueryChange({})}
-            className="mt-2 px-4 py-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+            className="mt-2 px-4 py-2 text-xs font-bold text-primary bg-accent hover:bg-indigo-100 dark:hover:bg-indigo-900/60 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t('home.resetFilter')}

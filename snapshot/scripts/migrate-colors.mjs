@@ -1,36 +1,3 @@
-现在我们进入阶段三：编写并执行自动化清洗脚本，批量将项目中分散硬编码的深浅色类名替换为阶段一/二建立的语义设计令牌（Design Tokens）。
-
-## [WIP] refactor: 执行自动化清洗脚本替换全站语义化设计令牌 (阶段三)
-
-### 用户需求
-编写并执行自动化清洗脚本，将源码目录（`src/`）中 90+ 处硬编码的颜色样式类（如 `bg-white dark:bg-slate-900`、`text-slate-800 dark:text-slate-100` 等）批量替换为 `bg-card`、`bg-muted`、`border-border`、`text-foreground`、`text-muted-foreground` 等语义化 Token。
-
-### 评论
-使用自动化正则表达式与 AST 替换可以消除 80% 以上的手工重复劳动，并消除人工修改可能遗漏或缩进损坏的风险，使整个代码库瞬间轻量化。
-
-### 目标
-1. 编写 `scripts/migrate-colors.mjs`，内置完整的语义类映射规则表，排除 `index.css` 和 `theme.ts` 等核心底座文件。
-2. 执行脚本完成全量 `.tsx` 与 `.ts` 文件的扫描与类名替换。
-
-### 基本原理
-通过 Node.js 原生递归遍历文件系统，针对高频出现的深浅色成对 Tailwind 类名执行安全正则替换，将具体色彩值统一收敛至 CSS 变量映射类。
-
-### 标签
-#intent/refactor #flow/ready #priority/high #comp/ui #concept/theme #scope/core #ai/instruct #task/domain/ui #task/object/token-migration #task/action/refactor #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 创建自动化清洗脚本
-
-编写 `scripts/migrate-colors.mjs`。
-
-~~~~~act
-write_file
-scripts/migrate-colors.mjs
-~~~~~
-~~~~~javascript
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -147,19 +114,3 @@ for (const file of allFiles) {
 }
 
 console.log(`\n🎉 Refactoring Complete: Cleaned ${modifiedCount} files.`);
-~~~~~
-
-#### Acts 2: 运行清洗脚本批量替换类名
-
-执行脚本，自动遍历并清洗所有相关组件。
-
-~~~~~act
-run_command
-~~~~~
-~~~~~
-node scripts/migrate-colors.mjs
-~~~~~
-
-### 下一步建议
-1. 自动化清洗脚本执行后，全站大量的 `bg-white dark:bg-slate-900` 与 `text-slate-800 dark:text-slate-100` 已被统一转化为 `bg-card`、`border-border` 与 `text-foreground` 等语义令牌。
-2. 接下来可以进入**阶段四**：选取业务核心通用组件（如 `ModalShell.tsx`、`QuestionCardShell.tsx` 等）接入 `src/components/ui/` 中的原子组件（`Card`、`Button`），进一步精简 DOM 结构。

@@ -68,8 +68,8 @@ export function TopDownPatternView({
       submitMode="immediate"
       onAnswer={(idx) => onAnswer(idx)}
       preview={
-        <div className="flex flex-col items-center gap-1.5 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner">
-          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+        <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
             {t('packs.abstraction.cards.abs_td_palette_2afc.promptTitle')}
           </span>
           <div

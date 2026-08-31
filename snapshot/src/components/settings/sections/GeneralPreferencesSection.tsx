@@ -46,9 +46,9 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 外观模式切换器 */}
-      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="flex items-center justify-between bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-accent text-primary rounded-xl">
             {currentTheme === 'dark' ? (
               <Moon className="w-4 h-4" />
             ) : currentTheme === 'light' ? (
@@ -58,21 +58,21 @@ export function GeneralPreferencesSection({
             )}
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.themeTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.themeDesc')}</div>
           </div>
         </div>
 
-        <div className="flex items-center bg-slate-200/80 dark:bg-slate-900/80 p-0.5 rounded-xl">
+        <div className="flex items-center bg-muted p-0.5 rounded-xl">
           <button
             type="button"
             onClick={() => handleThemeChange('light')}
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
               currentTheme === 'light'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             title={t('settings.themeLight')}
           >
@@ -85,7 +85,7 @@ export function GeneralPreferencesSection({
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
               currentTheme === 'dark'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             title={t('settings.themeDark')}
           >
@@ -98,7 +98,7 @@ export function GeneralPreferencesSection({
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
               currentTheme === 'system'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             title={t('settings.themeSystem')}
           >
@@ -109,27 +109,27 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 语言切换器 */}
-      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="flex items-center justify-between bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-accent text-primary rounded-xl">
             <Globe className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.languageTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.languageDesc')}</div>
           </div>
         </div>
 
-        <div className="flex items-center bg-slate-200/80 dark:bg-slate-900/80 p-0.5 rounded-xl">
+        <div className="flex items-center bg-muted p-0.5 rounded-xl">
           <button
             type="button"
             onClick={() => handleLocaleChange('zh-CN')}
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               (settings.global.locale || locale) === 'zh-CN'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {t('settings.langZh')}
@@ -140,7 +140,7 @@ export function GeneralPreferencesSection({
             className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               (settings.global.locale || locale) === 'en-US'
                 ? 'bg-indigo-600 text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {t('settings.langEn')}
@@ -149,13 +149,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 音效反馈开关 */}
-      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="flex items-center justify-between bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-accent text-primary rounded-xl">
             <Volume2 className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.soundTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.soundDesc')}</div>
@@ -169,13 +169,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 任务指引提示开关 */}
-      <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="flex items-center justify-between bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-accent text-primary rounded-xl">
             <HelpCircle className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.hintsTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.hintsDesc')}</div>
@@ -189,13 +189,13 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 闲置休眠保护 */}
-      <div className="space-y-2 bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="space-y-2 bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <div className="flex items-center gap-2.5 mb-1">
-          <div className="p-2 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-accent text-primary rounded-xl">
             <Clock className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.idleTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.idleDesc')}</div>
@@ -215,7 +215,7 @@ export function GeneralPreferencesSection({
               className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                 settings.global.idleTimeout === opt.value
                   ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent'
               }`}
             >
               {opt.label}
@@ -225,7 +225,7 @@ export function GeneralPreferencesSection({
       </div>
 
       {/* 全局滑块外延感应区 */}
-      <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="bg-muted/60 p-3.5 rounded-2xl border border-border/60">
         <SliderMarginGroup
           title={t('settings.sliderHitMarginTitle')}
           value={settings.global.sliderHitMargin ?? 12}

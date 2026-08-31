@@ -16,13 +16,13 @@ export function SettingToggleItem({
   return (
     <div className="flex items-center justify-between">
       <div>
-        <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">{title}</div>
+        <div className="text-sm font-semibold text-foreground">{title}</div>
         {description && <div className="text-xs text-slate-400">{description}</div>}
       </div>
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className="text-indigo-600 dark:text-indigo-400 hover:opacity-80 transition-opacity cursor-pointer"
+        className="text-primary hover:opacity-80 transition-opacity cursor-pointer"
       >
         {checked ? (
           <ToggleRight className="w-8 h-8 fill-indigo-600 text-indigo-600 dark:fill-indigo-500 dark:text-indigo-500" />

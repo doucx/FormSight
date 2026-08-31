@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 搭建内部设计系统基础设施与核心原子 UI 组件", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176052.5727015, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 执行自动化清洗脚本替换全站语义化设计令牌 (阶段三)", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788176068.6959932, "duration_ms": 0}}

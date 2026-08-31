@@ -96,14 +96,14 @@ export function ShapeMemory2AfcView({
       maxWidth="max-w-3xl"
     >
       {matchPhase === 'stimulus' && !isRevealed ? (
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
+        <div className="bg-muted/60 p-4 rounded-3xl border border-border shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
           <canvas
             ref={canvasRef}
             width={NEGATIVE_SPACE_CANVAS_SIZE}
             height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full aspect-square rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-950"
+            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-white dark:bg-slate-950"
           />
-          <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
             <div
               key={`${question.id}-${matchPhase}`}
               className="bg-indigo-600 h-full"
@@ -121,7 +121,7 @@ export function ShapeMemory2AfcView({
             title: t('common.areaA'),
             isCorrect: isTargetA,
             content: (
-              <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
                 <canvas
                   ref={matchOptionRefA}
                   width={NEGATIVE_SPACE_CANVAS_SIZE}
@@ -136,7 +136,7 @@ export function ShapeMemory2AfcView({
             title: t('common.areaB'),
             isCorrect: isTargetB,
             content: (
-              <div className="w-full flex justify-center bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-700/80 shadow-inner">
+              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
                 <canvas
                   ref={matchOptionRefB}
                   width={NEGATIVE_SPACE_CANVAS_SIZE}

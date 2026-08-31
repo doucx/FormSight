@@ -71,7 +71,7 @@ export function PerspectiveVpView({
       onValueChange={(_cur, active) => setLiveAngle(active)}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
+        <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center">
           <CanvasView
             width={PERSPECTIVE_CANVAS_SIZE}
             height={PERSPECTIVE_CANVAS_SIZE}
@@ -101,10 +101,10 @@ export function PerspectiveVpView({
       }
       footerDetails={
         showAnswer && userVal !== undefined ? (
-          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-slate-500 dark:text-slate-400">
+          <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
+            <span className="text-muted-foreground">
               {t('packs.perspective.views.vpTrueAngle')}{' '}
-              <span className="font-bold text-slate-800 dark:text-slate-100 font-mono">{targetVal}°</span>
+              <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span className={isHit ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'}>
               {t('packs.perspective.views.vpErrorInfo', {

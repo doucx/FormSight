@@ -28,7 +28,7 @@ export function FilterSectionHeader({
   iconColorClass?: string;
 }) {
   return (
-    <div className="text-[10px] sm:text-[11px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+    <div className="text-[10px] sm:text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
       <Icon className={`w-3 h-3 ${iconColorClass}`} />
       {title}
     </div>

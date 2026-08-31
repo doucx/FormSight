@@ -99,7 +99,7 @@ export function ColorCanvas({
   const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
       <div className="flex flex-col items-center gap-2 w-full">
         {mode === 'ALL' ? (
           <div className="flex items-center justify-center gap-4 w-full">
@@ -132,7 +132,7 @@ export function ColorCanvas({
         )}
       </div>
 
-      <div className="w-full space-y-4 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
         {mode === 'ALL' ? (
           <>
             <HsvTrackSlider

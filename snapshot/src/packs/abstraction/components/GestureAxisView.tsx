@@ -59,7 +59,7 @@ export function GestureAxisView({
       onValueChange={(_val, active) => setActiveSliderVal(active)}
       onAnswer={onAnswer}
       preview={
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex justify-center items-center">
+        <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center">
           <CanvasView
             width={ABSTRACTION_CANVAS_SIZE}
             height={ABSTRACTION_CANVAS_SIZE}

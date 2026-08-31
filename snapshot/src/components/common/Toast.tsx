@@ -41,7 +41,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
       ? 'bg-emerald-50 dark:bg-emerald-950/90 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800'
       : toast.type === 'error'
         ? 'bg-rose-50 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-800'
-        : 'bg-indigo-50 dark:bg-indigo-950/90 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800';
+        : 'bg-accent/90 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-800';
 
   const iconStyle =
     toast.type === 'success'
@@ -61,7 +61,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastMessage; onDismiss: () =>
       <button
         type="button"
         onClick={onDismiss}
-        className="p-1 rounded-lg text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors ml-2"
+        className="p-1 rounded-lg text-slate-400 dark:text-slate-400 hover:text-foreground transition-colors ml-2"
       >
         <X className="w-3.5 h-3.5" />
       </button>

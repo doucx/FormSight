@@ -108,7 +108,7 @@ export function DataGovernanceSection({
           type="button"
           disabled={isExporting}
           onClick={handleExport}
-          className="py-3 px-4 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 dark:text-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+          className="py-3 px-4 bg-muted/60 hover:bg-accent/50 hover:text-primary border border-border rounded-2xl text-xs font-bold text-foreground dark:text-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
         >
           <Download className="w-4 h-4 text-indigo-600" />
           {isExporting ? t('settings.exporting') : t('settings.exportStream')}
@@ -116,7 +116,7 @@ export function DataGovernanceSection({
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200 dark:border-slate-700/80 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
+          className="py-3 px-4 bg-muted/60 hover:bg-accent/50 hover:text-primary border border-border rounded-2xl text-xs font-bold text-foreground transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer"
         >
           <Upload className="w-4 h-4 text-indigo-600" />
           {t('settings.importBackup')}
@@ -133,14 +133,14 @@ export function DataGovernanceSection({
       {/* 数据库瘦身与修剪 */}
       <div className="bg-indigo-50/60 dark:bg-indigo-950/40 p-3.5 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 rounded-xl">
+          <div className="p-2 bg-indigo-100 dark:bg-indigo-950/60 text-primary rounded-xl">
             <Scissors className="w-4 h-4" />
           </div>
           <div>
             <div className="text-xs font-bold text-indigo-900 dark:text-indigo-200">
               {t('settings.pruneTitle')}
             </div>
-            <div className="text-[11px] text-indigo-600 dark:text-indigo-400">
+            <div className="text-[11px] text-primary">
               {t('settings.pruneDesc')}
             </div>
           </div>
@@ -155,10 +155,10 @@ export function DataGovernanceSection({
       </div>
 
       {/* 计划库重置与危险操作 */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+      <div className="pt-2 border-t border-border/60 space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            <div className="text-xs font-bold text-foreground">
               {t('settings.resetPlansTitle')}
             </div>
             <div className="text-[11px] text-slate-400">{t('settings.resetPlansDesc')}</div>
@@ -166,7 +166,7 @@ export function DataGovernanceSection({
           <button
             type="button"
             onClick={() => setShowResetPlansConfirm(true)}
-            className="py-2 px-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+            className="py-2 px-3 bg-muted hover:bg-accent text-foreground border border-border rounded-xl text-xs font-bold transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             {t('settings.resetPlansBtn')}

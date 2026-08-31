@@ -44,8 +44,8 @@ export function FilterEngine({
   );
 
   const containerClasses = isCompact
-    ? `w-full bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 space-y-2.5 flex-shrink-0 ${className}`
-    : `w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 ${className}`;
+    ? `w-full bg-muted/80 border border-border rounded-2xl p-3 space-y-2.5 flex-shrink-0 ${className}`
+    : `w-full bg-card border border-border rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 ${className}`;
 
   const tagSize = isCompact ? 'sm' : 'md';
 
@@ -73,7 +73,7 @@ export function FilterEngine({
               isCompact
                 ? 'pl-8 pr-8 py-1.5 text-xs rounded-xl'
                 : 'pl-10 pr-10 py-2.5 text-xs rounded-2xl'
-            } bg-white dark:bg-slate-800 hover:bg-slate-100/60 dark:hover:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-800 font-bold text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal`}
+            } bg-white dark:bg-slate-800 hover:bg-slate-100/60 dark:hover:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-800 font-bold text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all placeholder:text-muted-foreground placeholder:font-normal`}
           />
           {query.searchKeyword && (
             <button
@@ -88,7 +88,7 @@ export function FilterEngine({
 
         <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0">
           {!isCompact && (
-            <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl text-slate-500 dark:text-slate-400">
+            <div className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 px-3 py-2 bg-muted border border-border/60 rounded-xl text-muted-foreground">
               <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
               <span>{t('home.matchedModules', { count: totalMatches })}</span>
             </div>
@@ -101,8 +101,8 @@ export function FilterEngine({
               isCompact ? 'px-2.5 py-1.5 text-[11px] rounded-lg' : 'px-3 py-2 text-xs rounded-xl'
             } font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
               isAdvancedOpen
-                ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 shadow-xs'
-                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60'
+                ? 'bg-accent text-primary border-indigo-200 dark:border-indigo-900 shadow-xs'
+                : 'bg-white dark:bg-slate-800 text-muted-foreground border-border hover:bg-accent/60'
             }`}
           >
             <Filter className="w-3 h-3 text-indigo-600" />

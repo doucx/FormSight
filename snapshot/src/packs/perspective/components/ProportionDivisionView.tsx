@@ -180,7 +180,7 @@ export function ProportionDivisionView({
         </span>
       </div>
 
-      <div className="w-full bg-slate-50 dark:bg-slate-800/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-700/60 shadow-inner flex flex-col items-center gap-2">
+      <div className="w-full bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex flex-col items-center gap-2">
         <canvas
           ref={canvasRef}
           width={PERSPECTIVE_CANVAS_SIZE}
@@ -204,7 +204,7 @@ export function ProportionDivisionView({
               : 'cursor-crosshair md:cursor-none hover:border-indigo-400 hover:shadow-md'
           }`}
         />
-        <div className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-2">
+        <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-2">
           <span className="inline-flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full border-2 border-indigo-600 bg-indigo-600 inline-block" />
             <span>{t('common.startPercent')}</span>

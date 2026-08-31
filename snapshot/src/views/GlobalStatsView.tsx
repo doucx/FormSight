@@ -44,13 +44,13 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-200">
       {/* 顶部主操作栏 */}
-      <header className="w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-2xl shadow-xs">
             <BarChart2 className="w-6 h-6 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+            <h1 className="text-xl font-black text-foreground tracking-tight">
               {t('stats.title')}
             </h1>
             <p className="text-xs text-slate-400 font-medium">{t('stats.subTitle')}</p>
@@ -63,7 +63,7 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
           <select
             value={selectedFilter}
             onChange={(e) => setSelectedFilter((e.target as HTMLSelectElement).value)}
-            className="w-full sm:w-auto pl-8 pr-8 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm max-w-xs truncate"
+            className="w-full sm:w-auto pl-8 pr-8 py-2 text-xs font-bold text-foreground bg-muted hover:bg-accent border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 appearance-none cursor-pointer transition-all shadow-sm max-w-xs truncate"
           >
             <option value="all">{t('stats.allModules')}</option>
 
@@ -113,11 +113,11 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
 
       {/* 主体展示区 */}
       {loading ? (
-        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 flex items-center justify-center text-slate-400 text-sm shadow-sm">
+        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex items-center justify-center text-slate-400 text-sm shadow-sm">
           {t('stats.loading')}
         </div>
       ) : stats.allTime.total === 0 ? (
-        <div className="h-96 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
+        <div className="h-96 bg-card rounded-3xl border border-border p-6 flex flex-col items-center justify-center text-slate-400 text-sm gap-2 shadow-sm">
           <Activity className="w-10 h-10 text-slate-300" />
           {t('stats.noRecords', { filter: getCurrentFilterLabel() })}
         </div>
@@ -133,10 +133,10 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ActivityHeatmapCard heatmapData={heatmapData} />
 
-            <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm p-6 rounded-3xl flex flex-col gap-2">
-              <div className="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
+            <div className="bg-card border border-border shadow-sm p-6 rounded-3xl flex flex-col gap-2">
+              <div className="text-sm font-bold text-foreground flex items-center justify-between">
                 <span>{t('stats.trendTitle')}</span>
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-lg">
+                <span className="text-xs font-medium text-slate-500 bg-muted text-muted-foreground px-2.5 py-0.5 rounded-lg">
                   {t('stats.dailyMaxLevel')}
                 </span>
               </div>

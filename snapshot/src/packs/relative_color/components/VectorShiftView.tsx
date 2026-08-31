@@ -71,7 +71,7 @@ export function VectorShiftView({
       onSelectIndex={(idx) => onSelectIndex(idx)}
       onAnswer={() => onSubmit()}
       preview={
-        <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60 w-full flex flex-col items-center gap-3">
+        <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
           <div className="flex items-center justify-center gap-4">
             <div
               className="w-20 h-20 rounded-2xl border-2 border-white dark:border-slate-800 shadow-md"

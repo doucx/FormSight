@@ -45,7 +45,7 @@ export function HueInductionView({
       value: opt,
       isCorrect: isTarget,
       content: (
-        <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60 dark:border-slate-700/60 p-1 flex items-center justify-center bg-white dark:bg-slate-900">
+        <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60 dark:border-slate-700/60 p-1 flex items-center justify-center bg-card">
           <div
             className="w-full h-full rounded-lg shadow-sm border border-slate-200/50 dark:border-slate-700/50"
             style={{ backgroundColor: hexVal }}

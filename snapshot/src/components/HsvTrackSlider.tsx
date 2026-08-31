@@ -100,7 +100,7 @@ export function HsvTrackSlider({
       >
         <div
           ref={trackRef}
-          className="relative w-full h-7 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner flex items-center"
+          className="relative w-full h-7 rounded-xl border border-border shadow-inner flex items-center"
           style={{ background: gradient }}
         >
           {/* 当前设定值标记线：在非目标盲测轨道、或非揭晓状态的参考轨道上显示 */}
@@ -191,7 +191,7 @@ export function HsvTrackSlider({
               ? 'text-emerald-600'
               : isAnswerRevealed
                 ? 'text-rose-600'
-                : 'text-slate-700 dark:text-slate-300'
+                : 'text-foreground'
         }`}
       >
         {renderLabelText()}

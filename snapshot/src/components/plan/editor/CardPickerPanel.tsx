@@ -30,7 +30,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
       <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-1.5">
           <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="text-xs font-extrabold text-slate-700 dark:text-slate-200">
+          <span className="text-xs font-extrabold text-foreground">
             {t('plan.selectCardPrompt')}
           </span>
         </div>
@@ -49,7 +49,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
       {/* 模块列表：自适应拉伸并滚动 */}
       {availableCards.length === 0 ? (
-        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-slate-50/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+        <div className="flex-1 min-h-[160px] flex items-center justify-center p-6 text-center text-xs text-slate-400 bg-muted/40 rounded-2xl border border-dashed border-border">
           {t('plan.noCardMatched')}
         </div>
       ) : (
@@ -63,11 +63,11 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
 
             const cardBgStyle = isAdded
               ? 'bg-emerald-50/70 dark:bg-emerald-950/40 hover:bg-emerald-100/70 dark:hover:bg-emerald-900/50 border-emerald-300 dark:border-emerald-800 hover:border-emerald-400 shadow-xs'
-              : 'bg-slate-50 dark:bg-slate-800/60 hover:bg-indigo-50/60 dark:hover:bg-indigo-950/40 border-slate-200/80 dark:border-slate-700/80 hover:border-indigo-300 dark:hover:border-indigo-500';
+              : 'bg-muted/60 hover:bg-accent/60 border-border hover:border-primary/60';
 
             const iconBgStyle = isAdded
               ? 'bg-emerald-600 text-white shadow-xs'
-              : 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs group-hover:scale-105';
+              : 'bg-card text-primary shadow-xs group-hover:scale-105';
 
             return (
               <button
@@ -88,7 +88,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                         className={`text-xs font-bold truncate ${
                           isAdded
                             ? 'text-emerald-900 dark:text-emerald-200'
-                            : 'text-slate-800 dark:text-slate-100'
+                            : 'text-foreground'
                         }`}
                       >
                         {cardTitle}
@@ -104,7 +104,7 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
                       className={`text-[10px] truncate ${
                         isAdded
                           ? 'text-emerald-700/80 dark:text-emerald-300/80'
-                          : 'text-slate-400 dark:text-slate-500'
+                          : 'text-muted-foreground'
                       }`}
                     >
                       {cardDesc}

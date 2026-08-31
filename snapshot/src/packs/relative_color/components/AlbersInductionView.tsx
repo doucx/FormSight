@@ -99,7 +99,7 @@ export function AlbersInductionView({
         }
       />
 
-      <div className="w-full space-y-3 bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/60">
+      <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
         {!isLightnessMode && (
           <HsvTrackSlider
             label="H"
