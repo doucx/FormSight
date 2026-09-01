@@ -1,40 +1,41 @@
-我已查明 `src/utils/__tests__/relativeColorUtils.test.ts` 的具体内容。测试用例中调用的题目生成与判分函数实际上都统一集中在 `src/core/color/relativeColor.ts` 中（即 `generateVectorShiftQuestion`、`generateLightnessInductionQuestion`、`generateHueInductionQuestion`、`generateDecontextual2AfcQuestion` 以及通用的 `checkRelativeColorHit`）。
+这是 Biome Linter 触发的代码质量规则 `lint/style/noNonNullAssertion`，它禁止在 TypeScript 代码中使用非空断言运算符 `!`。
 
-现在我将生成计划，更新该测试文件中的导入路径及函数调用，彻底解决 4 处 TS2307 编译错误。
+我们将使用前置类型守卫（Type Guard）与显式异常抛出替代 `!`，消除所有的 linter 报错。
 
-## [WIP] fix: 修正 relativeColorUtils.test.ts 模块导入与函数调用
+## [WIP] fix: 消除测试用例中的非空断言以满足代码规范
 
 ### 错误分析
-测试文件 `src/utils/__tests__/relativeColorUtils.test.ts` 原本试图从不存在的 4 个卡片目录（`../../cards/rel_*/utils/generator`）导入 `generateQuestion` 与 `checkHit`。而在当前的架构实现中：
-1. 相对色彩相关的 4 种训练模式生成函数位于 `src/core/color/relativeColor.ts`，名称分别为 `generateVectorShiftQuestion`、`generateLightnessInductionQuestion`、`generateHueInductionQuestion` 和 `generateDecontextual2AfcQuestion`；
-2. 判分逻辑统一由 `checkRelativeColorHit(mode, userAnswer, question)` 处理。
+Biome 代码检查器在 `src/utils/__tests__/relativeColorUtils.test.ts` 中报告了 4 处 `lint/style/noNonNullAssertion` 规则错误：
+- 第 42 行：`q.correctIndex!`
+- 第 75 行：`q.idealRightCenter!`
+- 第 87 行：`q.correctIndex!`
+- 第 98 行：`q.largerPhysicalSide!`
 
-原测试文件的导入路径与判题调用参数不匹配导致了 TypeScript 编译阻断。
+TypeScript 的可选属性通过 `!` 断言虽然能通过类型推导，但不符合项目的 linter 风格约束。
 
 ### 用户需求
-修正 `src/utils/__tests__/relativeColorUtils.test.ts` 中的导入路径和函数调用，使所有相对色彩单元测试正确通过类型检查。
+移除测试文件中的所有非空断言 `!` 操作符，同时保持类型安全与测试断言的严格性。
 
 ### 评论
-将测试用例直接对齐到 `src/core/color/relativeColor.ts`，消除了对已被集中收敛的虚拟路径的无效依赖，恢复了自动化测试的有效性与健壮性。
+通过在测试用例中增加运行时守卫判断（如 `if (!q.options || q.correctIndex === undefined) throw new Error(...)`），既能让 TypeScript 编译器自动收窄（Narrowing）可选字段类型，又能完全符合 Biome 的代码规范。
 
 ### 目标
-1. 更新 `src/utils/__tests__/relativeColorUtils.test.ts` 中的模块导入为 `../../core/color/relativeColor`。
-2. 将 `check*Hit` 统一适配为 `checkRelativeColorHit` 签名调用。
-3. 确保所有 5 个测试场景（基础工具、矢量迁移、明度补偿、残像调和、环境穿透）类型定义完整匹配。
+1. 移除 `src/utils/__tests__/relativeColorUtils.test.ts` 中所有的 `!` 操作符。
+2. 增加前置类型收窄守卫，确保测试在异常时快速失败并提供明确错误信息。
 
 ### 基本原理
-由于该测试文件的导入区与各测试用例调用均需调整（变更幅度大于 30%），根据文件修改决策树选择使用 `write_file` 完整重写测试文件，确保无残留错误引用。
+使用 `write_file` 更新整个测试文件，使用标准的控制流类型收窄替换非空断言，彻底消除 linter 报错。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/tests #concept/executor #scope/core #ai/instruct #task/domain/testing #task/object/relative-color-tests #task/action/fix #task/state/continue
+#intent/fix #flow/ready #priority/medium #comp/tests #concept/executor #scope/core #ai/instruct #task/domain/testing #task/object/relative-color-tests #task/action/fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 更新测试文件 relativeColorUtils.test.ts
+#### Acts 1: 重写测试文件消除非空断言
 
-我们将完整重写 `src/utils/__tests__/relativeColorUtils.test.ts`，将所有相对色彩相关的函数导入与调用重定向至 `src/core/color/relativeColor.ts`。
+我们将重写 `src/utils/__tests__/relativeColorUtils.test.ts`，为所有可选字段添加显式检查以收窄类型。
 
 ~~~~~act
 write_file
@@ -82,7 +83,13 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
 
   it('VECTOR_SHIFT - should detect target choice correctly', () => {
     const q = generateVectorShiftQuestion(5);
-    const correctOption = q.options![q.correctIndex!];
+    expect(q.options).toBeDefined();
+    expect(q.correctIndex).toBeDefined();
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
+
+    const correctOption = q.options[q.correctIndex];
     const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
     expect(result.isHit).toBe(true);
   });
@@ -114,8 +121,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.bgRight).toBeDefined();
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.idealRightCenter).toBeDefined();
+    if (!q.idealRightCenter) {
+      throw new Error('idealRightCenter is undefined');
+    }
 
-    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter!, q);
+    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter, q);
     expect(hitRes.isHit).toBe(true);
   });
 
@@ -126,8 +136,12 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.bgRight).toBeDefined();
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.options).toBeDefined();
+    expect(q.correctIndex).toBeDefined();
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
 
-    const correctOption = q.options![q.correctIndex!];
+    const correctOption = q.options[q.correctIndex];
     const hitRes = checkRelativeColorHit('HUE_INDUCTION', correctOption, q);
     expect(hitRes.isHit).toBe(true);
   });
@@ -137,8 +151,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     const q = generateDecontextual2AfcQuestion(5);
     expect(q.largerPhysicalSide).toMatch(/^(A|B)$/);
     expect(q.physicalValueDiff).toBeGreaterThan(0);
+    if (!q.largerPhysicalSide) {
+      throw new Error('largerPhysicalSide is undefined');
+    }
 
-    const correctChoice = q.largerPhysicalSide!;
+    const correctChoice = q.largerPhysicalSide;
     const wrongChoice: 'A' | 'B' = correctChoice === 'A' ? 'B' : 'A';
 
     const hitRes = checkRelativeColorHit('DECONTEXTUAL_2AFC', correctChoice, q);
@@ -151,5 +168,5 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
 ~~~~~
 
 ### 下一步建议
-- 执行测试套件命令（例如 `npm run test` 或 `npx vitest run src/utils/__tests__/relativeColorUtils.test.ts`）验证所有用例运行状态。
-- 若所有测试通过且无需其他修改，可提交当前任务。
+- 重新运行 linter / 格式检查（如 `npm run check` 或 Biome 校验）确认所有规则通过。
+- 运行 Vitest 验证测试用例全部执行通过。

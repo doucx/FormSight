@@ -39,7 +39,13 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
 
   it('VECTOR_SHIFT - should detect target choice correctly', () => {
     const q = generateVectorShiftQuestion(5);
-    const correctOption = q.options![q.correctIndex!];
+    expect(q.options).toBeDefined();
+    expect(q.correctIndex).toBeDefined();
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
+
+    const correctOption = q.options[q.correctIndex];
     const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
     expect(result.isHit).toBe(true);
   });
@@ -71,8 +77,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.bgRight).toBeDefined();
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.idealRightCenter).toBeDefined();
+    if (!q.idealRightCenter) {
+      throw new Error('idealRightCenter is undefined');
+    }
 
-    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter!, q);
+    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter, q);
     expect(hitRes.isHit).toBe(true);
   });
 
@@ -83,8 +92,12 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.bgRight).toBeDefined();
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.options).toBeDefined();
+    expect(q.correctIndex).toBeDefined();
+    if (!q.options || q.correctIndex === undefined) {
+      throw new Error('options or correctIndex is undefined');
+    }
 
-    const correctOption = q.options![q.correctIndex!];
+    const correctOption = q.options[q.correctIndex];
     const hitRes = checkRelativeColorHit('HUE_INDUCTION', correctOption, q);
     expect(hitRes.isHit).toBe(true);
   });
@@ -94,8 +107,11 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     const q = generateDecontextual2AfcQuestion(5);
     expect(q.largerPhysicalSide).toMatch(/^(A|B)$/);
     expect(q.physicalValueDiff).toBeGreaterThan(0);
+    if (!q.largerPhysicalSide) {
+      throw new Error('largerPhysicalSide is undefined');
+    }
 
-    const correctChoice = q.largerPhysicalSide!;
+    const correctChoice = q.largerPhysicalSide;
     const wrongChoice: 'A' | 'B' = correctChoice === 'A' ? 'B' : 'A';
 
     const hitRes = checkRelativeColorHit('DECONTEXTUAL_2AFC', correctChoice, q);
