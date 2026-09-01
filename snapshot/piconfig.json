@@ -8,7 +8,7 @@
         "src/types/card.ts",
         "src/types/index.ts",
         "src/components/settings/DynamicDomainSettings.tsx",
-        "src/modules/star/",
+        "src/modules/star/"
       ]
     },
     "core": {
