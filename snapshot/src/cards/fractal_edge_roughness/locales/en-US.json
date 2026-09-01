@@ -1,0 +1,40 @@
+{
+  "title": "Fractal Edge Roughness",
+  "desc": "Judge contour roughness and high-frequency noise variance by matching the Hurst exponent (H).",
+  "instruction": "Adjust the lower curve's roughness (Hurst H) to match the upper target edge texture.",
+  "labels": {
+    "targetEdge": "Target Edge",
+    "userEdge": "Your Edge Adjustment",
+    "hurstExponent": "Hurst Exponent (H)",
+    "extremeRough": "Extremely Rough (H=0.1)",
+    "smooth": "Smooth (H=1.0)"
+  },
+  "analytics": {
+    "roughnessBias": {
+      "tabLabel": "Roughness Bias",
+      "title": "{{title}} · Roughness Perception Bias",
+      "subTitle": "Systematic perception offset between observed and physical Hurst roughness",
+      "cardTitle": "Roughness Perception Diagnostics",
+      "avgSignedBias": "Global Average Bias (ΔH):",
+      "overestimateRoughness": "-{{val}} (Perceives rougher)",
+      "underestimateRoughness": "+{{val}} (Perceives smoother)",
+      "neutral": "0 (Accurate)",
+      "avgAbsError": "Mean Absolute Error (ΔH):",
+      "desc": "A positive bias indicates you tend to perceive edges as smoother than they are, while a negative bias indicates hypersensitivity to high-frequency jitter."
+    },
+    "bandSensitivity": {
+      "tabLabel": "Band Sensitivity",
+      "title": "{{title}} · Roughness Band Diagnostics",
+      "subTitle": "Perceptual accuracy across high, medium, and low frequency roughness spectrums",
+      "cardTitle": "Roughness Sensitivity Breakdown",
+      "weakestHint": "Lowest discrimination accuracy in {{sector}}:",
+      "accuracyRate": "{{accuracy}}% accuracy",
+      "needMoreTrials": "Complete at least 3 trials in each roughness band to generate blindspot diagnostics."
+    }
+  },
+  "sectors": {
+    "highFrequency": "High Roughness (H 0.10-0.40)",
+    "mediumFrequency": "Medium Roughness (H 0.40-0.70)",
+    "lowFrequency": "Smooth Profile (H 0.70-1.00)"
+  }
+}

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788263947.4409726, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 创建分形边缘粗糙度感知训练卡片 fractal_edge_roughness", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788264255.302154, "duration_ms": 0}}

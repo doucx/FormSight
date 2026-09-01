@@ -1,0 +1,40 @@
+{
+  "title": "分形边缘粗糙度",
+  "desc": "通过调节 Hurst 指数 (H) 匹配边缘分形维数，锻炼对轮廓微观高频噪波与粗糙质感的量化直觉。",
+  "instruction": "拖拽滑块调节下方线条的高频噪波感（Hurst 指数），使其粗糙度与上方目标线完全一致",
+  "labels": {
+    "targetEdge": "目标边缘 (Target Edge)",
+    "userEdge": "你的调制 (Your Adjustment)",
+    "hurstExponent": "Hurst 指数 (H)",
+    "extremeRough": "极度粗糙 (H=0.1)",
+    "smooth": "平滑圆润 (H=1.0)"
+  },
+  "analytics": {
+    "roughnessBias": {
+      "tabLabel": "粗糙度偏置",
+      "title": "{{title}} · 粗糙度感知偏置分析",
+      "subTitle": "观察 Hurst 指数系统性偏向，揭示你对微观高频毛刺的感知敏感倾向",
+      "cardTitle": "粗糙度感知倾向诊断",
+      "avgSignedBias": "全局平均偏转 (ΔH):",
+      "overestimateRoughness": "-{{val}} (感知偏粗糙/对毛刺过度敏感)",
+      "underestimateRoughness": "+{{val}} (感知偏平滑/低估高频噪波)",
+      "neutral": "0 (精准中立)",
+      "avgAbsError": "平均绝对误差 (ΔH):",
+      "desc": "正偏置代表你倾向于将粗糙线条误判为更平滑；负偏置代表你对微小抖动极其敏感，容易过度估计粗糙度。"
+    },
+    "bandSensitivity": {
+      "tabLabel": "频段敏感度",
+      "title": "{{title}} · 粗糙频段敏感度诊断",
+      "subTitle": "评估你在高碎裂、中度纹理与平滑流线三大粗糙区间的辨识准确率",
+      "cardTitle": "粗糙度敏感盲区诊断",
+      "weakestHint": "你在 {{sector}} 区间辨识命中率最低：",
+      "accuracyRate": "{{accuracy}}% 准确率",
+      "needMoreTrials": "各粗糙度频段需完成至少 3 题才能生成弱点诊断。"
+    }
+  },
+  "sectors": {
+    "highFrequency": "高碎裂带 (H 0.10-0.40)",
+    "mediumFrequency": "中度纹理带 (H 0.40-0.70)",
+    "lowFrequency": "平滑流线带 (H 0.70-1.00)"
+  }
+}
