@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { getDB } from '../../storage/db/schema';
 import {
   DEFAULT_SETTINGS,
+  type UserSettings,
   getCardSettings,
   loadSettings,
   saveSettings,
