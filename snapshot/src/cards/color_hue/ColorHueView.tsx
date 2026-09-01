@@ -1,9 +1,5 @@
 import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../../core/color/colorUtils';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { HUE_SPECTRUM_GRADIENT } from '../../utils/theme';
 

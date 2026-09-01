@@ -68,7 +68,10 @@ export function generateQuestion(level: number): AngleEstimationQuestion {
   };
 }
 
-export function checkHit(userValue: number, question: AngleEstimationQuestion): AngleEstimationHitResult {
+export function checkHit(
+  userValue: number,
+  question: AngleEstimationQuestion,
+): AngleEstimationHitResult {
   const userVal = typeof userValue === 'number' ? userValue : 90;
   const targetVal = question.targetAngleDeg ?? 90;
   const errorValue = Math.round(Math.abs(userVal - targetVal) * 10) / 10;

@@ -126,7 +126,10 @@ export function generateQuestion(level: number): PerspPropDivisionQuestion {
   };
 }
 
-export function checkHit(clickPoint: Point, question: PerspPropDivisionQuestion): PerspPropDivisionHitResult {
+export function checkHit(
+  clickPoint: Point,
+  question: PerspPropDivisionQuestion,
+): PerspPropDivisionHitResult {
   const line = question.divisionLine;
   const dx = line.p2.x - line.p1.x;
   const dy = line.p2.y - line.p1.y;

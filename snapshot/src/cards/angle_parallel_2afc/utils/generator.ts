@@ -90,7 +90,10 @@ export function generateQuestion(level: number): AngleParallelQuestion {
   };
 }
 
-export function checkHit(choice: 'A' | 'B', question: AngleParallelQuestion): AngleParallelHitResult {
+export function checkHit(
+  choice: 'A' | 'B',
+  question: AngleParallelQuestion,
+): AngleParallelHitResult {
   const correctChoice = question.parallelSide ?? 'A';
   const isHit = choice === correctChoice;
 

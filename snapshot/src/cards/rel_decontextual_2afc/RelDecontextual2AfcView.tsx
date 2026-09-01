@@ -1,7 +1,10 @@
 import { Eye } from 'lucide-preact';
 import { Standard2AfcView } from '../../components/common/Standard2AfcView';
 import { hsvToHex } from '../../core/color/colorUtils';
-import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import type {
+  RelativeColorHitResult,
+  RelativeColorQuestionData,
+} from '../../core/color/relativeColor';
 import { useCardTranslation } from '../../core/i18n';
 import { PALETTE } from '../../utils/theme';
 

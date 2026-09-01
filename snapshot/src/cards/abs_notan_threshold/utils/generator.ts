@@ -102,10 +102,8 @@ export function generateQuestion(level: number): QuestionData {
   for (let y = 0; y < fieldDim; y++) {
     for (let x = 0; x < fieldDim; x++) {
       const idx = y * fieldDim + x;
-      const macroVal =
-        (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
-      const microVal =
-        (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+      const macroVal = (fbm2D(x * macroScale, y * macroScale, 2, macroNoise) - 0.5) * 2 * macroAmp;
+      const microVal = (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
       const raw = baseKey + macroVal + microVal;
       const clamped0to100 = Math.max(0, Math.min(100, raw));

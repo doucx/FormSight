@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absTdGesture2afcCard: CardManifest<QuestionData, HitResult, 'A' | 'B', BaseModuleSettings> = {
+export const absTdGesture2afcCard: CardManifest<
+  QuestionData,
+  HitResult,
+  'A' | 'B',
+  BaseModuleSettings
+> = {
   id: 'abs_td_gesture_2afc',
   domain: 'rhythm_and_notan',
   icon: Shuffle,

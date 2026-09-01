@@ -4,11 +4,7 @@ import { Standard2AfcView } from '../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import { useTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
-import {
-  TWO_AFC_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from './types';
+import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from './types';
 
 export interface NegAreaComparison2AfcViewProps {
   question: QuestionData;

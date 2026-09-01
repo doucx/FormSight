@@ -82,7 +82,10 @@ export function generateQuestion(level: number): AngleComparisonQuestion {
   };
 }
 
-export function checkHit(choice: 'A' | 'B', question: AngleComparisonQuestion): AngleComparisonHitResult {
+export function checkHit(
+  choice: 'A' | 'B',
+  question: AngleComparisonQuestion,
+): AngleComparisonHitResult {
   const correctChoice = question.largerSide ?? 'A';
   const isHit = choice === correctChoice;
 

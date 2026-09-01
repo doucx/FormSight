@@ -4,11 +4,7 @@ import { StandardSliderView } from '../../components/common/StandardSliderView';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import { useTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from './types';
+import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegRatioEstimationViewProps {
   question: QuestionData;

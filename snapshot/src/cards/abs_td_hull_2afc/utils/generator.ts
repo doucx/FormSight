@@ -124,11 +124,7 @@ export function generateQuestion(level: number): QuestionData {
     y: Math.round(p.y * scale),
   }));
 
-  const distractorBase = generateAdversarialDistractorHull(
-    targetBase,
-    clampedLevel,
-    OPTION_SIZE,
-  );
+  const distractorBase = generateAdversarialDistractorHull(targetBase, clampedLevel, OPTION_SIZE);
 
   const noiseFactor = 0.45 + t * 0.85;
   const targetDetailed = fractalizePolygon(targetBase, 2, noiseFactor);

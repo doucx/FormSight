@@ -55,9 +55,7 @@ export function AbsTdGesture2afcView({
               width={THUMB_SIZE}
               height={THUMB_SIZE}
               className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawSpinePromptCanvas(canvas, question.promptSpine, THUMB_SIZE)
-              }
+              draw={(canvas) => drawSpinePromptCanvas(canvas, question.promptSpine, THUMB_SIZE)}
               deps={[question.promptSpine]}
             />
           </div>

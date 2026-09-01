@@ -1,9 +1,5 @@
 import type { Point } from '../../../types';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from '../types';
+import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from '../types';
 
 export function generateRandomPolygon(
   level: number,
@@ -67,11 +63,7 @@ export function generateQuestion(difficultyLevel: number): QuestionData {
   const clampedLevel = Math.max(1, Math.min(35, difficultyLevel));
   const canvasArea = NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE;
   const targetPolygon = generateRandomPolygon(clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
-  const distractorPolygon = perturbPolygon(
-    targetPolygon,
-    clampedLevel,
-    NEGATIVE_SPACE_CANVAS_SIZE,
-  );
+  const distractorPolygon = perturbPolygon(targetPolygon, clampedLevel, NEGATIVE_SPACE_CANVAS_SIZE);
 
   const isTargetA = Math.random() < 0.5;
   const optionsPolygons = isTargetA
@@ -98,7 +90,10 @@ export function generateQuestion(difficultyLevel: number): QuestionData {
   };
 }
 
-export function evaluateAnswer(userChoiceInput: 0 | 1 | 'A' | 'B', question: QuestionData): HitResult {
+export function evaluateAnswer(
+  userChoiceInput: 0 | 1 | 'A' | 'B',
+  question: QuestionData,
+): HitResult {
   let userChoiceIndex: number;
   if (typeof userChoiceInput === 'number') {
     userChoiceIndex = userChoiceInput;

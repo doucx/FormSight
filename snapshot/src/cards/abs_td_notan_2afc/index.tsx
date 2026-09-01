@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absTdNotan2afcCard: CardManifest<QuestionData, HitResult, 'A' | 'B', BaseModuleSettings> = {
+export const absTdNotan2afcCard: CardManifest<
+  QuestionData,
+  HitResult,
+  'A' | 'B',
+  BaseModuleSettings
+> = {
   id: 'abs_td_notan_2afc',
   domain: 'rhythm_and_notan',
   icon: Droplet,

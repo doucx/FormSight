@@ -82,8 +82,7 @@ export function generateQuestion(level: number): QuestionData {
           macroSimilarityWeight * targetMacroVal) /
         blendNorm;
 
-      const microVal =
-        (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
+      const microVal = (fbm2D(x * microScale, y * microScale, 3, microNoise) - 0.5) * 2 * microAmp;
 
       const macroRaw = Math.max(0, Math.min(100, baseKey + targetMacroVal));
       targetMacroBuffer[idx] = Math.round((macroRaw / 100) * 255);

@@ -3,11 +3,7 @@ import { PointClickCanvas } from '../../components/common/PointClickCanvas';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import type { Point } from '../../types';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
-import {
-  FITTING_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from './types';
+import { FITTING_CANVAS_SIZE, type HitResult, type QuestionData } from './types';
 
 export interface NegVertexFittingViewProps {
   question: QuestionData;

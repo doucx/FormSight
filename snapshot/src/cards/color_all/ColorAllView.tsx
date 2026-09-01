@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
 import { Button } from '../../components/ui/button';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
+import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../../core/color/colorUtils';
 import { useTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';

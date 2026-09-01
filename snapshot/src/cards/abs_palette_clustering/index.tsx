@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absPaletteClusteringCard: CardManifest<QuestionData, HitResult, number, BaseModuleSettings> = {
+export const absPaletteClusteringCard: CardManifest<
+  QuestionData,
+  HitResult,
+  number,
+  BaseModuleSettings
+> = {
   id: 'abs_palette_clustering',
   domain: 'color_and_value',
   icon: Palette,

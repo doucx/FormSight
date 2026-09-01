@@ -2,7 +2,11 @@ import { setup2DCanvas } from '../../../core/canvas/hidpi';
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
 import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
-import type { LineSegment, PerspPropMigrationHitResult, PerspPropMigrationQuestion } from '../types';
+import type {
+  LineSegment,
+  PerspPropMigrationHitResult,
+  PerspPropMigrationQuestion,
+} from '../types';
 
 export const PERSPECTIVE_CANVAS_SIZE = 340;
 
@@ -172,7 +176,10 @@ export function generateQuestion(level: number): PerspPropMigrationQuestion {
   };
 }
 
-export function checkHit(clickPoint: Point, question: PerspPropMigrationQuestion): PerspPropMigrationHitResult {
+export function checkHit(
+  clickPoint: Point,
+  question: PerspPropMigrationQuestion,
+): PerspPropMigrationHitResult {
   const line = question.divisionLine;
   const dx = line.p2.x - line.p1.x;
   const dy = line.p2.y - line.p1.y;

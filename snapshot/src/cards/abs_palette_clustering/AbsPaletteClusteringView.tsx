@@ -59,9 +59,7 @@ export function AbsPaletteClusteringView({
             width={CANVAS_SIZE}
             height={CANVAS_SIZE}
             className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) =>
-              drawPaletteTilesCanvas(canvas, question.paletteTiles, CANVAS_SIZE)
-            }
+            draw={(canvas) => drawPaletteTilesCanvas(canvas, question.paletteTiles, CANVAS_SIZE)}
             deps={[question.paletteTiles]}
           />
         </div>

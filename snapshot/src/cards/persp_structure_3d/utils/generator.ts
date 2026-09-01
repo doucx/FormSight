@@ -102,7 +102,10 @@ export function generateQuestion(level: number): PerspStructure3DQuestion {
   };
 }
 
-export function checkHit(clickPoint: Point, question: PerspStructure3DQuestion): PerspStructure3DHitResult {
+export function checkHit(
+  clickPoint: Point,
+  question: PerspStructure3DQuestion,
+): PerspStructure3DHitResult {
   const target = question.targetProjectedPoint;
   const dist = target
     ? Math.sqrt((clickPoint.x - target.x) ** 2 + (clickPoint.y - target.y) ** 2)

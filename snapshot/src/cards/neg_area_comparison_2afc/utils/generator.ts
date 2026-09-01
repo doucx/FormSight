@@ -1,10 +1,6 @@
 import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
-import {
-  TWO_AFC_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from '../types';
+import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from '../types';
 
 export function calcPolygonArea(vertices: Point[]): number {
   const n = vertices.length;
@@ -29,10 +25,7 @@ export function calcPolygonCentroid(vertices: Point[]): Point {
   return { x: cx / vertices.length, y: cy / vertices.length };
 }
 
-export function generateRandomPolygon(
-  level: number,
-  canvasSize = TWO_AFC_CANVAS_SIZE,
-): Point[] {
+export function generateRandomPolygon(level: number, canvasSize = TWO_AFC_CANVAS_SIZE): Point[] {
   const clamped = Math.max(1, Math.min(35, level));
   const t = (clamped - 1) / 34;
 

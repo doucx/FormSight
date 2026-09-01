@@ -5,11 +5,7 @@ import { DualViewportContainer } from '../../components/common/DualViewportConta
 import { StandardSliderView } from '../../components/common/StandardSliderView';
 import { useTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
-import {
-  CANVAS_SIZE,
-  drawNotanNoiseField,
-  drawRawGrayscaleNoiseField,
-} from './utils/generator';
+import { CANVAS_SIZE, drawNotanNoiseField, drawRawGrayscaleNoiseField } from './utils/generator';
 
 export interface AbsNotanThresholdViewProps {
   question: QuestionData;

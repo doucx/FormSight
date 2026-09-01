@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absTdPalette2afcCard: CardManifest<QuestionData, HitResult, number, BaseModuleSettings> = {
+export const absTdPalette2afcCard: CardManifest<
+  QuestionData,
+  HitResult,
+  number,
+  BaseModuleSettings
+> = {
   id: 'abs_td_palette_2afc',
   domain: 'color_and_value',
   icon: Sparkles,

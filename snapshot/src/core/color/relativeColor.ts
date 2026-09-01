@@ -1,3 +1,4 @@
+import { createShuffledChoices } from '../math/mathUtils';
 import {
   calcDeltaEOk,
   generateTetrahedralDistractors,
@@ -7,7 +8,6 @@ import {
   hsvToOkLab,
   okLabToHsv,
 } from './oklchUtils';
-import { createShuffledChoices } from '../math/mathUtils';
 
 export type RelativeColorMode =
   | 'VECTOR_SHIFT'

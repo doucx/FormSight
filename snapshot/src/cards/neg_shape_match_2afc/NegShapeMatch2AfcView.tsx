@@ -4,11 +4,7 @@ import { Choice2AfcContainer } from '../../components/common/Choice2AfcContainer
 import { QuestionCardShell } from '../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import { useTranslation } from '../../core/i18n';
-import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-} from './types';
+import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegShapeMatch2AfcViewProps {
   question: QuestionData;

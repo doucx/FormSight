@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absNotanThresholdCard: CardManifest<QuestionData, HitResult, number, BaseModuleSettings> = {
+export const absNotanThresholdCard: CardManifest<
+  QuestionData,
+  HitResult,
+  number,
+  BaseModuleSettings
+> = {
   id: 'abs_notan_threshold',
   domain: 'rhythm_and_notan',
   icon: Sun,

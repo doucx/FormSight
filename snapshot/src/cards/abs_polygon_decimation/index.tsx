@@ -7,7 +7,12 @@ import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absPolygonDecimationCard: CardManifest<QuestionData, HitResult, 'A' | 'B', BaseModuleSettings> = {
+export const absPolygonDecimationCard: CardManifest<
+  QuestionData,
+  HitResult,
+  'A' | 'B',
+  BaseModuleSettings
+> = {
   id: 'abs_polygon_decimation',
   domain: 'form_and_proportion',
   icon: Maximize2,
