@@ -72,7 +72,7 @@ describe('settings utils with card-scoped isolation', () => {
     };
 
     const db = await getDB();
-    await db.put('app_settings', partialSettings as any, 'global_settings');
+    await db.put('app_settings', partialSettings as unknown as UserSettings, 'global_settings');
 
     const loaded = await loadSettings();
     expect(loaded.global.idleTimeout).toBe(120);
