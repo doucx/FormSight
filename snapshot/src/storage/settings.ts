@@ -177,7 +177,11 @@ export async function loadSettings(): Promise<UserSettings> {
 
     if (!stored) {
       const initialSettings: UserSettings = {
-        global: { ...DEFAULT_SETTINGS.global, locale: getCachedBypassLocale(), theme: getCachedBypassTheme() },
+        global: {
+          ...DEFAULT_SETTINGS.global,
+          locale: getCachedBypassLocale(),
+          theme: getCachedBypassTheme(),
+        },
         cards: defaultCards,
       };
       cachedSettings = initialSettings;

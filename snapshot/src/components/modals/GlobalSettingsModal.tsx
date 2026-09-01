@@ -30,7 +30,17 @@ export function GlobalSettingsModal({
 }: GlobalSettingsModalProps) {
   const { t } = useTranslation();
   const [settings, setSettings] = useState<UserSettings>(
-    () => externalSettings || { global: { locale: 'zh-CN', idleTimeout: 60, soundEnabled: true, sliderHitMargin: 12, showCanvasHints: true }, cards: {} },
+    () =>
+      externalSettings || {
+        global: {
+          locale: 'zh-CN',
+          idleTimeout: 60,
+          soundEnabled: true,
+          sliderHitMargin: 12,
+          showCanvasHints: true,
+        },
+        cards: {},
+      },
   );
 
   useEffect(() => {

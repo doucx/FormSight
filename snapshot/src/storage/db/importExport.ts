@@ -1,10 +1,6 @@
 import { registry } from '../../core/registry';
 import type { PlanStorageState, TrainingPlan } from '../../types/plan';
-import {
-  getDefaultPlans,
-  loadPlanStorageState,
-  loadTrainingPlan,
-} from '../planStorage';
+import { getDefaultPlans, loadPlanStorageState, loadTrainingPlan } from '../planStorage';
 import {
   DEFAULT_SETTINGS,
   type UserSettings,

@@ -17,7 +17,9 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
 
   const [settings, setSettings] = useState<UserSettings>(getSettingsSnapshot);
   const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(EMPTY_TRAINING_PLAN);
-  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => getPlanStorageStateSnapshot().plans);
+  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(
+    () => getPlanStorageStateSnapshot().plans,
+  );
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);

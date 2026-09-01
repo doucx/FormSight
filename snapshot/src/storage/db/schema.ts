@@ -274,7 +274,11 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
           database.createObjectStore('app_metadata');
         }
 
-        if (oldVersion < 3 && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        if (
+          oldVersion < 3 &&
+          typeof window !== 'undefined' &&
+          typeof localStorage !== 'undefined'
+        ) {
           try {
             const settingsStore = transaction.objectStore('app_settings');
             const planStore = transaction.objectStore('training_plans');
@@ -305,7 +309,7 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               const legacyRaw = localStorage.getItem('formsight_custom_training_plan');
               if (legacyRaw) {
                 const legacyPlan = JSON.parse(legacyRaw);
-                if (legacyPlan && legacyPlan.id) {
+                if (legacyPlan?.id) {
                   await planStore.put(legacyPlan);
                   activeId = legacyPlan.id;
                 }
@@ -316,7 +320,10 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               await metaStore.put(activeId, 'active_plan_id');
             }
           } catch (migrationErr) {
-            console.error('Failed to migrate LocalStorage to IndexedDB in v3 upgrade:', migrationErr);
+            console.error(
+              'Failed to migrate LocalStorage to IndexedDB in v3 upgrade:',
+              migrationErr,
+            );
           }
         }
       },
