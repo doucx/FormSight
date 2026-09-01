@@ -1,7 +1,7 @@
 import { ArrowLeft, ChevronRight, Clock, HelpCircle } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useState } from 'preact/hooks';
-import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
+import { getCardDesc, getCardInstruction, getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
 import { IdlePauseOverlay } from '../common/IdlePauseOverlay';
@@ -45,12 +45,11 @@ export function TrainingShell({
   session,
   showExitButton = true,
   showTimer = true,
-  children,
+  onExit,
 }: TrainingShellProps) {
   const { t } = useTranslation();
   const cardTitle = getCardTitle(card, t);
-  const instruction =
-    t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
+  const instruction = getCardInstruction(card, t);
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
