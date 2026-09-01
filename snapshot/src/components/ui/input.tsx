@@ -1,5 +1,6 @@
 import { type VariantProps, cva } from 'class-variance-authority';
 import type { JSX } from 'preact';
+import { forwardRef } from 'preact/compat';
 import { cn } from '../../utils/cn';
 
 export const inputVariants = cva(
@@ -24,6 +25,15 @@ export interface InputProps
   type?: string;
 }
 
-export function Input({ className, inputSize, type = 'text', ...props }: InputProps) {
-  return <input type={type} className={cn(inputVariants({ inputSize }), className)} {...props} />;
-}
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, inputSize, type = 'text', ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        type={type}
+        className={cn(inputVariants({ inputSize }), className)}
+        {...props}
+      />
+    );
+  },
+);

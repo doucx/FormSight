@@ -1,226 +1,117 @@
-现在，我将生成 Quipu 计划并执行修复。
+现在生成并执行修复计划。
 
-## [WIP] fix: 修复数据导入中的 domain 规范化、设置合并与文件触发漏洞
+## [WIP] fix: 为 Input UI 组件添加 forwardRef 转发以修复文件导入弹窗唤起失效
 
 ### 错误分析
 
-1. `src/storage/db/importExport.ts`: 导入 `dailySummaries` 时未做 `domain` 规范化映射，且从 `records` 回填重建时错误地硬编码了 `'star'` 默认值。
-2. `src/storage/db/importExport.ts`: `saveSettings` 直接覆盖可能导致新增卡片缺少默认字段。
-3. `src/components/settings/sections/DataGovernanceSection.tsx`: 文件读取后未清空 `input.value`，导致同名文件二次选择失效。
+`src/components/ui/input.tsx` 未使用 `forwardRef` 包装，外部传入的 `ref` 无法绑定到原生 `<input>` DOM 元素，导致通过 `ref.current.click()` 唤起隐藏文件上传控件（如「导入 JSON 备份」和「导入计划」）的操作失效。
 
 ### 用户需求
 
-确保系统全量备份导入与计划导入在任何场景下均能稳定执行，旧数据能正确映射至卡片一等公民的新版 `domain` 体系，且操作体验流畅可靠。
+修复点击「导入 JSON 备份」及计划中心的「导入计划」按钮后无法弹出系统本地文件选择窗口的问题。
 
 ### 评论
 
-数据备份与导入是用户数据的生命线。在向纯 Flat Card 架构演进后，数据导入层的兼容性映射与容错处理是保证用户资产安全无损迁移的核心保障。
+这是一个典型的 React/Preact 组件封装 ref 转发缺失问题。通过 `forwardRef` 规范化 UI 基础组件后，所有基于 ref 的聚焦、点击及流式交互均可恢复正常。
 
 ### 目标
 
-1. 升级 `importAllData`：在写入 `dailySummaries` 时做统一的 `cardId` 和 `domain` 修正。
-2. 修复降级重建 `dailySummaries` 时的 `domain` 解析，改用 `registry.getCardById(cardId)?.domain`。
-3. 导入 settings 时与系统默认配置安全合并。
-4. 在文件导入回调中重置 `input.value = ''`。
+1. 在 `src/components/ui/input.tsx` 中引入 `forwardRef`（来自 `preact/compat`），将 `ref` 正确转发给底层的原生 `<input>` 元素。
+2. 确保 `DataGovernanceSection.tsx` 与 `PlanEditorHeader.tsx` 的文件导入按钮点击后能够正常调起系统文件选择框。
 
 ### 基本原理
 
-在数据落地 IndexedDB / LocalStorage 之前，通过 `registry` 倒排映射机制自动修复旧版标识，并确保文件输入组件的状态及时重置。
+使用 `forwardRef<HTMLInputElement, InputProps>` 包装 `Input` 组件，使组件可以接收外部传入的 `ref` 并无缝挂载到底层真实 DOM 节点上。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/critical #comp/runtime #concept/state #concept/sync #scope/core #scope/ux #ai/instruct #task/domain/storage #task/object/data-import #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/interfaces #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/file-input-ref #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `src/storage/db/importExport.ts` 中的导入规范化与合并逻辑
+#### Acts 1: 升级 `src/components/ui/input.tsx` 支持 `forwardRef`
 
 ~~~~~act
 patch_file
-src/storage/db/importExport.ts
+src/components/ui/input.tsx
 ~~~~~
 ~~~~~typescript
-    // 4. 写入或重新生成 daily_summaries
-    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      for (const d of parsed.dailySummaries) {
-        await tx.objectStore('daily_summaries').put(d);
-      }
-      await tx.done;
-    } else if (parsed.records && parsed.records.length > 0) {
-      const summaryMap = new Map<string, DailySummaryData>();
-      for (const r of parsed.records) {
-        const domain = (r.domain || 'star') as TrainingDomain;
-        const cardId = r.cardId || r.mode;
-        const date = getLocalDateString(r.timestamp);
-        const summaryId = `${date}_${cardId}`;
-        const respMs = Number(r.responseTimeMs) || 0;
-        const level = Number(r.difficultyLevel) || 1;
+import { type VariantProps, cva } from 'class-variance-authority';
+import type { JSX } from 'preact';
+import { cn } from '../../utils/cn';
 
-        const existing = summaryMap.get(summaryId);
-        if (!existing) {
-          summaryMap.set(summaryId, {
-            id: summaryId,
-            date,
-            cardId,
-            domain,
-            mode: r.mode,
-            totalCount: 1,
-            hitCount: r.isHit ? 1 : 0,
-            totalTimeMs: respMs,
-            maxLevel: level,
-            minLevel: level,
-            lastLevel: level,
-            updatedAt: r.timestamp,
-          });
-        } else {
-          existing.totalCount += 1;
-          if (r.isHit) existing.hitCount += 1;
-          existing.totalTimeMs += respMs;
-          existing.maxLevel = Math.max(existing.maxLevel, level);
-          existing.minLevel = Math.min(existing.minLevel, level);
-          if (r.timestamp >= existing.updatedAt) {
-            existing.lastLevel = level;
-            existing.updatedAt = r.timestamp;
-          }
-        }
-      }
+export const inputVariants = cva(
+  'w-full bg-card hover:bg-muted/50 focus:bg-card text-foreground font-bold border border-border transition-all placeholder:text-muted-foreground placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/60 disabled:opacity-50 disabled:pointer-events-none',
+  {
+    variants: {
+      inputSize: {
+        default: 'px-3.5 py-2.5 text-xs rounded-2xl',
+        sm: 'px-2.5 py-1.5 text-xs rounded-xl',
+        lg: 'px-4 py-3 text-sm rounded-2xl',
+      },
+    },
+    defaultVariants: {
+      inputSize: 'default',
+    },
+  },
+);
 
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      for (const summary of summaryMap.values()) {
-        await tx.objectStore('daily_summaries').put(summary);
-      }
-      await tx.done;
-    }
+export interface InputProps
+  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    VariantProps<typeof inputVariants> {
+  type?: string;
+}
 
-    // 5. 更新 LocalStorage
-    if (parsed.settings) {
-      saveSettings(parsed.settings);
-    }
+export function Input({ className, inputSize, type = 'text', ...props }: InputProps) {
+  return <input type={type} className={cn(inputVariants({ inputSize }), className)} {...props} />;
+}
 ~~~~~
 ~~~~~typescript
-    // 4. 写入或重新生成 daily_summaries
-    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      for (const d of parsed.dailySummaries) {
-        const cardId = d.cardId || d.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : d.domain || 'core';
-        await tx.objectStore('daily_summaries').put({
-          ...d,
-          cardId,
-          domain,
-        });
-      }
-      await tx.done;
-    } else if (parsed.records && parsed.records.length > 0) {
-      const summaryMap = new Map<string, DailySummaryData>();
-      for (const r of parsed.records) {
-        const cardId = r.cardId || r.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : r.domain || 'core';
-        const date = getLocalDateString(r.timestamp);
-        const summaryId = `${date}_${cardId}`;
-        const respMs = Number(r.responseTimeMs) || 0;
-        const level = Number(r.difficultyLevel) || 1;
+import { type VariantProps, cva } from 'class-variance-authority';
+import type { JSX } from 'preact';
+import { forwardRef } from 'preact/compat';
+import { cn } from '../../utils/cn';
 
-        const existing = summaryMap.get(summaryId);
-        if (!existing) {
-          summaryMap.set(summaryId, {
-            id: summaryId,
-            date,
-            cardId,
-            domain,
-            mode: r.mode,
-            totalCount: 1,
-            hitCount: r.isHit ? 1 : 0,
-            totalTimeMs: respMs,
-            maxLevel: level,
-            minLevel: level,
-            lastLevel: level,
-            updatedAt: r.timestamp,
-          });
-        } else {
-          existing.domain = domain;
-          existing.totalCount += 1;
-          if (r.isHit) existing.hitCount += 1;
-          existing.totalTimeMs += respMs;
-          existing.maxLevel = Math.max(existing.maxLevel, level);
-          existing.minLevel = Math.min(existing.minLevel, level);
-          if (r.timestamp >= existing.updatedAt) {
-            existing.lastLevel = level;
-            existing.updatedAt = r.timestamp;
-          }
-        }
-      }
+export const inputVariants = cva(
+  'w-full bg-card hover:bg-muted/50 focus:bg-card text-foreground font-bold border border-border transition-all placeholder:text-muted-foreground placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/60 disabled:opacity-50 disabled:pointer-events-none',
+  {
+    variants: {
+      inputSize: {
+        default: 'px-3.5 py-2.5 text-xs rounded-2xl',
+        sm: 'px-2.5 py-1.5 text-xs rounded-xl',
+        lg: 'px-4 py-3 text-sm rounded-2xl',
+      },
+    },
+    defaultVariants: {
+      inputSize: 'default',
+    },
+  },
+);
 
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      for (const summary of summaryMap.values()) {
-        await tx.objectStore('daily_summaries').put(summary);
-      }
-      await tx.done;
-    }
+export interface InputProps
+  extends Omit<JSX.InputHTMLAttributes<HTMLInputElement>, 'size'>,
+    VariantProps<typeof inputVariants> {
+  type?: string;
+}
 
-    // 5. 更新 LocalStorage (深度合并保障新增卡片配置)
-    if (parsed.settings) {
-      const current = loadSettings();
-      const mergedSettings: UserSettings = {
-        global: { ...current.global, ...(parsed.settings.global || {}) },
-        cards: { ...current.cards, ...(parsed.settings.cards || {}) },
-      };
-      saveSettings(mergedSettings);
-    }
-~~~~~
-
-#### Acts 2: 修复 `DataGovernanceSection.tsx` 中的文件选择重置
-
-在读取文件后清空 `input.value`，确保同名文件重新导入能正常触发事件。
-
-~~~~~act
-patch_file
-src/components/settings/sections/DataGovernanceSection.tsx
-~~~~~
-~~~~~typescript
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        showToast(t('settings.importSuccessToast'), 'success');
-        onDataChanged();
-        onCloseModal();
-      } else {
-        showToast(t('settings.importInvalidToast'), 'error');
-      }
-    }
-  };
-~~~~~
-~~~~~typescript
-  const handleImportFile = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      const file = target.files[0];
-      const text = await file.text();
-      target.value = '';
-      const success = await importAllData(text);
-      if (success) {
-        showToast(t('settings.importSuccessToast'), 'success');
-        onDataChanged();
-        onCloseModal();
-      } else {
-        showToast(t('settings.importInvalidToast'), 'error');
-      }
-    }
-  };
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, inputSize, type = 'text', ...props }, ref) => {
+    return (
+      <input
+        ref={ref}
+        type={type}
+        className={cn(inputVariants({ inputSize }), className)}
+        {...props}
+      />
+    );
+  },
+);
 ~~~~~
 
 ### 下一步建议
 
-1. 尝试在全局设置中执行一次「流式导出 JSON」，然后执行「清空数据」，再将导出的文件重新「导入 JSON 备份」，验证以下项：
-   - 今日刷题统计与累计用时是否 100% 恢复。
-   - 认知档案中的热力图与各卡片等级是否正确呈现。
-   - 自定义训练流计划是否完整恢复。
+1. 在浏览器中打开全局设置（Global Settings），点击「导入 JSON 备份」按钮，确认系统文件选择窗口正常弹出。
+2. 选择之前导出的 `.json` 备份文件，验证数据导入与页面刷新是否顺畅。
+3. 打开计划中心（Plan Editor），测试顶部的「导入 JSON 计划」按钮是否同样能正常调起文件选择。
