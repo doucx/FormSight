@@ -1,0 +1,16 @@
+{
+  "title": "夹角大小估算",
+  "desc": "观察由纯黑线段构成的夹角，使用连续滑块精准评估夹角弧度大小 (0°~180°)。",
+  "instruction": "观察极简两条射线夹角，调制滑块逼近精准度数 (0°~180°)",
+  "badge": "夹角大小估算",
+  "settings": {
+    "showToleranceBandTitle": "显示容错带范围",
+    "showToleranceBandDesc": "在滑块轨道上直观展示当前难度下的容错区间色带"
+  },
+  "views": {
+    "estimationHint": "观察两射线夹角，调制滑块逼近精准度数 (0°~180°)",
+    "estimationLabel": "夹角估算值:",
+    "trueAngle": "绝对真理值:",
+    "errorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)"
+  }
+}

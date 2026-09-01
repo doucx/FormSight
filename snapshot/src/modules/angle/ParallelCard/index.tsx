@@ -8,6 +8,8 @@ import {
   generateAngleQuestion,
 } from '../_shared/angleUtils';
 import { ParallelView } from './ParallelView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 
 export const angleParallelCard: CardManifest<
   AngleQuestionData,
@@ -26,18 +28,8 @@ export const angleParallelCard: CardManifest<
   },
   hasWeaknessAnalytics: false,
   locales: {
-    'zh-CN': {
-      title: '平行线基准辨识',
-      desc: '观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。',
-      instruction: '观察上方基准线，在下方选出与其保持绝对平行的线 (键 1 / 2)',
-      badge: '平行线基准辨识',
-    },
-    'en-US': {
-      title: 'Parallel Alignment',
-      desc: 'Observe the prompt orientation and identify the strictly parallel line below (2AFC).',
-      instruction: 'Find the line that is strictly parallel to the prompt line (Keys 1 / 2).',
-      badge: 'Parallel Alignment',
-    },
+    'zh-CN': zhCN,
+    'en-US': enUS,
   },
   training: {
     generateQuestion: (level) => generateAngleQuestion('PARALLEL_ALIGNMENT_2AFC', level),

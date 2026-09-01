@@ -1,7 +1,7 @@
 import { Compass } from 'lucide-preact';
+import type { SettingFieldSchema } from '../../../components/settings/DynamicDomainSettings';
 import type { CardManifest } from '../../../core/contracts';
 import type { BaseModuleSettings } from '../../../storage/settings';
-import { SLIDER_COMMON_SCHEMAS } from '../_shared/schemas';
 import {
   type AngleHitResult,
   type AngleQuestionData,
@@ -9,6 +9,17 @@ import {
   generateAngleQuestion,
 } from '../_shared/angleUtils';
 import { EstimationView } from './EstimationView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
+
+const SLIDER_COMMON_SCHEMAS: SettingFieldSchema[] = [
+  {
+    type: 'toggle',
+    key: 'showToleranceBand',
+    title: 'cards.angle_estimation.settings.showToleranceBandTitle',
+    description: 'cards.angle_estimation.settings.showToleranceBandDesc',
+  },
+];
 
 export const angleEstimationCard: CardManifest<
   AngleQuestionData,
@@ -32,26 +43,8 @@ export const angleEstimationCard: CardManifest<
     showToleranceBand: true,
   },
   locales: {
-    'zh-CN': {
-      title: '夹角大小估算',
-      desc: '观察由纯黑线段构成的夹角，使用连续滑块精准评估夹角弧度大小 (0°~180°)。',
-      instruction: '观察极简两条射线夹角，调制滑块逼近精准度数 (0°~180°)',
-      badge: '夹角大小估算',
-      settings: {
-        showToleranceBandTitle: '显示容错带范围',
-        showToleranceBandDesc: '在滑块轨道上直观展示当前难度下的容错区间色带',
-      },
-    },
-    'en-US': {
-      title: 'Angle Estimation',
-      desc: 'Observe the angle formed by two rays and estimate its degree using a slider (0°~180°).',
-      instruction: 'Observe the two rays and adjust the slider to match the true angle (0°~180°).',
-      badge: 'Angle Estimation',
-      settings: {
-        showToleranceBandTitle: 'Show Tolerance Band',
-        showToleranceBandDesc: 'Visually highlight the accepted tolerance window on the slider track.',
-      },
-    },
+    'zh-CN': zhCN,
+    'en-US': enUS,
   },
   training: {
     generateQuestion: (level) => generateAngleQuestion('ANGLE_ESTIMATION', level),

@@ -1,0 +1,9 @@
+{
+  "title": "Angle 2AFC Comparison",
+  "desc": "Quickly identify which side has a larger angle under non-orthogonal orientations (2AFC).",
+  "instruction": "Identify which angle is larger (Keys 1 / 2).",
+  "badge": "Angle Comparison",
+  "views": {
+    "comparisonHint": "Identify which side contains a larger angle (Keys 1 / 2)"
+  }
+}

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "pi Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788230809.5699136, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(angle): 将 angle 模块各卡片 i18n 资源内聚至卡片目录并修正命名空间路径", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788231272.1869168, "duration_ms": 0}}

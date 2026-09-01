@@ -34,7 +34,7 @@ export function ParallelView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.angle.views.parallelHint')}
+      hintText={t('cards.angle_parallel_2afc.views.parallelHint')}
       hintIcon={Split}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -44,7 +44,7 @@ export function ParallelView({
       prompt={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('packs.angle.views.parallelPromptTitle')}
+            {t('cards.angle_parallel_2afc.views.parallelPromptTitle')}
           </span>
           <CanvasView
             width={ANGLE_PROMPT_SIZE}
@@ -68,8 +68,8 @@ export function ParallelView({
         isCorrect: isAHit,
         badge: showAnswer
           ? isAHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('cards.angle_parallel_2afc.views.absoluteParallel')
+            : t('cards.angle_parallel_2afc.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -96,8 +96,8 @@ export function ParallelView({
         isCorrect: isBHit,
         badge: showAnswer
           ? isBHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('cards.angle_parallel_2afc.views.absoluteParallel')
+            : t('cards.angle_parallel_2afc.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">

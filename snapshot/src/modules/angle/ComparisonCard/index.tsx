@@ -8,6 +8,8 @@ import {
   generateAngleQuestion,
 } from '../_shared/angleUtils';
 import { ComparisonView } from './ComparisonView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 
 export const angleComparisonCard: CardManifest<
   AngleQuestionData,
@@ -26,18 +28,8 @@ export const angleComparisonCard: CardManifest<
   },
   hasWeaknessAnalytics: false,
   locales: {
-    'zh-CN': {
-      title: '角度二分对比',
-      desc: '在消除空间正交基准干扰下，二选一快速判别哪一侧的两射线夹角更大 (2AFC)。',
-      instruction: '二选一快速判别哪一侧夹角更大 (键 1 / 2)',
-      badge: '角度二分对比',
-    },
-    'en-US': {
-      title: 'Angle 2AFC Comparison',
-      desc: 'Quickly identify which side has a larger angle under non-orthogonal orientations (2AFC).',
-      instruction: 'Identify which angle is larger (Keys 1 / 2).',
-      badge: 'Angle Comparison',
-    },
+    'zh-CN': zhCN,
+    'en-US': enUS,
   },
   training: {
     generateQuestion: (level) => generateAngleQuestion('ANGLE_COMPARISON_2AFC', level),

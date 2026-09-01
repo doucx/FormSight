@@ -32,7 +32,7 @@ export function ComparisonView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.angle.views.comparisonHint')}
+      hintText={t('cards.angle_comparison_2afc.views.comparisonHint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"

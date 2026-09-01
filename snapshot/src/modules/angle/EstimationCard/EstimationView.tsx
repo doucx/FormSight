@@ -39,11 +39,11 @@ export function EstimationView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('packs.angle.views.estimationHint')}
+      hintText={t('cards.angle_estimation.views.estimationHint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('packs.angle.views.estimationLabel')}
+      label={t('cards.angle_estimation.views.estimationLabel')}
       max={180}
       step={0.5}
       initialValue={90}
@@ -77,7 +77,7 @@ export function EstimationView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('packs.angle.views.trueAngle')}{' '}
+              {t('cards.angle_estimation.views.trueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span
@@ -87,7 +87,7 @@ export function EstimationView({
                   : 'text-rose-600 dark:text-rose-400 font-bold'
               }
             >
-              {t('packs.angle.views.errorInfo', {
+              {t('cards.angle_estimation.views.errorInfo', {
                 error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
                 tolerance,
               })}
