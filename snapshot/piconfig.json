@@ -4,10 +4,8 @@
       "format": "xml",
       "extension": ["ts", "tsx", "json"],
       "paths": [
-        "src/core/contracts.ts",
-        "src/core/i18n.ts",
-        "src/types/card.ts",
-        "src/types/index.ts",
+        "src/core",
+        "src/types",
         "src/components/settings/DynamicDomainSettings.tsx",
         "src/modules/star/"
       ]
