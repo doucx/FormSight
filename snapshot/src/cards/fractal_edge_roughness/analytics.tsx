@@ -3,6 +3,7 @@ import { Callout } from '../../components/ui/callout';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
+import { renderRoughnessBandChart, renderRoughnessBiasChart } from './utils/charts';
 import { getRoughnessSectorIdx } from './utils/generator';
 
 const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
@@ -15,7 +16,9 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       title: 'analytics.roughnessBias.title',
       subTitle: 'analytics.roughnessBias.subTitle',
       icon: Sparkles,
-      renderVisualizer: () => {},
+      renderVisualizer: (canvas, records) => {
+        renderRoughnessBiasChart(canvas, records);
+      },
       renderDiagnostics: (records) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
@@ -105,7 +108,9 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       title: 'analytics.bandSensitivity.title',
       subTitle: 'analytics.bandSensitivity.subTitle',
       icon: BarChart2,
-      renderVisualizer: () => {},
+      renderVisualizer: (canvas, records) => {
+        renderRoughnessBandChart(canvas, records);
+      },
       renderDiagnostics: (records) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
