@@ -26,6 +26,7 @@ interface AppRouterProps {
   allPlans: TrainingPlan[];
   settings: UserSettings;
   profilesLoaded: boolean;
+  dataVersion: number;
   onRefreshProfiles: () => Promise<void>;
   onSetTrainingPlan: (plan: TrainingPlan) => void;
   onSelectPlanOnHome: (planId: string) => void;
@@ -45,6 +46,7 @@ export function AppRouter({
   allPlans,
   settings,
   profilesLoaded,
+  dataVersion,
   onRefreshProfiles,
   onSetTrainingPlan,
   onSelectPlanOnHome,
@@ -96,12 +98,13 @@ export function AppRouter({
     }
 
     if (route.type === 'stats') {
-      return <GlobalStatsView onExit={() => navigate(lastHomeRoute)} />;
+      return <GlobalStatsView dataVersion={dataVersion} onExit={() => navigate(lastHomeRoute)} />;
     }
 
     if (route.type === 'plan-editor') {
       return (
         <PlanEditorView
+          key={`plan-editor-${dataVersion}`}
           initialPlan={trainingPlan}
           onExit={() => navigate(lastHomeRoute)}
           onPlanListChanged={onRefreshProfiles}
@@ -143,6 +146,7 @@ export function AppRouter({
   if (route.type === 'analytics') {
     return (
       <CardAnalyticsView
+        key={`card-analytics-${route.cardId}-${dataVersion}`}
         cardId={route.cardId}
         initialTab={route.tab}
         onExit={() => navigate(lastHomeRoute)}
@@ -158,6 +162,7 @@ export function AppRouter({
   if (route.type === 'plan-train') {
     return (
       <PlanTrainingView
+        key={`plan-train-${trainingPlan.id}-${dataVersion}`}
         plan={trainingPlan}
         settings={settings}
         onExit={async () => {

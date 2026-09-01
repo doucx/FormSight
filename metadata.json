@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] perf: 优化全量数据导入性能减少批量写入延迟", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788260628.416265, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 全局响应数据导入与清空事件以即时刷新认知档案与所有视图", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788260867.717437, "duration_ms": 0}}

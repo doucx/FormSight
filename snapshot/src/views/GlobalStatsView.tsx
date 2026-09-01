@@ -12,10 +12,11 @@ import { useGlobalStatsData } from '../hooks/useGlobalStatsData';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 
 interface GlobalStatsViewProps {
+  dataVersion?: number;
   onExit?: () => void;
 }
 
-export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
+export function GlobalStatsView({ dataVersion = 0, onExit: _onExit }: GlobalStatsViewProps = {}) {
   const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -29,7 +30,7 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
     heatmapData,
     pathMasteryList,
     challengeMasteryList,
-  } = useGlobalStatsData();
+  } = useGlobalStatsData(dataVersion);
 
   const allCards = registry.getAllCards();
 

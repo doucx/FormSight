@@ -19,6 +19,7 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
   const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData>>({});
+  const [dataVersion, setDataVersion] = useState<number>(0);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
@@ -38,6 +39,7 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
     setTrainingPlan(summary.trainingPlan);
     setAllPlans(summary.allPlans);
     setProfilesLoaded(true);
+    setDataVersion((v) => v + 1);
   }, [refreshTodayStats]);
 
   useEffect(() => {
@@ -92,6 +94,7 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
     profilesLoaded,
     totalTimeMs,
     profiles,
+    dataVersion,
     showToast,
     handleDismissToast,
     refreshProfiles,

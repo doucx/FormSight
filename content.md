@@ -1,271 +1,625 @@
-好的，我们将对 `src/storage/db/importExport.ts` 中的 `importAllData` 实现进行全量性能优化，消除事务分批等待、减少 GC 开销并加入域与时间计算缓存。
+经排查，**认知档案（GlobalStatsView）** 及其他部分视图（如单卡认知分析、计划编辑器）在清空或导入数据后未能即时刷新，原因在于：
+1. `useGlobalStatsData` 仅在组件初次挂载时（`useEffect(..., [])`）执行了一次从 IndexedDB `getDailySummaries()` 的异步拉取，没有响应应用层全局数据版本变化。
+2. `useAppBootstrap` 在数据重置/还原时虽执行了 `refreshProfiles`，但未维护全局 `dataVersion` 信号，导致下游未挂载在顶层 state 的异步视图无法察觉底层数据库变动。
+3. `AppRouter` 针对 `GlobalStatsView`、`CardAnalyticsView`、`PlanEditorView` 缺乏数据版本联动刷新机制。
 
-## [WIP] perf: 优化全量数据导入性能减少批量写入延迟
+我将生成一个计划修复这一问题。
+
+## [WIP] fix: 全局响应数据导入与清空事件以即时刷新认知档案与所有视图
+
+### 错误分析
+- **认知档案 (GlobalStatsView)**：其底层 Hook `useGlobalStatsData` 依赖项数组为空 `[]`，仅在 Mount 时读取 IndexedDB，当用户在设置弹窗中导入/清空数据后关闭弹窗，该页面状态不会重新请求数据库。
+- **单卡分析 (CardAnalyticsView)**：仅监听 `[plugin, card]`，无法感知底层历史记录在数据还原后的变更。
+- **计划编辑器与计划训练 (PlanEditorView / PlanTrainingView)**：内部状态初始值基于本地存储快照，未绑定数据版本。
 
 ### 用户需求
-解决当导入 7MB（约 19,000 条做答记录）备份文件时，导入过程耗时达 32 秒的性能瓶颈，将其优化至 1~2 秒级别。
+在设置中执行「导入备份」、「清空数据」、「恢复官方计划」或「数据库瘦身」后，无需手动刷新页面或切换视图，认知档案（统计卡片、热力图、掌握度矩阵、演进趋势图）及所有关联页面能够立即响应并呈现最新数据。
 
 ### 评论
-当前实现中频繁创建读写事务并等待落盘 (`await tx.done`)、高频浅拷贝大对象导致 GC 停顿以及未缓存域解析与时间计算，严重制约了数据治理管道的吞吐量。此次优化可显著改善大批量历史数据恢复时的体验。
+数据治理操作后保持单页应用（SPA）视图的一致性与响应性是非常关键的体验保障。引入全局响应式数据版本计数器（`dataVersion`）可精准触达所有异步拉取型子视图，既保持局部拉取的解耦设计，又实现全局数据的强一致刷新。
 
 ### 目标
-1. 在 `importAllData` 中，将 `records` 表的写入合并为单一事务，彻底消除多次分批事务带来的硬磁盘同步（fsync）等待。
-2. 建立卡片所属域（`domain`）的内存缓存，避免万级循环重复查询注册表。
-3. 原地修改解析后的 JSON 记录对象，消除 `{ ...r }` 浅拷贝引发的垃圾回收停顿。
-4. 优化 `daily_summaries` 退化计算逻辑，加入时间戳邻近缓存避免高频 `new Date()`。
+1. 在 `useAppBootstrap` 中引入并暴露 `dataVersion` 状态，每次执行 `refreshProfiles` 时递增。
+2. 改造 `useGlobalStatsData` 与 `GlobalStatsView`，支持传入 `dataVersion` 并在其变动时自动重新查询 `getDailySummaries()`。
+3. 在 `AppRouter` 中透传 `dataVersion`，并为 `CardAnalyticsView`、`PlanEditorView`、`PlanTrainingView` 绑定数据版本 key。
+4. 确保 `DataGovernanceSection` 中导入与修剪等异步操作正确 `await onDataChanged()`。
 
 ### 基本原理
-IndexedDB 的批量写入性能主要受事务落盘频率与对象分配开销制约。通过将所有 `records.put` 放入同一个 `readwrite` 事务中并由浏览器底层调度批量提交，配合原地属性赋值（In-place mutation），能将 I/O 与 CPU 资源消耗降至最低。
+通过在顶层 Hook `useAppBootstrap` 中维护一个受控的 `dataVersion` 计数器，一旦发生全量数据导入或清除，`refreshProfiles()` 触发 `dataVersion` 递增。下游视图通过 Hook 依赖项（`useEffect([dataVersion])`）或虚拟 DOM Key 重建（`key={dataVersion}`）自动触发最新数据拉取，彻底消除陈旧缓存。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #scope/dx #ai/instruct #task/domain/storage #task/object/backup-import #task/action/performance-optimization #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/storage #task/object/reactivity-sync #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 优化 `importExport.ts` 中的 `importAllData` 实现
-
-我们将重构 `importAllData` 中的写入与聚合逻辑，消除多余的事务截断与对象复制。
+#### Acts 1: 在 `useAppBootstrap` 中增加 `dataVersion` 状态驱动
 
 ~~~~~act
 patch_file
-src/storage/db/importExport.ts
+src/hooks/useAppBootstrap.ts
 ~~~~~
 ~~~~~typescript
-    // 1. 导入 sessions
-    if (parsed.sessions && parsed.sessions.length > 0) {
-      const tx = db.transaction('sessions', 'readwrite');
-      const store = tx.objectStore('sessions');
-      for (const s of parsed.sessions) {
-        const cardId = s.cardId || s.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : s.domain || 'core';
-        store.put({ ...s, domain, cardId });
-      }
-      await tx.done;
-    }
+  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
+  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+  const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData>>({});
 
-    // 2. 导入 profiles
-    if (parsed.profiles && parsed.profiles.length > 0) {
-      const tx = db.transaction('user_profiles', 'readwrite');
-      const store = tx.objectStore('user_profiles');
-      for (const p of parsed.profiles) {
-        const cardId = p.cardId || p.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : p.domain || 'core';
-        const totalTrials = p.totalTrials ?? 0;
-        store.put({ ...p, cardId, domain, totalTrials });
-      }
-      await tx.done;
-    }
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
 
-    // 3. 分批写入海量 records (每 2500 条为一个独立事务批次，采用管线并发排队)
-    if (parsed.records && parsed.records.length > 0) {
-      const BATCH_SIZE = 2500;
-      for (let i = 0; i < parsed.records.length; i += BATCH_SIZE) {
-        const batch = parsed.records.slice(i, i + BATCH_SIZE);
-        const tx = db.transaction('records', 'readwrite');
-        const store = tx.objectStore('records');
-        for (const r of batch) {
-          const cardId = r.cardId || r.mode;
-          const card = registry.getCardById(cardId);
-          const domain = card ? card.domain : r.domain || 'core';
-          store.put({ ...r, domain, cardId });
-        }
-        await tx.done;
-      }
-    }
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
-    // 4. 写入或重新生成 daily_summaries
-    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
-      for (const d of parsed.dailySummaries) {
-        const cardId = d.cardId || d.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : d.domain || 'core';
-        store.put({
-          ...d,
-          cardId,
-          domain,
-        });
-      }
-      await tx.done;
-    } else if (parsed.records && parsed.records.length > 0) {
-      const summaryMap = new Map<string, DailySummaryData>();
-      for (const r of parsed.records) {
-        const cardId = r.cardId || r.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : r.domain || 'core';
-        const date = getLocalDateString(r.timestamp);
-        const summaryId = `${date}_${cardId}`;
-        const respMs = Number(r.responseTimeMs) || 0;
-        const level = Number(r.difficultyLevel) || 1;
+  const refreshProfiles = useCallback(async () => {
+    const [summary] = await Promise.all([repository.getAppSummary(), refreshTodayStats()]);
 
-        const existing = summaryMap.get(summaryId);
-        if (!existing) {
-          summaryMap.set(summaryId, {
-            id: summaryId,
-            date,
-            cardId,
-            domain,
-            mode: r.mode,
-            totalCount: 1,
-            hitCount: r.isHit ? 1 : 0,
-            totalTimeMs: respMs,
-            maxLevel: level,
-            minLevel: level,
-            lastLevel: level,
-            updatedAt: r.timestamp,
-          });
-        } else {
-          existing.domain = domain;
-          existing.totalCount += 1;
-          if (r.isHit) existing.hitCount += 1;
-          existing.totalTimeMs += respMs;
-          existing.maxLevel = Math.max(existing.maxLevel, level);
-          existing.minLevel = Math.min(existing.minLevel, level);
-          if (r.timestamp >= existing.updatedAt) {
-            existing.lastLevel = level;
-            existing.updatedAt = r.timestamp;
-          }
-        }
-      }
-
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
-      for (const summary of summaryMap.values()) {
-        store.put(summary);
-      }
-      await tx.done;
-    }
+    setTotalTimeMs(summary.totalTimeMs);
+    setProfiles(summary.profiles);
+    setSettings(summary.settings);
+    setTrainingPlan(summary.trainingPlan);
+    setAllPlans(summary.allPlans);
+    setProfilesLoaded(true);
+  }, [refreshTodayStats]);
 ~~~~~
 ~~~~~typescript
-    // 卡片 Domain 内存缓存映射，避免万级循环中高频查表
-    const cardDomainCache = new Map<string, string>();
-    const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
-      const cached = cardDomainCache.get(cardId);
-      if (cached !== undefined) return cached;
-      const card = registry.getCardById(cardId);
-      const domain = card ? card.domain : fallbackDomain || 'core';
-      cardDomainCache.set(cardId, domain);
-      return domain;
+  const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
+  const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
+  const [profiles, setProfiles] = useState<Record<string, UnifiedProfileData>>({});
+  const [dataVersion, setDataVersion] = useState<number>(0);
+
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const refreshProfiles = useCallback(async () => {
+    const [summary] = await Promise.all([repository.getAppSummary(), refreshTodayStats()]);
+
+    setTotalTimeMs(summary.totalTimeMs);
+    setProfiles(summary.profiles);
+    setSettings(summary.settings);
+    setTrainingPlan(summary.trainingPlan);
+    setAllPlans(summary.allPlans);
+    setProfilesLoaded(true);
+    setDataVersion((v) => v + 1);
+  }, [refreshTodayStats]);
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useAppBootstrap.ts
+~~~~~
+~~~~~typescript
+    profilesLoaded,
+    totalTimeMs,
+    profiles,
+    showToast,
+    handleDismissToast,
+    refreshProfiles,
+    handleSelectPlanOnHome,
+  };
+}
+~~~~~
+~~~~~typescript
+    profilesLoaded,
+    totalTimeMs,
+    profiles,
+    dataVersion,
+    showToast,
+    handleDismissToast,
+    refreshProfiles,
+    handleSelectPlanOnHome,
+  };
+}
+~~~~~
+
+#### Acts 2: 改造 `useGlobalStatsData` 与 `GlobalStatsView` 响应 `dataVersion`
+
+~~~~~act
+patch_file
+src/hooks/useGlobalStatsData.ts
+~~~~~
+~~~~~typescript
+export function useGlobalStatsData() {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
+      const data = await getDailySummaries();
+      if (isMounted) {
+        setSummaries(data);
+        setLoading(false);
+      }
     };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+~~~~~
+~~~~~typescript
+export function useGlobalStatsData(dataVersion = 0) {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(true);
+  const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
-    // 1 & 2. 导入 sessions 与 profiles (合并至单一元数据事务)
-    if (
-      (parsed.sessions && parsed.sessions.length > 0) ||
-      (parsed.profiles && parsed.profiles.length > 0)
-    ) {
-      const metaTx = db.transaction(['sessions', 'user_profiles'], 'readwrite');
-      if (parsed.sessions && parsed.sessions.length > 0) {
-        const sessionStore = metaTx.objectStore('sessions');
-        for (const s of parsed.sessions) {
-          const cardId = s.cardId || s.mode;
-          s.cardId = cardId;
-          s.domain = getCachedDomain(cardId, s.domain);
-          sessionStore.put(s);
-        }
+  useEffect(() => {
+    let isMounted = true;
+    const loadData = async () => {
+      setLoading(true);
+      const data = await getDailySummaries();
+      if (isMounted) {
+        setSummaries(data);
+        setLoading(false);
       }
-      if (parsed.profiles && parsed.profiles.length > 0) {
-        const profileStore = metaTx.objectStore('user_profiles');
-        for (const p of parsed.profiles) {
-          const cardId = p.cardId || p.mode;
-          p.cardId = cardId;
-          p.domain = getCachedDomain(cardId, p.domain);
-          p.totalTrials = p.totalTrials ?? 0;
-          profileStore.put(p);
-        }
-      }
-      await metaTx.done;
+    };
+    loadData();
+    return () => {
+      isMounted = false;
+    };
+  }, [dataVersion]);
+~~~~~
+
+~~~~~act
+patch_file
+src/views/GlobalStatsView.tsx
+~~~~~
+~~~~~typescript
+interface GlobalStatsViewProps {
+  onExit?: () => void;
+}
+
+export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
+  const { t } = useTranslation();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const {
+    loading,
+    selectedFilter,
+    setSelectedFilter,
+    getCurrentFilterLabel,
+    stats,
+    dailyData,
+    heatmapData,
+    pathMasteryList,
+    challengeMasteryList,
+  } = useGlobalStatsData();
+~~~~~
+~~~~~typescript
+interface GlobalStatsViewProps {
+  dataVersion?: number;
+  onExit?: () => void;
+}
+
+export function GlobalStatsView({ dataVersion = 0, onExit: _onExit }: GlobalStatsViewProps = {}) {
+  const { t } = useTranslation();
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const {
+    loading,
+    selectedFilter,
+    setSelectedFilter,
+    getCurrentFilterLabel,
+    stats,
+    dailyData,
+    heatmapData,
+    pathMasteryList,
+    challengeMasteryList,
+  } = useGlobalStatsData(dataVersion);
+~~~~~
+
+#### Acts 3: 在 `AppRouter` 与 `App` 中传递 `dataVersion`
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+    profilesLoaded,
+    totalTimeMs,
+    profiles,
+    showToast,
+    handleDismissToast,
+    refreshProfiles,
+    handleSelectPlanOnHome,
+  } = useAppBootstrap(route, refreshTodayStats);
+~~~~~
+~~~~~typescript
+    profilesLoaded,
+    totalTimeMs,
+    profiles,
+    dataVersion,
+    showToast,
+    handleDismissToast,
+    refreshProfiles,
+    handleSelectPlanOnHome,
+  } = useAppBootstrap(route, refreshTodayStats);
+~~~~~
+
+~~~~~act
+patch_file
+src/app.tsx
+~~~~~
+~~~~~typescript
+      <AppRouter
+        route={route}
+        navigate={navigate}
+        lastHomeRoute={lastHomeRoute}
+        totalTimeMs={totalTimeMs}
+        todayStats={todayStats}
+        profiles={profiles}
+        trainingPlan={trainingPlan}
+        allPlans={allPlans}
+        settings={settings}
+        profilesLoaded={profilesLoaded}
+        onRefreshProfiles={refreshProfiles}
+        onSetTrainingPlan={setTrainingPlan}
+        onSelectPlanOnHome={handleSelectPlanOnHome}
+        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+        showToast={showToast}
+      />
+~~~~~
+~~~~~typescript
+      <AppRouter
+        route={route}
+        navigate={navigate}
+        lastHomeRoute={lastHomeRoute}
+        totalTimeMs={totalTimeMs}
+        todayStats={todayStats}
+        profiles={profiles}
+        trainingPlan={trainingPlan}
+        allPlans={allPlans}
+        settings={settings}
+        profilesLoaded={profilesLoaded}
+        dataVersion={dataVersion}
+        onRefreshProfiles={refreshProfiles}
+        onSetTrainingPlan={setTrainingPlan}
+        onSelectPlanOnHome={handleSelectPlanOnHome}
+        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
+        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
+        showToast={showToast}
+      />
+~~~~~
+
+~~~~~act
+patch_file
+src/components/routing/AppRouter.tsx
+~~~~~
+~~~~~typescript
+interface AppRouterProps {
+  route: RouteLocation;
+  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
+  lastHomeRoute: RouteLocation;
+  totalTimeMs: number;
+  todayStats: Record<string, { count: number; timeMs: number }>;
+  profiles: Record<string, UnifiedProfileData>;
+  trainingPlan: TrainingPlan;
+  allPlans: TrainingPlan[];
+  settings: UserSettings;
+  profilesLoaded: boolean;
+  onRefreshProfiles: () => Promise<void>;
+  onSetTrainingPlan: (plan: TrainingPlan) => void;
+  onSelectPlanOnHome: (planId: string) => void;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenGlobalSettings: () => void;
+  showToast: (message: string, type?: ToastType) => void;
+}
+
+export function AppRouter({
+  route,
+  navigate,
+  lastHomeRoute,
+  totalTimeMs,
+  todayStats,
+  profiles,
+  trainingPlan,
+  allPlans,
+  settings,
+  profilesLoaded,
+  onRefreshProfiles,
+  onSetTrainingPlan,
+  onSelectPlanOnHome,
+  onOpenCardSettings,
+  onOpenGlobalSettings,
+  showToast,
+}: AppRouterProps) {
+~~~~~
+~~~~~typescript
+interface AppRouterProps {
+  route: RouteLocation;
+  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
+  lastHomeRoute: RouteLocation;
+  totalTimeMs: number;
+  todayStats: Record<string, { count: number; timeMs: number }>;
+  profiles: Record<string, UnifiedProfileData>;
+  trainingPlan: TrainingPlan;
+  allPlans: TrainingPlan[];
+  settings: UserSettings;
+  profilesLoaded: boolean;
+  dataVersion: number;
+  onRefreshProfiles: () => Promise<void>;
+  onSetTrainingPlan: (plan: TrainingPlan) => void;
+  onSelectPlanOnHome: (planId: string) => void;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenGlobalSettings: () => void;
+  showToast: (message: string, type?: ToastType) => void;
+}
+
+export function AppRouter({
+  route,
+  navigate,
+  lastHomeRoute,
+  totalTimeMs,
+  todayStats,
+  profiles,
+  trainingPlan,
+  allPlans,
+  settings,
+  profilesLoaded,
+  dataVersion,
+  onRefreshProfiles,
+  onSetTrainingPlan,
+  onSelectPlanOnHome,
+  onOpenCardSettings,
+  onOpenGlobalSettings,
+  showToast,
+}: AppRouterProps) {
+~~~~~
+
+~~~~~act
+patch_file
+src/components/routing/AppRouter.tsx
+~~~~~
+~~~~~typescript
+    if (route.type === 'stats') {
+      return <GlobalStatsView onExit={() => navigate(lastHomeRoute)} />;
     }
 
-    // 3. 写入海量 records (单事务批量流式写入，原地修改对象消除 GC 停顿与多次 fsync)
-    if (parsed.records && parsed.records.length > 0) {
-      const tx = db.transaction('records', 'readwrite');
-      const store = tx.objectStore('records');
-      for (let i = 0; i < parsed.records.length; i++) {
-        const r = parsed.records[i];
-        const cardId = r.cardId || r.mode;
-        r.cardId = cardId;
-        r.domain = getCachedDomain(cardId, r.domain);
-        store.put(r);
-      }
-      await tx.done;
+    if (route.type === 'plan-editor') {
+      return (
+        <PlanEditorView
+          initialPlan={trainingPlan}
+          onExit={() => navigate(lastHomeRoute)}
+          onPlanListChanged={onRefreshProfiles}
+          onSaveAndExit={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            showToast(t('common.planUpdatedToast'), 'success');
+            navigate(lastHomeRoute);
+          }}
+          onStartPlanDirectly={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            navigate({ type: 'plan-train' });
+          }}
+        />
+      );
     }
 
-    // 4. 写入或重新生成 daily_summaries
-    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
-      for (const d of parsed.dailySummaries) {
-        const cardId = d.cardId || d.mode;
-        d.cardId = cardId;
-        d.domain = getCachedDomain(cardId, d.domain);
-        store.put(d);
-      }
-      await tx.done;
-    } else if (parsed.records && parsed.records.length > 0) {
-      const summaryMap = new Map<string, DailySummaryData>();
-      let lastTimestamp = -1;
-      let lastDateStr = '';
+    return null;
+  };
 
-      for (const r of parsed.records) {
-        const cardId = r.cardId || r.mode;
-        const domain = getCachedDomain(cardId, r.domain);
+  if (isMainShellPage) {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row w-full">
+        <AppNavigation
+          currentRoute={route}
+          onNavigate={(target) => navigate(target)}
+          onOpenSettings={onOpenGlobalSettings}
+        />
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 overflow-y-auto">
+          {renderMainContent()}
+        </main>
+      </div>
+    );
+  }
 
-        // 时间戳邻近缓存优化：同日或近时间戳避免重复 new Date() 计算
-        let dateStr = lastDateStr;
-        if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
-          dateStr = getLocalDateString(r.timestamp);
-          lastTimestamp = r.timestamp;
-          lastDateStr = dateStr;
+  if (route.type === 'analytics') {
+    return (
+      <CardAnalyticsView
+        cardId={route.cardId}
+        initialTab={route.tab}
+        onExit={() => navigate(lastHomeRoute)}
+        onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
+        onStartBenchmark={(cId) =>
+          navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })
         }
+        onOpenSettings={onOpenCardSettings}
+      />
+    );
+  }
 
-        const summaryId = `${dateStr}_${cardId}`;
-        const respMs = Number(r.responseTimeMs) || 0;
-        const level = Number(r.difficultyLevel) || 1;
+  if (route.type === 'plan-train') {
+    return (
+      <PlanTrainingView
+        plan={trainingPlan}
+        settings={settings}
+        onExit={async () => {
+          await onRefreshProfiles();
+          navigate(lastHomeRoute);
+        }}
+      />
+    );
+  }
+~~~~~
+~~~~~typescript
+    if (route.type === 'stats') {
+      return <GlobalStatsView dataVersion={dataVersion} onExit={() => navigate(lastHomeRoute)} />;
+    }
 
-        const existing = summaryMap.get(summaryId);
-        if (!existing) {
-          summaryMap.set(summaryId, {
-            id: summaryId,
-            date: dateStr,
-            cardId,
-            domain,
-            mode: r.mode,
-            totalCount: 1,
-            hitCount: r.isHit ? 1 : 0,
-            totalTimeMs: respMs,
-            maxLevel: level,
-            minLevel: level,
-            lastLevel: level,
-            updatedAt: r.timestamp,
-          });
+    if (route.type === 'plan-editor') {
+      return (
+        <PlanEditorView
+          key={`plan-editor-${dataVersion}`}
+          initialPlan={trainingPlan}
+          onExit={() => navigate(lastHomeRoute)}
+          onPlanListChanged={onRefreshProfiles}
+          onSaveAndExit={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            showToast(t('common.planUpdatedToast'), 'success');
+            navigate(lastHomeRoute);
+          }}
+          onStartPlanDirectly={(newPlan) => {
+            saveTrainingPlan(newPlan);
+            onSetTrainingPlan(newPlan);
+            onRefreshProfiles();
+            navigate({ type: 'plan-train' });
+          }}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  if (isMainShellPage) {
+    return (
+      <div className="min-h-screen flex flex-col md:flex-row w-full">
+        <AppNavigation
+          currentRoute={route}
+          onNavigate={(target) => navigate(target)}
+          onOpenSettings={onOpenGlobalSettings}
+        />
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 pb-20 md:pb-8 overflow-y-auto">
+          {renderMainContent()}
+        </main>
+      </div>
+    );
+  }
+
+  if (route.type === 'analytics') {
+    return (
+      <CardAnalyticsView
+        key={`card-analytics-${route.cardId}-${dataVersion}`}
+        cardId={route.cardId}
+        initialTab={route.tab}
+        onExit={() => navigate(lastHomeRoute)}
+        onStartTraining={(cId) => navigate({ type: 'train', cardId: cId, sessionType: 'training' })}
+        onStartBenchmark={(cId) =>
+          navigate({ type: 'train', cardId: cId, sessionType: 'benchmark' })
+        }
+        onOpenSettings={onOpenCardSettings}
+      />
+    );
+  }
+
+  if (route.type === 'plan-train') {
+    return (
+      <PlanTrainingView
+        key={`plan-train-${trainingPlan.id}-${dataVersion}`}
+        plan={trainingPlan}
+        settings={settings}
+        onExit={async () => {
+          await onRefreshProfiles();
+          navigate(lastHomeRoute);
+        }}
+      />
+    );
+  }
+~~~~~
+
+#### Acts 4: 确保 `DataGovernanceSection` 异步操作均 `await onDataChanged()`
+
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript
+  const handleImportFile = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      const file = target.files[0];
+      try {
+        setIsImporting(true);
+        const text = await file.text();
+        target.value = '';
+        const success = await importAllData(text);
+        if (success) {
+          showToast(t('settings.importSuccessToast'), 'success');
+          onDataChanged();
+          onCloseModal();
         } else {
-          existing.domain = domain;
-          existing.totalCount += 1;
-          if (r.isHit) existing.hitCount += 1;
-          existing.totalTimeMs += respMs;
-          existing.maxLevel = Math.max(existing.maxLevel, level);
-          existing.minLevel = Math.min(existing.minLevel, level);
-          if (r.timestamp >= existing.updatedAt) {
-            existing.lastLevel = level;
-            existing.updatedAt = r.timestamp;
-          }
+          showToast(t('settings.importInvalidToast'), 'error');
         }
+      } catch (err) {
+        console.error('Import exception:', err);
+        showToast(t('settings.importInvalidToast'), 'error');
+      } finally {
+        setIsImporting(false);
       }
-
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
-      for (const summary of summaryMap.values()) {
-        store.put(summary);
-      }
-      await tx.done;
     }
+  };
+
+  const handlePruneConfirmed = async () => {
+    setShowPruneConfirm(false);
+    try {
+      const res = await pruneColdRecords(90);
+      showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
+      onDataChanged();
+    } catch (err) {
+      console.error('Prune failed:', err);
+      showToast(t('settings.pruneFailToast'), 'error');
+    }
+  };
+~~~~~
+~~~~~typescript
+  const handleImportFile = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      const file = target.files[0];
+      try {
+        setIsImporting(true);
+        const text = await file.text();
+        target.value = '';
+        const success = await importAllData(text);
+        if (success) {
+          showToast(t('settings.importSuccessToast'), 'success');
+          await onDataChanged();
+          onCloseModal();
+        } else {
+          showToast(t('settings.importInvalidToast'), 'error');
+        }
+      } catch (err) {
+        console.error('Import exception:', err);
+        showToast(t('settings.importInvalidToast'), 'error');
+      } finally {
+        setIsImporting(false);
+      }
+    }
+  };
+
+  const handlePruneConfirmed = async () => {
+    setShowPruneConfirm(false);
+    try {
+      const res = await pruneColdRecords(90);
+      showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
+      await onDataChanged();
+    } catch (err) {
+      console.error('Prune failed:', err);
+      showToast(t('settings.pruneFailToast'), 'error');
+    }
+  };
 ~~~~~
 
 ### 下一步建议
-- 执行导入 7MB 备份文件的实际测试，测量导入耗时并验证 UI 遮罩层是否流畅关闭。
-- 确认全量数据导入后，数据统计（热力图、掌握度、生涯总用时等）能够即时且完整地刷新。
+- 测试在「认知档案」页面中直接打开全局设置弹窗，执行「清空数据」或「还原备份」，关闭弹窗后验证热力图、掌握度指标及演进趋势图是否立即清空或展现导入数据。
+- 确认在「探索大盘」和「训练计划」页面执行数据治理操作时，各卡片等级徽章与计划内容同步保持最新。

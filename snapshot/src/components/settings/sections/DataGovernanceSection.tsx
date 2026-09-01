@@ -68,7 +68,7 @@ export function DataGovernanceSection({
         const success = await importAllData(text);
         if (success) {
           showToast(t('settings.importSuccessToast'), 'success');
-          onDataChanged();
+          await onDataChanged();
           onCloseModal();
         } else {
           showToast(t('settings.importInvalidToast'), 'error');
@@ -87,7 +87,7 @@ export function DataGovernanceSection({
     try {
       const res = await pruneColdRecords(90);
       showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
-      onDataChanged();
+      await onDataChanged();
     } catch (err) {
       console.error('Prune failed:', err);
       showToast(t('settings.pruneFailToast'), 'error');

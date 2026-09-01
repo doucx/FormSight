@@ -5,7 +5,7 @@ import { registry } from '../core/registry';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../storage/index';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 
-export function useGlobalStatsData() {
+export function useGlobalStatsData(dataVersion = 0) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
@@ -25,7 +25,7 @@ export function useGlobalStatsData() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [dataVersion]);
 
   const filteredSummaries = useMemo(() => {
     return summaries.filter((s) => {
