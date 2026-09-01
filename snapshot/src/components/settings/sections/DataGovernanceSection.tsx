@@ -14,7 +14,7 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 
 interface DataGovernanceSectionProps {
-  onDataChanged: () => void;
+  onDataChanged: () => Promise<void> | void;
   onCloseModal: () => void;
   showToast: (msg: string, type?: ToastType) => void;
 }
@@ -32,6 +32,7 @@ export function DataGovernanceSection({
   const [showPruneConfirm, setShowPruneConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -102,10 +103,17 @@ export function DataGovernanceSection({
 
   const handleClearDataConfirmed = async () => {
     setShowClearConfirm(false);
-    await clearAllData();
-    showToast(t('settings.clearDataSuccessToast'), 'info');
-    onDataChanged();
-    onCloseModal();
+    try {
+      setIsClearing(true);
+      await clearAllData();
+      await onDataChanged();
+      showToast(t('settings.clearDataSuccessToast'), 'info');
+      onCloseModal();
+    } catch (err) {
+      console.error('Failed to clear data:', err);
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   return (
@@ -118,7 +126,7 @@ export function DataGovernanceSection({
       <div className="grid grid-cols-2 gap-3">
         <Button
           variant="outline"
-          disabled={isExporting || isImporting}
+          disabled={isExporting || isImporting || isClearing}
           onClick={handleExport}
           className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
@@ -131,7 +139,7 @@ export function DataGovernanceSection({
         </Button>
         <Button
           variant="outline"
-          disabled={isExporting || isImporting}
+          disabled={isExporting || isImporting || isClearing}
           onClick={() => fileInputRef.current?.click()}
           className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
@@ -146,14 +154,14 @@ export function DataGovernanceSection({
           ref={fileInputRef}
           type="file"
           accept=".json"
-          disabled={isImporting}
+          disabled={isImporting || isClearing}
           onChange={handleImportFile}
           className="hidden"
         />
       </div>
 
-      {/* 导入中全屏阻断遮罩 */}
-      {isImporting && (
+      {/* 导入与清空中全屏阻断遮罩 */}
+      {(isImporting || isClearing) && (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
           <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
             <div className="p-3 bg-accent text-primary rounded-2xl">
@@ -161,10 +169,10 @@ export function DataGovernanceSection({
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-bold text-foreground">
-                {t('settings.importingTitle')}
+                {isClearing ? t('settings.clearingTitle') : t('settings.importingTitle')}
               </h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                {t('settings.importingDesc')}
+                {isClearing ? t('settings.clearingDesc') : t('settings.importingDesc')}
               </p>
             </div>
           </div>

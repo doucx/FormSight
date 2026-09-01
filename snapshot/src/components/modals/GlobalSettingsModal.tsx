@@ -17,7 +17,7 @@ interface GlobalSettingsModalProps {
   settings?: UserSettings;
   onClose: () => void;
   onSave?: (newSettings: UserSettings) => void;
-  onDataChanged: () => void;
+  onDataChanged: () => Promise<void> | void;
   showToast: (msg: string, type?: ToastType) => void;
 }
 

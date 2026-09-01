@@ -1,582 +1,307 @@
-为了解决设置弹窗内容过长导致整个视口出现外部滚动条、用户必须滑到底部才能看到“完成”按钮的问题，我们将对 `ModalShell` 进行视口内聚与固定操作栏（Sticky/Fixed Header & Footer）重构：
+我们将为“清空数据”操作添加全屏阻塞遮罩（与还原备份一致的保护级别），并将整个清空与页面状态刷新链路（`refreshProfiles`）改为异步等待完成后再关闭模态框，确保数据与 UI 强一致。
 
-1. **弹窗高度约束与内部滚动**：将 `ModalShell` 卡片最大高度约束在 `max-h-[88vh]`，中间内容区独立滚动（`overflow-y-auto`），避免撑破全屏视口。
-2. **常驻底部操作栏**：为 `ModalShell` 增加专属 `footer` 插槽，将“完成”按钮常驻在弹窗底部，用户无需滚动即可随时确认并关闭。
-
-## [WIP] style(ui): 重构 ModalShell 为内嵌滚动与常驻底部操作栏布局
+## [WIP] feat(settings): 在清空数据时添加全屏阻塞遮罩并确保页面异步刷新
 
 ### 用户需求
-在设置项较多时，设置弹窗会出现垂直滚动条且“完成”按钮被挤压至最底部。需要优化弹窗结构，使头部与“完成”按钮常驻固定在可视区域，仅中间内容区支持独立滚动。
+1. 在用户确认执行“删除所有数据”时，必须阻止用户的一切操作（显示全屏 Loading 遮罩），防止并发点击。
+2. 数据清空完成后，必须确保应用上下文、能力层阶、打卡统计等页面状态完整刷新。
 
 ### 评论
-当前 `ModalShell` 依赖外部全屏遮罩的 `overflow-y-auto` 进行整体滚动，导致弹窗标题与底部 CTA 按钮随内容滚动而移出屏幕，不仅操作路径冗长，还破坏了对话框的视觉稳定性。采用“固定 Header + 独立滚动 Content + 常驻 Footer”的经典模态架构能显著提升交互效率。
+清空数据是一项高危操作，若在异步清空与 LocalStorage 重置期间未锁定界面，用户可能触发竞态写入。通过在清空期间挂载全屏阻断遮罩，并在 `clearAllData()` 之后显式 `await onDataChanged()` 重新拉取空状态数据，可以彻底杜绝界面残留旧数据或状态不一致的问题。
 
 ### 目标
-1. 重构 `src/components/common/ModalShell.tsx`，支持 `footer` 插槽，并将弹窗卡片设定为 `max-h-[88vh] flex flex-col`，内容区域独立滚动。
-2. 更新 `src/components/modals/GlobalSettingsModal.tsx` 与 `src/components/modals/SettingsModal.tsx`，将“完成”按钮移入 `footer` 插槽。
+1. 在 `DataGovernanceSection.tsx` 中增加 `isClearing` 状态，在 `handleClearDataConfirmed` 执行期间展示全屏阻断遮罩。
+2. 将 `onDataChanged` 设为异步等待（`await onDataChanged()`），确保状态加载完毕后再关闭模态框并展示 Toast。
+3. 在中英文语言包中增加清空数据中提示文案。
 
 ### 基本原理
-通过在弹窗卡片上使用 `flex flex-col` 与 `max-h-[88vh]`，将 Header 与 Footer 的 `flex-shrink` 设为 `0`，中间容器使用 `flex-1 overflow-y-auto`。这不仅将滚动行为限定在弹窗内部，还保证了底部主操作按钮在任何屏幕尺寸下都 100% 可见可用。
+将 `handleClearDataConfirmed` 改造为带状态的异步事务：触发后立即关闭确认对话框并进入 `isClearing` 全屏遮罩状态，清空数据库后调用 `await onDataChanged()` 重新触发 `useAppBootstrap` 的全局数据聚合更新，确保所有 View 消费的均为已清空后的最新响应式状态，最后安全解除遮罩并退出设置弹窗。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/modal-shell-layout #task/action/refactor #task/state/continue
+#intent/build #flow/ready #priority/high #comp/ui #concept/state #scope/ux #ai/instruct #task/domain/storage #task/object/clear-data-blocking-and-refresh #task/action/implementation #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 重构 `ModalShell.tsx` 支持常驻 Footer 与内嵌独立滚动
+#### Acts 1: 在中英文语言包中补充“正在清空数据”文案
 
 ~~~~~act
 patch_file
-src/components/common/ModalShell.tsx
+src/locales/zh-CN.json
 ~~~~~
-~~~~~typescript.old
-interface ModalShellProps {
-  title: string;
-  subTitle?: string;
-  icon?: (props: { className?: string }) => ComponentChildren;
-  maxWidth?: string;
-  onClose: () => void;
-  headerAction?: ComponentChildren;
-  children: ComponentChildren;
-}
-
-export function ModalShell({
-  title,
-  subTitle,
-  icon: Icon,
-  maxWidth = 'max-w-md',
-  onClose,
-  headerAction,
-  children,
-}: ModalShellProps) {
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 dark:bg-background/80 backdrop-blur-sm p-4 overflow-y-auto"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (
-          e.target === e.currentTarget &&
-          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
-        ) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        className={`w-full ${maxWidth} bg-card text-foreground rounded-3xl shadow-2xl border border-border/60 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-4">
-          <div className="flex items-center gap-2.5">
-            {Icon && (
-              <div className="p-2 bg-accent text-primary rounded-xl">
-                <Icon className="w-5 h-5" />
-              </div>
-            )}
-            <div>
-              <h2 className="text-lg font-bold text-foreground">{title}</h2>
-              {subTitle && <p className="text-xs text-muted-foreground">{subTitle}</p>}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {headerAction}
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Content */}
-        {children}
-      </div>
-    </div>
-  );
-}
+~~~~~json.old
+    "importBackup": "还原 JSON 备份",
+    "importing": "正在还原...",
+    "importingTitle": "正在还原数据备份",
+    "importingDesc": "正在清空旧数据并写入备份记录与档案，请稍候且勿关闭窗口...",
+    "pruneTitle": "数据库瘦身与修剪",
 ~~~~~
-~~~~~typescript.new
-interface ModalShellProps {
-  title: string;
-  subTitle?: string;
-  icon?: (props: { className?: string }) => ComponentChildren;
-  maxWidth?: string;
-  onClose: () => void;
-  headerAction?: ComponentChildren;
-  footer?: ComponentChildren;
-  children: ComponentChildren;
-}
-
-export function ModalShell({
-  title,
-  subTitle,
-  icon: Icon,
-  maxWidth = 'max-w-md',
-  onClose,
-  headerAction,
-  footer,
-  children,
-}: ModalShellProps) {
-  return (
-    <div
-      role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 dark:bg-background/80 backdrop-blur-sm p-4 overflow-hidden select-none"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (
-          e.target === e.currentTarget &&
-          (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ')
-        ) {
-          onClose();
-        }
-      }}
-    >
-      <div
-        className={`w-full ${maxWidth} max-h-[88vh] bg-card text-foreground rounded-3xl shadow-2xl border border-border/60 p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 my-auto`}
-      >
-        {/* 常驻 Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-3.5 flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            {Icon && (
-              <div className="p-2 bg-accent text-primary rounded-xl">
-                <Icon className="w-5 h-5" />
-              </div>
-            )}
-            <div>
-              <h2 className="text-lg font-bold text-foreground">{title}</h2>
-              {subTitle && <p className="text-xs text-muted-foreground">{subTitle}</p>}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {headerAction}
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* 独立内嵌滚动 Content */}
-        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0 scrollbar-thin">
-          {children}
-        </div>
-
-        {/* 常驻 Footer (如有) */}
-        {footer && (
-          <div className="pt-2 border-t border-border/60 flex-shrink-0">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+~~~~~json.new
+    "importBackup": "还原 JSON 备份",
+    "importing": "正在还原...",
+    "importingTitle": "正在还原数据备份",
+    "importingDesc": "正在清空旧数据并写入备份记录与档案，请稍候且勿关闭窗口...",
+    "clearingTitle": "正在清空数据",
+    "clearingDesc": "正在重置数据库与个人能力档案，请稍候且勿关闭窗口...",
+    "pruneTitle": "数据库瘦身与修剪",
 ~~~~~
 
-#### Acts 2: 调整 `GlobalSettingsModal.tsx` 使用常驻 Footer
+~~~~~act
+patch_file
+src/locales/en-US.json
+~~~~~
+~~~~~json.old
+    "importBackup": "Restore JSON Backup",
+    "importing": "Restoring...",
+    "importingTitle": "Restoring Data Backup",
+    "importingDesc": "Clearing old data and writing backup records and profiles, please wait and do not close the window...",
+    "pruneTitle": "Database Prune & Clean",
+~~~~~
+~~~~~json.new
+    "importBackup": "Restore JSON Backup",
+    "importing": "Restoring...",
+    "importingTitle": "Restoring Data Backup",
+    "importingDesc": "Clearing old data and writing backup records and profiles, please wait and do not close the window...",
+    "clearingTitle": "Clearing All Data",
+    "clearingDesc": "Resetting database and career profiles, please wait and do not close the window...",
+    "pruneTitle": "Database Prune & Clean",
+~~~~~
+
+#### Acts 2: 更新 `GlobalSettingsModal.tsx` 的类型定义支持异步 `onDataChanged`
 
 ~~~~~act
 patch_file
 src/components/modals/GlobalSettingsModal.tsx
 ~~~~~
 ~~~~~typescript.old
-  return (
-    <ModalShell title={t('settings.title')} icon={Sliders} onClose={onClose} maxWidth="max-w-md">
-      <GeneralPreferencesSection
-        settings={settings}
-        onUpdateGlobal={handleUpdateGlobal}
-        showToast={showToast}
-      />
-
-      <DataGovernanceSection
-        onDataChanged={onDataChanged}
-        onCloseModal={onClose}
-        showToast={showToast}
-      />
-
-      <div className="pt-2">
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
-          {t('common.complete')}
-        </Button>
-      </div>
-    </ModalShell>
-  );
+interface GlobalSettingsModalProps {
+  settings?: UserSettings;
+  onClose: () => void;
+  onSave?: (newSettings: UserSettings) => void;
+  onDataChanged: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
 ~~~~~
 ~~~~~typescript.new
-  return (
-    <ModalShell
-      title={t('settings.title')}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
-        </Button>
-      }
-    >
-      <GeneralPreferencesSection
-        settings={settings}
-        onUpdateGlobal={handleUpdateGlobal}
-        showToast={showToast}
-      />
-
-      <DataGovernanceSection
-        onDataChanged={onDataChanged}
-        onCloseModal={onClose}
-        showToast={showToast}
-      />
-    </ModalShell>
-  );
+interface GlobalSettingsModalProps {
+  settings?: UserSettings;
+  onClose: () => void;
+  onSave?: (newSettings: UserSettings) => void;
+  onDataChanged: () => Promise<void> | void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
 ~~~~~
 
-#### Acts 3: 调整 `SettingsModal.tsx` 使用常驻 Footer
+#### Acts 3: 在 `DataGovernanceSection.tsx` 中添加清空遮罩与异步刷新机制
 
 ~~~~~act
 patch_file
-src/components/modals/SettingsModal.tsx
+src/components/settings/sections/DataGovernanceSection.tsx
 ~~~~~
 ~~~~~typescript.old
-  return (
-    <ModalShell
-      title={t('settingsModal.title', { title: cardTitle })}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-    >
-      <div className="space-y-5">
-        {/* 通用配置：自动翻页开关 */}
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-foreground">
-              {t('settingsModal.autoNext')}
-            </div>
-            <div className="text-xs text-muted-foreground">{t('settingsModal.autoNextDesc')}</div>
-          </div>
-          <Switch
-            checked={cardConfig.autoNext}
-            onCheckedChange={(val) => updateCardConfig({ autoNext: val })}
-            aria-label={t('settingsModal.autoNext')}
-          />
-        </div>
+interface DataGovernanceSectionProps {
+  onDataChanged: () => void;
+  onCloseModal: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
 
-        {/* 通用配置：自动翻页延迟 */}
-        {cardConfig.autoNext && (
-          <div className="space-y-2 bg-muted/60 p-3.5 rounded-2xl border border-border/60">
-            <div className="flex justify-between items-center text-xs font-semibold text-muted-foreground">
-              <span>{t('settingsModal.delay')}</span>
-              <span className="font-mono text-primary font-bold">
-                {cardConfig.autoNextDelay} ms
-              </span>
-            </div>
-            <Input
-              type="range"
-              min="100"
-              max="2000"
-              step="100"
-              value={cardConfig.autoNextDelay}
-              onInput={(e) => {
-                const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
-                updateCardConfig({ autoNextDelay: val });
-              }}
-              className="w-full accent-indigo-600 cursor-pointer p-0 h-auto bg-transparent border-none shadow-none"
-            />
-          </div>
-        )}
+export function DataGovernanceSection({
+  onDataChanged,
+  onCloseModal,
+  showToast,
+}: DataGovernanceSectionProps) {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-        {/* 通用配置：自适应算子模式 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.adaptiveMode')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.adaptiveMode === 'block' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'block' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Target className="w-3.5 h-3.5 text-inherit" />
-              {t('settingsModal.modeBlock')}
-            </Button>
-            <Button
-              variant={cardConfig.adaptiveMode === 'staircase' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'staircase' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              {t('settingsModal.modeStaircase')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 轮次评估配置 */}
-        {cardConfig.adaptiveMode === 'block' && (
-          <div className="space-y-3 bg-accent p-3.5 rounded-2xl border border-border/60">
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.targetAcc')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {Math.round(cardConfig.targetAccuracy * 100)}%
-                </span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[0.7, 0.8, 0.85, 0.9].map((acc) => (
-                  <Button
-                    key={acc}
-                    variant={cardConfig.targetAccuracy === acc ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ targetAccuracy: acc })}
-                    className="h-auto py-1.5"
-                  >
-                    {Math.round(acc * 100)}%
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.blockSize')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[10, 15, 20].map((size) => (
-                  <Button
-                    key={size}
-                    variant={cardConfig.blockSize === size ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ blockSize: size })}
-                    className="h-auto py-1.5"
-                  >
-                    {t('settingsModal.trialsUnit', { size })}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 难度阶梯精细度 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.stepGranularity')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.stepGranularity === 'standard' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepStandard')}
-            </Button>
-            <Button
-              variant={cardConfig.stepGranularity === 'fine' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepFine')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
-      </div>
-
-      <div className="pt-2">
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
-          {t('common.complete')}
-        </Button>
-      </div>
-    </ModalShell>
-  );
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 ~~~~~
 ~~~~~typescript.new
-  return (
-    <ModalShell
-      title={t('settingsModal.title', { title: cardTitle })}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
+interface DataGovernanceSectionProps {
+  onDataChanged: () => Promise<void> | void;
+  onCloseModal: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
+
+export function DataGovernanceSection({
+  onDataChanged,
+  onCloseModal,
+  showToast,
+}: DataGovernanceSectionProps) {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+~~~~~
+
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript.old
+  const handleClearDataConfirmed = async () => {
+    setShowClearConfirm(false);
+    await clearAllData();
+    showToast(t('settings.clearDataSuccessToast'), 'info');
+    onDataChanged();
+    onCloseModal();
+  };
+~~~~~
+~~~~~typescript.new
+  const handleClearDataConfirmed = async () => {
+    setShowClearConfirm(false);
+    try {
+      setIsClearing(true);
+      await clearAllData();
+      await onDataChanged();
+      showToast(t('settings.clearDataSuccessToast'), 'info');
+      onCloseModal();
+    } catch (err) {
+      console.error('Failed to clear data:', err);
+    } finally {
+      setIsClearing(false);
+    }
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 备份导出与导入 */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          variant="outline"
+          disabled={isExporting || isImporting}
+          onClick={handleExport}
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
+        >
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 text-primary" />
+          )}
+          {isExporting ? t('settings.exporting') : t('settings.exportStream')}
         </Button>
-      }
-    >
-      <div className="space-y-5">
-        {/* 通用配置：自动翻页开关 */}
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <div className="text-sm font-semibold text-foreground">
-              {t('settingsModal.autoNext')}
-            </div>
-            <div className="text-xs text-muted-foreground">{t('settingsModal.autoNextDesc')}</div>
-          </div>
-          <Switch
-            checked={cardConfig.autoNext}
-            onCheckedChange={(val) => updateCardConfig({ autoNext: val })}
-            aria-label={t('settingsModal.autoNext')}
-          />
-        </div>
-
-        {/* 通用配置：自动翻页延迟 */}
-        {cardConfig.autoNext && (
-          <div className="space-y-2 bg-muted/60 p-3.5 rounded-2xl border border-border/60">
-            <div className="flex justify-between items-center text-xs font-semibold text-muted-foreground">
-              <span>{t('settingsModal.delay')}</span>
-              <span className="font-mono text-primary font-bold">
-                {cardConfig.autoNextDelay} ms
-              </span>
-            </div>
-            <Input
-              type="range"
-              min="100"
-              max="2000"
-              step="100"
-              value={cardConfig.autoNextDelay}
-              onInput={(e) => {
-                const val = Number.parseInt((e.target as HTMLInputElement).value, 10);
-                updateCardConfig({ autoNextDelay: val });
-              }}
-              className="w-full accent-indigo-600 cursor-pointer p-0 h-auto bg-transparent border-none shadow-none"
-            />
-          </div>
-        )}
-
-        {/* 通用配置：自适应算子模式 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.adaptiveMode')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.adaptiveMode === 'block' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'block' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Target className="w-3.5 h-3.5 text-inherit" />
-              {t('settingsModal.modeBlock')}
-            </Button>
-            <Button
-              variant={cardConfig.adaptiveMode === 'staircase' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ adaptiveMode: 'staircase' })}
-              className="gap-1.5 h-auto py-2.5"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-500" />
-              {t('settingsModal.modeStaircase')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 轮次评估配置 */}
-        {cardConfig.adaptiveMode === 'block' && (
-          <div className="space-y-3 bg-accent p-3.5 rounded-2xl border border-border/60">
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.targetAcc')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {Math.round(cardConfig.targetAccuracy * 100)}%
-                </span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[0.7, 0.8, 0.85, 0.9].map((acc) => (
-                  <Button
-                    key={acc}
-                    variant={cardConfig.targetAccuracy === acc ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ targetAccuracy: acc })}
-                    className="h-auto py-1.5"
-                  >
-                    {Math.round(acc * 100)}%
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-1.5 pt-1">
-              <div className="flex justify-between items-center text-xs font-semibold text-foreground">
-                <span>{t('settingsModal.blockSize')}</span>
-                <span className="font-bold text-primary font-mono">
-                  {t('settingsModal.trialsPerBlock', { size: cardConfig.blockSize })}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5">
-                {[10, 15, 20].map((size) => (
-                  <Button
-                    key={size}
-                    variant={cardConfig.blockSize === size ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => updateCardConfig({ blockSize: size })}
-                    className="h-auto py-1.5"
-                  >
-                    {t('settingsModal.trialsUnit', { size })}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 难度阶梯精细度 */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-foreground">
-            {t('settingsModal.stepGranularity')}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant={cardConfig.stepGranularity === 'standard' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'standard' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepStandard')}
-            </Button>
-            <Button
-              variant={cardConfig.stepGranularity === 'fine' ? 'default' : 'outline'}
-              onClick={() => updateCardConfig({ stepGranularity: 'fine' })}
-              className="h-auto py-2.5"
-            >
-              {t('settingsModal.stepFine')}
-            </Button>
-          </div>
-        </div>
-
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
+        <Button
+          variant="outline"
+          disabled={isExporting || isImporting}
+          onClick={() => fileInputRef.current?.click()}
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
+        >
+          {isImporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4 text-primary" />
+          )}
+          {isImporting ? t('settings.importing') : t('settings.importBackup')}
+        </Button>
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          disabled={isImporting}
+          onChange={handleImportFile}
+          className="hidden"
+        />
       </div>
-    </ModalShell>
-  );
+~~~~~
+~~~~~typescript.new
+      {/* 备份导出与导入 */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button
+          variant="outline"
+          disabled={isExporting || isImporting || isClearing}
+          onClick={handleExport}
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
+        >
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 text-primary" />
+          )}
+          {isExporting ? t('settings.exporting') : t('settings.exportStream')}
+        </Button>
+        <Button
+          variant="outline"
+          disabled={isExporting || isImporting || isClearing}
+          onClick={() => fileInputRef.current?.click()}
+          className="py-3 px-4 rounded-2xl gap-2 h-auto"
+        >
+          {isImporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4 text-primary" />
+          )}
+          {isImporting ? t('settings.importing') : t('settings.importBackup')}
+        </Button>
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          disabled={isImporting || isClearing}
+          onChange={handleImportFile}
+          className="hidden"
+        />
+      </div>
+~~~~~
+
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 导入中全屏阻断遮罩 */}
+      {isImporting && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
+          <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
+            <div className="p-3 bg-accent text-primary rounded-2xl">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">
+                {t('settings.importingTitle')}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t('settings.importingDesc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+~~~~~
+~~~~~typescript.new
+      {/* 导入与清空中全屏阻断遮罩 */}
+      {(isImporting || isClearing) && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
+          <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
+            <div className="p-3 bg-accent text-primary rounded-2xl">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">
+                {isClearing ? t('settings.clearingTitle') : t('settings.importingTitle')}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {isClearing ? t('settings.clearingDesc') : t('settings.importingDesc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 ~~~~~
 
 ### 下一步建议
 
-1. **界面检查**：打开“全局设置”和任一训练模块的“偏好设置”，观察弹窗最大高度是否被自适应约束，中间设置项滚动时顶部标题与底部“完成”按钮是否常驻可见。
-2. **提交变更**：如果所有调整符合预期，请告知我，我将为你生成 Git 提交计划。
+1. **验证清空流程**：在设置中点击“删除所有数据”并在二次确认弹窗中确认，观察全屏遮罩出现、数据清空与页面状态同步归零（今日刷题变为 0，所有卡片等级与总时长重置为初始状态）。
+2. **提交代码**：若所有功能均已符合预期，请告知我，我将为你生成 Git 提交计划。

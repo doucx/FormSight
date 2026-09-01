@@ -346,6 +346,8 @@
     "importing": "Restoring...",
     "importingTitle": "Restoring Data Backup",
     "importingDesc": "Clearing old data and writing backup records and profiles, please wait and do not close the window...",
+    "clearingTitle": "Clearing All Data",
+    "clearingDesc": "Resetting database and career profiles, please wait and do not close the window...",
     "pruneTitle": "Database Prune & Clean",
     "pruneDesc": "Prune polygon/grid geometry details older than 90 days",
     "pruneBtn": "Safe Prune",

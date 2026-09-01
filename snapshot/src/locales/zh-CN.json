@@ -346,6 +346,8 @@
     "importing": "正在还原...",
     "importingTitle": "正在还原数据备份",
     "importingDesc": "正在清空旧数据并写入备份记录与档案，请稍候且勿关闭窗口...",
+    "clearingTitle": "正在清空数据",
+    "clearingDesc": "正在重置数据库与个人能力档案，请稍候且勿关闭窗口...",
     "pruneTitle": "数据库瘦身与修剪",
     "pruneDesc": "清理 90 天以前的高开销图形几何细节",
     "pruneBtn": "安全瘦身",
