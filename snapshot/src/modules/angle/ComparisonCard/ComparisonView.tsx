@@ -7,7 +7,7 @@ import {
   type AngleHitResult,
   type AngleQuestionData,
   drawAngleCanvas,
-} from '../utils/angleUtils';
+} from '../_shared/angleUtils';
 
 interface AngleComparison2AfcViewProps {
   question: AngleQuestionData;
@@ -18,7 +18,7 @@ interface AngleComparison2AfcViewProps {
   showCanvasHints?: boolean;
 }
 
-export function AngleComparison2AfcView({
+export function ComparisonView({
   question,
   showAnswer,
   onAnswer,

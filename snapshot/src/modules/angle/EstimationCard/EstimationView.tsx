@@ -7,7 +7,7 @@ import {
   type AngleHitResult,
   type AngleQuestionData,
   drawAngleCanvas,
-} from '../utils/angleUtils';
+} from '../_shared/angleUtils';
 
 interface AngleEstimationViewProps {
   question: AngleQuestionData;
@@ -20,7 +20,7 @@ interface AngleEstimationViewProps {
   showCanvasHints?: boolean;
 }
 
-export function AngleEstimationView({
+export function EstimationView({
   question,
   showAnswer,
   userAnswer,

@@ -9,7 +9,7 @@ import {
   type AngleHitResult,
   type AngleQuestionData,
   drawSingleLineCanvas,
-} from '../utils/angleUtils';
+} from '../_shared/angleUtils';
 
 interface AngleParallel2AfcViewProps {
   question: AngleQuestionData;
@@ -20,7 +20,7 @@ interface AngleParallel2AfcViewProps {
   showCanvasHints?: boolean;
 }
 
-export function AngleParallel2AfcView({
+export function ParallelView({
   question,
   showAnswer,
   onAnswer,

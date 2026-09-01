@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "pi Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788229659.9419236, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(angle): 参考 star 模块重构 angle 卡组至 modules 架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788230273.9671595, "duration_ms": 0}}
