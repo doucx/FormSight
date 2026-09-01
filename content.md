@@ -4,6 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-playground/fractal_dimension_prototype.html | 190 ----------------------------
- 1 file changed, 190 deletions(-)
+src/cards/fractal_edge_roughness/index.tsx | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 ```

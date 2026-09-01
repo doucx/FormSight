@@ -22,7 +22,7 @@ export const fractalEdgeRoughnessCard: CardManifest<
     path: ['extraction', 'absolute_estimation'],
     challenge: ['illusion_piercing'],
     interaction: ['continuous_mod'],
-    status: 'experimental',
+    status: 'stable',
   },
   locales: {
     'zh-CN': zhCN,
