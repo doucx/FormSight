@@ -1,3 +1,5 @@
+import 'fake-indexeddb/auto';
+
 class MemoryStorage implements Storage {
   private store: Record<string, string> = {};
 

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 将系统配置与训练计划全量收敛至 IndexedDB 并支持旧版数据无损迁移", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262576.0660093, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 针对 Vitest 单元测试中暴露的异步签名、`indexedDB` 测试环境环境准备以及 `sound.ts` 同步快照读取问题进行修复", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262730.4897146, "duration_ms": 0}}

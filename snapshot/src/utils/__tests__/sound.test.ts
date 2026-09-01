@@ -3,20 +3,21 @@ import { loadSettings, saveSettings } from '../../storage/settings';
 import { playHitSound, playMissSound } from '../sound';
 
 describe('Web Audio Sound Manager', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     localStorage.clear();
+    await loadSettings();
   });
 
-  it('should not throw in non-browser or disabled environments', () => {
+  it('should not throw in non-browser or disabled environments', async () => {
     // 默认启用下调用不抛异常
     expect(() => playHitSound(1)).not.toThrow();
     expect(() => playHitSound(5)).not.toThrow();
     expect(() => playMissSound()).not.toThrow();
 
     // 禁用声音
-    const settings = loadSettings();
+    const settings = await loadSettings();
     settings.global.soundEnabled = false;
-    saveSettings(settings);
+    await saveSettings(settings);
 
     expect(() => playHitSound(1)).not.toThrow();
     expect(() => playMissSound()).not.toThrow();
