@@ -1,3 +1,4 @@
+import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { AnyTrainingPlugin } from '../core/contracts';
 import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
@@ -11,8 +12,55 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
+import type { CardAnalyticsView as FlatCardAnalyticsView, CardManifest } from './cardContract';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
+
+/**
+ * 递归补全卡片相对多语言 Key
+ */
+export function qualifyCardKey(key: string | undefined, cardId: string): string | undefined {
+  if (!key) return undefined;
+  if (key.startsWith('cards.') || key.startsWith('global.') || key.startsWith('packs.')) {
+    return key;
+  }
+  return `cards.${cardId}.${key.replace(/^\./, '')}`;
+}
+
+export function qualifySchemas(
+  schemas: SettingFieldSchema[] | undefined,
+  cardId: string,
+): SettingFieldSchema[] | undefined {
+  if (!schemas) return undefined;
+  return schemas.map((schema) => {
+    const s = { ...schema };
+    if (s.title) s.title = qualifyCardKey(s.title, cardId)!;
+    if (s.subTitle) s.subTitle = qualifyCardKey(s.subTitle, cardId);
+    if (s.type === 'targeting' && Array.isArray(s.sectors)) {
+      s.sectors = s.sectors.map((sec) => qualifyCardKey(sec, cardId)!);
+    }
+    if (s.options) {
+      s.options = s.options.map((opt) => ({
+        ...opt,
+        label: qualifyCardKey(opt.label, cardId)!,
+      }));
+    }
+    return s;
+  });
+}
+
+export function qualifyAnalyticsViews(
+  views: FlatCardAnalyticsView[] | undefined,
+  cardId: string,
+): FlatCardAnalyticsView[] {
+  if (!views) return [];
+  return views.map((v) => ({
+    ...v,
+    tabLabel: qualifyCardKey(v.tabLabel, cardId)!,
+    title: qualifyCardKey(v.title, cardId)!,
+    subTitle: qualifyCardKey(v.subTitle, cardId)!,
+  }));
+}
 
 class InvertedCardIndex {
   private domainMap = new Map<VisualDomainTag, Set<string>>();
@@ -117,6 +165,7 @@ class InvertedCardIndex {
 
 class SystemDomainRegistry {
   private packs = new Map<string, PackManifest>();
+  private cardManifestMap = new Map<string, CardManifest>();
   private cardMap = new Map<string, CardDefinition>();
   private cardPluginMap = new Map<string, AnyTrainingPlugin>();
   private cardAnalyticsMap = new Map<string, CardAnalyticsPlugin>();
@@ -127,9 +176,10 @@ class SystemDomainRegistry {
   }
 
   /**
-   * 自动扫描 src/packs/*\/index.ts 零配置注册
+   * 自动扫描：双轨兼容旧 packs 与新 flat cards
    */
   private autoDiscover(): void {
+    // 1. 扫描旧版 packs (绞杀期兼容)
     const packModules = import.meta.glob<{ default: PackManifest }>('../packs/*/index.ts', {
       eager: true,
     });
@@ -137,6 +187,70 @@ class SystemDomainRegistry {
     for (const path in packModules) {
       const manifest = packModules[path]?.default;
       if (manifest) this.register(manifest);
+    }
+
+    // 2. 扫描新版 flat cards (具有更高覆盖优先级)
+    const cardModules = import.meta.glob<{ default: CardManifest }>(
+      ['../cards/*/index.ts', '../cards/*/index.tsx'],
+      { eager: true },
+    );
+
+    for (const path in cardModules) {
+      const manifest = cardModules[path]?.default;
+      if (manifest?.id) this.registerCard(manifest);
+    }
+  }
+
+  public registerCard(card: CardManifest): void {
+    this.cardManifestMap.set(card.id, card);
+
+    // 1. 挂载卡片专属语言包
+    if (card.locales) {
+      i18n.registerCardLocales(card.id, card.locales);
+    }
+
+    // 2. 自动修饰并注册 SettingSchemas 相对 key
+    const normalizedSchemas = qualifySchemas(card.settingSchemas, card.id);
+
+    // 3. 构建标准 CardDefinition
+    const cardDef: CardDefinition = {
+      id: card.id,
+      packId: card.domain,
+      mode: card.id,
+      icon: card.icon,
+      tags: card.tags,
+      hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),
+      settingSchemas: normalizedSchemas,
+    };
+
+    // 4. 适配 AnyTrainingPlugin 运行时
+    const pluginAdapter: AnyTrainingPlugin = {
+      title: card.id,
+      getModeBadge: () => card.id,
+      isTargeting: (_m, s) => card.training.isTargeting?.(s) ?? false,
+      generateQuestion: (_m, lvl, s) => card.training.generateQuestion(lvl, s),
+      evaluateAnswer: (u, q) => card.training.evaluateAnswer(u, q),
+      isHit: (res) => card.training.isHit(res),
+      getQuestionLevel: (q) =>
+        card.training.getQuestionLevel?.(q) ??
+        (q as { difficultyLevel?: number })?.difficultyLevel ??
+        5,
+      extractRecordDetails: (q, h, u) =>
+        card.training.extractRecordDetails?.(q, h, u) ?? {},
+      renderCanvas: (props) => card.training.renderCanvas(props),
+    };
+
+    this.cardMap.set(card.id, cardDef);
+    this.cardPluginMap.set(card.id, pluginAdapter);
+    this.invertedIndex.indexCard(cardDef);
+
+    // 5. 注册卡片专属分析插件
+    if (card.analytics?.views) {
+      this.cardAnalyticsMap.set(card.id, {
+        cardId: card.id,
+        fetchRecords: card.analytics.fetchRecords ?? ((id) => getTrialRecordsByCard(id)),
+        views: qualifyAnalyticsViews(card.analytics.views, card.id),
+      });
     }
   }
 
@@ -279,6 +393,10 @@ class SystemDomainRegistry {
 
   public getCardById(cardId: string): CardDefinition | undefined {
     return this.cardMap.get(cardId);
+  }
+
+  public getCardManifest(cardId: string): CardManifest | undefined {
+    return this.cardManifestMap.get(cardId);
   }
 
   public getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
