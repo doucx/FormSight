@@ -13,7 +13,7 @@ import type {
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
 import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
 import type { CardAnalyticsPlugin } from './contracts';
-import { i18n } from './i18n';
+import { getCardDesc, getCardTitle, i18n } from './i18n';
 
 /**
  * 递归补全卡片相对多语言 Key
@@ -322,12 +322,23 @@ class SystemDomainRegistry {
     if (options.searchKeyword) {
       const kw = options.searchKeyword.trim().toLowerCase();
       if (kw) {
-        results = results.filter(
-          (c) =>
-            c.title?.toLowerCase().includes(kw) ||
-            c.desc?.toLowerCase().includes(kw) ||
-            c.id.toLowerCase().includes(kw),
-        );
+        results = results.filter((c) => {
+          if (c.id.toLowerCase().includes(kw)) return true;
+
+          const title = getCardTitle(c).toLowerCase();
+          if (title.includes(kw)) return true;
+
+          const desc = getCardDesc(c).toLowerCase();
+          if (desc.includes(kw)) return true;
+
+          const instructionKey = `cards.${c.id}.instruction`;
+          const instruction = i18n.t(instructionKey);
+          if (instruction !== instructionKey && instruction.toLowerCase().includes(kw)) {
+            return true;
+          }
+
+          return false;
+        });
       }
     }
 

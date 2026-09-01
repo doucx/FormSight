@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 清理废弃 PackMeta 导入并修正 card.packId 字段引用", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258066.405798, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复卡片多维搜索中的多语言标题与描述匹配失效问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258240.3737903, "duration_ms": 0}}

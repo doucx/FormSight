@@ -1,61 +1,55 @@
-我已经定位了 TypeScript 类型检查报错的原因并制定了修复方案。在卡片一等公民 (Card-Centric) 架构重构中，旧有的 `PackMeta` 和 `packId` 概念已被彻底废弃并统一收敛至 `domain`（视觉域）。目前有 4 个文件仍残留了未使用的废弃导入或引用了已被移除的 `packId` 属性。
+我现在将生成 Quipu 计划来修复搜索功能中因卡片多语言解耦导致的标题与描述搜索失效问题。
 
-## [WIP] fix: 清理废弃 PackMeta 导入并修正 card.packId 字段引用
+## [WIP] fix: 修复卡片多维搜索中的多语言标题与描述匹配失效问题
 
 ### 错误分析
 
-1. **未使用的废弃类型导入 (`TS6192`, `TS2305`, `TS6196`)**:
-   - `src/core/contracts.ts` 导入了 `CardDefinition, PackMeta`，但该模块内并未实际使用它们，且 `src/types/card.ts` 中已无 `PackMeta` 导出。
-   - `src/core/registry.ts` 从 `../types/card` 中导入了已不存在且未使用的 `PackMeta`。
-2. **废弃属性访问 (`TS2339`)**:
-   - `src/storage/db/importExport.ts`（第 167、179、196 行）在还原导入数据时访问了 `card.packId`，而在新规范中 `CardDefinition` 仅保留 `domain`。
-   - `src/storage/db/queries.ts`（第 22、110 行）在保存做答与会话时访问了 `canonicalCard.packId`，应改为读取 `canonicalCard.domain`。
+在卡片一等公民重构中，卡片元数据（标题 `title`、描述 `desc`、玩法要领 `instruction`）由全局集中管理改为内聚在卡片独立的 `locales/*.json` 词典中，并通过 `i18n` 运行时提供解析。而在 `src/core/registry.ts` 的 `queryCards` 方法中，依然直接读取了 `CardDefinition` 的 `c.title` 与 `c.desc`（均为 `undefined`），导致在按中文名（如“动态”、“单锚点”）搜索时匹配失效，必须输入卡片英文 ID 才能搜出。
 
 ### 用户需求
 
-修复项目中所有的 TypeScript 编译类型错误，彻底清理对 `PackMeta` 及 `packId` 的废弃引用，确保类型检查通过且平铺卡片架构稳健运行。
+修复探索大盘和计划编辑器的搜索过滤功能，使得用户输入卡片中文名称、描述关键词、卡片 ID 或要领文本时均能正常高亮匹配并筛选出对应模块。
 
 ### 评论
 
-这是在卡片化架构阶段 5 清理旧 Pack 概念残留的关键收尾步骤。消除这些旧字段引用后，底层持久化层（IndexedDB 与导入导出）将完全对齐到卡片的 `domain` 视觉域体系。
+这是一个关键的可用性与用户体验 (UX) 修复。通过在 `registry.queryCards` 中引入动态多语言解析，彻底打通了卡片私有词典与全局多维检索引擎。
 
 ### 目标
 
-1. 移除 `src/core/contracts.ts` 中无用的 `../types/card` 导入。
-2. 移除 `src/core/registry.ts` 中的 `PackMeta` 导入声明。
-3. 将 `src/storage/db/importExport.ts` 中的 `card.packId` 替换为 `card.domain`。
-4. 将 `src/storage/db/queries.ts` 中的 `canonicalCard.packId` 替换为 `canonicalCard.domain`。
+1. 在 `src/core/registry.ts` 中导入 `getCardTitle`、`getCardDesc` 与 `i18n`。
+2. 升级 `queryCards` 中的关键词过滤逻辑，使其同时对卡片 ID、当前语言下的卡片标题、卡片描述与指令文本进行全面模糊匹配。
 
 ### 基本原理
 
-通过字节级 `patch_file` 精确替换遗留代码中的废弃类型与属性名，保持整体业务逻辑与存储行为的一致性，满足 TypeScript 严格类型检查要求。
+利用 `getCardTitle(c)` 和 `getCardDesc(c)` 在查询过滤执行时即时解析当前激活语言（如 `zh-CN` 或 `en-US`）下的本地化文本，并与用户输入的关键词统一小写化匹配，保证搜索结果准确全面。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/architecture #task/object/card-centric-cleanup #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/engine #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/discovery #task/object/search-engine #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 core 层的类型导入声明
+#### Acts 1: 升级 `src/core/registry.ts` 的搜索过滤逻辑
 
-移除 `contracts.ts` 与 `registry.ts` 中对已废弃 `PackMeta` 的无效引用。
+导入 `getCardTitle` 与 `getCardDesc`，并在 `queryCards` 中支持多语言标题、描述及玩法说明的匹配。
 
 ~~~~~act
 patch_file
-src/core/contracts.ts
+src/core/registry.ts
 ~~~~~
 ~~~~~typescript
-import type { Point } from '../types';
-import type { CardDefinition, PackMeta } from '../types/card';
-
-export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
+import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
+import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
+import type { CardAnalyticsPlugin } from './contracts';
+import { i18n } from './i18n';
 ~~~~~
 ~~~~~typescript
-import type { Point } from '../types';
-
-export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
+import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
+import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
+import type { CardAnalyticsPlugin } from './contracts';
+import { getCardDesc, getCardTitle, i18n } from './i18n';
 ~~~~~
 
 ~~~~~act
@@ -63,175 +57,44 @@ patch_file
 src/core/registry.ts
 ~~~~~
 ~~~~~typescript
-import type {
-  CardDefinition,
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  PackMeta,
-  VisualDomainTag,
-} from '../types/card';
-~~~~~
-~~~~~typescript
-import type {
-  CardDefinition,
-  CardQueryOptions,
-  CardStatusTag,
-  CognitivePathTag,
-  InteractionTag,
-  MentalChallengeTag,
-  VisualDomainTag,
-} from '../types/card';
-~~~~~
-
-#### Acts 2: 修复 storage 层中关于 packId 的废弃字段引用
-
-将 `importExport.ts` 与 `queries.ts` 中涉及 `packId` 的访问对齐至 `domain` 字段。
-
-~~~~~act
-patch_file
-src/storage/db/importExport.ts
-~~~~~
-~~~~~typescript
-    // 1. 导入 sessions
-    if (parsed.sessions && parsed.sessions.length > 0) {
-      const tx = db.transaction('sessions', 'readwrite');
-      for (const s of parsed.sessions) {
-        const cardId = s.cardId || s.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.packId : s.domain || 'core';
-        await tx.objectStore('sessions').put({ ...s, domain, cardId });
-      }
-      await tx.done;
-    }
-
-    // 2. 导入 profiles
-    if (parsed.profiles && parsed.profiles.length > 0) {
-      const tx = db.transaction('user_profiles', 'readwrite');
-      for (const p of parsed.profiles) {
-        const cardId = p.cardId || p.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.packId : p.domain || 'core';
-        const totalTrials = p.totalTrials ?? 0;
-        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
-      }
-      await tx.done;
-    }
-
-    // 3. 分批写入海量 records (每 1500 条为一个独立事务批次)
-    if (parsed.records && parsed.records.length > 0) {
-      const BATCH_SIZE = 1500;
-      for (let i = 0; i < parsed.records.length; i += BATCH_SIZE) {
-        const batch = parsed.records.slice(i, i + BATCH_SIZE);
-        const tx = db.transaction('records', 'readwrite');
-        const store = tx.objectStore('records');
-        for (const r of batch) {
-          const cardId = r.cardId || r.mode;
-          const card = registry.getCardById(cardId);
-          const domain = card ? card.packId : r.domain || 'core';
-          await store.put({ ...r, domain, cardId });
-        }
-        await tx.done;
+    if (options.searchKeyword) {
+      const kw = options.searchKeyword.trim().toLowerCase();
+      if (kw) {
+        results = results.filter(
+          (c) =>
+            c.title?.toLowerCase().includes(kw) ||
+            c.desc?.toLowerCase().includes(kw) ||
+            c.id.toLowerCase().includes(kw),
+        );
       }
     }
 ~~~~~
 ~~~~~typescript
-    // 1. 导入 sessions
-    if (parsed.sessions && parsed.sessions.length > 0) {
-      const tx = db.transaction('sessions', 'readwrite');
-      for (const s of parsed.sessions) {
-        const cardId = s.cardId || s.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : s.domain || 'core';
-        await tx.objectStore('sessions').put({ ...s, domain, cardId });
-      }
-      await tx.done;
-    }
+    if (options.searchKeyword) {
+      const kw = options.searchKeyword.trim().toLowerCase();
+      if (kw) {
+        results = results.filter((c) => {
+          if (c.id.toLowerCase().includes(kw)) return true;
 
-    // 2. 导入 profiles
-    if (parsed.profiles && parsed.profiles.length > 0) {
-      const tx = db.transaction('user_profiles', 'readwrite');
-      for (const p of parsed.profiles) {
-        const cardId = p.cardId || p.mode;
-        const card = registry.getCardById(cardId);
-        const domain = card ? card.domain : p.domain || 'core';
-        const totalTrials = p.totalTrials ?? 0;
-        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
-      }
-      await tx.done;
-    }
+          const title = getCardTitle(c).toLowerCase();
+          if (title.includes(kw)) return true;
 
-    // 3. 分批写入海量 records (每 1500 条为一个独立事务批次)
-    if (parsed.records && parsed.records.length > 0) {
-      const BATCH_SIZE = 1500;
-      for (let i = 0; i < parsed.records.length; i += BATCH_SIZE) {
-        const batch = parsed.records.slice(i, i + BATCH_SIZE);
-        const tx = db.transaction('records', 'readwrite');
-        const store = tx.objectStore('records');
-        for (const r of batch) {
-          const cardId = r.cardId || r.mode;
-          const card = registry.getCardById(cardId);
-          const domain = card ? card.domain : r.domain || 'core';
-          await store.put({ ...r, domain, cardId });
-        }
-        await tx.done;
+          const desc = getCardDesc(c).toLowerCase();
+          if (desc.includes(kw)) return true;
+
+          const instructionKey = `cards.${c.id}.instruction`;
+          const instruction = i18n.t(instructionKey);
+          if (instruction !== instructionKey && instruction.toLowerCase().includes(kw)) {
+            return true;
+          }
+
+          return false;
+        });
       }
     }
-~~~~~
-
-~~~~~act
-patch_file
-src/storage/db/queries.ts
-~~~~~
-~~~~~typescript
-export async function saveTrialRecord(
-  record: UnifiedTrialRecord,
-  currentProfileLevel?: number,
-): Promise<void> {
-  const db = await getDB();
-  const cardId = record.cardId || record.mode;
-  const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.packId : record.domain || 'core';
-  const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
-~~~~~
-~~~~~typescript
-export async function saveTrialRecord(
-  record: UnifiedTrialRecord,
-  currentProfileLevel?: number,
-): Promise<void> {
-  const db = await getDB();
-  const cardId = record.cardId || record.mode;
-  const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.domain : record.domain || 'core';
-  const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
-~~~~~
-
-~~~~~act
-patch_file
-src/storage/db/queries.ts
-~~~~~
-~~~~~typescript
-export async function saveSession(session: UnifiedSessionData): Promise<void> {
-  const db = await getDB();
-  const cardId = session.cardId || session.mode;
-  const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.packId : session.domain || 'core';
-  await db.put('sessions', { ...session, cardId, domain: packId });
-}
-~~~~~
-~~~~~typescript
-export async function saveSession(session: UnifiedSessionData): Promise<void> {
-  const db = await getDB();
-  const cardId = session.cardId || session.mode;
-  const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.domain : session.domain || 'core';
-  await db.put('sessions', { ...session, cardId, domain: packId });
-}
 ~~~~~
 
 ### 下一步建议
 
-1. 执行 `pnpm tsc --noEmit` 再次验证全项目类型检查是否全部通过。
-2. 运行 `pnpm test` 和 `pnpm build` 进行全量构建冒烟测试。
+1. 在探索大盘（Discovery Hub）和计划中心测试搜索关键词（例如搜索“动态”、“色相”、“单锚点”以及“abs”），确认能准确即时匹配出相应卡片。
+2. 切换应用语言至英文，测试输入“gesture”、“hue”、“single”等英文关键词时的搜索匹配效果。
