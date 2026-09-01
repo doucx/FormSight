@@ -14,8 +14,11 @@ export function setupHiDpiCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
+  const width = Math.round(logicalWidth);
+  const height = Math.round(logicalHeight);
+
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
 
   ctx.resetTransform?.();
   ctx.scale(dpr, dpr);
@@ -42,6 +45,10 @@ export function initSquareHiDpiCanvas(
   const size = Math.round(rect.width) || fallbackSize;
   const ctx = setupHiDpiCanvas(canvas, size, size);
   if (!ctx) return null;
+
+  // 专属分析图表的正方形绘图，补齐基准 CSS 尺寸
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
 
   if (bgColor) {
     ctx.fillStyle = bgColor;

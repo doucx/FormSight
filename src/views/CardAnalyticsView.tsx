@@ -349,13 +349,11 @@ export function CardAnalyticsView({
         /* 专项分析视图 */
         <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-sm grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-in fade-in duration-150">
           {/* 左侧 Canvas 可视化区 */}
-          <div className="lg:col-span-7 flex justify-center bg-muted/40 p-6 rounded-3xl border border-border shadow-inner relative">
+          <div className="lg:col-span-7 flex items-center justify-center bg-muted/40 p-4 sm:p-6 rounded-3xl border border-border shadow-inner relative min-h-[320px] overflow-hidden">
             <canvas
               key={`${card.id}-${currentView.id}`}
               ref={canvasRef}
-              width={320}
-              height={320}
-              className="w-full max-w-[340px] aspect-square rounded-2xl border border-border/60 shadow-xs"
+              className="max-w-full h-auto rounded-2xl border border-border/60 shadow-xs block"
             />
           </div>
 
