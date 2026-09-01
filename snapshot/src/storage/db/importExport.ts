@@ -164,7 +164,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       for (const s of parsed.sessions) {
         const cardId = s.cardId || s.mode;
         const card = registry.getCardById(cardId);
-        const domain = card ? card.packId : s.domain || 'core';
+        const domain = card ? card.domain : s.domain || 'core';
         await tx.objectStore('sessions').put({ ...s, domain, cardId });
       }
       await tx.done;
@@ -176,7 +176,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       for (const p of parsed.profiles) {
         const cardId = p.cardId || p.mode;
         const card = registry.getCardById(cardId);
-        const domain = card ? card.packId : p.domain || 'core';
+        const domain = card ? card.domain : p.domain || 'core';
         const totalTrials = p.totalTrials ?? 0;
         await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
       }
@@ -193,7 +193,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         for (const r of batch) {
           const cardId = r.cardId || r.mode;
           const card = registry.getCardById(cardId);
-          const domain = card ? card.packId : r.domain || 'core';
+          const domain = card ? card.domain : r.domain || 'core';
           await store.put({ ...r, domain, cardId });
         }
         await tx.done;

@@ -8,7 +8,6 @@ import type {
   CognitivePathTag,
   InteractionTag,
   MentalChallengeTag,
-  PackMeta,
   VisualDomainTag,
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';

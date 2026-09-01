@@ -9,7 +9,6 @@ import type {
   StarSettings,
 } from '../storage/settings';
 import type { Point } from '../types';
-import type { CardDefinition, PackMeta } from '../types/card';
 
 export interface TrainingCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
   question: TQuestion;
