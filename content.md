@@ -4,7 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-piconfig.json               |  11 ----
- scripts/check-ts-smells.mjs | 140 ++++++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 140 insertions(+), 11 deletions(-)
+piconfig.json | 1 +
+ 1 file changed, 1 insertion(+)
 ```
