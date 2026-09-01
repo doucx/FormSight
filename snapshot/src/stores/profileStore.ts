@@ -1,9 +1,5 @@
 import { batch, computed, signal } from '@preact/signals';
-import {
-  getAllProfiles,
-  getDailySummaries,
-  getTrainingTimeMs,
-} from '../storage/db/queries';
+import { getAllProfiles, getDailySummaries, getTrainingTimeMs } from '../storage/db/queries';
 import {
   type DailySummaryData,
   type UnifiedProfileData,

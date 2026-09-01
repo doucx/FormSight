@@ -2,7 +2,7 @@ import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 import type { UnifiedProfileData } from '../../storage/db/schema';
-import { getCardSettings, type UserSettings } from '../../storage/settings';
+import { type UserSettings, getCardSettings } from '../../storage/settings';
 import {
   $activePlan,
   $allPlans,
