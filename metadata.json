@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 为 Input UI 组件添加 forwardRef 转发以修复文件导入弹窗唤起失效", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258366.9455025, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] perf(storage): 优化数据导入事务管线并添加全屏阻塞加载遮罩", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788259829.7642314, "duration_ms": 0}}

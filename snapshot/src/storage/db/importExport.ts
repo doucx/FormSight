@@ -161,11 +161,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     // 1. 导入 sessions
     if (parsed.sessions && parsed.sessions.length > 0) {
       const tx = db.transaction('sessions', 'readwrite');
+      const store = tx.objectStore('sessions');
       for (const s of parsed.sessions) {
         const cardId = s.cardId || s.mode;
         const card = registry.getCardById(cardId);
         const domain = card ? card.domain : s.domain || 'core';
-        await tx.objectStore('sessions').put({ ...s, domain, cardId });
+        store.put({ ...s, domain, cardId });
       }
       await tx.done;
     }
@@ -173,19 +174,20 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     // 2. 导入 profiles
     if (parsed.profiles && parsed.profiles.length > 0) {
       const tx = db.transaction('user_profiles', 'readwrite');
+      const store = tx.objectStore('user_profiles');
       for (const p of parsed.profiles) {
         const cardId = p.cardId || p.mode;
         const card = registry.getCardById(cardId);
         const domain = card ? card.domain : p.domain || 'core';
         const totalTrials = p.totalTrials ?? 0;
-        await tx.objectStore('user_profiles').put({ ...p, cardId, domain, totalTrials });
+        store.put({ ...p, cardId, domain, totalTrials });
       }
       await tx.done;
     }
 
-    // 3. 分批写入海量 records (每 1500 条为一个独立事务批次)
+    // 3. 分批写入海量 records (每 2500 条为一个独立事务批次，采用管线并发排队)
     if (parsed.records && parsed.records.length > 0) {
-      const BATCH_SIZE = 1500;
+      const BATCH_SIZE = 2500;
       for (let i = 0; i < parsed.records.length; i += BATCH_SIZE) {
         const batch = parsed.records.slice(i, i + BATCH_SIZE);
         const tx = db.transaction('records', 'readwrite');
@@ -194,7 +196,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
           const cardId = r.cardId || r.mode;
           const card = registry.getCardById(cardId);
           const domain = card ? card.domain : r.domain || 'core';
-          await store.put({ ...r, domain, cardId });
+          store.put({ ...r, domain, cardId });
         }
         await tx.done;
       }
@@ -203,11 +205,12 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     // 4. 写入或重新生成 daily_summaries
     if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
       const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
       for (const d of parsed.dailySummaries) {
         const cardId = d.cardId || d.mode;
         const card = registry.getCardById(cardId);
         const domain = card ? card.domain : d.domain || 'core';
-        await tx.objectStore('daily_summaries').put({
+        store.put({
           ...d,
           cardId,
           domain,
@@ -256,8 +259,9 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       }
 
       const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
       for (const summary of summaryMap.values()) {
-        await tx.objectStore('daily_summaries').put(summary);
+        store.put(summary);
       }
       await tx.done;
     }
