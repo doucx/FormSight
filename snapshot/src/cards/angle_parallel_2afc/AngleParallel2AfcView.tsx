@@ -1,20 +1,15 @@
 import { Split } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { useTranslation } from '../../../core/i18n';
-import { CANVAS_THEME } from '../../../utils/theme';
-import {
-  ANGLE_2AFC_SIZE,
-  ANGLE_PROMPT_SIZE,
-  type AngleHitResult,
-  type AngleQuestionData,
-  drawSingleLineCanvas,
-} from '../utils/angleUtils';
+import { CanvasView } from '../../components/common/CanvasView';
+import { Standard2AfcView } from '../../components/common/Standard2AfcView';
+import { useCardTranslation } from '../../core/i18n';
+import { CANVAS_THEME } from '../../utils/theme';
+import type { AngleParallelHitResult, AngleParallelQuestion } from './types';
+import { ANGLE_2AFC_SIZE, ANGLE_PROMPT_SIZE, drawSingleLineCanvas } from './utils/generator';
 
-interface AngleParallel2AfcViewProps {
-  question: AngleQuestionData;
+export interface AngleParallel2AfcViewProps {
+  question: AngleParallelQuestion;
   showAnswer: boolean;
-  userAnswer: AngleHitResult | null;
+  userAnswer: AngleParallelHitResult | null;
   onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -27,14 +22,14 @@ export function AngleParallel2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AngleParallel2AfcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('angle_parallel_2afc');
   const isAHit = question.parallelSide === 'A';
   const isBHit = question.parallelSide === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.angle.views.parallelHint')}
+      hintText={t('views.hint')}
       hintIcon={Split}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -44,7 +39,7 @@ export function AngleParallel2AfcView({
       prompt={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('packs.angle.views.parallelPromptTitle')}
+            {t('views.promptTitle')}
           </span>
           <CanvasView
             width={ANGLE_PROMPT_SIZE}
@@ -64,12 +59,12 @@ export function AngleParallel2AfcView({
         </div>
       }
       optionA={{
-        title: t('common.optionA'),
+        title: t('views.optionA'),
         isCorrect: isAHit,
         badge: showAnswer
           ? isAHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('views.absoluteParallel')
+            : t('views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -92,12 +87,12 @@ export function AngleParallel2AfcView({
         ),
       }}
       optionB={{
-        title: t('common.optionB'),
+        title: t('views.optionB'),
         isCorrect: isBHit,
         badge: showAnswer
           ? isBHit
-            ? t('packs.angle.views.absoluteParallel')
-            : t('packs.angle.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('views.absoluteParallel')
+            : t('views.deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">

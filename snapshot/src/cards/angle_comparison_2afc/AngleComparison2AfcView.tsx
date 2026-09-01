@@ -1,18 +1,14 @@
 import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { useTranslation } from '../../../core/i18n';
-import {
-  ANGLE_2AFC_SIZE,
-  type AngleHitResult,
-  type AngleQuestionData,
-  drawAngleCanvas,
-} from '../utils/angleUtils';
+import { CanvasView } from '../../components/common/CanvasView';
+import { Standard2AfcView } from '../../components/common/Standard2AfcView';
+import { useCardTranslation } from '../../core/i18n';
+import type { AngleComparisonHitResult, AngleComparisonQuestion } from './types';
+import { ANGLE_2AFC_SIZE, drawAngleCanvas } from './utils/generator';
 
-interface AngleComparison2AfcViewProps {
-  question: AngleQuestionData;
+export interface AngleComparison2AfcViewProps {
+  question: AngleComparisonQuestion;
   showAnswer: boolean;
-  userAnswer: AngleHitResult | null;
+  userAnswer: AngleComparisonHitResult | null;
   onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -25,14 +21,14 @@ export function AngleComparison2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: AngleComparison2AfcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('angle_comparison_2afc');
   const isAHit = question.largerSide === 'A';
   const isBHit = question.largerSide === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.angle.views.comparisonHint')}
+      hintText={t('views.hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -40,7 +36,7 @@ export function AngleComparison2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: t('common.areaA'),
+        title: t('views.areaA'),
         isCorrect: isAHit,
         badge: showAnswer ? `${question.angleA}°` : undefined,
         content: (
@@ -56,7 +52,7 @@ export function AngleComparison2AfcView({
         ),
       }}
       optionB={{
-        title: t('common.areaB'),
+        title: t('views.areaB'),
         isCorrect: isBHit,
         badge: showAnswer ? `${question.angleB}°` : undefined,
         content: (

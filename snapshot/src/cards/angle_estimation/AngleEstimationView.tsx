@@ -1,18 +1,14 @@
 import { Eye } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { useTranslation } from '../../../core/i18n';
-import {
-  ANGLE_CANVAS_SIZE,
-  type AngleHitResult,
-  type AngleQuestionData,
-  drawAngleCanvas,
-} from '../utils/angleUtils';
+import { CanvasView } from '../../components/common/CanvasView';
+import { StandardSliderView } from '../../components/common/StandardSliderView';
+import { useCardTranslation } from '../../core/i18n';
+import type { AngleEstimationHitResult, AngleEstimationQuestion } from './types';
+import { ANGLE_CANVAS_SIZE, drawAngleCanvas } from './utils/generator';
 
-interface AngleEstimationViewProps {
-  question: AngleQuestionData;
+export interface AngleEstimationViewProps {
+  question: AngleEstimationQuestion;
   showAnswer: boolean;
-  userAnswer: AngleHitResult | null;
+  userAnswer: AngleEstimationHitResult | null;
   onAnswer: (val: number) => void;
   disabled?: boolean;
   hitMargin?: number;
@@ -30,7 +26,7 @@ export function AngleEstimationView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: AngleEstimationViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('angle_estimation');
   const targetVal = question.targetAngleDeg ?? 90;
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
@@ -39,11 +35,11 @@ export function AngleEstimationView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('packs.angle.views.estimationHint')}
+      hintText={t('views.hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('packs.angle.views.estimationLabel')}
+      label={t('views.label')}
       max={180}
       step={0.5}
       initialValue={90}
@@ -77,7 +73,7 @@ export function AngleEstimationView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('packs.angle.views.trueAngle')}{' '}
+              {t('views.trueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span
@@ -87,7 +83,7 @@ export function AngleEstimationView({
                   : 'text-rose-600 dark:text-rose-400 font-bold'
               }
             >
-              {t('packs.angle.views.errorInfo', {
+              {t('views.errorInfo', {
                 error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
                 tolerance,
               })}

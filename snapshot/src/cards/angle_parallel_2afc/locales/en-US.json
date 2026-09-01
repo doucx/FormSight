@@ -1,0 +1,13 @@
+{
+  "title": "Parallel Alignment",
+  "desc": "Observe the prompt orientation and identify the strictly parallel line below (2AFC).",
+  "instruction": "Find the line that is strictly parallel to the prompt line (Keys 1 / 2).",
+  "views": {
+    "hint": "Observe the prompt line and select the parallel one below (Keys 1 / 2)",
+    "promptTitle": "Parallel Alignment Reference (Prompt)",
+    "optionA": "Line A",
+    "optionB": "Line B",
+    "absoluteParallel": "Strictly Parallel",
+    "deviationBadge": "Deviation {{deg}}°"
+  }
+}
