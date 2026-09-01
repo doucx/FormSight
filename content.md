@@ -1,100 +1,226 @@
-我现在将生成 Quipu 计划来修复搜索功能中因卡片多语言解耦导致的标题与描述搜索失效问题。
+现在，我将生成 Quipu 计划并执行修复。
 
-## [WIP] fix: 修复卡片多维搜索中的多语言标题与描述匹配失效问题
+## [WIP] fix: 修复数据导入中的 domain 规范化、设置合并与文件触发漏洞
 
 ### 错误分析
 
-在卡片一等公民重构中，卡片元数据（标题 `title`、描述 `desc`、玩法要领 `instruction`）由全局集中管理改为内聚在卡片独立的 `locales/*.json` 词典中，并通过 `i18n` 运行时提供解析。而在 `src/core/registry.ts` 的 `queryCards` 方法中，依然直接读取了 `CardDefinition` 的 `c.title` 与 `c.desc`（均为 `undefined`），导致在按中文名（如“动态”、“单锚点”）搜索时匹配失效，必须输入卡片英文 ID 才能搜出。
+1. `src/storage/db/importExport.ts`: 导入 `dailySummaries` 时未做 `domain` 规范化映射，且从 `records` 回填重建时错误地硬编码了 `'star'` 默认值。
+2. `src/storage/db/importExport.ts`: `saveSettings` 直接覆盖可能导致新增卡片缺少默认字段。
+3. `src/components/settings/sections/DataGovernanceSection.tsx`: 文件读取后未清空 `input.value`，导致同名文件二次选择失效。
 
 ### 用户需求
 
-修复探索大盘和计划编辑器的搜索过滤功能，使得用户输入卡片中文名称、描述关键词、卡片 ID 或要领文本时均能正常高亮匹配并筛选出对应模块。
+确保系统全量备份导入与计划导入在任何场景下均能稳定执行，旧数据能正确映射至卡片一等公民的新版 `domain` 体系，且操作体验流畅可靠。
 
 ### 评论
 
-这是一个关键的可用性与用户体验 (UX) 修复。通过在 `registry.queryCards` 中引入动态多语言解析，彻底打通了卡片私有词典与全局多维检索引擎。
+数据备份与导入是用户数据的生命线。在向纯 Flat Card 架构演进后，数据导入层的兼容性映射与容错处理是保证用户资产安全无损迁移的核心保障。
 
 ### 目标
 
-1. 在 `src/core/registry.ts` 中导入 `getCardTitle`、`getCardDesc` 与 `i18n`。
-2. 升级 `queryCards` 中的关键词过滤逻辑，使其同时对卡片 ID、当前语言下的卡片标题、卡片描述与指令文本进行全面模糊匹配。
+1. 升级 `importAllData`：在写入 `dailySummaries` 时做统一的 `cardId` 和 `domain` 修正。
+2. 修复降级重建 `dailySummaries` 时的 `domain` 解析，改用 `registry.getCardById(cardId)?.domain`。
+3. 导入 settings 时与系统默认配置安全合并。
+4. 在文件导入回调中重置 `input.value = ''`。
 
 ### 基本原理
 
-利用 `getCardTitle(c)` 和 `getCardDesc(c)` 在查询过滤执行时即时解析当前激活语言（如 `zh-CN` 或 `en-US`）下的本地化文本，并与用户输入的关键词统一小写化匹配，保证搜索结果准确全面。
+在数据落地 IndexedDB / LocalStorage 之前，通过 `registry` 倒排映射机制自动修复旧版标识，并确保文件输入组件的状态及时重置。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/engine #concept/ui #scope/ux #scope/core #ai/instruct #task/domain/discovery #task/object/search-engine #task/action/fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/runtime #concept/state #concept/sync #scope/core #scope/ux #ai/instruct #task/domain/storage #task/object/data-import #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 升级 `src/core/registry.ts` 的搜索过滤逻辑
-
-导入 `getCardTitle` 与 `getCardDesc`，并在 `queryCards` 中支持多语言标题、描述及玩法说明的匹配。
+#### Acts 1: 修复 `src/storage/db/importExport.ts` 中的导入规范化与合并逻辑
 
 ~~~~~act
 patch_file
-src/core/registry.ts
+src/storage/db/importExport.ts
 ~~~~~
 ~~~~~typescript
-import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
-import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
-import type { CardAnalyticsPlugin } from './contracts';
-import { i18n } from './i18n';
-~~~~~
-~~~~~typescript
-import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
-import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
-import type { CardAnalyticsPlugin } from './contracts';
-import { getCardDesc, getCardTitle, i18n } from './i18n';
-~~~~~
-
-~~~~~act
-patch_file
-src/core/registry.ts
-~~~~~
-~~~~~typescript
-    if (options.searchKeyword) {
-      const kw = options.searchKeyword.trim().toLowerCase();
-      if (kw) {
-        results = results.filter(
-          (c) =>
-            c.title?.toLowerCase().includes(kw) ||
-            c.desc?.toLowerCase().includes(kw) ||
-            c.id.toLowerCase().includes(kw),
-        );
+    // 4. 写入或重新生成 daily_summaries
+    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      for (const d of parsed.dailySummaries) {
+        await tx.objectStore('daily_summaries').put(d);
       }
+      await tx.done;
+    } else if (parsed.records && parsed.records.length > 0) {
+      const summaryMap = new Map<string, DailySummaryData>();
+      for (const r of parsed.records) {
+        const domain = (r.domain || 'star') as TrainingDomain;
+        const cardId = r.cardId || r.mode;
+        const date = getLocalDateString(r.timestamp);
+        const summaryId = `${date}_${cardId}`;
+        const respMs = Number(r.responseTimeMs) || 0;
+        const level = Number(r.difficultyLevel) || 1;
+
+        const existing = summaryMap.get(summaryId);
+        if (!existing) {
+          summaryMap.set(summaryId, {
+            id: summaryId,
+            date,
+            cardId,
+            domain,
+            mode: r.mode,
+            totalCount: 1,
+            hitCount: r.isHit ? 1 : 0,
+            totalTimeMs: respMs,
+            maxLevel: level,
+            minLevel: level,
+            lastLevel: level,
+            updatedAt: r.timestamp,
+          });
+        } else {
+          existing.totalCount += 1;
+          if (r.isHit) existing.hitCount += 1;
+          existing.totalTimeMs += respMs;
+          existing.maxLevel = Math.max(existing.maxLevel, level);
+          existing.minLevel = Math.min(existing.minLevel, level);
+          if (r.timestamp >= existing.updatedAt) {
+            existing.lastLevel = level;
+            existing.updatedAt = r.timestamp;
+          }
+        }
+      }
+
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      for (const summary of summaryMap.values()) {
+        await tx.objectStore('daily_summaries').put(summary);
+      }
+      await tx.done;
+    }
+
+    // 5. 更新 LocalStorage
+    if (parsed.settings) {
+      saveSettings(parsed.settings);
     }
 ~~~~~
 ~~~~~typescript
-    if (options.searchKeyword) {
-      const kw = options.searchKeyword.trim().toLowerCase();
-      if (kw) {
-        results = results.filter((c) => {
-          if (c.id.toLowerCase().includes(kw)) return true;
-
-          const title = getCardTitle(c).toLowerCase();
-          if (title.includes(kw)) return true;
-
-          const desc = getCardDesc(c).toLowerCase();
-          if (desc.includes(kw)) return true;
-
-          const instructionKey = `cards.${c.id}.instruction`;
-          const instruction = i18n.t(instructionKey);
-          if (instruction !== instructionKey && instruction.toLowerCase().includes(kw)) {
-            return true;
-          }
-
-          return false;
+    // 4. 写入或重新生成 daily_summaries
+    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      for (const d of parsed.dailySummaries) {
+        const cardId = d.cardId || d.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : d.domain || 'core';
+        await tx.objectStore('daily_summaries').put({
+          ...d,
+          cardId,
+          domain,
         });
       }
+      await tx.done;
+    } else if (parsed.records && parsed.records.length > 0) {
+      const summaryMap = new Map<string, DailySummaryData>();
+      for (const r of parsed.records) {
+        const cardId = r.cardId || r.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : r.domain || 'core';
+        const date = getLocalDateString(r.timestamp);
+        const summaryId = `${date}_${cardId}`;
+        const respMs = Number(r.responseTimeMs) || 0;
+        const level = Number(r.difficultyLevel) || 1;
+
+        const existing = summaryMap.get(summaryId);
+        if (!existing) {
+          summaryMap.set(summaryId, {
+            id: summaryId,
+            date,
+            cardId,
+            domain,
+            mode: r.mode,
+            totalCount: 1,
+            hitCount: r.isHit ? 1 : 0,
+            totalTimeMs: respMs,
+            maxLevel: level,
+            minLevel: level,
+            lastLevel: level,
+            updatedAt: r.timestamp,
+          });
+        } else {
+          existing.domain = domain;
+          existing.totalCount += 1;
+          if (r.isHit) existing.hitCount += 1;
+          existing.totalTimeMs += respMs;
+          existing.maxLevel = Math.max(existing.maxLevel, level);
+          existing.minLevel = Math.min(existing.minLevel, level);
+          if (r.timestamp >= existing.updatedAt) {
+            existing.lastLevel = level;
+            existing.updatedAt = r.timestamp;
+          }
+        }
+      }
+
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      for (const summary of summaryMap.values()) {
+        await tx.objectStore('daily_summaries').put(summary);
+      }
+      await tx.done;
     }
+
+    // 5. 更新 LocalStorage (深度合并保障新增卡片配置)
+    if (parsed.settings) {
+      const current = loadSettings();
+      const mergedSettings: UserSettings = {
+        global: { ...current.global, ...(parsed.settings.global || {}) },
+        cards: { ...current.cards, ...(parsed.settings.cards || {}) },
+      };
+      saveSettings(mergedSettings);
+    }
+~~~~~
+
+#### Acts 2: 修复 `DataGovernanceSection.tsx` 中的文件选择重置
+
+在读取文件后清空 `input.value`，确保同名文件重新导入能正常触发事件。
+
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript
+  const handleImportFile = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      const file = target.files[0];
+      const text = await file.text();
+      const success = await importAllData(text);
+      if (success) {
+        showToast(t('settings.importSuccessToast'), 'success');
+        onDataChanged();
+        onCloseModal();
+      } else {
+        showToast(t('settings.importInvalidToast'), 'error');
+      }
+    }
+  };
+~~~~~
+~~~~~typescript
+  const handleImportFile = async (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      const file = target.files[0];
+      const text = await file.text();
+      target.value = '';
+      const success = await importAllData(text);
+      if (success) {
+        showToast(t('settings.importSuccessToast'), 'success');
+        onDataChanged();
+        onCloseModal();
+      } else {
+        showToast(t('settings.importInvalidToast'), 'error');
+      }
+    }
+  };
 ~~~~~
 
 ### 下一步建议
 
-1. 在探索大盘（Discovery Hub）和计划中心测试搜索关键词（例如搜索“动态”、“色相”、“单锚点”以及“abs”），确认能准确即时匹配出相应卡片。
-2. 切换应用语言至英文，测试输入“gesture”、“hue”、“single”等英文关键词时的搜索匹配效果。
+1. 尝试在全局设置中执行一次「流式导出 JSON」，然后执行「清空数据」，再将导出的文件重新「导入 JSON 备份」，验证以下项：
+   - 今日刷题统计与累计用时是否 100% 恢复。
+   - 认知档案中的热力图与各卡片等级是否正确呈现。
+   - 自定义训练流计划是否完整恢复。

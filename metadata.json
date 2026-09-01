@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复卡片多维搜索中的多语言标题与描述匹配失效问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258240.3737903, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复数据导入中的 domain 规范化、设置合并与文件触发漏洞", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258314.5269291, "duration_ms": 0}}

@@ -204,14 +204,22 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
       const tx = db.transaction('daily_summaries', 'readwrite');
       for (const d of parsed.dailySummaries) {
-        await tx.objectStore('daily_summaries').put(d);
+        const cardId = d.cardId || d.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : d.domain || 'core';
+        await tx.objectStore('daily_summaries').put({
+          ...d,
+          cardId,
+          domain,
+        });
       }
       await tx.done;
     } else if (parsed.records && parsed.records.length > 0) {
       const summaryMap = new Map<string, DailySummaryData>();
       for (const r of parsed.records) {
-        const domain = (r.domain || 'star') as TrainingDomain;
         const cardId = r.cardId || r.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : r.domain || 'core';
         const date = getLocalDateString(r.timestamp);
         const summaryId = `${date}_${cardId}`;
         const respMs = Number(r.responseTimeMs) || 0;
@@ -234,6 +242,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
             updatedAt: r.timestamp,
           });
         } else {
+          existing.domain = domain;
           existing.totalCount += 1;
           if (r.isHit) existing.hitCount += 1;
           existing.totalTimeMs += respMs;
@@ -253,9 +262,14 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       await tx.done;
     }
 
-    // 5. 更新 LocalStorage
+    // 5. 更新 LocalStorage (深度合并保障新增卡片配置)
     if (parsed.settings) {
-      saveSettings(parsed.settings);
+      const current = loadSettings();
+      const mergedSettings: UserSettings = {
+        global: { ...current.global, ...(parsed.settings.global || {}) },
+        cards: { ...current.cards, ...(parsed.settings.cards || {}) },
+      };
+      saveSettings(mergedSettings);
     }
 
     if (parsed.planStorageState) {

@@ -60,6 +60,7 @@ export function DataGovernanceSection({
     if (target.files?.[0]) {
       const file = target.files[0];
       const text = await file.text();
+      target.value = '';
       const success = await importAllData(text);
       if (success) {
         showToast(t('settings.importSuccessToast'), 'success');
