@@ -1,248 +1,253 @@
-我们将修复 `src/components/common/PointClickCanvas.tsx` 中对已废弃的旧 `src/packs/star/utils/hitDetection` 路径的残留引用，改为直接从核心几何模块 `src/core/geometry/pointGrid.ts` 导入点阵吸附计算函数。
+我们将修复 `star_single`、`star_double_h` 和 `star_double_r` 中视图组件（`Star*View.tsx`）对 `userAnswer` 属性结构的解构错误。
 
-## [WIP] fix: 修复 PointClickCanvas 对已废弃 star pack 路径的引用
+## [WIP] fix: 修复寻星卡片视图中 userAnswer 属性解构导致的空指针异常
 
 ### 错误分析
-在完成阶段 1 绞杀旧 `src/packs/star/` 后，Vite 构建报错 `Failed to resolve import "../../packs/star/utils/hitDetection" from "src/components/common/PointClickCanvas.tsx"`。
-其根本原因是公共组件 `PointClickCanvas.tsx` 历史残留地引用了 `src/packs/star/utils/hitDetection` 中的 `findNearestGridPoint` 别名。而实际上该算法的通用实现早已收敛于核心通用几何库 `src/core/geometry/pointGrid.ts`（`findNearestPointInGrid`）。
+在训练会话执行流中，`GenericTrainingView` 将 `session.userAnswer`（类型为 `THitResult | null`，即 `HitResult | null`）传入 `renderCanvas` 的 props。
+而 `StarSingleView`、`StarDoubleHView` 与 `StarDoubleRView` 误将 `userAnswer` 声明为 `{ clickPoint: Point; hitResult: HitResult } | null`，并在模板中以 `userAnswer?.hitResult.nearestGridPoint` 的方式访问。当揭晓答案时，`userAnswer.hitResult` 为 `undefined`，访问 `.nearestGridPoint` 导致运行时抛出 `TypeError: Cannot read properties of undefined (reading 'nearestGridPoint')`。
 
 ### 用户需求
-修复 Vite 模块解析失败问题，使 `PointClickCanvas.tsx` 正确引用 `src/core/geometry/pointGrid.ts`。
+修复 `star_single`、`star_double_h`、`star_double_r` 中的视图组件，将 `userAnswer` 的类型直接对齐为 `HitResult | null`，并在画布中直接读取 `userAnswer?.nearestGridPoint` 与 `userAnswer?.isHit`。
 
 ### 评论
-公共通用组件不应该向下依赖特定业务卡片或扩展包的私有目录。将几何点阵查找函数直接从 `src/core/geometry/pointGrid` 引入是彻底解耦、符合架构规范的做法。
+将卡片视图的输入 props 精确对齐 `CardCanvasProps` 中泛型 `THitResult`，消除了中间层不必要的嵌套包装，使视图与训练状态机的数据流完全自洽、类型安全。
 
 ### 目标
-1. 修改 `src/components/common/PointClickCanvas.tsx`。
-2. 替换旧的 `../../packs/star/utils/hitDetection` 导入为 `../../core/geometry/pointGrid` 中的 `findNearestPointInGrid`。
+1. 修改 `src/cards/star_single/StarSingleView.tsx`。
+2. 修改 `src/cards/star_double_h/StarDoubleHView.tsx`。
+3. 修改 `src/cards/star_double_r/StarDoubleRView.tsx`。
 
 ### 基本原理
-`src/core/geometry/pointGrid.ts` 导出了 `findNearestPointInGrid(clickPoint, gridPoints)`，其返回签名与行为与原 `findNearestGridPoint` 完全一致。直接引用该核心模块可消除残留耦合。
+`THitResult` 在寻星系列卡片中即为 `HitResult`（包含 `nearestGridPoint` 与 `isHit`）。视图直接消费 `HitResult | null` 即可完整渲染用户点击吸附点与对错状态。
 
 ### 标签
-#intent/fix #flow/ready #priority/critical #comp/runtime #concept/parser #scope/core #ai/instruct #task/domain/architecture #task/object/point-click-canvas #task/action/bug-fix #task/state/continue #task/status/active
+#intent/fix #flow/ready #priority/critical #comp/runtime #concept/executor #scope/core #ai/instruct #task/domain/architecture #task/object/star-views #task/action/bug-fix #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `PointClickCanvas.tsx` 模块引用
-
-将导入源替换为 `../../core/geometry/pointGrid` 并直接调用 `findNearestPointInGrid`。
+#### Acts 1: 修复 `src/cards/star_single/StarSingleView.tsx`
 
 ~~~~~act
 patch_file
-src/components/common/PointClickCanvas.tsx
+src/cards/star_single/StarSingleView.tsx
 ~~~~~
 ~~~~~typescript.old
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { useTranslation } from '../../core/i18n';
-import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
-import type { Point } from '../../types';
-import { CANVAS_THEME } from '../../utils/theme';
+export interface StarSingleViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
+
+export function StarSingleView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarSingleViewProps) {
 ~~~~~
 ~~~~~typescript.new
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import { useTranslation } from '../../core/i18n';
-import type { Point } from '../../types';
-import { CANVAS_THEME } from '../../utils/theme';
+export interface StarSingleViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: HitResult | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
+
+export function StarSingleView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarSingleViewProps) {
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/common/PointClickCanvas.tsx
+src/cards/star_single/StarSingleView.tsx
 ~~~~~
 ~~~~~typescript.old
-  // 鼠标悬停与移动
-  const handleMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
-    if (!coords) return;
-
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
-
-    if (isWithinRange) {
-      setHoverPoint(nearestPoint);
-    } else if (hoverPoint) {
-      setHoverPoint(null);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isTouching && hoverPoint) setHoverPoint(null);
-  };
-
-  // 鼠标普通点击
-  const handleClick = (e: MouseEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
-    if (!coords) return;
-
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
-    if (!isWithinRange) return;
-
-    setHoverPoint(null);
-    onCommitPoint(nearestPoint);
-  };
-
-  // 触控开始
-  const handleTouchStart = (e: TouchEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || !e.touches[0]) return;
-    const touch = e.touches[0];
-    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
-    if (!coords) return;
-
-    setIsTouching(true);
-    setCurrentCanvasPos(coords.canvasPoint);
-
-    // 放大镜稳定位于手指正上方 75px，不进行翻转
-    setLoupePos({
-      x: coords.relX,
-      y: coords.relY - 75,
-    });
-
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
-    setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(coords.canvasPoint);
-  };
-
-  // 触控移动
-  const handleTouchMove = (e: TouchEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || !e.touches[0] || !isTouching) return;
-    if (e.cancelable) e.preventDefault();
-
-    const touch = e.touches[0];
-    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
-    if (!coords) return;
-
-    setCurrentCanvasPos(coords.canvasPoint);
-
-    // 放大镜稳定位于手指正上方 75px，不进行翻转
-    setLoupePos({
-      x: coords.relX,
-      y: coords.relY - 75,
-    });
-
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
-    setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(coords.canvasPoint);
-  };
-
-  // 触控松手确认提交
-  const handleTouchEnd = () => {
-    if (disabled || showAnswer || !isTouching) return;
-    setIsTouching(false);
-    setLoupePos(null);
-
-    if (hoverPoint) {
-      const commitPt = hoverPoint;
-      setHoverPoint(null);
-      onCommitPoint(commitPt);
-    } else if (currentCanvasPos) {
-      const { nearestPoint, isWithinRange } = findNearestGridPoint(currentCanvasPos, gridPoints);
-      if (isWithinRange) {
-        setHoverPoint(null);
-        onCommitPoint(nearestPoint);
-      }
-    }
-  };
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          anchors={[question.anchorA]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.hitResult.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
 ~~~~~
 ~~~~~typescript.new
-  // 鼠标悬停与移动
-  const handleMouseMove = (e: MouseEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
-    if (!coords) return;
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.nearestGridPoint}
+          anchors={[question.anchorA]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+~~~~~
 
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
+#### Acts 2: 修复 `src/cards/star_double_h/StarDoubleHView.tsx`
 
-    if (isWithinRange) {
-      setHoverPoint(nearestPoint);
-    } else if (hoverPoint) {
-      setHoverPoint(null);
-    }
-  };
+~~~~~act
+patch_file
+src/cards/star_double_h/StarDoubleHView.tsx
+~~~~~
+~~~~~typescript.old
+export interface StarDoubleHViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
 
-  const handleMouseLeave = () => {
-    if (!isTouching && hoverPoint) setHoverPoint(null);
-  };
+export function StarDoubleHView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarDoubleHViewProps) {
+~~~~~
+~~~~~typescript.new
+export interface StarDoubleHViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: HitResult | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
 
-  // 鼠标普通点击
-  const handleClick = (e: MouseEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || isTouching) return;
-    const coords = getCanvasCoordinates(e.clientX, e.clientY);
-    if (!coords) return;
+export function StarDoubleHView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarDoubleHViewProps) {
+~~~~~
 
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
-    if (!isWithinRange) return;
+~~~~~act
+patch_file
+src/cards/star_double_h/StarDoubleHView.tsx
+~~~~~
+~~~~~typescript.old
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.hitResult.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+~~~~~
+~~~~~typescript.new
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+~~~~~
 
-    setHoverPoint(null);
-    onCommitPoint(nearestPoint);
-  };
+#### Acts 3: 修复 `src/cards/star_double_r/StarDoubleRView.tsx`
 
-  // 触控开始
-  const handleTouchStart = (e: TouchEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || !e.touches[0]) return;
-    const touch = e.touches[0];
-    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
-    if (!coords) return;
+~~~~~act
+patch_file
+src/cards/star_double_r/StarDoubleRView.tsx
+~~~~~
+~~~~~typescript.old
+export interface StarDoubleRViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
 
-    setIsTouching(true);
-    setCurrentCanvasPos(coords.canvasPoint);
+export function StarDoubleRView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarDoubleRViewProps) {
+~~~~~
+~~~~~typescript.new
+export interface StarDoubleRViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer: HitResult | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  disabled?: boolean;
+}
 
-    // 放大镜稳定位于手指正上方 75px，不进行翻转
-    setLoupePos({
-      x: coords.relX,
-      y: coords.relY - 75,
-    });
+export function StarDoubleRView({
+  question,
+  showAnswer,
+  userAnswer,
+  onAnswer,
+  disabled = false,
+}: StarDoubleRViewProps) {
+~~~~~
 
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
-    setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(coords.canvasPoint);
-  };
-
-  // 触控移动
-  const handleTouchMove = (e: TouchEvent) => {
-    if (disabled || showAnswer || !gridPoints.length || !e.touches[0] || !isTouching) return;
-    if (e.cancelable) e.preventDefault();
-
-    const touch = e.touches[0];
-    const coords = getCanvasCoordinates(touch.clientX, touch.clientY);
-    if (!coords) return;
-
-    setCurrentCanvasPos(coords.canvasPoint);
-
-    // 放大镜稳定位于手指正上方 75px，不进行翻转
-    setLoupePos({
-      x: coords.relX,
-      y: coords.relY - 75,
-    });
-
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
-    setHoverPoint(isWithinRange ? nearestPoint : null);
-    updateLoupeCanvas(coords.canvasPoint);
-  };
-
-  // 触控松手确认提交
-  const handleTouchEnd = () => {
-    if (disabled || showAnswer || !isTouching) return;
-    setIsTouching(false);
-    setLoupePos(null);
-
-    if (hoverPoint) {
-      const commitPt = hoverPoint;
-      setHoverPoint(null);
-      onCommitPoint(commitPt);
-    } else if (currentCanvasPos) {
-      const { nearestPoint, isWithinRange } = findNearestPointInGrid(currentCanvasPos, gridPoints);
-      if (isWithinRange) {
-        setHoverPoint(null);
-        onCommitPoint(nearestPoint);
-      }
-    }
-  };
+~~~~~act
+patch_file
+src/cards/star_double_r/StarDoubleRView.tsx
+~~~~~
+~~~~~typescript.old
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.hitResult.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
+~~~~~
+~~~~~typescript.new
+        <PointClickCanvas
+          canvasSize={CANVAS_SIZE}
+          gridPoints={question.distractorPoints}
+          targetPoint={question.targetB}
+          userNearestPoint={userAnswer?.nearestGridPoint}
+          anchors={[question.anchorA, question.anchorC]}
+          showAnswer={showAnswer}
+          isHit={userAnswer?.isHit}
+          disabled={disabled}
+          maxDisplayWidth="w-full h-full aspect-square"
+          onCommitPoint={handleCommitPoint}
+        />
 ~~~~~
 
 ### 下一步建议
-导入路径修复完毕后，请刷新/重启 Vite 预览服务器进行验证。确认构建成功后，可继续进入**阶段 2: 几何与结构域迁移 (Angle 3 张 & Perspective 5 张)**。
+已修正寻星三张卡片中全部 `userAnswer` 的属性读取方式。在浏览器中验证自适应练习、作答与答案反馈均正常后，可继续推进**阶段 2: 几何与结构域迁移 (Angle 3 张 & Perspective 5 张)**。

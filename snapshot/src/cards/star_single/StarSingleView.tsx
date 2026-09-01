@@ -10,7 +10,7 @@ import { CANVAS_SIZE, checkHit } from './utils/generator';
 export interface StarSingleViewProps {
   question: QuestionData;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  userAnswer: HitResult | null;
   onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
   disabled?: boolean;
 }
@@ -74,10 +74,10 @@ export function StarSingleView({
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           anchors={[question.anchorA]}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}

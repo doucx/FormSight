@@ -10,7 +10,7 @@ import { CANVAS_SIZE, checkHit } from './utils/generator';
 export interface StarDoubleHViewProps {
   question: QuestionData;
   showAnswer: boolean;
-  userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
+  userAnswer: HitResult | null;
   onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
   disabled?: boolean;
 }
@@ -82,10 +82,10 @@ export function StarDoubleHView({
           canvasSize={CANVAS_SIZE}
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
+          userNearestPoint={userAnswer?.nearestGridPoint}
           anchors={[question.anchorA, question.anchorC]}
           showAnswer={showAnswer}
-          isHit={userAnswer?.hitResult.isHit}
+          isHit={userAnswer?.isHit}
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           onCommitPoint={handleCommitPoint}
