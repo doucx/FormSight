@@ -1,0 +1,8 @@
+{
+  "title": "Top-Down Gesture Match",
+  "desc": "Given an abstract spine, identify which complex particle field follows that dynamic.",
+  "instruction": "Identify which particle field conforms to the prompt spine (Keys 1 / 2).",
+  "badge": "Top-Down Gesture",
+  "hint": "Identify which detailed field conforms to the prompt spine above",
+  "promptTitle": "Prompt Spine"
+}
