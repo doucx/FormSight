@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { NEGATIVE_SPACE_CANVAS_SIZE } from '../../cards/neg_ratio_estimation/types';
 import {
-  NEGATIVE_SPACE_CANVAS_SIZE,
   calcPolygonArea,
-  checkNegativeSpaceHit,
-  generateNegativeSpaceQuestion,
+  evaluateAnswer as checkNegativeSpaceHit,
+  generateQuestion as generateNegativeSpaceQuestion,
   generateRandomPolygon,
   getNegativeSpaceToleranceForLevel,
-} from '../../packs/negative_space/utils';
+} from '../../cards/neg_ratio_estimation/utils/generator';
 
 describe('negativeSpaceUtils', () => {
   it('calcPolygonArea - should calculate rectangle and triangle area accurately via Shoelace formula', () => {
@@ -63,8 +63,7 @@ describe('negativeSpaceUtils', () => {
   });
 
   it('generateNegativeSpaceQuestion - should create question with consistent areas and ratio', () => {
-    const q = generateNegativeSpaceQuestion('RATIO_ESTIMATION', 10);
-    expect(q.mode).toBe('RATIO_ESTIMATION');
+    const q = generateNegativeSpaceQuestion(10);
     expect(q.canvasArea).toBe(NEGATIVE_SPACE_CANVAS_SIZE * NEGATIVE_SPACE_CANVAS_SIZE);
     expect((q.positiveArea ?? 0) + (q.negativeArea ?? 0)).toBeCloseTo(q.canvasArea, -1);
     expect(q.targetNegativeRatio).toBeGreaterThan(15);
@@ -72,7 +71,7 @@ describe('negativeSpaceUtils', () => {
   });
 
   it('checkNegativeSpaceHit - should validate hit within dynamic tolerance threshold', () => {
-    const q = generateNegativeSpaceQuestion('RATIO_ESTIMATION', 1);
+    const q = generateNegativeSpaceQuestion(1);
     q.targetNegativeRatio = 60.0;
     q.tolerance = 10.0;
 

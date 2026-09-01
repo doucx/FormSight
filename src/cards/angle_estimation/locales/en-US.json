@@ -1,0 +1,15 @@
+{
+  "title": "Angle Estimation",
+  "desc": "Observe the angle formed by two rays and estimate its degree using a slider (0°~180°).",
+  "instruction": "Observe the two rays and adjust the slider to match the true angle (0°~180°).",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Band",
+    "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"
+  },
+  "views": {
+    "hint": "Observe the angle formed by rays and modulate the slider to match (0°~180°)",
+    "label": "Angle Estimation Value:",
+    "trueAngle": "Ground Truth Value:",
+    "errorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "title": "明度反差补偿",
+  "desc": "在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致",
+  "instruction": "调节右侧中心色块明度，使左右两块在不同背景下「视觉感知看起来完全一致」",
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+  },
+  "views": {
+    "hint": "调节右侧中心明度，使左右两块视觉感知看起来完全一致",
+    "leftBase": "左侧固定基准",
+    "rightModulate": "右侧调制区 (达成感知一致)"
+  }
+}

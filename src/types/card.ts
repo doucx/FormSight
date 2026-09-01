@@ -49,7 +49,7 @@ export interface CardTags {
 
 export interface CardDefinition {
   id: string;
-  packId: string;
+  domain: VisualDomainTag;
   mode: string;
   title?: string;
   desc?: string;
@@ -58,21 +58,10 @@ export interface CardDefinition {
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
-}
-
-export interface PackMeta {
-  id: string;
-  title?: string;
-  subTitle?: string;
-  desc?: string;
-  version?: string;
-  author?: string;
-  themeColor?: 'indigo' | 'amber' | 'purple' | 'emerald';
-  icon?: (props: { className?: string }) => ComponentChildren;
+  defaultSettings?: Record<string, unknown>;
 }
 
 export interface CardQueryOptions {
-  packId?: string;
   domains?: VisualDomainTag[];
   paths?: CognitivePathTag[];
   challenges?: MentalChallengeTag[];

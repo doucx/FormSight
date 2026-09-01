@@ -1,0 +1,9 @@
+{
+  "title": "Negative Area 2AFC",
+  "desc": "Compare two silhouettes and identify which one has greater negative space area.",
+  "instruction": "Identify which side contains more negative white space (Keys 1 / 2).",
+  "views": {
+    "areaHint": "Identify which side contains larger negative white space area (Keys 1 / 2)",
+    "whiteSpace": "White Space {{ratio}}%"
+  }
+}

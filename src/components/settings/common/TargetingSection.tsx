@@ -57,7 +57,13 @@ export function TargetingSection({
           <div className={`grid ${gridCols} gap-1.5`}>
             {sectors.map((name, idx) => {
               const selected = selectedSectors.includes(idx);
-              const label = t(name) || name;
+              const translated = t(name);
+              const label =
+                translated !== name
+                  ? translated
+                  : name.startsWith('cards.')
+                    ? name.split('.').slice(2).join('.')
+                    : name;
               return (
                 <Button
                   key={name}

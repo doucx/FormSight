@@ -27,6 +27,7 @@ export function App() {
     profilesLoaded,
     totalTimeMs,
     profiles,
+    dataVersion,
     showToast,
     handleDismissToast,
     refreshProfiles,
@@ -53,6 +54,7 @@ export function App() {
         allPlans={allPlans}
         settings={settings}
         profilesLoaded={profilesLoaded}
+        dataVersion={dataVersion}
         onRefreshProfiles={refreshProfiles}
         onSetTrainingPlan={setTrainingPlan}
         onSelectPlanOnHome={handleSelectPlanOnHome}

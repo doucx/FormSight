@@ -1,0 +1,14 @@
+{
+  "title": "黑白素描归组",
+  "desc": "调节二值化明度剪切阈值，过滤杂乱中间调，压榨出最坚固的 Notan 黑白大关系。",
+  "instruction": "调节二值化阈值滑块，达成黑白咬合最平衡的 Notan 状态",
+  "badge": "黑白素描归组",
+  "hint": "观察左侧灰阶原图，在下方滑块点击/调节右侧最佳黑白二值截断点",
+  "label": "二值化截断阈值:",
+  "rawScene": "灰阶原图 (Raw Scene)",
+  "notanOutput": "二值显影 (Notan Output)",
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+  }
+}

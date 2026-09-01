@@ -1,4 +1,4 @@
-import { Download, RotateCcw, Scissors, Trash2, Upload } from 'lucide-preact';
+import { Download, Loader2, RotateCcw, Scissors, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import {
@@ -14,7 +14,7 @@ import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 
 interface DataGovernanceSectionProps {
-  onDataChanged: () => void;
+  onDataChanged: () => Promise<void> | void;
   onCloseModal: () => void;
   showToast: (msg: string, type?: ToastType) => void;
 }
@@ -31,6 +31,8 @@ export function DataGovernanceSection({
   const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
   const [showPruneConfirm, setShowPruneConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const handleExport = async () => {
     try {
@@ -59,14 +61,23 @@ export function DataGovernanceSection({
     const target = e.target as HTMLInputElement;
     if (target.files?.[0]) {
       const file = target.files[0];
-      const text = await file.text();
-      const success = await importAllData(text);
-      if (success) {
-        showToast(t('settings.importSuccessToast'), 'success');
-        onDataChanged();
-        onCloseModal();
-      } else {
+      try {
+        setIsImporting(true);
+        const text = await file.text();
+        target.value = '';
+        const success = await importAllData(text);
+        if (success) {
+          showToast(t('settings.importSuccessToast'), 'success');
+          await onDataChanged();
+          onCloseModal();
+        } else {
+          showToast(t('settings.importInvalidToast'), 'error');
+        }
+      } catch (err) {
+        console.error('Import exception:', err);
         showToast(t('settings.importInvalidToast'), 'error');
+      } finally {
+        setIsImporting(false);
       }
     }
   };
@@ -76,7 +87,7 @@ export function DataGovernanceSection({
     try {
       const res = await pruneColdRecords(90);
       showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
-      onDataChanged();
+      await onDataChanged();
     } catch (err) {
       console.error('Prune failed:', err);
       showToast(t('settings.pruneFailToast'), 'error');
@@ -92,10 +103,17 @@ export function DataGovernanceSection({
 
   const handleClearDataConfirmed = async () => {
     setShowClearConfirm(false);
-    await clearAllData();
-    showToast(t('settings.clearDataSuccessToast'), 'info');
-    onDataChanged();
-    onCloseModal();
+    try {
+      setIsClearing(true);
+      await clearAllData();
+      await onDataChanged();
+      showToast(t('settings.clearDataSuccessToast'), 'info');
+      onCloseModal();
+    } catch (err) {
+      console.error('Failed to clear data:', err);
+    } finally {
+      setIsClearing(false);
+    }
   };
 
   return (
@@ -108,29 +126,58 @@ export function DataGovernanceSection({
       <div className="grid grid-cols-2 gap-3">
         <Button
           variant="outline"
-          disabled={isExporting}
+          disabled={isExporting || isImporting || isClearing}
           onClick={handleExport}
           className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
-          <Download className="w-4 h-4 text-primary" />
+          {isExporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Download className="w-4 h-4 text-primary" />
+          )}
           {isExporting ? t('settings.exporting') : t('settings.exportStream')}
         </Button>
         <Button
           variant="outline"
+          disabled={isExporting || isImporting || isClearing}
           onClick={() => fileInputRef.current?.click()}
           className="py-3 px-4 rounded-2xl gap-2 h-auto"
         >
-          <Upload className="w-4 h-4 text-primary" />
-          {t('settings.importBackup')}
+          {isImporting ? (
+            <Loader2 className="w-4 h-4 text-primary animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4 text-primary" />
+          )}
+          {isImporting ? t('settings.importing') : t('settings.importBackup')}
         </Button>
         <Input
           ref={fileInputRef}
           type="file"
           accept=".json"
+          disabled={isImporting || isClearing}
           onChange={handleImportFile}
           className="hidden"
         />
       </div>
+
+      {/* 导入与清空中全屏阻断遮罩 */}
+      {(isImporting || isClearing) && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
+          <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
+            <div className="p-3 bg-accent text-primary rounded-2xl">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">
+                {isClearing ? t('settings.clearingTitle') : t('settings.importingTitle')}
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {isClearing ? t('settings.clearingDesc') : t('settings.importingDesc')}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 数据库瘦身与修剪 */}
       <div className="bg-accent p-3.5 rounded-2xl border border-border/60 dark:border-border/60 flex items-center justify-between">

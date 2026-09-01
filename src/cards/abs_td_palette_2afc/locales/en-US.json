@@ -1,0 +1,8 @@
+{
+  "title": "Top-Down Palette Match",
+  "desc": "Given a prompt dominant color, match the mosaic pattern sharing that tonality.",
+  "instruction": "Select the mosaic pattern with the matching dominant color base (Keys 1-4).",
+  "badge": "Top-Down Palette",
+  "hint": "Observe the dominant color above and select the matching mosaic pattern (Keys 1-4)",
+  "promptTitle": "Prompt Dominant Color"
+}

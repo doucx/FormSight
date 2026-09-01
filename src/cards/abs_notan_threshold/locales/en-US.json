@@ -1,0 +1,14 @@
+{
+  "title": "Notan Value Thresholding",
+  "desc": "Modulate the binarization cutoff threshold to extract solid Notan value groupings.",
+  "instruction": "Adjust the threshold slider to find the most balanced Notan state.",
+  "badge": "Notan Threshold",
+  "hint": "Observe the raw scene on the left, then adjust the Notan threshold slider below",
+  "label": "Binarization Threshold:",
+  "rawScene": "Raw Grayscale Scene",
+  "notanOutput": "Notan Output",
+  "settings": {
+    "showToleranceBandTitle": "Show Slider Tolerance Band",
+    "showToleranceBandDesc": "Display dynamic tolerance interval around the hover cursor"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "title": "Negative Vertex Fitting",
+  "desc": "Observe the negative space contours and locate the truncated vertex on the grid.",
+  "instruction": "Click to locate the truncated vertex based on negative space contours.",
+  "views": {
+    "vertexHint": "Compare negative space and click to locate the truncated vertex on the right"
+  }
+}

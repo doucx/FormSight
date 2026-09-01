@@ -1,0 +1,8 @@
+{
+  "title": "Top-Down Notan Match",
+  "desc": "Given a binary Notan silhouette, match the grayscale scene with that value foundation.",
+  "instruction": "Identify which grayscale scene shares this Notan foundation (Keys 1 / 2).",
+  "badge": "Top-Down Notan",
+  "hint": "Identify which grayscale scene shares the Notan foundation above",
+  "promptTitle": "Prompt Notan Silhouette"
+}

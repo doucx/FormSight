@@ -1,0 +1,23 @@
+{
+  "title": "负形占比滑块评估",
+  "desc": "估计不规则几何多边形外部留白（负形）占整幅画面的面积百分比，强化空间直觉。",
+  "instruction": "估计黑色主体周围的白色留白（负形）占画面总面积的百分比",
+  "settings": {
+    "showToleranceBandTitle": "动态容错辅助指示线",
+    "showToleranceBandDesc": "在滑块上显示实时动态 Δ% 容错感应区间指示线。"
+  },
+  "views": {
+    "ratioHint": "估计白色留白 (负形) 占整幅画面的面积百分比",
+    "ratioLabel": "负形空间占比估计:"
+  },
+  "analytics": {
+    "ratioScatter": {
+      "tabLabel": "留白占比评估",
+      "title": "{{title}} · 留白占比分析",
+      "subTitle": "洞察你对留白空间面积占比估算的直觉灵敏度",
+      "cardTitle": "空间留白敏感度诊断",
+      "avgError": "负形占比平均绝对误差:",
+      "desc": "散点越紧贴对角线，代表对负形几何空隙的面积直觉越敏锐精准。"
+    }
+  }
+}

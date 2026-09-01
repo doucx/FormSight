@@ -1,0 +1,45 @@
+{
+  "title": "Horizontal Double Anchors",
+  "desc": "Horizontal dual anchors to train proportion and orthogonal projection intuition.",
+  "instruction": "Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.",
+  "settings": {
+    "gridSizeTitle": "Distractor Grid Dimensions",
+    "targetingTitle": "Targeted Weakness Reinforcement",
+    "targetingSubTitle": "Select angle sectors for targeted training:"
+  },
+  "sectors": {
+    "e": "East (0°)",
+    "ne": "NE (45°)",
+    "n": "North (90°)",
+    "nw": "NW (135°)",
+    "w": "West (180°)",
+    "sw": "SW (225°)",
+    "s": "South (270°)",
+    "se": "SE (315°)"
+  },
+  "analytics": {
+    "spatialBias": {
+      "tabLabel": "Spatial Bias",
+      "title": "{{title}} · Spatial Bias Analysis",
+      "subTitle": "Center point represents ground truth. Point spread reveals systematic hand-eye offset.",
+      "cardTitle": "Systematic Bias",
+      "desc": "Center is the ground truth. Tighter cluster indicates sharper spatial intuition.",
+      "avgDx": "Avg X Offset:",
+      "avgDy": "Avg Y Offset:",
+      "avgDist": "Avg Pixel Error:",
+      "right": "Right +{{val}}",
+      "left": "Left {{val}}",
+      "down": "Down +{{val}}",
+      "up": "Up {{val}}"
+    },
+    "directionalCompass": {
+      "tabLabel": "8-Way Compass",
+      "title": "{{title}} · 8-Directional Sensitivity",
+      "subTitle": "Insights into your localization accuracy across 8 polar sectors",
+      "cardTitle": "Directional Blindspot",
+      "weakestHint": "Lowest accuracy found in sector {{sector}}:",
+      "accuracyRate": "{{accuracy}}% accuracy",
+      "needMoreTrials": "Complete at least 3 trials in each sector to generate blindspot diagnostics."
+    }
+  }
+}

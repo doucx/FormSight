@@ -1,11 +1,9 @@
-import { Boxes, Filter, RotateCcw, Search, Sparkles, X } from 'lucide-preact';
-import { getPackTitle, useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
+import { Filter, RotateCcw, Search, Sparkles, X } from 'lucide-preact';
+import { useTranslation } from '../../core/i18n';
 import type { CardQueryOptions } from '../../types/card';
-import { TagPill } from '../common/TagPill';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { AdvancedTagMatrix, FilterSectionHeader } from './AdvancedTagMatrix';
+import { AdvancedTagMatrix } from './AdvancedTagMatrix';
 
 interface FilterEngineProps {
   query: CardQueryOptions;
@@ -25,7 +23,6 @@ export function FilterEngine({
   const { t } = useTranslation();
   const isCompact = variant === 'compact';
   const isAdvancedOpen = Boolean(query.showAdvanced);
-  const packs = registry.getAllPacks();
 
   const toggleDimension = <T extends string>(key: keyof CardQueryOptions, value: T) => {
     const current = (query[key] as T[] | undefined) || [];
@@ -37,7 +34,6 @@ export function FilterEngine({
 
   const hasActiveFilters = Boolean(
     query.searchKeyword ||
-      query.packId ||
       (query.domains && query.domains.length > 0) ||
       (query.paths && query.paths.length > 0) ||
       (query.challenges && query.challenges.length > 0) ||
@@ -120,39 +116,6 @@ export function FilterEngine({
           )}
         </div>
       </div>
-
-      {/* 扩展包 (Pack) 快速筛选标签 */}
-      {packs.length > 0 && (
-        <div
-          className={`space-y-1 border-t border-border/60 dark:border-border ${isCompact ? 'pt-1.5' : 'pt-3'}`}
-        >
-          <FilterSectionHeader icon={Boxes} title={t('home.allPacks')} />
-          <div
-            className={`flex gap-1 items-center ${
-              isCompact ? 'flex-nowrap overflow-x-auto pb-1.5 scrollbar-none' : 'flex-wrap'
-            }`}
-          >
-            <TagPill
-              size={tagSize}
-              label={t('home.allPacks')}
-              selected={!query.packId}
-              onClick={() => onChange({ ...query, packId: undefined })}
-            />
-            {packs.map((p) => (
-              <TagPill
-                key={p.packId}
-                size={tagSize}
-                label={getPackTitle(p, t)}
-                count={p.cards.length}
-                selected={query.packId === p.packId}
-                onClick={() =>
-                  onChange({ ...query, packId: query.packId === p.packId ? undefined : p.packId })
-                }
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 高级五维标签矩阵折叠区 */}
       {isAdvancedOpen && (

@@ -1,0 +1,15 @@
+{
+  "title": "透视灭点汇聚感",
+  "desc": "观察已有倾角透视线，通过滑块调制第三条线段倾斜度，使其精准延长交汇于同一灭点 (VP)。",
+  "instruction": "观察已有透视线，调制滑块旋转第三条线使其交汇于同一灭点",
+  "settings": {
+    "showToleranceBandTitle": "显示动态容错带",
+    "showToleranceBandDesc": "在滑块周围显示当前难度下的容错区间指示线"
+  },
+  "views": {
+    "hint": "观察已有透视基准线，调制滑块旋转第三条射线使其交汇于同一灭点 (0°~360°)",
+    "rayAngle": "射线倾角:",
+    "vpTrueAngle": "精准交汇角:",
+    "vpErrorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)"
+  }
+}

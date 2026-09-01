@@ -182,7 +182,7 @@ export function HomeView({
             <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all text-primary" />
           </div>
           <div className="mt-2">
-            <div className="text-sm font-black text-foreground">{t('home.allPacks')}</div>
+            <div className="text-sm font-black text-foreground">{t('nav.discovery')}</div>
             <p className="text-xs text-muted-foreground mt-0.5">
               {t('home.matchedModules', { count: registry.getAllCards().length })}
             </p>

@@ -19,7 +19,7 @@ export async function saveTrialRecord(
   const db = await getDB();
   const cardId = record.cardId || record.mode;
   const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.packId : record.domain || 'core';
+  const packId = canonicalCard ? canonicalCard.domain : record.domain || 'core';
   const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
 
   const normalizedRecord: UnifiedTrialRecord = {
@@ -107,7 +107,7 @@ export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
   const cardId = session.cardId || session.mode;
   const canonicalCard = registry.getCardById(cardId);
-  const packId = canonicalCard ? canonicalCard.packId : session.domain || 'core';
+  const packId = canonicalCard ? canonicalCard.domain : session.domain || 'core';
   await db.put('sessions', { ...session, cardId, domain: packId });
 }
 

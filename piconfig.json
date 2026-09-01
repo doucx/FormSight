@@ -12,6 +12,7 @@
         "src/core/i18n.ts",
         "src/core/registry.ts",
         "src/core/contracts.ts",
+        "src/core/cardContract.ts",
         "src/core/engine/adaptiveEngine.ts",
         "src/storage/settings.ts",
         "src/storage/planStorage.ts",
@@ -117,13 +118,8 @@
     "full": {
       "format": "xml",
       "extension": ["ts", "tsx", "json", "css"],
-      "paths": [
-        "src/"
-      ],
-      "ignore": [
-        "*.test.ts",
-        "*.test.tsx"
-      ]
+      "paths": ["src/"],
+      "ignore": ["*.test.ts", "*.test.tsx"]
     }
   }
 }

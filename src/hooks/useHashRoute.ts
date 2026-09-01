@@ -18,7 +18,6 @@ export type RouteLocation =
   | { type: 'analytics'; cardId: string; tab?: string };
 
 function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
-  const packId = params.get('pack') || undefined;
   const domains = params.get('domains')?.split(',').filter(Boolean) as
     | VisualDomainTag[]
     | undefined;
@@ -51,7 +50,6 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
         : undefined;
 
   if (
-    !packId &&
     (!domains || domains.length === 0) &&
     (!paths || paths.length === 0) &&
     (!challenges || challenges.length === 0) &&
@@ -64,7 +62,6 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   }
 
   return {
-    packId,
     domains: domains && domains.length > 0 ? domains : undefined,
     paths: paths && paths.length > 0 ? paths : undefined,
     challenges: challenges && challenges.length > 0 ? challenges : undefined,
@@ -122,9 +119,6 @@ function stringifyRoute(route: RouteLocation): string {
   if (route.type === 'discovery') {
     if (!route.query) return '#/discovery';
     const params = new URLSearchParams();
-    if (route.query.packId && route.query.packId !== 'all') {
-      params.set('pack', route.query.packId);
-    }
     if (route.query.domains && route.query.domains.length > 0) {
       params.set('domains', route.query.domains.join(','));
     }

@@ -1,0 +1,49 @@
+{
+  "title": "Hue",
+  "desc": "Identify the exact angle of a color on the 360° color wheel.",
+  "instruction": "Locate the exact degree of the color on the 360° color wheel.",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Indicator Band",
+    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb",
+    "targetingTitle": "Targeted Hue Reinforcement",
+    "targetingSubTitle": "Select hue sectors for targeted practice:"
+  },
+  "sectors": {
+    "red": "Red (0°-30°)",
+    "orange": "Orange (30°-60°)",
+    "yellow": "Yellow (60°-90°)",
+    "yellowGreen": "Yellow-Green (90°-120°)",
+    "green": "Green (120°-150°)",
+    "cyanGreen": "Cyan-Green (150°-180°)",
+    "cyan": "Cyan (180°-210°)",
+    "blue": "Blue (210°-240°)",
+    "blueViolet": "Blue-Violet (240°-270°)",
+    "violet": "Violet (270°-300°)",
+    "magenta": "Magenta (300°-330°)",
+    "rose": "Rose (330°-360°)"
+  },
+  "analytics": {
+    "hueBias": {
+      "tabLabel": "Hue Bias",
+      "title": "{{title}} · Hue Bias Analysis",
+      "subTitle": "Distribution of signed hue offsets across the spectrum",
+      "cardTitle": "Systematic Hue Offset Diagnostics",
+      "avgSignedBias": "Global Average Hue Deviation:",
+      "clockwise": "+{{val}}° (Clockwise)",
+      "counterClockwise": "{{val}}° (Counter-Clockwise)",
+      "maxBiasSector": "Greatest Bias Sector:",
+      "avgBias": "Avg Bias:",
+      "needMoreTrials": "Complete at least 3 trials in each sector to generate precise bias diagnostics.",
+      "avgAbsError": "Mean Absolute Angular Error:"
+    },
+    "hueRing": {
+      "tabLabel": "12-Hue Sensitivity",
+      "title": "{{title}} · 12-Hue Sensitivity",
+      "subTitle": "Perceptual accuracy across 12 OKLab hue sectors",
+      "cardTitle": "Hue Blindspot Diagnostics",
+      "weakestHint": "Lowest accuracy found in sector {{sector}}:",
+      "accuracyRate": "{{accuracy}}% accuracy",
+      "needMoreTrials": "Complete at least 3 trials in each hue sector to generate blindspot diagnostics."
+    }
+  }
+}

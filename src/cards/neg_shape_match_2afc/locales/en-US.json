@@ -1,0 +1,9 @@
+{
+  "title": "Negative Shape Match",
+  "desc": "Memorize negative space contours and match the identical silhouette (2AFC).",
+  "instruction": "Memorize the shape and select the identical one (Keys 1 / 2).",
+  "views": {
+    "memoryStimulusHint": "Memorize the negative space contour ({{ms}}ms)",
+    "memoryRecallHint": "Recall Match: Which side matches the shape just shown? (Keys 1 / 2)"
+  }
+}

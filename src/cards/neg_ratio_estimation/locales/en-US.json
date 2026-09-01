@@ -1,0 +1,23 @@
+{
+  "title": "Negative Space Ratio",
+  "desc": "Estimate the area percentage of negative space outside the irregular polygon.",
+  "instruction": "Estimate the percentage of white negative space relative to the whole canvas.",
+  "settings": {
+    "showToleranceBandTitle": "Dynamic Tolerance Guide",
+    "showToleranceBandDesc": "Show visual indicator lines on slider for dynamic error tolerance."
+  },
+  "views": {
+    "ratioHint": "Estimate the area percentage of white negative space relative to the whole scene",
+    "ratioLabel": "Negative Space Ratio Estimation:"
+  },
+  "analytics": {
+    "ratioScatter": {
+      "tabLabel": "Ratio Estimation",
+      "title": "{{title}} · Ratio Analysis",
+      "subTitle": "Insights into your perceptual sensitivity for negative space area",
+      "cardTitle": "Space Sensitivity Diagnostics",
+      "avgError": "Average Ratio Error:",
+      "desc": "The closer points lie to the diagonal, the sharper your spatial area intuition."
+    }
+  }
+}

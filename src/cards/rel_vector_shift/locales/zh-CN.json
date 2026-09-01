@@ -1,0 +1,12 @@
+{
+  "title": "色彩矢量迁移",
+  "desc": "保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉",
+  "instruction": "观察上方 A➔B 色彩推移，在下方候选项中找出符合 C➔D 的同向推移色",
+  "settings": {
+    "showToleranceBandTitle": "显示容错感应区",
+    "showToleranceBandDesc": "在候选色块上标示容错参考"
+  },
+  "views": {
+    "prompt": "观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
+  }
+}

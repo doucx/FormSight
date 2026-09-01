@@ -1,0 +1,14 @@
+{
+  "title": "Lightness Induction",
+  "desc": "Compensate for background illusion to achieve perceived lightness constancy.",
+  "instruction": "Adjust right center value so both center squares appear perceptually identical.",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Indicator Band",
+    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
+  },
+  "views": {
+    "hint": "Adjust right center lightness until both center swatches appear identical",
+    "leftBase": "Left Anchor Reference",
+    "rightModulate": "Right Modulation (Match Perception)"
+  }
+}

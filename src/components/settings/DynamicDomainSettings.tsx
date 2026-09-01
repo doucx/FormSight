@@ -56,7 +56,14 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
   const resolveText = (text?: string): string => {
     if (!text) return '';
     const translated = t(text);
-    return translated !== text ? translated : text;
+    if (translated !== text) return translated;
+    if (text.startsWith('cards.')) {
+      const parts = text.split('.');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('.');
+      }
+    }
+    return text;
   };
 
   return (

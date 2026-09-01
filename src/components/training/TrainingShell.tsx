@@ -49,8 +49,7 @@ export function TrainingShell({
 }: TrainingShellProps) {
   const { t } = useTranslation();
   const cardTitle = getCardTitle(card, t);
-  const instruction =
-    t(`packs.${card.packId}.cards.${card.id}.instruction`) || card.instruction || '';
+  const instruction = t(`cards.${card.id}.instruction`) || card.instruction || '';
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);

@@ -53,6 +53,11 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
       icon={Sliders}
       onClose={onClose}
       maxWidth="max-w-md"
+      footer={
+        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
+          {t('common.complete')}
+        </Button>
+      }
     >
       <div className="space-y-5">
         {/* 通用配置：自动翻页开关 */}
@@ -199,12 +204,6 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             onChange={(patch) => updateCardConfig(patch)}
           />
         )}
-      </div>
-
-      <div className="pt-2">
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
-          {t('common.complete')}
-        </Button>
       </div>
     </ModalShell>
   );
