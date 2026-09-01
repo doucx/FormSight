@@ -55,7 +55,8 @@ export function CardAnalyticsView({
 
   const cardTitle = card ? getCardTitle(card, t) : cardId;
   const cardDesc = card ? getCardDesc(card, t) : '';
-  const domainTitle = card?.domain && DOMAIN_TAGS[card.domain] ? t(DOMAIN_TAGS[card.domain].i18nKey) : '';
+  const domainTitle =
+    card?.domain && DOMAIN_TAGS[card.domain] ? t(DOMAIN_TAGS[card.domain].i18nKey) : '';
 
   const views = plugin?.views ?? [];
 

@@ -137,5 +137,3 @@ export interface CardAnalyticsPlugin<TRecord extends UnifiedTrialRecord = Unifie
   fetchRecords: (cardId: string) => Promise<TRecord[]>;
   views: CardAnalyticsView<TRecord>[];
 }
-
-

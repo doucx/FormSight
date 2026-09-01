@@ -148,10 +148,7 @@ export function useTranslation() {
 /**
  * 通用：解析卡片标题多语言 (优先 cards.<cardId>.title)
  */
-export function getCardTitle(
-  card: { id: string; title?: string },
-  t = i18n.t,
-): string {
+export function getCardTitle(card: { id: string; title?: string }, t = i18n.t): string {
   const cardKey = `cards.${card.id}.title`;
   const translatedCard = t(cardKey);
   return translatedCard !== cardKey ? translatedCard : card.title || card.id;
@@ -160,10 +157,7 @@ export function getCardTitle(
 /**
  * 通用：解析卡片描述多语言 (优先 cards.<cardId>.desc)
  */
-export function getCardDesc(
-  card: { id: string; desc?: string },
-  t = i18n.t,
-): string {
+export function getCardDesc(card: { id: string; desc?: string }, t = i18n.t): string {
   const cardKey = `cards.${card.id}.desc`;
   const translatedCard = t(cardKey);
   return translatedCard !== cardKey ? translatedCard : card.desc || '';

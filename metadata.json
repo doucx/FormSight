@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 useCardTranslation 局部翻译 Hook 对全局词典键的回退解析", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788257945.093596, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M contracts.ts, M i18n.ts, M CardAnalyticsView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788258060.0959482, "duration_ms": 0}}
