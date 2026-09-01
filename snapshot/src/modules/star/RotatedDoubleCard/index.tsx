@@ -8,6 +8,8 @@ import { STAR_SCHEMAS } from '../_shared/schemas';
 import type { StarHitResult } from '../_shared/types';
 import { RotatedDoubleView } from './RotatedDoubleView';
 import { type RotatedDoubleQuestion, generateRotatedDoubleQuestion } from './generator';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 
 export const starDoubleRCard: CardManifest<
   RotatedDoubleQuestion,
@@ -32,19 +34,8 @@ export const starDoubleRCard: CardManifest<
     manualTargetSectors: [],
   },
   locales: {
-    'zh-CN': {
-      title: '旋转双锚点',
-      desc: '带有倾斜角度的双锚点，评估复杂旋转视角下的几何构图力',
-      instruction: '观察左侧旋转倾斜双锚点几何关系，在右侧点阵中盲打定位',
-      badge: '旋转双锚点',
-    },
-    'en-US': {
-      title: 'Rotated Double Anchors',
-      desc: 'Tilted dual anchors to master complex rotated coordinate mapping.',
-      instruction:
-        'Observe the rotated dual anchors on the left, then locate the target on the right.',
-      badge: 'Rotated Dual',
-    },
+    'zh-CN': zhCN,
+    'en-US': enUS,
   },
   training: {
     isTargeting: (settings) => settings.targetingMode === 'manual',
@@ -74,7 +65,7 @@ export const starDoubleRCard: CardManifest<
     ),
   },
   analytics: {
-    views: createStarAnalyticsViews(),
+    views: createStarAnalyticsViews('star_double_r'),
   },
 };
 

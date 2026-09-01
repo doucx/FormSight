@@ -1,0 +1,46 @@
+{
+  "title": "水平双锚点",
+  "desc": "水平线段两端锚点，评估两点比例与正交投影判定力",
+  "instruction": "观察左侧水平双锚点几何关系，在右侧点阵中盲打定位",
+  "badge": "水平双锚点",
+  "settings": {
+    "gridSizeTitle": "干扰点网格大小",
+    "targetingTitle": "弱点专项靶向强化",
+    "targetingSubTitle": "选择需要靶向强化的角度扇区："
+  },
+  "sectors": {
+    "e": "正东 (0°)",
+    "ne": "东北 (45°)",
+    "n": "正北 (90°)",
+    "nw": "西北 (135°)",
+    "w": "正西 (180°)",
+    "sw": "西南 (225°)",
+    "s": "正南 (270°)",
+    "se": "东南 (315°)"
+  },
+  "analytics": {
+    "spatialBias": {
+      "tabLabel": "空间偏置散点",
+      "title": "水平双锚点 · 空间偏置分析",
+      "subTitle": "中心绿点为绝对真理点，散点分布揭示手眼定位偏移",
+      "cardTitle": "系统空间偏置 (Systematic Bias)",
+      "desc": "中心为绝对真理点。散点越收敛代表空间直觉越敏锐。",
+      "avgDx": "平均 X 轴偏移:",
+      "avgDy": "平均 Y 轴偏移:",
+      "avgDist": "平均像素误差:",
+      "right": "右 +{{val}}",
+      "left": "左 {{val}}",
+      "down": "下 +{{val}}",
+      "up": "上 {{val}}"
+    },
+    "directionalCompass": {
+      "tabLabel": "八向方位罗盘",
+      "title": "水平双锚点 · 八向方位敏感度",
+      "subTitle": "洞察你在 8 个极坐标视角扇区上的定位准确率分布",
+      "cardTitle": "方位盲区诊断",
+      "weakestHint": "你在 {{sector}} 方位上命中率最低：",
+      "accuracyRate": "{{accuracy}}% 准确率",
+      "needMoreTrials": "各方位完成至少 3 题后可生成薄弱扇区诊断。"
+    }
+  }
+}

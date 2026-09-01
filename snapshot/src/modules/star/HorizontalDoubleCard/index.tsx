@@ -8,6 +8,8 @@ import { STAR_SCHEMAS } from '../_shared/schemas';
 import type { StarHitResult } from '../_shared/types';
 import { HorizontalDoubleView } from './HorizontalDoubleView';
 import { type HorizontalDoubleQuestion, generateHorizontalDoubleQuestion } from './generator';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
 
 export const starDoubleHCard: CardManifest<
   HorizontalDoubleQuestion,
@@ -31,19 +33,8 @@ export const starDoubleHCard: CardManifest<
     manualTargetSectors: [],
   },
   locales: {
-    'zh-CN': {
-      title: '水平双锚点',
-      desc: '水平线段两端锚点，评估两点比例与正交投影判定力',
-      instruction: '观察左侧水平双锚点几何关系，在右侧点阵中盲打定位',
-      badge: '水平双锚点',
-    },
-    'en-US': {
-      title: 'Horizontal Double Anchors',
-      desc: 'Horizontal dual anchors to train proportion and orthogonal projection intuition.',
-      instruction:
-        'Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.',
-      badge: 'Horizontal Dual',
-    },
+    'zh-CN': zhCN,
+    'en-US': enUS,
   },
   training: {
     isTargeting: (settings) => settings.targetingMode === 'manual',
@@ -72,7 +63,7 @@ export const starDoubleHCard: CardManifest<
     ),
   },
   analytics: {
-    views: createStarAnalyticsViews(),
+    views: createStarAnalyticsViews('star_double_h'),
   },
 };
 
