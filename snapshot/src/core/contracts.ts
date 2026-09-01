@@ -27,7 +27,6 @@ export interface TrainingPlugin<
   TAnswerVal = unknown,
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 > {
-  packId?: string;
   title: string;
   getModeBadge: (mode: string) => string;
   isTargeting?: (mode: string, settings: TSettings) => boolean;
@@ -139,18 +138,4 @@ export interface CardAnalyticsPlugin<TRecord extends UnifiedTrialRecord = Unifie
   views: CardAnalyticsView<TRecord>[];
 }
 
-/**
- * 扩展包清单 (Pack Manifest)
- * v0.4.x 核心插件规范：任何独立内容扩展包（Pack）均遵循此清单
- */
-export interface PackManifest {
-  packId: string;
-  meta: PackMeta;
-  cards: CardDefinition[];
-  trainingPlugin: AnyTrainingPlugin;
-  analyticsPlugins?: Record<string, CardAnalyticsPlugin>;
-  defaultCardSettings?: Record<string, Partial<BaseModuleSettings>>;
-  locales?: Record<string, Record<string, unknown>>;
-}
 
-export type AnyManifest = PackManifest;

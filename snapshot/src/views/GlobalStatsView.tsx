@@ -6,7 +6,7 @@ import { StatsMetricCards } from '../components/stats/StatsMetricCards';
 import { Select } from '../components/ui/select';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
 import { renderTrendChartCanvas } from '../core/canvas/charts/drawTrendChart';
-import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { useGlobalStatsData } from '../hooks/useGlobalStatsData';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
@@ -31,7 +31,6 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
     challengeMasteryList,
   } = useGlobalStatsData();
 
-  const packs = registry.getAllPacks();
   const allCards = registry.getAllCards();
 
   useEffect(() => {
@@ -67,14 +66,6 @@ export function GlobalStatsView(_props: GlobalStatsViewProps = {}) {
             className="w-full sm:w-auto max-w-xs truncate"
           >
             <option value="all">{t('stats.allModules')}</option>
-
-            <optgroup label={t('stats.optgroupPacks')}>
-              {packs.map((p) => (
-                <option key={`pack:${p.packId}`} value={`pack:${p.packId}`}>
-                  {getPackTitle(p, t)}
-                </option>
-              ))}
-            </optgroup>
 
             <optgroup label={t('stats.optgroupDomains')}>
               {(Object.keys(DOMAIN_TAGS) as VisualDomainTag[]).map((domain) => (

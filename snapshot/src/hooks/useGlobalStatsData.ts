@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
-import { getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../storage/index';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
@@ -30,13 +30,6 @@ export function useGlobalStatsData() {
   const filteredSummaries = useMemo(() => {
     return summaries.filter((s) => {
       if (selectedFilter === 'all') return true;
-
-      if (selectedFilter.startsWith('pack:')) {
-        const targetPackId = selectedFilter.replace('pack:', '');
-        const pack = registry.getPack(targetPackId);
-        const packCardIds = new Set(pack?.cards.map((c) => c.id) || []);
-        return packCardIds.has(s.cardId || s.mode);
-      }
 
       if (selectedFilter.startsWith('domain:')) {
         const targetDomain = selectedFilter.replace('domain:', '') as VisualDomainTag;
@@ -70,12 +63,6 @@ export function useGlobalStatsData() {
 
   const getCurrentFilterLabel = () => {
     if (selectedFilter === 'all') return t('stats.allModules');
-    if (selectedFilter.startsWith('pack:')) {
-      const pId = selectedFilter.replace('pack:', '');
-      const pack = registry.getPack(pId);
-      const pTitle = pack ? getPackTitle(pack, t) : pId;
-      return `${t('home.allPacks')} • ${pTitle}`;
-    }
     if (selectedFilter.startsWith('domain:')) {
       const d = selectedFilter.replace('domain:', '') as VisualDomainTag;
       return `Domain • ${t(DOMAIN_TAGS[d]?.i18nKey || d)}`;

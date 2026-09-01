@@ -18,9 +18,10 @@ import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Callout } from '../components/ui/callout';
 import { MetricCard } from '../components/ui/metric-card';
+import { DOMAIN_TAGS } from '../config/tags';
 import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
 import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
-import { getCardDesc, getCardTitle, getPackTitle, useTranslation } from '../core/i18n';
+import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { UnifiedTrialRecord } from '../storage/index';
 
@@ -52,10 +53,9 @@ export function CardAnalyticsView({
   const [activeTabId, setActiveTabId] = useState<string>(initialTab || 'overview');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const pack = card ? registry.getPack(card.packId) : null;
   const cardTitle = card ? getCardTitle(card, t) : cardId;
   const cardDesc = card ? getCardDesc(card, t) : '';
-  const packTitle = pack ? getPackTitle(pack, t) : '';
+  const domainTitle = card?.domain && DOMAIN_TAGS[card.domain] ? t(DOMAIN_TAGS[card.domain].i18nKey) : '';
 
   const views = plugin?.views ?? [];
 
@@ -149,9 +149,9 @@ export function CardAnalyticsView({
                 <h1 className="text-lg sm:text-xl font-black text-foreground truncate tracking-tight">
                   {cardTitle}
                 </h1>
-                {packTitle && (
+                {domainTitle && (
                   <Badge variant="secondary" size="sm">
-                    {packTitle}
+                    {domainTitle}
                   </Badge>
                 )}
                 {card.tags.status === 'experimental' && (

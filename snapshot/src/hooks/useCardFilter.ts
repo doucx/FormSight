@@ -68,13 +68,6 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
     updateQuery({ ...query, statuses: next.length > 0 ? next : undefined });
   };
 
-  const handleSelectPack = (packId?: string) => {
-    updateQuery({
-      ...query,
-      packId: packId || undefined,
-    });
-  };
-
   const toggleAdvancedOpen = () => {
     updateQuery({
       ...query,
@@ -88,7 +81,6 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
 
   const hasActiveFilters = Boolean(
     query.searchKeyword ||
-      query.packId ||
       (query.domains && query.domains.length > 0) ||
       (query.paths && query.paths.length > 0) ||
       (query.challenges && query.challenges.length > 0) ||
@@ -113,7 +105,6 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
     toggleChallenge,
     toggleInteraction,
     toggleStatus,
-    handleSelectPack,
     toggleAdvancedOpen,
     handleResetFilters,
   };

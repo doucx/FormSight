@@ -13,7 +13,7 @@ import type {
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
 import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
-import type { CardAnalyticsPlugin, PackManifest } from './contracts';
+import type { CardAnalyticsPlugin } from './contracts';
 import { i18n } from './i18n';
 
 /**
@@ -21,7 +21,7 @@ import { i18n } from './i18n';
  */
 export function qualifyCardKey(key: string | undefined, cardId: string): string | undefined {
   if (!key) return undefined;
-  if (key.startsWith('cards.') || key.startsWith('global.') || key.startsWith('packs.')) {
+  if (key.startsWith('cards.') || key.startsWith('global.')) {
     return key;
   }
   return `cards.${cardId}.${key.replace(/^\./, '')}`;
@@ -87,7 +87,6 @@ class InvertedCardIndex {
   private challengeMap = new Map<MentalChallengeTag, Set<string>>();
   private interactionMap = new Map<InteractionTag, Set<string>>();
   private statusMap = new Map<CardStatusTag, Set<string>>();
-  private packMap = new Map<string, Set<string>>();
 
   public clear(): void {
     this.domainMap.clear();
@@ -95,20 +94,10 @@ class InvertedCardIndex {
     this.challengeMap.clear();
     this.interactionMap.clear();
     this.statusMap.clear();
-    this.packMap.clear();
   }
 
   public indexCard(card: CardDefinition): void {
     const id = card.id;
-
-    if (card.packId) {
-      let set = this.packMap.get(card.packId);
-      if (!set) {
-        set = new Set();
-        this.packMap.set(card.packId, set);
-      }
-      set.add(id);
-    }
 
     if (card.tags) {
       for (const d of card.tags.domain || []) {
@@ -176,14 +165,9 @@ class InvertedCardIndex {
   public getCardIdsByStatus(status: CardStatusTag): Set<string> {
     return this.statusMap.get(status) || new Set();
   }
-
-  public getCardIdsByPack(packId: string): Set<string> {
-    return this.packMap.get(packId) || new Set();
-  }
 }
 
 class SystemDomainRegistry {
-  private packs = new Map<string, PackManifest>();
   private cardManifestMap = new Map<string, CardManifest>();
   private cardMap = new Map<string, CardDefinition>();
   private cardPluginMap = new Map<string, AnyTrainingPlugin>();
@@ -195,20 +179,9 @@ class SystemDomainRegistry {
   }
 
   /**
-   * 自动扫描：双轨兼容旧 packs 与新 flat cards
+   * 自动扫描所有独立 Flat Cards 清单
    */
   private autoDiscover(): void {
-    // 1. 扫描旧版 packs (绞杀期兼容)
-    const packModules = import.meta.glob<{ default: PackManifest }>('../packs/*/index.ts', {
-      eager: true,
-    });
-
-    for (const path in packModules) {
-      const manifest = packModules[path]?.default;
-      if (manifest) this.register(manifest);
-    }
-
-    // 2. 扫描新版 flat cards (具有更高覆盖优先级)
     const cardModules = import.meta.glob<{ default: CardManifest }>(
       ['../cards/*/index.ts', '../cards/*/index.tsx'],
       { eager: true },
@@ -234,7 +207,7 @@ class SystemDomainRegistry {
     // 3. 构建标准 CardDefinition
     const cardDef: CardDefinition = {
       id: card.id,
-      packId: card.domain,
+      domain: card.domain,
       mode: card.id,
       icon: card.icon,
       tags: card.tags,
@@ -273,32 +246,6 @@ class SystemDomainRegistry {
     }
   }
 
-  public register(manifest: PackManifest): void {
-    this.packs.set(manifest.packId, manifest);
-
-    // 自动挂载 Pack 私有语言包至 `packs.<packId>` 命名空间
-    if (manifest.locales) {
-      i18n.registerPackLocales(manifest.packId, manifest.locales);
-    }
-
-    for (const card of manifest.cards) {
-      const normalizedCard: CardDefinition = {
-        ...card,
-        packId: manifest.packId,
-      };
-
-      this.cardMap.set(card.id, normalizedCard);
-      this.cardPluginMap.set(card.id, manifest.trainingPlugin);
-      this.invertedIndex.indexCard(normalizedCard);
-    }
-
-    if (manifest.analyticsPlugins) {
-      for (const [cardId, plugin] of Object.entries(manifest.analyticsPlugins)) {
-        this.cardAnalyticsMap.set(cardId, plugin);
-      }
-    }
-  }
-
   /**
    * 基于倒排索引的高性能多维条件卡片查询
    */
@@ -316,10 +263,6 @@ class SystemDomainRegistry {
         candidateIds = next;
       }
     };
-
-    if (options.packId) {
-      intersect(this.invertedIndex.getCardIdsByPack(options.packId));
-    }
 
     if (options.domains && options.domains.length > 0) {
       const domainUnion = new Set<string>();
@@ -390,19 +333,6 @@ class SystemDomainRegistry {
     }
 
     return results;
-  }
-
-  // === Pack 访问接口 ===
-  public getAllPacks(): PackManifest[] {
-    return Array.from(this.packs.values());
-  }
-
-  public getPack(packId: string): PackManifest | undefined {
-    return this.packs.get(packId);
-  }
-
-  public getAllPackMetas(): PackMeta[] {
-    return Array.from(this.packs.values()).map((p) => p.meta);
   }
 
   // === 卡片直查接口 ===

@@ -85,12 +85,7 @@ export function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
 
   for (const card of allCards) {
     const manifest = registry.getCardManifest?.(card.id);
-    const pack = registry.getPack(card.packId);
-    const cardDefaults =
-      manifest?.defaultSettings ||
-      card.defaultSettings ||
-      pack?.defaultCardSettings?.[card.id] ||
-      {};
+    const cardDefaults = manifest?.defaultSettings || card.defaultSettings || {};
 
     const cardConfig: BaseModuleSettings = {
       ...DEFAULT_BASE_SETTINGS,
