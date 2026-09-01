@@ -1,0 +1,10 @@
+{
+  "title": "Proportion Division",
+  "desc": "Blindly cut lines at 1/2, 1/3, 1/4, or golden ratio (0.618).",
+  "instruction": "Click at the designated target proportion along the tilted line.",
+  "views": {
+    "hint": "Slide along the tilted segment and release to confirm proportional division (or click directly)",
+    "targetRatio": "Target Proportion:",
+    "userPosition": "User Position: {{pos}}% (Error: ±{{error}}%)"
+  }
+}

@@ -1,40 +1,37 @@
 import { Box } from 'lucide-preact';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import { useTranslation } from '../../../core/i18n';
-import type { Point } from '../../../types';
-import {
-  PERSPECTIVE_CANVAS_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  draw3DCubeWireframe,
-} from '../utils/perspectiveUtils';
+import { PointClickCanvas } from '../../components/common/PointClickCanvas';
+import { QuestionCardShell } from '../../components/common/QuestionCardShell';
+import { useCardTranslation, useTranslation } from '../../core/i18n';
+import type { Point } from '../../types';
+import type { PerspStructure3DHitResult, PerspStructure3DQuestion } from './types';
+import { PERSPECTIVE_CANVAS_SIZE, draw3DCubeWireframe } from './utils/generator';
 
-interface StructureProjection3DViewProps {
-  question: PerspectiveQuestionData;
+export interface PerspStructure3DViewProps {
+  question: PerspStructure3DQuestion;
   showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
+  userAnswer: PerspStructure3DHitResult | null;
   onAnswer: (point: Point) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function StructureProjection3DView({
+export function PerspStructure3DView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: StructureProjection3DViewProps) {
-  const { t } = useTranslation();
+}: PerspStructure3DViewProps) {
+  const { t: cardT } = useCardTranslation('persp_structure_3d');
+  const { t: commonT } = useTranslation();
   const isHit = Boolean(userAnswer?.isHit);
   const targetPt3D = question.targetPoint3D;
   const dim = question.gridDim3D ?? 3;
 
   return (
     <QuestionCardShell
-      hintText={t('packs.perspective.views.structureHint')}
+      hintText={cardT('views.hint')}
       hintIcon={Box}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -43,13 +40,13 @@ export function StructureProjection3DView({
         {/* 左侧三视图正交切面预览 */}
         <div className="bg-muted/60 p-4 rounded-2xl border border-border flex flex-col gap-3">
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">
-            {t('common.viewTriAxis')}
+            {commonT('common.viewTriAxis')}
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-muted-foreground">
             {/* 顶视图 (X-Z) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{t('common.topView')}</span>
+              <span className="text-muted-foreground font-bold">{commonT('common.topView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
@@ -71,7 +68,7 @@ export function StructureProjection3DView({
 
             {/* 正视图 (X-Y) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{t('common.frontView')}</span>
+              <span className="text-muted-foreground font-bold">{commonT('common.frontView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
@@ -93,7 +90,7 @@ export function StructureProjection3DView({
 
             {/* 侧视图 (Z-Y) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{t('common.sideView')}</span>
+              <span className="text-muted-foreground font-bold">{commonT('common.sideView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{

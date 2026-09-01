@@ -1,19 +1,15 @@
 import { Sliders } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { useTranslation } from '../../../core/i18n';
-import {
-  PERSPECTIVE_CANVAS_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  drawVpConvergenceCanvas,
-} from '../utils/perspectiveUtils';
+import { CanvasView } from '../../components/common/CanvasView';
+import { StandardSliderView } from '../../components/common/StandardSliderView';
+import { useCardTranslation } from '../../core/i18n';
+import type { PerspVpHitResult, PerspVpQuestion } from './types';
+import { PERSPECTIVE_CANVAS_SIZE, drawVpConvergenceCanvas } from './utils/generator';
 
-interface PerspectiveVpViewProps {
-  question: PerspectiveQuestionData;
+export interface PerspVpConvergenceViewProps {
+  question: PerspVpQuestion;
   showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
+  userAnswer: PerspVpHitResult | null;
   onAnswer: (val: number) => void;
   disabled?: boolean;
   hitMargin?: number;
@@ -21,7 +17,7 @@ interface PerspectiveVpViewProps {
   showCanvasHints?: boolean;
 }
 
-export function PerspectiveVpView({
+export function PerspVpConvergenceView({
   question,
   showAnswer,
   userAnswer,
@@ -30,16 +26,15 @@ export function PerspectiveVpView({
   hitMargin = 12,
   showToleranceBand = true,
   showCanvasHints = true,
-}: PerspectiveVpViewProps) {
-  const { t } = useTranslation();
+}: PerspVpConvergenceViewProps) {
+  const { t } = useCardTranslation('persp_vp_convergence');
   const targetVal = question.targetAngleDeg ?? 0;
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
-  const userVal = userAnswer?.userValue as number | undefined;
+  const userVal = userAnswer?.userValue;
 
   const [liveAngle, setLiveAngle] = useState<number>(180);
 
-  // 当题目切换时重置当前调制角度为 180°
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset liveAngle on new question
   useEffect(() => {
     setLiveAngle(180);
@@ -50,11 +45,11 @@ export function PerspectiveVpView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('packs.perspective.views.vpHint')}
+      hintText={t('views.hint')}
       hintIcon={Sliders}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('packs.perspective.views.rayAngle')}
+      label={t('views.rayAngle')}
       max={360}
       step={0.5}
       initialValue={180}
@@ -103,7 +98,7 @@ export function PerspectiveVpView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('packs.perspective.views.vpTrueAngle')}{' '}
+              {t('views.vpTrueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span
@@ -113,7 +108,7 @@ export function PerspectiveVpView({
                   : 'text-rose-600 dark:text-rose-400 font-bold'
               }
             >
-              {t('packs.perspective.views.vpErrorInfo', {
+              {t('views.vpErrorInfo', {
                 error: userAnswer?.errorValue ?? 0,
                 tolerance,
               })}

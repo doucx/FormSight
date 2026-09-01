@@ -1,38 +1,34 @@
 import { Eye } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { useTranslation } from '../../../core/i18n';
-import {
-  PERSPECTIVE_2AFC_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  drawGestaltCanvas,
-} from '../utils/perspectiveUtils';
+import { CanvasView } from '../../components/common/CanvasView';
+import { Standard2AfcView } from '../../components/common/Standard2AfcView';
+import { useCardTranslation } from '../../core/i18n';
+import type { PerspGestaltHitResult, PerspGestaltQuestion } from './types';
+import { PERSPECTIVE_2AFC_SIZE, drawGestaltCanvas } from './utils/generator';
 
-interface GestaltContinuation2AfcViewProps {
-  question: PerspectiveQuestionData;
+export interface PerspGestaltContinuationViewProps {
+  question: PerspGestaltQuestion;
   showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
+  userAnswer: PerspGestaltHitResult | null;
   onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function GestaltContinuation2AfcView({
+export function PerspGestaltContinuationView({
   question,
   showAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: GestaltContinuation2AfcViewProps) {
-  const { t } = useTranslation();
+}: PerspGestaltContinuationViewProps) {
+  const { t } = useCardTranslation('persp_gestalt_continuation');
   const isAHit = question.correctChoice === 'A';
   const isBHit = question.correctChoice === 'B';
 
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.perspective.views.gestaltHint')}
+      hintText={t('views.hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -40,7 +36,7 @@ export function GestaltContinuation2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: t('common.optionA'),
+        title: t('views.optionA'),
         isCorrect: isAHit,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -63,7 +59,7 @@ export function GestaltContinuation2AfcView({
         ),
       }}
       optionB={{
-        title: t('common.optionB'),
+        title: t('views.optionB'),
         isCorrect: isBHit,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">

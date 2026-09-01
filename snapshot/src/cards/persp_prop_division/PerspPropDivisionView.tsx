@@ -1,48 +1,41 @@
 import { Disc } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import { Badge } from '../../../components/ui/badge';
-import { useTranslation } from '../../../core/i18n';
-import type { Point } from '../../../types';
-import {
-  PERSPECTIVE_CANVAS_SIZE,
-  type PerspectiveHitResult,
-  type PerspectiveQuestionData,
-  drawProportionCanvas,
-} from '../utils/perspectiveUtils';
+import { QuestionCardShell } from '../../components/common/QuestionCardShell';
+import { Badge } from '../../components/ui/badge';
+import { useCardTranslation, useTranslation } from '../../core/i18n';
+import type { Point } from '../../types';
+import type { PerspPropDivisionHitResult, PerspPropDivisionQuestion } from './types';
+import { PERSPECTIVE_CANVAS_SIZE, drawProportionCanvas } from './utils/generator';
 
-interface ProportionDivisionViewProps {
-  question: PerspectiveQuestionData;
+export interface PerspPropDivisionViewProps {
+  question: PerspPropDivisionQuestion;
   showAnswer: boolean;
-  userAnswer: PerspectiveHitResult | null;
+  userAnswer: PerspPropDivisionHitResult | null;
   onAnswer: (point: Point) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function ProportionDivisionView({
+export function PerspPropDivisionView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: ProportionDivisionViewProps) {
-  const { t } = useTranslation();
+}: PerspPropDivisionViewProps) {
+  const { t: cardT } = useCardTranslation('persp_prop_division');
+  const { t: commonT } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
-  // 题目切换时重置状态
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setUserClickedPoint(null);
     setHoverPoint(null);
   }, [question.id]);
 
-  /**
-   * 将屏幕鼠标或触控坐标垂直正交投影吸附至当前线段，获得线段上的垂足点与比例参数 t
-   */
   const getProjectedPoint = useCallback(
     (clientX: number, clientY: number): Point | null => {
       const canvas = canvasRef.current;
@@ -59,7 +52,6 @@ export function ProportionDivisionView({
       const lenSq = dx * dx + dy * dy;
       if (lenSq === 0) return null;
 
-      // 正交投影公式: t = (M - P1)·(P2 - P1) / |P2 - P1|^2
       const t = ((mouseX - line.p1.x) * dx + (mouseY - line.p1.y) * dy) / lenSq;
       const clampedT = Math.max(0, Math.min(1, t));
 
@@ -127,7 +119,6 @@ export function ProportionDivisionView({
 
   const isHit = Boolean(userAnswer?.isHit);
 
-  // 触发 Canvas 重绘
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -151,7 +142,7 @@ export function ProportionDivisionView({
 
   return (
     <QuestionCardShell
-      hintText={t('packs.perspective.views.proportionDivisionHint')}
+      hintText={cardT('views.hint')}
       hintIcon={Disc}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -159,13 +150,13 @@ export function ProportionDivisionView({
         showAnswer ? (
           <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('packs.perspective.views.targetRatio')}{' '}
+              {cardT('views.targetRatio')}{' '}
               <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              {t('packs.perspective.views.userPosition', {
+              {cardT('views.userPosition', {
                 pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
                 error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
               })}
@@ -174,7 +165,6 @@ export function ProportionDivisionView({
         ) : null
       }
     >
-      {/* 极简纯数字目标面板 */}
       <div className="w-full bg-accent/80 border border-border/60 dark:border-border rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
         <span className="text-2xl font-black text-primary font-black dark:text-indigo-200 font-mono tracking-widest">
           {question.targetRatioName ?? '1/2'}
@@ -198,7 +188,7 @@ export function ProportionDivisionView({
           }}
           tabIndex={0}
           role="button"
-          aria-label={t('packs.perspective.cards.perspective_proportion_division.title')}
+          aria-label={cardT('title')}
           className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
@@ -212,7 +202,7 @@ export function ProportionDivisionView({
               size="sm"
               className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600"
             />
-            <span>{t('common.startPercent')}</span>
+            <span>{commonT('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
@@ -221,7 +211,7 @@ export function ProportionDivisionView({
               size="sm"
               className="w-2 h-2 p-0 rounded-full border-none bg-muted-foreground"
             />
-            <span>{t('common.endPercent')}</span>
+            <span>{commonT('common.endPercent')}</span>
           </span>
         </div>
       </div>
