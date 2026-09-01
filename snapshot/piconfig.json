@@ -1,5 +1,16 @@
 {
   "presets": {
+    "refactor-modules": {
+      "format": "xml",
+      "extension": ["ts", "tsx", "json"],
+      "paths": [
+        "src/core/contracts.ts",
+        "src/types/card.ts",
+        "src/types/index.ts",
+        "src/components/settings/DynamicDomainSettings.tsx",
+        "src/modules/star/",
+      ]
+    },
     "core": {
       "format": "xml",
       "extension": ["ts", "tsx"],
