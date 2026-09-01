@@ -1,24 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
-  generatePolarGridPoints,
-  generateQuestion as generateSingleQuestion,
-} from '../../cards/star_single/utils/generator';
-import {
   generateBipolarGridPoints,
   generateQuestion as generateDoubleHQuestion,
 } from '../../cards/star_double_h/utils/generator';
+import { generateQuestion as generateDoubleRQuestion } from '../../cards/star_double_r/utils/generator';
 import {
-  generateQuestion as generateDoubleRQuestion,
-} from '../../cards/star_double_r/utils/generator';
+  generatePolarGridPoints,
+  generateQuestion as generateSingleQuestion,
+} from '../../cards/star_single/utils/generator';
 import {
   getDynamicCrosshairMetrics,
   getDynamicDotRadius,
   getGridMinSpacing,
 } from '../../core/canvas/drawPointGrid';
-import {
-  evaluatePointGridHit,
-  findNearestPointInGrid,
-} from '../../core/geometry/pointGrid';
+import { evaluatePointGridHit, findNearestPointInGrid } from '../../core/geometry/pointGrid';
 import type { Point } from '../../types';
 
 function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
