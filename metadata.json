@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(star): 重构 star 模块多语言结构并解耦分析视图的硬编码跨卡片 Key", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788231559.3118873, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复单锚点等新架构卡片训练页玩法要领（instruction）国际化键名外显问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788232504.0220754, "duration_ms": 0}}

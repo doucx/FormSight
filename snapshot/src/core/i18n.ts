@@ -204,6 +204,31 @@ export function getCardDesc(
 }
 
 /**
+ * 通用：解析卡片玩法要领多语言回退 (优先卡片级词典 -> Pack词典 -> 静态字段 -> 描述)
+ */
+export function getCardInstruction(
+  card: { id: string; packId?: string; instruction?: string; desc?: string },
+  t = i18n.t,
+): string {
+  // 1. 优先从 Card 命名空间查询 instruction
+  const cardKey = `cards.${card.id}.instruction`;
+  const cardInst = t(cardKey);
+  if (cardInst !== cardKey) return cardInst;
+
+  // 2. 回退从 legacy Pack 命名空间查询 instruction
+  const packId = card.packId || 'core';
+  const legacyPackKey = `packs.${packId}.cards.${card.id}.instruction`;
+  const legacyInst = t(legacyPackKey);
+  if (legacyInst !== legacyPackKey) return legacyInst;
+
+  // 3. 回退到静态 instruction 字段
+  if (card.instruction) return card.instruction;
+
+  // 4. 最终回退到描述信息 (desc)
+  return getCardDesc(card, t);
+}
+
+/**
  * 通用：解析扩展包标题多语言回退
  */
 export function getPackTitle(
