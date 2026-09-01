@@ -12,7 +12,7 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 import { UNIVERSAL_ANALYTICS_VIEWS } from './analytics/universalViews';
-import type { CardAnalyticsView as FlatCardAnalyticsView, CardManifest } from './cardContract';
+import type { CardManifest, CardAnalyticsView as FlatCardAnalyticsView } from './cardContract';
 import type { CardAnalyticsPlugin, PackManifest } from './contracts';
 import { i18n } from './i18n';
 
@@ -235,8 +235,7 @@ class SystemDomainRegistry {
         card.training.getQuestionLevel?.(q) ??
         (q as { difficultyLevel?: number })?.difficultyLevel ??
         5,
-      extractRecordDetails: (q, h, u) =>
-        card.training.extractRecordDetails?.(q, h, u) ?? {},
+      extractRecordDetails: (q, h, u) => card.training.extractRecordDetails?.(q, h, u) ?? {},
       renderCanvas: (props) => card.training.renderCanvas(props),
     };
 

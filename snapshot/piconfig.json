@@ -118,13 +118,8 @@
     "full": {
       "format": "xml",
       "extension": ["ts", "tsx", "json", "css"],
-      "paths": [
-        "src/"
-      ],
-      "ignore": [
-        "*.test.ts",
-        "*.test.tsx"
-      ]
+      "paths": ["src/"],
+      "ignore": ["*.test.ts", "*.test.tsx"]
     }
   }
 }
