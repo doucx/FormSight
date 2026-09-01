@@ -1,12 +1,13 @@
 # 📸 Snapshot Capture
 
 ### 💬 备注:
-checkf
+update
 
 检测到工作区发生变更。
 
 ### 📝 变更文件摘要:
 ```
-package.json | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+package-lock.json | 31 +++++++++++++++++++++++++++++--
+ package.json      |  1 +
+ 2 files changed, 30 insertions(+), 2 deletions(-)
 ```

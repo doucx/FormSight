@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788266258.0199485, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "update Capture: M package-lock.json, M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788267427.1185727, "duration_ms": 0}}
