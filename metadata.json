@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(analytics): 添加 fractal_edge_roughness 分析图表与高分屏画布自适应修复", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788265882.6579833, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788266258.0199485, "duration_ms": 0}}
