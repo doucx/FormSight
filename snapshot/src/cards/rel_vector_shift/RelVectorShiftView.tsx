@@ -31,7 +31,9 @@ export function RelVectorShiftView({
   const activeColor = options?.[selectedIndex] ?? targetD;
 
   useEffect(() => {
-    setSelectedIndex(0);
+    if (question.id) {
+      setSelectedIndex(0);
+    }
   }, [question.id]);
 
   const hexA = hsvToHex(...colorA);

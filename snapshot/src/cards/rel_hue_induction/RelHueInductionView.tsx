@@ -31,7 +31,9 @@ export function RelHueInductionView({
   const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
 
   useEffect(() => {
-    setSelectedIdx(0);
+    if (question.id) {
+      setSelectedIdx(0);
+    }
   }, [question.id]);
 
   const bgLeftHex = hsvToHex(...(bgLeft ?? [0, 0, 90]));

@@ -42,7 +42,7 @@ export function RelLightnessInductionView({
       setUserRightS(question.targetLeftCenter[1]);
       setUserRightV(question.targetLeftCenter[2]);
     }
-  }, [question.id, question.targetLeftCenter]);
+  }, [question.targetLeftCenter]);
 
   const handleSubmit = useCallback(() => {
     if (disabled || showAnswer) return;

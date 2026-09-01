@@ -64,11 +64,13 @@ export function ColorAllView({
   const handleDragV = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'V' : null), []);
 
   useEffect(() => {
-    setUserH(180);
-    setUserS(50);
-    setUserV(50);
-    setAllHoverVals({ H: null, S: null, V: null });
-    setDraggingLabel(null);
+    if (question.id) {
+      setUserH(180);
+      setUserS(50);
+      setUserV(50);
+      setAllHoverVals({ H: null, S: null, V: null });
+      setDraggingLabel(null);
+    }
   }, [question.id]);
 
   const handleSubmitAll = () => {
