@@ -7,7 +7,13 @@ import {
   savePlanStorageState,
   saveTrainingPlan,
 } from '../planStorage';
-import { DEFAULT_SETTINGS, type UserSettings, loadSettings, saveSettings } from '../settings';
+import {
+  DEFAULT_SETTINGS,
+  type UserSettings,
+  buildDefaultCardSettings,
+  loadSettings,
+  saveSettings,
+} from '../settings';
 import {
   DB_VERSION,
   type DailySummaryData,
@@ -158,6 +164,17 @@ export async function importAllData(jsonString: string): Promise<boolean> {
   try {
     const db = await getDB();
 
+    // 0. 清空现有数据库，实现纯净全量还原 (Restore)
+    const clearTx = db.transaction(
+      ['sessions', 'records', 'user_profiles', 'daily_summaries'],
+      'readwrite',
+    );
+    await clearTx.objectStore('sessions').clear();
+    await clearTx.objectStore('records').clear();
+    await clearTx.objectStore('user_profiles').clear();
+    await clearTx.objectStore('daily_summaries').clear();
+    await clearTx.done;
+
     // 1. 导入 sessions
     if (parsed.sessions && parsed.sessions.length > 0) {
       const tx = db.transaction('sessions', 'readwrite');
@@ -266,14 +283,14 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       await tx.done;
     }
 
-    // 5. 更新 LocalStorage (深度合并保障新增卡片配置)
+    // 5. 还原 LocalStorage 设置与训练计划（基于备份完全置换）
     if (parsed.settings) {
-      const current = loadSettings();
-      const mergedSettings: UserSettings = {
-        global: { ...current.global, ...(parsed.settings.global || {}) },
-        cards: { ...current.cards, ...(parsed.settings.cards || {}) },
+      const defaultCards = buildDefaultCardSettings();
+      const restoredSettings: UserSettings = {
+        global: { ...DEFAULT_SETTINGS.global, ...(parsed.settings.global || {}) },
+        cards: { ...defaultCards, ...(parsed.settings.cards || {}) },
       };
-      saveSettings(mergedSettings);
+      saveSettings(restoredSettings);
     }
 
     if (parsed.planStorageState) {
