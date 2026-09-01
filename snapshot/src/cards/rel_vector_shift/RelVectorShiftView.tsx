@@ -1,39 +1,39 @@
 import { ArrowRight, Shuffle } from 'lucide-preact';
-import { StandardNafcView } from '../../../components/common/StandardNafcView';
-import { hsvToHex } from '../../../core/color/colorUtils';
-import { useTranslation } from '../../../core/i18n';
-import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+import { useEffect, useState } from 'preact/hooks';
+import { StandardNafcView } from '../../components/common/StandardNafcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
 
-interface VectorShiftViewProps {
+export interface RelVectorShiftViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
   userAnswer?: RelativeColorHitResult | null;
-  selectedIndex: number;
-  onSelectIndex: (idx: number) => void;
-  onSubmit: () => void;
+  onAnswer: (userVal: [number, number, number]) => void;
   disabled?: boolean;
-  hitMargin?: number;
-  showToleranceBand?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function VectorShiftView({
+export function RelVectorShiftView({
   question,
   showAnswer,
-  selectedIndex,
-  onSelectIndex,
-  onSubmit,
+  onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: VectorShiftViewProps) {
-  const { t } = useTranslation();
+}: RelVectorShiftViewProps) {
+  const { t } = useCardTranslation('rel_vector_shift');
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
   const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
   const activeColor = options?.[selectedIndex] ?? targetD;
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [question.id]);
 
   const hexA = hsvToHex(...colorA);
   const hexB = hsvToHex(...colorB);
   const hexC = hsvToHex(...colorC);
-
   const hexSelectedD = hsvToHex(...activeColor);
   const hexTargetD = hsvToHex(...targetD);
 
@@ -57,7 +57,7 @@ export function VectorShiftView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText={t('packs.relative_color.views.vectorPrompt')}
+      hintText={t('views.prompt')}
       hintIcon={Shuffle}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -68,8 +68,11 @@ export function VectorShiftView({
       disabled={disabled}
       submitMode="button"
       submitButtonText={t('common.confirmSpace')}
-      onSelectIndex={(idx) => onSelectIndex(idx)}
-      onAnswer={() => onSubmit()}
+      onSelectIndex={(idx) => setSelectedIndex(idx)}
+      onAnswer={() => {
+        const chosenColor = options?.[selectedIndex] ?? targetD;
+        onAnswer(chosenColor);
+      }}
       preview={
         <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
           <div className="flex items-center justify-center gap-4">

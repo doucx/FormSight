@@ -1,28 +1,27 @@
 import { Eye } from 'lucide-preact';
-import { Standard2AfcView } from '../../../components/common/Standard2AfcView';
-import { hsvToHex } from '../../../core/color/colorUtils';
-import { useTranslation } from '../../../core/i18n';
-import { PALETTE } from '../../../utils/theme';
-import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+import { Standard2AfcView } from '../../components/common/Standard2AfcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
+import { PALETTE } from '../../utils/theme';
 
-interface Decontextual2AfcViewProps {
+export interface RelDecontextual2AfcViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
   userAnswer?: RelativeColorHitResult | null;
-  selectedChoice?: 'A' | 'B' | null;
-  onSelectChoice: (choice: 'A' | 'B') => void;
+  onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function Decontextual2AfcView({
+export function RelDecontextual2AfcView({
   question,
   showAnswer,
-  onSelectChoice,
+  onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: Decontextual2AfcViewProps) {
-  const { t } = useTranslation();
+}: RelDecontextual2AfcViewProps) {
+  const { t } = useCardTranslation('rel_decontextual_2afc');
   const isAHit = question.largerPhysicalSide === 'A';
   const isBHit = question.largerPhysicalSide === 'B';
 
@@ -34,21 +33,21 @@ export function Decontextual2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('packs.relative_color.views.decontextualHint')}
+      hintText={t('views.hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
       showAnswer={showAnswer}
       disabled={disabled}
-      onAnswer={onSelectChoice}
+      onAnswer={onAnswer}
       optionA={{
         title: t('common.areaA'),
         isCorrect: isAHit,
         badge: isAHit
-          ? t('packs.relative_color.views.physicallyBrighter', {
+          ? t('views.physicallyBrighter', {
               v: question.centerColorA?.[2] ?? 50,
             })
-          : t('packs.relative_color.views.physicallyDarker', {
+          : t('views.physicallyDarker', {
               v: question.centerColorA?.[2] ?? 50,
             }),
         content: (
@@ -64,10 +63,10 @@ export function Decontextual2AfcView({
         title: t('common.areaB'),
         isCorrect: isBHit,
         badge: isBHit
-          ? t('packs.relative_color.views.physicallyBrighter', {
+          ? t('views.physicallyBrighter', {
               v: question.centerColorB?.[2] ?? 50,
             })
-          : t('packs.relative_color.views.physicallyDarker', {
+          : t('views.physicallyDarker', {
               v: question.centerColorB?.[2] ?? 50,
             }),
         content: (

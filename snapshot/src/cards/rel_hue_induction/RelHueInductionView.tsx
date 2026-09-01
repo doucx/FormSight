@@ -1,12 +1,12 @@
 import { Sparkles } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { DualViewportContainer } from '../../../components/common/DualViewportContainer';
-import { StandardNafcView } from '../../../components/common/StandardNafcView';
-import { hsvToHex } from '../../../core/color/colorUtils';
-import { useTranslation } from '../../../core/i18n';
-import type { RelativeColorHitResult, RelativeColorQuestionData } from '../utils/index';
+import { useEffect, useState } from 'preact/hooks';
+import { DualViewportContainer } from '../../components/common/DualViewportContainer';
+import { StandardNafcView } from '../../components/common/StandardNafcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
 
-interface HueInductionViewProps {
+export interface RelHueInductionViewProps {
   question: RelativeColorQuestionData;
   showAnswer: boolean;
   userAnswer?: RelativeColorHitResult | null;
@@ -15,17 +15,21 @@ interface HueInductionViewProps {
   showCanvasHints?: boolean;
 }
 
-export function HueInductionView({
+export function RelHueInductionView({
   question,
   showAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: HueInductionViewProps) {
-  const { t } = useTranslation();
+}: RelHueInductionViewProps) {
+  const { t } = useCardTranslation('rel_hue_induction');
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
 
   const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
+
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [question.id]);
 
   const bgLeftHex = hsvToHex(...(bgLeft ?? [0, 0, 90]));
   const bgRightHex = hsvToHex(...(bgRight ?? [0, 0, 20]));
@@ -58,7 +62,7 @@ export function HueInductionView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText={t('packs.relative_color.views.hueSelectHint')}
+      hintText={t('views.hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -76,11 +80,11 @@ export function HueInductionView({
       }}
       preview={
         <DualViewportContainer
-          leftTitle={t('packs.relative_color.views.leftBase')}
-          rightTitle={t('packs.relative_color.views.rightPreview')}
+          leftTitle={t('views.leftBase')}
+          rightTitle={t('views.rightPreview')}
           leftContent={
             <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
               style={{ backgroundColor: bgLeftHex }}
             >
               <div
@@ -91,7 +95,7 @@ export function HueInductionView({
           }
           rightContent={
             <div
-              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md shadow-md relative"
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
               style={{ backgroundColor: bgRightHex }}
             >
               <div
@@ -102,7 +106,7 @@ export function HueInductionView({
                   <div
                     className="absolute bottom-0 left-0 right-0 h-1/2"
                     style={{ backgroundColor: idealRightHex }}
-                    title={t('packs.relative_color.views.splitComparisonTooltip')}
+                    title={t('views.splitComparisonTooltip')}
                   />
                 )}
               </div>

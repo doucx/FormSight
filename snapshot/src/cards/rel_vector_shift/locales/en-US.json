@@ -1,0 +1,12 @@
+{
+  "title": "Color Vector Shift",
+  "desc": "Observe color vector shift A->B and select matching parallel shift C->D.",
+  "instruction": "Observe vector A->B and find matching vector C->D below.",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Indicator Band",
+    "showToleranceBandDesc": "Display tolerance reference on swatches"
+  },
+  "views": {
+    "prompt": "Observe vector shift A➔B and pick the matching C➔D shift below"
+  }
+}

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 展平重构色彩感知域 4 张单卡为一等公民卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788255895.811556, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 展平重构相对色彩感知域 4 张单卡为一等公民卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788256163.6905303, "duration_ms": 0}}

@@ -1,18 +1,87 @@
 import {
+  calcDeltaEOk,
   generateTetrahedralDistractors,
   getDistractorDistanceForLevel,
   getTargetDeltaEForLevel,
   hasGamutMargin,
   hsvToOkLab,
   okLabToHsv,
-} from '../../../core/color/oklchUtils';
-import { createShuffledChoices } from '../../../core/math/mathUtils';
-import { calcCompensatedRightColor } from './inductionMath';
-import type { RelativeColorMode, RelativeColorQuestionData } from './types';
+} from './oklchUtils';
+import { createShuffledChoices } from '../math/mathUtils';
 
-/**
- * 随机生成色彩矢量迁移题目
- */
+export type RelativeColorMode =
+  | 'VECTOR_SHIFT'
+  | 'LIGHTNESS_INDUCTION'
+  | 'HUE_INDUCTION'
+  | 'DECONTEXTUAL_2AFC';
+
+export interface RelativeColorQuestionData {
+  id: string;
+  mode: RelativeColorMode;
+  difficultyLevel: number;
+  colorA: [number, number, number];
+  colorB: [number, number, number];
+  colorC: [number, number, number];
+  targetD: [number, number, number];
+  options?: [number, number, number][];
+  correctIndex?: number;
+  bgLeft?: [number, number, number];
+  bgRight?: [number, number, number];
+  targetLeftCenter?: [number, number, number];
+  idealRightCenter?: [number, number, number];
+  centerColorA?: [number, number, number];
+  centerColorB?: [number, number, number];
+  largerPhysicalSide?: 'A' | 'B';
+  physicalValueDiff?: number;
+  tolerance: number;
+}
+
+export interface RelativeColorHitResult {
+  isHit: boolean;
+  userD?: [number, number, number];
+  targetD?: [number, number, number];
+  deltaEError: number;
+  magnitudeError?: number;
+  angleErrorDeg?: number;
+  tolerance: number;
+  selectedIndex?: number;
+  userChoice?: 'A' | 'B';
+  correctChoice?: 'A' | 'B';
+  physicalValueDiff?: number;
+}
+
+export function calcInductionShift(
+  bgLab: [number, number, number],
+  centerLab: [number, number, number],
+  intensity = 0.22,
+): [number, number, number] {
+  const dL = bgLab[0] - centerLab[0];
+  const da = bgLab[1] - centerLab[1];
+  const db = bgLab[2] - centerLab[2];
+  return [-dL * intensity, -da * intensity, -db * intensity];
+}
+
+export function calcCompensatedRightColor(
+  bgLeftLab: [number, number, number],
+  centerLeftLab: [number, number, number],
+  bgRightLab: [number, number, number],
+  intensity = 0.22,
+): [number, number, number] {
+  const shiftL = calcInductionShift(bgLeftLab, centerLeftLab, intensity);
+  const perceivedL: [number, number, number] = [
+    centerLeftLab[0] + shiftL[0],
+    centerLeftLab[1] + shiftL[1],
+    centerLeftLab[2] + shiftL[2],
+  ];
+
+  const factor = 1 + intensity;
+  return [
+    (perceivedL[0] + intensity * bgRightLab[0]) / factor,
+    (perceivedL[1] + intensity * bgRightLab[1]) / factor,
+    (perceivedL[2] + intensity * bgRightLab[2]) / factor,
+  ];
+}
+
 export function generateVectorShiftQuestion(level: number): RelativeColorQuestionData {
   const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
@@ -89,9 +158,6 @@ export function generateVectorShiftQuestion(level: number): RelativeColorQuestio
   };
 }
 
-/**
- * 生成阿尔伯斯明度反差补偿题目 (LIGHTNESS_INDUCTION)
- */
 export function generateLightnessInductionQuestion(level: number): RelativeColorQuestionData {
   const id = `ali_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
@@ -137,9 +203,6 @@ export function generateLightnessInductionQuestion(level: number): RelativeColor
   };
 }
 
-/**
- * 生成补色残像与色相诱导补偿题目 (HUE_INDUCTION - 4AFC 模式)
- */
 export function generateHueInductionQuestion(level: number): RelativeColorQuestionData {
   const id = `ahi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
@@ -168,7 +231,6 @@ export function generateHueInductionQuestion(level: number): RelativeColorQuesti
   const idealLabR = calcCompensatedRightColor(labBgL, labCenterL, labBgR, 0.22);
   const idealRightCenter = okLabToHsv(idealLabR);
 
-  // 利用正四面体算法生成 3 个等距对抗干扰色
   const distractors = generateTetrahedralDistractors(idealLabR, distractorDeltaE);
   const { options, correctIndex } = createShuffledChoices(idealRightCenter, distractors);
 
@@ -190,9 +252,6 @@ export function generateHueInductionQuestion(level: number): RelativeColorQuesti
   };
 }
 
-/**
- * 生成环境穿透判别二选一题目 (DECONTEXTUAL_2AFC)
- */
 export function generateDecontextual2AfcQuestion(level: number): RelativeColorQuestionData {
   const id = `adc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
@@ -201,7 +260,6 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
   const diffPercent = Math.max(1.5, Math.round(18 * (1.5 / 18) ** t * 10) / 10);
 
   const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
-
   const isTrapTrial = Math.random() < 0.5;
   const sideForBrightBg: 'A' | 'B' = isTrapTrial
     ? largerPhysicalSide
@@ -248,21 +306,71 @@ export function generateDecontextual2AfcQuestion(level: number): RelativeColorQu
   };
 }
 
-/**
- * 统一根据模式生成题目
- */
-export function generateRelativeColorQuestion(
+export function checkRelativeColorHit(
   mode: RelativeColorMode,
-  level: number,
-): RelativeColorQuestionData {
-  switch (mode) {
-    case 'LIGHTNESS_INDUCTION':
-      return generateLightnessInductionQuestion(level);
-    case 'HUE_INDUCTION':
-      return generateHueInductionQuestion(level);
-    case 'DECONTEXTUAL_2AFC':
-      return generateDecontextual2AfcQuestion(level);
-    default:
-      return generateVectorShiftQuestion(level);
+  userAnswer: [number, number, number] | 'A' | 'B',
+  question: RelativeColorQuestionData,
+): RelativeColorHitResult {
+  if (mode === 'DECONTEXTUAL_2AFC') {
+    const userChoice = userAnswer as 'A' | 'B';
+    const isHit = userChoice === question.largerPhysicalSide;
+    return {
+      isHit,
+      userChoice,
+      correctChoice: question.largerPhysicalSide,
+      physicalValueDiff: question.physicalValueDiff,
+      deltaEError: isHit ? 0 : (question.physicalValueDiff ?? 0),
+      tolerance: question.tolerance,
+    };
   }
+
+  const userD = userAnswer as [number, number, number];
+  const { colorA, colorB, colorC, targetD, difficultyLevel, options, correctIndex } = question;
+
+  const labTargetD = hsvToOkLab(...targetD);
+  const labUserD = hsvToOkLab(...userD);
+
+  const selectedIndex = options?.findIndex(
+    (opt) => opt[0] === userD[0] && opt[1] === userD[1] && opt[2] === userD[2],
+  );
+
+  const deltaEError = calcDeltaEOk(labTargetD, labUserD);
+  const tolerance = getTargetDeltaEForLevel(difficultyLevel);
+  const isHit =
+    selectedIndex !== undefined && selectedIndex !== -1
+      ? selectedIndex === correctIndex
+      : deltaEError <= tolerance;
+
+  const labA = hsvToOkLab(...colorA);
+  const labB = hsvToOkLab(...colorB);
+  const labC = hsvToOkLab(...colorC);
+
+  const vRef: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+  const vUser: [number, number, number] = [
+    labUserD[0] - labC[0],
+    labUserD[1] - labC[1],
+    labUserD[2] - labC[2],
+  ];
+
+  const magRef = Math.sqrt(vRef[0] ** 2 + vRef[1] ** 2 + vRef[2] ** 2);
+  const magUser = Math.sqrt(vUser[0] ** 2 + vUser[1] ** 2 + vUser[2] ** 2);
+  const magnitudeError = Math.abs(magUser - magRef);
+
+  let angleErrorDeg = 0;
+  if (magRef > 1e-4 && magUser > 1e-4) {
+    const dot = vRef[0] * vUser[0] + vRef[1] * vUser[1] + vRef[2] * vUser[2];
+    const cosTheta = Math.max(-1, Math.min(1, dot / (magRef * magUser)));
+    angleErrorDeg = Math.round((Math.acos(cosTheta) * 180) / Math.PI);
+  }
+
+  return {
+    isHit,
+    userD,
+    targetD,
+    deltaEError: Math.round(deltaEError * 1000) / 1000,
+    magnitudeError: Math.round(magnitudeError * 1000) / 1000,
+    angleErrorDeg,
+    tolerance,
+    selectedIndex,
+  };
 }

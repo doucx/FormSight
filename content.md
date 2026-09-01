@@ -1,1315 +1,890 @@
-好的，我们正式开始**阶段 3：色彩感知域迁移**。
+我们将继续完成**阶段 3 的后半部分：相对环境色（Relative Color）4 张卡片展平迁移**。
 
-首先，我们将色彩感知核心的 4 张卡片（`color_hue`、`color_val`、`color_sat`、`color_all`）全面重构成符合 `CardManifest` 契约的标准平铺单卡架构，各自包含自洽的 `locales/{zh-CN,en-US}.json`、独立的 View 视图组件以及专属的 `analytics.tsx` 诊断视图。
+我们将把 `src/packs/relative_color/` 下的 4 种训练模式解耦并展平为 4 张标准自包含单卡：
+1. `src/cards/rel_vector_shift/`（色彩矢量迁移）
+2. `src/cards/rel_lightness_induction/`（明度反差补偿）
+3. `src/cards/rel_hue_induction/`（补色残像调和）
+4. `src/cards/rel_decontextual_2afc/`（环境穿透判别）
 
-## [WIP] feat: 展平重构色彩感知域 4 张单卡为一等公民卡片
+并将核心几何/色彩数学推演能力沉淀至 `src/core/color/relativeColor.ts`，最后安全移除旧版 `src/packs/relative_color/`。
+
+## [WIP] feat: 展平重构相对色彩感知域 4 张单卡为一等公民卡片
 
 ### 用户需求
-按照 FormSight 卡片一等公民重构路线图的阶段 3 要求：
-1. 创建 `src/cards/color_hue/`（色相环感知估测与八向偏转散点分析）。
-2. 创建 `src/cards/color_val/`（纯明度梯度估测与阶梯诊断）。
-3. 创建 `src/cards/color_sat/`（饱和度梯度估测）。
-4. 创建 `src/cards/color_all/`（HSV 三维全色彩融合匹配）。
-5. 消除大 `switch` 与全局命名空间硬编码，所有词典使用局部相对 key。
-6. 保证文件后缀均为 `.tsx`。
+按路线图阶段 3 要求：
+1. 抽离相对色彩核心计算模型至 `src/core/color/relativeColor.ts`。
+2. 建立 `src/cards/rel_vector_shift/`、`src/cards/rel_lightness_induction/`、`src/cards/rel_hue_induction/` 与 `src/cards/rel_decontextual_2afc/` 4 个平铺单卡目录。
+3. 迁移自包含多语言词典（纯相对 key）与 Preact 视图组件（保证 `.tsx` 后缀）。
+4. 绞杀删除 `src/packs/relative_color/` 目录。
 
 ### 评论
-色彩三要素卡片从聚合包向单卡平铺迁移，是建立色彩域独立自包含能力的关键一步。通过将 H/S/V 及 Match 的出题、评测、滑块交互与分析视图解耦为 4 个独立原子卡片，能够极大降低单一组件的复杂度，并支持后续单独调优每种色彩训练的容错算法与 UI 呈现。
+相对色彩模块（包含同时对比、阿尔伯斯侧抑制模型与色矢量推移）此前高度耦合在单一 `RelativeColorCanvas.tsx` 中。本次展平重构彻底打破大 `switch(mode)` 分发，使得每个独立的认知抗性模型都能自治维护，且无需在卡片内部硬编码全局作用域前缀。
 
 ### 目标
-1. 创建 `src/cards/color_hue/` 目录及其 locales、analytics、view 与 `index.tsx`。
-2. 创建 `src/cards/color_val/` 目录及其 locales、view 与 `index.tsx`。
-3. 创建 `src/cards/color_sat/` 目录及其 locales、view 与 `index.tsx`。
-4. 创建 `src/cards/color_all/` 目录及其 locales、view 与 `index.tsx`。
-5. 检查并清理旧版 `src/packs/color/`。
+1. 创建 `src/core/color/relativeColor.ts`，导出通用的出题、打分与感知诱导推演函数。
+2. 创建 `rel_vector_shift`、`rel_lightness_induction`、`rel_hue_induction` 和 `rel_decontextual_2afc` 4 张卡片的 `locales/`、View 视图组件与 `index.tsx`。
+3. 移除 `src/packs/relative_color/` 存量旧文件。
 
 ### 基本原理
-注册中心 `registry.ts` 会自动扫描 `src/cards/*/index.{ts,tsx}` 并将词典挂载至 `cards.<card_id>`，同时自动对 `settingSchemas` 和 `analytics.views` 的相对 key 递归修饰。每个卡片完全自包含，在保留原有色彩数学库（`colorUtils.ts`）复用的同时消除对旧 `PackManifest` 的依赖。
+注册中心 `registry.ts` 会自动扫描新单卡并无缝接管，视图内通过 `useCardTranslation` 解析局部作用域多语言（如 `views.hint`），实现零配置热插拔与绞杀者模式平滑迁移。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/runtime #concept/ui #scope/core #ai/instruct #task/domain/color #task/object/color-cards #task/action/refactor #task/state/begin #task/status/active
+#intent/build #flow/ready #priority/high #comp/runtime #concept/ui #scope/core #ai/instruct #task/domain/color #task/object/relative-color-cards #task/action/refactor #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 创建 `color_hue` 卡片目录与代码
+#### Acts 1: 沉淀相对色彩核心算法库至 `src/core/color/relativeColor.ts`
 
 ~~~~~act
 write_file
-src/cards/color_hue/locales/zh-CN.json
+src/core/color/relativeColor.ts
 ~~~~~
-~~~~~json
-{
-  "title": "色相 (Hue)",
-  "desc": "识别颜色在色相环上的具体角度 (0°~360°)",
-  "instruction": "定位上方色块在 360° 色相环上的精准角度",
-  "settings": {
-    "showToleranceBandTitle": "显示滑块容错感应区",
-    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间",
-    "targetingTitle": "色相弱点专项靶向强化",
-    "targetingSubTitle": "选择需要靶向强化的色相扇区："
-  },
-  "sectors": {
-    "red": "红 (0°-30°)",
-    "orange": "橙 (30°-60°)",
-    "yellow": "黄 (60°-90°)",
-    "yellowGreen": "黄绿 (90°-120°)",
-    "green": "绿 (120°-150°)",
-    "cyanGreen": "青绿 (150°-180°)",
-    "cyan": "青 (180°-210°)",
-    "blue": "蓝 (210°-240°)",
-    "blueViolet": "蓝紫 (240°-270°)",
-    "violet": "紫 (270°-300°)",
-    "magenta": "品红 (300°-330°)",
-    "rose": "紫红 (330°-360°)"
-  },
-  "analytics": {
-    "hueBias": {
-      "tabLabel": "色相偏差度",
-      "title": "{{title}} · 色相偏差度分析",
-      "subTitle": "横轴色相与纵轴偏差分布，揭示系统性偏色倾向",
-      "cardTitle": "系统性偏色倾向诊断",
-      "avgSignedBias": "全局平均偏转角:",
-      "clockwise": "+{{val}}° (顺时针)",
-      "counterClockwise": "{{val}}° (逆时针)",
-      "maxBiasSector": "最大偏差扇区：",
-      "avgBias": "平均偏差:",
-      "needMoreTrials": "样本量达到每个扇区至少 3 题后可生成精准扇区偏向诊断。",
-      "avgAbsError": "平均绝对角度误差:"
-    },
-    "hueRing": {
-      "tabLabel": "12 色相敏感度",
-      "title": "{{title}} · 12 色相敏感度分析",
-      "subTitle": "洞察你对 OKLab 色彩空间 12 色相扇区的敏感度与正确率分布",
-      "cardTitle": "色相盲区诊断",
-      "weakestHint": "你在 {{sector}} 色相上辨识度最低：",
-      "accuracyRate": "{{accuracy}}% 正确率",
-      "needMoreTrials": "需每个色相扇区完成至少 3 题才能生成弱点诊断。"
-    }
-  }
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/color_hue/locales/en-US.json
-~~~~~
-~~~~~json
-{
-  "title": "Hue",
-  "desc": "Identify the exact angle of a color on the 360° color wheel.",
-  "instruction": "Locate the exact degree of the color on the 360° color wheel.",
-  "settings": {
-    "showToleranceBandTitle": "Show Tolerance Indicator Band",
-    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb",
-    "targetingTitle": "Targeted Hue Reinforcement",
-    "targetingSubTitle": "Select hue sectors for targeted practice:"
-  },
-  "sectors": {
-    "red": "Red (0°-30°)",
-    "orange": "Orange (30°-60°)",
-    "yellow": "Yellow (60°-90°)",
-    "yellowGreen": "Yellow-Green (90°-120°)",
-    "green": "Green (120°-150°)",
-    "cyanGreen": "Cyan-Green (150°-180°)",
-    "cyan": "Cyan (180°-210°)",
-    "blue": "Blue (210°-240°)",
-    "blueViolet": "Blue-Violet (240°-270°)",
-    "violet": "Violet (270°-300°)",
-    "magenta": "Magenta (300°-330°)",
-    "rose": "Rose (330°-360°)"
-  },
-  "analytics": {
-    "hueBias": {
-      "tabLabel": "Hue Bias",
-      "title": "{{title}} · Hue Bias Analysis",
-      "subTitle": "Distribution of signed hue offsets across the spectrum",
-      "cardTitle": "Systematic Hue Offset Diagnostics",
-      "avgSignedBias": "Global Average Hue Deviation:",
-      "clockwise": "+{{val}}° (Clockwise)",
-      "counterClockwise": "{{val}}° (Counter-Clockwise)",
-      "maxBiasSector": "Greatest Bias Sector:",
-      "avgBias": "Avg Bias:",
-      "needMoreTrials": "Complete at least 3 trials in each sector to generate precise bias diagnostics.",
-      "avgAbsError": "Mean Absolute Angular Error:"
-    },
-    "hueRing": {
-      "tabLabel": "12-Hue Sensitivity",
-      "title": "{{title}} · 12-Hue Sensitivity",
-      "subTitle": "Perceptual accuracy across 12 OKLab hue sectors",
-      "cardTitle": "Hue Blindspot Diagnostics",
-      "weakestHint": "Lowest accuracy found in sector {{sector}}:",
-      "accuracyRate": "{{accuracy}}% accuracy",
-      "needMoreTrials": "Complete at least 3 trials in each hue sector to generate blindspot diagnostics."
-    }
-  }
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/color_hue/ColorHueView.tsx
-~~~~~
-~~~~~tsx
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
+~~~~~ts
 import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT } from '../../utils/theme';
+  calcDeltaEOk,
+  generateTetrahedralDistractors,
+  getDistractorDistanceForLevel,
+  getTargetDeltaEForLevel,
+  hasGamutMargin,
+  hsvToOkLab,
+  okLabToHsv,
+} from './oklchUtils';
+import { createShuffledChoices } from '../math/mathUtils';
 
-export interface ColorHueViewProps {
-  question: ColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
-  onAnswer: (userVal: number) => void;
-  disabled?: boolean;
-  settings: ColorSenseSettings;
+export type RelativeColorMode =
+  | 'VECTOR_SHIFT'
+  | 'LIGHTNESS_INDUCTION'
+  | 'HUE_INDUCTION'
+  | 'DECONTEXTUAL_2AFC';
+
+export interface RelativeColorQuestionData {
+  id: string;
+  mode: RelativeColorMode;
+  difficultyLevel: number;
+  colorA: [number, number, number];
+  colorB: [number, number, number];
+  colorC: [number, number, number];
+  targetD: [number, number, number];
+  options?: [number, number, number][];
+  correctIndex?: number;
+  bgLeft?: [number, number, number];
+  bgRight?: [number, number, number];
+  targetLeftCenter?: [number, number, number];
+  idealRightCenter?: [number, number, number];
+  centerColorA?: [number, number, number];
+  centerColorB?: [number, number, number];
+  largerPhysicalSide?: 'A' | 'B';
+  physicalValueDiff?: number;
+  tolerance: number;
 }
 
-export function ColorHueView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  settings,
-}: ColorHueViewProps) {
-  const { targetH, targetS, targetV, difficultyLevel } = question;
-  const targetHex = hsvToHex(targetH, targetS, targetV);
-  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
-
-  const hitMargin = settings.sliderHitMargin ?? 12;
-  const showToleranceBand = settings.showToleranceBand ?? true;
-
-  return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
-
-      <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
-        <HsvTrackSlider
-          label="H"
-          gradient={HUE_SPECTRUM_GRADIENT}
-          val={targetH}
-          max={360}
-          unit="°"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetH}
-          userVal={userAnswer?.userValue}
-          isHit={userAnswer?.isHit}
-          isInteractiveTarget={true}
-          onCommit={(v) => {
-            if (!showAnswer && !disabled) onAnswer(v);
-          }}
-          disabled={disabled}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-      </div>
-    </div>
-  );
+export interface RelativeColorHitResult {
+  isHit: boolean;
+  userD?: [number, number, number];
+  targetD?: [number, number, number];
+  deltaEError: number;
+  magnitudeError?: number;
+  angleErrorDeg?: number;
+  tolerance: number;
+  selectedIndex?: number;
+  userChoice?: 'A' | 'B';
+  correctChoice?: 'A' | 'B';
+  physicalValueDiff?: number;
 }
-~~~~~
 
-~~~~~act
-write_file
-src/cards/color_hue/analytics.tsx
-~~~~~
-~~~~~tsx
-import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
-import { Callout } from '../../components/ui/callout';
-import { renderHueRingCanvas } from '../../core/canvas/charts/drawColorRing';
-import type { SectorStat } from '../../core/canvas/charts/drawCompass';
-import {
-  calcSignedHueBias,
-  renderHueBiasChartCanvas,
-} from '../../core/canvas/charts/drawHueBiasChart';
-import type { CardAnalyticsView } from '../../core/cardContract';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { calculateBasicOverallStats } from '../../core/contracts';
-import { i18n } from '../../core/i18n';
+export function calcInductionShift(
+  bgLab: [number, number, number],
+  centerLab: [number, number, number],
+  intensity = 0.22,
+): [number, number, number] {
+  const dL = bgLab[0] - centerLab[0];
+  const da = bgLab[1] - centerLab[1];
+  const db = bgLab[2] - centerLab[2];
+  return [-dL * intensity, -da * intensity, -db * intensity];
+}
 
-const COLOR_SECTOR_KEYS = [
-  'sectors.red',
-  'sectors.orange',
-  'sectors.yellow',
-  'sectors.yellowGreen',
-  'sectors.green',
-  'sectors.cyanGreen',
-  'sectors.cyan',
-  'sectors.blue',
-  'sectors.blueViolet',
-  'sectors.violet',
-  'sectors.magenta',
-  'sectors.rose',
-];
+export function calcCompensatedRightColor(
+  bgLeftLab: [number, number, number],
+  centerLeftLab: [number, number, number],
+  bgRightLab: [number, number, number],
+  intensity = 0.22,
+): [number, number, number] {
+  const shiftL = calcInductionShift(bgLeftLab, centerLeftLab, intensity);
+  const perceivedL: [number, number, number] = [
+    centerLeftLab[0] + shiftL[0],
+    centerLeftLab[1] + shiftL[1],
+    centerLeftLab[2] + shiftL[2],
+  ];
 
-export function createColorHueAnalytics(): CardAnalyticsView[] {
+  const factor = 1 + intensity;
   return [
-    {
-      id: 'hue_bias_chart',
-      tabLabel: 'analytics.hueBias.tabLabel',
-      title: 'analytics.hueBias.title',
-      subTitle: 'analytics.hueBias.subTitle',
-      icon: Sparkles,
-      renderVisualizer: (canvas, records) => {
-        renderHueBiasChartCanvas(canvas, records);
-      },
-      renderDiagnostics: (records) => {
-        const totalCount = records.length;
-        if (totalCount === 0) return null;
-
-        let sumSignedBias = 0;
-        const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumBias: 0 }));
-        for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const uHsv = (r.userHSV as [number, number, number]) || tHsv;
-          const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
-          sumSignedBias += bias;
-
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-          sectorBuckets[idx].total += 1;
-          if (r.isHit) sectorBuckets[idx].hits += 1;
-          sectorBuckets[idx].sumBias += bias;
-        }
-
-        const avgSignedBias = Math.round((sumSignedBias / totalCount) * 10) / 10;
-        const validSectors = sectorBuckets
-          .map((b, i) => ({
-            sectorIdx: i,
-            label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
-            total: b.total,
-            accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-            avgBias: b.total > 0 ? Math.round((b.sumBias / b.total) * 10) / 10 : 0,
-          }))
-          .filter((s) => s.total >= 3);
-
-        const maxBiasSector =
-          validSectors.length > 0
-            ? validSectors.reduce((prev, curr) =>
-                Math.abs(curr.avgBias) > Math.abs(prev.avgBias) ? curr : prev,
-              )
-            : null;
-
-        const signedBiasText =
-          avgSignedBias > 0
-            ? i18n.t('cards.color_hue.analytics.hueBias.clockwise', { val: avgSignedBias })
-            : avgSignedBias < 0
-              ? i18n.t('cards.color_hue.analytics.hueBias.counterClockwise', { val: avgSignedBias })
-              : '0°';
-
-        return (
-          <Callout
-            variant="warning"
-            icon={AlertCircle}
-            title={i18n.t('cards.color_hue.analytics.hueBias.cardTitle')}
-          >
-            <div className="space-y-2 text-xs text-foreground pt-1">
-              <div className="flex justify-between bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs font-mono">
-                <span className="text-muted-foreground">
-                  {i18n.t('cards.color_hue.analytics.hueBias.avgSignedBias')}
-                </span>
-                <span
-                  className={`font-bold ${
-                    avgSignedBias > 0
-                      ? 'text-amber-600 dark:text-amber-400'
-                      : avgSignedBias < 0
-                        ? 'text-primary'
-                        : 'text-foreground'
-                  }`}
-                >
-                  {signedBiasText}
-                </span>
-              </div>
-
-              {maxBiasSector ? (
-                <div className="space-y-1.5">
-                  <p className="text-muted-foreground">
-                    {i18n.t('cards.color_hue.analytics.hueBias.maxBiasSector')}
-                    <span className="font-bold text-amber-700 dark:text-amber-300 ml-1">
-                      {maxBiasSector.label}
-                    </span>
-                  </p>
-                  <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs">
-                    <div className="flex items-center gap-1.5">
-                      <div
-                        className="w-3 h-3 rounded-full border border-border"
-                        style={{
-                          backgroundColor: hsvToHex(maxBiasSector.sectorIdx * 30 + 15, 100, 100),
-                        }}
-                      />
-                      <span className="font-bold text-foreground">
-                        {maxBiasSector.label.split(' ')[0]}
-                      </span>
-                    </div>
-                    <span className="font-black text-amber-700 dark:text-amber-300 font-mono text-xs">
-                      {i18n.t('cards.color_hue.analytics.hueBias.avgBias')}{' '}
-                      {maxBiasSector.avgBias > 0
-                        ? `+${maxBiasSector.avgBias}°`
-                        : `${maxBiasSector.avgBias}°`}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-muted-foreground text-xs">
-                  {i18n.t('cards.color_hue.analytics.hueBias.needMoreTrials')}
-                </p>
-              )}
-            </div>
-          </Callout>
-        );
-      },
-      getOverallStats: (records) => {
-        const baseStats = calculateBasicOverallStats(records);
-        const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError =
-          baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
-
-        return {
-          ...baseStats,
-          customSummary: (
-            <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
-              <span>{i18n.t('cards.color_hue.analytics.hueBias.avgAbsError')}</span>
-              <span>{avgError}°</span>
-            </div>
-          ),
-        };
-      },
-    },
-    {
-      id: 'hue_ring',
-      tabLabel: 'analytics.hueRing.tabLabel',
-      title: 'analytics.hueRing.title',
-      subTitle: 'analytics.hueRing.subTitle',
-      icon: PieChart,
-      renderVisualizer: (canvas, records) => {
-        const sectorBuckets = Array.from({ length: 12 }, () => ({
-          total: 0,
-          hits: 0,
-          sumError: 0,
-        }));
-        for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-          sectorBuckets[idx].total += 1;
-          if (r.isHit) sectorBuckets[idx].hits += 1;
-          sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
-        }
-        const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-          sectorIdx: i,
-          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
-          total: b.total,
-          accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-          avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-        }));
-        renderHueRingCanvas(canvas, sectorStats);
-      },
-      renderDiagnostics: (records) => {
-        const totalCount = records.length;
-        if (totalCount === 0) return null;
-
-        const sectorBuckets = Array.from({ length: 12 }, () => ({
-          total: 0,
-          hits: 0,
-          sumError: 0,
-        }));
-        for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-          sectorBuckets[idx].total += 1;
-          if (r.isHit) sectorBuckets[idx].hits += 1;
-          sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
-        }
-        const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-          sectorIdx: i,
-          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
-          total: b.total,
-          accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-          avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-        }));
-        const validSectors = sectorStats.filter((s) => s.total >= 3);
-        const weakestSector =
-          validSectors.length > 0
-            ? validSectors.reduce((prev, curr) => (curr.accuracy < prev.accuracy ? curr : prev))
-            : null;
-
-        return (
-          <Callout
-            variant="warning"
-            icon={AlertCircle}
-            title={i18n.t('cards.color_hue.analytics.hueRing.cardTitle')}
-          >
-            {weakestSector ? (
-              <div className="space-y-2 pt-1">
-                <p className="text-foreground text-xs">
-                  {i18n.t('cards.color_hue.analytics.hueRing.weakestHint', {
-                    sector: weakestSector.label,
-                  })}
-                </p>
-                <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="w-3 h-3 rounded-full border border-border"
-                      style={{
-                        backgroundColor: hsvToHex(weakestSector.sectorIdx * 30 + 15, 100, 100),
-                      }}
-                    />
-                    <span className="font-bold text-foreground">
-                      {weakestSector.label.split(' ')[0]}
-                    </span>
-                  </div>
-                  <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
-                    {i18n.t('cards.color_hue.analytics.hueRing.accuracyRate', {
-                      accuracy: weakestSector.accuracy,
-                    })}
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-xs">
-                {i18n.t('cards.color_hue.analytics.hueRing.needMoreTrials')}
-              </p>
-            )}
-          </Callout>
-        );
-      },
-      getOverallStats: (records) => {
-        const baseStats = calculateBasicOverallStats(records);
-        const sumError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
-        const avgError =
-          baseStats.total > 0 ? Math.round((sumError / baseStats.total) * 10) / 10 : 0;
-
-        return {
-          ...baseStats,
-          customSummary: (
-            <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
-              <span>{i18n.t('cards.color_hue.analytics.hueBias.avgAbsError')}</span>
-              <span>{avgError}°</span>
-            </div>
-          ),
-        };
-      },
-    },
+    (perceivedL[0] + intensity * bgRightLab[0]) / factor,
+    (perceivedL[1] + intensity * bgRightLab[1]) / factor,
+    (perceivedL[2] + intensity * bgRightLab[2]) / factor,
   ];
 }
-~~~~~
 
-~~~~~act
-write_file
-src/cards/color_hue/index.tsx
-~~~~~
-~~~~~tsx
-import { RotateCw } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { ColorHueView } from './ColorHueView';
-import { createColorHueAnalytics } from './analytics';
-import enUS from './locales/en-US.json';
-import zhCN from './locales/zh-CN.json';
+export function generateVectorShiftQuestion(level: number): RelativeColorQuestionData {
+  const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
+  const R = getDistractorDistanceForLevel(clampedLevel);
+  const t = (clampedLevel - 1) / 34;
 
-const COLOR_SECTOR_KEYS = [
-  'sectors.red',
-  'sectors.orange',
-  'sectors.yellow',
-  'sectors.yellowGreen',
-  'sectors.green',
-  'sectors.cyanGreen',
-  'sectors.cyan',
-  'sectors.blue',
-  'sectors.blueViolet',
-  'sectors.violet',
-  'sectors.magenta',
-  'sectors.rose',
-];
+  let attempts = 0;
+  let colorA: [number, number, number] = [0, 0, 0];
+  let colorB: [number, number, number] = [0, 0, 0];
+  let colorC: [number, number, number] = [0, 0, 0];
+  let targetD: [number, number, number] = [0, 0, 0];
+  let labTargetD: [number, number, number] = [0, 0, 0];
+  let vAB: [number, number, number] = [0, 0, 0];
 
-export const colorHueCard: CardManifest<
-  ColorQuestionData,
-  ColorHitResult,
-  number,
-  ColorSenseSettings
-> = {
-  id: 'color_hue',
-  domain: 'color_and_value',
-  icon: RotateCw,
-  tags: {
-    domain: ['color_and_value'],
-    path: ['absolute_estimation'],
-    interaction: ['continuous_mod'],
-    status: 'stable',
-  },
-  locales: {
-    'zh-CN': zhCN,
-    'en-US': enUS,
-  },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: 'settings.targetingTitle',
-      subTitle: 'settings.targetingSubTitle',
-      sectors: COLOR_SECTOR_KEYS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
-  defaultSettings: {
-    sliderHitMargin: 12,
-    showToleranceBand: true,
-    targetingMode: 'off',
-    manualTargetSectors: [],
-  },
-  training: {
-    isTargeting: (settings) => settings.targetingMode === 'manual',
-    generateQuestion: (level, settings) =>
-      generateColorQuestion('H', level, {
-        targetingMode: settings.targetingMode,
-        targetSectors: settings.manualTargetSectors,
-      }),
-    evaluateAnswer: (userVal, q) => checkColorHit('H', userVal, q),
-    isHit: (res) => res.isHit,
-    getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult, userVal) => ({
-      targetHSV: [q.targetH, q.targetS, q.targetV],
-      userHSV: [userVal, q.targetS, q.targetV],
-      errorValue: hitResult.errorValue,
-    }),
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <ColorHueView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={onAnswer}
-        disabled={disabled}
-        settings={settings}
-      />
-    ),
-  },
-  analytics: {
-    views: createColorHueAnalytics(),
-  },
-};
+  while (attempts < 200) {
+    attempts++;
+    const hA = Math.floor(Math.random() * 360);
+    const sA = Math.floor(Math.random() * 55) + 25;
+    const vA = Math.floor(Math.random() * 55) + 30;
+    colorA = [hA, sA, vA];
 
-export default colorHueCard;
-~~~~~
+    const hB = (hA + (Math.floor(Math.random() * 60) - 30) + 360) % 360;
+    const sB = Math.max(15, Math.min(90, sA + (Math.floor(Math.random() * 40) - 20)));
+    const vB = Math.max(20, Math.min(95, vA + (Math.floor(Math.random() * 50) - 25)));
+    colorB = [hB, sB, vB];
 
-#### Acts 2: 创建 `color_val` 卡片目录与代码
+    const maxHueOffset = 10 + t * 170;
+    const maxSatOffset = 5 + t * 35;
+    const maxValOffset = 5 + t * 35;
 
-~~~~~act
-write_file
-src/cards/color_val/locales/zh-CN.json
-~~~~~
-~~~~~json
-{
-  "title": "明度 (Value)",
-  "desc": "已知色相，评估颜色的素描明暗程度 (0%~100%)",
-  "instruction": "评估上方色块的素描明度深浅比例 (0%~100%)",
-  "settings": {
-    "showToleranceBandTitle": "显示滑块容错感应区",
-    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+    const hC_jitter = (Math.random() * 2 - 1) * maxHueOffset;
+    const sC_jitter = (Math.random() * 2 - 1) * maxSatOffset;
+    const vC_jitter = (Math.random() * 2 - 1) * maxValOffset;
+
+    const hC = (hA + hC_jitter + 360) % 360;
+    const sC = Math.max(15, Math.min(90, sA + sC_jitter));
+    const vC = Math.max(20, Math.min(95, vA + vC_jitter));
+    colorC = [Math.round(hC), Math.round(sC), Math.round(vC)];
+
+    const labA = hsvToOkLab(...colorA);
+    const labB = hsvToOkLab(...colorB);
+    const labC = hsvToOkLab(...colorC);
+
+    vAB = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+    const vMag = Math.sqrt(vAB[0] ** 2 + vAB[1] ** 2 + vAB[2] ** 2);
+    if (vMag < 0.03) continue;
+
+    labTargetD = [labC[0] + vAB[0], labC[1] + vAB[1], labC[2] + vAB[2]];
+    if (hasGamutMargin(labTargetD, R * 0.95)) {
+      targetD = okLabToHsv(labTargetD);
+      break;
+    }
   }
-}
-~~~~~
 
-~~~~~act
-write_file
-src/cards/color_val/locales/en-US.json
-~~~~~
-~~~~~json
-{
-  "title": "Value",
-  "desc": "Given hue, estimate the lightness/darkness value (0%~100%).",
-  "instruction": "Estimate the value/brightness percentage of the color (0%~100%).",
-  "settings": {
-    "showToleranceBandTitle": "Show Tolerance Indicator Band",
-    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
+  if (!targetD || (targetD[0] === 0 && targetD[1] === 0 && targetD[2] === 0 && attempts >= 200)) {
+    targetD = okLabToHsv(labTargetD);
   }
-}
-~~~~~
 
-~~~~~act
-write_file
-src/cards/color_val/ColorValView.tsx
-~~~~~
-~~~~~tsx
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
+  const bestDistractors = generateTetrahedralDistractors(labTargetD, R);
+  const { options, correctIndex } = createShuffledChoices(targetD, bestDistractors);
 
-export interface ColorValViewProps {
-  question: ColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
-  onAnswer: (userVal: number) => void;
-  disabled?: boolean;
-  settings: ColorSenseSettings;
+  return {
+    id,
+    mode: 'VECTOR_SHIFT',
+    difficultyLevel: clampedLevel,
+    colorA,
+    colorB,
+    colorC,
+    targetD,
+    tolerance,
+    options,
+    correctIndex,
+  };
 }
 
-export function ColorValView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  settings,
-}: ColorValViewProps) {
-  const { targetH, targetS, targetV, difficultyLevel } = question;
-  const targetHex = hsvToHex(targetH, targetS, targetV);
-  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
+export function generateLightnessInductionQuestion(level: number): RelativeColorQuestionData {
+  const id = `ali_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
 
-  const hitMargin = settings.sliderHitMargin ?? 12;
-  const showToleranceBand = settings.showToleranceBand ?? true;
+  const isLeftBright = Math.random() < 0.5;
+  const bgLVal = isLeftBright
+    ? Math.floor(Math.random() * 20) + 75
+    : Math.floor(Math.random() * 20) + 10;
+  const bgRVal = isLeftBright
+    ? Math.floor(Math.random() * 20) + 10
+    : Math.floor(Math.random() * 20) + 75;
 
-  const hueGradient = HUE_SPECTRUM_GRADIENT;
-  const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(targetH, 100, 100)})`;
+  const baseHue = Math.floor(Math.random() * 360);
+  const baseSat = Math.floor(Math.random() * 15);
 
-  return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
+  const bgLeft: [number, number, number] = [baseHue, baseSat, bgLVal];
+  const bgRight: [number, number, number] = [baseHue, baseSat, bgRVal];
 
-      <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
-        <HsvTrackSlider
-          label="H"
-          gradient={hueGradient}
-          val={targetH}
-          max={360}
-          unit="°"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetH}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={false}
-        />
+  const centerLVal = Math.floor(Math.random() * 20) + 40;
+  const targetLeftCenter: [number, number, number] = [baseHue, baseSat, centerLVal];
 
-        <HsvTrackSlider
-          label="V"
-          gradient={valGradient}
-          val={targetV}
-          max={100}
-          unit="%"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetV}
-          userVal={userAnswer?.userValue}
-          isHit={userAnswer?.isHit}
-          isInteractiveTarget={true}
-          onCommit={(v) => {
-            if (!showAnswer && !disabled) onAnswer(v);
-          }}
-          disabled={disabled}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-      </div>
-    </div>
+  const labBgL = hsvToOkLab(...bgLeft);
+  const labCenterL = hsvToOkLab(...targetLeftCenter);
+  const labBgR = hsvToOkLab(...bgRight);
+
+  const idealLabR = calcCompensatedRightColor(labBgL, labCenterL, labBgR, 0.25);
+  const idealRightCenter = okLabToHsv(idealLabR);
+
+  return {
+    id,
+    mode: 'LIGHTNESS_INDUCTION',
+    difficultyLevel: clampedLevel,
+    colorA: bgLeft,
+    colorB: targetLeftCenter,
+    colorC: bgRight,
+    targetD: idealRightCenter,
+    bgLeft,
+    bgRight,
+    targetLeftCenter,
+    idealRightCenter,
+    tolerance,
+  };
+}
+
+export function generateHueInductionQuestion(level: number): RelativeColorQuestionData {
+  const id = `ahi_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+  const tolerance = getTargetDeltaEForLevel(clampedLevel);
+  const distractorDeltaE = getDistractorDistanceForLevel(clampedLevel);
+
+  const bgLHue = Math.floor(Math.random() * 360);
+  const bgLSat = Math.floor(Math.random() * 30) + 70;
+  const bgLVal = Math.floor(Math.random() * 30) + 50;
+  const bgLeft: [number, number, number] = [bgLHue, bgLSat, bgLVal];
+
+  const bgRHue = (bgLHue + 180 + (Math.floor(Math.random() * 40) - 20)) % 360;
+  const bgRSat = Math.floor(Math.random() * 25);
+  const bgRVal = Math.floor(Math.random() * 30) + 50;
+  const bgRight: [number, number, number] = [bgRHue, bgRSat, bgRVal];
+
+  const centerHue = (bgLHue + 60 + Math.floor(Math.random() * 120)) % 360;
+  const centerSat = Math.floor(Math.random() * 30) + 30;
+  const centerVal = Math.floor(Math.random() * 30) + 45;
+  const targetLeftCenter: [number, number, number] = [centerHue, centerSat, centerVal];
+
+  const labBgL = hsvToOkLab(...bgLeft);
+  const labCenterL = hsvToOkLab(...targetLeftCenter);
+  const labBgR = hsvToOkLab(...bgRight);
+
+  const idealLabR = calcCompensatedRightColor(labBgL, labCenterL, labBgR, 0.22);
+  const idealRightCenter = okLabToHsv(idealLabR);
+
+  const distractors = generateTetrahedralDistractors(idealLabR, distractorDeltaE);
+  const { options, correctIndex } = createShuffledChoices(idealRightCenter, distractors);
+
+  return {
+    id,
+    mode: 'HUE_INDUCTION',
+    difficultyLevel: clampedLevel,
+    colorA: bgLeft,
+    colorB: targetLeftCenter,
+    colorC: bgRight,
+    targetD: idealRightCenter,
+    bgLeft,
+    bgRight,
+    targetLeftCenter,
+    idealRightCenter,
+    options,
+    correctIndex,
+    tolerance,
+  };
+}
+
+export function generateDecontextual2AfcQuestion(level: number): RelativeColorQuestionData {
+  const id = `adc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const clampedLevel = Math.max(1, Math.min(35, level));
+
+  const t = (clampedLevel - 1) / 34;
+  const diffPercent = Math.max(1.5, Math.round(18 * (1.5 / 18) ** t * 10) / 10);
+
+  const largerPhysicalSide: 'A' | 'B' = Math.random() < 0.5 ? 'A' : 'B';
+  const isTrapTrial = Math.random() < 0.5;
+  const sideForBrightBg: 'A' | 'B' = isTrapTrial
+    ? largerPhysicalSide
+    : largerPhysicalSide === 'A'
+      ? 'B'
+      : 'A';
+
+  const brightBgVal = Math.floor(Math.random() * 15) + 80;
+  const darkBgVal = Math.floor(Math.random() * 15) + 10;
+
+  const bgLeftVal = sideForBrightBg === 'A' ? brightBgVal : darkBgVal;
+  const bgRightVal = sideForBrightBg === 'B' ? brightBgVal : darkBgVal;
+
+  const baseHue = Math.floor(Math.random() * 360);
+  const baseSat = Math.floor(Math.random() * 20);
+
+  const bgLeft: [number, number, number] = [baseHue, baseSat, bgLeftVal];
+  const bgRight: [number, number, number] = [baseHue, baseSat, bgRightVal];
+
+  const baseCenterVal = Math.floor(Math.random() * 20) + 40;
+  const valA =
+    largerPhysicalSide === 'A' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+  const valB =
+    largerPhysicalSide === 'B' ? baseCenterVal + diffPercent : baseCenterVal - diffPercent;
+
+  const centerColorA: [number, number, number] = [baseHue, baseSat, Math.round(valA)];
+  const centerColorB: [number, number, number] = [baseHue, baseSat, Math.round(valB)];
+
+  return {
+    id,
+    mode: 'DECONTEXTUAL_2AFC',
+    difficultyLevel: clampedLevel,
+    colorA: bgLeft,
+    colorB: centerColorA,
+    colorC: bgRight,
+    targetD: centerColorB,
+    bgLeft,
+    bgRight,
+    centerColorA,
+    centerColorB,
+    largerPhysicalSide,
+    physicalValueDiff: diffPercent,
+    tolerance: diffPercent,
+  };
+}
+
+export function checkRelativeColorHit(
+  mode: RelativeColorMode,
+  userAnswer: [number, number, number] | 'A' | 'B',
+  question: RelativeColorQuestionData,
+): RelativeColorHitResult {
+  if (mode === 'DECONTEXTUAL_2AFC') {
+    const userChoice = userAnswer as 'A' | 'B';
+    const isHit = userChoice === question.largerPhysicalSide;
+    return {
+      isHit,
+      userChoice,
+      correctChoice: question.largerPhysicalSide,
+      physicalValueDiff: question.physicalValueDiff,
+      deltaEError: isHit ? 0 : (question.physicalValueDiff ?? 0),
+      tolerance: question.tolerance,
+    };
+  }
+
+  const userD = userAnswer as [number, number, number];
+  const { colorA, colorB, colorC, targetD, difficultyLevel, options, correctIndex } = question;
+
+  const labTargetD = hsvToOkLab(...targetD);
+  const labUserD = hsvToOkLab(...userD);
+
+  const selectedIndex = options?.findIndex(
+    (opt) => opt[0] === userD[0] && opt[1] === userD[1] && opt[2] === userD[2],
   );
+
+  const deltaEError = calcDeltaEOk(labTargetD, labUserD);
+  const tolerance = getTargetDeltaEForLevel(difficultyLevel);
+  const isHit =
+    selectedIndex !== undefined && selectedIndex !== -1
+      ? selectedIndex === correctIndex
+      : deltaEError <= tolerance;
+
+  const labA = hsvToOkLab(...colorA);
+  const labB = hsvToOkLab(...colorB);
+  const labC = hsvToOkLab(...colorC);
+
+  const vRef: [number, number, number] = [labB[0] - labA[0], labB[1] - labA[1], labB[2] - labA[2]];
+  const vUser: [number, number, number] = [
+    labUserD[0] - labC[0],
+    labUserD[1] - labC[1],
+    labUserD[2] - labC[2],
+  ];
+
+  const magRef = Math.sqrt(vRef[0] ** 2 + vRef[1] ** 2 + vRef[2] ** 2);
+  const magUser = Math.sqrt(vUser[0] ** 2 + vUser[1] ** 2 + vUser[2] ** 2);
+  const magnitudeError = Math.abs(magUser - magRef);
+
+  let angleErrorDeg = 0;
+  if (magRef > 1e-4 && magUser > 1e-4) {
+    const dot = vRef[0] * vUser[0] + vRef[1] * vUser[1] + vRef[2] * vUser[2];
+    const cosTheta = Math.max(-1, Math.min(1, dot / (magRef * magUser)));
+    angleErrorDeg = Math.round((Math.acos(cosTheta) * 180) / Math.PI);
+  }
+
+  return {
+    isHit,
+    userD,
+    targetD,
+    deltaEError: Math.round(deltaEError * 1000) / 1000,
+    magnitudeError: Math.round(magnitudeError * 1000) / 1000,
+    angleErrorDeg,
+    tolerance,
+    selectedIndex,
+  };
 }
 ~~~~~
 
-~~~~~act
-write_file
-src/cards/color_val/index.tsx
-~~~~~
-~~~~~tsx
-import { Sun } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { ColorValView } from './ColorValView';
-import enUS from './locales/en-US.json';
-import zhCN from './locales/zh-CN.json';
-
-export const colorValCard: CardManifest<
-  ColorQuestionData,
-  ColorHitResult,
-  number,
-  ColorSenseSettings
-> = {
-  id: 'color_val',
-  domain: 'color_and_value',
-  icon: Sun,
-  tags: {
-    domain: ['color_and_value'],
-    path: ['absolute_estimation'],
-    interaction: ['continuous_mod'],
-    status: 'stable',
-  },
-  locales: {
-    'zh-CN': zhCN,
-    'en-US': enUS,
-  },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-  ],
-  defaultSettings: {
-    sliderHitMargin: 12,
-    showToleranceBand: true,
-  },
-  training: {
-    generateQuestion: (level) => generateColorQuestion('V', level),
-    evaluateAnswer: (userVal, q) => checkColorHit('V', userVal, q),
-    isHit: (res) => res.isHit,
-    getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult, userVal) => ({
-      targetHSV: [q.targetH, q.targetS, q.targetV],
-      userHSV: [q.targetH, q.targetS, userVal],
-      errorValue: hitResult.errorValue,
-    }),
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <ColorValView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={onAnswer}
-        disabled={disabled}
-        settings={settings}
-      />
-    ),
-  },
-};
-
-export default colorValCard;
-~~~~~
-
-#### Acts 3: 创建 `color_sat` 卡片目录与代码
+#### Acts 2: 创建 `rel_vector_shift` 卡片
 
 ~~~~~act
 write_file
-src/cards/color_sat/locales/zh-CN.json
+src/cards/rel_vector_shift/locales/zh-CN.json
 ~~~~~
 ~~~~~json
 {
-  "title": "饱和度 (Sat)",
-  "desc": "已知色相与明度，评估色彩的鲜艳纯度 (0%~100%)",
-  "instruction": "评估上方色块的鲜艳纯度比例 (0%~100%)",
+  "title": "色彩矢量迁移",
+  "desc": "保持固有色推移矢量 v_AB 在全场施加统一推移，建立光影相对偏转直觉",
+  "instruction": "观察上方 A➔B 色彩推移，在下方候选项中找出符合 C➔D 的同向推移色",
   "settings": {
-    "showToleranceBandTitle": "显示滑块容错感应区",
-    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+    "showToleranceBandTitle": "显示容错感应区",
+    "showToleranceBandDesc": "在候选色块上标示容错参考"
+  },
+  "views": {
+    "prompt": "观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
   }
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/cards/color_sat/locales/en-US.json
+src/cards/rel_vector_shift/locales/en-US.json
 ~~~~~
 ~~~~~json
 {
-  "title": "Saturation",
-  "desc": "Given hue and value, estimate the purity and saturation (0%~100%).",
-  "instruction": "Estimate the saturation purity percentage of the color (0%~100%).",
+  "title": "Color Vector Shift",
+  "desc": "Observe color vector shift A->B and select matching parallel shift C->D.",
+  "instruction": "Observe vector A->B and find matching vector C->D below.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
-    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
+    "showToleranceBandDesc": "Display tolerance reference on swatches"
+  },
+  "views": {
+    "prompt": "Observe vector shift A➔B and pick the matching C➔D shift below"
   }
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/cards/color_sat/ColorSatView.tsx
+src/cards/rel_vector_shift/RelVectorShiftView.tsx
 ~~~~~
 ~~~~~tsx
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
+import { ArrowRight, Shuffle } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import { StandardNafcView } from '../../components/common/StandardNafcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
 
-export interface ColorSatViewProps {
-  question: ColorQuestionData;
+export interface RelVectorShiftViewProps {
+  question: RelativeColorQuestionData;
   showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
-  onAnswer: (userVal: number) => void;
-  disabled?: boolean;
-  settings: ColorSenseSettings;
-}
-
-export function ColorSatView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  settings,
-}: ColorSatViewProps) {
-  const { targetH, targetS, targetV, difficultyLevel } = question;
-  const targetHex = hsvToHex(targetH, targetS, targetV);
-  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
-
-  const hitMargin = settings.sliderHitMargin ?? 12;
-  const showToleranceBand = settings.showToleranceBand ?? true;
-
-  const hueGradient = HUE_SPECTRUM_GRADIENT;
-  const satGradient = `linear-gradient(to right, ${hsvToHex(targetH, 0, targetV)}, ${hsvToHex(targetH, 100, targetV)})`;
-  const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(targetH, 100, 100)})`;
-
-  return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
-
-      <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
-        <HsvTrackSlider
-          label="H"
-          gradient={hueGradient}
-          val={targetH}
-          max={360}
-          unit="°"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetH}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={false}
-        />
-
-        <HsvTrackSlider
-          label="S"
-          gradient={satGradient}
-          val={targetS}
-          max={100}
-          unit="%"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetS}
-          userVal={userAnswer?.userValue}
-          isHit={userAnswer?.isHit}
-          isInteractiveTarget={true}
-          onCommit={(v) => {
-            if (!showAnswer && !disabled) onAnswer(v);
-          }}
-          disabled={disabled}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-        />
-
-        <HsvTrackSlider
-          label="V"
-          gradient={valGradient}
-          val={targetV}
-          max={100}
-          unit="%"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetV}
-          disabled={true}
-          hitMargin={hitMargin}
-          showToleranceBand={false}
-        />
-      </div>
-    </div>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/color_sat/index.tsx
-~~~~~
-~~~~~tsx
-import { Droplet } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { ColorSatView } from './ColorSatView';
-import enUS from './locales/en-US.json';
-import zhCN from './locales/zh-CN.json';
-
-export const colorSatCard: CardManifest<
-  ColorQuestionData,
-  ColorHitResult,
-  number,
-  ColorSenseSettings
-> = {
-  id: 'color_sat',
-  domain: 'color_and_value',
-  icon: Droplet,
-  tags: {
-    domain: ['color_and_value'],
-    path: ['absolute_estimation'],
-    interaction: ['continuous_mod'],
-    status: 'stable',
-  },
-  locales: {
-    'zh-CN': zhCN,
-    'en-US': enUS,
-  },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-  ],
-  defaultSettings: {
-    sliderHitMargin: 12,
-    showToleranceBand: true,
-  },
-  training: {
-    generateQuestion: (level) => generateColorQuestion('S', level),
-    evaluateAnswer: (userVal, q) => checkColorHit('S', userVal, q),
-    isHit: (res) => res.isHit,
-    getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult, userVal) => ({
-      targetHSV: [q.targetH, q.targetS, q.targetV],
-      userHSV: [q.targetH, userVal, q.targetV],
-      errorValue: hitResult.errorValue,
-    }),
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <ColorSatView
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={onAnswer}
-        disabled={disabled}
-        settings={settings}
-      />
-    ),
-  },
-};
-
-export default colorSatCard;
-~~~~~
-
-#### Acts 4: 创建 `color_all` 卡片目录与代码
-
-~~~~~act
-write_file
-src/cards/color_all/locales/zh-CN.json
-~~~~~
-~~~~~json
-{
-  "title": "综合拾色 (Match)",
-  "desc": "同时调整色相、饱和度与明度，逼近真理色彩",
-  "instruction": "同时调制色相、饱和度与明度轨，使右侧色块逼近左侧目标色",
-  "settings": {
-    "showToleranceBandTitle": "显示滑块容错感应区",
-    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间",
-    "enableHoverColorPreviewTitle": "综合拾色悬停颜色实时联动",
-    "enableHoverColorPreviewDesc": "鼠标悬停滑块时右侧色块实时跟随试探预览"
-  }
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/color_all/locales/en-US.json
-~~~~~
-~~~~~json
-{
-  "title": "Full Color Match",
-  "desc": "Simultaneously adjust Hue, Saturation, and Value to match the target color.",
-  "instruction": "Modulate H, S, and V tracks to match the target color on the left.",
-  "settings": {
-    "showToleranceBandTitle": "Show Tolerance Indicator Band",
-    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb",
-    "enableHoverColorPreviewTitle": "Realtime Color Preview on Slider Hover",
-    "enableHoverColorPreviewDesc": "Follow trial preview swatch when cursor hovers over sliders"
-  }
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/color_all/ColorAllView.tsx
-~~~~~
-~~~~~tsx
-import { useCallback, useEffect, useState } from 'preact/hooks';
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import { Button } from '../../components/ui/button';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  hsvToHex,
-} from '../../core/color/colorUtils';
-import { useTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
-
-export interface ColorAllViewProps {
-  question: ColorQuestionData;
-  showAnswer: boolean;
-  userAnswer: ColorHitResult | null;
+  userAnswer?: RelativeColorHitResult | null;
   onAnswer: (userVal: [number, number, number]) => void;
   disabled?: boolean;
-  settings: ColorSenseSettings;
+  showCanvasHints?: boolean;
 }
 
-export function ColorAllView({
+export function RelVectorShiftView({
+  question,
+  showAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: RelVectorShiftViewProps) {
+  const { t } = useCardTranslation('rel_vector_shift');
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+  const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
+  const activeColor = options?.[selectedIndex] ?? targetD;
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [question.id]);
+
+  const hexA = hsvToHex(...colorA);
+  const hexB = hsvToHex(...colorB);
+  const hexC = hsvToHex(...colorC);
+  const hexSelectedD = hsvToHex(...activeColor);
+  const hexTargetD = hsvToHex(...targetD);
+
+  const nafcOptions = (options || []).map((opt, idx) => {
+    const isTarget = idx === correctIndex;
+    const hexVal = hsvToHex(...opt);
+    return {
+      key: `vector-shift-opt-${idx}-${hexVal}`,
+      title: t('common.candidateN', { num: idx + 1 }),
+      value: opt,
+      isCorrect: isTarget,
+      content: (
+        <div
+          className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+          style={{ backgroundColor: hexVal }}
+        />
+      ),
+    };
+  });
+
+  return (
+    <StandardNafcView<[number, number, number]>
+      questionId={question.id}
+      hintText={t('views.prompt')}
+      hintIcon={Shuffle}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+      columns={4}
+      options={nafcOptions}
+      selectedIndex={selectedIndex}
+      showAnswer={showAnswer}
+      disabled={disabled}
+      submitMode="button"
+      submitButtonText={t('common.confirmSpace')}
+      onSelectIndex={(idx) => setSelectedIndex(idx)}
+      onAnswer={() => {
+        const chosenColor = options?.[selectedIndex] ?? targetD;
+        onAnswer(chosenColor);
+      }}
+      preview={
+        <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-4">
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+              style={{ backgroundColor: hexA }}
+            />
+            <ArrowRight className="w-4 h-4 text-indigo-400" />
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+              style={{ backgroundColor: hexB }}
+            />
+          </div>
+
+          <div className="flex items-center justify-center gap-4">
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+              style={{ backgroundColor: hexC }}
+            />
+            <ArrowRight className="w-4 h-4 text-indigo-400" />
+            <div
+              className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md transition-all duration-150 relative overflow-hidden"
+              style={{ backgroundColor: hexSelectedD }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1/2"
+                  style={{ backgroundColor: hexTargetD }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_vector_shift/index.tsx
+~~~~~
+~~~~~tsx
+import { Shuffle } from 'lucide-preact';
+import type { CardManifest } from '../../core/cardContract';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateVectorShiftQuestion,
+} from '../../core/color/relativeColor';
+import type { RelativeColorSettings } from '../../storage/settings';
+import { RelVectorShiftView } from './RelVectorShiftView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
+
+export const relVectorShiftCard: CardManifest<
+  RelativeColorQuestionData,
+  RelativeColorHitResult,
+  [number, number, number],
+  RelativeColorSettings
+> = {
+  id: 'rel_vector_shift',
+  domain: 'color_and_value',
+  icon: Shuffle,
+  tags: {
+    domain: ['color_and_value'],
+    path: ['relational_mapping'],
+    challenge: ['illusion_piercing'],
+    interaction: ['multi_choice'],
+    status: 'stable',
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  settingSchemas: [
+    {
+      type: 'toggle',
+      key: 'showToleranceBand',
+      title: 'settings.showToleranceBandTitle',
+      description: 'settings.showToleranceBandDesc',
+    },
+  ],
+  defaultSettings: {
+    sliderHitMargin: 12,
+    showToleranceBand: true,
+  },
+  training: {
+    generateQuestion: (level) => generateVectorShiftQuestion(level),
+    evaluateAnswer: (userVal, q) => checkRelativeColorHit('VECTOR_SHIFT', userVal, q),
+    isHit: (res) => res.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    extractRecordDetails: (q, hitResult, userVal) => ({
+      colorA: q.colorA,
+      colorB: q.colorB,
+      colorC: q.colorC,
+      targetD: q.targetD,
+      userD: userVal,
+      deltaEError: hitResult.deltaEError,
+    }),
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+      <RelVectorShiftView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={onAnswer}
+        disabled={disabled}
+        showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
+      />
+    ),
+  },
+};
+
+export default relVectorShiftCard;
+~~~~~
+
+#### Acts 3: 创建 `rel_lightness_induction` 卡片
+
+~~~~~act
+write_file
+src/cards/rel_lightness_induction/locales/zh-CN.json
+~~~~~
+~~~~~json
+{
+  "title": "明度反差补偿",
+  "desc": "在强明暗对比背景下，微调中心色物理明度以抵消环境视错觉，达成感知一致",
+  "instruction": "调节右侧中心色块明度，使左右两块在不同背景下「视觉感知看起来完全一致」",
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+  },
+  "views": {
+    "hint": "调节右侧中心明度，使左右两块视觉感知看起来完全一致",
+    "leftBase": "左侧固定基准",
+    "rightModulate": "右侧调制区 (达成感知一致)"
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_lightness_induction/locales/en-US.json
+~~~~~
+~~~~~json
+{
+  "title": "Lightness Induction",
+  "desc": "Compensate for background illusion to achieve perceived lightness constancy.",
+  "instruction": "Adjust right center value so both center squares appear perceptually identical.",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Indicator Band",
+    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
+  },
+  "views": {
+    "hint": "Adjust right center lightness until both center swatches appear identical",
+    "leftBase": "Left Anchor Reference",
+    "rightModulate": "Right Modulation (Match Perception)"
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_lightness_induction/RelLightnessInductionView.tsx
+~~~~~
+~~~~~tsx
+import { Eye } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { DualViewportContainer } from '../../components/common/DualViewportContainer';
+import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
+import { QuestionCardShell } from '../../components/common/QuestionCardShell';
+import { Button } from '../../components/ui/button';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
+import type { RelativeColorSettings } from '../../storage/settings';
+import { PALETTE } from '../../utils/theme';
+
+export interface RelLightnessInductionViewProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer: RelativeColorHitResult | null;
+  onAnswer: (userVal: [number, number, number]) => void;
+  disabled?: boolean;
+  settings: RelativeColorSettings;
+}
+
+export function RelLightnessInductionView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   settings,
-}: ColorAllViewProps) {
-  const { t } = useTranslation();
-  const { targetH, targetS, targetV, difficultyLevel } = question;
-  const targetHex = hsvToHex(targetH, targetS, targetV);
-  const targetHSV: [number, number, number] = [targetH, targetS, targetV];
+}: RelLightnessInductionViewProps) {
+  const { t } = useCardTranslation('rel_lightness_induction');
 
-  const hitMargin = settings.sliderHitMargin ?? 12;
-  const showToleranceBand = settings.showToleranceBand ?? true;
-  const enableHoverColorPreview = settings.enableHoverColorPreview ?? true;
-
-  const [userH, setUserH] = useState<number>(180);
-  const [userS, setUserS] = useState<number>(50);
-  const [userV, setUserV] = useState<number>(50);
-
-  const [allHoverVals, setAllHoverVals] = useState<Record<'H' | 'S' | 'V', number | null>>({
-    H: null,
-    S: null,
-    V: null,
-  });
-  const [draggingLabel, setDraggingLabel] = useState<'H' | 'S' | 'V' | null>(null);
-
-  const handleHoverH = useCallback(
-    (hVal: number | null) =>
-      setAllHoverVals((prev) => (prev.H === hVal ? prev : { ...prev, H: hVal })),
-    [],
-  );
-  const handleHoverS = useCallback(
-    (sVal: number | null) =>
-      setAllHoverVals((prev) => (prev.S === sVal ? prev : { ...prev, S: sVal })),
-    [],
-  );
-  const handleHoverV = useCallback(
-    (vVal: number | null) =>
-      setAllHoverVals((prev) => (prev.V === vVal ? prev : { ...prev, V: vVal })),
-    [],
-  );
-
-  const handleDragH = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'H' : null), []);
-  const handleDragS = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'S' : null), []);
-  const handleDragV = useCallback((isDrag: boolean) => setDraggingLabel(isDrag ? 'V' : null), []);
+  const [userRightH, setUserRightH] = useState<number>(180);
+  const [userRightS, setUserRightS] = useState<number>(50);
+  const [userRightV, setUserRightV] = useState<number>(50);
 
   useEffect(() => {
-    setUserH(180);
-    setUserS(50);
-    setUserV(50);
-    setAllHoverVals({ H: null, S: null, V: null });
-    setDraggingLabel(null);
-  }, [question.id]);
+    if (question.targetLeftCenter) {
+      setUserRightH(question.targetLeftCenter[0]);
+      setUserRightS(question.targetLeftCenter[1]);
+      setUserRightV(question.targetLeftCenter[2]);
+    }
+  }, [question.id, question.targetLeftCenter]);
 
-  const handleSubmitAll = () => {
+  const handleSubmit = useCallback(() => {
     if (disabled || showAnswer) return;
-    onAnswer([userH, userS, userV]);
-  };
+    onAnswer([userRightH, userRightS, userRightV]);
+  }, [disabled, showAnswer, userRightH, userRightS, userRightV, onAnswer]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === 'Space' && !showAnswer && !disabled) {
         e.preventDefault();
-        onAnswer([userH, userS, userV]);
+        handleSubmit();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAnswer, disabled, userH, userS, userV, onAnswer]);
+  }, [showAnswer, disabled, handleSubmit]);
 
-  const currentH = userH;
-  const currentV = userV;
+  const bgLeftHex = hsvToHex(...(question.bgLeft ?? [0, 0, 100]));
+  const bgRightHex = hsvToHex(...(question.bgRight ?? [0, 0, 0]));
+  const centerLeftHex = hsvToHex(...(question.targetLeftCenter ?? [0, 0, 50]));
 
-  const hueGradient = HUE_SPECTRUM_GRADIENT;
-  const satGradient = `linear-gradient(to right, ${hsvToHex(currentH, 0, currentV)}, ${hsvToHex(currentH, 100, currentV)})`;
-  const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
+  const userRightHex = hsvToHex(userRightH, userRightS, userRightV);
+  const idealRightHex = hsvToHex(...(question.idealRightCenter ?? question.targetD));
+  const rightValGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(userRightH, 100, 100)})`;
+
+  const hitMargin = settings.sliderHitMargin ?? 12;
+  const showToleranceBand = settings.showToleranceBand ?? true;
+  const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
   return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div className="flex items-center justify-center gap-4 w-full">
+    <QuestionCardShell
+      hintText={t('views.hint')}
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-3xl"
+    >
+      <DualViewportContainer
+        leftTitle={t('views.leftBase')}
+        rightTitle={t('views.rightModulate')}
+        leftContent={
           <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-            style={{ backgroundColor: targetHex }}
-          />
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            style={{ backgroundColor: bgLeftHex }}
+          >
+            <div
+              className="w-16 h-16 rounded-xl transition-all"
+              style={{ backgroundColor: centerLeftHex }}
+            />
+          </div>
+        }
+        rightContent={
           <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-75"
-            style={{
-              backgroundColor: hsvToHex(
-                draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                  ? (allHoverVals.H ?? userH)
-                  : userH,
-                draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                  ? (allHoverVals.S ?? userS)
-                  : userS,
-                draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                  ? (allHoverVals.V ?? userV)
-                  : userV,
-              ),
-            }}
-          />
-        </div>
-      </div>
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            style={{ backgroundColor: bgRightHex }}
+          >
+            <div
+              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+              style={{ backgroundColor: userRightHex }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1/2"
+                  style={{ backgroundColor: idealRightHex }}
+                />
+              )}
+            </div>
+          </div>
+        }
+      />
 
-      <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
-        <HsvTrackSlider
-          label="H"
-          gradient={hueGradient}
-          val={userH}
-          max={360}
-          unit="°"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetH}
-          userVal={userAnswer?.userHSV?.[0] ?? userH}
-          isHit={userAnswer?.isHit}
-          onValChange={setUserH}
-          allUserHSV={[userH, userS, userV]}
-          disabled={disabled}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-          onHoverStateChange={handleHoverH}
-          onDraggingStateChange={handleDragH}
-        />
-        <HsvTrackSlider
-          label="S"
-          gradient={satGradient}
-          val={userS}
-          max={100}
-          unit="%"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
-          showAnswer={showAnswer}
-          targetVal={targetS}
-          userVal={userAnswer?.userHSV?.[1] ?? userS}
-          isHit={userAnswer?.isHit}
-          onValChange={setUserS}
-          allUserHSV={[userH, userS, userV]}
-          disabled={disabled}
-          hitMargin={hitMargin}
-          showToleranceBand={showToleranceBand}
-          onHoverStateChange={handleHoverS}
-          onDraggingStateChange={handleDragS}
-        />
+      <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
         <HsvTrackSlider
           label="V"
-          gradient={valGradient}
-          val={userV}
+          gradient={rightValGradient}
+          val={userRightV}
           max={100}
           unit="%"
-          targetHSV={targetHSV}
-          difficultyLevel={difficultyLevel}
+          targetHSV={question.targetD}
+          difficultyLevel={question.difficultyLevel}
           showAnswer={showAnswer}
-          targetVal={targetV}
-          userVal={userAnswer?.userHSV?.[2] ?? userV}
+          targetVal={question.idealRightCenter?.[2] ?? question.targetD[2]}
+          userVal={userRightV}
           isHit={userAnswer?.isHit}
-          onValChange={setUserV}
-          allUserHSV={[userH, userS, userV]}
+          onValChange={setUserRightV}
           disabled={disabled}
           hitMargin={hitMargin}
           showToleranceBand={showToleranceBand}
-          onHoverStateChange={handleHoverV}
-          onDraggingStateChange={handleDragV}
         />
       </div>
 
       {!showAnswer && (
         <Button
           variant="default"
-          onClick={handleSubmitAll}
+          onClick={handleSubmit}
           disabled={disabled}
           className="w-full py-3 text-xs font-bold rounded-2xl"
         >
           {t('common.confirmSpace')}
         </Button>
       )}
-    </div>
+    </QuestionCardShell>
   );
 }
 ~~~~~
 
 ~~~~~act
 write_file
-src/cards/color_all/index.tsx
+src/cards/rel_lightness_induction/index.tsx
 ~~~~~
 ~~~~~tsx
-import { Palette } from 'lucide-preact';
+import { Sun } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
 import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { ColorAllView } from './ColorAllView';
+  type RelativeColorHitResult,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateLightnessInductionQuestion,
+} from '../../core/color/relativeColor';
+import type { RelativeColorSettings } from '../../storage/settings';
+import { RelLightnessInductionView } from './RelLightnessInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 
-export const colorAllCard: CardManifest<
-  ColorQuestionData,
-  ColorHitResult,
+export const relLightnessInductionCard: CardManifest<
+  RelativeColorQuestionData,
+  RelativeColorHitResult,
   [number, number, number],
-  ColorSenseSettings
+  RelativeColorSettings
 > = {
-  id: 'color_all',
+  id: 'rel_lightness_induction',
   domain: 'color_and_value',
-  icon: Palette,
+  icon: Sun,
   tags: {
     domain: ['color_and_value'],
-    path: ['absolute_estimation'],
+    path: ['relational_mapping'],
+    challenge: ['illusion_piercing'],
     interaction: ['continuous_mod'],
     status: 'stable',
   },
@@ -1324,30 +899,26 @@ export const colorAllCard: CardManifest<
       title: 'settings.showToleranceBandTitle',
       description: 'settings.showToleranceBandDesc',
     },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: 'settings.enableHoverColorPreviewTitle',
-      description: 'settings.enableHoverColorPreviewDesc',
-    },
   ],
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
-    enableHoverColorPreview: true,
   },
   training: {
-    generateQuestion: (level) => generateColorQuestion('ALL', level),
-    evaluateAnswer: (userVal, q) => checkColorHit('ALL', userVal, q),
+    generateQuestion: (level) => generateLightnessInductionQuestion(level),
+    evaluateAnswer: (userVal, q) => checkRelativeColorHit('LIGHTNESS_INDUCTION', userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult, userVal) => ({
-      targetHSV: [q.targetH, q.targetS, q.targetV],
-      userHSV: userVal,
-      errorValue: hitResult.errorValue,
+      bgLeft: q.bgLeft,
+      bgRight: q.bgRight,
+      targetLeftCenter: q.targetLeftCenter,
+      idealRightCenter: q.idealRightCenter,
+      userRightColor: userVal,
+      deltaEError: hitResult.deltaEError,
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <ColorAllView
+      <RelLightnessInductionView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
@@ -1359,41 +930,504 @@ export const colorAllCard: CardManifest<
   },
 };
 
-export default colorAllCard;
+export default relLightnessInductionCard;
 ~~~~~
 
-#### Acts 5: 绞杀删除已迁移的 `src/packs/color` 目录
+#### Acts 4: 创建 `rel_hue_induction` 卡片
 
 ~~~~~act
-delete_file
-src/packs/color/locales/zh-CN.json
+write_file
+src/cards/rel_hue_induction/locales/zh-CN.json
 ~~~~~
-
-~~~~~act
-delete_file
-src/packs/color/locales/en-US.json
-~~~~~
-
-~~~~~act
-delete_file
-src/packs/color/views/ColorCanvas.tsx
-~~~~~
-
-~~~~~act
-delete_file
-src/packs/color/analytics.tsx
-~~~~~
-
-~~~~~act
-delete_file
-src/packs/color/plugin.tsx
+~~~~~json
+{
+  "title": "补色残像调和",
+  "desc": "在强色相与饱和度背景下，四选一选出逆向补偿后的目标色，训练环境光色感知调和力",
+  "instruction": "观察左侧强色相背景下的基准色，选出右侧达成感知一致的补偿色 (键 1-4)",
+  "views": {
+    "hint": "观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)",
+    "leftBase": "左侧固定基准",
+    "rightPreview": "右侧环境补偿区 (实时预览)",
+    "splitComparisonTooltip": "上半部为您的选择，下半部为理论真理色"
+  }
+}
 ~~~~~
 
 ~~~~~act
+write_file
+src/cards/rel_hue_induction/locales/en-US.json
+~~~~~
+~~~~~json
+{
+  "title": "Hue Induction & Harmony",
+  "desc": "Select the compensated target color to counteract chromatic induction (4AFC).",
+  "instruction": "Select the hue that compensates for the colored background (Keys 1-4).",
+  "views": {
+    "hint": "Observe reference and preview candidate compensations below (Keys 1-4, Space)",
+    "leftBase": "Left Anchor Reference",
+    "rightPreview": "Right Compensated Area (Live Preview)",
+    "splitComparisonTooltip": "Top half is your selection, bottom half is ground truth"
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_hue_induction/RelHueInductionView.tsx
+~~~~~
+~~~~~tsx
+import { Sparkles } from 'lucide-preact';
+import { useEffect, useState } from 'preact/hooks';
+import { DualViewportContainer } from '../../components/common/DualViewportContainer';
+import { StandardNafcView } from '../../components/common/StandardNafcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
+
+export interface RelHueInductionViewProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer?: RelativeColorHitResult | null;
+  onAnswer: (chosenColor: [number, number, number]) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function RelHueInductionView({
+  question,
+  showAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: RelHueInductionViewProps) {
+  const { t } = useCardTranslation('rel_hue_induction');
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+
+  const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
+
+  useEffect(() => {
+    setSelectedIdx(0);
+  }, [question.id]);
+
+  const bgLeftHex = hsvToHex(...(bgLeft ?? [0, 0, 90]));
+  const bgRightHex = hsvToHex(...(bgRight ?? [0, 0, 20]));
+  const centerLeftHex = hsvToHex(...(targetLeftCenter ?? [0, 0, 50]));
+  const idealRightHex = hsvToHex(...(idealRightCenter ?? [0, 0, 50]));
+
+  const targetIdx = correctIndex ?? 0;
+  const activeColor = options?.[selectedIdx] ?? idealRightCenter ?? [0, 0, 50];
+  const activeRightHex = hsvToHex(...activeColor);
+
+  const nafcOptions = (options || []).map((opt, idx) => {
+    const isTarget = idx === targetIdx;
+    const hexVal = hsvToHex(...opt);
+    return {
+      key: `hue-opt-${idx}-${hexVal}`,
+      title: t('common.candidateN', { num: idx + 1 }),
+      value: opt,
+      isCorrect: isTarget,
+      content: (
+        <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-border/60 p-1 flex items-center justify-center bg-card">
+          <div
+            className="w-full h-full rounded-lg shadow-sm border border-border/50"
+            style={{ backgroundColor: hexVal }}
+          />
+        </div>
+      ),
+    };
+  });
+
+  return (
+    <StandardNafcView<[number, number, number]>
+      questionId={question.id}
+      hintText={t('views.hint')}
+      hintIcon={Sparkles}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-3xl"
+      columns={4}
+      options={nafcOptions}
+      selectedIndex={selectedIdx}
+      showAnswer={showAnswer}
+      disabled={disabled}
+      submitMode="button"
+      submitButtonText={t('common.confirmSpace')}
+      onSelectIndex={(idx) => setSelectedIdx(idx)}
+      onAnswer={(_idx, option) => {
+        const chosen = option.value ?? activeColor;
+        onAnswer(chosen);
+      }}
+      preview={
+        <DualViewportContainer
+          leftTitle={t('views.leftBase')}
+          rightTitle={t('views.rightPreview')}
+          leftContent={
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+              style={{ backgroundColor: bgLeftHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all"
+                style={{ backgroundColor: centerLeftHex }}
+              />
+            </div>
+          }
+          rightContent={
+            <div
+              className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+              style={{ backgroundColor: bgRightHex }}
+            >
+              <div
+                className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+                style={{ backgroundColor: activeRightHex }}
+              >
+                {showAnswer && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-1/2"
+                    style={{ backgroundColor: idealRightHex }}
+                    title={t('views.splitComparisonTooltip')}
+                  />
+                )}
+              </div>
+            </div>
+          }
+        />
+      }
+    />
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_hue_induction/index.tsx
+~~~~~
+~~~~~tsx
+import { Palette } from 'lucide-preact';
+import type { CardManifest } from '../../core/cardContract';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateHueInductionQuestion,
+} from '../../core/color/relativeColor';
+import type { RelativeColorSettings } from '../../storage/settings';
+import { RelHueInductionView } from './RelHueInductionView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
+
+export const relHueInductionCard: CardManifest<
+  RelativeColorQuestionData,
+  RelativeColorHitResult,
+  [number, number, number],
+  RelativeColorSettings
+> = {
+  id: 'rel_hue_induction',
+  domain: 'color_and_value',
+  icon: Palette,
+  tags: {
+    domain: ['color_and_value'],
+    path: ['relational_mapping'],
+    challenge: ['illusion_piercing'],
+    interaction: ['multi_choice'],
+    status: 'stable',
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  training: {
+    generateQuestion: (level) => generateHueInductionQuestion(level),
+    evaluateAnswer: (userVal, q) => checkRelativeColorHit('HUE_INDUCTION', userVal, q),
+    isHit: (res) => res.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    extractRecordDetails: (q, hitResult, userVal) => ({
+      bgLeft: q.bgLeft,
+      bgRight: q.bgRight,
+      targetLeftCenter: q.targetLeftCenter,
+      idealRightCenter: q.idealRightCenter,
+      userRightColor: userVal,
+      options: q.options,
+      correctIndex: q.correctIndex,
+      deltaEError: hitResult.deltaEError,
+    }),
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+      <RelHueInductionView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={onAnswer}
+        disabled={disabled}
+        showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
+      />
+    ),
+  },
+};
+
+export default relHueInductionCard;
+~~~~~
+
+#### Acts 5: 创建 `rel_decontextual_2afc` 卡片
+
+~~~~~act
+write_file
+src/cards/rel_decontextual_2afc/locales/zh-CN.json
+~~~~~
+~~~~~json
+{
+  "title": "环境穿透判别",
+  "desc": "穿透强对比背景的视错觉陷阱，快速二选一判别色块的客观物理明度真理",
+  "instruction": "穿透背景视错觉干扰，二选一判别哪一侧中心色块「客观物理明度更高」",
+  "views": {
+    "hint": "穿透背景视错觉，判别哪一侧中心色块「客观物理明度更高」",
+    "physicallyBrighter": "物理明度更高 (V: {{v}}%)",
+    "physicallyDarker": "物理更暗 (V: {{v}}%)"
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_decontextual_2afc/locales/en-US.json
+~~~~~
+~~~~~json
+{
+  "title": "Decontextualized 2AFC",
+  "desc": "Pierce through simultaneous contrast illusions to identify the objectively brighter color.",
+  "instruction": "Identify which center square is physically brighter (Keys 1 / 2).",
+  "views": {
+    "hint": "Pierce background illusion and identify the objectively brighter center square",
+    "physicallyBrighter": "Physically Brighter (V: {{v}}%)",
+    "physicallyDarker": "Physically Darker (V: {{v}}%)"
+  }
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx
+~~~~~
+~~~~~tsx
+import { Eye } from 'lucide-preact';
+import { Standard2AfcView } from '../../components/common/Standard2AfcView';
+import { hsvToHex } from '../../core/color/colorUtils';
+import type { RelativeColorHitResult, RelativeColorQuestionData } from '../../core/color/relativeColor';
+import { useCardTranslation } from '../../core/i18n';
+import { PALETTE } from '../../utils/theme';
+
+export interface RelDecontextual2AfcViewProps {
+  question: RelativeColorQuestionData;
+  showAnswer: boolean;
+  userAnswer?: RelativeColorHitResult | null;
+  onAnswer: (choice: 'A' | 'B') => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function RelDecontextual2AfcView({
+  question,
+  showAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: RelDecontextual2AfcViewProps) {
+  const { t } = useCardTranslation('rel_decontextual_2afc');
+  const isAHit = question.largerPhysicalSide === 'A';
+  const isBHit = question.largerPhysicalSide === 'B';
+
+  const hexBgA = hsvToHex(...(question.bgLeft ?? [0, 0, 90]));
+  const hexBgB = hsvToHex(...(question.bgRight ?? [0, 0, 10]));
+  const hexCenterA = hsvToHex(...(question.centerColorA ?? [0, 0, 50]));
+  const hexCenterB = hsvToHex(...(question.centerColorB ?? [0, 0, 50]));
+
+  return (
+    <Standard2AfcView
+      questionId={question.id}
+      hintText={t('views.hint')}
+      hintIcon={Eye}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+      showAnswer={showAnswer}
+      disabled={disabled}
+      onAnswer={onAnswer}
+      optionA={{
+        title: t('common.areaA'),
+        isCorrect: isAHit,
+        badge: isAHit
+          ? t('views.physicallyBrighter', {
+              v: question.centerColorA?.[2] ?? 50,
+            })
+          : t('views.physicallyDarker', {
+              v: question.centerColorA?.[2] ?? 50,
+            }),
+        content: (
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
+          >
+            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
+          </div>
+        ),
+      }}
+      optionB={{
+        title: t('common.areaB'),
+        isCorrect: isBHit,
+        badge: isBHit
+          ? t('views.physicallyBrighter', {
+              v: question.centerColorB?.[2] ?? 50,
+            })
+          : t('views.physicallyDarker', {
+              v: question.centerColorB?.[2] ?? 50,
+            }),
+        content: (
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
+          >
+            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
+          </div>
+        ),
+      }}
+    />
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_decontextual_2afc/index.tsx
+~~~~~
+~~~~~tsx
+import { Columns } from 'lucide-preact';
+import type { CardManifest } from '../../core/cardContract';
+import {
+  type RelativeColorHitResult,
+  type RelativeColorQuestionData,
+  checkRelativeColorHit,
+  generateDecontextual2AfcQuestion,
+} from '../../core/color/relativeColor';
+import type { RelativeColorSettings } from '../../storage/settings';
+import { RelDecontextual2AfcView } from './RelDecontextual2AfcView';
+import enUS from './locales/en-US.json';
+import zhCN from './locales/zh-CN.json';
+
+export const relDecontextual2AfcCard: CardManifest<
+  RelativeColorQuestionData,
+  RelativeColorHitResult,
+  'A' | 'B',
+  RelativeColorSettings
+> = {
+  id: 'rel_decontextual_2afc',
+  domain: 'color_and_value',
+  icon: Columns,
+  tags: {
+    domain: ['color_and_value'],
+    path: ['relational_mapping'],
+    challenge: ['illusion_piercing'],
+    interaction: ['binary_choice'],
+    status: 'stable',
+  },
+  locales: {
+    'zh-CN': zhCN,
+    'en-US': enUS,
+  },
+  training: {
+    generateQuestion: (level) => generateDecontextual2AfcQuestion(level),
+    evaluateAnswer: (userVal, q) => checkRelativeColorHit('DECONTEXTUAL_2AFC', userVal, q),
+    isHit: (res) => res.isHit,
+    getQuestionLevel: (q) => q.difficultyLevel,
+    extractRecordDetails: (q, hitResult, userVal) => ({
+      userChoice: userVal,
+      correctChoice: q.largerPhysicalSide,
+      physicalValueDiff: q.physicalValueDiff,
+    }),
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
+      <RelDecontextual2AfcView
+        question={question}
+        showAnswer={showAnswer}
+        userAnswer={userAnswer}
+        onAnswer={onAnswer}
+        disabled={disabled}
+        showCanvasHints={(settings.showCanvasHints as boolean) ?? true}
+      />
+    ),
+  },
+};
+
+export default relDecontextual2AfcCard;
+~~~~~
+
+#### Acts 6: 绞杀删除已迁移的 `src/packs/relative_color` 目录
+
+~~~~~act
 delete_file
-src/packs/color/index.ts
+src/packs/relative_color/components/AlbersInductionView.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/components/Decontextual2AfcView.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/components/HueInductionView.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/components/VectorShiftView.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/locales/en-US.json
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/locales/zh-CN.json
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/utils/generators.ts
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/utils/hitDetection.ts
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/utils/inductionMath.ts
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/utils/types.ts
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/utils/index.ts
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/views/RelativeColorCanvas.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/plugin.tsx
+~~~~~
+
+~~~~~act
+delete_file
+src/packs/relative_color/index.ts
 ~~~~~
 
 ### 下一步建议
-1. 检查 `src/packs/relative_color/` 目录中的卡片定义与视图结构，按同样规范重构迁移为 `rel_vector_shift`、`rel_lightness_induction`、`rel_hue_induction` 和 `rel_decontextual_2afc` 4 张自包含单卡。
-2. 在迁移完成后运行 TypeScript 类型检查与单元测试，验证双向中英文词条解析与分析图表完整性。
+1. 运行编译与测试指令（如 `pnpm tsc --noEmit`），验证色彩感知域（阶段 3）的全部 8 张卡片（4 张绝对色彩三要素 + 4 张相对环境色）类型无报错。
+2. 进入阶段 4：图底与抽象域迁移（Negative Space 4 张卡片与 Abstraction 8 张卡片）。
