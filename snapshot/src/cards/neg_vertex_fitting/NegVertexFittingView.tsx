@@ -4,6 +4,7 @@ import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import type { Point } from '../../types';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import { FITTING_CANVAS_SIZE, type HitResult, type QuestionData } from './types';
+import { evaluateAnswer } from './utils/generator';
 
 export interface NegVertexFittingViewProps {
   question: QuestionData;
@@ -66,13 +67,14 @@ export function NegVertexFittingView({
     [question.truncatedVertices, question.vertices, showAnswer],
   );
 
-  const handleCommitPoint = (clickPoint: Point) => {
-    // 采用自身 evaluateAnswer 判定
-    const { evaluateAnswer } = require('./utils/generator');
-    const hitResult: HitResult = evaluateAnswer(clickPoint, question);
-    if (!hitResult.isWithinRange) return;
-    onAnswer({ clickPoint, hitResult });
-  };
+  const handleCommitPoint = useCallback(
+    (clickPoint: Point) => {
+      const hitResult: HitResult = evaluateAnswer(clickPoint, question);
+      if (!hitResult.isWithinRange) return;
+      onAnswer({ clickPoint, hitResult });
+    },
+    [question, onAnswer],
+  );
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
@@ -96,11 +98,7 @@ export function NegVertexFittingView({
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           customOverlayRender={handleCustomOverlayRender}
-          onCommitPoint={(pt) => {
-            const hitResult = require('./utils/generator').evaluateAnswer(pt, question);
-            if (!hitResult.isWithinRange) return;
-            onAnswer({ clickPoint: pt, hitResult });
-          }}
+          onCommitPoint={handleCommitPoint}
         />
       </div>
     </div>

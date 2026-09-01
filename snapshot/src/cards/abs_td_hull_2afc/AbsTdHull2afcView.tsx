@@ -22,7 +22,6 @@ export interface AbsTdHull2afcViewProps {
 export function AbsTdHull2afcView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

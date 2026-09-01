@@ -6,7 +6,7 @@ import { NegVertexFittingView } from './NegVertexFittingView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { evaluateAnswer, generateQuestion } from './utils/generator';
+import { generateQuestion } from './utils/generator';
 
 export const negVertexFittingCard: CardManifest<
   QuestionData,

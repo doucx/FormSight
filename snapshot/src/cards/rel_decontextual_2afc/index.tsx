@@ -36,7 +36,7 @@ export const relDecontextual2AfcCard: CardManifest<
     evaluateAnswer: (userVal, q) => checkRelativeColorHit('DECONTEXTUAL_2AFC', userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult, userVal) => ({
+    extractRecordDetails: (q, _hitResult, userVal) => ({
       userChoice: userVal,
       correctChoice: q.largerPhysicalSide,
       physicalValueDiff: q.physicalValueDiff,

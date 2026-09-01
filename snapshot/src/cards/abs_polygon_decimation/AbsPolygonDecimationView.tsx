@@ -22,7 +22,6 @@ export interface AbsPolygonDecimationViewProps {
 export function AbsPolygonDecimationView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

@@ -20,7 +20,6 @@ export interface AbsTdNotan2afcViewProps {
 export function AbsTdNotan2afcView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

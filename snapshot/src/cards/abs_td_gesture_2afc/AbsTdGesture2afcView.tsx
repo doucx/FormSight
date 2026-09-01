@@ -25,7 +25,6 @@ export interface AbsTdGesture2afcViewProps {
 export function AbsTdGesture2afcView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
