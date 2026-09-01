@@ -170,15 +170,36 @@ export function getCardDesc(
 }
 
 /**
- * 卡片局部翻译 Hook，支持纯相对 key 自动补全为 `cards.<cardId>.<key>`
+ * 卡片局部翻译 Hook，优先查找 `cards.<cardId>.<key>`，未命中时自动回退到全局词典
  */
 export function useCardTranslation(cardId: string) {
   const { t: baseT, locale, setLocale } = useTranslation();
 
-  const cardT = (key: string, params?: Record<string, string | number>) => {
-    const isGlobal = key.startsWith('cards.') || key.startsWith('global.');
-    const fullKey = isGlobal ? key : `cards.${cardId}.${key.replace(/^\./, '')}`;
-    return baseT(fullKey, params);
+  const cardT = <T = string>(key: string, params?: Record<string, string | number>): T => {
+    const isExplicitGlobal =
+      key.startsWith('cards.') ||
+      key.startsWith('common.') ||
+      key.startsWith('global.') ||
+      key.startsWith('tags.') ||
+      key.startsWith('nav.') ||
+      key.startsWith('settings.') ||
+      key.startsWith('stats.') ||
+      key.startsWith('plan.') ||
+      key.startsWith('home.');
+
+    if (isExplicitGlobal) {
+      return baseT<T>(key, params);
+    }
+
+    const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
+    const result = baseT<T>(cardKey, params);
+
+    // 若未在卡片局部命名空间查找到（返回了原始拼装 key），回退尝试直接查全局
+    if (typeof result === 'string' && result === cardKey) {
+      return baseT<T>(key, params);
+    }
+
+    return result;
   };
 
   return { t: cardT, locale, setLocale };
