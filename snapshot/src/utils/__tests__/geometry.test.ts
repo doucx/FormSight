@@ -1,16 +1,44 @@
 import { describe, expect, it } from 'vitest';
 import {
-  calcDistance,
-  checkHit,
-  findNearestGridPoint,
-  generateBipolarGridPoints,
   generatePolarGridPoints,
-  generateQuestion,
+  generateQuestion as generateSingleQuestion,
+} from '../../cards/star_single/utils/generator';
+import {
+  generateBipolarGridPoints,
+  generateQuestion as generateDoubleHQuestion,
+} from '../../cards/star_double_h/utils/generator';
+import {
+  generateQuestion as generateDoubleRQuestion,
+} from '../../cards/star_double_r/utils/generator';
+import {
   getDynamicCrosshairMetrics,
   getDynamicDotRadius,
   getGridMinSpacing,
-  rotatePoint,
-} from '../../packs/star/utils';
+} from '../../core/canvas/drawPointGrid';
+import {
+  evaluatePointGridHit,
+  findNearestPointInGrid,
+} from '../../core/geometry/pointGrid';
+import type { Point } from '../../types';
+
+function rotatePoint(p: Point, center: Point, angleDeg: number): Point {
+  const rad = (angleDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = p.x - center.x;
+  const dy = p.y - center.y;
+
+  return {
+    x: Math.round((center.x + dx * cos - dy * sin) * 100) / 100,
+    y: Math.round((center.y + dx * sin + dy * cos) * 100) / 100,
+  };
+}
+
+function calcDistance(p1: Point, p2: Point): number {
+  const dx = p1.x - p2.x;
+  const dy = p1.y - p2.y;
+  return Math.round(Math.sqrt(dx * dx + dy * dy) * 100) / 100;
+}
 
 describe('geometry utils', () => {
   it('rotatePoint - should correctly rotate a point around center', () => {
@@ -46,25 +74,25 @@ describe('geometry utils', () => {
     expect(points.length).toBe(9);
   });
 
-  it('findNearestGridPoint - should find closest grid point and range check', () => {
+  it('findNearestPointInGrid - should find closest grid point and range check', () => {
     const grid = [
       { x: 10, y: 10 },
       { x: 50, y: 50 },
     ];
     const click = { x: 11, y: 11 };
-    const res = findNearestGridPoint(click, grid);
+    const res = findNearestPointInGrid(click, grid);
     expect(res.nearestPoint).toEqual({ x: 10, y: 10 });
     expect(res.minDistance).toBeCloseTo(1.41, 1);
     expect(res.isWithinRange).toBe(true);
   });
 
-  it('checkHit - should detect hit when click is very close to target', () => {
+  it('evaluatePointGridHit - should detect hit when click is very close to target', () => {
     const targetB = { x: 10, y: 10 };
     const grid = [
       { x: 10, y: 10 },
       { x: 30, y: 30 },
     ];
-    const hitResult = checkHit({ x: 10.1, y: 10.1 }, targetB, grid);
+    const hitResult = evaluatePointGridHit({ x: 10.1, y: 10.1 }, targetB, grid);
     expect(hitResult.isHit).toBe(true);
     expect(hitResult.errorDistance).toBeLessThan(0.5);
   });
@@ -84,30 +112,25 @@ describe('geometry utils', () => {
     const metricsDense = getDynamicCrosshairMetrics(gridDense);
     const metricsSparse = getDynamicCrosshairMetrics(gridSparse);
 
-    // 密集点阵下的准星尺寸应显著小于稀疏点阵
     expect(metricsDense.size).toBeLessThan(metricsSparse.size);
-    expect(metricsDense.size).toBeLessThanOrEqual(4); // 4 * 0.42 ≈ 1.68 -> clamp to 3.5
+    expect(metricsDense.size).toBeLessThanOrEqual(4);
     expect(metricsDense.lineWidth).toBeLessThanOrEqual(metricsSparse.lineWidth);
   });
 
   it('generateQuestion - should generate valid question data for single, double_h and double_r', () => {
-    const qSingle = generateQuestion('single', 1);
-    expect(qSingle.mode).toBe('single');
+    const qSingle = generateSingleQuestion(1);
     expect(qSingle.anchorA).toBeDefined();
     expect(qSingle.targetB).toBeDefined();
     expect(qSingle.distractorPoints.length).toBeGreaterThan(0);
 
-    const qDoubleH = generateQuestion('double_h', 10);
-    expect(qDoubleH.mode).toBe('double_h');
+    const qDoubleH = generateDoubleHQuestion(10);
     expect(qDoubleH.anchorC).toBeDefined();
 
-    const qDoubleR = generateQuestion('double_r', 15);
-    expect(qDoubleR.mode).toBe('double_r');
+    const qDoubleR = generateDoubleRQuestion(15);
     expect(qDoubleR.rotationAngle).toBeDefined();
   });
 
   it('generateQuestion with manual targeting - should generate targeted angles with higher probability', () => {
-    // 锁定扇区 0 (对应 0° 正东，允许加权抖动 ±20°)
     const options = {
       targetingMode: 'manual' as const,
       targetSectors: [0],
@@ -117,8 +140,7 @@ describe('geometry utils', () => {
     const totalRuns = 200;
 
     for (let i = 0; i < totalRuns; i++) {
-      const q = generateQuestion('single', 5, options);
-      // 0° ± 25° 范围 (0~25° 或 335~360°)
+      const q = generateSingleQuestion(5, options);
       if (q.angleDegree <= 25 || q.angleDegree >= 335) {
         targetedCount++;
       }

@@ -7,7 +7,7 @@ import { createStarDoubleRAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { checkHit, generateQuestion } from './utils/generator';
+import { generateQuestion } from './utils/generator';
 
 const SECTOR_KEYS = [
   'sectors.e',

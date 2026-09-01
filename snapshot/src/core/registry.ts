@@ -33,19 +33,38 @@ export function qualifySchemas(
 ): SettingFieldSchema[] | undefined {
   if (!schemas) return undefined;
   return schemas.map((schema) => {
-    const s = { ...schema };
-    if (s.title) s.title = qualifyCardKey(s.title, cardId) ?? s.title;
-    if (s.subTitle) s.subTitle = qualifyCardKey(s.subTitle, cardId);
-    if (s.type === 'targeting' && Array.isArray(s.sectors)) {
-      s.sectors = s.sectors.map((sec) => qualifyCardKey(sec, cardId) ?? sec);
+    if (schema.type === 'sliderMargin') {
+      return {
+        ...schema,
+        title: qualifyCardKey(schema.title, cardId),
+      };
     }
-    if (s.options) {
-      s.options = s.options.map((opt) => ({
-        ...opt,
-        label: qualifyCardKey(opt.label, cardId) ?? opt.label,
-      }));
+    if (schema.type === 'toggle') {
+      return {
+        ...schema,
+        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
+        description: qualifyCardKey(schema.description, cardId) ?? schema.description,
+      };
     }
-    return s;
+    if (schema.type === 'buttonGroup') {
+      return {
+        ...schema,
+        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
+        options: schema.options.map((opt) => ({
+          ...opt,
+          label: qualifyCardKey(opt.label, cardId) ?? opt.label,
+        })),
+      };
+    }
+    if (schema.type === 'targeting') {
+      return {
+        ...schema,
+        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
+        subTitle: qualifyCardKey(schema.subTitle, cardId) ?? schema.subTitle,
+        sectors: schema.sectors.map((sec) => qualifyCardKey(sec, cardId) ?? sec),
+      };
+    }
+    return schema;
   });
 }
 
