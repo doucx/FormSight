@@ -7,6 +7,7 @@ import { registry } from './core/registry';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useTheme } from './hooks/useTheme';
+import { reloadAllStores } from './stores/index';
 import { refreshAppData } from './stores/profileStore';
 import { $settings } from './stores/settingsStore';
 import { $toasts, dismissToast, showToast } from './stores/toastStore';
@@ -42,7 +43,7 @@ export function App() {
           settings={$settings.value}
           onClose={() => setIsGlobalSettingsOpen(false)}
           onSave={() => refreshAppData()}
-          onDataChanged={refreshAppData}
+          onDataChanged={reloadAllStores}
           showToast={showToast}
         />
       )}

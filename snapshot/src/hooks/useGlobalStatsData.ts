@@ -1,32 +1,17 @@
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useMemo, useState } from 'preact/hooks';
 import { CHALLENGE_TAGS, DOMAIN_TAGS, PATH_TAGS } from '../config/tags';
 import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import { type DailySummaryData, getDailySummaries, getLocalDateString } from '../storage/index';
+import { getLocalDateString } from '../storage/index';
+import { $dailySummaries, $isProfilesLoaded } from '../stores/profileStore';
 import type { CognitivePathTag, MentalChallengeTag, VisualDomainTag } from '../types/card';
 
-export function useGlobalStatsData(dataVersion = 0) {
+export function useGlobalStatsData() {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(true);
-  const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: dataVersion triggers data reload
-  useEffect(() => {
-    let isMounted = true;
-    const loadData = async () => {
-      setLoading(true);
-      const data = await getDailySummaries();
-      if (isMounted) {
-        setSummaries(data);
-        setLoading(false);
-      }
-    };
-    loadData();
-    return () => {
-      isMounted = false;
-    };
-  }, [dataVersion]);
+  const summaries = $dailySummaries.value;
+  const loading = !$isProfilesLoaded.value;
 
   const filteredSummaries = useMemo(() => {
     return summaries.filter((s) => {

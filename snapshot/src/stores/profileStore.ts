@@ -1,15 +1,24 @@
 import { batch, computed, signal } from '@preact/signals';
 import {
   getAllProfiles,
-  getTodaySummaries,
+  getDailySummaries,
   getTrainingTimeMs,
 } from '../storage/db/queries';
-import type { DailySummaryData, UnifiedProfileData } from '../storage/db/schema';
+import {
+  type DailySummaryData,
+  type UnifiedProfileData,
+  getLocalDateString,
+} from '../storage/db/schema';
 
 export const $profiles = signal<Record<string, UnifiedProfileData>>({});
-export const $todaySummaries = signal<DailySummaryData[]>([]);
+export const $dailySummaries = signal<DailySummaryData[]>([]);
 export const $totalTimeMs = signal<number>(0);
 export const $isProfilesLoaded = signal<boolean>(false);
+
+export const $todaySummaries = computed<DailySummaryData[]>(() => {
+  const todayStr = getLocalDateString(Date.now());
+  return $dailySummaries.value.filter((s) => s.date === todayStr);
+});
 
 export const $todayStatsMap = computed<Record<string, { count: number; timeMs: number }>>(() => {
   const map: Record<string, { count: number; timeMs: number }> = {};
@@ -37,10 +46,10 @@ export const $overallStats = computed(() => {
 });
 
 export async function refreshAppData(): Promise<void> {
-  const [timeMs, profileList, todayList] = await Promise.all([
+  const [timeMs, profileList, allSummaries] = await Promise.all([
     getTrainingTimeMs(),
     getAllProfiles(),
-    getTodaySummaries(),
+    getDailySummaries(),
   ]);
 
   const pMap: Record<string, UnifiedProfileData> = {};
@@ -51,7 +60,7 @@ export async function refreshAppData(): Promise<void> {
   batch(() => {
     $totalTimeMs.value = timeMs;
     $profiles.value = pMap;
-    $todaySummaries.value = todayList;
+    $dailySummaries.value = allSummaries;
     $isProfilesLoaded.value = true;
   });
 }
