@@ -25,6 +25,9 @@ export function renderRoughnessBiasChart(
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
   // 背景填充
   ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.fillRect(0, 0, width, height);
@@ -175,6 +178,9 @@ export function renderRoughnessBandChart(
 
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 
   ctx.fillStyle = CANVAS_THEME.bg.primary;
   ctx.fillRect(0, 0, width, height);

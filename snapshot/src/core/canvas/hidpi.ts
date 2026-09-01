@@ -19,8 +19,6 @@ export function setupHiDpiCanvas(
 
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
 
   ctx.resetTransform?.();
   ctx.scale(dpr, dpr);
@@ -47,6 +45,10 @@ export function initSquareHiDpiCanvas(
   const size = Math.round(rect.width) || fallbackSize;
   const ctx = setupHiDpiCanvas(canvas, size, size);
   if (!ctx) return null;
+
+  // 专属分析图表的正方形绘图，补齐基准 CSS 尺寸
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
 
   if (bgColor) {
     ctx.fillStyle = bgColor;

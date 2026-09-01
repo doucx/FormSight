@@ -14,6 +14,9 @@ export function renderTrendChartCanvas(
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
 
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
   const padding = { top: 20, right: 20, bottom: 25, left: 30 };
   const chartW = width - padding.left - padding.right;
   const chartH = height - padding.top - padding.bottom;
@@ -101,6 +104,9 @@ export function renderSessionTrendChartCanvas(
   const height = 160;
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx || history.length === 0) return;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 
   const padding = { top: 25, right: 25, bottom: 30, left: 45 };
   const chartW = width - padding.left - padding.right;

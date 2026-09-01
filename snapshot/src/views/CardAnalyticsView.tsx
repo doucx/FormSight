@@ -353,7 +353,7 @@ export function CardAnalyticsView({
             <canvas
               key={`${card.id}-${currentView.id}`}
               ref={canvasRef}
-              className="max-w-full rounded-2xl border border-border/60 shadow-xs block"
+              className="max-w-full h-auto rounded-2xl border border-border/60 shadow-xs block"
             />
           </div>
 
