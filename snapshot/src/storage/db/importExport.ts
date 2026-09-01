@@ -17,7 +17,6 @@ import {
 import {
   DB_VERSION,
   type DailySummaryData,
-  type TrainingDomain,
   type UnifiedProfileData,
   type UnifiedSessionData,
   type UnifiedTrialRecord,
