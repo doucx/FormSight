@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M app.tsx, M AppRouter.tsx, M useAppBootstrap.ts ... and 7 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788267789.8480237, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788267798.0161462, "duration_ms": 0}}
