@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M useAppBootstrap.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262941.0099497, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(storage): 将用户设置与训练计划完整迁移至 IndexedDB", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262983.24285, "duration_ms": 0}}
