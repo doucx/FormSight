@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
 import { useTranslation } from '../../core/i18n';
-import { findNearestGridPoint } from '../../packs/star/utils/hitDetection';
 import type { Point } from '../../types';
 import { CANVAS_THEME } from '../../utils/theme';
 
@@ -190,7 +190,7 @@ export function PointClickCanvas({
     const coords = getCanvasCoordinates(e.clientX, e.clientY);
     if (!coords) return;
 
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
 
     if (isWithinRange) {
       setHoverPoint(nearestPoint);
@@ -209,7 +209,7 @@ export function PointClickCanvas({
     const coords = getCanvasCoordinates(e.clientX, e.clientY);
     if (!coords) return;
 
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
     if (!isWithinRange) return;
 
     setHoverPoint(null);
@@ -232,7 +232,7 @@ export function PointClickCanvas({
       y: coords.relY - 75,
     });
 
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
     setHoverPoint(isWithinRange ? nearestPoint : null);
     updateLoupeCanvas(coords.canvasPoint);
   };
@@ -254,7 +254,7 @@ export function PointClickCanvas({
       y: coords.relY - 75,
     });
 
-    const { nearestPoint, isWithinRange } = findNearestGridPoint(coords.canvasPoint, gridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(coords.canvasPoint, gridPoints);
     setHoverPoint(isWithinRange ? nearestPoint : null);
     updateLoupeCanvas(coords.canvasPoint);
   };
@@ -270,7 +270,7 @@ export function PointClickCanvas({
       setHoverPoint(null);
       onCommitPoint(commitPt);
     } else if (currentCanvasPos) {
-      const { nearestPoint, isWithinRange } = findNearestGridPoint(currentCanvasPos, gridPoints);
+      const { nearestPoint, isWithinRange } = findNearestPointInGrid(currentCanvasPos, gridPoints);
       if (isWithinRange) {
         setHoverPoint(null);
         onCommitPoint(nearestPoint);

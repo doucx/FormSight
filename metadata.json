@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 完成阶段 1 试点试验：展平 Star 寻星 3 张卡片并绞杀旧包", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788254642.447392, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 PointClickCanvas 对已废弃 star pack 路径的引用", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788254759.7854736, "duration_ms": 0}}
