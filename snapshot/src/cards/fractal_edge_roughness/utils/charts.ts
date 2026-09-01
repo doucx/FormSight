@@ -216,11 +216,7 @@ export function renderRoughnessBandChart(
     // 题目样本与误差信息
     ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '11px ui-monospace, monospace';
-    ctx.fillText(
-      `${b.total} 题${b.total > 0 ? ` · 均差 ΔH ${avgErr}` : ''}`,
-      16,
-      y + 18,
-    );
+    ctx.fillText(`${b.total} 题${b.total > 0 ? ` · 均差 ΔH ${avgErr}` : ''}`, 16, y + 18);
 
     // 背景槽
     const barY = y + 4;
