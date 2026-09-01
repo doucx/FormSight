@@ -7,35 +7,19 @@ import { registry } from './core/registry';
 import { useAppBootstrap } from './hooks/useAppBootstrap';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useTheme } from './hooks/useTheme';
-import { useTodayStats } from './hooks/useTodayStats';
+import { refreshAppData } from './stores/profileStore';
+import { $settings } from './stores/settingsStore';
+import { $toasts, dismissToast, showToast } from './stores/toastStore';
 
 export function App() {
   const { route, navigate } = useHashRoute();
-  const { todayStats, refreshTodayStats } = useTodayStats();
-
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
 
-  const {
-    lastHomeRoute,
-    settings,
-    setSettings,
-    trainingPlan,
-    setTrainingPlan,
-    allPlans,
-    toasts,
-    profilesLoaded,
-    totalTimeMs,
-    profiles,
-    dataVersion,
-    showToast,
-    handleDismissToast,
-    refreshProfiles,
-    handleSelectPlanOnHome,
-  } = useAppBootstrap(route, refreshTodayStats);
+  const { lastHomeRoute } = useAppBootstrap(route);
 
   // 挂载夜间模式全局响应与监听
-  useTheme(settings);
+  useTheme($settings.value);
 
   const activeSettingsCard = activeSettingsCardId
     ? registry.getCardById(activeSettingsCardId)
@@ -47,30 +31,18 @@ export function App() {
         route={route}
         navigate={navigate}
         lastHomeRoute={lastHomeRoute}
-        totalTimeMs={totalTimeMs}
-        todayStats={todayStats}
-        profiles={profiles}
-        trainingPlan={trainingPlan}
-        allPlans={allPlans}
-        settings={settings}
-        profilesLoaded={profilesLoaded}
-        dataVersion={dataVersion}
-        onRefreshProfiles={refreshProfiles}
-        onSetTrainingPlan={setTrainingPlan}
-        onSelectPlanOnHome={handleSelectPlanOnHome}
         onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
         onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-        showToast={showToast}
       />
 
-      <ToastContainer toasts={toasts} onDismiss={handleDismissToast} />
+      <ToastContainer toasts={$toasts.value} onDismiss={dismissToast} />
 
       {isGlobalSettingsOpen && (
         <GlobalSettingsModal
-          settings={settings}
+          settings={$settings.value}
           onClose={() => setIsGlobalSettingsOpen(false)}
-          onSave={(newSettings) => setSettings(newSettings)}
-          onDataChanged={refreshProfiles}
+          onSave={() => refreshAppData()}
+          onDataChanged={refreshAppData}
           showToast={showToast}
         />
       )}
@@ -78,9 +50,9 @@ export function App() {
       {activeSettingsCard && (
         <SettingsModal
           card={activeSettingsCard}
-          settings={settings}
+          settings={$settings.value}
           onClose={() => setActiveSettingsCardId(null)}
-          onSave={(newSettings) => setSettings(newSettings)}
+          onSave={() => refreshAppData()}
         />
       )}
     </div>
