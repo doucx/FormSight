@@ -1,42 +1,12 @@
 {
-  "meta": {
-    "title": "Absolute Color Recognition",
-    "subTitle": "Color Recognition",
-    "desc": "Deconstruct the HSV/OKLab color space. Build perceptual acuity through progressive identification of Hue, Value, and Saturation."
-  },
-  "cards": {
-    "color_hue": {
-      "title": "Hue",
-      "desc": "Identify the exact angle of a color on the 360° color wheel.",
-      "instruction": "Locate the exact degree of the color on the 360° color wheel.",
-      "badge": "Hue"
-    },
-    "color_val": {
-      "title": "Value",
-      "desc": "Given hue, estimate the lightness/darkness value (0%~100%).",
-      "instruction": "Estimate the value/brightness percentage of the color (0%~100%).",
-      "badge": "Value"
-    },
-    "color_sat": {
-      "title": "Saturation",
-      "desc": "Given hue and value, estimate the purity and saturation (0%~100%).",
-      "instruction": "Estimate the saturation purity percentage of the color (0%~100%).",
-      "badge": "Saturation"
-    },
-    "color_all": {
-      "title": "Full Color Match",
-      "desc": "Simultaneously adjust Hue, Saturation, and Value to match the target color.",
-      "instruction": "Modulate H, S, and V tracks to match the target color on the left.",
-      "badge": "Match"
-    }
-  },
+  "title": "Hue",
+  "desc": "Identify the exact angle of a color on the 360° color wheel.",
+  "instruction": "Locate the exact degree of the color on the 360° color wheel.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
     "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb",
     "targetingTitle": "Targeted Hue Reinforcement",
-    "targetingSubTitle": "Select hue sectors for targeted practice:",
-    "enableHoverColorPreviewTitle": "Realtime Color Preview on Slider Hover",
-    "enableHoverColorPreviewDesc": "Follow trial preview swatch when cursor hovers over sliders"
+    "targetingSubTitle": "Select hue sectors for targeted practice:"
   },
   "sectors": {
     "red": "Red (0°-30°)",
@@ -55,7 +25,7 @@
   "analytics": {
     "hueBias": {
       "tabLabel": "Hue Bias",
-      "title": "Hue Bias Analysis",
+      "title": "{{title}} · Hue Bias Analysis",
       "subTitle": "Distribution of signed hue offsets across the spectrum",
       "cardTitle": "Systematic Hue Offset Diagnostics",
       "avgSignedBias": "Global Average Hue Deviation:",
@@ -68,7 +38,7 @@
     },
     "hueRing": {
       "tabLabel": "12-Hue Sensitivity",
-      "title": "12-Hue Sensitivity",
+      "title": "{{title}} · 12-Hue Sensitivity",
       "subTitle": "Perceptual accuracy across 12 OKLab hue sectors",
       "cardTitle": "Hue Blindspot Diagnostics",
       "weakestHint": "Lowest accuracy found in sector {{sector}}:",

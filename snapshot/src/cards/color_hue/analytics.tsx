@@ -6,35 +6,33 @@ import {
   calcSignedHueBias,
   renderHueBiasChartCanvas,
 } from '../../core/canvas/charts/drawHueBiasChart';
+import type { CardAnalyticsView } from '../../core/cardContract';
 import { hsvToHex } from '../../core/color/colorUtils';
-import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
+import { calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
-import { getTrialRecordsByCard } from '../../storage/index';
 
 const COLOR_SECTOR_KEYS = [
-  'packs.color.sectors.red',
-  'packs.color.sectors.orange',
-  'packs.color.sectors.yellow',
-  'packs.color.sectors.yellowGreen',
-  'packs.color.sectors.green',
-  'packs.color.sectors.cyanGreen',
-  'packs.color.sectors.cyan',
-  'packs.color.sectors.blue',
-  'packs.color.sectors.blueViolet',
-  'packs.color.sectors.violet',
-  'packs.color.sectors.magenta',
-  'packs.color.sectors.rose',
+  'sectors.red',
+  'sectors.orange',
+  'sectors.yellow',
+  'sectors.yellowGreen',
+  'sectors.green',
+  'sectors.cyanGreen',
+  'sectors.cyan',
+  'sectors.blue',
+  'sectors.blueViolet',
+  'sectors.violet',
+  'sectors.magenta',
+  'sectors.rose',
 ];
 
-export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
-  cardId: 'color_hue',
-  fetchRecords: async (id) => getTrialRecordsByCard(id),
-  views: [
+export function createColorHueAnalytics(): CardAnalyticsView[] {
+  return [
     {
       id: 'hue_bias_chart',
-      tabLabel: 'packs.color.analytics.hueBias.tabLabel',
-      title: 'packs.color.analytics.hueBias.title',
-      subTitle: 'packs.color.analytics.hueBias.subTitle',
+      tabLabel: 'analytics.hueBias.tabLabel',
+      title: 'analytics.hueBias.title',
+      subTitle: 'analytics.hueBias.subTitle',
       icon: Sparkles,
       renderVisualizer: (canvas, records) => {
         renderHueBiasChartCanvas(canvas, records);
@@ -61,7 +59,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         const validSectors = sectorBuckets
           .map((b, i) => ({
             sectorIdx: i,
-            label: i18n.t(COLOR_SECTOR_KEYS[i]),
+            label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
             total: b.total,
             accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
             avgBias: b.total > 0 ? Math.round((b.sumBias / b.total) * 10) / 10 : 0,
@@ -77,21 +75,21 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
 
         const signedBiasText =
           avgSignedBias > 0
-            ? i18n.t('packs.color.analytics.hueBias.clockwise', { val: avgSignedBias })
+            ? i18n.t('cards.color_hue.analytics.hueBias.clockwise', { val: avgSignedBias })
             : avgSignedBias < 0
-              ? i18n.t('packs.color.analytics.hueBias.counterClockwise', { val: avgSignedBias })
+              ? i18n.t('cards.color_hue.analytics.hueBias.counterClockwise', { val: avgSignedBias })
               : '0°';
 
         return (
           <Callout
             variant="warning"
             icon={AlertCircle}
-            title={i18n.t('packs.color.analytics.hueBias.cardTitle')}
+            title={i18n.t('cards.color_hue.analytics.hueBias.cardTitle')}
           >
             <div className="space-y-2 text-xs text-foreground pt-1">
               <div className="flex justify-between bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs font-mono">
                 <span className="text-muted-foreground">
-                  {i18n.t('packs.color.analytics.hueBias.avgSignedBias')}
+                  {i18n.t('cards.color_hue.analytics.hueBias.avgSignedBias')}
                 </span>
                 <span
                   className={`font-bold ${
@@ -109,7 +107,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               {maxBiasSector ? (
                 <div className="space-y-1.5">
                   <p className="text-muted-foreground">
-                    {i18n.t('packs.color.analytics.hueBias.maxBiasSector')}
+                    {i18n.t('cards.color_hue.analytics.hueBias.maxBiasSector')}
                     <span className="font-bold text-amber-700 dark:text-amber-300 ml-1">
                       {maxBiasSector.label}
                     </span>
@@ -127,7 +125,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                       </span>
                     </div>
                     <span className="font-black text-amber-700 dark:text-amber-300 font-mono text-xs">
-                      {i18n.t('packs.color.analytics.hueBias.avgBias')}{' '}
+                      {i18n.t('cards.color_hue.analytics.hueBias.avgBias')}{' '}
                       {maxBiasSector.avgBias > 0
                         ? `+${maxBiasSector.avgBias}°`
                         : `${maxBiasSector.avgBias}°`}
@@ -136,7 +134,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                 </div>
               ) : (
                 <p className="text-muted-foreground text-xs">
-                  {i18n.t('packs.color.analytics.hueBias.needMoreTrials')}
+                  {i18n.t('cards.color_hue.analytics.hueBias.needMoreTrials')}
                 </p>
               )}
             </div>
@@ -153,7 +151,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
-              <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
+              <span>{i18n.t('cards.color_hue.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>
           ),
@@ -162,9 +160,9 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
     },
     {
       id: 'hue_ring',
-      tabLabel: 'packs.color.analytics.hueRing.tabLabel',
-      title: 'packs.color.analytics.hueRing.title',
-      subTitle: 'packs.color.analytics.hueRing.subTitle',
+      tabLabel: 'analytics.hueRing.tabLabel',
+      title: 'analytics.hueRing.title',
+      subTitle: 'analytics.hueRing.subTitle',
       icon: PieChart,
       renderVisualizer: (canvas, records) => {
         const sectorBuckets = Array.from({ length: 12 }, () => ({
@@ -181,7 +179,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         }
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
           sectorIdx: i,
-          label: i18n.t(COLOR_SECTOR_KEYS[i]),
+          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
           total: b.total,
           accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
           avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
@@ -206,7 +204,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
         }
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
           sectorIdx: i,
-          label: i18n.t(COLOR_SECTOR_KEYS[i]),
+          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
           total: b.total,
           accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
           avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
@@ -221,12 +219,12 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           <Callout
             variant="warning"
             icon={AlertCircle}
-            title={i18n.t('packs.color.analytics.hueRing.cardTitle')}
+            title={i18n.t('cards.color_hue.analytics.hueRing.cardTitle')}
           >
             {weakestSector ? (
               <div className="space-y-2 pt-1">
                 <p className="text-foreground text-xs">
-                  {i18n.t('packs.color.analytics.hueRing.weakestHint', {
+                  {i18n.t('cards.color_hue.analytics.hueRing.weakestHint', {
                     sector: weakestSector.label,
                   })}
                 </p>
@@ -243,7 +241,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
                     </span>
                   </div>
                   <span className="font-black text-rose-600 dark:text-rose-400 text-sm">
-                    {i18n.t('packs.color.analytics.hueRing.accuracyRate', {
+                    {i18n.t('cards.color_hue.analytics.hueRing.accuracyRate', {
                       accuracy: weakestSector.accuracy,
                     })}
                   </span>
@@ -251,7 +249,7 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
               </div>
             ) : (
               <p className="text-muted-foreground text-xs">
-                {i18n.t('packs.color.analytics.hueRing.needMoreTrials')}
+                {i18n.t('cards.color_hue.analytics.hueRing.needMoreTrials')}
               </p>
             )}
           </Callout>
@@ -267,12 +265,12 @@ export const colorHueAnalyticsPlugin: CardAnalyticsPlugin = {
           ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs">
-              <span>{i18n.t('packs.color.analytics.hueBias.avgAbsError')}</span>
+              <span>{i18n.t('cards.color_hue.analytics.hueBias.avgAbsError')}</span>
               <span>{avgError}°</span>
             </div>
           ),
         };
       },
     },
-  ],
-};
+  ];
+}
