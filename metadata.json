@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(types): 修复未使用的变量声明、模块引入及迁移测试路径", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788257169.1650512, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修正 relativeColorUtils.test.ts 模块导入与函数调用", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788257424.8409781, "duration_ms": 0}}

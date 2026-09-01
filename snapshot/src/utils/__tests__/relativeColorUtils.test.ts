@@ -1,21 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import {
-  checkHit as checkDecontextualHit,
-  generateQuestion as generateDecontextualQuestion,
-} from '../../cards/rel_decontextual_2afc/utils/generator';
-import {
-  checkHit as checkHueInductionHit,
-  generateQuestion as generateHueInductionQuestion,
-} from '../../cards/rel_hue_induction/utils/generator';
-import {
-  checkHit as checkLightnessHit,
-  generateQuestion as generateLightnessQuestion,
-} from '../../cards/rel_lightness_induction/utils/generator';
-import {
-  checkHit as checkVectorShiftHit,
-  generateQuestion as generateVectorShiftQuestion,
-} from '../../cards/rel_vector_shift/utils/generator';
 import { getDistractorDistanceForLevel, okLabToHsv } from '../../core/color/oklchUtils';
+import {
+  checkRelativeColorHit,
+  generateDecontextual2AfcQuestion,
+  generateHueInductionQuestion,
+  generateLightnessInductionQuestion,
+  generateVectorShiftQuestion,
+} from '../../core/color/relativeColor';
 
 describe('relativeColorUtils with deterministic orthogonal distractors & Albers modes', () => {
   // === 1. 基础工具函数测试 ===
@@ -41,15 +32,15 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.options).toBeDefined();
     expect(q.correctIndex).toBeDefined();
 
-    expect(q.options.length).toBe(4);
+    expect(q.options?.length).toBe(4);
     expect(q.correctIndex).toBeGreaterThanOrEqual(0);
     expect(q.correctIndex).toBeLessThanOrEqual(3);
   });
 
   it('VECTOR_SHIFT - should detect target choice correctly', () => {
     const q = generateVectorShiftQuestion(5);
-    const correctOption = q.options[q.correctIndex];
-    const result = checkVectorShiftHit(correctOption, q);
+    const correctOption = q.options![q.correctIndex!];
+    const result = checkRelativeColorHit('VECTOR_SHIFT', correctOption, q);
     expect(result.isHit).toBe(true);
   });
 
@@ -75,13 +66,13 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
 
   // === 3. 阿尔伯斯 LIGHTNESS_INDUCTION 测试 ===
   it('LIGHTNESS_INDUCTION - should generate dual background with contrast and ideal center', () => {
-    const q = generateLightnessQuestion(5);
+    const q = generateLightnessInductionQuestion(5);
     expect(q.bgLeft).toBeDefined();
     expect(q.bgRight).toBeDefined();
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.idealRightCenter).toBeDefined();
 
-    const hitRes = checkLightnessHit(q.idealRightCenter[2], q);
+    const hitRes = checkRelativeColorHit('LIGHTNESS_INDUCTION', q.idealRightCenter!, q);
     expect(hitRes.isHit).toBe(true);
   });
 
@@ -93,23 +84,24 @@ describe('relativeColorUtils with deterministic orthogonal distractors & Albers 
     expect(q.targetLeftCenter).toBeDefined();
     expect(q.options).toBeDefined();
 
-    const hitRes = checkHueInductionHit(q.correctIndex, q);
+    const correctOption = q.options![q.correctIndex!];
+    const hitRes = checkRelativeColorHit('HUE_INDUCTION', correctOption, q);
     expect(hitRes.isHit).toBe(true);
   });
 
   // === 5. 阿尔伯斯 DECONTEXTUAL_2AFC 测试 ===
   it('DECONTEXTUAL_2AFC - should evaluate binary choice correctly and have decoupled backgrounds', () => {
-    const q = generateDecontextualQuestion(5);
+    const q = generateDecontextual2AfcQuestion(5);
     expect(q.largerPhysicalSide).toMatch(/^(A|B)$/);
     expect(q.physicalValueDiff).toBeGreaterThan(0);
 
-    const correctChoice = q.largerPhysicalSide;
+    const correctChoice = q.largerPhysicalSide!;
     const wrongChoice: 'A' | 'B' = correctChoice === 'A' ? 'B' : 'A';
 
-    const hitRes = checkDecontextualHit(correctChoice, q);
+    const hitRes = checkRelativeColorHit('DECONTEXTUAL_2AFC', correctChoice, q);
     expect(hitRes.isHit).toBe(true);
 
-    const missRes = checkDecontextualHit(wrongChoice, q);
+    const missRes = checkRelativeColorHit('DECONTEXTUAL_2AFC', wrongChoice, q);
     expect(missRes.isHit).toBe(false);
   });
 });
