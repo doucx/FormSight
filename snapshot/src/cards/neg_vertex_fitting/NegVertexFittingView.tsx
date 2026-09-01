@@ -1,30 +1,29 @@
 import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import type { Point } from '../../../types';
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
+import { PointClickCanvas } from '../../components/common/PointClickCanvas';
+import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
+import type { Point } from '../../types';
+import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import {
   FITTING_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
+  type HitResult,
+  type QuestionData,
+} from './types';
 
-interface VertexFittingViewProps {
-  question: NegativeSpaceQuestionData;
+export interface NegVertexFittingViewProps {
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
-  onAnswer: (clickPoint: Point) => void;
+  userAnswer: HitResult | null;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
   disabled?: boolean;
-  showCanvasHints?: boolean;
 }
 
-export function VertexFittingView({
+export function NegVertexFittingView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
-}: VertexFittingViewProps) {
+}: NegVertexFittingViewProps) {
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -38,7 +37,6 @@ export function VertexFittingView({
     });
   }, [question.vertices]);
 
-  // 自定义绘制截断正形与参考边框
   const handleCustomOverlayRender = useCallback(
     (ctx: CanvasRenderingContext2D) => {
       if (question.truncatedVertices && question.truncatedVertices.length >= 3) {
@@ -72,6 +70,14 @@ export function VertexFittingView({
     [question.truncatedVertices, question.vertices, showAnswer],
   );
 
+  const handleCommitPoint = (clickPoint: Point) => {
+    // 采用自身 evaluateAnswer 判定
+    const { evaluateAnswer } = require('./utils/generator');
+    const hitResult: HitResult = evaluateAnswer(clickPoint, question);
+    if (!hitResult.isWithinRange) return;
+    onAnswer({ clickPoint, hitResult });
+  };
+
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
       <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
@@ -94,7 +100,11 @@ export function VertexFittingView({
           disabled={disabled}
           maxDisplayWidth="w-full h-full aspect-square"
           customOverlayRender={handleCustomOverlayRender}
-          onCommitPoint={onAnswer}
+          onCommitPoint={(pt) => {
+            const hitResult = require('./utils/generator').evaluateAnswer(pt, question);
+            if (!hitResult.isWithinRange) return;
+            onAnswer({ clickPoint: pt, hitResult });
+          }}
         />
       </div>
     </div>

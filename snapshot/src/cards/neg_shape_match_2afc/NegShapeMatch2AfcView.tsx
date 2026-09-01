@@ -1,26 +1,31 @@
 import { Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Choice2AfcContainer } from '../../../components/common/Choice2AfcContainer';
-import { QuestionCardShell } from '../../../components/common/QuestionCardShell';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { useTranslation } from '../../../core/i18n';
-import { NEGATIVE_SPACE_CANVAS_SIZE, type NegativeSpaceQuestionData } from '../utils/index';
+import { Choice2AfcContainer } from '../../components/common/Choice2AfcContainer';
+import { QuestionCardShell } from '../../components/common/QuestionCardShell';
+import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
+import { useTranslation } from '../../core/i18n';
+import {
+  NEGATIVE_SPACE_CANVAS_SIZE,
+  type HitResult,
+  type QuestionData,
+} from './types';
 
-interface ShapeMemory2AfcViewProps {
-  question: NegativeSpaceQuestionData;
+export interface NegShapeMatch2AfcViewProps {
+  question: QuestionData;
   showAnswer: boolean;
+  userAnswer?: HitResult | null;
   onAnswer: (choice: 0 | 1) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function ShapeMemory2AfcView({
+export function NegShapeMatch2AfcView({
   question,
   showAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: ShapeMemory2AfcViewProps) {
+}: NegShapeMatch2AfcViewProps) {
   const { t } = useTranslation();
   const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
   const [selectedMatchChoice, setSelectedMatchChoice] = useState<'A' | 'B' | null>(null);
@@ -86,10 +91,10 @@ export function ShapeMemory2AfcView({
     <QuestionCardShell
       hintText={
         matchPhase === 'stimulus' && !isRevealed
-          ? t('packs.negative_space.views.memoryStimulusHint', {
+          ? t('cards.neg_shape_match_2afc.views.memoryStimulusHint', {
               ms: question.displayTimeMs ?? 1500,
             })
-          : t('packs.negative_space.views.memoryRecallHint')
+          : t('cards.neg_shape_match_2afc.views.memoryRecallHint')
       }
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}

@@ -1,19 +1,17 @@
 import { Crosshair } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
-import { type CardAnalyticsPlugin, calculateBasicOverallStats } from '../../core/contracts';
+import type { CardAnalyticsView } from '../../core/cardContract';
+import { calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
-import { getTrialRecordsByCard } from '../../storage/index';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 
-export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
-  cardId: 'neg_ratio_estimation',
-  fetchRecords: async (id) => getTrialRecordsByCard(id),
-  views: [
+export function createNegRatioAnalytics(): CardAnalyticsView[] {
+  return [
     {
       id: 'ratio_scatter',
-      tabLabel: 'packs.negative_space.analytics.ratioScatter.tabLabel',
-      title: 'packs.negative_space.analytics.ratioScatter.title',
-      subTitle: 'packs.negative_space.analytics.ratioScatter.subTitle',
+      tabLabel: 'analytics.ratioScatter.tabLabel',
+      title: 'analytics.ratioScatter.title',
+      subTitle: 'analytics.ratioScatter.subTitle',
       icon: Crosshair,
       renderVisualizer: (canvas, records) => {
         const ctx = canvas.getContext('2d');
@@ -59,19 +57,19 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
           <Callout
             variant="success"
             icon={Crosshair}
-            title={i18n.t('packs.negative_space.analytics.ratioScatter.cardTitle')}
+            title={i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.cardTitle')}
           >
             <div className="space-y-1.5 text-xs text-foreground pt-1">
               <div className="flex justify-between font-mono bg-card p-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs">
                 <span className="text-muted-foreground">
-                  {i18n.t('packs.negative_space.analytics.ratioScatter.avgError')}
+                  {i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.avgError')}
                 </span>
                 <span className="font-bold text-emerald-700 dark:text-emerald-300">
                   ±{avgRatioErr}%
                 </span>
               </div>
               <p className="text-muted-foreground leading-relaxed">
-                {i18n.t('packs.negative_space.analytics.ratioScatter.desc')}
+                {i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.desc')}
               </p>
             </div>
           </Callout>
@@ -79,5 +77,5 @@ export const negRatioAnalyticsPlugin: CardAnalyticsPlugin = {
       },
       getOverallStats: (records) => calculateBasicOverallStats(records),
     },
-  ],
-};
+  ];
+}

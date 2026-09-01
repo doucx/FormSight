@@ -1,19 +1,19 @@
 import { Maximize2 } from 'lucide-preact';
-import { CanvasView } from '../../../components/common/CanvasView';
-import { StandardSliderView } from '../../../components/common/StandardSliderView';
-import { drawPolygonCanvas } from '../../../core/canvas/drawPolygon';
-import { useTranslation } from '../../../core/i18n';
-import { CANVAS_THEME } from '../../../utils/theme';
+import { CanvasView } from '../../components/common/CanvasView';
+import { StandardSliderView } from '../../components/common/StandardSliderView';
+import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
+import { useTranslation } from '../../core/i18n';
+import { CANVAS_THEME } from '../../utils/theme';
 import {
   NEGATIVE_SPACE_CANVAS_SIZE,
-  type NegativeSpaceHitResult,
-  type NegativeSpaceQuestionData,
-} from '../utils/index';
+  type HitResult,
+  type QuestionData,
+} from './types';
 
-interface RatioEstimationViewProps {
-  question: NegativeSpaceQuestionData;
+export interface NegRatioEstimationViewProps {
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer: NegativeSpaceHitResult | null;
+  userAnswer: HitResult | null;
   onAnswer: (val: number) => void;
   disabled?: boolean;
   hitMargin?: number;
@@ -21,7 +21,7 @@ interface RatioEstimationViewProps {
   showCanvasHints?: boolean;
 }
 
-export function RatioEstimationView({
+export function NegRatioEstimationView({
   question,
   showAnswer,
   userAnswer,
@@ -30,7 +30,7 @@ export function RatioEstimationView({
   hitMargin = 12,
   showToleranceBand = true,
   showCanvasHints = true,
-}: RatioEstimationViewProps) {
+}: NegRatioEstimationViewProps) {
   const { t } = useTranslation();
   const { targetNegativeRatio, tolerance } = question;
   const isHit = Boolean(userAnswer?.isHit);
@@ -38,11 +38,11 @@ export function RatioEstimationView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('packs.negative_space.views.ratioHint')}
+      hintText={t('cards.neg_ratio_estimation.views.ratioHint')}
       hintIcon={Maximize2}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('packs.negative_space.views.ratioLabel')}
+      label={t('cards.neg_ratio_estimation.views.ratioLabel')}
       max={100}
       step={0.1}
       initialValue={50.0}
