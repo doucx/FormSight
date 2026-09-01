@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import {
   clonePlan,
   deletePlan,
   exportPlanToJson,
+  getPlanStorageStateSnapshot,
   importPlanFromJson,
   loadPlanStorageState,
   savePlanStorageState,
@@ -36,12 +37,18 @@ export function usePlanEditorState({
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [storageState, setStorageState] = useState<PlanStorageState>(loadPlanStorageState);
+  const [storageState, setStorageState] = useState<PlanStorageState>(getPlanStorageStateSnapshot);
   const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPlanStorageState().then((state) => {
+      setStorageState(state);
+    });
+  }, []);
 
   const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
 
@@ -76,10 +83,10 @@ export function usePlanEditorState({
   const handleImportPlan = (e: Event) => {
     const target = e.target as HTMLInputElement;
     if (target.files?.[0]) {
-      target.files[0].text().then((text) => {
-        const imported = importPlanFromJson(text);
+      target.files[0].text().then(async (text) => {
+        const imported = await importPlanFromJson(text);
         if (imported) {
-          const nextState = loadPlanStorageState();
+          const nextState = await loadPlanStorageState();
           setStorageState(nextState);
           setCurrentPlan(imported);
           setPlanNameInput(imported.name);
@@ -93,13 +100,13 @@ export function usePlanEditorState({
     }
   };
 
-  const persist = (): TrainingPlan => {
+  const persist = async (): Promise<TrainingPlan> => {
     const sanitized = sanitizePlan(currentPlan, planNameInput);
     const updatedPlans = storageState.plans.some((p) => p.id === sanitized.id)
       ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
       : [sanitized, ...storageState.plans];
 
-    savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
+    await savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
     onPlanListChanged?.();
     return sanitized;
   };
@@ -144,31 +151,31 @@ export function usePlanEditorState({
       updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
     handleClearAll: () => updatePlanItems(() => []),
     handleCreateNewBlankPlan,
-    handleCloneCurrent: () => {
-      const cloned = clonePlan(currentPlan);
-      const nextState = loadPlanStorageState();
+    handleCloneCurrent: async () => {
+      const cloned = await clonePlan(currentPlan);
+      const nextState = await loadPlanStorageState();
       setStorageState(nextState);
       setCurrentPlan(cloned);
       setPlanNameInput(cloned.name);
       onPlanListChanged?.();
       showToast(t('plan.clonedPlanToast', { name: cloned.name }));
     },
-    handleToggleFavoriteItem: (planId: string, e: MouseEvent) => {
+    handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
       e.stopPropagation();
-      const nextState = togglePlanFavorite(planId);
+      const nextState = await togglePlanFavorite(planId);
       setStorageState(nextState);
       if (currentPlan.id === planId) {
         setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
       }
       onPlanListChanged?.();
     },
-    handleDeletePlanItem: (planId: string, e: MouseEvent) => {
+    handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
       e.stopPropagation();
       if (storageState.plans.length <= 1) {
         showToast(t('plan.minOnePlanToast'));
         return;
       }
-      const nextState = deletePlan(planId);
+      const nextState = await deletePlan(planId);
       setStorageState(nextState);
       if (currentPlan.id === planId) {
         const fallback = nextState.plans[0];
@@ -190,7 +197,7 @@ export function usePlanEditorState({
       showToast(t('plan.exportedJsonToast'));
     },
     handleImportPlan,
-    handleSaveOnly: () => onSaveAndExit(persist()),
-    handleSaveAndStart: () => onStartPlanDirectly(persist()),
+    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
   };
 }

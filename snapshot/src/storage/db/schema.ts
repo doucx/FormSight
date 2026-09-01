@@ -59,6 +59,9 @@ export interface DailySummaryData {
   updatedAt: number;
 }
 
+import type { TrainingPlan } from '../../types/plan';
+import type { UserSettings } from '../settings';
+
 export interface FormSightDBSchema extends DBSchema {
   sessions: {
     key: string;
@@ -100,10 +103,25 @@ export interface FormSightDBSchema extends DBSchema {
       'by-domain': string;
     };
   };
+  app_settings: {
+    key: string;
+    value: UserSettings;
+  };
+  training_plans: {
+    key: string;
+    value: TrainingPlan;
+    indexes: {
+      'by-updated': number;
+    };
+  };
+  app_metadata: {
+    key: string;
+    value: unknown;
+  };
 }
 
 export const DB_NAME = 'FormSightDB';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
@@ -239,6 +257,66 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
             }
           } catch (e) {
             console.error('Failed to migrate legacy records to daily_summaries:', e);
+          }
+        }
+
+        // 6. v3 升级：新增 app_settings, training_plans, app_metadata 并迁移 LocalStorage
+        if (!database.objectStoreNames.contains('app_settings')) {
+          database.createObjectStore('app_settings');
+        }
+
+        if (!database.objectStoreNames.contains('training_plans')) {
+          const planStore = database.createObjectStore('training_plans', { keyPath: 'id' });
+          planStore.createIndex('by-updated', 'updatedAt');
+        }
+
+        if (!database.objectStoreNames.contains('app_metadata')) {
+          database.createObjectStore('app_metadata');
+        }
+
+        if (oldVersion < 3 && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+          try {
+            const settingsStore = transaction.objectStore('app_settings');
+            const planStore = transaction.objectStore('training_plans');
+            const metaStore = transaction.objectStore('app_metadata');
+
+            // 迁移 LocalStorage 中的 settings
+            const rawSettings = localStorage.getItem('formsight_user_settings');
+            if (rawSettings) {
+              const parsedSettings = JSON.parse(rawSettings);
+              if (parsedSettings && typeof parsedSettings === 'object') {
+                await settingsStore.put(parsedSettings, 'global_settings');
+              }
+            }
+
+            // 迁移 LocalStorage 中的 plans
+            const rawPlans = localStorage.getItem('formsight_training_plans_store');
+            let activeId: string | null = null;
+            if (rawPlans) {
+              const parsed = JSON.parse(rawPlans);
+              if (parsed && Array.isArray(parsed.plans)) {
+                for (const p of parsed.plans) {
+                  await planStore.put(p);
+                }
+                activeId = parsed.activePlanId || (parsed.plans[0] ? parsed.plans[0].id : null);
+              }
+            } else {
+              // 兼容极早期的 formsight_custom_training_plan
+              const legacyRaw = localStorage.getItem('formsight_custom_training_plan');
+              if (legacyRaw) {
+                const legacyPlan = JSON.parse(legacyRaw);
+                if (legacyPlan && legacyPlan.id) {
+                  await planStore.put(legacyPlan);
+                  activeId = legacyPlan.id;
+                }
+              }
+            }
+
+            if (activeId) {
+              await metaStore.put(activeId, 'active_plan_id');
+            }
+          } catch (migrationErr) {
+            console.error('Failed to migrate LocalStorage to IndexedDB in v3 upgrade:', migrationErr);
           }
         }
       },

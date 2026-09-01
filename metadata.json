@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788261258.886645, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 将系统配置与训练计划全量收敛至 IndexedDB 并支持旧版数据无损迁移", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262576.0660093, "duration_ms": 0}}

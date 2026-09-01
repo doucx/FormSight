@@ -17,6 +17,7 @@ import {
   clonePlan,
   deletePlan,
   exportPlanToJson,
+  getPlanStorageStateSnapshot,
   importPlanFromJson,
   loadPlanStorageState,
   loadTrainingPlan,
@@ -30,6 +31,7 @@ import {
   type BaseModuleSettings,
   type UserSettings,
   getCardSettings,
+  getSettingsSnapshot,
   loadSettings,
   saveSettings,
 } from './settings';
@@ -44,22 +46,23 @@ export interface AppDataSummary {
 
 /**
  * 聚合仓储层 (SystemRepository)
- * 统一收敛 IndexedDB、LocalStorage 及跨介质事务与稳态治理操作
+ * 统一收敛 IndexedDB 事务与稳态治理操作
  */
 export class SystemRepository {
   // === 查询与聚合统计 ===
   public async getAppSummary(): Promise<AppDataSummary> {
-    const totalTimeMs = await getTrainingTimeMs();
-    const allProfilesList = await getAllProfiles();
-    const profiles: Record<string, UnifiedProfileData> = {};
+    const [totalTimeMs, allProfilesList, settings, planState, trainingPlan] = await Promise.all([
+      getTrainingTimeMs(),
+      getAllProfiles(),
+      loadSettings(),
+      loadPlanStorageState(),
+      loadTrainingPlan(),
+    ]);
 
+    const profiles: Record<string, UnifiedProfileData> = {};
     for (const p of allProfilesList) {
       profiles[p.cardId] = p;
     }
-
-    const settings = loadSettings();
-    const planState = loadPlanStorageState();
-    const trainingPlan = loadTrainingPlan();
 
     return {
       totalTimeMs,
@@ -83,14 +86,16 @@ export class SystemRepository {
 
   // === 设置偏好管理 ===
   public getSettings = loadSettings;
+  public getSettingsSnapshot = getSettingsSnapshot;
   public saveSettings = saveSettings;
   public getCardSettings(cardId: string): BaseModuleSettings {
-    const current = loadSettings();
+    const current = getSettingsSnapshot();
     return getCardSettings(current, cardId);
   }
 
   // === 训练计划管理 ===
   public getPlanStorageState = loadPlanStorageState;
+  public getPlanStorageStateSnapshot = getPlanStorageStateSnapshot;
   public savePlanStorageState = savePlanStorageState;
   public getActivePlan = loadTrainingPlan;
   public savePlan = saveTrainingPlan;
