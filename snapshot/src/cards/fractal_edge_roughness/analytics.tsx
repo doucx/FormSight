@@ -5,11 +5,7 @@ import { calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
 import { getRoughnessSectorIdx } from './utils/generator';
 
-const SECTOR_KEYS = [
-  'sectors.highFrequency',
-  'sectors.mediumFrequency',
-  'sectors.lowFrequency',
-];
+const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
 
 export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
   return [
@@ -35,17 +31,22 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
         }
 
         const avgSignedBias = Math.round((sumSignedBias / totalCount) * 1000) / 1000;
-        const avgAbsError = Math.round((sumAbsError / totalCount) * 1000) / 1000;
 
         const signedBiasText =
           avgSignedBias > 0
-            ? i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.underestimateRoughness', {
-                val: avgSignedBias,
-              })
+            ? i18n.t(
+                'cards.fractal_edge_roughness.analytics.roughnessBias.underestimateRoughness',
+                {
+                  val: avgSignedBias,
+                },
+              )
             : avgSignedBias < 0
-              ? i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.overestimateRoughness', {
-                  val: Math.abs(avgSignedBias),
-                })
+              ? i18n.t(
+                  'cards.fractal_edge_roughness.analytics.roughnessBias.overestimateRoughness',
+                  {
+                    val: Math.abs(avgSignedBias),
+                  },
+                )
               : i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.neutral');
 
         return (
@@ -89,7 +90,9 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
           ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs font-mono">
-              <span>{i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.avgAbsError')}</span>
+              <span>
+                {i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.avgAbsError')}
+              </span>
               <span>{avgAbsError}</span>
             </div>
           ),
