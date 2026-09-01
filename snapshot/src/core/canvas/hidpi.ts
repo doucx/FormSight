@@ -14,8 +14,13 @@ export function setupHiDpiCanvas(
   const ctx = canvas.getContext('2d');
   if (!ctx) return null;
 
-  canvas.width = Math.round(logicalWidth * dpr);
-  canvas.height = Math.round(logicalHeight * dpr);
+  const width = Math.round(logicalWidth);
+  const height = Math.round(logicalHeight);
+
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 
   ctx.resetTransform?.();
   ctx.scale(dpr, dpr);

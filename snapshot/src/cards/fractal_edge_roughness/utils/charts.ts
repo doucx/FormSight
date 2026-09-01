@@ -18,8 +18,8 @@ export function renderRoughnessBiasChart(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
 ): void {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.round(rect.width) || 520;
+  const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
+  const width = Math.min(540, Math.max(300, parentWidth));
   const height = 260;
 
   const ctx = setupHiDpiCanvas(canvas, width, height);
@@ -169,9 +169,9 @@ export function renderRoughnessBandChart(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
 ): void {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.round(rect.width) || 520;
-  const height = 240;
+  const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
+  const width = Math.min(540, Math.max(300, parentWidth));
+  const height = 230;
 
   const ctx = setupHiDpiCanvas(canvas, width, height);
   if (!ctx) return;
