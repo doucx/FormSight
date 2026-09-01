@@ -5,6 +5,7 @@
       "extension": ["ts", "tsx", "json"],
       "paths": [
         "src/core/contracts.ts",
+        "src/core/i18n.ts",
         "src/types/card.ts",
         "src/types/index.ts",
         "src/components/settings/DynamicDomainSettings.tsx",
