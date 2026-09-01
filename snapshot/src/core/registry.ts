@@ -240,6 +240,7 @@ class SystemDomainRegistry {
       tags: card.tags,
       hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),
       settingSchemas: normalizedSchemas,
+      defaultSettings: card.defaultSettings,
     };
 
     // 4. 适配 AnyTrainingPlugin 运行时

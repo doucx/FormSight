@@ -20,7 +20,10 @@ describe('settings utils with card-scoped isolation', () => {
     expect(settings.cards.color_hue.autoNext).toBe(true);
     expect(settings.cards.rel_vector_shift.autoNext).toBe(true);
     expect(settings.cards.star_single.gridSize).toBe(3);
+    expect(settings.cards.star_single.targetingMode).toBe('off');
     expect(settings.cards.color_hue.showToleranceBand).toBe(true);
+    expect(settings.cards.color_hue.targetingMode).toBe('off');
+    expect(settings.cards.color_all.enableHoverColorPreview).toBe(true);
   });
 
   it('saveSettings & loadSettings - should persist and retrieve card-scoped settings', () => {

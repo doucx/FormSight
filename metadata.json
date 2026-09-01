@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M relativeColorUtils.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788257603.0566347, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复卡片专属默认配置在初始化与合并时丢失的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788257605.1459358, "duration_ms": 0}}

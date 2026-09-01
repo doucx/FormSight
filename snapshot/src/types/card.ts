@@ -58,6 +58,7 @@ export interface CardDefinition {
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;
   settingSchemas?: SettingFieldSchema[];
+  defaultSettings?: Record<string, unknown>;
 }
 
 export interface PackMeta {

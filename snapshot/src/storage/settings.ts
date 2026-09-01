@@ -84,15 +84,20 @@ export function buildDefaultCardSettings(): Record<string, BaseModuleSettings> {
   const allCards = registry.getAllCards();
 
   for (const card of allCards) {
+    const manifest = registry.getCardManifest?.(card.id);
     const pack = registry.getPack(card.packId);
-    const packCardDefaults = pack?.defaultCardSettings?.[card.id] || {};
+    const cardDefaults =
+      manifest?.defaultSettings ||
+      card.defaultSettings ||
+      pack?.defaultCardSettings?.[card.id] ||
+      {};
 
     const cardConfig: BaseModuleSettings = {
       ...DEFAULT_BASE_SETTINGS,
-      ...packCardDefaults,
+      ...cardDefaults,
     };
 
-    // 若声明了连续调制滑块交互，注入默认滑块偏好（若 Pack 未显式覆盖）
+    // 若声明了连续调制滑块交互，注入默认滑块偏好（若未显式覆盖）
     if (card.tags?.interaction?.includes('continuous_mod')) {
       if (cardConfig.sliderHitMargin === undefined) {
         cardConfig.sliderHitMargin = 12;
