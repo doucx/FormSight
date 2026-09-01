@@ -83,36 +83,40 @@ function analyzeFile(filepath) {
   let fileHasIssue = false;
   const fileIssues = [];
 
-  lines.forEach((line, index) => {
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index];
     const lineNum = index + 1;
     // 简单跳过单行注释
-    if (line.trim().startsWith('//')) return;
+    if (line.trim().startsWith('//')) continue;
 
-    SMELLS.forEach(smell => {
+    for (const smell of SMELLS) {
       // 克隆正则以重置 lastIndex
       const regex = new RegExp(smell.regex.source, smell.regex.flags);
-      let match;
-      while ((match = regex.exec(line)) !== null) {
+      let match = regex.exec(line);
+      while (match !== null) {
         fileHasIssue = true;
         totalIssues++;
         fileIssues.push({
           lineNum,
           matchStr: match[0].trim(),
           lineStr: line.trim(),
-          smell
+          smell,
         });
+        match = regex.exec(line);
       }
-    });
-  });
+    }
+  }
 
   if (fileHasIssue) {
     filesWithIssues++;
     console.log(`\n📄 ${c.cyan}${c.bold}${filepath}${c.reset}`);
-    fileIssues.forEach(issue => {
-      console.log(`   ${c.gray}Line ${issue.lineNum.toString().padEnd(4)}${c.reset} | [${issue.smell.color}${issue.smell.level}${c.reset}] ${c.bold}${issue.smell.id}${c.reset}`);
+    for (const issue of fileIssues) {
+      console.log(
+        `   ${c.gray}Line ${issue.lineNum.toString().padEnd(4)}${c.reset} | [${issue.smell.color}${issue.smell.level}${c.reset}] ${c.bold}${issue.smell.id}${c.reset}`,
+      );
       console.log(`             ${c.gray}Code: ${c.reset}${issue.lineStr}`);
       console.log(`             ${c.gray}Hint: ${c.reset}${issue.smell.desc}`);
-    });
+    }
   }
 }
 

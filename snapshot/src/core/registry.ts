@@ -34,15 +34,15 @@ export function qualifySchemas(
   if (!schemas) return undefined;
   return schemas.map((schema) => {
     const s = { ...schema };
-    if (s.title) s.title = qualifyCardKey(s.title, cardId)!;
+    if (s.title) s.title = qualifyCardKey(s.title, cardId) ?? s.title;
     if (s.subTitle) s.subTitle = qualifyCardKey(s.subTitle, cardId);
     if (s.type === 'targeting' && Array.isArray(s.sectors)) {
-      s.sectors = s.sectors.map((sec) => qualifyCardKey(sec, cardId)!);
+      s.sectors = s.sectors.map((sec) => qualifyCardKey(sec, cardId) ?? sec);
     }
     if (s.options) {
       s.options = s.options.map((opt) => ({
         ...opt,
-        label: qualifyCardKey(opt.label, cardId)!,
+        label: qualifyCardKey(opt.label, cardId) ?? opt.label,
       }));
     }
     return s;
@@ -56,9 +56,9 @@ export function qualifyAnalyticsViews(
   if (!views) return [];
   return views.map((v) => ({
     ...v,
-    tabLabel: qualifyCardKey(v.tabLabel, cardId)!,
-    title: qualifyCardKey(v.title, cardId)!,
-    subTitle: qualifyCardKey(v.subTitle, cardId)!,
+    tabLabel: qualifyCardKey(v.tabLabel, cardId) ?? v.tabLabel,
+    title: qualifyCardKey(v.title, cardId) ?? v.title,
+    subTitle: qualifyCardKey(v.subTitle, cardId) ?? v.subTitle,
   }));
 }
 

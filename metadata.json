@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复寻星卡片视图中 userAnswer 属性解构导致的空指针异常", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788254866.8798385, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Biome Lint 规则违规与非空断言", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788255041.7872584, "duration_ms": 0}}
