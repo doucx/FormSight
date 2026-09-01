@@ -1,32 +1,27 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { PointClickCanvas } from '../../../components/common/PointClickCanvas';
-import { drawDot } from '../../../core/canvas/drawPointGrid';
-import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
-import type { Point } from '../../../types';
-import { CANVAS_THEME } from '../../../utils/theme';
-import {
-  CANVAS_SIZE,
-  type HitResult,
-  type QuestionData,
-  checkHit,
-  getDynamicDotRadius,
-} from '../utils/index';
+import { PointClickCanvas } from '../../components/common/PointClickCanvas';
+import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
+import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import type { Point } from '../../types';
+import { CANVAS_THEME } from '../../utils/theme';
+import type { HitResult, QuestionData } from './types';
+import { CANVAS_SIZE, checkHit } from './utils/generator';
 
-export interface StarCanvasProps {
+export interface StarSingleViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer: { clickPoint: Point; hitResult: HitResult } | null;
-  onAnswer: (clickPoint: Point, hitResult: HitResult) => void;
+  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
   disabled?: boolean;
 }
 
-export function StarCanvas({
+export function StarSingleView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
-}: StarCanvasProps) {
+}: StarSingleViewProps) {
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -46,16 +41,6 @@ export function StarCanvas({
           dotRadius,
         );
 
-        if (question.anchorC) {
-          drawDot(
-            ctx,
-            question.anchorC.x,
-            question.anchorC.y,
-            CANVAS_THEME.pointGrid.dotAnchor,
-            dotRadius,
-          );
-        }
-
         drawDot(
           ctx,
           question.targetB.x,
@@ -70,7 +55,7 @@ export function StarCanvas({
   const handleCommitPoint = (clickPoint: Point) => {
     const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
     if (!hitResult.isWithinRange) return;
-    onAnswer(clickPoint, hitResult);
+    onAnswer({ clickPoint, hitResult });
   };
 
   return (
@@ -90,7 +75,7 @@ export function StarCanvas({
           gridPoints={question.distractorPoints}
           targetPoint={question.targetB}
           userNearestPoint={userAnswer?.hitResult.nearestGridPoint}
-          anchors={[question.anchorA, question.anchorC]}
+          anchors={[question.anchorA]}
           showAnswer={showAnswer}
           isHit={userAnswer?.hitResult.isHit}
           disabled={disabled}
