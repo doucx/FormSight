@@ -74,11 +74,7 @@ export function ModalShell({
         </div>
 
         {/* 常驻 Footer (如有) */}
-        {footer && (
-          <div className="pt-2 border-t border-border/60 flex-shrink-0">
-            {footer}
-          </div>
-        )}
+        {footer && <div className="pt-2 border-t border-border/60 flex-shrink-0">{footer}</div>}
       </div>
     </div>
   );
