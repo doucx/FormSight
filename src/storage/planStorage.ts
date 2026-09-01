@@ -1,9 +1,7 @@
 import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
 import { i18n } from '../core/i18n';
 import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
-
-const PLANS_STORAGE_KEY = 'formsight_training_plans_store';
-const LEGACY_PLAN_STORAGE_KEY = 'formsight_custom_training_plan';
+import { getDB } from './db/schema';
 
 export const EMPTY_TRAINING_PLAN: TrainingPlan = {
   id: 'custom_plan_default',
@@ -44,79 +42,83 @@ export function getDefaultPlans(): TrainingPlan[] {
   return DEFAULT_PLAN_TEMPLATES.map((tmpl) => createPlanFromTemplateInternal(tmpl, true, true));
 }
 
-export function loadPlanStorageState(): PlanStorageState {
+let cachedPlanState: PlanStorageState = {
+  activePlanId: EMPTY_TRAINING_PLAN.id,
+  plans: [EMPTY_TRAINING_PLAN],
+};
+
+/**
+ * 异步从 IndexedDB 加载全部训练计划与激活计划状态
+ */
+export async function loadPlanStorageState(): Promise<PlanStorageState> {
   try {
-    const raw = localStorage.getItem(PLANS_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.plans) && parsed.plans.length > 0) {
-        const activeId = parsed.activePlanId || parsed.plans[0].id;
-        return {
-          activePlanId: activeId,
-          plans: parsed.plans,
-        };
+    const db = await getDB();
+    const plans = await db.getAll('training_plans');
+    let activePlanId = (await db.get('app_metadata', 'active_plan_id')) as string | undefined;
+
+    if (!plans || plans.length === 0) {
+      const defaultPlans = getDefaultPlans();
+      const tx = db.transaction(['training_plans', 'app_metadata'], 'readwrite');
+      const planStore = tx.objectStore('training_plans');
+      for (const p of defaultPlans) {
+        await planStore.put(p);
       }
+      activePlanId = defaultPlans[0]?.id || EMPTY_TRAINING_PLAN.id;
+      await tx.objectStore('app_metadata').put(activePlanId, 'active_plan_id');
+      await tx.done;
+
+      cachedPlanState = {
+        activePlanId,
+        plans: defaultPlans,
+      };
+      return cachedPlanState;
     }
 
-    // 尝试迁移旧单计划存储
-    const legacyRaw = localStorage.getItem(LEGACY_PLAN_STORAGE_KEY);
-    const defaultPlans = getDefaultPlans();
-
-    if (legacyRaw) {
-      try {
-        const legacyParsed = JSON.parse(legacyRaw);
-        if (legacyParsed && Array.isArray(legacyParsed.items) && legacyParsed.items.length > 0) {
-          const customPlan: TrainingPlan = {
-            id: legacyParsed.id || `custom_${Date.now()}`,
-            name: legacyParsed.name || i18n.t('common.defaultCustomPlanName'),
-            description: i18n.t('common.migratedPlanDesc'),
-            items: legacyParsed.items,
-            isFavorite: true,
-            isBuiltin: false,
-            updatedAt: legacyParsed.updatedAt || Date.now(),
-          };
-          const state: PlanStorageState = {
-            activePlanId: customPlan.id,
-            plans: [customPlan, ...defaultPlans],
-          };
-          savePlanStorageState(state);
-          return state;
-        }
-      } catch {}
+    if (!activePlanId || !plans.some((p) => p.id === activePlanId)) {
+      activePlanId = plans[0].id;
+      await db.put('app_metadata', activePlanId, 'active_plan_id');
     }
 
-    const initialState: PlanStorageState = {
-      activePlanId: defaultPlans[0]?.id || EMPTY_TRAINING_PLAN.id,
-      plans: defaultPlans.length > 0 ? defaultPlans : [EMPTY_TRAINING_PLAN],
+    cachedPlanState = {
+      activePlanId,
+      plans,
     };
-    savePlanStorageState(initialState);
-    return initialState;
+    return cachedPlanState;
   } catch (e) {
-    console.error('Failed to load plan storage state:', e);
-    const fallbackPlans = getDefaultPlans();
-    return {
-      activePlanId: fallbackPlans[0]?.id || EMPTY_TRAINING_PLAN.id,
-      plans: fallbackPlans,
-    };
+    console.error('Failed to load plans from IndexedDB:', e);
+    return cachedPlanState;
   }
 }
 
-export function savePlanStorageState(state: PlanStorageState): void {
+export function getPlanStorageStateSnapshot(): PlanStorageState {
+  return cachedPlanState;
+}
+
+export async function savePlanStorageState(state: PlanStorageState): Promise<void> {
+  cachedPlanState = state;
   try {
-    localStorage.setItem(PLANS_STORAGE_KEY, JSON.stringify(state));
+    const db = await getDB();
+    const tx = db.transaction(['training_plans', 'app_metadata'], 'readwrite');
+    const planStore = tx.objectStore('training_plans');
+    await planStore.clear();
+    for (const p of state.plans) {
+      await planStore.put(p);
+    }
+    await tx.objectStore('app_metadata').put(state.activePlanId, 'active_plan_id');
+    await tx.done;
   } catch (e) {
-    console.error('Failed to save plan storage state:', e);
+    console.error('Failed to save plan storage state to IndexedDB:', e);
   }
 }
 
-export function loadTrainingPlan(): TrainingPlan {
-  const state = loadPlanStorageState();
+export async function loadTrainingPlan(): Promise<TrainingPlan> {
+  const state = await loadPlanStorageState();
   const active = state.plans.find((p) => p.id === state.activePlanId);
   return active || state.plans[0] || EMPTY_TRAINING_PLAN;
 }
 
-export function saveTrainingPlan(plan: TrainingPlan): void {
-  const state = loadPlanStorageState();
+export async function saveTrainingPlan(plan: TrainingPlan): Promise<void> {
+  const state = await loadPlanStorageState();
   const index = state.plans.findIndex((p) => p.id === plan.id);
   const updatedPlan: TrainingPlan = {
     ...plan,
@@ -131,36 +133,36 @@ export function saveTrainingPlan(plan: TrainingPlan): void {
     newPlans = [updatedPlan, ...state.plans];
   }
 
-  savePlanStorageState({
+  await savePlanStorageState({
     activePlanId: updatedPlan.id,
     plans: newPlans,
   });
 }
 
-export function setActivePlan(planId: string): TrainingPlan | null {
-  const state = loadPlanStorageState();
+export async function setActivePlan(planId: string): Promise<TrainingPlan | null> {
+  const state = await loadPlanStorageState();
   const target = state.plans.find((p) => p.id === planId);
   if (!target) return null;
 
-  savePlanStorageState({
+  await savePlanStorageState({
     ...state,
     activePlanId: planId,
   });
   return target;
 }
 
-export function togglePlanFavorite(planId: string): PlanStorageState {
-  const state = loadPlanStorageState();
+export async function togglePlanFavorite(planId: string): Promise<PlanStorageState> {
+  const state = await loadPlanStorageState();
   const newPlans = state.plans.map((p) =>
     p.id === planId ? { ...p, isFavorite: !(p.isFavorite ?? true) } : p,
   );
   const nextState = { ...state, plans: newPlans };
-  savePlanStorageState(nextState);
+  await savePlanStorageState(nextState);
   return nextState;
 }
 
-export function deletePlan(planId: string): PlanStorageState {
-  const state = loadPlanStorageState();
+export async function deletePlan(planId: string): Promise<PlanStorageState> {
+  const state = await loadPlanStorageState();
   const newPlans = state.plans.filter((p) => p.id !== planId);
   const safePlans = newPlans.length > 0 ? newPlans : getDefaultPlans();
   const nextActiveId =
@@ -169,21 +171,21 @@ export function deletePlan(planId: string): PlanStorageState {
       : state.activePlanId;
 
   const nextState = { activePlanId: nextActiveId, plans: safePlans };
-  savePlanStorageState(nextState);
+  await savePlanStorageState(nextState);
   return nextState;
 }
 
-export function resetPlansToDefault(): PlanStorageState {
+export async function resetPlansToDefault(): Promise<PlanStorageState> {
   const defaultPlans = getDefaultPlans();
   const initialState: PlanStorageState = {
     activePlanId: defaultPlans[0]?.id || EMPTY_TRAINING_PLAN.id,
     plans: defaultPlans.length > 0 ? defaultPlans : [EMPTY_TRAINING_PLAN],
   };
-  savePlanStorageState(initialState);
+  await savePlanStorageState(initialState);
   return initialState;
 }
 
-export function clonePlan(plan: TrainingPlan): TrainingPlan {
+export async function clonePlan(plan: TrainingPlan): Promise<TrainingPlan> {
   const newId = `plan_copy_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
   const cloned: TrainingPlan = {
     ...plan,
@@ -197,7 +199,7 @@ export function clonePlan(plan: TrainingPlan): TrainingPlan {
     })),
     updatedAt: Date.now(),
   };
-  saveTrainingPlan(cloned);
+  await saveTrainingPlan(cloned);
   return cloned;
 }
 
@@ -222,7 +224,7 @@ export function exportPlanToJson(plan: TrainingPlan): string {
   );
 }
 
-export function importPlanFromJson(jsonStr: string): TrainingPlan | null {
+export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan | null> {
   try {
     const data = JSON.parse(jsonStr);
     const planData = data.plan || data;
@@ -247,7 +249,7 @@ export function importPlanFromJson(jsonStr: string): TrainingPlan | null {
       updatedAt: Date.now(),
     };
 
-    saveTrainingPlan(importedPlan);
+    await saveTrainingPlan(importedPlan);
     return importedPlan;
   } catch (e) {
     console.error('Failed to import plan from json:', e);

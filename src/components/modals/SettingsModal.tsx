@@ -41,7 +41,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           [card.id]: updatedCard,
         },
       };
-      saveSettings(nextSettings);
+      saveSettings(nextSettings).catch((err) => console.error(err));
       onSave(nextSettings);
       return nextSettings;
     });

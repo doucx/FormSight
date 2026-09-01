@@ -108,17 +108,17 @@ export function AppRouter({
           initialPlan={trainingPlan}
           onExit={() => navigate(lastHomeRoute)}
           onPlanListChanged={onRefreshProfiles}
-          onSaveAndExit={(newPlan) => {
-            saveTrainingPlan(newPlan);
+          onSaveAndExit={async (newPlan) => {
+            await saveTrainingPlan(newPlan);
             onSetTrainingPlan(newPlan);
-            onRefreshProfiles();
+            await onRefreshProfiles();
             showToast(t('common.planUpdatedToast'), 'success');
             navigate(lastHomeRoute);
           }}
-          onStartPlanDirectly={(newPlan) => {
-            saveTrainingPlan(newPlan);
+          onStartPlanDirectly={async (newPlan) => {
+            await saveTrainingPlan(newPlan);
             onSetTrainingPlan(newPlan);
-            onRefreshProfiles();
+            await onRefreshProfiles();
             navigate({ type: 'plan-train' });
           }}
         />

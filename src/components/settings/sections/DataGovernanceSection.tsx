@@ -94,11 +94,11 @@ export function DataGovernanceSection({
     }
   };
 
-  const handleResetPlansConfirmed = () => {
+  const handleResetPlansConfirmed = async () => {
     setShowResetPlansConfirm(false);
-    resetPlansToDefault();
+    await resetPlansToDefault();
     showToast(t('settings.resetPlansSuccessToast'), 'success');
-    onDataChanged();
+    await onDataChanged();
   };
 
   const handleClearDataConfirmed = async () => {

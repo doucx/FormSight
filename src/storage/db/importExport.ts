@@ -1,18 +1,11 @@
 import { registry } from '../../core/registry';
 import type { PlanStorageState, TrainingPlan } from '../../types/plan';
-import {
-  loadPlanStorageState,
-  loadTrainingPlan,
-  resetPlansToDefault,
-  savePlanStorageState,
-  saveTrainingPlan,
-} from '../planStorage';
+import { getDefaultPlans, loadPlanStorageState, loadTrainingPlan } from '../planStorage';
 import {
   DEFAULT_SETTINGS,
   type UserSettings,
   buildDefaultCardSettings,
   loadSettings,
-  saveSettings,
 } from '../settings';
 import {
   DB_VERSION,
@@ -57,13 +50,12 @@ function validateImportBundle(data: unknown): data is FormSightExportBundle {
 
 /**
  * 流式分块导出 FormSight 全量系统数据为 Blob
- * 采用分批游标与 BlobPart 数组流式拼装，防止单次 JSON.stringify 触发堆内存 OOM
  */
 export async function exportAllDataStream(): Promise<Blob> {
   const db = await getDB();
-  const settings = loadSettings();
-  const trainingPlan = loadTrainingPlan();
-  const planStorageState = loadPlanStorageState();
+  const settings = await loadSettings();
+  const trainingPlan = await loadTrainingPlan();
+  const planStorageState = await loadPlanStorageState();
 
   const header = {
     appName: 'FormSight',
@@ -111,7 +103,7 @@ export async function exportAllDataStream(): Promise<Blob> {
   }
   blobParts.push('  ],\n');
 
-  // 5. 分块输出海量 records (每批 1000 条输出一次，防内存暴涨)
+  // 5. 分块输出海量 records
   blobParts.push('  "records": [\n');
   const tx = db.transaction('records', 'readonly');
   const store = tx.objectStore('records');
@@ -132,16 +124,13 @@ export async function exportAllDataStream(): Promise<Blob> {
   return new Blob(blobParts, { type: 'application/json' });
 }
 
-/**
- * 全量导出字符串 (向后兼容)
- */
 export async function exportAllData(): Promise<string> {
   const blob = await exportAllDataStream();
   return blob.text();
 }
 
 /**
- * 分批原子化全量数据导入（支持大文件安全分批写入与回滚）
+ * 单一 ACID 事务全量还原导入
  */
 export async function importAllData(jsonString: string): Promise<boolean> {
   let parsed: unknown;
@@ -157,24 +146,32 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     return false;
   }
 
-  const previousSettingsSnapshot = loadSettings();
-  const previousPlanStateSnapshot = loadPlanStorageState();
-
   try {
     const db = await getDB();
 
-    // 0. 清空现有数据库，实现纯净全量还原 (Restore)
-    const clearTx = db.transaction(
-      ['sessions', 'records', 'user_profiles', 'daily_summaries'],
+    // 开启跨所有表的统一原子事务
+    const tx = db.transaction(
+      [
+        'sessions',
+        'records',
+        'user_profiles',
+        'daily_summaries',
+        'app_settings',
+        'training_plans',
+        'app_metadata',
+      ],
       'readwrite',
     );
-    await clearTx.objectStore('sessions').clear();
-    await clearTx.objectStore('records').clear();
-    await clearTx.objectStore('user_profiles').clear();
-    await clearTx.objectStore('daily_summaries').clear();
-    await clearTx.done;
 
-    // 卡片 Domain 内存缓存映射，避免万级循环中高频查表
+    // 0. 清空现有所有表
+    await tx.objectStore('sessions').clear();
+    await tx.objectStore('records').clear();
+    await tx.objectStore('user_profiles').clear();
+    await tx.objectStore('daily_summaries').clear();
+    await tx.objectStore('app_settings').clear();
+    await tx.objectStore('training_plans').clear();
+    await tx.objectStore('app_metadata').clear();
+
     const cardDomainCache = new Map<string, string>();
     const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
       const cached = cardDomainCache.get(cardId);
@@ -185,59 +182,50 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       return domain;
     };
 
-    // 1 & 2. 导入 sessions 与 profiles (合并至单一元数据事务)
-    if (
-      (parsed.sessions && parsed.sessions.length > 0) ||
-      (parsed.profiles && parsed.profiles.length > 0)
-    ) {
-      const metaTx = db.transaction(['sessions', 'user_profiles'], 'readwrite');
-      if (parsed.sessions && parsed.sessions.length > 0) {
-        const sessionStore = metaTx.objectStore('sessions');
-        for (const s of parsed.sessions) {
-          const cardId = s.cardId || s.mode;
-          s.cardId = cardId;
-          s.domain = getCachedDomain(cardId, s.domain);
-          sessionStore.put(s);
-        }
+    // 1. 恢复 sessions
+    if (parsed.sessions && parsed.sessions.length > 0) {
+      const sessionStore = tx.objectStore('sessions');
+      for (const s of parsed.sessions) {
+        const cardId = s.cardId || s.mode;
+        s.cardId = cardId;
+        s.domain = getCachedDomain(cardId, s.domain);
+        await sessionStore.put(s);
       }
-      if (parsed.profiles && parsed.profiles.length > 0) {
-        const profileStore = metaTx.objectStore('user_profiles');
-        for (const p of parsed.profiles) {
-          const cardId = p.cardId || p.mode;
-          p.cardId = cardId;
-          p.domain = getCachedDomain(cardId, p.domain);
-          p.totalTrials = p.totalTrials ?? 0;
-          profileStore.put(p);
-        }
-      }
-      await metaTx.done;
     }
 
-    // 3. 写入海量 records (单事务批量流式写入，原地修改对象消除 GC 停顿与多次 fsync)
+    // 2. 恢复 profiles
+    if (parsed.profiles && parsed.profiles.length > 0) {
+      const profileStore = tx.objectStore('user_profiles');
+      for (const p of parsed.profiles) {
+        const cardId = p.cardId || p.mode;
+        p.cardId = cardId;
+        p.domain = getCachedDomain(cardId, p.domain);
+        p.totalTrials = p.totalTrials ?? 0;
+        await profileStore.put(p);
+      }
+    }
+
+    // 3. 恢复 records
     if (parsed.records && parsed.records.length > 0) {
-      const tx = db.transaction('records', 'readwrite');
-      const store = tx.objectStore('records');
+      const recordStore = tx.objectStore('records');
       for (let i = 0; i < parsed.records.length; i++) {
         const r = parsed.records[i];
         const cardId = r.cardId || r.mode;
         r.cardId = cardId;
         r.domain = getCachedDomain(cardId, r.domain);
-        store.put(r);
+        await recordStore.put(r);
       }
-      await tx.done;
     }
 
-    // 4. 写入或重新生成 daily_summaries
+    // 4. 恢复 daily_summaries
     if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
+      const dailyStore = tx.objectStore('daily_summaries');
       for (const d of parsed.dailySummaries) {
         const cardId = d.cardId || d.mode;
         d.cardId = cardId;
         d.domain = getCachedDomain(cardId, d.domain);
-        store.put(d);
+        await dailyStore.put(d);
       }
-      await tx.done;
     } else if (parsed.records && parsed.records.length > 0) {
       const summaryMap = new Map<string, DailySummaryData>();
       let lastTimestamp = -1;
@@ -247,7 +235,6 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         const cardId = r.cardId || r.mode;
         const domain = getCachedDomain(cardId, r.domain);
 
-        // 时间戳邻近缓存优化：同日或近时间戳避免重复 new Date() 计算
         let dateStr = lastDateStr;
         if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
           dateStr = getLocalDateString(r.timestamp);
@@ -289,39 +276,50 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         }
       }
 
-      const tx = db.transaction('daily_summaries', 'readwrite');
-      const store = tx.objectStore('daily_summaries');
+      const dailyStore = tx.objectStore('daily_summaries');
       for (const summary of summaryMap.values()) {
-        store.put(summary);
+        await dailyStore.put(summary);
       }
-      await tx.done;
     }
 
-    // 5. 还原 LocalStorage 设置与训练计划（基于备份完全置换）
-    if (parsed.settings) {
-      const defaultCards = buildDefaultCardSettings();
-      const restoredSettings: UserSettings = {
-        global: { ...DEFAULT_SETTINGS.global, ...(parsed.settings.global || {}) },
-        cards: { ...defaultCards, ...(parsed.settings.cards || {}) },
-      };
-      saveSettings(restoredSettings);
-    }
+    // 5. 恢复 app_settings
+    const settingsStore = tx.objectStore('app_settings');
+    const defaultCards = buildDefaultCardSettings();
+    const restoredSettings: UserSettings = parsed.settings
+      ? {
+          global: { ...DEFAULT_SETTINGS.global, ...(parsed.settings.global || {}) },
+          cards: { ...defaultCards, ...(parsed.settings.cards || {}) },
+        }
+      : {
+          global: { ...DEFAULT_SETTINGS.global },
+          cards: defaultCards,
+        };
+    await settingsStore.put(restoredSettings, 'global_settings');
 
-    if (parsed.planStorageState) {
-      savePlanStorageState(parsed.planStorageState);
+    // 6. 恢复 training_plans 与 activePlanId
+    const planStore = tx.objectStore('training_plans');
+    const metaStore = tx.objectStore('app_metadata');
+
+    if (parsed.planStorageState && Array.isArray(parsed.planStorageState.plans)) {
+      for (const p of parsed.planStorageState.plans) {
+        await planStore.put(p);
+      }
+      await metaStore.put(parsed.planStorageState.activePlanId, 'active_plan_id');
     } else if (parsed.trainingPlan) {
-      saveTrainingPlan(parsed.trainingPlan);
+      await planStore.put(parsed.trainingPlan);
+      await metaStore.put(parsed.trainingPlan.id, 'active_plan_id');
+    } else {
+      const defaultPlans = getDefaultPlans();
+      for (const p of defaultPlans) {
+        await planStore.put(p);
+      }
+      await metaStore.put(defaultPlans[0]?.id, 'active_plan_id');
     }
 
+    await tx.done;
     return true;
   } catch (err) {
-    console.error('Failed to import data, rolling back snapshot:', err);
-    try {
-      saveSettings(previousSettingsSnapshot);
-      savePlanStorageState(previousPlanStateSnapshot);
-    } catch (rollbackErr) {
-      console.error('Failed to rollback snapshot:', rollbackErr);
-    }
+    console.error('Failed to import data transactionally:', err);
     return false;
   }
 }
@@ -332,15 +330,32 @@ export async function importAllData(jsonString: string): Promise<boolean> {
 export async function clearAllData(): Promise<void> {
   const db = await getDB();
   const tx = db.transaction(
-    ['sessions', 'records', 'user_profiles', 'daily_summaries'],
+    [
+      'sessions',
+      'records',
+      'user_profiles',
+      'daily_summaries',
+      'app_settings',
+      'training_plans',
+      'app_metadata',
+    ],
     'readwrite',
   );
   await tx.objectStore('sessions').clear();
   await tx.objectStore('records').clear();
   await tx.objectStore('user_profiles').clear();
   await tx.objectStore('daily_summaries').clear();
-  await tx.done;
+  await tx.objectStore('app_settings').clear();
+  await tx.objectStore('training_plans').clear();
+  await tx.objectStore('app_metadata').clear();
 
-  resetPlansToDefault();
-  saveSettings(DEFAULT_SETTINGS);
+  const defaultPlans = getDefaultPlans();
+  const planStore = tx.objectStore('training_plans');
+  for (const p of defaultPlans) {
+    await planStore.put(p);
+  }
+  await tx.objectStore('app_metadata').put(defaultPlans[0]?.id, 'active_plan_id');
+  await tx.objectStore('app_settings').put(DEFAULT_SETTINGS, 'global_settings');
+
+  await tx.done;
 }

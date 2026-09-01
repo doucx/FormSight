@@ -3,8 +3,12 @@ import type { ToastMessage, ToastType } from '../components/common/Toast';
 import { getCardTitle, i18n, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { type UnifiedProfileData, repository } from '../storage/index';
-import { loadPlanStorageState, loadTrainingPlan, setActivePlan } from '../storage/planStorage';
-import { type UserSettings, loadSettings } from '../storage/settings';
+import {
+  EMPTY_TRAINING_PLAN,
+  getPlanStorageStateSnapshot,
+  setActivePlan,
+} from '../storage/planStorage';
+import { type UserSettings, getSettingsSnapshot } from '../storage/settings';
 import type { TrainingPlan } from '../types/plan';
 import type { RouteLocation } from './useHashRoute';
 
@@ -12,9 +16,11 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
   const { t } = useTranslation();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 
-  const [settings, setSettings] = useState<UserSettings>(loadSettings);
-  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(loadTrainingPlan);
-  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(() => loadPlanStorageState().plans);
+  const [settings, setSettings] = useState<UserSettings>(getSettingsSnapshot);
+  const [trainingPlan, setTrainingPlan] = useState<TrainingPlan>(EMPTY_TRAINING_PLAN);
+  const [allPlans, setAllPlans] = useState<TrainingPlan[]>(
+    () => getPlanStorageStateSnapshot().plans,
+  );
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [profilesLoaded, setProfilesLoaded] = useState<boolean>(false);
   const [totalTimeMs, setTotalTimeMs] = useState<number>(0);
@@ -73,8 +79,8 @@ export function useAppBootstrap(route: RouteLocation, refreshTodayStats: () => P
   }, [route, trainingPlan.name, t]);
 
   const handleSelectPlanOnHome = useCallback(
-    (planId: string) => {
-      const target = setActivePlan(planId);
+    async (planId: string) => {
+      const target = await setActivePlan(planId);
       if (target) {
         setTrainingPlan(target);
         showToast(t('common.switchedPlanToast', { name: target.name }), 'info');

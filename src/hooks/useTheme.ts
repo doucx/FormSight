@@ -3,7 +3,8 @@ import {
   type ResolvedTheme,
   type ThemeMode,
   type UserSettings,
-  loadSettings,
+  getCachedBypassTheme,
+  getSettingsSnapshot,
   saveSettings,
 } from '../storage/settings';
 
@@ -31,7 +32,8 @@ export function applyThemeToDocument(themeMode: ThemeMode = 'system'): ResolvedT
 }
 
 export function useTheme(externalSettings?: UserSettings): UseThemeResult {
-  const currentMode = externalSettings?.global?.theme || loadSettings().global.theme || 'system';
+  const currentMode =
+    externalSettings?.global?.theme || getSettingsSnapshot().global.theme || getCachedBypassTheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>(currentMode);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     applyThemeToDocument(currentMode),
@@ -52,7 +54,8 @@ export function useTheme(externalSettings?: UserSettings): UseThemeResult {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleMediaChange = () => {
-      const activeMode = externalSettings?.global?.theme || loadSettings().global.theme || 'system';
+      const activeMode =
+        externalSettings?.global?.theme || getSettingsSnapshot().global.theme || 'system';
       if (activeMode === 'system') {
         const nextResolved = applyThemeToDocument('system');
         setResolvedTheme(nextResolved);
@@ -68,7 +71,7 @@ export function useTheme(externalSettings?: UserSettings): UseThemeResult {
     const nextResolved = applyThemeToDocument(newMode);
     setResolvedTheme(nextResolved);
 
-    const current = loadSettings();
+    const current = getSettingsSnapshot();
     const updated: UserSettings = {
       ...current,
       global: {

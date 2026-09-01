@@ -1,4 +1,4 @@
-import { loadSettings } from '../storage/settings';
+import { getSettingsSnapshot } from '../storage/settings';
 
 let audioCtx: AudioContext | null = null;
 
@@ -18,8 +18,8 @@ function getAudioContext(): AudioContext | null {
  * @param streak 当前连击次数 (0..N)
  */
 export function playHitSound(streak = 0): void {
-  const settings = loadSettings();
-  if (!settings.global.soundEnabled) return;
+  const settings = getSettingsSnapshot();
+  if (!settings.global?.soundEnabled) return;
 
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -55,8 +55,8 @@ export function playHitSound(streak = 0): void {
  * 播放答错提示音 (柔和低沉的下行平滑提示)
  */
 export function playMissSound(): void {
-  const settings = loadSettings();
-  if (!settings.global.soundEnabled) return;
+  const settings = getSettingsSnapshot();
+  if (!settings.global?.soundEnabled) return;
 
   const ctx = getAudioContext();
   if (!ctx) return;

@@ -29,15 +29,29 @@ export function GlobalSettingsModal({
   showToast,
 }: GlobalSettingsModalProps) {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState<UserSettings>(() => externalSettings || loadSettings());
+  const [settings, setSettings] = useState<UserSettings>(
+    () =>
+      externalSettings || {
+        global: {
+          locale: 'zh-CN',
+          idleTimeout: 60,
+          soundEnabled: true,
+          sliderHitMargin: 12,
+          showCanvasHints: true,
+        },
+        cards: {},
+      },
+  );
 
   useEffect(() => {
     if (externalSettings) {
       setSettings(externalSettings);
+    } else {
+      loadSettings().then((s) => setSettings(s));
     }
   }, [externalSettings]);
 
-  const handleUpdateGlobal = (patch: Partial<GlobalSettings>) => {
+  const handleUpdateGlobal = async (patch: Partial<GlobalSettings>) => {
     const updated: UserSettings = {
       ...settings,
       global: {
@@ -45,7 +59,7 @@ export function GlobalSettingsModal({
         ...patch,
       },
     };
-    saveSettings(updated);
+    await saveSettings(updated);
     setSettings(updated);
     onSave?.(updated);
     onDataChanged();

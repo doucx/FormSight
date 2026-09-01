@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
 import { AdaptiveEngine } from '../core/engine/adaptiveEngine';
-import { type AdaptiveMode, type StepGranularity, loadSettings } from '../storage/settings';
+import { type AdaptiveMode, type StepGranularity, getSettingsSnapshot } from '../storage/settings';
 import { playHitSound, playMissSound } from '../utils/sound';
 import { useIdleProtection } from './session/useIdleProtection';
 import { useTrainingKeybindings } from './session/useTrainingKeybindings';
@@ -96,7 +96,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const effectiveIdleTimeout =
     typeof optionsIdleTimeout === 'number'
       ? optionsIdleTimeout
-      : (loadSettings().global.idleTimeout ?? 60);
+      : (getSettingsSnapshot().global.idleTimeout ?? 60);
 
   // === 1. 闲置与失焦保护微 Hook ===
   const { isIdle, pauseToIdle, resumeFromIdle } = useIdleProtection({
