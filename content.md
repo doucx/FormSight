@@ -1,307 +1,271 @@
-我们将为“清空数据”操作添加全屏阻塞遮罩（与还原备份一致的保护级别），并将整个清空与页面状态刷新链路（`refreshProfiles`）改为异步等待完成后再关闭模态框，确保数据与 UI 强一致。
+好的，我们将对 `src/storage/db/importExport.ts` 中的 `importAllData` 实现进行全量性能优化，消除事务分批等待、减少 GC 开销并加入域与时间计算缓存。
 
-## [WIP] feat(settings): 在清空数据时添加全屏阻塞遮罩并确保页面异步刷新
+## [WIP] perf: 优化全量数据导入性能减少批量写入延迟
 
 ### 用户需求
-1. 在用户确认执行“删除所有数据”时，必须阻止用户的一切操作（显示全屏 Loading 遮罩），防止并发点击。
-2. 数据清空完成后，必须确保应用上下文、能力层阶、打卡统计等页面状态完整刷新。
+解决当导入 7MB（约 19,000 条做答记录）备份文件时，导入过程耗时达 32 秒的性能瓶颈，将其优化至 1~2 秒级别。
 
 ### 评论
-清空数据是一项高危操作，若在异步清空与 LocalStorage 重置期间未锁定界面，用户可能触发竞态写入。通过在清空期间挂载全屏阻断遮罩，并在 `clearAllData()` 之后显式 `await onDataChanged()` 重新拉取空状态数据，可以彻底杜绝界面残留旧数据或状态不一致的问题。
+当前实现中频繁创建读写事务并等待落盘 (`await tx.done`)、高频浅拷贝大对象导致 GC 停顿以及未缓存域解析与时间计算，严重制约了数据治理管道的吞吐量。此次优化可显著改善大批量历史数据恢复时的体验。
 
 ### 目标
-1. 在 `DataGovernanceSection.tsx` 中增加 `isClearing` 状态，在 `handleClearDataConfirmed` 执行期间展示全屏阻断遮罩。
-2. 将 `onDataChanged` 设为异步等待（`await onDataChanged()`），确保状态加载完毕后再关闭模态框并展示 Toast。
-3. 在中英文语言包中增加清空数据中提示文案。
+1. 在 `importAllData` 中，将 `records` 表的写入合并为单一事务，彻底消除多次分批事务带来的硬磁盘同步（fsync）等待。
+2. 建立卡片所属域（`domain`）的内存缓存，避免万级循环重复查询注册表。
+3. 原地修改解析后的 JSON 记录对象，消除 `{ ...r }` 浅拷贝引发的垃圾回收停顿。
+4. 优化 `daily_summaries` 退化计算逻辑，加入时间戳邻近缓存避免高频 `new Date()`。
 
 ### 基本原理
-将 `handleClearDataConfirmed` 改造为带状态的异步事务：触发后立即关闭确认对话框并进入 `isClearing` 全屏遮罩状态，清空数据库后调用 `await onDataChanged()` 重新触发 `useAppBootstrap` 的全局数据聚合更新，确保所有 View 消费的均为已清空后的最新响应式状态，最后安全解除遮罩并退出设置弹窗。
+IndexedDB 的批量写入性能主要受事务落盘频率与对象分配开销制约。通过将所有 `records.put` 放入同一个 `readwrite` 事务中并由浏览器底层调度批量提交，配合原地属性赋值（In-place mutation），能将 I/O 与 CPU 资源消耗降至最低。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/ui #concept/state #scope/ux #ai/instruct #task/domain/storage #task/object/clear-data-blocking-and-refresh #task/action/implementation #task/state/continue
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/state #scope/core #scope/dx #ai/instruct #task/domain/storage #task/object/backup-import #task/action/performance-optimization #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 在中英文语言包中补充“正在清空数据”文案
+#### Acts 1: 优化 `importExport.ts` 中的 `importAllData` 实现
+
+我们将重构 `importAllData` 中的写入与聚合逻辑，消除多余的事务截断与对象复制。
 
 ~~~~~act
 patch_file
-src/locales/zh-CN.json
+src/storage/db/importExport.ts
 ~~~~~
-~~~~~json.old
-    "importBackup": "还原 JSON 备份",
-    "importing": "正在还原...",
-    "importingTitle": "正在还原数据备份",
-    "importingDesc": "正在清空旧数据并写入备份记录与档案，请稍候且勿关闭窗口...",
-    "pruneTitle": "数据库瘦身与修剪",
-~~~~~
-~~~~~json.new
-    "importBackup": "还原 JSON 备份",
-    "importing": "正在还原...",
-    "importingTitle": "正在还原数据备份",
-    "importingDesc": "正在清空旧数据并写入备份记录与档案，请稍候且勿关闭窗口...",
-    "clearingTitle": "正在清空数据",
-    "clearingDesc": "正在重置数据库与个人能力档案，请稍候且勿关闭窗口...",
-    "pruneTitle": "数据库瘦身与修剪",
-~~~~~
-
-~~~~~act
-patch_file
-src/locales/en-US.json
-~~~~~
-~~~~~json.old
-    "importBackup": "Restore JSON Backup",
-    "importing": "Restoring...",
-    "importingTitle": "Restoring Data Backup",
-    "importingDesc": "Clearing old data and writing backup records and profiles, please wait and do not close the window...",
-    "pruneTitle": "Database Prune & Clean",
-~~~~~
-~~~~~json.new
-    "importBackup": "Restore JSON Backup",
-    "importing": "Restoring...",
-    "importingTitle": "Restoring Data Backup",
-    "importingDesc": "Clearing old data and writing backup records and profiles, please wait and do not close the window...",
-    "clearingTitle": "Clearing All Data",
-    "clearingDesc": "Resetting database and career profiles, please wait and do not close the window...",
-    "pruneTitle": "Database Prune & Clean",
-~~~~~
-
-#### Acts 2: 更新 `GlobalSettingsModal.tsx` 的类型定义支持异步 `onDataChanged`
-
-~~~~~act
-patch_file
-src/components/modals/GlobalSettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-interface GlobalSettingsModalProps {
-  settings?: UserSettings;
-  onClose: () => void;
-  onSave?: (newSettings: UserSettings) => void;
-  onDataChanged: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-~~~~~
-~~~~~typescript.new
-interface GlobalSettingsModalProps {
-  settings?: UserSettings;
-  onClose: () => void;
-  onSave?: (newSettings: UserSettings) => void;
-  onDataChanged: () => Promise<void> | void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-~~~~~
-
-#### Acts 3: 在 `DataGovernanceSection.tsx` 中添加清空遮罩与异步刷新机制
-
-~~~~~act
-patch_file
-src/components/settings/sections/DataGovernanceSection.tsx
-~~~~~
-~~~~~typescript.old
-interface DataGovernanceSectionProps {
-  onDataChanged: () => void;
-  onCloseModal: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-
-export function DataGovernanceSection({
-  onDataChanged,
-  onCloseModal,
-  showToast,
-}: DataGovernanceSectionProps) {
-  const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
-  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-~~~~~
-~~~~~typescript.new
-interface DataGovernanceSectionProps {
-  onDataChanged: () => Promise<void> | void;
-  onCloseModal: () => void;
-  showToast: (msg: string, type?: ToastType) => void;
-}
-
-export function DataGovernanceSection({
-  onDataChanged,
-  onCloseModal,
-  showToast,
-}: DataGovernanceSectionProps) {
-  const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
-  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
-~~~~~
-
-~~~~~act
-patch_file
-src/components/settings/sections/DataGovernanceSection.tsx
-~~~~~
-~~~~~typescript.old
-  const handleClearDataConfirmed = async () => {
-    setShowClearConfirm(false);
-    await clearAllData();
-    showToast(t('settings.clearDataSuccessToast'), 'info');
-    onDataChanged();
-    onCloseModal();
-  };
-~~~~~
-~~~~~typescript.new
-  const handleClearDataConfirmed = async () => {
-    setShowClearConfirm(false);
-    try {
-      setIsClearing(true);
-      await clearAllData();
-      await onDataChanged();
-      showToast(t('settings.clearDataSuccessToast'), 'info');
-      onCloseModal();
-    } catch (err) {
-      console.error('Failed to clear data:', err);
-    } finally {
-      setIsClearing(false);
+~~~~~typescript
+    // 1. 导入 sessions
+    if (parsed.sessions && parsed.sessions.length > 0) {
+      const tx = db.transaction('sessions', 'readwrite');
+      const store = tx.objectStore('sessions');
+      for (const s of parsed.sessions) {
+        const cardId = s.cardId || s.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : s.domain || 'core';
+        store.put({ ...s, domain, cardId });
+      }
+      await tx.done;
     }
-  };
-~~~~~
 
-~~~~~act
-patch_file
-src/components/settings/sections/DataGovernanceSection.tsx
-~~~~~
-~~~~~typescript.old
-      {/* 备份导出与导入 */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          disabled={isExporting || isImporting}
-          onClick={handleExport}
-          className="py-3 px-4 rounded-2xl gap-2 h-auto"
-        >
-          {isExporting ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-          ) : (
-            <Download className="w-4 h-4 text-primary" />
-          )}
-          {isExporting ? t('settings.exporting') : t('settings.exportStream')}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={isExporting || isImporting}
-          onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 rounded-2xl gap-2 h-auto"
-        >
-          {isImporting ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4 text-primary" />
-          )}
-          {isImporting ? t('settings.importing') : t('settings.importBackup')}
-        </Button>
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          disabled={isImporting}
-          onChange={handleImportFile}
-          className="hidden"
-        />
-      </div>
-~~~~~
-~~~~~typescript.new
-      {/* 备份导出与导入 */}
-      <div className="grid grid-cols-2 gap-3">
-        <Button
-          variant="outline"
-          disabled={isExporting || isImporting || isClearing}
-          onClick={handleExport}
-          className="py-3 px-4 rounded-2xl gap-2 h-auto"
-        >
-          {isExporting ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-          ) : (
-            <Download className="w-4 h-4 text-primary" />
-          )}
-          {isExporting ? t('settings.exporting') : t('settings.exportStream')}
-        </Button>
-        <Button
-          variant="outline"
-          disabled={isExporting || isImporting || isClearing}
-          onClick={() => fileInputRef.current?.click()}
-          className="py-3 px-4 rounded-2xl gap-2 h-auto"
-        >
-          {isImporting ? (
-            <Loader2 className="w-4 h-4 text-primary animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4 text-primary" />
-          )}
-          {isImporting ? t('settings.importing') : t('settings.importBackup')}
-        </Button>
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept=".json"
-          disabled={isImporting || isClearing}
-          onChange={handleImportFile}
-          className="hidden"
-        />
-      </div>
-~~~~~
+    // 2. 导入 profiles
+    if (parsed.profiles && parsed.profiles.length > 0) {
+      const tx = db.transaction('user_profiles', 'readwrite');
+      const store = tx.objectStore('user_profiles');
+      for (const p of parsed.profiles) {
+        const cardId = p.cardId || p.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : p.domain || 'core';
+        const totalTrials = p.totalTrials ?? 0;
+        store.put({ ...p, cardId, domain, totalTrials });
+      }
+      await tx.done;
+    }
 
-~~~~~act
-patch_file
-src/components/settings/sections/DataGovernanceSection.tsx
+    // 3. 分批写入海量 records (每 2500 条为一个独立事务批次，采用管线并发排队)
+    if (parsed.records && parsed.records.length > 0) {
+      const BATCH_SIZE = 2500;
+      for (let i = 0; i < parsed.records.length; i += BATCH_SIZE) {
+        const batch = parsed.records.slice(i, i + BATCH_SIZE);
+        const tx = db.transaction('records', 'readwrite');
+        const store = tx.objectStore('records');
+        for (const r of batch) {
+          const cardId = r.cardId || r.mode;
+          const card = registry.getCardById(cardId);
+          const domain = card ? card.domain : r.domain || 'core';
+          store.put({ ...r, domain, cardId });
+        }
+        await tx.done;
+      }
+    }
+
+    // 4. 写入或重新生成 daily_summaries
+    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
+      for (const d of parsed.dailySummaries) {
+        const cardId = d.cardId || d.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : d.domain || 'core';
+        store.put({
+          ...d,
+          cardId,
+          domain,
+        });
+      }
+      await tx.done;
+    } else if (parsed.records && parsed.records.length > 0) {
+      const summaryMap = new Map<string, DailySummaryData>();
+      for (const r of parsed.records) {
+        const cardId = r.cardId || r.mode;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : r.domain || 'core';
+        const date = getLocalDateString(r.timestamp);
+        const summaryId = `${date}_${cardId}`;
+        const respMs = Number(r.responseTimeMs) || 0;
+        const level = Number(r.difficultyLevel) || 1;
+
+        const existing = summaryMap.get(summaryId);
+        if (!existing) {
+          summaryMap.set(summaryId, {
+            id: summaryId,
+            date,
+            cardId,
+            domain,
+            mode: r.mode,
+            totalCount: 1,
+            hitCount: r.isHit ? 1 : 0,
+            totalTimeMs: respMs,
+            maxLevel: level,
+            minLevel: level,
+            lastLevel: level,
+            updatedAt: r.timestamp,
+          });
+        } else {
+          existing.domain = domain;
+          existing.totalCount += 1;
+          if (r.isHit) existing.hitCount += 1;
+          existing.totalTimeMs += respMs;
+          existing.maxLevel = Math.max(existing.maxLevel, level);
+          existing.minLevel = Math.min(existing.minLevel, level);
+          if (r.timestamp >= existing.updatedAt) {
+            existing.lastLevel = level;
+            existing.updatedAt = r.timestamp;
+          }
+        }
+      }
+
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
+      for (const summary of summaryMap.values()) {
+        store.put(summary);
+      }
+      await tx.done;
+    }
 ~~~~~
-~~~~~typescript.old
-      {/* 导入中全屏阻断遮罩 */}
-      {isImporting && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
-          <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
-            <div className="p-3 bg-accent text-primary rounded-2xl">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">
-                {t('settings.importingTitle')}
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {t('settings.importingDesc')}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-~~~~~
-~~~~~typescript.new
-      {/* 导入与清空中全屏阻断遮罩 */}
-      {(isImporting || isClearing) && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-150 p-6 text-center select-none">
-          <div className="bg-card border border-border p-6 sm:p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full animate-in zoom-in-95 duration-150">
-            <div className="p-3 bg-accent text-primary rounded-2xl">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-            <div className="space-y-1">
-              <h3 className="text-base font-bold text-foreground">
-                {isClearing ? t('settings.clearingTitle') : t('settings.importingTitle')}
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {isClearing ? t('settings.clearingDesc') : t('settings.importingDesc')}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+~~~~~typescript
+    // 卡片 Domain 内存缓存映射，避免万级循环中高频查表
+    const cardDomainCache = new Map<string, string>();
+    const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
+      const cached = cardDomainCache.get(cardId);
+      if (cached !== undefined) return cached;
+      const card = registry.getCardById(cardId);
+      const domain = card ? card.domain : fallbackDomain || 'core';
+      cardDomainCache.set(cardId, domain);
+      return domain;
+    };
+
+    // 1 & 2. 导入 sessions 与 profiles (合并至单一元数据事务)
+    if (
+      (parsed.sessions && parsed.sessions.length > 0) ||
+      (parsed.profiles && parsed.profiles.length > 0)
+    ) {
+      const metaTx = db.transaction(['sessions', 'user_profiles'], 'readwrite');
+      if (parsed.sessions && parsed.sessions.length > 0) {
+        const sessionStore = metaTx.objectStore('sessions');
+        for (const s of parsed.sessions) {
+          const cardId = s.cardId || s.mode;
+          s.cardId = cardId;
+          s.domain = getCachedDomain(cardId, s.domain);
+          sessionStore.put(s);
+        }
+      }
+      if (parsed.profiles && parsed.profiles.length > 0) {
+        const profileStore = metaTx.objectStore('user_profiles');
+        for (const p of parsed.profiles) {
+          const cardId = p.cardId || p.mode;
+          p.cardId = cardId;
+          p.domain = getCachedDomain(cardId, p.domain);
+          p.totalTrials = p.totalTrials ?? 0;
+          profileStore.put(p);
+        }
+      }
+      await metaTx.done;
+    }
+
+    // 3. 写入海量 records (单事务批量流式写入，原地修改对象消除 GC 停顿与多次 fsync)
+    if (parsed.records && parsed.records.length > 0) {
+      const tx = db.transaction('records', 'readwrite');
+      const store = tx.objectStore('records');
+      for (let i = 0; i < parsed.records.length; i++) {
+        const r = parsed.records[i];
+        const cardId = r.cardId || r.mode;
+        r.cardId = cardId;
+        r.domain = getCachedDomain(cardId, r.domain);
+        store.put(r);
+      }
+      await tx.done;
+    }
+
+    // 4. 写入或重新生成 daily_summaries
+    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
+      for (const d of parsed.dailySummaries) {
+        const cardId = d.cardId || d.mode;
+        d.cardId = cardId;
+        d.domain = getCachedDomain(cardId, d.domain);
+        store.put(d);
+      }
+      await tx.done;
+    } else if (parsed.records && parsed.records.length > 0) {
+      const summaryMap = new Map<string, DailySummaryData>();
+      let lastTimestamp = -1;
+      let lastDateStr = '';
+
+      for (const r of parsed.records) {
+        const cardId = r.cardId || r.mode;
+        const domain = getCachedDomain(cardId, r.domain);
+
+        // 时间戳邻近缓存优化：同日或近时间戳避免重复 new Date() 计算
+        let dateStr = lastDateStr;
+        if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
+          dateStr = getLocalDateString(r.timestamp);
+          lastTimestamp = r.timestamp;
+          lastDateStr = dateStr;
+        }
+
+        const summaryId = `${dateStr}_${cardId}`;
+        const respMs = Number(r.responseTimeMs) || 0;
+        const level = Number(r.difficultyLevel) || 1;
+
+        const existing = summaryMap.get(summaryId);
+        if (!existing) {
+          summaryMap.set(summaryId, {
+            id: summaryId,
+            date: dateStr,
+            cardId,
+            domain,
+            mode: r.mode,
+            totalCount: 1,
+            hitCount: r.isHit ? 1 : 0,
+            totalTimeMs: respMs,
+            maxLevel: level,
+            minLevel: level,
+            lastLevel: level,
+            updatedAt: r.timestamp,
+          });
+        } else {
+          existing.domain = domain;
+          existing.totalCount += 1;
+          if (r.isHit) existing.hitCount += 1;
+          existing.totalTimeMs += respMs;
+          existing.maxLevel = Math.max(existing.maxLevel, level);
+          existing.minLevel = Math.min(existing.minLevel, level);
+          if (r.timestamp >= existing.updatedAt) {
+            existing.lastLevel = level;
+            existing.updatedAt = r.timestamp;
+          }
+        }
+      }
+
+      const tx = db.transaction('daily_summaries', 'readwrite');
+      const store = tx.objectStore('daily_summaries');
+      for (const summary of summaryMap.values()) {
+        store.put(summary);
+      }
+      await tx.done;
+    }
 ~~~~~
 
 ### 下一步建议
-
-1. **验证清空流程**：在设置中点击“删除所有数据”并在二次确认弹窗中确认，观察全屏遮罩出现、数据清空与页面状态同步归零（今日刷题变为 0，所有卡片等级与总时长重置为初始状态）。
-2. **提交代码**：若所有功能均已符合预期，请告知我，我将为你生成 Git 提交计划。
+- 执行导入 7MB 备份文件的实际测试，测量导入耗时并验证 UI 遮罩层是否流畅关闭。
+- 确认全量数据导入后，数据统计（热力图、掌握度、生涯总用时等）能够即时且完整地刷新。
