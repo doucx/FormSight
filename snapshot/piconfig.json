@@ -1,16 +1,5 @@
 {
   "presets": {
-    "default": {
-      "format": "xml",
-      "extension": ["ts", "tsx"],
-      "paths": [
-        "src/core/",
-        "src/types/",
-        "src/storage/",
-        "src/hooks/",
-        "src/app.tsx"
-      ]
-    },
     "core": {
       "format": "xml",
       "extension": ["ts", "tsx"],

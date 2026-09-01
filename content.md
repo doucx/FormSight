@@ -4,8 +4,7 @@
 
 ### 📝 变更文件摘要:
 ```
-playground/fractal_dimension_prototype.html      | 190 +++++++++++++++++
- playground/fractal_domain_warping_prototype.html | 247 +++++++++++++++++++++++
- playground/fractal_lsystem_spine_prototype.html  | 212 +++++++++++++++++++
- 3 files changed, 649 insertions(+)
+piconfig.json               |  11 ----
+ scripts/check-ts-smells.mjs | 140 ++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 140 insertions(+), 11 deletions(-)
 ```
