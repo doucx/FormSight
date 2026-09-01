@@ -52,7 +52,17 @@ export function GlobalSettingsModal({
   };
 
   return (
-    <ModalShell title={t('settings.title')} icon={Sliders} onClose={onClose} maxWidth="max-w-md">
+    <ModalShell
+      title={t('settings.title')}
+      icon={Sliders}
+      onClose={onClose}
+      maxWidth="max-w-md"
+      footer={
+        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
+          {t('common.complete')}
+        </Button>
+      }
+    >
       <GeneralPreferencesSection
         settings={settings}
         onUpdateGlobal={handleUpdateGlobal}
@@ -64,12 +74,6 @@ export function GlobalSettingsModal({
         onCloseModal={onClose}
         showToast={showToast}
       />
-
-      <div className="pt-2">
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto">
-          {t('common.complete')}
-        </Button>
-      </div>
     </ModalShell>
   );
 }

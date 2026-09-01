@@ -9,6 +9,7 @@ interface ModalShellProps {
   maxWidth?: string;
   onClose: () => void;
   headerAction?: ComponentChildren;
+  footer?: ComponentChildren;
   children: ComponentChildren;
 }
 
@@ -19,12 +20,13 @@ export function ModalShell({
   maxWidth = 'max-w-md',
   onClose,
   headerAction,
+  footer,
   children,
 }: ModalShellProps) {
   return (
     <div
       role="presentation"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 dark:bg-background/80 backdrop-blur-sm p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 dark:bg-background/80 backdrop-blur-sm p-4 overflow-hidden select-none"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -38,10 +40,10 @@ export function ModalShell({
       }}
     >
       <div
-        className={`w-full ${maxWidth} bg-card text-foreground rounded-3xl shadow-2xl border border-border/60 p-6 flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-150 my-auto`}
+        className={`w-full ${maxWidth} max-h-[88vh] bg-card text-foreground rounded-3xl shadow-2xl border border-border/60 p-6 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-150 my-auto`}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        {/* 常驻 Header */}
+        <div className="flex items-center justify-between border-b border-border/60 pb-3.5 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             {Icon && (
               <div className="p-2 bg-accent text-primary rounded-xl">
@@ -66,8 +68,17 @@ export function ModalShell({
           </div>
         </div>
 
-        {/* Content */}
-        {children}
+        {/* 独立内嵌滚动 Content */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 min-h-0 scrollbar-thin">
+          {children}
+        </div>
+
+        {/* 常驻 Footer (如有) */}
+        {footer && (
+          <div className="pt-2 border-t border-border/60 flex-shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
