@@ -2,8 +2,22 @@ import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
 import type { UnifiedProfileData } from '../../storage/db/schema';
-import { saveTrainingPlan } from '../../storage/planStorage';
 import { type UserSettings, getCardSettings } from '../../storage/settings';
+import {
+  $activePlan,
+  $allPlans,
+  savePlanAction,
+  setActivePlanAction,
+} from '../../stores/planStore';
+import {
+  $isProfilesLoaded,
+  $profiles,
+  $todayStatsMap,
+  $totalTimeMs,
+  refreshAppData,
+} from '../../stores/profileStore';
+import { $settings } from '../../stores/settingsStore';
+import { showToast } from '../../stores/toastStore';
 import type { TrainingPlan } from '../../types/plan';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
@@ -19,44 +33,38 @@ interface AppRouterProps {
   route: RouteLocation;
   navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
   lastHomeRoute: RouteLocation;
-  totalTimeMs: number;
-  todayStats: Record<string, { count: number; timeMs: number }>;
-  profiles: Record<string, UnifiedProfileData>;
-  trainingPlan: TrainingPlan;
-  allPlans: TrainingPlan[];
-  settings: UserSettings;
-  profilesLoaded: boolean;
-  dataVersion: number;
-  onRefreshProfiles: () => Promise<void>;
-  onSetTrainingPlan: (plan: TrainingPlan) => void;
-  onSelectPlanOnHome: (planId: string) => void;
+  totalTimeMs?: number;
+  todayStats?: Record<string, { count: number; timeMs: number }>;
+  profiles?: Record<string, UnifiedProfileData>;
+  trainingPlan?: TrainingPlan;
+  allPlans?: TrainingPlan[];
+  settings?: UserSettings;
+  profilesLoaded?: boolean;
+  onRefreshProfiles?: () => Promise<void>;
+  onSetTrainingPlan?: (plan: TrainingPlan) => void;
+  onSelectPlanOnHome?: (planId: string) => void;
   onOpenCardSettings: (cardId: string) => void;
   onOpenGlobalSettings: () => void;
-  showToast: (message: string, type?: ToastType) => void;
+  showToast?: (message: string, type?: ToastType) => void;
 }
 
 export function AppRouter({
   route,
   navigate,
   lastHomeRoute,
-  totalTimeMs,
-  todayStats,
-  profiles,
-  trainingPlan,
-  allPlans,
-  settings,
-  profilesLoaded,
-  dataVersion,
-  onRefreshProfiles,
-  onSetTrainingPlan,
-  onSelectPlanOnHome,
   onOpenCardSettings,
   onOpenGlobalSettings,
-  showToast,
 }: AppRouterProps) {
   const { t } = useTranslation();
 
-  // 判断是否为需要呈现全局导航栏的主干页面
+  const currentPlan = $activePlan.value;
+  const currentSettings = $settings.value;
+  const currentProfiles = $profiles.value;
+  const currentTodayStats = $todayStatsMap.value;
+  const currentTotalTime = $totalTimeMs.value;
+  const profilesLoaded = $isProfilesLoaded.value;
+  const allPlansList = $allPlans.value;
+
   const isMainShellPage =
     route.type === 'home' ||
     route.type === 'discovery' ||
@@ -67,14 +75,14 @@ export function AppRouter({
     if (route.type === 'home') {
       return (
         <HomeView
-          totalTimeMs={totalTimeMs}
-          todayStats={todayStats}
-          profiles={profiles}
-          trainingPlan={trainingPlan}
-          allPlans={allPlans}
+          totalTimeMs={currentTotalTime}
+          todayStats={currentTodayStats}
+          profiles={currentProfiles}
+          trainingPlan={currentPlan}
+          allPlans={allPlansList}
           onStartPlan={() => navigate({ type: 'plan-train' })}
           onOpenPlanEditor={() => navigate({ type: 'plan-editor' })}
-          onSelectPlan={onSelectPlanOnHome}
+          onSelectPlan={(pId) => setActivePlanAction(pId)}
           onNavigateToDiscovery={() => navigate({ type: 'discovery' })}
           onNavigateToStats={() => navigate({ type: 'stats' })}
         />
@@ -84,8 +92,8 @@ export function AppRouter({
     if (route.type === 'discovery') {
       return (
         <DiscoveryView
-          todayStats={todayStats}
-          profiles={profiles}
+          todayStats={currentTodayStats}
+          profiles={currentProfiles}
           query={route.query}
           onQueryChange={(newQuery) =>
             navigate({ type: 'discovery', query: newQuery }, { replace: true })
@@ -98,27 +106,24 @@ export function AppRouter({
     }
 
     if (route.type === 'stats') {
-      return <GlobalStatsView dataVersion={dataVersion} onExit={() => navigate(lastHomeRoute)} />;
+      return <GlobalStatsView onExit={() => navigate(lastHomeRoute)} />;
     }
 
     if (route.type === 'plan-editor') {
       return (
         <PlanEditorView
-          key={`plan-editor-${dataVersion}`}
-          initialPlan={trainingPlan}
+          initialPlan={currentPlan}
           onExit={() => navigate(lastHomeRoute)}
-          onPlanListChanged={onRefreshProfiles}
+          onPlanListChanged={refreshAppData}
           onSaveAndExit={async (newPlan) => {
-            await saveTrainingPlan(newPlan);
-            onSetTrainingPlan(newPlan);
-            await onRefreshProfiles();
+            await savePlanAction(newPlan);
+            await refreshAppData();
             showToast(t('common.planUpdatedToast'), 'success');
             navigate(lastHomeRoute);
           }}
           onStartPlanDirectly={async (newPlan) => {
-            await saveTrainingPlan(newPlan);
-            onSetTrainingPlan(newPlan);
-            await onRefreshProfiles();
+            await savePlanAction(newPlan);
+            await refreshAppData();
             navigate({ type: 'plan-train' });
           }}
         />
@@ -146,7 +151,7 @@ export function AppRouter({
   if (route.type === 'analytics') {
     return (
       <CardAnalyticsView
-        key={`card-analytics-${route.cardId}-${dataVersion}`}
+        key={`card-analytics-${route.cardId}`}
         cardId={route.cardId}
         initialTab={route.tab}
         onExit={() => navigate(lastHomeRoute)}
@@ -162,11 +167,11 @@ export function AppRouter({
   if (route.type === 'plan-train') {
     return (
       <PlanTrainingView
-        key={`plan-train-${trainingPlan.id}-${dataVersion}`}
-        plan={trainingPlan}
-        settings={settings}
+        key={`plan-train-${currentPlan.id}`}
+        plan={currentPlan}
+        settings={currentSettings}
         onExit={async () => {
-          await onRefreshProfiles();
+          await refreshAppData();
           navigate(lastHomeRoute);
         }}
       />
@@ -191,7 +196,7 @@ export function AppRouter({
       navigate(lastHomeRoute);
       return null;
     }
-    const activeLevel = profiles[activeCard.id]?.currentLevel || 5;
+    const activeLevel = currentProfiles[activeCard.id]?.currentLevel || 5;
 
     return (
       <GenericTrainingView
@@ -200,10 +205,10 @@ export function AppRouter({
         plugin={plugin}
         sessionType={route.sessionType}
         initialLevel={activeLevel}
-        settings={getCardSettings(settings, activeCard.id)}
-        globalSettings={settings.global}
+        settings={getCardSettings(currentSettings, activeCard.id)}
+        globalSettings={currentSettings.global}
         onExit={async () => {
-          await onRefreshProfiles();
+          await refreshAppData();
           navigate(lastHomeRoute);
         }}
       />
