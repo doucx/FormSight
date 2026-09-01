@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复未使用的导入、异步设置读取与测试用例类型导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262929.1986065, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M useAppBootstrap.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788262941.0099497, "duration_ms": 0}}

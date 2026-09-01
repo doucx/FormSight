@@ -3,7 +3,11 @@ import type { ToastMessage, ToastType } from '../components/common/Toast';
 import { getCardTitle, i18n, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import { type UnifiedProfileData, repository } from '../storage/index';
-import { EMPTY_TRAINING_PLAN, getPlanStorageStateSnapshot, setActivePlan } from '../storage/planStorage';
+import {
+  EMPTY_TRAINING_PLAN,
+  getPlanStorageStateSnapshot,
+  setActivePlan,
+} from '../storage/planStorage';
 import { type UserSettings, getSettingsSnapshot } from '../storage/settings';
 import type { TrainingPlan } from '../types/plan';
 import type { RouteLocation } from './useHashRoute';
