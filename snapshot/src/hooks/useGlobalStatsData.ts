@@ -11,6 +11,7 @@ export function useGlobalStatsData(dataVersion = 0) {
   const [summaries, setSummaries] = useState<DailySummaryData[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: dataVersion triggers data reload
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {

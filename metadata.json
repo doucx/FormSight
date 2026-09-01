@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M ModalShell.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788261108.9788418, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(hooks): 通过添加 biome-ignore 解决 useGlobalStatsData 依赖警告", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788261109.4479444, "duration_ms": 0}}
