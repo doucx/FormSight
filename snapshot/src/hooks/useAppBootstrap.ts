@@ -23,6 +23,7 @@ export function useAppBootstrap(route: RouteLocation) {
   }, []);
 
   // 动态更新页面标题
+  // biome-ignore lint/correctness/useExhaustiveDependencies: update document title when plan name or route changes
   useEffect(() => {
     const currentPlanName = $activePlan.value.name;
     if (route.type === 'home') {

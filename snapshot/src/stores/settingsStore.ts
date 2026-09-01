@@ -1,6 +1,8 @@
 import { computed, signal } from '@preact/signals';
 import { applyThemeToDocument } from '../hooks/useTheme';
 import {
+  type BaseModuleSettings,
+  DEFAULT_BASE_SETTINGS,
   DEFAULT_SETTINGS,
   type ThemeMode,
   type UserSettings,
@@ -40,9 +42,9 @@ export async function updateGlobalSettings(
 
 export async function updateCardSettings(
   cardId: string,
-  patch: Record<string, unknown>,
+  patch: Partial<BaseModuleSettings> | Record<string, unknown>,
 ): Promise<UserSettings> {
-  const currentCard = $settings.value.cards[cardId] || {};
+  const currentCard = $settings.value.cards[cardId] || DEFAULT_BASE_SETTINGS;
   const next: UserSettings = {
     ...$settings.value,
     cards: {
@@ -50,7 +52,7 @@ export async function updateCardSettings(
       [cardId]: {
         ...currentCard,
         ...patch,
-      } as any,
+      } as BaseModuleSettings,
     },
   };
   $settings.value = next;
