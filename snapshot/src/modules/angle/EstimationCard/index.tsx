@@ -51,8 +51,7 @@ export const angleEstimationCard: CardManifest<
     evaluateAnswer: (userVal, q) => checkAngleHit(userVal, q),
     isHit: (hitResult) => hitResult.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (_q, hitResult, userVal, mode) => ({
-      mode,
+    extractRecordDetails: (_q, hitResult, userVal) => ({
       userAnswer: userVal,
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
