@@ -69,7 +69,9 @@ export function ParallelView({
         badge: showAnswer
           ? isAHit
             ? t('cards.angle_parallel_2afc.views.absoluteParallel')
-            : t('cards.angle_parallel_2afc.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            : t('cards.angle_parallel_2afc.views.deviationBadge', {
+                deg: question.angularDeviation ?? 0,
+              })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -97,7 +99,9 @@ export function ParallelView({
         badge: showAnswer
           ? isBHit
             ? t('cards.angle_parallel_2afc.views.absoluteParallel')
-            : t('cards.angle_parallel_2afc.views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            : t('cards.angle_parallel_2afc.views.deviationBadge', {
+                deg: question.angularDeviation ?? 0,
+              })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
