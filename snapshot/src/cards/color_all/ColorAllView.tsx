@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'preact/hooks';
 import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
 import { Button } from '../../components/ui/button';
 import { hsvToHex } from '../../core/color/colorUtils';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
@@ -24,7 +24,7 @@ export function ColorAllView({
   disabled = false,
   settings,
 }: ColorAllViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('color_all');
   const { targetH, targetS, targetV, difficultyLevel } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
   const targetHSV: [number, number, number] = [targetH, targetS, targetV];

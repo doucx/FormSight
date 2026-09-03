@@ -33,7 +33,7 @@ export function RelDecontextual2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -44,10 +44,10 @@ export function RelDecontextual2AfcView({
         title: t('common.areaA'),
         isCorrect: isAHit,
         badge: isAHit
-          ? t('views.physicallyBrighter', {
+          ? t('physicallyBrighter', {
               v: question.centerColorA[2],
             })
-          : t('views.physicallyDarker', {
+          : t('physicallyDarker', {
               v: question.centerColorA[2],
             }),
         content: (
@@ -63,10 +63,10 @@ export function RelDecontextual2AfcView({
         title: t('common.areaB'),
         isCorrect: isBHit,
         badge: isBHit
-          ? t('views.physicallyBrighter', {
+          ? t('physicallyBrighter', {
               v: question.centerColorB[2],
             })
-          : t('views.physicallyDarker', {
+          : t('physicallyDarker', {
               v: question.centerColorB[2],
             }),
         content: (

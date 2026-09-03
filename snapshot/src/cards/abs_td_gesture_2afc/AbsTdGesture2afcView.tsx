@@ -1,7 +1,7 @@
 import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { Standard2AfcView } from '../../components/common/Standard2AfcView';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
 import {
   OPTION_SIZE,
@@ -29,7 +29,7 @@ export function AbsTdGesture2afcView({
   disabled = false,
   showCanvasHints = true,
 }: AbsTdGesture2afcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_td_gesture_2afc');
 
   const isTargetA = question.correctParticleChoice === 'A';
   const isTargetB = !isTargetA;
@@ -37,7 +37,7 @@ export function AbsTdGesture2afcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('cards.abs_td_gesture_2afc.hint')}
+      hintText={t('hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -47,7 +47,7 @@ export function AbsTdGesture2afcView({
       prompt={
         <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('cards.abs_td_gesture_2afc.promptTitle')}
+            {t('promptTitle')}
           </span>
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView

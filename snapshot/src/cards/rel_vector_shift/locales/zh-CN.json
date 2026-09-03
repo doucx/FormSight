@@ -6,7 +6,5 @@
     "showToleranceBandTitle": "显示容错感应区",
     "showToleranceBandDesc": "在候选色块上标示容错参考"
   },
-  "views": {
-    "prompt": "观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
-  }
+  "prompt": "观察上方 A➔B 色彩推移，在候选区选出符合 C➔D 的同向推移色"
 }

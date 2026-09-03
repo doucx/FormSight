@@ -6,10 +6,8 @@
     "showToleranceBandTitle": "Show Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"
   },
-  "views": {
-    "hint": "Observe the angle formed by rays and modulate the slider to match (0°~180°)",
-    "label": "Angle Estimation Value:",
-    "trueAngle": "Ground Truth Value:",
-    "errorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
-  }
+  "hint": "Observe the angle formed by rays and modulate the slider to match (0°~180°)",
+  "label": "Angle Estimation Value:",
+  "trueAngle": "Ground Truth Value:",
+  "errorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
 }

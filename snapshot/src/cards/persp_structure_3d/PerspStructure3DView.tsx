@@ -196,7 +196,7 @@ export function PerspStructure3DView({
 
   return (
     <QuestionCardShell
-      hintText={cardT('views.hint')}
+      hintText={cardT('hint')}
       hintIcon={Box}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -298,7 +298,7 @@ export function PerspStructure3DView({
             }}
             tabIndex={0}
             role="button"
-            aria-label={cardT('views.hint')}
+            aria-label={cardT('hint')}
             className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
               disabled || showAnswer
                 ? 'cursor-default'

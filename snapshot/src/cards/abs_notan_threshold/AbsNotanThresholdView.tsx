@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { CanvasView } from '../../components/common/CanvasView';
 import { DualViewportContainer } from '../../components/common/DualViewportContainer';
 import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, drawNotanNoiseField, drawRawGrayscaleNoiseField } from './utils/generator';
 
@@ -27,7 +27,7 @@ export function AbsNotanThresholdView({
   hitMargin = 12,
   showCanvasHints = true,
 }: AbsNotanThresholdViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_notan_threshold');
   const [activeVal, setActiveVal] = useState<number>(50);
 
   const targetVal = question.idealNotanThreshold;
@@ -35,11 +35,11 @@ export function AbsNotanThresholdView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('cards.abs_notan_threshold.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
-      label={t('cards.abs_notan_threshold.label')}
+      label={t('label')}
       max={100}
       step={0.5}
       initialValue={50}
@@ -55,8 +55,8 @@ export function AbsNotanThresholdView({
       onAnswer={onAnswer}
       preview={
         <DualViewportContainer
-          leftTitle={t('cards.abs_notan_threshold.rawScene')}
-          rightTitle={t('cards.abs_notan_threshold.notanOutput')}
+          leftTitle={t('rawScene')}
+          rightTitle={t('notanOutput')}
           leftContent={
             <div className="w-full flex justify-center bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
               <CanvasView

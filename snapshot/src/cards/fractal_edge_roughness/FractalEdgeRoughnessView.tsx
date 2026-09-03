@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { StandardSliderView } from '../../components/common/StandardSliderView';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_HEIGHT, CANVAS_WIDTH, generateFractalLine } from './utils/generator';
@@ -21,7 +21,7 @@ export function FractalEdgeRoughnessView({
   onAnswer,
   disabled = false,
 }: FractalEdgeRoughnessViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('fractal_edge_roughness');
   const [currentH, setCurrentH] = useState(0.5);
 
   const targetCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -86,8 +86,8 @@ export function FractalEdgeRoughnessView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('cards.fractal_edge_roughness.instruction')}
-      label={t('cards.fractal_edge_roughness.labels.hurstExponent')}
+      hintText={t('instruction')}
+      label={t('hurstExponent')}
       min={0.1}
       max={1.0}
       step={0.01}
@@ -106,7 +106,7 @@ export function FractalEdgeRoughnessView({
           {/* 上视口：目标边缘 */}
           <div className="relative rounded-2xl border border-border bg-card p-3 shadow-inner">
             <span className="absolute top-2.5 left-3.5 text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-wider">
-              {t('cards.fractal_edge_roughness.labels.targetEdge')}
+              {t('targetEdge')}
             </span>
             <canvas
               ref={targetCanvasRef}
@@ -119,7 +119,7 @@ export function FractalEdgeRoughnessView({
           {/* 下视口：用户实时调制边缘 */}
           <div className="relative rounded-2xl border-2 border-primary/40 bg-card p-3 shadow-inner">
             <span className="absolute top-2.5 left-3.5 text-[10px] font-mono font-bold text-primary uppercase tracking-wider">
-              {t('cards.fractal_edge_roughness.labels.userEdge')}
+              {t('userEdge')}
             </span>
             <canvas
               ref={userCanvasRef}

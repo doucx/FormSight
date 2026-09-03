@@ -2,7 +2,7 @@ import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { Standard2AfcView } from '../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from './types';
 
@@ -22,7 +22,7 @@ export function NegAreaComparison2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: NegAreaComparison2AfcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('neg_area_comparison_2afc');
   const largerSide = question.largerSide;
   const isAHit = largerSide === 'A';
   const isBHit = largerSide === 'B';
@@ -30,7 +30,7 @@ export function NegAreaComparison2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('cards.neg_area_comparison_2afc.views.areaHint')}
+      hintText={t('areaHint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -40,7 +40,7 @@ export function NegAreaComparison2AfcView({
       optionA={{
         title: t('common.areaA'),
         isCorrect: isAHit,
-        badge: t('cards.neg_area_comparison_2afc.views.whiteSpace', {
+        badge: t('whiteSpace', {
           ratio: question.negRatioA ?? 50,
         }),
         content: (
@@ -66,7 +66,7 @@ export function NegAreaComparison2AfcView({
       optionB={{
         title: t('common.areaB'),
         isCorrect: isBHit,
-        badge: t('cards.neg_area_comparison_2afc.views.whiteSpace', {
+        badge: t('whiteSpace', {
           ratio: question.negRatioB ?? 50,
         }),
         content: (

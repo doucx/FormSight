@@ -142,7 +142,7 @@ export function PerspPropDivisionView({
 
   return (
     <QuestionCardShell
-      hintText={cardT('views.hint')}
+      hintText={cardT('hint')}
       hintIcon={Disc}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -150,13 +150,13 @@ export function PerspPropDivisionView({
         showAnswer ? (
           <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {cardT('views.targetRatio')}{' '}
+              {cardT('targetRatio')}{' '}
               <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              {cardT('views.userPosition', {
+              {cardT('userPosition', {
                 pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
                 error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
               })}

@@ -45,11 +45,11 @@ export function PerspVpConvergenceView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Sliders}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('views.rayAngle')}
+      label={t('rayAngle')}
       max={360}
       step={0.5}
       initialValue={180}
@@ -98,7 +98,7 @@ export function PerspVpConvergenceView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('views.vpTrueAngle')}{' '}
+              {t('vpTrueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span
@@ -108,7 +108,7 @@ export function PerspVpConvergenceView({
                   : 'text-rose-600 dark:text-rose-400 font-bold'
               }
             >
-              {t('views.vpErrorInfo', {
+              {t('vpErrorInfo', {
                 error: userAnswer?.errorValue ?? 0,
                 tolerance,
               })}

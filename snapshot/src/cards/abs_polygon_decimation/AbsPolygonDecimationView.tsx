@@ -2,7 +2,7 @@ import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { Standard2AfcView } from '../../components/common/Standard2AfcView';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, OPTION_SIZE } from './utils/generator';
@@ -26,7 +26,7 @@ export function AbsPolygonDecimationView({
   disabled = false,
   showCanvasHints = true,
 }: AbsPolygonDecimationViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_polygon_decimation');
 
   const isTargetA = question.correctPolyChoice === 'A';
   const isTargetB = !isTargetA;
@@ -34,7 +34,7 @@ export function AbsPolygonDecimationView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('cards.abs_polygon_decimation.hint')}
+      hintText={t('hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -44,7 +44,7 @@ export function AbsPolygonDecimationView({
       prompt={
         <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('cards.abs_polygon_decimation.promptTitle')}
+            {t('promptTitle')}
           </span>
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView

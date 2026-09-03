@@ -2,7 +2,5 @@
   "title": "3D Structural Rotation",
   "desc": "Translate orthographic tri-views into 3D isometric cube grid coordinates.",
   "instruction": "Locate the 3D point in the axonometric cube grid based on the 3 views.",
-  "views": {
-    "hint": "Observe the tri-view coordinates and select the corresponding 3D vertex inside the isometric grid"
-  }
+  "hint": "Observe the tri-view coordinates and select the corresponding 3D vertex inside the isometric grid"
 }

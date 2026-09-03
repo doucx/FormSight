@@ -2,12 +2,10 @@
   "title": "平行线基准辨识",
   "desc": "观察上方给定的斜率基准线，在下方两个候选项中二选一找出与其绝对平行的线段 (2AFC)。",
   "instruction": "观察上方基准线，在下方选出与其保持绝对平行的线 (键 1 / 2)",
-  "views": {
-    "hint": "观察上方基准线，选出下方与它严格平行的线 (键 1 / 2)",
-    "promptTitle": "平行基准线 (Prompt)",
-    "optionA": "选项 A",
-    "optionB": "选项 B",
-    "absoluteParallel": "绝对平行",
-    "deviationBadge": "偏转 {{deg}}°"
-  }
+  "hint": "观察上方基准线，选出下方与它严格平行的线 (键 1 / 2)",
+  "promptTitle": "平行基准线 (Prompt)",
+  "optionA": "选项 A",
+  "optionB": "选项 B",
+  "absoluteParallel": "绝对平行",
+  "deviationBadge": "偏转 {{deg}}°"
 }

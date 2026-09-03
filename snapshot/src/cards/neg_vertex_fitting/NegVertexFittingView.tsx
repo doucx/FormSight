@@ -3,7 +3,7 @@ import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { LOUPE_DIAMETER, usePointLoupe } from '../../hooks/usePointLoupe';
 import type { Point } from '../../types';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
@@ -24,7 +24,7 @@ export function NegVertexFittingView({
   onAnswer,
   disabled = false,
 }: NegVertexFittingViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('neg_vertex_fitting');
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
@@ -249,7 +249,7 @@ export function NegVertexFittingView({
           }}
           tabIndex={0}
           role="button"
-          aria-label={t('cards.neg_vertex_fitting.views.vertexHint')}
+          aria-label={t('vertexHint')}
           className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
             disabled || showAnswer
               ? 'cursor-default'

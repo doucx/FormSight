@@ -2,7 +2,7 @@ import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { StandardNafcView } from '../../components/common/StandardNafcView';
 import { hsvToHex } from '../../core/color/colorUtils';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 
@@ -22,7 +22,7 @@ export function AbsPaletteClusteringView({
   disabled = false,
   showCanvasHints = true,
 }: AbsPaletteClusteringViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_palette_clustering');
 
   const nafcOptions = (question.paletteOptions || []).map((hsv, idx) => {
     const hex = hsvToHex(...hsv);
@@ -43,7 +43,7 @@ export function AbsPaletteClusteringView({
   return (
     <StandardNafcView
       questionId={question.id}
-      hintText={t('cards.abs_palette_clustering.hint')}
+      hintText={t('hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
