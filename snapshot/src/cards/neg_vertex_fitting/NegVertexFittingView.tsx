@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';

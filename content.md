@@ -1,80 +1,111 @@
-这是由于 Linter (`biome`) 的无障碍辅助功能 (a11y) 规则 `useKeyWithClickEvents` 触发的校验报错。在交互式 `<canvas role="button">` 节点绑定了鼠标点击事件 `onClick` 时，必须成对提供相应的键盘操作事件监听器（如 `onKeyDown`），以确保键盘用户的无障碍交互支持。
+好的，针对 TypeScript 编译器报告的两个问题（`NegVertexFittingView` 中未使用的 `useCallback`，以及单测文件 `colorUtils.test.ts` 仍在使用已解耦移除的 `'ALL'` 参数），我将生成修复计划同步更新代码与测试用例。
 
-我将生成一个修复计划，为这两个文件的交互画布补全 `onKeyDown` 键盘事件。
-
-## [WIP] fix: 为交互式 canvas 补齐 onKeyDown 键盘事件以满足 a11y 规范
+## [WIP] fix: 清理未使用的 import 并同步单测至独立 color_all 生成器
 
 ### 错误分析
-在重构 `NegVertexFittingView.tsx` 和 `PerspStructure3DView.tsx` 消除逃生舱时，虽然为交互式 `<canvas>` 赋予了 `role="button"` 与 `tabIndex={0}`，但遗漏了成对的 `onKeyDown` 键盘事件处理器。这触发了 Biome 严格的 `lint/a11y/useKeyWithClickEvents` 规则，导致 lint 检查失败。
+1. **TS6133**: 在 `NegVertexFittingView.tsx` 中，由于提取并直接声明了事件处理函数，导致顶部导入的 `useCallback` 从未被使用，触发了 `noUnusedLocals` / `TS6133` 错误。
+2. **TS2345**: 在此前重构中，我们已成功将 `color_all` 的 3D 色彩拾取生成与命中检测从 `colorUtils.ts` 剥离至 `cards/color_all/utils/generator.ts`，并将 `ColorMode` 严格限定为纯标量 `'H' | 'S' | 'V'`。而 `colorUtils.test.ts` 中的一条历史单元测试依然在向 `generateColorQuestion` 和 `checkColorHit` 传递已废弃的 `'ALL'` 控制标记，导致类型检查报错。
 
 ### 用户需求
-修复 `NegVertexFittingView.tsx` 和 `PerspStructure3DView.tsx` 中 `<canvas>` 节点缺少键盘事件的问题，消除 linter 报错。
+1. 清理 `NegVertexFittingView.tsx` 顶部未使用的 `useCallback` 导入。
+2. 将 `colorUtils.test.ts` 中针对综合拾色（ALL 模式）的测试逻辑，同步更新为调用新的独立生成模块 `cards/color_all/utils/generator.ts`。
 
 ### 评论
-遵循 Web 无障碍（a11y）标准能够保障键盘导航以及读屏工具使用者的操作体验，通过添加键盘事件绑定，可以完全消除 linter 报警并保证交互行为的一致性。
+单元测试与被测契约保持 100% 同步是保证重构不发生回退的关键。将测试用例直接对准解耦后的 `cards/color_all/utils/generator`，能精准验证独立出来的 3D 拾色算法逻辑。
 
 ### 目标
-1. 在 `src/cards/neg_vertex_fitting/NegVertexFittingView.tsx` 的交互 `<canvas>` 上补齐 `onKeyDown` 监听。
-2. 在 `src/cards/persp_structure_3d/PerspStructure3DView.tsx` 的交互 `<canvas>` 上补齐 `onKeyDown` 监听。
+1. 在 `NegVertexFittingView.tsx` 移除 `useCallback`。
+2. 在 `src/utils/__tests__/colorUtils.test.ts` 中引入 `generateColorAllQuestion` 与 `checkColorAllHit`，并更新测试断言。
 
 ### 基本原理
-对于承担 `role="button"` 语义的交互式 `<canvas>` 元素，添加标准的 `onKeyDown` 拦截（阻止在聚焦按键时的意外空格/回车滚动），不仅满足无障碍规范要求，且与系统内其他基础交互画布（如 `PointClickCanvas`）的实现保持统一。
+对于已被解耦的正交业务逻辑，单测应当随之对应更新为测试新的自治模块。解耦后的 `ColorAllHitResult` 返回明确的 `deltaEError`，单测据此进行精确断言即可。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/ui #scope/dx #ai/instruct #task/domain/a11y #task/object/canvas-keyboard-events #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/tests #scope/dx #ai/instruct #task/domain/testing #task/object/test-sync #task/action/bug-fix #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `NegVertexFittingView.tsx` 的无障碍键盘事件缺失
+#### Acts 1: 清理 `NegVertexFittingView.tsx` 中未使用的 `useCallback`
 
 ~~~~~act
 patch_file
 src/cards/neg_vertex_fitting/NegVertexFittingView.tsx
 ~~~~~
 ~~~~~typescript.old
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchCancel}
-          tabIndex={0}
-          role="button"
-          aria-label={t('cards.neg_vertex_fitting.views.vertexHint')}
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 ~~~~~
 ~~~~~typescript.new
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchCancel}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('cards.neg_vertex_fitting.views.vertexHint')}
+import { useEffect, useRef, useState } from 'preact/hooks';
+import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 ~~~~~
 
-#### Acts 2: 修复 `PerspStructure3DView.tsx` 的无障碍键盘事件缺失
+#### Acts 2: 更新 `colorUtils.test.ts` 中的 `color_all` 测试用例
 
 ~~~~~act
 patch_file
-src/cards/persp_structure_3d/PerspStructure3DView.tsx
+src/utils/__tests__/colorUtils.test.ts
 ~~~~~
 ~~~~~typescript.old
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            tabIndex={0}
-            role="button"
-            aria-label={cardT('views.hint')}
+import { describe, expect, it } from 'vitest';
+import { checkColorHit, generateColorQuestion, hsvToHex } from '../../core/color/colorUtils';
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
+import { PALETTE } from '../theme';
 ~~~~~
 ~~~~~typescript.new
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-            }}
-            tabIndex={0}
-            role="button"
-            aria-label={cardT('views.hint')}
+import { describe, expect, it } from 'vitest';
+import {
+  checkHit as checkColorAllHit,
+  generateQuestion as generateColorAllQuestion,
+} from '../../cards/color_all/utils/generator';
+import { checkColorHit, generateColorQuestion, hsvToHex } from '../../core/color/colorUtils';
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab } from '../../core/color/oklchUtils';
+import { PALETTE } from '../theme';
+~~~~~
+
+~~~~~act
+patch_file
+src/utils/__tests__/colorUtils.test.ts
+~~~~~
+~~~~~typescript.old
+  it('checkColorHit - should evaluate ALL mode using OKLab delta E with full user HSV tuple', () => {
+    const questionALL = generateColorQuestion('ALL', 1);
+    questionALL.targetH = 0;
+    questionALL.targetS = 100;
+    questionALL.targetV = 100;
+
+    // Exact match in ALL mode
+    const hitExact = checkColorHit('ALL', [0, 100, 100], questionALL);
+    expect(hitExact.isHit).toBe(true);
+    expect(hitExact.errorValue).toBe(0);
+
+    // Large deviation in ALL mode
+    const hitFar = checkColorHit('ALL', [180, 20, 20], questionALL);
+    expect(hitFar.isHit).toBe(false);
+    expect(hitFar.errorValue).toBeGreaterThan(0.2);
+  });
+~~~~~
+~~~~~typescript.new
+  it('color_all checkHit - should evaluate full color matching using OKLab delta E with full user HSV tuple', () => {
+    const questionALL = generateColorAllQuestion(1);
+    questionALL.targetH = 0;
+    questionALL.targetS = 100;
+    questionALL.targetV = 100;
+
+    // Exact match in ALL mode
+    const hitExact = checkColorAllHit([0, 100, 100], questionALL);
+    expect(hitExact.isHit).toBe(true);
+    expect(hitExact.deltaEError).toBe(0);
+
+    // Large deviation in ALL mode
+    const hitFar = checkColorAllHit([180, 20, 20], questionALL);
+    expect(hitFar.isHit).toBe(false);
+    expect(hitFar.deltaEError).toBeGreaterThan(0.2);
+  });
 ~~~~~
 
 ### 下一步建议
-1. **重新运行 Lint 检查**：运行 `npm run lint` 或直接执行 linter 检查，验证两个 a11y 报错均已消除。
-2. **构建与测试**：执行 `npm run build` 确保整体验证通过。
+1. **重新执行类型检查与测试**：在终端运行 `npm run build` 或 `npx vitest run`，验证全部测试与类型编译均通过。
+2. **发起提交**：验证无误后可进行代码提交。
