@@ -1,11 +1,7 @@
 import { Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
-import {
-  clearAllData,
-  exportAllDataStream,
-  importAllData,
-} from '../../../storage/index';
+import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
 import { resetPlansToDefault } from '../../../storage/planStorage';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
