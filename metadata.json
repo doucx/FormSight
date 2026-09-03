@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(cards): 彻底消除 relativeColor 伪多态与 star/vertex 评估契约逆转", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788431379.6250422, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] test(cards): 下沉相对色彩测试至各独立卡片模块并建立 oklch 核心算法测试", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788431517.6562781, "duration_ms": 0}}
