@@ -30,8 +30,14 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
         let sumDx = 0;
         let sumDy = 0;
         for (const r of records) {
-          const uClick = (r.userClick as [number, number]) || [0, 0];
-          const tB = (r.targetB as [number, number]) || [0, 0];
+          const uClick: [number, number] =
+            Array.isArray(r.userClick) && r.userClick.length === 2
+              ? [Number(r.userClick[0]), Number(r.userClick[1])]
+              : [0, 0];
+          const tB: [number, number] =
+            Array.isArray(r.targetB) && r.targetB.length === 2
+              ? [Number(r.targetB[0]), Number(r.targetB[1])]
+              : [0, 0];
           sumDx += uClick[0] - tB[0];
           sumDy += uClick[1] - tB[1];
         }
@@ -47,11 +53,17 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
         let sumDy = 0;
         let sumDist = 0;
         for (const r of records) {
-          const uClick = (r.userClick as [number, number]) || [0, 0];
-          const tB = (r.targetB as [number, number]) || [0, 0];
+          const uClick: [number, number] =
+            Array.isArray(r.userClick) && r.userClick.length === 2
+              ? [Number(r.userClick[0]), Number(r.userClick[1])]
+              : [0, 0];
+          const tB: [number, number] =
+            Array.isArray(r.targetB) && r.targetB.length === 2
+              ? [Number(r.targetB[0]), Number(r.targetB[1])]
+              : [0, 0];
           sumDx += uClick[0] - tB[0];
           sumDy += uClick[1] - tB[1];
-          sumDist += (r.errorPixelDistance as number) || 0;
+          sumDist += Number(r.errorPixelDistance || 0);
         }
         const avgDx = Math.round((sumDx / totalCount) * 10) / 10;
         const avgDy = Math.round((sumDy / totalCount) * 10) / 10;

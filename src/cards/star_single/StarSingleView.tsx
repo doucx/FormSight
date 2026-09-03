@@ -2,16 +2,17 @@ import { useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../components/common/PointClickCanvas';
 import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
 import type { Point } from '../../types';
 import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, checkHit } from './utils/generator';
+import { CANVAS_SIZE } from './utils/generator';
 
 export interface StarSingleViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer: HitResult | null;
-  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  onAnswer: (userVal: Point) => void;
   disabled?: boolean;
 }
 
@@ -53,9 +54,12 @@ export function StarSingleView({
   }, [question]);
 
   const handleCommitPoint = (clickPoint: Point) => {
-    const hitResult = checkHit(clickPoint, question.targetB, question.distractorPoints);
-    if (!hitResult.isWithinRange) return;
-    onAnswer({ clickPoint, hitResult });
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+      clickPoint,
+      question.distractorPoints,
+    );
+    if (!isWithinRange) return;
+    onAnswer(nearestPoint);
   };
 
   return (

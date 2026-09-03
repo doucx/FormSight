@@ -10,6 +10,7 @@ import type { CardAnalyticsView } from '../../core/cardContract';
 import { hsvToHex } from '../../core/color/colorUtils';
 import { calculateBasicOverallStats } from '../../core/contracts';
 import { i18n } from '../../core/i18n';
+import type { UnifiedTrialRecord } from '../../storage/db/schema';
 
 const COLOR_SECTOR_KEYS = [
   'sectors.red',
@@ -25,6 +26,46 @@ const COLOR_SECTOR_KEYS = [
   'sectors.magenta',
   'sectors.rose',
 ];
+
+/**
+ * 运行时安全守卫：将未知的试炼记录字段转换为合法的 HSV 三元组
+ */
+function parseHsvTuple(
+  raw: unknown,
+  fallback: [number, number, number] = [0, 0, 0],
+): [number, number, number] {
+  if (Array.isArray(raw) && raw.length === 3) {
+    return [Number(raw[0]) || 0, Number(raw[1]) || 0, Number(raw[2]) || 0];
+  }
+  return fallback;
+}
+
+/**
+ * 聚合 12 个色相扇区的样本量、命中数与平均误差统计
+ */
+function calculateHueSectorStats(records: UnifiedTrialRecord[]): SectorStat[] {
+  const sectorBuckets = Array.from({ length: 12 }, () => ({
+    total: 0,
+    hits: 0,
+    sumError: 0,
+  }));
+
+  for (const r of records) {
+    const tHsv = parseHsvTuple(r.targetHSV);
+    const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
+    sectorBuckets[idx].total += 1;
+    if (r.isHit) sectorBuckets[idx].hits += 1;
+    sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
+  }
+
+  return sectorBuckets.map((b, i) => ({
+    sectorIdx: i,
+    label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
+    total: b.total,
+    accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
+    avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
+  }));
+}
 
 export function createColorHueAnalytics(): CardAnalyticsView[] {
   return [
@@ -42,10 +83,15 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
         if (totalCount === 0) return null;
 
         let sumSignedBias = 0;
-        const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumBias: 0 }));
+        const sectorBuckets = Array.from({ length: 12 }, () => ({
+          total: 0,
+          hits: 0,
+          sumBias: 0,
+        }));
+
         for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const uHsv = (r.userHSV as [number, number, number]) || tHsv;
+          const tHsv = parseHsvTuple(r.targetHSV);
+          const uHsv = parseHsvTuple(r.userHSV, tHsv);
           const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
           sumSignedBias += bias;
 
@@ -165,50 +211,14 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
       subTitle: 'analytics.hueRing.subTitle',
       icon: PieChart,
       renderVisualizer: (canvas, records) => {
-        const sectorBuckets = Array.from({ length: 12 }, () => ({
-          total: 0,
-          hits: 0,
-          sumError: 0,
-        }));
-        for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-          sectorBuckets[idx].total += 1;
-          if (r.isHit) sectorBuckets[idx].hits += 1;
-          sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
-        }
-        const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-          sectorIdx: i,
-          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
-          total: b.total,
-          accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-          avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-        }));
+        const sectorStats = calculateHueSectorStats(records);
         renderHueRingCanvas(canvas, sectorStats);
       },
       renderDiagnostics: (records) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
-        const sectorBuckets = Array.from({ length: 12 }, () => ({
-          total: 0,
-          hits: 0,
-          sumError: 0,
-        }));
-        for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
-          sectorBuckets[idx].total += 1;
-          if (r.isHit) sectorBuckets[idx].hits += 1;
-          sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
-        }
-        const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
-          sectorIdx: i,
-          label: i18n.t(`cards.color_hue.${COLOR_SECTOR_KEYS[i]}`),
-          total: b.total,
-          accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
-          avgError: b.total > 0 ? Math.round((b.sumError / b.total) * 10) / 10 : 0,
-        }));
+        const sectorStats = calculateHueSectorStats(records);
         const validSectors = sectorStats.filter((s) => s.total >= 3);
         const weakestSector =
           validSectors.length > 0

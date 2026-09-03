@@ -1,19 +1,15 @@
 import { Palette } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
-import {
-  type RelativeColorHitResult,
-  type RelativeColorQuestionData,
-  checkRelativeColorHit,
-  generateHueInductionQuestion,
-} from '../../core/color/relativeColor';
 import type { RelativeColorSettings } from '../../storage/settings';
 import { RelHueInductionView } from './RelHueInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import type { HitResult, QuestionData } from './types';
+import { checkHit, generateQuestion } from './utils/generator';
 
 export const relHueInductionCard: CardManifest<
-  RelativeColorQuestionData,
-  RelativeColorHitResult,
+  QuestionData,
+  HitResult,
   [number, number, number],
   RelativeColorSettings
 > = {
@@ -32,8 +28,8 @@ export const relHueInductionCard: CardManifest<
     'en-US': enUS,
   },
   training: {
-    generateQuestion: (level) => generateHueInductionQuestion(level),
-    evaluateAnswer: (userVal, q) => checkRelativeColorHit('HUE_INDUCTION', userVal, q),
+    generateQuestion: (level) => generateQuestion(level),
+    evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult, userVal) => ({

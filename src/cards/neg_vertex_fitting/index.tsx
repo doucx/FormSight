@@ -6,12 +6,12 @@ import { NegVertexFittingView } from './NegVertexFittingView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { generateQuestion } from './utils/generator';
+import { evaluateAnswer, generateQuestion } from './utils/generator';
 
 export const negVertexFittingCard: CardManifest<
   QuestionData,
   HitResult,
-  { clickPoint: Point; hitResult: HitResult },
+  Point,
   BaseModuleSettings
 > = {
   id: 'neg_vertex_fitting',
@@ -30,15 +30,13 @@ export const negVertexFittingCard: CardManifest<
   },
   training: {
     generateQuestion: (level) => generateQuestion(level),
-    evaluateAnswer: (userVal) => userVal.hitResult,
+    evaluateAnswer: (userPoint, question) => evaluateAnswer(userPoint, question),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult) => ({
+    extractRecordDetails: (q, hitResult, userVal) => ({
       targetVertexIndex: q.targetVertexIndex,
-      targetPoint: q.targetPoint ? [q.targetPoint.x, q.targetPoint.y] : undefined,
-      userClick: hitResult.nearestGridPoint
-        ? [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y]
-        : undefined,
+      targetPoint: [q.targetPoint.x, q.targetPoint.y],
+      userClick: [userVal.x, userVal.y],
       errorPixelDistance: hitResult.errorDistance,
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (

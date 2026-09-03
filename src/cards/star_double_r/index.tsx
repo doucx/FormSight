@@ -7,7 +7,7 @@ import { createStarDoubleRAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { generateQuestion } from './utils/generator';
+import { checkHit, generateQuestion } from './utils/generator';
 
 const SECTOR_KEYS = [
   'sectors.e',
@@ -20,12 +20,7 @@ const SECTOR_KEYS = [
   'sectors.se',
 ];
 
-export const starDoubleRCard: CardManifest<
-  QuestionData,
-  HitResult,
-  { clickPoint: Point; hitResult: HitResult },
-  StarSettings
-> = {
+export const starDoubleRCard: CardManifest<QuestionData, HitResult, Point, StarSettings> = {
   id: 'star_double_r',
   domain: 'spatial_structure',
   icon: RotateCw,
@@ -76,14 +71,14 @@ export const starDoubleRCard: CardManifest<
         targetingMode: settings.targetingMode,
         targetSectors: settings.manualTargetSectors,
       }),
-    evaluateAnswer: (userVal) => userVal.hitResult,
+    evaluateAnswer: (userPoint, question) => checkHit(userPoint, question),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
-    extractRecordDetails: (q, hitResult) => ({
+    extractRecordDetails: (q, hitResult, userVal) => ({
       anchorA: [q.anchorA.x, q.anchorA.y],
       anchorC: [q.anchorC.x, q.anchorC.y],
       targetB: [q.targetB.x, q.targetB.y],
-      userClick: [hitResult.nearestGridPoint.x, hitResult.nearestGridPoint.y],
+      userClick: [userVal.x, userVal.y],
       angleDegree: q.angleDegree,
       distanceRatio: q.distanceRatio,
       errorPixelDistance: hitResult.errorDistance,

@@ -40,11 +40,35 @@ interface DynamicDomainSettingsProps {
   onChange: (patch: Record<string, unknown>) => void;
 }
 
+function getNumericSetting(values: Record<string, unknown>, key: string, fallback = 12): number {
+  const v = values[key];
+  return typeof v === 'number' ? v : fallback;
+}
+
+function getBooleanSetting(
+  values: Record<string, unknown>,
+  key: string,
+  fallback = false,
+): boolean {
+  const v = values[key];
+  return typeof v === 'boolean' ? v : fallback;
+}
+
+function getTargetingModeSetting(values: Record<string, unknown>, key: string): TargetingMode {
+  const v = values[key];
+  return v === 'manual' ? 'manual' : 'off';
+}
+
+function getNumericArraySetting(values: Record<string, unknown>, key: string): number[] {
+  const v = values[key];
+  return Array.isArray(v) ? (v.filter((n) => typeof n === 'number') as number[]) : [];
+}
+
 export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDomainSettingsProps) {
   const { t } = useTranslation();
 
   const handleSectorToggle = (sectorsKey: string, sectorIdx: number) => {
-    const currentSectors = (values[sectorsKey] as number[] | undefined) || [];
+    const currentSectors = getNumericArraySetting(values, sectorsKey);
     const exists = currentSectors.includes(sectorIdx);
     const updated = exists
       ? currentSectors.filter((s) => s !== sectorIdx)
@@ -74,7 +98,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
             <SliderMarginGroup
               key={field.key}
               title={field.title ? resolveText(field.title) : undefined}
-              value={(values[field.key] as number | undefined) ?? 12}
+              value={getNumericSetting(values, field.key, 12)}
               onChange={(val) => onChange({ [field.key]: val })}
             />
           );
@@ -86,7 +110,7 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
               key={field.key}
               title={resolveText(field.title)}
               description={field.description ? resolveText(field.description) : undefined}
-              checked={Boolean(values[field.key])}
+              checked={getBooleanSetting(values, field.key, false)}
               onChange={(checked) => onChange({ [field.key]: checked })}
             />
           );
@@ -117,8 +141,8 @@ export function DynamicDomainSettings({ schemas, values, onChange }: DynamicDoma
         }
 
         if (field.type === 'targeting') {
-          const mode = (values[field.modeKey] as TargetingMode | undefined) || 'off';
-          const selectedSectors = (values[field.sectorsKey] as number[] | undefined) || [];
+          const mode = getTargetingModeSetting(values, field.modeKey);
+          const selectedSectors = getNumericArraySetting(values, field.sectorsKey);
 
           return (
             <TargetingSection

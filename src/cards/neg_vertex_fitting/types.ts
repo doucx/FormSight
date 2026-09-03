@@ -21,5 +21,4 @@ export interface HitResult {
   nearestGridPoint: Point;
   errorDistance: number;
   tolerance: number;
-  isWithinRange?: boolean;
 }

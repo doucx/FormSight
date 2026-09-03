@@ -2,16 +2,13 @@ import { ArrowRight, Shuffle } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 import { StandardNafcView } from '../../components/common/StandardNafcView';
 import { hsvToHex } from '../../core/color/colorUtils';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../../core/color/relativeColor';
 import { useCardTranslation } from '../../core/i18n';
+import type { HitResult, QuestionData } from './types';
 
 export interface RelVectorShiftViewProps {
-  question: RelativeColorQuestionData;
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer?: RelativeColorHitResult | null;
+  userAnswer?: HitResult | null;
   onAnswer: (userVal: [number, number, number]) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -28,7 +25,7 @@ export function RelVectorShiftView({
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
-  const activeColor = options?.[selectedIndex] ?? targetD;
+  const activeColor = options[selectedIndex] ?? targetD;
 
   useEffect(() => {
     if (question.id) {
@@ -42,7 +39,7 @@ export function RelVectorShiftView({
   const hexSelectedD = hsvToHex(...activeColor);
   const hexTargetD = hsvToHex(...targetD);
 
-  const nafcOptions = (options || []).map((opt, idx) => {
+  const nafcOptions = options.map((opt, idx) => {
     const isTarget = idx === correctIndex;
     const hexVal = hsvToHex(...opt);
     return {
@@ -75,7 +72,7 @@ export function RelVectorShiftView({
       submitButtonText={t('common.confirmSpace')}
       onSelectIndex={(idx) => setSelectedIndex(idx)}
       onAnswer={() => {
-        const chosenColor = options?.[selectedIndex] ?? targetD;
+        const chosenColor = options[selectedIndex] ?? targetD;
         onAnswer(chosenColor);
       }}
       preview={

@@ -1,19 +1,15 @@
 import { Palette } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorAllView } from './ColorAllView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import type { HitResult, QuestionData } from './types';
+import { checkHit, generateQuestion } from './utils/generator';
 
 export const colorAllCard: CardManifest<
-  ColorQuestionData,
-  ColorHitResult,
+  QuestionData,
+  HitResult,
   [number, number, number],
   ColorSenseSettings
 > = {
@@ -50,14 +46,14 @@ export const colorAllCard: CardManifest<
     enableHoverColorPreview: true,
   },
   training: {
-    generateQuestion: (level) => generateColorQuestion('ALL', level),
-    evaluateAnswer: (userVal, q) => checkColorHit('ALL', userVal, q),
+    generateQuestion: (level) => generateQuestion(level),
+    evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult, userVal) => ({
       targetHSV: [q.targetH, q.targetS, q.targetV],
       userHSV: userVal,
-      errorValue: hitResult.errorValue,
+      deltaEError: hitResult.deltaEError,
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <ColorAllView
