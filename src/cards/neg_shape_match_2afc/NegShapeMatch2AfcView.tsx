@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { Choice2AfcContainer } from '../../components/common/Choice2AfcContainer';
 import { QuestionCardShell } from '../../components/common/QuestionCardShell';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegShapeMatch2AfcViewProps {
@@ -22,7 +22,7 @@ export function NegShapeMatch2AfcView({
   disabled = false,
   showCanvasHints = true,
 }: NegShapeMatch2AfcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('neg_shape_match_2afc');
   const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
   const [selectedMatchChoice, setSelectedMatchChoice] = useState<'A' | 'B' | null>(null);
 
@@ -87,10 +87,10 @@ export function NegShapeMatch2AfcView({
     <QuestionCardShell
       hintText={
         matchPhase === 'stimulus' && !isRevealed
-          ? t('cards.neg_shape_match_2afc.views.memoryStimulusHint', {
+          ? t('memoryStimulusHint', {
               ms: question.displayTimeMs ?? 1500,
             })
-          : t('cards.neg_shape_match_2afc.views.memoryRecallHint')
+          : t('memoryRecallHint')
       }
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}

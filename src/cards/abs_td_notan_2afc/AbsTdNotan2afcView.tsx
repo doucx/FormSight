@@ -1,7 +1,7 @@
 import { Columns } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { Standard2AfcView } from '../../components/common/Standard2AfcView';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
 import { OPTION_SIZE, THUMB_SIZE, drawRawGrayscaleNoiseField } from './utils/generator';
 
@@ -24,7 +24,7 @@ export function AbsTdNotan2afcView({
   disabled = false,
   showCanvasHints = true,
 }: AbsTdNotan2afcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_td_notan_2afc');
 
   const isTargetA = question.correctNotanChoice === 'A';
   const isTargetB = !isTargetA;
@@ -32,7 +32,7 @@ export function AbsTdNotan2afcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('cards.abs_td_notan_2afc.hint')}
+      hintText={t('hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -42,7 +42,7 @@ export function AbsTdNotan2afcView({
       prompt={
         <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('cards.abs_td_notan_2afc.promptTitle')}
+            {t('promptTitle')}
           </span>
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
             <CanvasView

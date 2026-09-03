@@ -69,14 +69,14 @@ export function RelLightnessInductionView({
 
   return (
     <QuestionCardShell
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
     >
       <DualViewportContainer
-        leftTitle={t('views.leftBase')}
-        rightTitle={t('views.rightModulate')}
+        leftTitle={t('leftBase')}
+        rightTitle={t('rightModulate')}
         leftContent={
           <div
             className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"

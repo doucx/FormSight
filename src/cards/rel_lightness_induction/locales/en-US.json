@@ -6,9 +6,7 @@
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
     "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
   },
-  "views": {
-    "hint": "Adjust right center lightness until both center swatches appear identical",
-    "leftBase": "Left Anchor Reference",
-    "rightModulate": "Right Modulation (Match Perception)"
-  }
+  "hint": "Adjust right center lightness until both center swatches appear identical",
+  "leftBase": "Left Anchor Reference",
+  "rightModulate": "Right Modulation (Match Perception)"
 }

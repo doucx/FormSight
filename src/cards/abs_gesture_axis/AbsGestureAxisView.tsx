@@ -2,7 +2,7 @@ import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { CanvasView } from '../../components/common/CanvasView';
 import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, drawParticlesCanvas } from './utils/generator';
@@ -27,7 +27,7 @@ export function AbsGestureAxisView({
   hitMargin = 12,
   showCanvasHints = true,
 }: AbsGestureAxisViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_gesture_axis');
   const [activeSliderVal, setActiveSliderVal] = useState<number>(90);
 
   const targetVal = question.targetAngleDeg;
@@ -37,11 +37,11 @@ export function AbsGestureAxisView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('cards.abs_gesture_axis.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('cards.abs_gesture_axis.label')}
+      label={t('label')}
       max={180}
       step={0.5}
       initialValue={90}

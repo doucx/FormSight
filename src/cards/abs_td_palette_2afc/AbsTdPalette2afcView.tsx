@@ -2,7 +2,7 @@ import { Sparkles } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { StandardNafcView } from '../../components/common/StandardNafcView';
 import { hsvToHex } from '../../core/color/colorUtils';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
 import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
@@ -23,7 +23,7 @@ export function AbsTdPalette2afcView({
   disabled = false,
   showCanvasHints = true,
 }: AbsTdPalette2afcViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('abs_td_palette_2afc');
   const promptHex = question.promptDominantColor
     ? hsvToHex(...question.promptDominantColor)
     : CANVAS_THEME.status.accentHover;
@@ -53,7 +53,7 @@ export function AbsTdPalette2afcView({
   return (
     <StandardNafcView
       questionId={question.id}
-      hintText={t('cards.abs_td_palette_2afc.hint')}
+      hintText={t('hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -66,7 +66,7 @@ export function AbsTdPalette2afcView({
       preview={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('cards.abs_td_palette_2afc.promptTitle')}
+            {t('promptTitle')}
           </span>
           <div
             className="w-16 h-16 rounded-2xl border-4 border-card dark:border-border shadow-md ring-1 ring-border/60"

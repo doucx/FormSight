@@ -6,10 +6,8 @@
     "showToleranceBandTitle": "Show Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"
   },
-  "views": {
-    "hint": "Observe the existing perspective lines and adjust the slider to converge rays at the vanishing point (0°~360°)",
-    "rayAngle": "Ray Angle:",
-    "vpTrueAngle": "True Convergence Angle:",
-    "vpErrorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
-  }
+  "hint": "Observe the existing perspective lines and adjust the slider to converge rays at the vanishing point (0°~360°)",
+  "rayAngle": "Ray Angle:",
+  "vpTrueAngle": "True Convergence Angle:",
+  "vpErrorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
 }

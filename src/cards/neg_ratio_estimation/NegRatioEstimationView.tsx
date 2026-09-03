@@ -2,7 +2,7 @@ import { Maximize2 } from 'lucide-preact';
 import { CanvasView } from '../../components/common/CanvasView';
 import { StandardSliderView } from '../../components/common/StandardSliderView';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { CANVAS_THEME } from '../../utils/theme';
 import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
@@ -27,18 +27,18 @@ export function NegRatioEstimationView({
   showToleranceBand = true,
   showCanvasHints = true,
 }: NegRatioEstimationViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation('neg_ratio_estimation');
   const { targetNegativeRatio, tolerance } = question;
   const isHit = Boolean(userAnswer?.isHit);
 
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('cards.neg_ratio_estimation.views.ratioHint')}
+      hintText={t('ratioHint')}
       hintIcon={Maximize2}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('cards.neg_ratio_estimation.views.ratioLabel')}
+      label={t('ratioLabel')}
       max={100}
       step={0.1}
       initialValue={50.0}

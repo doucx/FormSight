@@ -63,7 +63,7 @@ export function RelHueInductionView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -81,8 +81,8 @@ export function RelHueInductionView({
       }}
       preview={
         <DualViewportContainer
-          leftTitle={t('views.leftBase')}
-          rightTitle={t('views.rightPreview')}
+          leftTitle={t('leftBase')}
+          rightTitle={t('rightPreview')}
           leftContent={
             <div
               className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
@@ -107,7 +107,7 @@ export function RelHueInductionView({
                   <div
                     className="absolute bottom-0 left-0 right-0 h-1/2"
                     style={{ backgroundColor: idealRightHex }}
-                    title={t('views.splitComparisonTooltip')}
+                    title={t('splitComparisonTooltip')}
                   />
                 )}
               </div>

@@ -28,7 +28,7 @@ export function PerspGestaltContinuationView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -36,7 +36,7 @@ export function PerspGestaltContinuationView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: t('views.optionA'),
+        title: t('optionA'),
         isCorrect: isAHit,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -59,7 +59,7 @@ export function PerspGestaltContinuationView({
         ),
       }}
       optionB={{
-        title: t('views.optionB'),
+        title: t('optionB'),
         isCorrect: isBHit,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">

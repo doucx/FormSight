@@ -29,7 +29,7 @@ export function AngleParallel2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Split}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -39,7 +39,7 @@ export function AngleParallel2AfcView({
       prompt={
         <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('views.promptTitle')}
+            {t('promptTitle')}
           </span>
           <CanvasView
             width={ANGLE_PROMPT_SIZE}
@@ -59,12 +59,12 @@ export function AngleParallel2AfcView({
         </div>
       }
       optionA={{
-        title: t('views.optionA'),
+        title: t('optionA'),
         isCorrect: isAHit,
         badge: showAnswer
           ? isAHit
-            ? t('views.absoluteParallel')
-            : t('views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('absoluteParallel')
+            : t('deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
@@ -87,12 +87,12 @@ export function AngleParallel2AfcView({
         ),
       }}
       optionB={{
-        title: t('views.optionB'),
+        title: t('optionB'),
         isCorrect: isBHit,
         badge: showAnswer
           ? isBHit
-            ? t('views.absoluteParallel')
-            : t('views.deviationBadge', { deg: question.angularDeviation ?? 0 })
+            ? t('absoluteParallel')
+            : t('deviationBadge', { deg: question.angularDeviation ?? 0 })
           : undefined,
         content: (
           <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">

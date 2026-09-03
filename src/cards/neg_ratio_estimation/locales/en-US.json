@@ -6,10 +6,6 @@
     "showToleranceBandTitle": "Dynamic Tolerance Guide",
     "showToleranceBandDesc": "Show visual indicator lines on slider for dynamic error tolerance."
   },
-  "views": {
-    "ratioHint": "Estimate the area percentage of white negative space relative to the whole scene",
-    "ratioLabel": "Negative Space Ratio Estimation:"
-  },
   "analytics": {
     "ratioScatter": {
       "tabLabel": "Ratio Estimation",
@@ -19,5 +15,7 @@
       "avgError": "Average Ratio Error:",
       "desc": "The closer points lie to the diagonal, the sharper your spatial area intuition."
     }
-  }
+  },
+  "ratioHint": "Estimate the area percentage of white negative space relative to the whole scene",
+  "ratioLabel": "Negative Space Ratio Estimation:"
 }

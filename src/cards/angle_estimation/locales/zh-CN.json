@@ -6,10 +6,8 @@
     "showToleranceBandTitle": "显示动态容错带",
     "showToleranceBandDesc": "在滑块周围显示当前难度下的容错区间指示线"
   },
-  "views": {
-    "hint": "观察两射线夹角，调制滑块逼近精准度数 (0°~180°)",
-    "label": "夹角估算值:",
-    "trueAngle": "绝对真理值:",
-    "errorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)"
-  }
+  "hint": "观察两射线夹角，调制滑块逼近精准度数 (0°~180°)",
+  "label": "夹角估算值:",
+  "trueAngle": "绝对真理值:",
+  "errorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)"
 }

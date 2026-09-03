@@ -28,7 +28,7 @@ export function AngleComparison2AfcView({
   return (
     <Standard2AfcView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
@@ -36,7 +36,7 @@ export function AngleComparison2AfcView({
       disabled={disabled}
       onAnswer={onAnswer}
       optionA={{
-        title: t('views.areaA'),
+        title: t('areaA'),
         isCorrect: isAHit,
         badge: showAnswer ? `${question.angleA}°` : undefined,
         content: (
@@ -52,7 +52,7 @@ export function AngleComparison2AfcView({
         ),
       }}
       optionB={{
-        title: t('views.areaB'),
+        title: t('areaB'),
         isCorrect: isBHit,
         badge: showAnswer ? `${question.angleB}°` : undefined,
         content: (

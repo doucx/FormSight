@@ -59,7 +59,7 @@ export function RelVectorShiftView({
   return (
     <StandardNafcView<[number, number, number]>
       questionId={question.id}
-      hintText={t('views.prompt')}
+      hintText={t('prompt')}
       hintIcon={Shuffle}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"

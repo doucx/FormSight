@@ -35,11 +35,11 @@ export function AngleEstimationView({
   return (
     <StandardSliderView
       questionId={question.id}
-      hintText={t('views.hint')}
+      hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('views.label')}
+      label={t('label')}
       max={180}
       step={0.5}
       initialValue={90}
@@ -73,7 +73,7 @@ export function AngleEstimationView({
         showAnswer && userVal !== undefined ? (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {t('views.trueAngle')}{' '}
+              {t('trueAngle')}{' '}
               <span className="font-bold text-foreground font-mono">{targetVal}°</span>
             </span>
             <span
@@ -83,7 +83,7 @@ export function AngleEstimationView({
                   : 'text-rose-600 dark:text-rose-400 font-bold'
               }
             >
-              {t('views.errorInfo', {
+              {t('errorInfo', {
                 error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
                 tolerance,
               })}
