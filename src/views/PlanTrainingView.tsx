@@ -148,8 +148,8 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     return null;
   }
 
-  const plugin = registry.getPluginByCardId(currentCard.id);
-  if (!plugin) {
+  const manifest = registry.getCardManifest(currentCard.id);
+  if (!manifest) {
     onExit();
     return null;
   }
@@ -210,7 +210,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         <GenericTrainingView
           key={`plan-stage-${planSessionKey}-${currentStepIndex}-${currentCard.id}`}
           card={currentCard}
-          plugin={plugin}
+          manifest={manifest}
           sessionType="training"
           initialLevel={stageInitialLevel}
           settings={cardConfig}

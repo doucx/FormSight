@@ -1,5 +1,4 @@
 import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
-import type { AnyTrainingPlugin } from '../core/contracts';
 import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
   CardDefinition,
@@ -169,7 +168,6 @@ class InvertedCardIndex {
 class SystemDomainRegistry {
   private cardManifestMap = new Map<string, CardManifest>();
   private cardMap = new Map<string, CardDefinition>();
-  private cardPluginMap = new Map<string, AnyTrainingPlugin>();
   private cardAnalyticsMap = new Map<string, CardAnalyticsPlugin>();
   private invertedIndex = new InvertedCardIndex();
 
@@ -215,27 +213,10 @@ class SystemDomainRegistry {
       defaultSettings: card.defaultSettings,
     };
 
-    // 4. 适配 AnyTrainingPlugin 运行时
-    const pluginAdapter: AnyTrainingPlugin = {
-      title: card.id,
-      getModeBadge: () => card.id,
-      isTargeting: (_m, s) => card.training.isTargeting?.(s) ?? false,
-      generateQuestion: (_m, lvl, s) => card.training.generateQuestion(lvl, s),
-      evaluateAnswer: (u, q) => card.training.evaluateAnswer(u, q),
-      isHit: (res) => card.training.isHit(res),
-      getQuestionLevel: (q) =>
-        card.training.getQuestionLevel?.(q) ??
-        (q as { difficultyLevel?: number })?.difficultyLevel ??
-        5,
-      extractRecordDetails: (q, h, u) => card.training.extractRecordDetails?.(q, h, u) ?? {},
-      renderCanvas: (props) => card.training.renderCanvas(props),
-    };
-
     this.cardMap.set(card.id, cardDef);
-    this.cardPluginMap.set(card.id, pluginAdapter);
     this.invertedIndex.indexCard(cardDef);
 
-    // 5. 注册卡片专属分析插件
+    // 4. 注册卡片专属分析插件
     if (card.analytics?.views) {
       this.cardAnalyticsMap.set(card.id, {
         cardId: card.id,
@@ -356,10 +337,6 @@ class SystemDomainRegistry {
 
   public getCardManifest(cardId: string): CardManifest | undefined {
     return this.cardManifestMap.get(cardId);
-  }
-
-  public getPluginByCardId(cardId: string): AnyTrainingPlugin | undefined {
-    return this.cardPluginMap.get(cardId);
   }
 
   public getAnalyticsPluginByCardId(cardId: string): CardAnalyticsPlugin | undefined {

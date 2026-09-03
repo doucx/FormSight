@@ -1,6 +1,6 @@
 import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
 import { TrainingShell } from '../components/training/TrainingShell';
-import type { TrainingPlugin } from '../core/contracts';
+import type { CardManifest } from '../core/cardContract';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import { saveSession, saveTrialRecord } from '../storage/index';
 import type { BaseModuleSettings, GlobalSettings } from '../storage/settings';
@@ -13,7 +13,7 @@ export interface GenericTrainingViewProps<
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 > {
   card: CardDefinition;
-  plugin: TrainingPlugin<TQuestion, THitResult, TAnswerVal, TSettings>;
+  manifest: CardManifest<TQuestion, THitResult, TAnswerVal, TSettings>;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   settings: TSettings;
@@ -34,7 +34,7 @@ export function GenericTrainingView<
   TSettings extends BaseModuleSettings = BaseModuleSettings,
 >({
   card,
-  plugin,
+  manifest,
   sessionType,
   initialLevel,
   settings,
@@ -48,11 +48,11 @@ export function GenericTrainingView<
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const domain = card.domain;
-  const mode = card.mode;
+  const training = manifest.training;
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,
-    mode,
+    mode: card.id,
     sessionType,
     initialLevel,
     autoNext: settings.autoNext,
@@ -65,9 +65,9 @@ export function GenericTrainingView<
     onTargetLimitReached,
     onIdleChange,
     onIdleResume,
-    generateQuestion: (level) => plugin.generateQuestion(mode, level, settings),
-    evaluateAnswer: (userVal, q) => plugin.evaluateAnswer(userVal, q, mode),
-    isHit: (hitResult) => plugin.isHit(hitResult),
+    generateQuestion: (level) => training.generateQuestion(level, settings),
+    evaluateAnswer: (userVal, q) => training.evaluateAnswer(userVal, q),
+    isHit: (hitResult) => training.isHit(hitResult),
     saveTrialRecord: async ({
       sessionId,
       question: q,
@@ -76,18 +76,23 @@ export function GenericTrainingView<
       userVal,
       currentProfileLevel,
     }) => {
+      const qLevel =
+        training.getQuestionLevel?.(q) ??
+        (q as { difficultyLevel?: number })?.difficultyLevel ??
+        initialLevel;
+
       await saveTrialRecord(
         {
           id: `rec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
           sessionId,
           cardId: card.id,
           domain,
-          mode,
+          mode: card.id,
           timestamp: Date.now(),
-          difficultyLevel: plugin.getQuestionLevel(q),
-          isHit: plugin.isHit(hitResult),
+          difficultyLevel: qLevel,
+          isHit: training.isHit(hitResult),
           responseTimeMs,
-          details: plugin.extractRecordDetails(q, hitResult, userVal, mode),
+          details: training.extractRecordDetails?.(q, hitResult, userVal) ?? {},
         },
         currentProfileLevel,
       );
@@ -104,7 +109,7 @@ export function GenericTrainingView<
         id: sessionId,
         cardId: card.id,
         domain,
-        mode,
+        mode: card.id,
         type: sessionType,
         startTimestamp,
         endTimestamp: ended ? Date.now() : undefined,
@@ -117,13 +122,19 @@ export function GenericTrainingView<
     onExit,
   });
 
-  const isTargeting = plugin.isTargeting ? plugin.isTargeting(mode, settings) : false;
+  const isTargeting = training.isTargeting ? training.isTargeting(settings) : false;
+
+  const currentLevel = session.question
+    ? (training.getQuestionLevel?.(session.question) ??
+      (session.question as { difficultyLevel?: number })?.difficultyLevel ??
+      initialLevel)
+    : initialLevel;
 
   return (
     <TrainingShell
       card={card}
       sessionType={sessionType}
-      currentLevel={session.question ? plugin.getQuestionLevel(session.question) : initialLevel}
+      currentLevel={currentLevel}
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}
@@ -132,7 +143,7 @@ export function GenericTrainingView<
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>
-        plugin.renderCanvas({
+        training.renderCanvas({
           question: session.question,
           showAnswer: session.showAnswer,
           userAnswer: session.userAnswer,
