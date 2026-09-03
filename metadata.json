@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(router): 清理 AppRouterProps 遗留的僵尸 Props", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788439265.0589082, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(tooling): 添加卡片 i18n 规范审计与自动修复脚本", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788439429.1357484, "duration_ms": 0}}

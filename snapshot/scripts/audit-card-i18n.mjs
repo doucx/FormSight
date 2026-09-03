@@ -1,38 +1,3 @@
-我将为你编写一个专业的工程化检测与自动修复脚本 `scripts/audit-card-i18n.mjs`，用于自动化审计并清理卡片 i18n 绝对路径、展平多余嵌套、检测 Canvas 硬编码并为 CI 流程提供退出码支持。
-
-## [WIP] feat(tooling): 添加卡片 i18n 规范审计与自动修复脚本
-
-### 用户需求
-针对治理梯队 2（推行规范化 `useCardTranslation`、卡片词典结构展平、剔除切片垫片与 Canvas 硬编码净化），创建一个位于 `scripts/` 目录的 `.mjs` Node.js 脚本。该脚本需支持检查与自动修复模式，未来可直接接入 CI 流程。
-
-### 评论
-该工具是保证微内核卡片自包含性与 i18n 协议边界的关键基础设施。通过 AST/正则扫描与 JSON 规范化，可以在不依赖沉重外部 ESLint 插件的情况下，极低成本地收敛全量卡片的调用风格并阻断新代码劣化。
-
-### 目标
-1. 创建 `scripts/audit-card-i18n.mjs`。
-2. 支持 `--check`（默认，CI 模式，发现违规退出码为 1）与 `--fix`（自动修复模式）。
-3. 检查并修复卡片内部全局 `useTranslation()` 及 `cards.<cardId>.` 绝对长路径引用。
-4. 检查并支持展平卡片词典中过度的 `views` / `labels` 嵌套层级，并同步更新组件内调用。
-5. 检查 `DynamicDomainSettings` 与 `TargetingSection` 中的 `split('.').slice(2)` 垫片残留。
-6. 检查 Canvas 图表渲染函数中的硬编码中文字符。
-
-### 基本原理
-使用纯 Node.js ESM 原生文件操作与正则表达式扫描 `src/cards` 和 `src/components` 目录，通过识别卡片目录结构解析对应的 `cardId`，对 JSON 词典和 TSX 视图进行模式匹配和安全重构，输出带有色彩高亮的诊断报告。
-
-### 标签
-#intent/tooling #flow/ready #priority/high #comp/build #concept/parser #scope/dx #ai/instruct #task/domain/testing #task/object/i18n-audit-script #task/action/implementation #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 创建 `scripts/audit-card-i18n.mjs` 审计与自动修复脚本
-
-~~~~~act
-write_file
-scripts/audit-card-i18n.mjs
-~~~~~
-~~~~~javascript
 #!/usr/bin/env node
 
 import fs from 'node:fs';
@@ -386,9 +351,3 @@ function run() {
 }
 
 run();
-~~~~~
-
-### 下一步建议
-1. **执行初次校验**: 运行 `node scripts/audit-card-i18n.mjs`，查看全库卡片违规清单报告。
-2. **测试自动修复**: 运行 `node scripts/audit-card-i18n.mjs --fix`，验证词典嵌套展平与卡片组件相对 Key 替换效果。
-3. **集成 CI 与 package.json**: 在 `package.json` 的 `scripts` 中添加 `"audit:i18n": "node scripts/audit-card-i18n.mjs"`，作为代码提交流程的静态守护卡点。
