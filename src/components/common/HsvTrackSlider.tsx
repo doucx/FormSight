@@ -108,7 +108,7 @@ export function HsvTrackSlider({
           {/* 当前设定值标记线：在非目标盲测轨道、或非揭晓状态的参考轨道上显示 */}
           {(!showAnswer && !isInteractiveTarget) || (showAnswer && userVal === undefined) ? (
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-card pointer-events-none shadow-sm z-20"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-foreground pointer-events-none shadow-sm z-20"
               style={{ left: getPercent(val, max) }}
             />
           ) : null}
@@ -162,7 +162,7 @@ export function HsvTrackSlider({
           {/* 鼠标悬停准心线 */}
           {!showAnswer && hoverVal !== null && (isInteractiveTarget || hoverVal !== val) && (
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-card shadow-sm pointer-events-none z-30 opacity-75"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-0.5 h-8 bg-foreground shadow-sm pointer-events-none z-30 opacity-75"
               style={{ left: getPercent(hoverVal, max) }}
             />
           )}
