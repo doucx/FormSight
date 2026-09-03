@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef } from 'preact/hooks';
 import { PointClickCanvas } from '../../components/common/PointClickCanvas';
 import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
+import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
 import type { Point } from '../../types';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import { FITTING_CANVAS_SIZE, type HitResult, type QuestionData } from './types';
-import { evaluateAnswer } from './utils/generator';
 
 export interface NegVertexFittingViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer: HitResult | null;
-  onAnswer: (userVal: { clickPoint: Point; hitResult: HitResult }) => void;
+  onAnswer: (userPoint: Point) => void;
   disabled?: boolean;
 }
 
@@ -69,11 +69,14 @@ export function NegVertexFittingView({
 
   const handleCommitPoint = useCallback(
     (clickPoint: Point) => {
-      const hitResult: HitResult = evaluateAnswer(clickPoint, question);
-      if (!hitResult.isWithinRange) return;
-      onAnswer({ clickPoint, hitResult });
+      const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+        clickPoint,
+        question.distractorPoints,
+      );
+      if (!isWithinRange) return;
+      onAnswer(nearestPoint);
     },
-    [question, onAnswer],
+    [question.distractorPoints, onAnswer],
   );
 
   return (

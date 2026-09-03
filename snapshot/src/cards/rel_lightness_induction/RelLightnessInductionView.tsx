@@ -5,18 +5,15 @@ import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
 import { QuestionCardShell } from '../../components/common/QuestionCardShell';
 import { Button } from '../../components/ui/button';
 import { hsvToHex } from '../../core/color/colorUtils';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../../core/color/relativeColor';
 import { useCardTranslation } from '../../core/i18n';
 import type { RelativeColorSettings } from '../../storage/settings';
 import { PALETTE } from '../../utils/theme';
+import type { HitResult, QuestionData } from './types';
 
 export interface RelLightnessInductionViewProps {
-  question: RelativeColorQuestionData;
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer: RelativeColorHitResult | null;
+  userAnswer: HitResult | null;
   onAnswer: (userVal: [number, number, number]) => void;
   disabled?: boolean;
   settings: RelativeColorSettings;
@@ -32,16 +29,14 @@ export function RelLightnessInductionView({
 }: RelLightnessInductionViewProps) {
   const { t } = useCardTranslation('rel_lightness_induction');
 
-  const [userRightH, setUserRightH] = useState<number>(180);
-  const [userRightS, setUserRightS] = useState<number>(50);
-  const [userRightV, setUserRightV] = useState<number>(50);
+  const [userRightH, setUserRightH] = useState<number>(question.targetLeftCenter[0]);
+  const [userRightS, setUserRightS] = useState<number>(question.targetLeftCenter[1]);
+  const [userRightV, setUserRightV] = useState<number>(question.targetLeftCenter[2]);
 
   useEffect(() => {
-    if (question.targetLeftCenter) {
-      setUserRightH(question.targetLeftCenter[0]);
-      setUserRightS(question.targetLeftCenter[1]);
-      setUserRightV(question.targetLeftCenter[2]);
-    }
+    setUserRightH(question.targetLeftCenter[0]);
+    setUserRightS(question.targetLeftCenter[1]);
+    setUserRightV(question.targetLeftCenter[2]);
   }, [question.targetLeftCenter]);
 
   const handleSubmit = useCallback(() => {
@@ -60,12 +55,12 @@ export function RelLightnessInductionView({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showAnswer, disabled, handleSubmit]);
 
-  const bgLeftHex = hsvToHex(...(question.bgLeft ?? [0, 0, 100]));
-  const bgRightHex = hsvToHex(...(question.bgRight ?? [0, 0, 0]));
-  const centerLeftHex = hsvToHex(...(question.targetLeftCenter ?? [0, 0, 50]));
+  const bgLeftHex = hsvToHex(...question.bgLeft);
+  const bgRightHex = hsvToHex(...question.bgRight);
+  const centerLeftHex = hsvToHex(...question.targetLeftCenter);
 
   const userRightHex = hsvToHex(userRightH, userRightS, userRightV);
-  const idealRightHex = hsvToHex(...(question.idealRightCenter ?? question.targetD));
+  const idealRightHex = hsvToHex(...question.idealRightCenter);
   const rightValGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(userRightH, 100, 100)})`;
 
   const hitMargin = settings.sliderHitMargin ?? 12;
@@ -120,10 +115,10 @@ export function RelLightnessInductionView({
           val={userRightV}
           max={100}
           unit="%"
-          targetHSV={question.targetD}
+          targetHSV={question.idealRightCenter}
           difficultyLevel={question.difficultyLevel}
           showAnswer={showAnswer}
-          targetVal={question.idealRightCenter?.[2] ?? question.targetD[2]}
+          targetVal={question.idealRightCenter[2]}
           userVal={userRightV}
           isHit={userAnswer?.isHit}
           onValChange={setUserRightV}

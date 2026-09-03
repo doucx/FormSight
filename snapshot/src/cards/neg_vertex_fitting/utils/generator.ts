@@ -103,17 +103,16 @@ export function generateQuestion(difficultyLevel: number): QuestionData {
   };
 }
 
-export function evaluateAnswer(clickPoint: Point, question: QuestionData): HitResult {
-  const targetPoint = question.targetPoint ?? { x: 0, y: 0 };
-  const distractorPoints = question.distractorPoints ?? [];
+export function evaluateAnswer(userPoint: Point, question: QuestionData): HitResult {
+  const targetPoint = question.targetPoint;
+  const distractorPoints = question.distractorPoints;
 
-  const hitRes = evaluatePointGridHit(clickPoint, targetPoint, distractorPoints);
+  const hitRes = evaluatePointGridHit(userPoint, targetPoint, distractorPoints);
   return {
     isHit: hitRes.isHit,
-    clickPoint,
+    clickPoint: userPoint,
     nearestGridPoint: hitRes.nearestGridPoint,
     errorDistance: hitRes.errorDistance,
     tolerance: question.tolerance,
-    isWithinRange: hitRes.isWithinRange,
   };
 }

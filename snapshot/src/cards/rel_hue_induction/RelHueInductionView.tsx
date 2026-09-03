@@ -3,16 +3,13 @@ import { useEffect, useState } from 'preact/hooks';
 import { DualViewportContainer } from '../../components/common/DualViewportContainer';
 import { StandardNafcView } from '../../components/common/StandardNafcView';
 import { hsvToHex } from '../../core/color/colorUtils';
-import type {
-  RelativeColorHitResult,
-  RelativeColorQuestionData,
-} from '../../core/color/relativeColor';
 import { useCardTranslation } from '../../core/i18n';
+import type { HitResult, QuestionData } from './types';
 
 export interface RelHueInductionViewProps {
-  question: RelativeColorQuestionData;
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer?: RelativeColorHitResult | null;
+  userAnswer?: HitResult | null;
   onAnswer: (chosenColor: [number, number, number]) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
@@ -36,17 +33,16 @@ export function RelHueInductionView({
     }
   }, [question.id]);
 
-  const bgLeftHex = hsvToHex(...(bgLeft ?? [0, 0, 90]));
-  const bgRightHex = hsvToHex(...(bgRight ?? [0, 0, 20]));
-  const centerLeftHex = hsvToHex(...(targetLeftCenter ?? [0, 0, 50]));
-  const idealRightHex = hsvToHex(...(idealRightCenter ?? [0, 0, 50]));
+  const bgLeftHex = hsvToHex(...bgLeft);
+  const bgRightHex = hsvToHex(...bgRight);
+  const centerLeftHex = hsvToHex(...targetLeftCenter);
+  const idealRightHex = hsvToHex(...idealRightCenter);
 
-  const targetIdx = correctIndex ?? 0;
-  const activeColor = options?.[selectedIdx] ?? idealRightCenter ?? [0, 0, 50];
+  const activeColor = options[selectedIdx] ?? idealRightCenter;
   const activeRightHex = hsvToHex(...activeColor);
 
-  const nafcOptions = (options || []).map((opt, idx) => {
-    const isTarget = idx === targetIdx;
+  const nafcOptions = options.map((opt, idx) => {
+    const isTarget = idx === correctIndex;
     const hexVal = hsvToHex(...opt);
     return {
       key: `hue-opt-${idx}-${hexVal}`,

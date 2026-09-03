@@ -1,19 +1,15 @@
 import { Columns } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
-import {
-  type RelativeColorHitResult,
-  type RelativeColorQuestionData,
-  checkRelativeColorHit,
-  generateDecontextual2AfcQuestion,
-} from '../../core/color/relativeColor';
 import type { RelativeColorSettings } from '../../storage/settings';
 import { RelDecontextual2AfcView } from './RelDecontextual2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import type { HitResult, QuestionData } from './types';
+import { checkHit, generateQuestion } from './utils/generator';
 
 export const relDecontextual2AfcCard: CardManifest<
-  RelativeColorQuestionData,
-  RelativeColorHitResult,
+  QuestionData,
+  HitResult,
   'A' | 'B',
   RelativeColorSettings
 > = {
@@ -32,8 +28,8 @@ export const relDecontextual2AfcCard: CardManifest<
     'en-US': enUS,
   },
   training: {
-    generateQuestion: (level) => generateDecontextual2AfcQuestion(level),
-    evaluateAnswer: (userVal, q) => checkRelativeColorHit('DECONTEXTUAL_2AFC', userVal, q),
+    generateQuestion: (level) => generateQuestion(level),
+    evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, _hitResult, userVal) => ({

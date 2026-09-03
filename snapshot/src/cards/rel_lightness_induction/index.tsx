@@ -1,19 +1,15 @@
 import { Sun } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
-import {
-  type RelativeColorHitResult,
-  type RelativeColorQuestionData,
-  checkRelativeColorHit,
-  generateLightnessInductionQuestion,
-} from '../../core/color/relativeColor';
 import type { RelativeColorSettings } from '../../storage/settings';
 import { RelLightnessInductionView } from './RelLightnessInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import type { HitResult, QuestionData } from './types';
+import { checkHit, generateQuestion } from './utils/generator';
 
 export const relLightnessInductionCard: CardManifest<
-  RelativeColorQuestionData,
-  RelativeColorHitResult,
+  QuestionData,
+  HitResult,
   [number, number, number],
   RelativeColorSettings
 > = {
@@ -44,8 +40,8 @@ export const relLightnessInductionCard: CardManifest<
     showToleranceBand: true,
   },
   training: {
-    generateQuestion: (level) => generateLightnessInductionQuestion(level),
-    evaluateAnswer: (userVal, q) => checkRelativeColorHit('LIGHTNESS_INDUCTION', userVal, q),
+    generateQuestion: (level) => generateQuestion(level),
+    evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult, userVal) => ({

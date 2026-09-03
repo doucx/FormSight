@@ -168,6 +168,11 @@ export function generateQuestion(
   };
 }
 
-export function checkHit(clickPoint: Point, targetB: Point, gridPoints: Point[]): HitResult {
-  return evaluatePointGridHit(clickPoint, targetB, gridPoints);
+export function checkHit(userPoint: Point, question: QuestionData): HitResult {
+  const res = evaluatePointGridHit(userPoint, question.targetB, question.distractorPoints);
+  return {
+    isHit: res.isHit,
+    nearestGridPoint: res.nearestGridPoint,
+    errorDistance: res.errorDistance,
+  };
 }
