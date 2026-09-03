@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 同步更新数据库测试用例以移除废弃的 mode 属性", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788437951.314614, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M db.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788437961.252405, "duration_ms": 0}}
