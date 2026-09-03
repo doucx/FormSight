@@ -1,68 +1,127 @@
-所有针对历史 `mode` 字段的清理、数据库 Schema v4 升级、冗余迁移分支移除、单元测试对齐以及 `prune.ts` 冷数据修剪功能的清理均已就绪。现在将生成独立的 `[COMMIT]` 计划以提交这批变更。
+我已经分析了 `AppRouter.tsx` 中的接口与实现，将移除 `AppRouterProps` 中声明但从未被实际消费的 11 个僵尸属性，并清理相关的未引用类型导入。
 
-## [COMMIT] refactor(storage): 清理数据库 mode 冗余字段并移除 prune 冷数据修剪功能
+## [WIP] refactor(router): 清理 AppRouterProps 遗留的僵尸 Props
 
 ### 用户需求
-将本次完成的“消除持久化债务、升级 IndexedDB 至 v4、清理历史迁移分支、对齐测试套件并移除冷数据修剪功能”的全部文件改动打包装配，创建标准的 Git 提交。
+按照系统架构审查报告中梯队 3 的要求，彻底移除 `src/components/routing/AppRouter.tsx` 中 `AppRouterProps` 声明的 11 个未消费的遗留参数（包括 `totalTimeMs`、`todayStats`、`profiles`、`trainingPlan`、`allPlans`、`settings`、`profilesLoaded`、`onRefreshProfiles`、`onSetTrainingPlan`、`onSelectPlanOnHome`、`showToast`），使组件接口对齐纯粹基于 Signals 单一真实源（SSOT）的实际消费形态。
 
 ### 评论
-本次提交彻底消除了自单体时期遗留的 `mode` 与 `cardId` 双生幽灵主键，全面统一步调至微内核卡片体系；同时精简了无用的数据冷修剪功能，使数据层与上层 UI 交互都更加精简、稳健且符合当前架构原则。
+该项重构耗时短且收益显著。早前应用状态管理由基于 React/Preact 的 Props Drilling 逐步重构至 `@preact/signals` 响应式单例 Store，但 `AppRouterProps` 接口声明未及时精简，形成了“接口声明了十余个属性，组件内部却全部丢弃、直接读取 Signals”的欺骗性接口。清理这些遗留参数能够消除状态源二义性，大幅提高代码可维护性。
 
 ### 目标
-1. 将修改后的业务代码、存储契约、国际化语言包和测试套件文件全部添加至 Git 暂存区。
-2. 依据 Conventional Commits 规范创建详尽的 Git Commit 提交记录。
+1. 精简 `src/components/routing/AppRouter.tsx` 中的 `AppRouterProps` 接口，仅保留实际消费的 `route`、`navigate`、`lastHomeRoute`、`onOpenCardSettings`、`onOpenGlobalSettings` 5 个属性。
+2. 同步清理因移除这些属性而闲置的类型导入（`UnifiedProfileData`、`UserSettings`、`TrainingPlan`、`ToastType`）。
 
 ### 基本原理
-按照 Quipu 协议约束，将破坏性/编辑性文件修改与版本控制提交物理隔离。在确认全部改动准确无误且测试对齐后，通过 `git_add` 与 `git_commit` 将该工作单元沉淀为原子化版本节点。
+`AppRouter` 内部的所有数据与操作分发（如 `$activePlan`、`$settings`、`$profiles`、`refreshAppData`、`savePlanAction` 等）已经全面直接接入 Signal Store，调用方 `app.tsx` 实际也从未传递过这些冗余属性。删除无用属性定义与无用 import 不会对现有运行时行为产生任何负面影响，同时能使 TypeScript 编译期接口与运行时保持 100% 一致。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/engine #concept/state #scope/core #scope/api #ai/instruct #task/domain/storage #task/object/schema-unification #task/action/refactor #task/state/end #task/status/completed
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/app-router #task/action/refactor #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交代码变动
+#### Acts 1: 清理 AppRouter.tsx 的类型导入与 AppRouterProps 接口
 
-将所有修改与删除的文件加入暂存区，并执行原子化提交。
-
-~~~~~act
-git_add
-src/components/settings/sections/DataGovernanceSection.tsx
-src/core/registry.ts
-src/hooks/useGlobalStatsData.ts
-src/hooks/useTodayStats.ts
-src/hooks/useTrainingSession.ts
-src/locales/en-US.json
-src/locales/zh-CN.json
-src/storage/db/importExport.ts
-src/storage/db/index.ts
-src/storage/db/prune.ts
-src/storage/db/queries.ts
-src/storage/db/schema.ts
-src/storage/repository.ts
-src/stores/profileStore.ts
-src/types/card.ts
-src/utils/__tests__/db.test.ts
-src/views/GenericTrainingView.tsx
-~~~~~
+我们将修改 `src/components/routing/AppRouter.tsx`，移除因废弃僵尸 Props 而不再需要的类型导入，并将 `AppRouterProps` 缩减为其实际需要的核心参数。
 
 ~~~~~act
-git_commit
+patch_file
+src/components/routing/AppRouter.tsx
 ~~~~~
-~~~~~text
-refactor(storage): remove legacy mode field and prune functionality
+~~~~~typescript.old
+import { useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { RouteLocation } from '../../hooks/useHashRoute';
+import type { UnifiedProfileData } from '../../storage/db/schema';
+import { type UserSettings, getCardSettings } from '../../storage/settings';
+import {
+  $activePlan,
+  $allPlans,
+  savePlanAction,
+  setActivePlanAction,
+} from '../../stores/planStore';
+import {
+  $isProfilesLoaded,
+  $profiles,
+  $todayStatsMap,
+  $totalTimeMs,
+  refreshAppData,
+} from '../../stores/profileStore';
+import { $settings } from '../../stores/settingsStore';
+import { showToast } from '../../stores/toastStore';
+import type { TrainingPlan } from '../../types/plan';
+import { CardAnalyticsView } from '../../views/CardAnalyticsView';
+import { DiscoveryView } from '../../views/DiscoveryView';
+import { GenericTrainingView } from '../../views/GenericTrainingView';
+import { GlobalStatsView } from '../../views/GlobalStatsView';
+import { HomeView } from '../../views/HomeView';
+import { PlanEditorView } from '../../views/PlanEditorView';
+import { PlanTrainingView } from '../../views/PlanTrainingView';
+import type { ToastType } from '../common/Toast';
+import { AppNavigation } from '../navigation/AppNavigation';
 
-- Upgrade IndexedDB schema to DB_VERSION = 4 and unify all entities/indexes to cardId
-- Remove defensive `s.cardId || s.mode` fallback checks across queries, stats hooks, views, and stores
-- Delete unused `src/storage/db/prune.ts` and its corresponding UI components and ConfirmModals in DataGovernanceSection
-- Clean obsolete migration branches in `schema.ts` and streamline backup import/export
-- Update `src/utils/__tests__/db.test.ts` to align with the schema definitions
-- Remove obsolete prune i18n entries from zh-CN and en-US
+interface AppRouterProps {
+  route: RouteLocation;
+  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
+  lastHomeRoute: RouteLocation;
+  totalTimeMs?: number;
+  todayStats?: Record<string, { count: number; timeMs: number }>;
+  profiles?: Record<string, UnifiedProfileData>;
+  trainingPlan?: TrainingPlan;
+  allPlans?: TrainingPlan[];
+  settings?: UserSettings;
+  profilesLoaded?: boolean;
+  onRefreshProfiles?: () => Promise<void>;
+  onSetTrainingPlan?: (plan: TrainingPlan) => void;
+  onSelectPlanOnHome?: (planId: string) => void;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenGlobalSettings: () => void;
+  showToast?: (message: string, type?: ToastType) => void;
+}
 ~~~~~
+~~~~~typescript.new
+import { useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { RouteLocation } from '../../hooks/useHashRoute';
+import { getCardSettings } from '../../storage/settings';
+import {
+  $activePlan,
+  $allPlans,
+  savePlanAction,
+  setActivePlanAction,
+} from '../../stores/planStore';
+import {
+  $isProfilesLoaded,
+  $profiles,
+  $todayStatsMap,
+  $totalTimeMs,
+  refreshAppData,
+} from '../../stores/profileStore';
+import { $settings } from '../../stores/settingsStore';
+import { showToast } from '../../stores/toastStore';
+import { CardAnalyticsView } from '../../views/CardAnalyticsView';
+import { DiscoveryView } from '../../views/DiscoveryView';
+import { GenericTrainingView } from '../../views/GenericTrainingView';
+import { GlobalStatsView } from '../../views/GlobalStatsView';
+import { HomeView } from '../../views/HomeView';
+import { PlanEditorView } from '../../views/PlanEditorView';
+import { PlanTrainingView } from '../../views/PlanTrainingView';
+import { AppNavigation } from '../navigation/AppNavigation';
 
----
+interface AppRouterProps {
+  route: RouteLocation;
+  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
+  lastHomeRoute: RouteLocation;
+  onOpenCardSettings: (cardId: string) => void;
+  onOpenGlobalSettings: () => void;
+}
+~~~~~
 
 ### 下一步建议
-- **分支推送**: 若已配置远端仓库，可执行 `git push` 将本地提交同步至远端分支。
-- **CI/CD 观测**: 观察自动化流水线是否平稳运行通过类型检查、代码格式化（Biome）与测试用例验证。
+1. **构建与类型验证**：执行 `npm run build` 或 `tsc --noEmit` 确认无遗留编译错误。
+2. **继续处理梯队 2 治理**：推进国际化子系统的规范化，包括：
+   - 全面在卡片视图中推行 `useCardTranslation` 相对键；
+   - 彻底删除 `DynamicDomainSettings` 中的 `split('.').slice(2)` 截取补丁；
+   - 为 Canvas 绘图函数注入动态国际化文本参数。

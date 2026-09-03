@@ -1,8 +1,7 @@
 import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { RouteLocation } from '../../hooks/useHashRoute';
-import type { UnifiedProfileData } from '../../storage/db/schema';
-import { type UserSettings, getCardSettings } from '../../storage/settings';
+import { getCardSettings } from '../../storage/settings';
 import {
   $activePlan,
   $allPlans,
@@ -18,7 +17,6 @@ import {
 } from '../../stores/profileStore';
 import { $settings } from '../../stores/settingsStore';
 import { showToast } from '../../stores/toastStore';
-import type { TrainingPlan } from '../../types/plan';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
@@ -26,26 +24,14 @@ import { GlobalStatsView } from '../../views/GlobalStatsView';
 import { HomeView } from '../../views/HomeView';
 import { PlanEditorView } from '../../views/PlanEditorView';
 import { PlanTrainingView } from '../../views/PlanTrainingView';
-import type { ToastType } from '../common/Toast';
 import { AppNavigation } from '../navigation/AppNavigation';
 
 interface AppRouterProps {
   route: RouteLocation;
   navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
   lastHomeRoute: RouteLocation;
-  totalTimeMs?: number;
-  todayStats?: Record<string, { count: number; timeMs: number }>;
-  profiles?: Record<string, UnifiedProfileData>;
-  trainingPlan?: TrainingPlan;
-  allPlans?: TrainingPlan[];
-  settings?: UserSettings;
-  profilesLoaded?: boolean;
-  onRefreshProfiles?: () => Promise<void>;
-  onSetTrainingPlan?: (plan: TrainingPlan) => void;
-  onSelectPlanOnHome?: (planId: string) => void;
   onOpenCardSettings: (cardId: string) => void;
   onOpenGlobalSettings: () => void;
-  showToast?: (message: string, type?: ToastType) => void;
 }
 
 export function AppRouter({
