@@ -44,8 +44,12 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
         let sumSignedBias = 0;
         const sectorBuckets = Array.from({ length: 12 }, () => ({ total: 0, hits: 0, sumBias: 0 }));
         for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
-          const uHsv = (r.userHSV as [number, number, number]) || tHsv;
+          const tHsv: [number, number, number] = Array.isArray(r.targetHSV) && r.targetHSV.length === 3
+            ? [Number(r.targetHSV[0]), Number(r.targetHSV[1]), Number(r.targetHSV[2])]
+            : [0, 0, 0];
+          const uHsv: [number, number, number] = Array.isArray(r.userHSV) && r.userHSV.length === 3
+            ? [Number(r.userHSV[0]), Number(r.userHSV[1]), Number(r.userHSV[2])]
+            : tHsv;
           const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
           sumSignedBias += bias;
 
@@ -171,7 +175,9 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
           sumError: 0,
         }));
         for (const r of records) {
-          const tHsv = (r.targetHSV as [number, number, number]) || [0, 0, 0];
+          const tHsv: [number, number, number] = Array.isArray(r.targetHSV) && r.targetHSV.length === 3
+            ? [Number(r.targetHSV[0]), Number(r.targetHSV[1]), Number(r.targetHSV[2])]
+            : [0, 0, 0];
           const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
           sectorBuckets[idx].total += 1;
           if (r.isHit) sectorBuckets[idx].hits += 1;

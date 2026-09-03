@@ -1,8 +1,13 @@
 import { Box } from 'lucide-preact';
-import { PointClickCanvas } from '../../components/common/PointClickCanvas';
+import { useEffect, useState } from 'preact/hooks';
 import { QuestionCardShell } from '../../components/common/QuestionCardShell';
+import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
+import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
+import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
 import { useCardTranslation, useTranslation } from '../../core/i18n';
+import { LOUPE_DIAMETER, usePointLoupe } from '../../hooks/usePointLoupe';
 import type { Point } from '../../types';
+import { CANVAS_THEME } from '../../utils/theme';
 import type { PerspStructure3DHitResult, PerspStructure3DQuestion } from './types';
 import { PERSPECTIVE_CANVAS_SIZE, draw3DCubeWireframe } from './utils/generator';
 
@@ -25,9 +30,163 @@ export function PerspStructure3DView({
 }: PerspStructure3DViewProps) {
   const { t: cardT } = useCardTranslation('persp_structure_3d');
   const { t: commonT } = useTranslation();
-  const isHit = Boolean(userAnswer?.isHit);
+  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
+
   const targetPt3D = question.targetPoint3D;
   const dim = question.gridDim3D ?? 3;
+
+  const {
+    containerRef,
+    canvasRef,
+    loupeCanvasRef,
+    isTouching,
+    loupePos,
+    currentCanvasPos,
+    startTouch,
+    moveTouch,
+    endTouch,
+    getCanvasCoordinates,
+  } = usePointLoupe({
+    canvasSize: PERSPECTIVE_CANVAS_SIZE,
+    gridPoints: question.projectedGridPoints || [],
+    disabled: disabled || showAnswer,
+  });
+
+  // 自治渲染 3D 轴测网格与点阵
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = setupHiDpiCanvas(canvas, PERSPECTIVE_CANVAS_SIZE, PERSPECTIVE_CANVAS_SIZE);
+    if (!ctx) return;
+
+    ctx.fillStyle = CANVAS_THEME.bg.primary;
+    ctx.fillRect(0, 0, PERSPECTIVE_CANVAS_SIZE, PERSPECTIVE_CANVAS_SIZE);
+
+    // 绘制 3D 轴测立方体线框
+    const center = {
+      x: PERSPECTIVE_CANVAS_SIZE / 2,
+      y: PERSPECTIVE_CANVAS_SIZE / 2 + 10,
+    };
+    const scale = dim === 4 ? 42 : 55;
+    draw3DCubeWireframe(ctx, center, scale, dim);
+
+    // 绘制轴测点阵
+    const dotRadius = getDynamicDotRadius(question.projectedGridPoints || []);
+    const hoverRadius = Math.max(2.5, dotRadius * 1.6);
+
+    for (const p of question.projectedGridPoints || []) {
+      drawDot(ctx, p.x, p.y, CANVAS_THEME.pointGrid.dotDefault, dotRadius);
+    }
+
+    if (!disabled && !showAnswer && hoverPoint) {
+      drawDot(ctx, hoverPoint.x, hoverPoint.y, CANVAS_THEME.pointGrid.dotHover, hoverRadius);
+    }
+
+    if (showAnswer && question.targetProjectedPoint) {
+      drawDot(
+        ctx,
+        question.targetProjectedPoint.x,
+        question.targetProjectedPoint.y,
+        CANVAS_THEME.pointGrid.crosshairTarget,
+        dotRadius * 1.5,
+      );
+
+      if (userAnswer?.userValue && !userAnswer.isHit) {
+        drawDot(
+          ctx,
+          userAnswer.userValue.x,
+          userAnswer.userValue.y,
+          CANVAS_THEME.pointGrid.dotMiss,
+          dotRadius * 1.4,
+        );
+      }
+    }
+  }, [
+    question.projectedGridPoints,
+    question.targetProjectedPoint,
+    dim,
+    hoverPoint,
+    showAnswer,
+    userAnswer,
+    disabled,
+    canvasRef,
+  ]);
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (disabled || showAnswer || isTouching) return;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    if (!coords) return;
+
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+      coords.canvasPoint,
+      question.projectedGridPoints,
+    );
+    setHoverPoint(isWithinRange ? nearestPoint : null);
+  };
+
+  const handleMouseLeave = () => {
+    if (!isTouching && hoverPoint) setHoverPoint(null);
+  };
+
+  const handleClick = (e: MouseEvent) => {
+    if (disabled || showAnswer || isTouching) return;
+    const coords = getCanvasCoordinates(e.clientX, e.clientY);
+    if (!coords) return;
+
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+      coords.canvasPoint,
+      question.projectedGridPoints,
+    );
+    if (!isWithinRange) return;
+
+    setHoverPoint(null);
+    onAnswer(nearestPoint);
+  };
+
+  const handleTouchStart = (e: TouchEvent) => {
+    if (!e.touches[0]) return;
+    const pt = startTouch(e.touches[0].clientX, e.touches[0].clientY);
+    if (!pt) return;
+
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(pt, question.projectedGridPoints);
+    setHoverPoint(isWithinRange ? nearestPoint : null);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!e.touches[0]) return;
+    if (e.cancelable) e.preventDefault();
+
+    const pt = moveTouch(e.touches[0].clientX, e.touches[0].clientY);
+    if (!pt) return;
+
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(pt, question.projectedGridPoints);
+    setHoverPoint(isWithinRange ? nearestPoint : null);
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled || showAnswer || !isTouching) return;
+    endTouch();
+
+    if (hoverPoint) {
+      const commitPt = hoverPoint;
+      setHoverPoint(null);
+      onAnswer(commitPt);
+    } else if (currentCanvasPos) {
+      const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+        currentCanvasPos,
+        question.projectedGridPoints,
+      );
+      if (isWithinRange) {
+        setHoverPoint(null);
+        onAnswer(nearestPoint);
+      }
+    }
+  };
+
+  const handleTouchCancel = () => {
+    endTouch();
+    setHoverPoint(null);
+  };
 
   return (
     <QuestionCardShell
@@ -113,24 +272,51 @@ export function PerspStructure3DView({
         </div>
 
         {/* 右侧 3D 立方体透视交互点阵 */}
-        <div className="flex justify-center">
-          <PointClickCanvas
-            canvasSize={PERSPECTIVE_CANVAS_SIZE}
-            gridPoints={question.projectedGridPoints || []}
-            targetPoint={question.targetProjectedPoint}
-            showAnswer={showAnswer}
-            isHit={isHit}
-            disabled={disabled}
-            onCommitPoint={onAnswer}
-            customOverlayRender={(ctx) => {
-              const center = {
-                x: PERSPECTIVE_CANVAS_SIZE / 2,
-                y: PERSPECTIVE_CANVAS_SIZE / 2 + 10,
-              };
-              const scale = dim === 4 ? 42 : 55;
-              draw3DCubeWireframe(ctx, center, scale, dim);
-            }}
+        <div
+          ref={containerRef}
+          className="relative flex justify-center w-full max-w-[340px] aspect-square mx-auto select-none"
+        >
+          <canvas
+            ref={canvasRef}
+            width={PERSPECTIVE_CANVAS_SIZE}
+            height={PERSPECTIVE_CANVAS_SIZE}
+            onClick={handleClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+            tabIndex={0}
+            role="button"
+            aria-label={cardT('views.hint')}
+            className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
+              disabled || showAnswer
+                ? 'cursor-default'
+                : hoverPoint
+                  ? 'cursor-none hover:border-primary/60 hover:shadow-indigo-50/50'
+                  : 'cursor-crosshair hover:border-primary/60 hover:shadow-indigo-50/50'
+            }`}
           />
+
+          {isTouching && loupePos && (
+            <div
+              className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-card ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
+              style={{
+                left: `${loupePos.x}px`,
+                top: `${loupePos.y}px`,
+                width: `${LOUPE_DIAMETER}px`,
+                height: `${LOUPE_DIAMETER}px`,
+              }}
+            >
+              <canvas
+                ref={loupeCanvasRef}
+                width={LOUPE_DIAMETER}
+                height={LOUPE_DIAMETER}
+                className="w-full h-full block"
+              />
+            </div>
+          )}
         </div>
       </div>
     </QuestionCardShell>
