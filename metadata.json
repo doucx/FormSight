@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "rm Capture: D refactor_structure.py", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788428402.0947301, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M contracts.ts, M GenericTrainingView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788428430.9406824, "duration_ms": 0}}

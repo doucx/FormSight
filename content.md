@@ -1,12 +1,13 @@
 # 📸 Snapshot Capture
 
 ### 💬 备注:
-rm
+checkf
 
 检测到工作区发生变更。
 
 ### 📝 变更文件摘要:
 ```
-scripts/refactor_structure.py | 319 ------------------------------------------
- 1 file changed, 319 deletions(-)
+src/core/contracts.ts             | 2 +-
+ src/views/GenericTrainingView.tsx | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 ```
