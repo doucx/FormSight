@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 规范 color_hue 分析层类型守卫并消除重复计算", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788432130.4242997, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 为交互式 canvas 补齐 onKeyDown 键盘事件以满足 a11y 规范", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788432179.8402324, "duration_ms": 0}}

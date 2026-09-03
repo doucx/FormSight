@@ -244,6 +244,9 @@ export function NegVertexFittingView({
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+          }}
           tabIndex={0}
           role="button"
           aria-label={t('cards.neg_vertex_fitting.views.vertexHint')}

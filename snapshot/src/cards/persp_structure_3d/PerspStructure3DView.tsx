@@ -287,6 +287,9 @@ export function PerspStructure3DView({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
+            }}
             tabIndex={0}
             role="button"
             aria-label={cardT('views.hint')}
