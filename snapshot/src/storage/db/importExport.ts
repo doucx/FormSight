@@ -186,11 +186,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     if (parsed.sessions && parsed.sessions.length > 0) {
       const sessionStore = tx.objectStore('sessions');
       for (const s of parsed.sessions) {
-        const raw = s as Record<string, unknown>;
-        const cardId = (raw.cardId || raw.mode) as string;
-        delete raw.mode;
-        s.cardId = cardId;
-        s.domain = getCachedDomain(cardId, s.domain);
+        s.domain = getCachedDomain(s.cardId, s.domain);
         await sessionStore.put(s);
       }
     }
@@ -199,11 +195,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     if (parsed.profiles && parsed.profiles.length > 0) {
       const profileStore = tx.objectStore('user_profiles');
       for (const p of parsed.profiles) {
-        const raw = p as Record<string, unknown>;
-        const cardId = (raw.cardId || raw.mode) as string;
-        delete raw.mode;
-        p.cardId = cardId;
-        p.domain = getCachedDomain(cardId, p.domain);
+        p.domain = getCachedDomain(p.cardId, p.domain);
         p.totalTrials = p.totalTrials ?? 0;
         await profileStore.put(p);
       }
@@ -214,11 +206,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       const recordStore = tx.objectStore('records');
       for (let i = 0; i < parsed.records.length; i++) {
         const r = parsed.records[i];
-        const raw = r as Record<string, unknown>;
-        const cardId = (raw.cardId || raw.mode) as string;
-        delete raw.mode;
-        r.cardId = cardId;
-        r.domain = getCachedDomain(cardId, r.domain);
+        r.domain = getCachedDomain(r.cardId, r.domain);
         await recordStore.put(r);
       }
     }
@@ -227,11 +215,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
     if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
       const dailyStore = tx.objectStore('daily_summaries');
       for (const d of parsed.dailySummaries) {
-        const raw = d as Record<string, unknown>;
-        const cardId = (raw.cardId || raw.mode) as string;
-        delete raw.mode;
-        d.cardId = cardId;
-        d.domain = getCachedDomain(cardId, d.domain);
+        d.domain = getCachedDomain(d.cardId, d.domain);
         await dailyStore.put(d);
       }
     } else if (parsed.records && parsed.records.length > 0) {
@@ -240,10 +224,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       let lastDateStr = '';
 
       for (const r of parsed.records) {
-        const raw = r as Record<string, unknown>;
-        const cardId = (raw.cardId || raw.mode) as string;
-        delete raw.mode;
-        const domain = getCachedDomain(cardId, r.domain);
+        const domain = getCachedDomain(r.cardId, r.domain);
 
         let dateStr = lastDateStr;
         if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
@@ -252,7 +233,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
           lastDateStr = dateStr;
         }
 
-        const summaryId = `${dateStr}_${cardId}`;
+        const summaryId = `${dateStr}_${r.cardId}`;
         const respMs = Number(r.responseTimeMs) || 0;
         const level = Number(r.difficultyLevel) || 1;
 
@@ -261,7 +242,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
           summaryMap.set(summaryId, {
             id: summaryId,
             date: dateStr,
-            cardId,
+            cardId: r.cardId,
             domain,
             totalCount: 1,
             hitCount: r.isHit ? 1 : 0,
