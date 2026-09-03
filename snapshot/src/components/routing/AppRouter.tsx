@@ -187,12 +187,8 @@ export function AppRouter({
       );
     }
     const activeCard = registry.getCardById(route.cardId);
-    if (!activeCard) {
-      navigate(lastHomeRoute);
-      return null;
-    }
-    const plugin = registry.getPluginByCardId(activeCard.id);
-    if (!plugin) {
+    const manifest = registry.getCardManifest(route.cardId);
+    if (!activeCard || !manifest) {
       navigate(lastHomeRoute);
       return null;
     }
@@ -202,7 +198,7 @@ export function AppRouter({
       <GenericTrainingView
         key={`${activeCard.id}-${route.sessionType}`}
         card={activeCard}
-        plugin={plugin}
+        manifest={manifest}
         sessionType={route.sessionType}
         initialLevel={activeLevel}
         settings={getCardSettings(currentSettings, activeCard.id)}
