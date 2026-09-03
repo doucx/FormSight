@@ -17,7 +17,7 @@ export async function saveTrialRecord(
   currentProfileLevel?: number,
 ): Promise<void> {
   const db = await getDB();
-  const cardId = record.cardId || record.mode;
+  const cardId = record.cardId;
   const canonicalCard = registry.getCardById(cardId);
   const packId = canonicalCard ? canonicalCard.domain : record.domain || 'core';
   const targetProfileLevel = currentProfileLevel ?? record.difficultyLevel;
@@ -48,7 +48,6 @@ export async function saveTrialRecord(
       date: dateStr,
       cardId,
       domain: packId,
-      mode: record.mode,
       totalCount: 1,
       hitCount: record.isHit ? 1 : 0,
       totalTimeMs: respMs,
@@ -60,7 +59,6 @@ export async function saveTrialRecord(
     await dailyStore.put(newSummary);
   } else {
     existingDaily.domain = packId;
-    existingDaily.mode = record.mode;
     existingDaily.totalCount += 1;
     if (record.isHit) existingDaily.hitCount += 1;
     existingDaily.totalTimeMs += respMs;
@@ -79,7 +77,6 @@ export async function saveTrialRecord(
     const newProfile: UnifiedProfileData = {
       cardId,
       domain: packId,
-      mode: record.mode,
       currentLevel: targetProfileLevel,
       bestLevel: targetProfileLevel,
       totalTrials: 1,
@@ -89,7 +86,6 @@ export async function saveTrialRecord(
     await profileStore.put(newProfile);
   } else {
     existingProfile.domain = packId;
-    existingProfile.mode = record.mode;
     existingProfile.totalTrials += 1;
     if (record.isHit) existingProfile.totalHits += 1;
     existingProfile.currentLevel = targetProfileLevel;
@@ -105,7 +101,7 @@ export async function saveTrialRecord(
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {
   const db = await getDB();
-  const cardId = session.cardId || session.mode;
+  const cardId = session.cardId;
   const canonicalCard = registry.getCardById(cardId);
   const packId = canonicalCard ? canonicalCard.domain : session.domain || 'core';
   await db.put('sessions', { ...session, cardId, domain: packId });

@@ -52,7 +52,7 @@ export function GenericTrainingView<
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,
-    mode: card.id,
+    cardId: card.id,
     sessionType,
     initialLevel,
     autoNext: settings.autoNext,
@@ -87,7 +87,6 @@ export function GenericTrainingView<
           sessionId,
           cardId: card.id,
           domain,
-          mode: card.id,
           timestamp: Date.now(),
           difficultyLevel: qLevel,
           isHit: training.isHit(hitResult),
@@ -109,7 +108,6 @@ export function GenericTrainingView<
         id: sessionId,
         cardId: card.id,
         domain,
-        mode: card.id,
         type: sessionType,
         startTimestamp,
         endTimestamp: ended ? Date.now() : undefined,

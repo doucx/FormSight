@@ -19,7 +19,7 @@ export const $todaySummaries = computed<DailySummaryData[]>(() => {
 export const $todayStatsMap = computed<Record<string, { count: number; timeMs: number }>>(() => {
   const map: Record<string, { count: number; timeMs: number }> = {};
   for (const s of $todaySummaries.value) {
-    const key = s.cardId || s.mode;
+    const key = s.cardId;
     if (!map[key]) {
       map[key] = { count: 0, timeMs: 0 };
     }

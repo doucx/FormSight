@@ -21,26 +21,26 @@ export function useGlobalStatsData() {
         const targetDomain = selectedFilter.replace('domain:', '') as VisualDomainTag;
         const matchedCards = registry.queryCards({ domains: [targetDomain] });
         const matchedIds = new Set(matchedCards.map((c) => c.id));
-        return matchedIds.has(s.cardId || s.mode);
+        return matchedIds.has(s.cardId);
       }
 
       if (selectedFilter.startsWith('path:')) {
         const targetPath = selectedFilter.replace('path:', '') as CognitivePathTag;
         const matchedCards = registry.queryCards({ paths: [targetPath] });
         const matchedIds = new Set(matchedCards.map((c) => c.id));
-        return matchedIds.has(s.cardId || s.mode);
+        return matchedIds.has(s.cardId);
       }
 
       if (selectedFilter.startsWith('challenge:')) {
         const targetChallenge = selectedFilter.replace('challenge:', '') as MentalChallengeTag;
         const matchedCards = registry.queryCards({ challenges: [targetChallenge] });
         const matchedIds = new Set(matchedCards.map((c) => c.id));
-        return matchedIds.has(s.cardId || s.mode);
+        return matchedIds.has(s.cardId);
       }
 
       if (selectedFilter.startsWith('card:')) {
         const targetCardId = selectedFilter.replace('card:', '');
-        return s.cardId === targetCardId || s.mode === targetCardId;
+        return s.cardId === targetCardId;
       }
 
       return true;
@@ -129,7 +129,7 @@ export function useGlobalStatsData() {
   const pathMasteryList = useMemo(() => {
     const cardSummaryMap = new Map<string, { total: number; hits: number }>();
     for (const s of summaries) {
-      const key = s.cardId || s.mode;
+      const key = s.cardId;
       const prev = cardSummaryMap.get(key) || { total: 0, hits: 0 };
       cardSummaryMap.set(key, {
         total: prev.total + s.totalCount,
@@ -166,7 +166,7 @@ export function useGlobalStatsData() {
   const challengeMasteryList = useMemo(() => {
     const cardSummaryMap = new Map<string, { total: number; hits: number }>();
     for (const s of summaries) {
-      const key = s.cardId || s.mode;
+      const key = s.cardId;
       const prev = cardSummaryMap.get(key) || { total: 0, hits: 0 };
       cardSummaryMap.set(key, {
         total: prev.total + s.totalCount,

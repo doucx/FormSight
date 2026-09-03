@@ -205,7 +205,6 @@ class SystemDomainRegistry {
     const cardDef: CardDefinition = {
       id: card.id,
       domain: card.domain,
-      mode: card.id,
       icon: card.icon,
       tags: card.tags,
       hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),

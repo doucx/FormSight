@@ -1,12 +1,7 @@
-import { Download, Loader2, RotateCcw, Scissors, Trash2, Upload } from 'lucide-preact';
+import { Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
-import {
-  clearAllData,
-  exportAllDataStream,
-  importAllData,
-  pruneColdRecords,
-} from '../../../storage/index';
+import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
 import { resetPlansToDefault } from '../../../storage/planStorage';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
@@ -29,7 +24,6 @@ export function DataGovernanceSection({
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
-  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -79,18 +73,6 @@ export function DataGovernanceSection({
       } finally {
         setIsImporting(false);
       }
-    }
-  };
-
-  const handlePruneConfirmed = async () => {
-    setShowPruneConfirm(false);
-    try {
-      const res = await pruneColdRecords(90);
-      showToast(t('settings.pruneSuccessToast', { count: res.prunedCount }), 'success');
-      await onDataChanged();
-    } catch (err) {
-      console.error('Prune failed:', err);
-      showToast(t('settings.pruneFailToast'), 'error');
     }
   };
 
@@ -179,27 +161,6 @@ export function DataGovernanceSection({
         </div>
       )}
 
-      {/* 数据库瘦身与修剪 */}
-      <div className="bg-accent p-3.5 rounded-2xl border border-border/60 dark:border-border/60 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 bg-accent dark:bg-accent/60 text-primary rounded-xl">
-            <Scissors className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="text-xs font-bold text-foreground">{t('settings.pruneTitle')}</div>
-            <div className="text-xs text-primary">{t('settings.pruneDesc')}</div>
-          </div>
-        </div>
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => setShowPruneConfirm(true)}
-          className="flex-shrink-0"
-        >
-          {t('settings.pruneBtn')}
-        </Button>
-      </div>
-
       {/* 计划库重置与危险操作 */}
       <div className="pt-2 border-t border-border/60 space-y-3">
         <div className="flex items-center justify-between">
@@ -236,16 +197,6 @@ export function DataGovernanceSection({
       </div>
 
       {/* 二次确认弹窗群 */}
-      <ConfirmModal
-        isOpen={showPruneConfirm}
-        title={t('settings.pruneTitle')}
-        message={t('settings.pruneConfirmMessage')}
-        confirmText={t('settings.pruneBtn')}
-        isDangerous={false}
-        onConfirm={handlePruneConfirmed}
-        onCancel={() => setShowPruneConfirm(false)}
-      />
-
       <ConfirmModal
         isOpen={showResetPlansConfirm}
         title={t('settings.resetPlansTitle')}

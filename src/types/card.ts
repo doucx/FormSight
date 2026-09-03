@@ -50,7 +50,6 @@ export interface CardTags {
 export interface CardDefinition {
   id: string;
   domain: VisualDomainTag;
-  mode: string;
   title?: string;
   desc?: string;
   instruction?: string;

@@ -1,6 +1,5 @@
 import type { TrainingPlan } from '../types/plan';
 import { clearAllData, exportAllData, exportAllDataStream, importAllData } from './db/importExport';
-import { pruneColdRecords } from './db/prune';
 import {
   formatTotalTime,
   getAllProfiles,
@@ -112,7 +111,6 @@ export class SystemRepository {
   public exportAllDataStream = exportAllDataStream;
   public importAllData = importAllData;
   public clearAllData = clearAllData;
-  public pruneColdRecords = pruneColdRecords;
 }
 
 export const repository = new SystemRepository();
