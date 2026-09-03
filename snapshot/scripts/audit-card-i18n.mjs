@@ -99,7 +99,7 @@ function auditCardLocales(cardId) {
               flattenedKeys.add(`views.${key}`);
             }
           }
-          delete data.views;
+          data.views = undefined;
           changed = true;
         }
       }
@@ -119,7 +119,7 @@ function auditCardLocales(cardId) {
               flattenedKeys.add(`labels.${key}`);
             }
           }
-          delete data.labels;
+          data.labels = undefined;
           changed = true;
         }
       }
@@ -152,7 +152,11 @@ function auditCardViews(cardId, flattenedKeys = []) {
   for (const file of files) {
     const fileName = path.basename(file);
     // 排除 analytics 与 generator
-    if (fileName === 'analytics.tsx' || fileName === 'generator.ts' || fileName.includes('.test.')) {
+    if (
+      fileName === 'analytics.tsx' ||
+      fileName === 'generator.ts' ||
+      fileName.includes('.test.')
+    ) {
       continue;
     }
 
@@ -206,10 +210,7 @@ function auditCardViews(cardId, flattenedKeys = []) {
       if (isFixMode) {
         // 自动替换导入
         if (content.includes('useTranslation') && !content.includes('useCardTranslation')) {
-          content = content.replace(
-            /\buseTranslation\b/g,
-            'useCardTranslation',
-          );
+          content = content.replace(/\buseTranslation\b/g, 'useCardTranslation');
           content = content.replace(
             /const\s*\{\s*t\s*\}\s*=\s*useCardTranslation\(\);/g,
             `const { t } = useCardTranslation('${cardId}');`,
@@ -270,7 +271,11 @@ function auditCanvasHardcodedChinese() {
       if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
         return;
       }
-      if (line.includes('fillText') || line.includes('strokeText') || line.includes('SECTOR_NAMES')) {
+      if (
+        line.includes('fillText') ||
+        line.includes('strokeText') ||
+        line.includes('SECTOR_NAMES')
+      ) {
         const matches = line.match(chineseRegex);
         if (matches && matches.length > 0) {
           issues.push({
@@ -293,7 +298,9 @@ function auditCanvasHardcodedChinese() {
 function run() {
   console.log(`\n${colors.bold}=== FormSight 卡片 i18n 架构契约审计 ===${colors.reset}\n`);
   logInfo(`工作区根目录: ${ROOT_DIR}`);
-  logInfo(`运行模式: ${isFixMode ? `${colors.green}自动修复 (--fix)${colors.reset}` : `${colors.yellow}仅检查 (--check)${colors.reset}`}\n`);
+  logInfo(
+    `运行模式: ${isFixMode ? `${colors.green}自动修复 (--fix)${colors.reset}` : `${colors.yellow}仅检查 (--check)${colors.reset}`}\n`,
+  );
 
   const cardIds = getCardDirectories();
   logInfo(`共检索到 ${cardIds.length} 个卡片模块。\n`);
@@ -307,9 +314,13 @@ function run() {
     const cardIssues = [...localeIssues, ...viewIssues];
     if (cardIssues.length > 0) {
       allIssues.push(...cardIssues);
-      console.log(`${colors.yellow}● 卡片 [${cardId}]${colors.reset} 发现 ${cardIssues.length} 处规范偏差:`);
+      console.log(
+        `${colors.yellow}● 卡片 [${cardId}]${colors.reset} 发现 ${cardIssues.length} 处规范偏差:`,
+      );
       for (const issue of cardIssues) {
-        console.log(`  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}${colors.reset}: ${issue.message}`);
+        console.log(
+          `  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}${colors.reset}: ${issue.message}`,
+        );
       }
     }
   }
@@ -319,7 +330,9 @@ function run() {
     allIssues.push(...sliceIssues);
     console.log(`\n${colors.yellow}● 设置垫片代码检查:${colors.reset}`);
     for (const issue of sliceIssues) {
-      console.log(`  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}${colors.reset}: ${issue.message}`);
+      console.log(
+        `  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}${colors.reset}: ${issue.message}`,
+      );
     }
   }
 
@@ -328,7 +341,9 @@ function run() {
     allIssues.push(...canvasIssues);
     console.log(`\n${colors.yellow}● Canvas 图表国际化硬编码检查:${colors.reset}`);
     for (const issue of canvasIssues) {
-      console.log(`  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}:${issue.line}${colors.reset}: ${issue.message}`);
+      console.log(
+        `  - ${colors.gray}${path.relative(ROOT_DIR, issue.file)}:${issue.line}${colors.reset}: ${issue.message}`,
+      );
     }
   }
 
@@ -344,7 +359,9 @@ function run() {
       process.exit(0);
     } else {
       logError(`共发现 ${totalViolations} 处规范违规。`);
-      console.log(`${colors.gray}提示: 运行 'node scripts/audit-card-i18n.mjs --fix' 可自动修复常见路径与词典层级偏差。${colors.reset}\n`);
+      console.log(
+        `${colors.gray}提示: 运行 'node scripts/audit-card-i18n.mjs --fix' 可自动修复常见路径与词典层级偏差。${colors.reset}\n`,
+      );
       process.exit(1);
     }
   }
