@@ -8,7 +8,7 @@ import { useTrainingKeybindings } from './session/useTrainingKeybindings';
 
 export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   domain: string;
-  mode: string;
+  cardId: string;
   sessionType: 'training' | 'benchmark';
   initialLevel: number;
   autoNext: boolean;
@@ -46,7 +46,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
 
 export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   domain,
-  mode,
+  cardId,
   sessionType,
   initialLevel,
   autoNext,
@@ -67,7 +67,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   saveSession,
   onExit,
 }: UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal>) {
-  const sessionIdRef = useRef<string>(`${domain}_${mode}_session_${Date.now()}`);
+  const sessionIdRef = useRef<string>(`${domain}_${cardId}_session_${Date.now()}`);
   const startTimeRef = useRef<number>(Date.now());
   const adaptiveEngineRef = useRef<AdaptiveEngine>(
     new AdaptiveEngine(
@@ -273,14 +273,14 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setShowAnswer(false);
     setUserAnswer(null);
     streakRef.current = 0;
-    sessionIdRef.current = `${domain}_${mode}_session_${Date.now()}`;
+    sessionIdRef.current = `${domain}_${cardId}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
     adaptiveEngineRef.current.setLevel(initialLevel);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }, [domain, mode, initialLevel, generateQuestion]);
+  }, [domain, cardId, initialLevel, generateQuestion]);
 
   // === 2. 键盘快捷键微 Hook ===
   useTrainingKeybindings({

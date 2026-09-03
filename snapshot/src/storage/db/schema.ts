@@ -6,7 +6,6 @@ export interface UnifiedSessionData {
   id: string;
   cardId: string;
   domain?: string;
-  mode: string;
   type: 'training' | 'benchmark';
   startTimestamp: number;
   endTimestamp?: number;
@@ -21,7 +20,6 @@ export interface UnifiedTrialRecord {
   sessionId: string;
   cardId: string;
   domain?: string;
-  mode: string;
   timestamp: number;
   difficultyLevel: number;
   isHit: boolean;
@@ -33,7 +31,6 @@ export interface UnifiedTrialRecord {
 export interface UnifiedProfileData {
   cardId: string;
   domain?: string;
-  mode: string;
   currentLevel: number;
   bestLevel: number;
   totalTrials: number;
@@ -49,7 +46,6 @@ export interface DailySummaryData {
   date: string; // 本地日期 'YYYY-MM-DD'
   cardId: string;
   domain?: string;
-  mode: string;
   totalCount: number;
   hitCount: number;
   totalTimeMs: number;
@@ -69,7 +65,6 @@ export interface FormSightDBSchema extends DBSchema {
     indexes: {
       'by-card': string;
       'by-domain': string;
-      'by-domain-mode': [string, string];
     };
   };
   records: {
@@ -79,8 +74,6 @@ export interface FormSightDBSchema extends DBSchema {
       'by-card': string;
       'by-session': string;
       'by-domain': string;
-      'by-domain-mode': [string, string];
-      'by-mode': string;
       'by-card-timestamp': [string, number];
       'by-timestamp': number;
     };
@@ -121,7 +114,7 @@ export interface FormSightDBSchema extends DBSchema {
 }
 
 export const DB_NAME = 'FormSightDB';
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
@@ -146,9 +139,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
         if (!sessionsStore.indexNames.contains('by-domain')) {
           sessionsStore.createIndex('by-domain', 'domain');
         }
-        if (!sessionsStore.indexNames.contains('by-domain-mode')) {
-          sessionsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
 
         // 2. records 表
         const recordsStore = database.objectStoreNames.contains('records')
@@ -163,12 +153,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
         }
         if (!recordsStore.indexNames.contains('by-domain')) {
           recordsStore.createIndex('by-domain', 'domain');
-        }
-        if (!recordsStore.indexNames.contains('by-domain-mode')) {
-          recordsStore.createIndex('by-domain-mode', ['domain', 'mode']);
-        }
-        if (!recordsStore.indexNames.contains('by-mode')) {
-          recordsStore.createIndex('by-mode', 'mode');
         }
         if (!recordsStore.indexNames.contains('by-card-timestamp')) {
           recordsStore.createIndex('by-card-timestamp', ['cardId', 'timestamp']);
@@ -186,7 +170,7 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
           profilesStore.createIndex('by-domain', 'domain');
         }
 
-        // 4. daily_summaries 表 (v2 新增物化日聚合)
+        // 4. daily_summaries 表
         const dailyStore = database.objectStoreNames.contains('daily_summaries')
           ? transaction.objectStore('daily_summaries')
           : database.createObjectStore('daily_summaries', { keyPath: 'id' });
@@ -207,7 +191,7 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
           dailyStore.createIndex('by-date-domain', ['date', 'domain']);
         }
 
-        // 5. 存量历史记录迁移：升级时回填已有 records 至 daily_summaries
+        // 5. 存量历史记录迁移：升级时回填已有 records 至 daily_summaries (v1 -> v2)
         if (oldVersion < 2) {
           try {
             const allRecords = await recordsStore.getAll();
@@ -215,12 +199,13 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               const summaryMap = new Map<string, DailySummaryData>();
 
               for (const r of allRecords) {
-                const cardId = r.cardId || r.mode;
-                const domain = r.domain || cardId;
-                const date = getLocalDateString(r.timestamp);
+                const raw = r as Record<string, unknown>;
+                const cardId = (raw.cardId || raw.mode || 'unknown') as string;
+                const domain = (raw.domain || cardId) as string;
+                const date = getLocalDateString(Number(raw.timestamp));
                 const summaryId = `${date}_${cardId}`;
-                const respMs = Number(r.responseTimeMs) || 0;
-                const level = Number(r.difficultyLevel) || 1;
+                const respMs = Number(raw.responseTimeMs) || 0;
+                const level = Number(raw.difficultyLevel) || 1;
 
                 const existing = summaryMap.get(summaryId);
                 if (!existing) {
@@ -229,24 +214,23 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
                     date,
                     cardId,
                     domain,
-                    mode: r.mode,
                     totalCount: 1,
-                    hitCount: r.isHit ? 1 : 0,
+                    hitCount: raw.isHit ? 1 : 0,
                     totalTimeMs: respMs,
                     maxLevel: level,
                     minLevel: level,
                     lastLevel: level,
-                    updatedAt: r.timestamp,
+                    updatedAt: Number(raw.timestamp),
                   });
                 } else {
                   existing.totalCount += 1;
-                  if (r.isHit) existing.hitCount += 1;
+                  if (raw.isHit) existing.hitCount += 1;
                   existing.totalTimeMs += respMs;
                   existing.maxLevel = Math.max(existing.maxLevel, level);
                   existing.minLevel = Math.min(existing.minLevel, level);
-                  if (r.timestamp >= existing.updatedAt) {
+                  if (Number(raw.timestamp) >= existing.updatedAt) {
                     existing.lastLevel = level;
-                    existing.updatedAt = r.timestamp;
+                    existing.updatedAt = Number(raw.timestamp);
                   }
                 }
               }
@@ -284,7 +268,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
             const planStore = transaction.objectStore('training_plans');
             const metaStore = transaction.objectStore('app_metadata');
 
-            // 迁移 LocalStorage 中的 settings
             const rawSettings = localStorage.getItem('formsight_user_settings');
             if (rawSettings) {
               const parsedSettings = JSON.parse(rawSettings);
@@ -293,7 +276,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               }
             }
 
-            // 迁移 LocalStorage 中的 plans
             const rawPlans = localStorage.getItem('formsight_training_plans_store');
             let activeId: string | null = null;
             if (rawPlans) {
@@ -305,7 +287,6 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
                 activeId = parsed.activePlanId || (parsed.plans[0] ? parsed.plans[0].id : null);
               }
             } else {
-              // 兼容极早期的 formsight_custom_training_plan
               const legacyRaw = localStorage.getItem('formsight_custom_training_plan');
               if (legacyRaw) {
                 const legacyPlan = JSON.parse(legacyRaw);
@@ -324,6 +305,68 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
               'Failed to migrate LocalStorage to IndexedDB in v3 upgrade:',
               migrationErr,
             );
+          }
+        }
+
+        // 7. v4 升级：移除 mode 字段并清理过时索引
+        if (oldVersion < 4) {
+          if (sessionsStore.indexNames.contains('by-domain-mode')) {
+            sessionsStore.deleteIndex('by-domain-mode');
+          }
+          if (recordsStore.indexNames.contains('by-domain-mode')) {
+            recordsStore.deleteIndex('by-domain-mode');
+          }
+          if (recordsStore.indexNames.contains('by-mode')) {
+            recordsStore.deleteIndex('by-mode');
+          }
+
+          try {
+            // 清洗 sessions
+            const allSessions = await sessionsStore.getAll();
+            for (const s of allSessions) {
+              const raw = s as Record<string, unknown>;
+              if ('mode' in raw) {
+                raw.cardId = (raw.cardId || raw.mode) as string;
+                delete raw.mode;
+                await sessionsStore.put(s);
+              }
+            }
+
+            // 清洗 user_profiles
+            const allProfiles = await profilesStore.getAll();
+            for (const p of allProfiles) {
+              const raw = p as Record<string, unknown>;
+              if ('mode' in raw) {
+                raw.cardId = (raw.cardId || raw.mode) as string;
+                delete raw.mode;
+                await profilesStore.put(p);
+              }
+            }
+
+            // 清洗 daily_summaries
+            const allDaily = await dailyStore.getAll();
+            for (const d of allDaily) {
+              const raw = d as Record<string, unknown>;
+              if ('mode' in raw) {
+                raw.cardId = (raw.cardId || raw.mode) as string;
+                delete raw.mode;
+                await dailyStore.put(d);
+              }
+            }
+
+            // 清洗 records (使用游标更新)
+            let cursor = await recordsStore.openCursor();
+            while (cursor) {
+              const rec = cursor.value as Record<string, unknown>;
+              if ('mode' in rec) {
+                rec.cardId = (rec.cardId || rec.mode) as string;
+                delete rec.mode;
+                await cursor.update(cursor.value);
+              }
+              cursor = await cursor.continue();
+            }
+          } catch (cleanErr) {
+            console.error('Failed to clean mode fields in v4 upgrade:', cleanErr);
           }
         }
       },

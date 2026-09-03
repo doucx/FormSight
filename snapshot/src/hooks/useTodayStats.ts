@@ -11,7 +11,7 @@ export function useTodayStats() {
     const stats: Record<string, { count: number; timeMs: number }> = {};
 
     for (const s of summaries) {
-      const key = s.cardId || s.mode;
+      const key = s.cardId;
       if (!stats[key]) {
         stats[key] = { count: 0, timeMs: 0 };
       }
