@@ -45,7 +45,11 @@ function getNumericSetting(values: Record<string, unknown>, key: string, fallbac
   return typeof v === 'number' ? v : fallback;
 }
 
-function getBooleanSetting(values: Record<string, unknown>, key: string, fallback = false): boolean {
+function getBooleanSetting(
+  values: Record<string, unknown>,
+  key: string,
+  fallback = false,
+): boolean {
   const v = values[key];
   return typeof v === 'boolean' ? v : fallback;
 }

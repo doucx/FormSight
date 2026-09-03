@@ -62,17 +62,7 @@ export function usePointLoupe({ canvasSize, gridPoints, disabled = false }: UseP
       const sy = (focusPt.y - sampleSize / 2) * dpr;
       const sSize = sampleSize * dpr;
 
-      loupeCtx.drawImage(
-        mainCanvas,
-        sx,
-        sy,
-        sSize,
-        sSize,
-        0,
-        0,
-        LOUPE_DIAMETER,
-        LOUPE_DIAMETER,
-      );
+      loupeCtx.drawImage(mainCanvas, sx, sy, sSize, sSize, 0, 0, LOUPE_DIAMETER, LOUPE_DIAMETER);
 
       const center = LOUPE_DIAMETER / 2;
       loupeCtx.strokeStyle = CANVAS_THEME.status.accent;

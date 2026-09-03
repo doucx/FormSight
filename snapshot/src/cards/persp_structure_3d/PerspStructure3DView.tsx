@@ -148,7 +148,10 @@ export function PerspStructure3DView({
     const pt = startTouch(e.touches[0].clientX, e.touches[0].clientY);
     if (!pt) return;
 
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(pt, question.projectedGridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+      pt,
+      question.projectedGridPoints,
+    );
     setHoverPoint(isWithinRange ? nearestPoint : null);
   };
 
@@ -159,7 +162,10 @@ export function PerspStructure3DView({
     const pt = moveTouch(e.touches[0].clientX, e.touches[0].clientY);
     if (!pt) return;
 
-    const { nearestPoint, isWithinRange } = findNearestPointInGrid(pt, question.projectedGridPoints);
+    const { nearestPoint, isWithinRange } = findNearestPointInGrid(
+      pt,
+      question.projectedGridPoints,
+    );
     setHoverPoint(isWithinRange ? nearestPoint : null);
   };
 

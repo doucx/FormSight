@@ -38,10 +38,7 @@ export function generateQuestion(level: number): QuestionData {
   };
 }
 
-export function checkHit(
-  userHSV: [number, number, number],
-  question: QuestionData,
-): HitResult {
+export function checkHit(userHSV: [number, number, number], question: QuestionData): HitResult {
   const { targetH, targetS, targetV, difficultyLevel } = question;
   const targetLab = hsvToOkLab(targetH, targetS, targetV);
   const userLab = hsvToOkLab(...userHSV);
