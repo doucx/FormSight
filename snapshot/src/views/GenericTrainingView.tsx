@@ -48,8 +48,12 @@ export function GenericTrainingView<
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const domain = card.domain;
-  const engine = manifest.engine ?? manifest.training!;
+  const engine = manifest.engine ?? manifest.training;
   const renderCanvas = manifest.ui?.renderCanvas ?? manifest.training?.renderCanvas;
+
+  if (!engine || !renderCanvas) {
+    throw new Error(`Card [${card.id}] is missing engine or renderCanvas implementation`);
+  }
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,

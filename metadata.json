@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "run Capture: M migrate-card-manifests.mjs, M index.tsx, M index.tsx ... and 31 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788524834.6860158, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 修复 TypeScript 报错及不合规非空断言", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788525213.562288, "duration_ms": 0}}
