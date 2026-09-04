@@ -44,12 +44,11 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   }, [heatmapData]);
 
   // 2. 解析多语言月份数组
-  // biome-ignore lint/correctness/useExhaustiveDependencies: recalculate month translations on locale switch
+  const rawMonths = t<string[]>('stats.heatmapMonths');
   const monthNames = useMemo(() => {
-    const raw = t<string[]>('stats.heatmapMonths');
-    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(rawMonths)) return rawMonths;
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  }, [t, locale]);
+  }, [rawMonths]);
 
   // 3. 构建 53 周 x 7 天 (周日~周六) 矩阵
   const { weeks, totalTrialsPastYear } = useMemo(() => {

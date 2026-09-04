@@ -27,12 +27,6 @@ export function PerspPropDivisionView({
   const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
-  useEffect(() => {
-    setUserClickedPoint(null);
-    setHoverPoint(null);
-  }, [question.id]);
-
   const getProjectedPoint = useCallback(
     (clientX: number, clientY: number): Point | null => {
       const canvas = canvasRef.current;
