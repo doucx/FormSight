@@ -1,3 +1,4 @@
+import { expDecayInterpolate } from '../../../core/math/mathUtils';
 import type { Point } from '../../../types';
 import { CANVAS_THEME } from '../../../utils/theme';
 import type { PerspStructure3DHitResult, PerspStructure3DQuestion, Point3D } from '../types';
@@ -90,6 +91,7 @@ export function generateQuestion(level: number): PerspStructure3DQuestion {
   }
 
   const targetProjectedPoint = project3DTo2D(targetPoint3D, center, scale);
+  const tolerance = Math.round(expDecayInterpolate(18.0, 5.0, clampedLevel) * 10) / 10;
 
   return {
     id,
@@ -98,7 +100,7 @@ export function generateQuestion(level: number): PerspStructure3DQuestion {
     targetPoint3D,
     projectedGridPoints,
     targetProjectedPoint,
-    tolerance: 0.5,
+    tolerance,
   };
 }
 
@@ -110,7 +112,7 @@ export function checkHit(
   const dist = target
     ? Math.sqrt((clickPoint.x - target.x) ** 2 + (clickPoint.y - target.y) ** 2)
     : 999;
-  const isHit = dist <= 12;
+  const isHit = dist <= question.tolerance;
 
   return {
     isHit,

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M check-i18n.mjs", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788492731.6101286, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复核心判题契约伪容错与选项类型二义性", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788511808.6697278, "duration_ms": 0}}

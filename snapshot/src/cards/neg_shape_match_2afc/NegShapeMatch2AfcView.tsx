@@ -10,7 +10,7 @@ export interface NegShapeMatch2AfcViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer?: HitResult | null;
-  onAnswer: (choice: 0 | 1) => void;
+  onAnswer: (choice: 'A' | 'B') => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
@@ -74,7 +74,7 @@ export function NegShapeMatch2AfcView({
     (choice: 'A' | 'B') => {
       if (disabled || showAnswer || matchPhase !== 'recall') return;
       setSelectedMatchChoice(choice);
-      onAnswer(choice === 'A' ? 0 : 1);
+      onAnswer(choice);
     },
     [disabled, showAnswer, matchPhase, onAnswer],
   );

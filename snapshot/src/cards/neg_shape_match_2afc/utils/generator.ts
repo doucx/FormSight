@@ -91,20 +91,11 @@ export function generateQuestion(difficultyLevel: number): QuestionData {
 }
 
 export function evaluateAnswer(
-  userChoiceInput: 0 | 1 | 'A' | 'B',
+  userChoice: 'A' | 'B',
   question: QuestionData,
 ): HitResult {
-  let userChoiceIndex: number;
-  if (typeof userChoiceInput === 'number') {
-    userChoiceIndex = userChoiceInput;
-  } else if (userChoiceInput === 'A') {
-    userChoiceIndex = 0;
-  } else {
-    userChoiceIndex = 1;
-  }
-
-  const isHit = userChoiceIndex === question.correctOptionIndex;
-  const userChoice: 'A' | 'B' = userChoiceIndex === 0 ? 'A' : 'B';
+  const userChoiceIndex = userChoice === 'A' ? 0 : 1;
+  const isHit = userChoice === question.correctChoice;
 
   return {
     isHit,
