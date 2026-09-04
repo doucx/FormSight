@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 修复 TypeScript 报错及不合规非空断言", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788525213.562288, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(core): 移除卡片契约的向后兼容层并收敛至纯净的 engine/ui 架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788526134.316222, "duration_ms": 0}}
