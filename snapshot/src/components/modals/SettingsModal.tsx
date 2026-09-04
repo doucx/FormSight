@@ -8,8 +8,8 @@ import {
   saveSettings,
 } from '../../storage/settings';
 import type { CardDefinition } from '../../types/card';
+import { registry } from '../../core/registry';
 import { ModalShell } from '../common/ModalShell';
-import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
@@ -196,14 +196,21 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           </div>
         </div>
 
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
+        {/* 渲染卡片专属设置组件 */}
+        {(() => {
+          const manifest = registry.getCardManifest(card.id);
+          if (manifest?.renderSettings) {
+            return (
+              <div className="pt-2 border-t border-border/60">
+                {manifest.renderSettings({
+                  settings: cardConfig as any,
+                  updateSettings: (patch) => updateCardConfig(patch as any)
+                })}
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
     </ModalShell>
   );

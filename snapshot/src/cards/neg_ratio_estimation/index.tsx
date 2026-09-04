@@ -1,6 +1,8 @@
 import { Maximize2 } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
 import type { NegativeSpaceSettings } from '../../storage/settings';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import { useCardTranslation } from '../../core/i18n';
 import { NegRatioEstimationView } from './NegRatioEstimationView';
 import { createNegRatioAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
@@ -28,14 +30,19 @@ export const negRatioEstimationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('neg_ratio_estimation');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={settings.showToleranceBand as boolean ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

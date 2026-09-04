@@ -1,5 +1,7 @@
 import { Palette } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorAllView } from './ColorAllView';
 import enUS from './locales/en-US.json';
@@ -26,20 +28,25 @@ export const colorAllCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-    {
-      type: 'toggle',
-      key: 'enableHoverColorPreview',
-      title: 'settings.enableHoverColorPreviewTitle',
-      description: 'settings.enableHoverColorPreviewDesc',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('color_all');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={settings.showToleranceBand as boolean ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+        <SettingToggleItem
+          title={t('settings.enableHoverColorPreviewTitle')}
+          description={t('settings.enableHoverColorPreviewDesc')}
+          checked={settings.enableHoverColorPreview as boolean ?? true}
+          onChange={(val) => updateSettings({ enableHoverColorPreview: val })}
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

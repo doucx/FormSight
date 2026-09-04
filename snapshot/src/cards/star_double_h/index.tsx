@@ -1,5 +1,8 @@
 import { Crosshair } from 'lucide-preact';
 import type { CardManifest } from '../../core/cardContract';
+import { TargetingSection } from '../../components/settings/common/TargetingSection';
+import { Button } from '../../components/ui/button';
+import { useCardTranslation } from '../../core/i18n';
 import type { StarSettings } from '../../storage/settings';
 import type { Point } from '../../types';
 import { StarDoubleHView } from './StarDoubleHView';
@@ -34,29 +37,45 @@ export const starDoubleHCard: CardManifest<QuestionData, HitResult, Point, StarS
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'buttonGroup',
-      key: 'gridSize',
-      title: 'settings.gridSizeTitle',
-      options: [
-        { label: '2x2', value: 2 },
-        { label: '3x3', value: 3 },
-        { label: '4x4', value: 4 },
-        { label: '5x5', value: 5 },
-      ],
-      gridCols: 'grid-cols-4',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: 'settings.targetingTitle',
-      subTitle: 'settings.targetingSubTitle',
-      sectors: SECTOR_KEYS,
-      gridCols: 'grid-cols-4',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('star_double_h');
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <div className="text-sm font-semibold text-foreground">{t('settings.gridSizeTitle')}</div>
+          <div className="grid grid-cols-4 gap-1.5">
+            {[2, 3, 4, 5].map((size) => (
+              <Button
+                key={size}
+                variant={settings.gridSize === size ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => updateSettings({ gridSize: size })}
+                className="py-2 h-auto"
+              >
+                {size}x{size}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <TargetingSection
+          title={t('settings.targetingTitle')}
+          subTitle={t('settings.targetingSubTitle')}
+          mode={settings.targetingMode ?? 'off'}
+          onModeChange={(m) => updateSettings({ targetingMode: m })}
+          sectors={SECTOR_KEYS}
+          selectedSectors={settings.manualTargetSectors ?? []}
+          onToggleSector={(idx) => {
+            const current = settings.manualTargetSectors ?? [];
+            const next = current.includes(idx)
+              ? current.filter((s) => s !== idx)
+              : [...current, idx];
+            updateSettings({ manualTargetSectors: next });
+          }}
+          gridCols="grid-cols-4"
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     gridSize: 3,
     targetingMode: 'off',

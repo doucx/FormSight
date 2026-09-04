@@ -1,5 +1,4 @@
 import type { ComponentChildren } from 'preact';
-import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 
 /**
  * 维度 1: 视觉域 (Visual Domain) - 观察的基础视觉原材料
@@ -56,7 +55,6 @@ export interface CardDefinition {
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;
-  settingSchemas?: SettingFieldSchema[];
   defaultSettings?: Record<string, unknown>;
 }
 

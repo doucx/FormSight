@@ -6,6 +6,9 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../../core/color/colorUtils';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import { TargetingSection } from '../../components/settings/common/TargetingSection';
+import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorHueView } from './ColorHueView';
 import { createColorHueAnalytics } from './analytics';
@@ -46,23 +49,35 @@ export const colorHueCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: 'settings.targetingTitle',
-      subTitle: 'settings.targetingSubTitle',
-      sectors: COLOR_SECTOR_KEYS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('color_hue');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={settings.showToleranceBand as boolean ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+        <TargetingSection
+          title={t('settings.targetingTitle')}
+          subTitle={t('settings.targetingSubTitle')}
+          mode={settings.targetingMode ?? 'off'}
+          onModeChange={(m) => updateSettings({ targetingMode: m })}
+          sectors={COLOR_SECTOR_KEYS}
+          selectedSectors={settings.manualTargetSectors ?? []}
+          onToggleSector={(idx) => {
+            const current = settings.manualTargetSectors ?? [];
+            const next = current.includes(idx)
+              ? current.filter((s) => s !== idx)
+              : [...current, idx];
+            updateSettings({ manualTargetSectors: next });
+          }}
+          gridCols="grid-cols-3"
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

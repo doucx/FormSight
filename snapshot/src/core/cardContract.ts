@@ -1,5 +1,4 @@
 import type { ComponentChildren } from 'preact';
-import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { UnifiedTrialRecord } from '../storage/db/schema';
 import type { BaseModuleSettings } from '../storage/settings';
 import type { CardTags, VisualDomainTag } from '../types/card';
@@ -42,7 +41,10 @@ export interface CardManifest<
   icon: (props: { className?: string }) => ComponentChildren;
 
   /** 2. 个性化设置项定义与默认值 */
-  settingSchemas?: SettingFieldSchema[];
+  renderSettings?: (props: {
+    settings: TSettings;
+    updateSettings: (patch: Partial<TSettings>) => void;
+  }) => ComponentChildren;
   defaultSettings?: Partial<TSettings>;
 
   /** 3. 自包含多语言词典 */
