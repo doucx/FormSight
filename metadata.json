@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 初始化路径别名配置并构建 Card SDK 聚合导出入口", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788519150.6564877, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 扩展 Card SDK 导出以支持卡片分析图表、诊断组件与触控放大镜", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788519529.261147, "duration_ms": 0}}

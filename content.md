@@ -1,135 +1,36 @@
-好的，我们将按照基础设施先行的架构规划，首先建立路径别名与 Card SDK 骨架，统一划定卡片插件与宿主系统之间的防腐隔离边界。
+通过对所有卡片的源码扫描，发现各卡片中专属的**认知分析图表（Compass/Heatmap/HueRing/HueBias）**、**Callout 诊断提示框**、**触控放大镜（`usePointLoupe` 与 `LOUPE_DIAMETER`）** 以及 **特定卡片设置类型与 Trial 记录类型** 尚未包含在 SDK 中。
 
-## [WIP] feat: 初始化路径别名配置并构建 Card SDK 聚合导出入口
+我们将在 `@formsight/card-sdk` 中全面补齐这些导出，确保卡片层在后续迁移时无需直接 import 宿主内部路径。
+
+## [WIP] feat: 扩展 Card SDK 导出以支持卡片分析图表、诊断组件与触控放大镜
 
 ### 用户需求
-1. 在 `tsconfig.json` 和 `vite.config.ts` 中配置 `@/`（源码根目录映射）以及 `@formsight/card-sdk`（SDK 入口映射）别名。
-2. 新建 `src/card-sdk/index.ts`，导出稳定的数学工具、Canvas 渲染辅助、主题样式、颜色模型与基础类型等底层设施。
-3. 将即将面临原子化重构的老视图包装组件（如 `StandardNafcView`、`Standard2AfcView`、`StandardSliderView` 等）暂时通过 SDK 导出并标注 `@deprecated`，保障后续卡片路径迁移过程中的平滑编译与过渡。
+在 `src/card-sdk/index.ts` 中补齐卡片（Cards）开发与自定义分析视图（Analytics）所需的所有基础设施导出，包括：
+1. **触控与精细点阵定位**：`usePointLoupe`、`LOUPE_DIAMETER` 及相关类型。
+2. **诊断与分析图表**：`Callout` 诊断容器，以及扇区雷达图（`renderCompassCanvas`）、热力散点图（`renderHeatmapCanvas`）、色相环（`renderHueRingCanvas`）、色偏趋势图（`renderHueBiasChartCanvas`、`calcSignedHueBias`）等。
+3. **设置模型与持久化记录类型**：`StarSettings`、`ColorSenseSettings`、`RelativeColorSettings`、`NegativeSpaceSettings` 以及 `UnifiedTrialRecord`。
 
 ### 评论
-当前各 Card 内部存在大量穿透宿主深层目录的相对引用（如 `../../../../core/...`）。在对各卡片的视图排版控制权进行原子化重构前，优先搭建好 SDK 基础设施与路径别名，能够避免二次重构时重复修改 import 路径，实现卡片开发体系的彻底防腐。
+卡片不仅包含答题界面（View），还包含卡片专属的认知分析页面（`analytics.tsx`）与复杂定位交互（如透视三维点阵与负形切点）。将图表绘制算法与提示组件一并收敛入 Card SDK，能使卡片彻底成为自包含、低耦合的插件单元。
 
 ### 目标
-1. 更新 `tsconfig.json`：配置 `baseUrl: "."` 与 `paths` 映射。
-2. 更新 `vite.config.ts`：在 `resolve.alias` 中挂载 `@` 与 `@formsight/card-sdk`。
-3. 创建 `src/card-sdk/index.ts`：全面聚合卡片插件所需的各类能力与组件。
+1. 完整重构 `src/card-sdk/index.ts`。
+2. 导出分析图表、触控放大镜 Hook、Callout 诊断组件及数据库记录类型。
+3. 确保导出命名与宿主模块完全吻合，支持强类型推断。
 
 ### 基本原理
-通过 Facade 模式（外观模式）建立独立的 `@formsight/card-sdk` 模块。卡片（Cards）仅依赖 SDK 暴露的稳定接口，解耦卡片对系统内部物理目录树的直接认知；同时在 SDK 中通过 `@deprecated` 显式标记旧式大包围组件，为随后的 UI 控制权倒置重构建立平滑的弃用渐进通道。
+卡片分析插件（`CardAnalyticsPlugin`）需要直接绘制 Canvas 图表与挂载诊断面板，通过将图表绘制核心能力提升至 SDK 层，满足卡片内部 `analytics.tsx` 的调用需求，建立真正的领域防腐层（Domain Facade）。
 
 ### 标签
-#intent/build #flow/ready #priority/high #comp/interfaces #concept/config #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/card-sdk #task/action/setup #task/state/begin #task/status/active
+#intent/build #flow/ready #priority/high #comp/interfaces #concept/ui #scope/dx #scope/core #ai/instruct #task/domain/architecture #task/object/card-sdk #task/action/setup #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 配置 TypeScript 与 Vite 路径别名
+#### Acts 1: 扩充 `src/card-sdk/index.ts` 完整导出集
 
-我们将为 TypeScript 编译器和 Vite 打包器配置 `@/` 与 `@formsight/card-sdk` 路径别名。
-
-~~~~~act
-write_file
-tsconfig.json
-~~~~~
-~~~~~json
-{
-  "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-
-    /* Path Aliasing */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@formsight/card-sdk": ["src/card-sdk/index.ts"]
-    }
-  },
-  "include": ["src"]
-}
-~~~~~
-
-~~~~~act
-write_file
-vite.config.ts
-~~~~~
-~~~~~typescript
-import path from 'node:path';
-import preact from '@preact/preset-vite';
-import { VitePWA } from 'vite-plugin-pwa';
-import { defineConfig } from 'vitest/config';
-import packageJson from './package.json';
-
-// https://vitejs.dev/config/
-export default defineConfig({
-  base: './',
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@formsight/card-sdk': path.resolve(__dirname, './src/card-sdk/index.ts'),
-    },
-  },
-  plugins: [
-    preact(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
-      manifest: {
-        name: 'FormSight - 视觉造型构图与色彩感知强化系统',
-        short_name: 'FormSight',
-        description:
-          '基于视知觉心理学、OKLab 感知色彩空间与几何拓扑建模的自适应视觉与手眼协调强化训练系统',
-        theme_color: '#4F46E5',
-        background_color: '#F8FAFC',
-        display: 'standalone',
-        orientation: 'portrait-primary',
-        icons: [
-          {
-            src: 'favicon.svg',
-            sizes: '192x192 512x512',
-            type: 'image/svg+xml',
-            purpose: 'any maskable',
-          },
-        ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,txt}'],
-      },
-    }),
-  ],
-  define: {
-    __APP_VERSION__: JSON.stringify(packageJson.version),
-  },
-  test: {
-    globals: true,
-    environment: 'node',
-    setupFiles: ['./src/test/setup.ts'],
-  },
-});
-~~~~~
-
-#### Acts 2: 创建 Card SDK 核心聚合入口
-
-我们将创建 `src/card-sdk/index.ts`，导出数学算法、色彩模型、Canvas 绘图工具、多语言钩子、主题语义变量，以及声明了弃用标记的过渡期视图组件。
+我们将重写 `src/card-sdk/index.ts`，提供包含分析图表、触控放大镜和数据诊断模型的完整 SDK 接口。
 
 ~~~~~act
 write_file
@@ -140,7 +41,7 @@ src/card-sdk/index.ts
  * ============================================================================
  * 🚀 FormSight Card Developer SDK
  * ============================================================================
- * 所有独立卡片 (src/cards/*) 应通过本 SDK 引入宿主能力，严禁使用脆弱的深层相对路径穿透访问宿主内部实现。
+ * 所有独立卡片 (src/cards/*) 应通过本 SDK 引入宿主能力，严禁使用深层相对路径穿透访问宿主内部实现。
  */
 
 // ----------------------------------------------------------------------------
@@ -211,7 +112,38 @@ export {
 export { drawPolygonCanvas, type DrawPolygonOptions } from '../core/canvas/drawPolygon';
 
 // ----------------------------------------------------------------------------
-// 5. 国际化与契约规范 (I18n & Card Contracts)
+// 5. 认知分析图表渲染器 (Analytics Chart Renderers)
+// ----------------------------------------------------------------------------
+export {
+  renderCompassCanvas,
+  type SectorStat,
+} from '../core/canvas/charts/drawCompass';
+export { renderHeatmapCanvas } from '../core/canvas/charts/drawHeatmap';
+export { renderHueRingCanvas } from '../core/canvas/charts/drawColorRing';
+export {
+  calcSignedHueBias,
+  renderHueBiasChartCanvas,
+} from '../core/canvas/charts/drawHueBiasChart';
+export {
+  renderTrendChartCanvas,
+  renderSessionTrendChartCanvas,
+} from '../core/canvas/charts/drawTrendChart';
+
+// ----------------------------------------------------------------------------
+// 6. 交互 Hook 与触控手势 (Interactive Hooks & Point Loupe)
+// ----------------------------------------------------------------------------
+export {
+  usePointLoupe,
+  LOUPE_DIAMETER,
+  type UsePointLoupeOptions,
+} from '../hooks/usePointLoupe';
+export {
+  useTrackPointer,
+  type UseTrackPointerOptions,
+} from '../hooks/useTrackPointer';
+
+// ----------------------------------------------------------------------------
+// 7. 国际化与契约规范 (I18n & Card Contracts)
 // ----------------------------------------------------------------------------
 export {
   useCardTranslation,
@@ -228,10 +160,11 @@ export type {
 export {
   calculateBasicOverallStats,
   type BaseInteractiveCardProps,
+  type CardAnalyticsPlugin,
 } from '../core/contracts';
 
 // ----------------------------------------------------------------------------
-// 6. 主题 Token、样式与时间工具 (Theme, Styling & Formatting)
+// 8. 主题 Token、样式与时间工具 (Theme, Styling & Formatting)
 // ----------------------------------------------------------------------------
 export {
   CANVAS_THEME,
@@ -250,11 +183,16 @@ export { cn } from '../utils/cn';
 export { formatSecondsToTimer } from '../utils/time';
 
 // ----------------------------------------------------------------------------
-// 7. 共享数据类型与设置模型 (Data Types & Storage Models)
+// 9. 共享数据类型与存储模型 (Data Types & Storage Models)
 // ----------------------------------------------------------------------------
 export type { Point, Size, Rect, HSVTuple, OKLabTuple } from '../types';
 export type {
   BaseModuleSettings,
+  StarSettings,
+  ColorSenseSettings,
+  RelativeColorSettings,
+  NegativeSpaceSettings,
+  AbstractionSettings,
   StepGranularity,
   AdaptiveMode,
   TargetingMode,
@@ -268,9 +206,15 @@ export type {
   InteractionTag,
   CardStatusTag,
 } from '../types/card';
+export type {
+  UnifiedTrialRecord,
+  UnifiedSessionData,
+  UnifiedProfileData,
+  DailySummaryData,
+} from '../storage/db/schema';
 
 // ----------------------------------------------------------------------------
-// 8. 基础通用交互组件 (UI Primitives & Common Views)
+// 10. 通用 UI 组件 (UI Primitives & Diagnostic Components)
 // ----------------------------------------------------------------------------
 export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
 export { DualViewportContainer } from '../components/common/DualViewportContainer';
@@ -291,13 +235,14 @@ export {
   type ChoiceCardState,
   type ChoiceCardProps,
 } from '../components/ui/choice-card';
+export { Callout, type CalloutProps, calloutVariants } from '../components/ui/callout';
 export { Button, type ButtonProps } from '../components/ui/button';
 export { Badge, type BadgeProps } from '../components/ui/badge';
 export { SettingToggleItem } from '../components/settings/common/SettingToggleItem';
 export { SliderMarginGroup } from '../components/settings/common/SliderMarginGroup';
 
 // ----------------------------------------------------------------------------
-// 9. 废弃标记的过渡视图包装器 (Deprecated Standard Views for Graceful Migration)
+// 11. 废弃标记的过渡视图包装器 (Deprecated Standard Views for Graceful Migration)
 // ----------------------------------------------------------------------------
 /** @deprecated 建议优先使用组合排版与原子 Hook，后续将移除此包装器 */
 export {
@@ -319,5 +264,6 @@ export {
 ~~~~~
 
 ### 下一步建议
-1. **统一收敛相对路径**：对 `src/cards/` 目录下的卡片进行批量路径重构，将 `../../../../core/...`、`../../../utils/...` 替换为直接从 `@formsight/card-sdk` 引入。
-2. **原子化拆解 UI 控制权**：提取 `useNafcShortcuts` 等原子键盘操作 Hook，并在卡片视图中由组合式布局逐步取代 `StandardNafcView`，直至彻底清退这批老视图包装器。
+SDK 已具备支持卡片生成器、交互 View 以及分析诊断页面所需的全部导出。
+下一步可以开始执行：
+- **全局收敛相对路径**：批量将 `src/cards/` 目录下全部卡片源文件（包括 `index.tsx`、`*View.tsx`、`generator.ts`、`analytics.tsx` 等）中的宿主跨级相对导入替换为从 `@formsight/card-sdk` 导入。
