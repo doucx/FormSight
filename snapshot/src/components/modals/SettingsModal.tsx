@@ -186,7 +186,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
         {/* 渲染卡片专属设置组件 */}
         {(() => {
           const manifest = registry.getCardManifest(card.id);
-          const renderSettings = manifest?.ui?.renderSettings ?? manifest?.renderSettings;
+          const renderSettings = manifest?.ui?.renderSettings;
           if (renderSettings) {
             return (
               <div className="pt-2 border-t border-border/60">
