@@ -1,5 +1,3 @@
-
-
 import {
   CANVAS_THEME,
   type Point,
