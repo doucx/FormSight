@@ -1,8 +1,14 @@
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import { type ColorHitResult, type ColorQuestionData, hsvToHex } from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
 
+
+import {
+  ColorSenseSettings,
+  hsvToHex,
+  HsvTrackSlider,
+  HUE_SPECTRUM_GRADIENT,
+  PALETTE,
+  type ColorHitResult,
+  type ColorQuestionData
+} from '@formsight/card-sdk';
 export interface ColorValViewProps {
   question: ColorQuestionData;
   showAnswer: boolean;

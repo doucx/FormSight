@@ -1,8 +1,12 @@
-import { setup2DCanvas } from '../../../core/canvas/hidpi';
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
-import { CANVAS_THEME } from '../../../utils/theme';
+
+
 import type { AngleComparisonHitResult, AngleComparisonQuestion, LineSegment } from '../types';
+import {
+  CANVAS_THEME,
+  expDecayInterpolate,
+  Point,
+  setup2DCanvas
+} from '@formsight/card-sdk';
 
 export const ANGLE_2AFC_SIZE = 240;
 

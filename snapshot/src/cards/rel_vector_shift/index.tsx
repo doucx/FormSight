@@ -1,13 +1,16 @@
 import { Shuffle } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { RelativeColorSettings } from '../../storage/settings';
+
 import { RelVectorShiftView } from './RelVectorShiftView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import {
+  CardManifest,
+  RelativeColorSettings,
+  SettingToggleItem,
+  useCardTranslation
+} from '@formsight/card-sdk';
 
 export const relVectorShiftCard: CardManifest<
   QuestionData,

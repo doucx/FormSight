@@ -1,11 +1,11 @@
 import { Split } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { AngleParallel2AfcView } from './AngleParallel2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { AngleParallelHitResult, AngleParallelQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const angleParallel2AfcCard: CardManifest<
   AngleParallelQuestion,

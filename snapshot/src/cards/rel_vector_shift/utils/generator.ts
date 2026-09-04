@@ -1,14 +1,16 @@
+
+
+import type { HitResult, QuestionData } from '../types';
 import {
   calcDeltaEOk,
+  createShuffledChoices,
   generateTetrahedralDistractors,
   getDistractorDistanceForLevel,
   getTargetDeltaEForLevel,
   hasGamutMargin,
   hsvToOkLab,
-  okLabToHsv,
-} from '../../../core/color/oklchUtils';
-import { createShuffledChoices } from '../../../core/math/mathUtils';
-import type { HitResult, QuestionData } from '../types';
+  okLabToHsv
+} from '@formsight/card-sdk';
 
 export function generateQuestion(level: number): QuestionData {
   const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

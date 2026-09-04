@@ -1,5 +1,6 @@
-import type { Point } from '../../../types';
+
 import type { HitResult, QuestionData } from '../types';
+import { Point } from '@formsight/card-sdk';
 
 export const CANVAS_SIZE = 400;
 export const OPTION_SIZE = 260;

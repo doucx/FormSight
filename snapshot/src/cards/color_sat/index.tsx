@@ -1,17 +1,18 @@
 import { Droplet } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
+
 import { ColorSatView } from './ColorSatView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import {
+  CardManifest,
+  checkColorHit,
+  ColorSenseSettings,
+  generateColorQuestion,
+  SettingToggleItem,
+  useCardTranslation,
+  type ColorHitResult,
+  type ColorQuestionData
+} from '@formsight/card-sdk';
 
 export const colorSatCard: CardManifest<
   ColorQuestionData,

@@ -1,8 +1,12 @@
-import { setup2DCanvas } from '../../../core/canvas/hidpi';
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
-import { CANVAS_THEME } from '../../../utils/theme';
+
+
 import type { LineSegment, PerspVpHitResult, PerspVpQuestion } from '../types';
+import {
+  CANVAS_THEME,
+  expDecayInterpolate,
+  Point,
+  setup2DCanvas
+} from '@formsight/card-sdk';
 
 export const PERSPECTIVE_CANVAS_SIZE = 340;
 

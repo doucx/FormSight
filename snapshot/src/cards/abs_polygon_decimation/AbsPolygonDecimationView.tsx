@@ -1,11 +1,14 @@
 import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../components/common/CanvasView';
-import { Standard2AfcView } from '../../components/common/Standard2AfcView';
-import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useCardTranslation } from '../../core/i18n';
-import { CANVAS_THEME } from '../../utils/theme';
+
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, OPTION_SIZE } from './utils/generator';
+import {
+  CANVAS_THEME,
+  CanvasView,
+  drawPolygonCanvas,
+  Standard2AfcView,
+  useCardTranslation
+} from '@formsight/card-sdk';
 
 const CANVAS_OPTION_CLASS =
   'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';

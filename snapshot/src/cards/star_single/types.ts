@@ -1,5 +1,6 @@
-import type { Point } from '../../types';
 
+
+import { Point } from '@formsight/card-sdk';
 export interface QuestionData {
   id: string;
   anchorA: Point;

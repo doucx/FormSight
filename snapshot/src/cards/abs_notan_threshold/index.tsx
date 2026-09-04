@@ -1,13 +1,16 @@
 import { Sun } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { AbsNotanThresholdView } from './AbsNotanThresholdView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import {
+  BaseModuleSettings,
+  CardManifest,
+  SettingToggleItem,
+  useCardTranslation
+} from '@formsight/card-sdk';
 
 export const absNotanThresholdCard: CardManifest<
   QuestionData,

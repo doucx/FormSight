@@ -1,15 +1,18 @@
 import { Crosshair } from 'lucide-preact';
-import { Button } from '../../components/ui/button';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { StarSettings } from '../../storage/settings';
-import type { Point } from '../../types';
+
 import { StarDoubleHView } from './StarDoubleHView';
 import { createStarDoubleHAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import {
+  Button,
+  CardManifest,
+  Point,
+  StarSettings,
+  useCardTranslation
+} from '@formsight/card-sdk';
 
 const SECTOR_KEYS = [
   'sectors.e',

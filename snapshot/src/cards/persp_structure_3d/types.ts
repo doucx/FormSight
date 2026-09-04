@@ -1,5 +1,6 @@
-import type { Point } from '../../types';
 
+
+import { Point } from '@formsight/card-sdk';
 export interface Point3D {
   x: number;
   y: number;

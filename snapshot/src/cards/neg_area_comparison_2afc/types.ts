@@ -1,5 +1,6 @@
-import type { Point } from '../../types';
 
+
+import { Point } from '@formsight/card-sdk';
 export const TWO_AFC_CANVAS_SIZE = 280;
 
 export interface QuestionData {

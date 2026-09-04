@@ -1,11 +1,11 @@
 import { Maximize2 } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { AbsPolygonDecimationView } from './AbsPolygonDecimationView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const absPolygonDecimationCard: CardManifest<
   QuestionData,

@@ -1,6 +1,7 @@
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
+
+
 import type { HitResult, QuestionData } from '../types';
+import { expDecayInterpolate, Point } from '@formsight/card-sdk';
 
 export const CANVAS_WIDTH = 600;
 export const CANVAS_HEIGHT = 140;

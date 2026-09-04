@@ -1,13 +1,15 @@
+
+
+import type { HitResult, QuestionData } from '../types';
 import {
   calcDeltaEOk,
+  createShuffledChoices,
   generateTetrahedralDistractors,
   getDistractorDistanceForLevel,
   getTargetDeltaEForLevel,
   hsvToOkLab,
-  okLabToHsv,
-} from '../../../core/color/oklchUtils';
-import { createShuffledChoices } from '../../../core/math/mathUtils';
-import type { HitResult, QuestionData } from '../types';
+  okLabToHsv
+} from '@formsight/card-sdk';
 
 export function calcInductionShift(
   bgLab: [number, number, number],

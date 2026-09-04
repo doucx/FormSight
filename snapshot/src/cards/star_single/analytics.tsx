@@ -1,10 +1,13 @@
 import { Compass, Target } from 'lucide-preact';
-import { Callout } from '../../components/ui/callout';
-import { type SectorStat, renderCompassCanvas } from '../../core/canvas/charts/drawCompass';
-import { renderHeatmapCanvas } from '../../core/canvas/charts/drawHeatmap';
-import type { CardAnalyticsView } from '../../core/cardContract';
-import { calculateBasicOverallStats } from '../../core/contracts';
-import type { UnifiedTrialRecord } from '../../storage/db/schema';
+import {
+  calculateBasicOverallStats,
+  Callout,
+  CardAnalyticsView,
+  renderCompassCanvas,
+  renderHeatmapCanvas,
+  UnifiedTrialRecord,
+  type SectorStat
+} from '@formsight/card-sdk';
 
 const SECTOR_KEYS = [
   'sectors.e',

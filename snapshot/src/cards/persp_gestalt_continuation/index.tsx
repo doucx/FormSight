@@ -1,11 +1,11 @@
 import { Eye } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { PerspGestaltContinuationView } from './PerspGestaltContinuationView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { PerspGestaltHitResult, PerspGestaltQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const perspGestaltContinuationCard: CardManifest<
   PerspGestaltQuestion,

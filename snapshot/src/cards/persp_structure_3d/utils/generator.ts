@@ -1,7 +1,7 @@
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
-import { CANVAS_THEME } from '../../../utils/theme';
+
+
 import type { PerspStructure3DHitResult, PerspStructure3DQuestion, Point3D } from '../types';
+import { CANVAS_THEME, expDecayInterpolate, Point } from '@formsight/card-sdk';
 
 export const PERSPECTIVE_CANVAS_SIZE = 340;
 

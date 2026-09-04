@@ -1,10 +1,11 @@
+
+import type { HitResult, QuestionData } from '../types';
 import {
   calcDeltaEOk,
   getOkChroma,
   getTargetDeltaEForLevel,
-  hsvToOkLab,
-} from '../../../core/color/oklchUtils';
-import type { HitResult, QuestionData } from '../types';
+  hsvToOkLab
+} from '@formsight/card-sdk';
 
 export function generateQuestion(level: number): QuestionData {
   const id = `cq_all_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

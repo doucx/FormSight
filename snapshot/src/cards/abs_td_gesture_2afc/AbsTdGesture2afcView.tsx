@@ -1,9 +1,8 @@
 import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../components/common/CanvasView';
-import { Standard2AfcView } from '../../components/common/Standard2AfcView';
-import { useCardTranslation } from '../../core/i18n';
+
 import type { HitResult, QuestionData } from './types';
 import {
+import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
   OPTION_SIZE,
   THUMB_SIZE,
   drawParticlesCanvas,

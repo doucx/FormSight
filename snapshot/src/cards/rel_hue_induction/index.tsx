@@ -1,11 +1,11 @@
 import { Palette } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { RelativeColorSettings } from '../../storage/settings';
+
 import { RelHueInductionView } from './RelHueInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import { CardManifest, RelativeColorSettings } from '@formsight/card-sdk';
 
 export const relHueInductionCard: CardManifest<
   QuestionData,

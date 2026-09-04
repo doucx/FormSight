@@ -1,13 +1,16 @@
 import { Compass } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { AngleEstimationView } from './AngleEstimationView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { AngleEstimationHitResult, AngleEstimationQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
+import {
+  BaseModuleSettings,
+  CardManifest,
+  SettingToggleItem,
+  useCardTranslation
+} from '@formsight/card-sdk';
 
 export interface AngleEstimationSettings extends BaseModuleSettings {
   sliderHitMargin?: number;

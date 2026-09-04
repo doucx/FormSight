@@ -1,12 +1,12 @@
 import { Sparkles } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
 import { FractalEdgeRoughnessView } from './FractalEdgeRoughnessView';
 import { createFractalEdgeRoughnessAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { evaluateAnswer, generateQuestion } from './utils/generator';
+import { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const fractalEdgeRoughnessCard: CardManifest<
   QuestionData,

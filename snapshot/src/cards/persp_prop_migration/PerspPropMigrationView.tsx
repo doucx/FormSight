@@ -1,12 +1,15 @@
 import { ArrowRightLeft } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { CanvasView } from '../../components/common/CanvasView';
-import { QuestionCardShell } from '../../components/common/QuestionCardShell';
-import { Badge } from '../../components/ui/badge';
-import { useCardTranslation } from '../../core/i18n';
-import type { Point } from '../../types';
+
 import type { PerspPropMigrationHitResult, PerspPropMigrationQuestion } from './types';
 import {
+import {
+  Badge,
+  CanvasView,
+  Point,
+  QuestionCardShell,
+  useCardTranslation
+} from '@formsight/card-sdk';
   PERSPECTIVE_CANVAS_SIZE,
   drawHorizontalReferenceCanvas,
   drawProportionCanvas,
