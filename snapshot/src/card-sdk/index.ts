@@ -102,6 +102,14 @@ export {
   useTrackPointer,
   type UseTrackPointerOptions,
 } from '../hooks/useTrackPointer';
+export {
+  useChoiceShortcuts,
+  type UseChoiceShortcutsOptions,
+} from '../hooks/useChoiceShortcuts';
+export {
+  useSubmitShortcut,
+  type UseSubmitShortcutOptions,
+} from '../hooks/useSubmitShortcut';
 
 // ----------------------------------------------------------------------------
 // 7. 国际化与契约规范 (I18n & Card Contracts)
@@ -179,6 +187,7 @@ export type {
 // ----------------------------------------------------------------------------
 export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
 export { DualViewportContainer } from '../components/common/DualViewportContainer';
+export { SliderTrack, type SliderTrackProps } from '../components/common/SliderTrack';
 export {
   PointClickCanvas,
   type PointClickCanvasProps,
