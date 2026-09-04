@@ -2,6 +2,7 @@ import { AlertCircle, BarChart2, Sparkles } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
+import type { FractalEdgeRoughnessTrialRecord } from './types';
 import { renderRoughnessBandChart, renderRoughnessBiasChart } from './utils/charts';
 import { getRoughnessSectorIdx } from './utils/generator';
 
@@ -18,7 +19,8 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       renderVisualizer: (canvas, records, t) => {
         renderRoughnessBiasChart(canvas, records, t);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as FractalEdgeRoughnessTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -26,10 +28,8 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
         let sumAbsError = 0;
 
         for (const r of records) {
-          const bias = Number(r.signedBias ?? 0);
-          const err = Number(r.errorValue ?? 0);
-          sumSignedBias += bias;
-          sumAbsError += err;
+          sumSignedBias += r.signedBias;
+          sumAbsError += r.errorValue;
         }
 
         const avgSignedBias = Math.round((sumSignedBias / totalCount) * 1000) / 1000;
@@ -96,14 +96,14 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       renderVisualizer: (canvas, records, t) => {
         renderRoughnessBandChart(canvas, records, t);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as FractalEdgeRoughnessTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
         const sectorBuckets = Array.from({ length: 3 }, () => ({ total: 0, hits: 0 }));
         for (const r of records) {
-          const targetH = Number(r.targetH ?? 0.5);
-          const sIdx = getRoughnessSectorIdx(targetH);
+          const sIdx = getRoughnessSectorIdx(r.targetH);
           sectorBuckets[sIdx].total += 1;
           if (r.isHit) sectorBuckets[sIdx].hits += 1;
         }

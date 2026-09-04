@@ -2,7 +2,16 @@ import { Crosshair } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
+import type { UnifiedTrialRecord } from '../../storage/db/schema';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
+
+interface NegRatioTrialRecord extends UnifiedTrialRecord {
+  targetNegativeRatio: number;
+  userRatio: number;
+  errorValue: number;
+  positiveArea: number;
+  negativeArea: number;
+}
 
 export function createNegRatioAnalytics(): CardAnalyticsView[] {
   return [
@@ -12,7 +21,8 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
       title: 'analytics.ratioScatter.title',
       subTitle: 'analytics.ratioScatter.subTitle',
       icon: Crosshair,
-      renderVisualizer: (canvas, records) => {
+      renderVisualizer: (canvas, rawRecords) => {
+        const records = rawRecords as NegRatioTrialRecord[];
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         const w = canvas.width;
@@ -28,10 +38,8 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
         ctx.stroke();
 
         for (const r of records) {
-          const target = Number(r.targetNegativeRatio ?? 50);
-          const user = Number(r.userRatio ?? 50);
-          const px = 30 + (target / 100) * (w - 50);
-          const py = h - 30 - (user / 100) * (h - 50);
+          const px = 30 + (r.targetNegativeRatio / 100) * (w - 50);
+          const py = h - 30 - (r.userRatio / 100) * (h - 50);
 
           ctx.beginPath();
           ctx.arc(px, py, 3.5, 0, Math.PI * 2);
@@ -41,14 +49,15 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
           ctx.fill();
         }
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as NegRatioTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
         const avgRatioErr =
           totalCount > 0
             ? Math.round(
-                (records.reduce((acc, c) => acc + Number(c.errorValue || 0), 0) / totalCount) * 10,
+                (records.reduce((acc, c) => acc + c.errorValue, 0) / totalCount) * 10,
               ) / 10
             : 0;
 

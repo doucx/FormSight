@@ -8,6 +8,8 @@ export interface QuestionData {
   sectorIdx: number; // 粗糙度频段：0: 高碎裂 (0.1~0.4), 1: 中度纹理 (0.4~0.7), 2: 平滑流线 (0.7~1.0)
 }
 
+import type { UnifiedTrialRecord } from '../../storage/db/schema';
+
 export interface HitResult {
   isHit: boolean;
   userH: number;
@@ -15,4 +17,11 @@ export interface HitResult {
   errorValue: number; // 绝对误差 |userH - targetH|
   signedBias: number; // 符号偏置 userH - targetH (正为偏平滑/低估粗糙度，负为过度敏感)
   tolerance: number;
+}
+
+export interface FractalEdgeRoughnessTrialRecord extends UnifiedTrialRecord {
+  targetH: number;
+  userH: number;
+  errorValue: number;
+  signedBias: number;
 }

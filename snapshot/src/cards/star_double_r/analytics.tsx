@@ -4,6 +4,7 @@ import { type SectorStat, renderCompassCanvas } from '../../core/canvas/charts/d
 import { renderHeatmapCanvas } from '../../core/canvas/charts/drawHeatmap';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
+import type { UnifiedTrialRecord } from '../../storage/db/schema';
 
 const SECTOR_KEYS = [
   'sectors.e',
@@ -16,6 +17,16 @@ const SECTOR_KEYS = [
   'sectors.se',
 ];
 
+interface StarDoubleRTrialRecord extends UnifiedTrialRecord {
+  anchorA: [number, number];
+  anchorC: [number, number];
+  targetB: [number, number];
+  userClick: [number, number];
+  angleDegree: number;
+  distanceRatio: number;
+  errorPixelDistance: number;
+}
+
 export function createStarDoubleRAnalytics(): CardAnalyticsView[] {
   return [
     {
@@ -24,21 +35,21 @@ export function createStarDoubleRAnalytics(): CardAnalyticsView[] {
       title: 'analytics.spatialBias.title',
       subTitle: 'analytics.spatialBias.subTitle',
       icon: Target,
-      renderVisualizer: (canvas, records) => {
+      renderVisualizer: (canvas, rawRecords) => {
+        const records = rawRecords as StarDoubleRTrialRecord[];
         const totalCount = records.length;
         let sumDx = 0;
         let sumDy = 0;
         for (const r of records) {
-          const uClick = (r.userClick as [number, number]) || [0, 0];
-          const tB = (r.targetB as [number, number]) || [0, 0];
-          sumDx += uClick[0] - tB[0];
-          sumDy += uClick[1] - tB[1];
+          sumDx += r.userClick[0] - r.targetB[0];
+          sumDy += r.userClick[1] - r.targetB[1];
         }
         const avgDx = totalCount > 0 ? Math.round((sumDx / totalCount) * 10) / 10 : 0;
         const avgDy = totalCount > 0 ? Math.round((sumDy / totalCount) * 10) / 10 : 0;
         renderHeatmapCanvas(canvas, records, avgDx, avgDy, totalCount);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as StarDoubleRTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -46,11 +57,9 @@ export function createStarDoubleRAnalytics(): CardAnalyticsView[] {
         let sumDy = 0;
         let sumDist = 0;
         for (const r of records) {
-          const uClick = (r.userClick as [number, number]) || [0, 0];
-          const tB = (r.targetB as [number, number]) || [0, 0];
-          sumDx += uClick[0] - tB[0];
-          sumDy += uClick[1] - tB[1];
-          sumDist += (r.errorPixelDistance as number) || 0;
+          sumDx += r.userClick[0] - r.targetB[0];
+          sumDy += r.userClick[1] - r.targetB[1];
+          sumDist += r.errorPixelDistance;
         }
         const avgDx = Math.round((sumDx / totalCount) * 10) / 10;
         const avgDy = Math.round((sumDy / totalCount) * 10) / 10;
@@ -100,19 +109,20 @@ export function createStarDoubleRAnalytics(): CardAnalyticsView[] {
       title: 'analytics.directionalCompass.title',
       subTitle: 'analytics.directionalCompass.subTitle',
       icon: Compass,
-      renderVisualizer: (canvas, records, t) => {
+      renderVisualizer: (canvas, rawRecords, t) => {
+        const records = rawRecords as StarDoubleRTrialRecord[];
         const sectorBuckets = Array.from({ length: 8 }, () => ({
           total: 0,
           hits: 0,
           sumDist: 0,
         }));
         for (const r of records) {
-          const angle = Number(r.angleDegree ?? 0);
+          const angle = r.angleDegree;
           const normAngle = ((angle % 360) + 360) % 360;
           const sectorIdx = Math.floor(((normAngle + 22.5) % 360) / 45);
           sectorBuckets[sectorIdx].total += 1;
           if (r.isHit) sectorBuckets[sectorIdx].hits += 1;
-          sectorBuckets[sectorIdx].sumDist += Number(r.errorPixelDistance || 0);
+          sectorBuckets[sectorIdx].sumDist += r.errorPixelDistance;
         }
 
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
@@ -125,13 +135,14 @@ export function createStarDoubleRAnalytics(): CardAnalyticsView[] {
 
         renderCompassCanvas(canvas, sectorStats);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as StarDoubleRTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
         const sectorBuckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
         for (const r of records) {
-          const angle = Number(r.angleDegree ?? 0);
+          const angle = r.angleDegree;
           const normAngle = ((angle % 360) + 360) % 360;
           const sectorIdx = Math.floor(((normAngle + 22.5) % 360) / 45);
           sectorBuckets[sectorIdx].total += 1;

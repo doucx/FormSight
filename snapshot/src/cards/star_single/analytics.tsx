@@ -18,9 +18,12 @@ const SECTOR_KEYS = [
 ];
 
 interface StarSingleTrialRecord extends UnifiedTrialRecord {
-  userClick?: [number, number];
-  targetB?: [number, number];
-  errorPixelDistance?: number;
+  anchorA: [number, number];
+  targetB: [number, number];
+  userClick: [number, number];
+  angleDegree: number;
+  distanceRatio: number;
+  errorPixelDistance: number;
 }
 
 export function createStarSingleAnalytics(): CardAnalyticsView[] {
@@ -31,35 +34,31 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
       title: 'analytics.spatialBias.title',
       subTitle: 'analytics.spatialBias.subTitle',
       icon: Target,
-      renderVisualizer: (canvas, records) => {
+      renderVisualizer: (canvas, rawRecords) => {
+        const records = rawRecords as StarSingleTrialRecord[];
         const totalCount = records.length;
         let sumDx = 0;
         let sumDy = 0;
-        for (const rec of records) {
-          const r = rec as StarSingleTrialRecord;
-          const uClick = r.userClick || [0, 0];
-          const tB = r.targetB || [0, 0];
-          sumDx += uClick[0] - tB[0];
-          sumDy += uClick[1] - tB[1];
+        for (const r of records) {
+          sumDx += r.userClick[0] - r.targetB[0];
+          sumDy += r.userClick[1] - r.targetB[1];
         }
         const avgDx = totalCount > 0 ? Math.round((sumDx / totalCount) * 10) / 10 : 0;
         const avgDy = totalCount > 0 ? Math.round((sumDy / totalCount) * 10) / 10 : 0;
         renderHeatmapCanvas(canvas, records, avgDx, avgDy, totalCount);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as StarSingleTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
         let sumDx = 0;
         let sumDy = 0;
         let sumDist = 0;
-        for (const rec of records) {
-          const r = rec as StarSingleTrialRecord;
-          const uClick = r.userClick || [0, 0];
-          const tB = r.targetB || [0, 0];
-          sumDx += uClick[0] - tB[0];
-          sumDy += uClick[1] - tB[1];
-          sumDist += Number(r.errorPixelDistance || 0);
+        for (const r of records) {
+          sumDx += r.userClick[0] - r.targetB[0];
+          sumDy += r.userClick[1] - r.targetB[1];
+          sumDist += r.errorPixelDistance;
         }
         const avgDx = Math.round((sumDx / totalCount) * 10) / 10;
         const avgDy = Math.round((sumDy / totalCount) * 10) / 10;
@@ -109,19 +108,20 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
       title: 'analytics.directionalCompass.title',
       subTitle: 'analytics.directionalCompass.subTitle',
       icon: Compass,
-      renderVisualizer: (canvas, records, t) => {
+      renderVisualizer: (canvas, rawRecords, t) => {
+        const records = rawRecords as StarSingleTrialRecord[];
         const sectorBuckets = Array.from({ length: 8 }, () => ({
           total: 0,
           hits: 0,
           sumDist: 0,
         }));
         for (const r of records) {
-          const angle = Number(r.angleDegree ?? 0);
+          const angle = r.angleDegree;
           const normAngle = ((angle % 360) + 360) % 360;
           const sectorIdx = Math.floor(((normAngle + 22.5) % 360) / 45);
           sectorBuckets[sectorIdx].total += 1;
           if (r.isHit) sectorBuckets[sectorIdx].hits += 1;
-          sectorBuckets[sectorIdx].sumDist += Number(r.errorPixelDistance || 0);
+          sectorBuckets[sectorIdx].sumDist += r.errorPixelDistance;
         }
 
         const sectorStats: SectorStat[] = sectorBuckets.map((b, i) => ({
@@ -134,13 +134,14 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
 
         renderCompassCanvas(canvas, sectorStats);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as StarSingleTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
         const sectorBuckets = Array.from({ length: 8 }, () => ({ total: 0, hits: 0 }));
         for (const r of records) {
-          const angle = Number(r.angleDegree ?? 0);
+          const angle = r.angleDegree;
           const normAngle = ((angle % 360) + 360) % 360;
           const sectorIdx = Math.floor(((normAngle + 22.5) % 360) / 45);
           sectorBuckets[sectorIdx].total += 1;
