@@ -9,11 +9,7 @@ import './index.css';
 
 async function bootstrap() {
   // 1. 严格阻塞等待全部 IndexedDB 核心数据加载至 Signals
-  await Promise.all([
-    initSettingsStore(),
-    initPlanStore(),
-    refreshAppData(),
-  ]);
+  await Promise.all([initSettingsStore(), initPlanStore(), refreshAppData()]);
 
   // 2. 确保 i18n 语言与当前设定严格对齐
   const currentSettings = $settings.value;

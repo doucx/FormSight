@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 实现阻塞式初始化以彻底解决首屏主题闪烁与变色动画问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788515084.7414434, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M main.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788515151.2629626, "duration_ms": 0}}
