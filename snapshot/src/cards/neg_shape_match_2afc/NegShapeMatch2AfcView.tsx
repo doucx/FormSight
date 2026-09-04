@@ -1,11 +1,14 @@
-import { Sparkles } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
 import {
-  Choice2AfcContainer,
+  Badge,
+  ChoiceCard,
   QuestionCardShell,
   drawPolygonCanvas,
+  getChoiceCardState,
   useCardTranslation,
+  useChoiceShortcuts,
 } from '@formsight/card-sdk';
 import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
@@ -21,22 +24,22 @@ export interface NegShapeMatch2AfcViewProps {
 export function NegShapeMatch2AfcView({
   question,
   showAnswer,
+  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
 }: NegShapeMatch2AfcViewProps) {
   const { t } = useCardTranslation('neg_shape_match_2afc');
   const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
-  const [selectedMatchChoice, setSelectedMatchChoice] = useState<'A' | 'B' | null>(null);
+  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const matchOptionRefA = useRef<HTMLCanvasElement | null>(null);
   const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset phase and selection when question changes
   useEffect(() => {
     setMatchPhase('stimulus');
-    setSelectedMatchChoice(null);
+    setSelectedChoice(null);
   }, [question.id]);
 
   useEffect(() => {
@@ -73,23 +76,41 @@ export function NegShapeMatch2AfcView({
     }
   }, [matchPhase, showAnswer, question.optionsPolygons]);
 
-  const handleSelectMatchChoice = useCallback(
+  const handleSelectChoice = useCallback(
     (choice: 'A' | 'B') => {
       if (disabled || showAnswer || matchPhase !== 'recall') return;
-      setSelectedMatchChoice(choice);
+      setSelectedChoice(choice);
       onAnswer(choice);
     },
     [disabled, showAnswer, matchPhase, onAnswer],
   );
 
-  const isRevealed = showAnswer;
+  useChoiceShortcuts({
+    optionsCount: 2,
+    disabled: disabled || showAnswer || matchPhase !== 'recall',
+    onSelect: (idx) => handleSelectChoice(idx === 0 ? 'A' : 'B'),
+  });
+
+  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
   const isTargetA = question.correctOptionIndex === 0;
   const isTargetB = question.correctOptionIndex === 1;
+
+  const stateA = getChoiceCardState({
+    showAnswer,
+    isTarget: isTargetA,
+    isSelected: effectiveChoice === 'A',
+  });
+
+  const stateB = getChoiceCardState({
+    showAnswer,
+    isTarget: isTargetB,
+    isSelected: effectiveChoice === 'B',
+  });
 
   return (
     <QuestionCardShell
       hintText={
-        matchPhase === 'stimulus' && !isRevealed
+        matchPhase === 'stimulus' && !showAnswer
           ? t('memoryStimulusHint', {
               ms: question.displayTimeMs ?? 1500,
             })
@@ -99,7 +120,7 @@ export function NegShapeMatch2AfcView({
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
     >
-      {matchPhase === 'stimulus' && !isRevealed ? (
+      {matchPhase === 'stimulus' && !showAnswer ? (
         <div className="bg-muted/60 p-4 rounded-3xl border border-border shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
           <canvas
             ref={canvasRef}
@@ -119,43 +140,63 @@ export function NegShapeMatch2AfcView({
           </div>
         </div>
       ) : (
-        <Choice2AfcContainer
-          optionA={{
-            key: 'A',
-            title: t('common.areaA'),
-            isCorrect: isTargetA,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefA}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-                />
-              </div>
-            ),
-          }}
-          optionB={{
-            key: 'B',
-            title: t('common.areaB'),
-            isCorrect: isTargetB,
-            content: (
-              <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-                <canvas
-                  ref={matchOptionRefB}
-                  width={NEGATIVE_SPACE_CANVAS_SIZE}
-                  height={NEGATIVE_SPACE_CANVAS_SIZE}
-                  className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-                />
-              </div>
-            ),
-          }}
-          selectedChoice={selectedMatchChoice}
-          showAnswer={showAnswer}
-          disabled={disabled || matchPhase !== 'recall'}
-          enableKeyboardShortcuts={true}
-          onSelect={handleSelectMatchChoice}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
+          <ChoiceCard
+            state={stateA}
+            size="lg"
+            disabled={disabled || matchPhase !== 'recall' || showAnswer}
+            onClick={() => handleSelectChoice('A')}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                  1
+                </Badge>
+                {t('common.areaA')}
+              </span>
+              {showAnswer && isTargetA && (
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              )}
+            </div>
+
+            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+              <canvas
+                ref={matchOptionRefA}
+                width={NEGATIVE_SPACE_CANVAS_SIZE}
+                height={NEGATIVE_SPACE_CANVAS_SIZE}
+                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
+              />
+            </div>
+          </ChoiceCard>
+
+          <ChoiceCard
+            state={stateB}
+            size="lg"
+            disabled={disabled || matchPhase !== 'recall' || showAnswer}
+            onClick={() => handleSelectChoice('B')}
+          >
+            <div className="flex items-center justify-between w-full px-1">
+              <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                  2
+                </Badge>
+                {t('common.areaB')}
+              </span>
+              {showAnswer && isTargetB && (
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              )}
+            </div>
+
+            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+              <canvas
+                ref={matchOptionRefB}
+                width={NEGATIVE_SPACE_CANVAS_SIZE}
+                height={NEGATIVE_SPACE_CANVAS_SIZE}
+                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
+              />
+            </div>
+          </ChoiceCard>
+        </div>
       )}
     </QuestionCardShell>
   );
