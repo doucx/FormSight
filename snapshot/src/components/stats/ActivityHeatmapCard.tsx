@@ -21,7 +21,7 @@ const TOTAL_WEEKS = 53;
 const TOOLTIP_HALF_WIDTH = 85; // 浮窗安全半宽估算值 (px)
 
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const matrixContainerRef = useRef<HTMLDivElement | null>(null);
 
