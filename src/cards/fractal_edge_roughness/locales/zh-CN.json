@@ -34,5 +34,8 @@
   "userEdge": "你的调制 (Your Adjustment)",
   "hurstExponent": "Hurst 指数 (H)",
   "extremeRough": "极度粗糙 (H=0.1)",
-  "smooth": "平滑圆润 (H=1.0)"
+  "smooth": "平滑圆润 (H=1.0)",
+  "chartBiasUnder": "↑ 低估粗糙度 (感知偏平滑)",
+  "chartBiasOver": "↓ 高估粗糙度 (对毛刺敏感)",
+  "chartAvgDelta": "均差 ΔH {{val}}"
 }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { CanvasView } from '../../components/common/CanvasView';
 import { QuestionCardShell } from '../../components/common/QuestionCardShell';
 import { Badge } from '../../components/ui/badge';
-import { useCardTranslation, useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import type { Point } from '../../types';
 import type { PerspPropMigrationHitResult, PerspPropMigrationQuestion } from './types';
 import {
@@ -29,8 +29,7 @@ export function PerspPropMigrationView({
   disabled = false,
   showCanvasHints = true,
 }: PerspPropMigrationViewProps) {
-  const { t: cardT } = useCardTranslation('persp_prop_migration');
-  const { t: commonT } = useTranslation();
+  const { t } = useCardTranslation('persp_prop_migration');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
@@ -147,7 +146,7 @@ export function PerspPropMigrationView({
 
   return (
     <QuestionCardShell
-      hintText={cardT('hint')}
+      hintText={t('hint')}
       hintIcon={ArrowRightLeft}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
@@ -155,13 +154,13 @@ export function PerspPropMigrationView({
         showAnswer ? (
           <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
-              {cardT('targetRatio')}{' '}
+              {t('targetRatio')}{' '}
               <span className="font-bold text-foreground font-mono">
                 {((question.targetRatio ?? 0) * 100).toFixed(1)}%
               </span>
             </span>
             <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              {cardT('userPosition', {
+              {t('userPosition', {
                 pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
                 error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
               })}
@@ -199,7 +198,7 @@ export function PerspPropMigrationView({
           }}
           tabIndex={0}
           role="button"
-          aria-label={cardT('title')}
+          aria-label={t('title')}
           className={`w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card touch-none select-none transition-all ${
             disabled || showAnswer
               ? 'cursor-default'
@@ -213,7 +212,7 @@ export function PerspPropMigrationView({
               size="sm"
               className="w-2.5 h-2.5 p-0 rounded-full border-2 border-indigo-600 bg-indigo-600"
             />
-            <span>{commonT('common.startPercent')}</span>
+            <span>{t('common.startPercent')}</span>
           </span>
           <span>→</span>
           <span className="inline-flex items-center gap-1">
@@ -222,7 +221,7 @@ export function PerspPropMigrationView({
               size="sm"
               className="w-2 h-2 p-0 rounded-full border-none bg-muted-foreground"
             />
-            <span>{commonT('common.endPercent')}</span>
+            <span>{t('common.endPercent')}</span>
           </span>
         </div>
       </div>

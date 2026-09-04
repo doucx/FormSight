@@ -1,5 +1,7 @@
 import { Sliders } from 'lucide-preact';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
 import type { CardManifest } from '../../core/cardContract';
+import { useCardTranslation } from '../../core/i18n';
 import type { BaseModuleSettings } from '../../storage/settings';
 import { PerspVpConvergenceView } from './PerspVpConvergenceView';
 import enUS from './locales/en-US.json';
@@ -31,14 +33,19 @@ export const perspVpConvergenceCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('persp_vp_convergence');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={(settings.showToleranceBand as boolean) ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

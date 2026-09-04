@@ -166,35 +166,43 @@ export function getCardDesc(card: { id: string; desc?: string }, t = i18n.t): st
 /**
  * 卡片局部翻译 Hook，优先查找 `cards.<cardId>.<key>`，未命中时自动回退到全局词典
  */
-export function useCardTranslation(cardId: string) {
-  const { t: baseT, locale, setLocale } = useTranslation();
+export type ScopedTranslator = <T = string>(
+  key: string,
+  params?: Record<string, string | number>,
+) => T;
 
-  const cardT = <T = string>(key: string, params?: Record<string, string | number>): T => {
+/**
+ * 为非 React 组件（纯函数、Canvas 渲染、计算模块）提供带卡片作用域的翻译器
+ */
+export function createScopedTranslator(cardId: string): ScopedTranslator {
+  return <T = string>(key: string, params?: Record<string, string | number>): T => {
     const isExplicitGlobal =
       key.startsWith('cards.') ||
       key.startsWith('common.') ||
       key.startsWith('global.') ||
       key.startsWith('tags.') ||
       key.startsWith('nav.') ||
-      key.startsWith('settings.') ||
       key.startsWith('stats.') ||
       key.startsWith('plan.') ||
       key.startsWith('home.');
 
     if (isExplicitGlobal) {
-      return baseT<T>(key, params);
+      return i18n.t<T>(key, params);
     }
 
     const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
-    const result = baseT<T>(cardKey, params);
+    const result = i18n.t<T>(cardKey, params);
 
-    // 若未在卡片局部命名空间查找到（返回了原始拼装 key），回退尝试直接查全局
     if (typeof result === 'string' && result === cardKey) {
-      return baseT<T>(key, params);
+      return i18n.t<T>(key, params);
     }
 
     return result;
   };
+}
 
+export function useCardTranslation(cardId: string) {
+  const { locale, setLocale } = useTranslation();
+  const cardT = createScopedTranslator(cardId);
   return { t: cardT, locale, setLocale };
 }

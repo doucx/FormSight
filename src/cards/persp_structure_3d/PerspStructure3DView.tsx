@@ -4,7 +4,7 @@ import { QuestionCardShell } from '../../components/common/QuestionCardShell';
 import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
 import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
 import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import { useCardTranslation, useTranslation } from '../../core/i18n';
+import { useCardTranslation } from '../../core/i18n';
 import { LOUPE_DIAMETER, usePointLoupe } from '../../hooks/usePointLoupe';
 import type { Point } from '../../types';
 import { CANVAS_THEME } from '../../utils/theme';
@@ -28,8 +28,7 @@ export function PerspStructure3DView({
   disabled = false,
   showCanvasHints = true,
 }: PerspStructure3DViewProps) {
-  const { t: cardT } = useCardTranslation('persp_structure_3d');
-  const { t: commonT } = useTranslation();
+  const { t } = useCardTranslation('persp_structure_3d');
   const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
 
   const targetPt3D = question.targetPoint3D;
@@ -196,7 +195,7 @@ export function PerspStructure3DView({
 
   return (
     <QuestionCardShell
-      hintText={cardT('hint')}
+      hintText={t('hint')}
       hintIcon={Box}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
@@ -205,13 +204,13 @@ export function PerspStructure3DView({
         {/* 左侧三视图正交切面预览 */}
         <div className="bg-muted/60 p-4 rounded-2xl border border-border flex flex-col gap-3">
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">
-            {commonT('common.viewTriAxis')}
+            {t('common.viewTriAxis')}
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs font-semibold text-muted-foreground">
             {/* 顶视图 (X-Z) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{commonT('common.topView')}</span>
+              <span className="text-muted-foreground font-bold">{t('common.topView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
@@ -233,7 +232,7 @@ export function PerspStructure3DView({
 
             {/* 正视图 (X-Y) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{commonT('common.frontView')}</span>
+              <span className="text-muted-foreground font-bold">{t('common.frontView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
@@ -255,7 +254,7 @@ export function PerspStructure3DView({
 
             {/* 侧视图 (Z-Y) */}
             <div className="flex flex-col items-center gap-1 bg-card p-2 rounded-xl border border-border">
-              <span className="text-muted-foreground font-bold">{commonT('common.sideView')}</span>
+              <span className="text-muted-foreground font-bold">{t('common.sideView')}</span>
               <div
                 className="w-14 h-14 border border-dashed border-indigo-200 dark:border-indigo-900 rounded grid relative bg-muted/40"
                 style={{
@@ -298,7 +297,7 @@ export function PerspStructure3DView({
             }}
             tabIndex={0}
             role="button"
-            aria-label={cardT('hint')}
+            aria-label={t('hint')}
             className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
               disabled || showAnswer
                 ? 'cursor-default'

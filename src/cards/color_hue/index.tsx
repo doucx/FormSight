@@ -1,4 +1,6 @@
-import { RotateCw } from 'lucide-preact';
+import { Crosshair, RotateCw } from 'lucide-preact';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import { Button } from '../../components/ui/button';
 import type { CardManifest } from '../../core/cardContract';
 import {
   type ColorHitResult,
@@ -6,6 +8,7 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../../core/color/colorUtils';
+import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorHueView } from './ColorHueView';
 import { createColorHueAnalytics } from './analytics';
@@ -46,23 +49,71 @@ export const colorHueCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-    {
-      type: 'targeting',
-      modeKey: 'targetingMode',
-      sectorsKey: 'manualTargetSectors',
-      title: 'settings.targetingTitle',
-      subTitle: 'settings.targetingSubTitle',
-      sectors: COLOR_SECTOR_KEYS,
-      gridCols: 'grid-cols-3',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('color_hue');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={(settings.showToleranceBand as boolean) ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+        <div className="space-y-2 pt-2 border-t border-border/65">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Crosshair className="w-4 h-4 text-primary" />
+            {t('settings.targetingTitle')}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { id: 'off', label: t('settingsModal.targetingOff') },
+              { id: 'manual', label: t('settingsModal.targetingManual') },
+            ].map((m) => (
+              <Button
+                key={m.id}
+                variant={(settings.targetingMode ?? 'off') === m.id ? 'default' : 'outline'}
+                onClick={() => updateSettings({ targetingMode: m.id as 'off' | 'manual' })}
+                className="py-2 h-auto"
+              >
+                {m.label}
+              </Button>
+            ))}
+          </div>
+
+          {settings.targetingMode === 'manual' && (
+            <div className="bg-muted/60 p-3 rounded-2xl border border-border/60 space-y-2">
+              <div className="text-xs font-semibold text-muted-foreground">
+                {t('settings.targetingSubTitle')}
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {COLOR_SECTOR_KEYS.map((name, idx) => {
+                  const selected = (settings.manualTargetSectors ?? []).includes(idx);
+                  const label = t(name);
+                  return (
+                    <Button
+                      key={name}
+                      variant={selected ? 'accent' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        const current = settings.manualTargetSectors ?? [];
+                        const next = current.includes(idx)
+                          ? current.filter((s) => s !== idx)
+                          : [...current, idx];
+                        updateSettings({ manualTargetSectors: next });
+                      }}
+                      className="py-1.5 px-1 text-xs h-auto"
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

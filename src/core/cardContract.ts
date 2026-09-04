@@ -1,5 +1,4 @@
 import type { ComponentChildren } from 'preact';
-import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import type { UnifiedTrialRecord } from '../storage/db/schema';
 import type { BaseModuleSettings } from '../storage/settings';
 import type { CardTags, VisualDomainTag } from '../types/card';
@@ -14,15 +13,20 @@ export interface CardCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings> {
   settings: TSettings;
 }
 
+import type { ScopedTranslator } from './i18n';
+
 export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord> {
   id: string;
   tabLabel: string;
   title: string;
   subTitle: string;
   icon?: (props: { className?: string }) => ComponentChildren;
-  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[]) => void;
-  renderDiagnostics: (records: TRecord[]) => ComponentChildren;
-  getOverallStats?: (records: TRecord[]) => {
+  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[], t: ScopedTranslator) => void;
+  renderDiagnostics: (records: TRecord[], t: ScopedTranslator) => ComponentChildren;
+  getOverallStats?: (
+    records: TRecord[],
+    t: ScopedTranslator,
+  ) => {
     accuracy: number;
     total: number;
     customSummary?: ComponentChildren;
@@ -42,7 +46,10 @@ export interface CardManifest<
   icon: (props: { className?: string }) => ComponentChildren;
 
   /** 2. 个性化设置项定义与默认值 */
-  settingSchemas?: SettingFieldSchema[];
+  renderSettings?: (props: {
+    settings: TSettings;
+    updateSettings: (patch: Partial<TSettings>) => void;
+  }) => ComponentChildren;
   defaultSettings?: Partial<TSettings>;
 
   /** 3. 自包含多语言词典 */

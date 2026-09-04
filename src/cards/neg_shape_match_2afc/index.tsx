@@ -10,7 +10,7 @@ import { evaluateAnswer, generateQuestion } from './utils/generator';
 export const negShapeMatch2AfcCard: CardManifest<
   QuestionData,
   HitResult,
-  0 | 1,
+  'A' | 'B',
   BaseModuleSettings
 > = {
   id: 'neg_shape_match_2afc',
@@ -33,7 +33,7 @@ export const negShapeMatch2AfcCard: CardManifest<
     isHit: (res) => res.isHit,
     getQuestionLevel: (q) => q.difficultyLevel,
     extractRecordDetails: (q, hitResult, userVal) => ({
-      userChoice: userVal === 0 ? 'A' : 'B',
+      userChoice: userVal,
       correctChoice: q.correctChoice,
       displayTimeMs: q.displayTimeMs,
       errorValue: hitResult.errorValue,

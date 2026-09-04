@@ -94,10 +94,7 @@ export function checkHit(userColor: [number, number, number], question: Question
     (opt) => opt[0] === userColor[0] && opt[1] === userColor[1] && opt[2] === userColor[2],
   );
 
-  const isHit =
-    selectedIndex !== -1
-      ? selectedIndex === question.correctIndex
-      : deltaEError <= question.tolerance;
+  const isHit = selectedIndex === question.correctIndex;
 
   return {
     isHit,

@@ -1,5 +1,7 @@
 import { Shuffle } from 'lucide-preact';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
 import type { CardManifest } from '../../core/cardContract';
+import { useCardTranslation } from '../../core/i18n';
 import type { RelativeColorSettings } from '../../storage/settings';
 import { RelVectorShiftView } from './RelVectorShiftView';
 import enUS from './locales/en-US.json';
@@ -27,14 +29,19 @@ export const relVectorShiftCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  settingSchemas: [
-    {
-      type: 'toggle',
-      key: 'showToleranceBand',
-      title: 'settings.showToleranceBandTitle',
-      description: 'settings.showToleranceBandDesc',
-    },
-  ],
+  renderSettings: ({ settings, updateSettings }) => {
+    const { t } = useCardTranslation('rel_vector_shift');
+    return (
+      <div className="space-y-4">
+        <SettingToggleItem
+          title={t('settings.showToleranceBandTitle')}
+          description={t('settings.showToleranceBandDesc')}
+          checked={(settings.showToleranceBand as boolean) ?? true}
+          onChange={(val) => updateSettings({ showToleranceBand: val })}
+        />
+      </div>
+    );
+  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,

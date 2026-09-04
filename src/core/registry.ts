@@ -1,4 +1,3 @@
-import type { SettingFieldSchema } from '../components/settings/DynamicDomainSettings';
 import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
   CardDefinition,
@@ -23,47 +22,6 @@ export function qualifyCardKey(key: string | undefined, cardId: string): string 
     return key;
   }
   return `cards.${cardId}.${key.replace(/^\./, '')}`;
-}
-
-export function qualifySchemas(
-  schemas: SettingFieldSchema[] | undefined,
-  cardId: string,
-): SettingFieldSchema[] | undefined {
-  if (!schemas) return undefined;
-  return schemas.map((schema) => {
-    if (schema.type === 'sliderMargin') {
-      return {
-        ...schema,
-        title: qualifyCardKey(schema.title, cardId),
-      };
-    }
-    if (schema.type === 'toggle') {
-      return {
-        ...schema,
-        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
-        description: qualifyCardKey(schema.description, cardId) ?? schema.description,
-      };
-    }
-    if (schema.type === 'buttonGroup') {
-      return {
-        ...schema,
-        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
-        options: schema.options.map((opt) => ({
-          ...opt,
-          label: qualifyCardKey(opt.label, cardId) ?? opt.label,
-        })),
-      };
-    }
-    if (schema.type === 'targeting') {
-      return {
-        ...schema,
-        title: qualifyCardKey(schema.title, cardId) ?? schema.title,
-        subTitle: qualifyCardKey(schema.subTitle, cardId) ?? schema.subTitle,
-        sectors: schema.sectors.map((sec) => qualifyCardKey(sec, cardId) ?? sec),
-      };
-    }
-    return schema;
-  });
 }
 
 export function qualifyAnalyticsViews(
@@ -198,17 +156,13 @@ class SystemDomainRegistry {
       i18n.registerCardLocales(card.id, card.locales);
     }
 
-    // 2. 自动修饰并注册 SettingSchemas 相对 key
-    const normalizedSchemas = qualifySchemas(card.settingSchemas, card.id);
-
-    // 3. 构建标准 CardDefinition
+    // 2. 构建标准 CardDefinition
     const cardDef: CardDefinition = {
       id: card.id,
       domain: card.domain,
       icon: card.icon,
       tags: card.tags,
       hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),
-      settingSchemas: normalizedSchemas,
       defaultSettings: card.defaultSettings,
     };
 

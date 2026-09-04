@@ -21,7 +21,7 @@ import { MetricCard } from '../components/ui/metric-card';
 import { DOMAIN_TAGS } from '../config/tags';
 import { getCognitiveOverviewInsights } from '../core/analytics/universalViews';
 import type { CardAnalyticsView as CardAnalyticsViewContract } from '../core/contracts';
-import { getCardDesc, getCardTitle, useTranslation } from '../core/i18n';
+import { getCardDesc, getCardTitle, useCardTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
 import type { UnifiedTrialRecord } from '../storage/index';
 
@@ -42,7 +42,7 @@ export function CardAnalyticsView({
   onStartBenchmark,
   onOpenSettings,
 }: CardAnalyticsViewProps) {
-  const { t } = useTranslation();
+  const { t } = useCardTranslation(cardId);
   const card = registry.getCardById(cardId);
   const plugin = useMemo(
     () => (card ? registry.getAnalyticsPluginByCardId(card.id) : null),
@@ -89,8 +89,8 @@ export function CardAnalyticsView({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    currentView.renderVisualizer(canvas, records);
-  }, [currentView, loading, records]);
+    currentView.renderVisualizer(canvas, records, t);
+  }, [currentView, loading, records, t]);
 
   // 计算全局统计指标
   const summaryStats = useMemo(() => {
@@ -369,7 +369,7 @@ export function CardAnalyticsView({
             </div>
 
             {/* 插件个性化诊断 */}
-            <div className="space-y-3">{currentView.renderDiagnostics(records)}</div>
+            <div className="space-y-3">{currentView.renderDiagnostics(records, t)}</div>
           </div>
         </div>
       ) : null}

@@ -2,7 +2,6 @@ import { AlertCircle, BarChart2, Sparkles } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
-import { i18n } from '../../core/i18n';
 import { renderRoughnessBandChart, renderRoughnessBiasChart } from './utils/charts';
 import { getRoughnessSectorIdx } from './utils/generator';
 
@@ -16,10 +15,10 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       title: 'analytics.roughnessBias.title',
       subTitle: 'analytics.roughnessBias.subTitle',
       icon: Sparkles,
-      renderVisualizer: (canvas, records) => {
-        renderRoughnessBiasChart(canvas, records);
+      renderVisualizer: (canvas, records, t) => {
+        renderRoughnessBiasChart(canvas, records, t);
       },
-      renderDiagnostics: (records) => {
+      renderDiagnostics: (records, t) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -37,35 +36,23 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
 
         const signedBiasText =
           avgSignedBias > 0
-            ? i18n.t(
-                'cards.fractal_edge_roughness.analytics.roughnessBias.underestimateRoughness',
-                {
-                  val: avgSignedBias,
-                },
-              )
+            ? t('analytics.roughnessBias.underestimateRoughness', { val: avgSignedBias })
             : avgSignedBias < 0
-              ? i18n.t(
-                  'cards.fractal_edge_roughness.analytics.roughnessBias.overestimateRoughness',
-                  {
-                    val: Math.abs(avgSignedBias),
-                  },
-                )
-              : i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.neutral');
+              ? t('analytics.roughnessBias.overestimateRoughness', {
+                  val: Math.abs(avgSignedBias),
+                })
+              : t('analytics.roughnessBias.neutral');
 
         return (
-          <Callout
-            variant="info"
-            icon={AlertCircle}
-            title={i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.cardTitle')}
-          >
+          <Callout variant="info" icon={AlertCircle} title={t('analytics.roughnessBias.cardTitle')}>
             <div className="space-y-2 text-xs text-foreground pt-1">
               <p className="text-muted-foreground leading-relaxed">
-                {i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.desc')}
+                {t('analytics.roughnessBias.desc')}
               </p>
 
               <div className="flex justify-between bg-card p-2 rounded-xl border border-border/60 font-mono shadow-xs">
                 <span className="text-muted-foreground">
-                  {i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.avgSignedBias')}
+                  {t('analytics.roughnessBias.avgSignedBias')}
                 </span>
                 <span
                   className={`font-bold ${
@@ -83,7 +70,7 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
           </Callout>
         );
       },
-      getOverallStats: (records) => {
+      getOverallStats: (records, t) => {
         const baseStats = calculateBasicOverallStats(records);
         const sumAbsError = records.reduce((acc, curr) => acc + Number(curr.errorValue || 0), 0);
         const avgAbsError =
@@ -93,9 +80,7 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
           ...baseStats,
           customSummary: (
             <div className="flex justify-between text-indigo-700 font-bold border-t border-border/60 pt-1 text-xs font-mono">
-              <span>
-                {i18n.t('cards.fractal_edge_roughness.analytics.roughnessBias.avgAbsError')}
-              </span>
+              <span>{t('analytics.roughnessBias.avgAbsError')}</span>
               <span>{avgAbsError}</span>
             </div>
           ),
@@ -108,10 +93,10 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
       title: 'analytics.bandSensitivity.title',
       subTitle: 'analytics.bandSensitivity.subTitle',
       icon: BarChart2,
-      renderVisualizer: (canvas, records) => {
-        renderRoughnessBandChart(canvas, records);
+      renderVisualizer: (canvas, records, t) => {
+        renderRoughnessBandChart(canvas, records, t);
       },
-      renderDiagnostics: (records) => {
+      renderDiagnostics: (records, t) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -125,7 +110,7 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
 
         const validSectors = sectorBuckets
           .map((b, i) => ({
-            label: i18n.t(`cards.fractal_edge_roughness.${SECTOR_KEYS[i]}`),
+            label: t(SECTOR_KEYS[i]),
             total: b.total,
             accuracy: b.total > 0 ? Math.round((b.hits / b.total) * 100) : 0,
           }))
@@ -140,19 +125,19 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
           <Callout
             variant="warning"
             icon={AlertCircle}
-            title={i18n.t('cards.fractal_edge_roughness.analytics.bandSensitivity.cardTitle')}
+            title={t('analytics.bandSensitivity.cardTitle')}
           >
             {weakest ? (
               <div className="space-y-1.5 text-xs text-foreground pt-1">
                 <p>
-                  {i18n.t('cards.fractal_edge_roughness.analytics.bandSensitivity.weakestHint', {
+                  {t('analytics.bandSensitivity.weakestHint', {
                     sector: weakest.label,
                   })}
                 </p>
                 <div className="flex justify-between items-center bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 font-mono shadow-xs">
                   <span>{weakest.label}</span>
                   <span className="font-bold text-rose-600 dark:text-rose-400">
-                    {i18n.t('cards.fractal_edge_roughness.analytics.bandSensitivity.accuracyRate', {
+                    {t('analytics.bandSensitivity.accuracyRate', {
                       accuracy: weakest.accuracy,
                     })}
                   </span>
@@ -160,7 +145,7 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
               </div>
             ) : (
               <p className="text-muted-foreground text-xs">
-                {i18n.t('cards.fractal_edge_roughness.analytics.bandSensitivity.needMoreTrials')}
+                {t('analytics.bandSensitivity.needMoreTrials')}
               </p>
             )}
           </Callout>

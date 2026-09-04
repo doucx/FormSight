@@ -1,15 +1,15 @@
 import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
 import {
   type BaseModuleSettings,
   type UserSettings,
   getCardSettings,
-  saveSettings,
 } from '../../storage/settings';
+import { updateCardSettings } from '../../stores/settingsStore';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
-import { DynamicDomainSettings } from '../settings/DynamicDomainSettings';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
@@ -28,23 +28,10 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
   const cardTitle = getCardTitle(card, t);
 
-  const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
-    setCurrent((prev) => {
-      const updatedCard = {
-        ...getCardSettings(prev, card.id),
-        ...patch,
-      };
-      const nextSettings: UserSettings = {
-        ...prev,
-        cards: {
-          ...prev.cards,
-          [card.id]: updatedCard,
-        },
-      };
-      saveSettings(nextSettings).catch((err) => console.error(err));
-      onSave(nextSettings);
-      return nextSettings;
-    });
+  const updateCardConfig = async (patch: Partial<BaseModuleSettings>) => {
+    const next = await updateCardSettings(card.id, patch);
+    setCurrent(next);
+    onSave(next);
   };
 
   return (
@@ -196,14 +183,21 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           </div>
         </div>
 
-        {/* 渲染卡片专属设置 Schemas */}
-        {card.settingSchemas && card.settingSchemas.length > 0 && (
-          <DynamicDomainSettings
-            schemas={card.settingSchemas}
-            values={cardConfig}
-            onChange={(patch) => updateCardConfig(patch)}
-          />
-        )}
+        {/* 渲染卡片专属设置组件 */}
+        {(() => {
+          const manifest = registry.getCardManifest(card.id);
+          if (manifest?.renderSettings) {
+            return (
+              <div className="pt-2 border-t border-border/60">
+                {manifest.renderSettings({
+                  settings: cardConfig,
+                  updateSettings: updateCardConfig,
+                })}
+              </div>
+            );
+          }
+          return null;
+        })()}
       </div>
     </ModalShell>
   );

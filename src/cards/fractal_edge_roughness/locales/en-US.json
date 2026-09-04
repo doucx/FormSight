@@ -34,5 +34,8 @@
   "userEdge": "Your Edge Adjustment",
   "hurstExponent": "Hurst Exponent (H)",
   "extremeRough": "Extremely Rough (H=0.1)",
-  "smooth": "Smooth (H=1.0)"
+  "smooth": "Smooth (H=1.0)",
+  "chartBiasUnder": "↑ Underestimate roughness (Perceives smoother)",
+  "chartBiasOver": "↓ Overestimate roughness (Hypersensitive to jitter)",
+  "chartAvgDelta": "Avg ΔH {{val}}"
 }

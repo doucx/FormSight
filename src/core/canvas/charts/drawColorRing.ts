@@ -3,7 +3,12 @@ import { hsvToHex } from '../../color/colorUtils';
 import { initSquareHiDpiCanvas } from '../hidpi';
 import type { SectorStat } from './drawCompass';
 
-export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
+export function renderHueRingCanvas(
+  canvas: HTMLCanvasElement,
+  sectorStats: SectorStat[],
+  titleText = 'Hue',
+  accuracyText = 'Accuracy',
+) {
   const init = initSquareHiDpiCanvas(canvas, 340);
   if (!init) return;
   const { ctx, size } = init;
@@ -80,8 +85,8 @@ export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
   ctx.fillStyle = CANVAS_THEME.text.primary;
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('Hue', cx, cy - 5);
+  ctx.fillText(titleText, cx, cy - 5);
   ctx.fillStyle = CANVAS_THEME.text.secondary;
   ctx.font = '9px sans-serif';
-  ctx.fillText('Accuracy', cx, cy + 8);
+  ctx.fillText(accuracyText, cx, cy + 8);
 }
