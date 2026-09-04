@@ -1,15 +1,21 @@
 import { render } from 'preact';
 import { App } from './app';
+import { i18n } from './core/i18n';
 import { applyThemeToDocument } from './hooks/useTheme';
-import { getCachedBypassTheme, loadSettings } from './storage/settings';
+import { loadSettings } from './storage/settings';
 import './index.css';
 
-// 使用旁路缓存极速应用外观主题，避免首屏渲染闪烁
-applyThemeToDocument(getCachedBypassTheme());
-
-// 异步引导 IndexedDB 并渲染主应用
+// 异步从 IndexedDB 加载设置并完成首屏直出应用，再挂载组件树
 async function bootstrap() {
-  await loadSettings();
+  const settings = await loadSettings();
+
+  // 1. 在 DOM 节点初次渲染前完成主题 class 与色彩空间配置
+  applyThemeToDocument(settings.global.theme);
+
+  // 2. 将 IDB 中保存的语言设置给 i18n 实例
+  i18n.init(settings.global.locale);
+
+  // 3. 此时所有初始属性均已匹配，挂载不会产生属性突变与补间变色动画
   const appElement = document.getElementById('app');
   if (appElement) {
     render(<App />, appElement);

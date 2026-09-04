@@ -4,22 +4,6 @@ import zhCNGlobal from '../locales/zh-CN.json';
 
 export type LocaleDictionary = Record<string, unknown>;
 
-function getSavedLocale(): string {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return 'zh-CN';
-  }
-  try {
-    const raw = localStorage.getItem('formsight_user_settings');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed?.global?.locale) {
-        return parsed.global.locale;
-      }
-    }
-  } catch {}
-  return 'zh-CN';
-}
-
 class I18nManager {
   private currentLocale = 'zh-CN';
   private fallbackLocale = 'zh-CN';
@@ -27,7 +11,6 @@ class I18nManager {
   private listeners = new Set<(locale: string) => void>();
 
   constructor() {
-    this.currentLocale = getSavedLocale();
     this.registerGlobalLocales({
       'zh-CN': zhCNGlobal as LocaleDictionary,
       'en-US': enUSGlobal as LocaleDictionary,
@@ -35,13 +18,8 @@ class I18nManager {
   }
 
   public init(initialLocale?: string): void {
-    if (initialLocale) {
+    if (initialLocale && initialLocale !== this.currentLocale) {
       this.setLocale(initialLocale);
-    } else {
-      const saved = getSavedLocale();
-      if (saved && saved !== this.currentLocale) {
-        this.setLocale(saved);
-      }
     }
   }
 

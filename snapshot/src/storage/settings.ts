@@ -134,39 +134,6 @@ let cachedSettings: UserSettings = {
 };
 
 /**
- * 极简启动旁路缓存读写（仅用于 HTML 首屏防白屏闪烁）
- */
-function syncBypassCache(settings: UserSettings): void {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
-  try {
-    if (settings.global.theme) {
-      localStorage.setItem('formsight_theme_cache', settings.global.theme);
-    }
-    if (settings.global.locale) {
-      localStorage.setItem('formsight_locale_cache', settings.global.locale);
-    }
-  } catch {}
-}
-
-export function getCachedBypassTheme(): ThemeMode {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'system';
-  try {
-    const t = localStorage.getItem('formsight_theme_cache');
-    if (t === 'light' || t === 'dark' || t === 'system') return t;
-  } catch {}
-  return 'system';
-}
-
-export function getCachedBypassLocale(): string {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'zh-CN';
-  try {
-    const l = localStorage.getItem('formsight_locale_cache');
-    if (l) return l;
-  } catch {}
-  return 'zh-CN';
-}
-
-/**
  * 从 IndexedDB 异步加载全局设置并更新内存缓存
  */
 export async function loadSettings(): Promise<UserSettings> {
@@ -179,14 +146,11 @@ export async function loadSettings(): Promise<UserSettings> {
       const initialSettings: UserSettings = {
         global: {
           ...DEFAULT_SETTINGS.global,
-          locale: getCachedBypassLocale(),
-          theme: getCachedBypassTheme(),
         },
         cards: defaultCards,
       };
       cachedSettings = initialSettings;
       await db.put('app_settings', initialSettings, 'global_settings');
-      syncBypassCache(initialSettings);
       return initialSettings;
     }
 
@@ -206,7 +170,6 @@ export async function loadSettings(): Promise<UserSettings> {
     };
 
     cachedSettings = resolvedSettings;
-    syncBypassCache(resolvedSettings);
     return resolvedSettings;
   } catch (e) {
     console.error('Failed to load user settings from IndexedDB, using fallback:', e);
@@ -220,11 +183,10 @@ export function getSettingsSnapshot(): UserSettings {
 }
 
 /**
- * 异步保存设置到 IndexedDB，同时更新内存与旁路缓存
+ * 异步保存设置到 IndexedDB，同时更新内存缓存
  */
 export async function saveSettings(settings: UserSettings): Promise<void> {
   cachedSettings = settings;
-  syncBypassCache(settings);
   try {
     const db = await getDB();
     await db.put('app_settings', settings, 'global_settings');

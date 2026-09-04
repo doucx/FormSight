@@ -3,7 +3,6 @@ import {
   type ResolvedTheme,
   type ThemeMode,
   type UserSettings,
-  getCachedBypassTheme,
   getSettingsSnapshot,
   saveSettings,
 } from '../storage/settings';
@@ -33,7 +32,7 @@ export function applyThemeToDocument(themeMode: ThemeMode = 'system'): ResolvedT
 
 export function useTheme(externalSettings?: UserSettings): UseThemeResult {
   const currentMode =
-    externalSettings?.global?.theme || getSettingsSnapshot().global.theme || getCachedBypassTheme();
+    externalSettings?.global?.theme || getSettingsSnapshot().global.theme || 'system';
   const [themeMode, setThemeMode] = useState<ThemeMode>(currentMode);
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     applyThemeToDocument(currentMode),
