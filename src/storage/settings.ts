@@ -142,9 +142,6 @@ function syncBypassCache(settings: UserSettings): void {
     if (settings.global.theme) {
       localStorage.setItem('formsight_theme_cache', settings.global.theme);
     }
-    if (settings.global.locale) {
-      localStorage.setItem('formsight_locale_cache', settings.global.locale);
-    }
   } catch {}
 }
 
@@ -155,15 +152,6 @@ export function getCachedBypassTheme(): ThemeMode {
     if (t === 'light' || t === 'dark' || t === 'system') return t;
   } catch {}
   return 'system';
-}
-
-export function getCachedBypassLocale(): string {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'zh-CN';
-  try {
-    const l = localStorage.getItem('formsight_locale_cache');
-    if (l) return l;
-  } catch {}
-  return 'zh-CN';
 }
 
 /**
@@ -179,7 +167,6 @@ export async function loadSettings(): Promise<UserSettings> {
       const initialSettings: UserSettings = {
         global: {
           ...DEFAULT_SETTINGS.global,
-          locale: getCachedBypassLocale(),
           theme: getCachedBypassTheme(),
         },
         cards: defaultCards,
