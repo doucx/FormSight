@@ -76,9 +76,9 @@ function isExplicitGlobal(key) {
 function checkKeyExists(key, cardId, vGlobal) {
   if (cardId && !isExplicitGlobal(key)) {
     const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
-    if (vGlobal.hasOwnProperty(cardKey)) return true;
+    if (Object.hasOwn(vGlobal, cardKey)) return true;
   }
-  return vGlobal.hasOwnProperty(key);
+  return Object.hasOwn(vGlobal, key);
 }
 
 const missingKeys = [];
@@ -114,8 +114,7 @@ function scanSourceFile(filepath) {
     cardId = matchCard[1];
   }
 
-  let match;
-  while ((match = T_CALL_REGEX.exec(content)) !== null) {
+  for (const match of content.matchAll(T_CALL_REGEX)) {
     const key = match[2];
     if (key.includes('${') || !key.trim()) continue;
     addMissing(relativePath, key, cardId);
