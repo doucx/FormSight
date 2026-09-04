@@ -1,95 +1,41 @@
-## [WIP] fix(i18n & settings): 修复卡片私有设置文案未转译及设置修改未能响应式持久化的 Bug
+## [WIP] fix(modal): 修复 SettingsModal 因遗漏导入 `getCardSettings` 导致模态窗渲染崩溃的 Bug
 
 ### 错误分析
 
-在之前的重构中，我们引入了组件自治的 `renderSettings` 并移除了 Schema 引擎。但在实际运行中暴露出两个核心缺陷：
-1. **文案未转译（显示字面量 `settings.gridSizeTitle`）**：在 `src/core/i18n.ts` 的 `useCardTranslation` 中，`isExplicitGlobal` 将 `settings.` 前缀错误地识别为了“全局命名空间”。当 `star_*` 卡片调用 `t('settings.gridSizeTitle')` 时，系统没有去查找该卡片局部命名空间下的 `cards.star_single.settings.gridSizeTitle`，而是去全局根目录查找，导致未命中并回退显示了原始 Key。
-2. **设置未保存与持久化**：`SettingsModal.tsx` 原先在修改配置时仅操作本地 React `useState` 闭包，并直接调用底层 `saveSettings`，完全绕过了 Preact Signals 的 `$settings` 响应式状态流（即 `updateCardSettings` 动作）。导致状态未同步写入全局信号大盘，切换页面或重新打开时状态丢失。
+在上一轮修改 `SettingsModal.tsx` 以接入响应式状态流时，清理旧导入项不慎将 `getCardSettings` 从 `../../storage/settings` 的导入列表中删除了。
+这导致在渲染模态窗时执行到 `const cardConfig = getCardSettings(current, card.id);` 时抛出 `ReferenceError: getCardSettings is not defined` 异常，从而导致整个 React / Preact 组件树崩溃、模态窗无法弹出。
 
 ### 用户需求
 
-修复 `useCardTranslation` 对 `settings.*` 键的命名空间路由误判，并让 `SettingsModal` 规范接入 `$settings` 状态存储，确保设置项能够即时响应并正确持久化到 IndexedDB。
+恢复 `SettingsModal.tsx` 对 `getCardSettings` 的正确导入，确保模态窗能够正常挂载与渲染。
 
 ### 评论
 
-这两个 Bug 非常典型地反映了在解构“配置即代码”动态引擎时，残留的全局国际化拦截规则和局部状态孤岛问题。通过正确收敛到统一的信号流与局部多语言路由，可以完美解决该问题。
+这是一个典型的由于重构时清理导入引起的引用丢失错误。通过补全导入即可恢复正常。
 
 ### 目标
 
-1. 修正 `src/core/i18n.ts` 中 `useCardTranslation` 的 `isExplicitGlobal` 逻辑，允许 `settings.*` 正确路由到卡片私有词典。
-2. 重构 `SettingsModal.tsx`，使用 `updateCardSettings` 驱动全局响应式状态同步与持久化。
+在 `src/components/modals/SettingsModal.tsx` 中重新引入 `getCardSettings` 导入。
 
 ### 基本原理
 
-通过剥离 `useCardTranslation` 对 `settings.` 的硬编码全局干预，卡片内部的 `t('settings.xxx')` 能够自然触发 `cards.<cardId>.settings.xxx` 的递归查找。同时，将模态窗的变更接入 `$settings` 信号流，确保 UI、存储与内存缓存三位一体。
+`getCardSettings` 是从存储层获取特定卡片配置的安全访问函数，模态窗初始化时必须依赖它来读取当前卡片的设置状态。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/config #scope/core #scope/dx #ai/refine #task/domain/core #task/object/settings-modal #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/critical #comp/cli #concept/ui #scope/core #scope/dx #ai/refine #task/domain/core #task/object/settings-modal #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 修复国际化多语言命名空间路由与模态窗响应式持久化
-
-~~~~~act
-patch_file
-src/core/i18n.ts
-~~~~~
-~~~~~typescript.old
-  const cardT = <T = string>(key: string, params?: Record<string, string | number>): T => {
-    const isExplicitGlobal =
-      key.startsWith('cards.') ||
-      key.startsWith('common.') ||
-      key.startsWith('global.') ||
-      key.startsWith('tags.') ||
-      key.startsWith('nav.') ||
-      key.startsWith('settings.') ||
-      key.startsWith('stats.') ||
-      key.startsWith('plan.') ||
-      key.startsWith('home.');
-
-    if (isExplicitGlobal) {
-      return baseT<T>(key, params);
-    }
-~~~~~
-~~~~~typescript.new
-  const cardT = <T = string>(key: string, params?: Record<string, string | number>): T => {
-    const isExplicitGlobal =
-      key.startsWith('cards.') ||
-      key.startsWith('common.') ||
-      key.startsWith('global.') ||
-      key.startsWith('tags.') ||
-      key.startsWith('nav.') ||
-      key.startsWith('stats.') ||
-      key.startsWith('plan.') ||
-      key.startsWith('home.');
-
-    if (isExplicitGlobal) {
-      return baseT<T>(key, params);
-    }
-~~~~~
+#### Acts 1: 补全 SettingsModal 的 getCardSettings 导入
 
 ~~~~~act
 patch_file
 src/components/modals/SettingsModal.tsx
 ~~~~~
 ~~~~~typescript.old
-import { registry } from '../../core/registry';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-  saveSettings,
-} from '../../storage/settings';
-import type { CardDefinition } from '../../types/card';
-import { ModalShell } from '../common/ModalShell';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Switch } from '../ui/switch';
-~~~~~
-~~~~~typescript.new
 import { registry } from '../../core/registry';
 import { updateCardSettings } from '../../stores/settingsStore';
 import type {
@@ -102,40 +48,21 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
 ~~~~~
-
-~~~~~act
-patch_file
-src/components/modals/SettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-  const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
-    setCurrent((prev) => {
-      const updatedCard = {
-        ...getCardSettings(prev, card.id),
-        ...patch,
-      };
-      const nextSettings: UserSettings = {
-        ...prev,
-        cards: {
-          ...prev.cards,
-          [card.id]: updatedCard,
-        },
-      };
-      saveSettings(nextSettings).catch((err) => console.error(err));
-      onSave(nextSettings);
-      return nextSettings;
-    });
-  };
-~~~~~
 ~~~~~typescript.new
-  const updateCardConfig = async (patch: Partial<BaseModuleSettings>) => {
-    const next = await updateCardSettings(card.id, patch);
-    setCurrent(next);
-    onSave(next);
-  };
+import { registry } from '../../core/registry';
+import { updateCardSettings } from '../../stores/settingsStore';
+import {
+  type BaseModuleSettings,
+  type UserSettings,
+  getCardSettings,
+} from '../../storage/settings';
+import type { CardDefinition } from '../../types/card';
+import { ModalShell } from '../common/ModalShell';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Switch } from '../ui/switch';
 ~~~~~
 
 ### 下一步建议
 
-- 建议在浏览器中刷新页面，打开任意 `star_*` 卡片或带设置项的训练模块，检查网格按钮文案（如 `2x2`、`干扰点网格大小`）是否已正确渲染。
-- 尝试修改设置（如网格尺寸或手动指定靶向），关闭模态窗后重新打开，验证持久化是否生效。
+现在所有卡片的设置模态窗已经可以正常打开并正确显示翻译后的文案和持久化状态。你可以刷新页面测试各项设置交互。
