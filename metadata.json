@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M SettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788490366.9343379, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 彻底废弃 TargetingSection 抽象黑洞，实现卡片专属设置的完全自治与精准多语言路由", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788490624.854211, "duration_ms": 0}}

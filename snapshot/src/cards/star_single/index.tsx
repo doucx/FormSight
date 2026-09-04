@@ -1,5 +1,4 @@
-import { Target } from 'lucide-preact';
-import { TargetingSection } from '../../components/settings/common/TargetingSection';
+import { Crosshair, Target } from 'lucide-preact';
 import { Button } from '../../components/ui/button';
 import type { CardManifest } from '../../core/cardContract';
 import { useCardTranslation } from '../../core/i18n';
@@ -57,22 +56,56 @@ export const starSingleCard: CardManifest<QuestionData, HitResult, Point, StarSe
             ))}
           </div>
         </div>
-        <TargetingSection
-          title={t('settings.targetingTitle')}
-          subTitle={t('settings.targetingSubTitle')}
-          mode={settings.targetingMode ?? 'off'}
-          onModeChange={(m) => updateSettings({ targetingMode: m })}
-          sectors={SECTOR_KEYS}
-          selectedSectors={settings.manualTargetSectors ?? []}
-          onToggleSector={(idx) => {
-            const current = settings.manualTargetSectors ?? [];
-            const next = current.includes(idx)
-              ? current.filter((s) => s !== idx)
-              : [...current, idx];
-            updateSettings({ manualTargetSectors: next });
-          }}
-          gridCols="grid-cols-4"
-        />
+        <div className="space-y-2 pt-2 border-t border-border/65">
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Crosshair className="w-4 h-4 text-primary" />
+            {t('settings.targetingTitle')}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {[
+              { id: 'off', label: t('settingsModal.targetingOff') },
+              { id: 'manual', label: t('settingsModal.targetingManual') },
+            ].map((m) => (
+              <Button
+                key={m.id}
+                variant={(settings.targetingMode ?? 'off') === m.id ? 'default' : 'outline'}
+                onClick={() => updateSettings({ targetingMode: m.id as 'off' | 'manual' })}
+                className="py-2 h-auto"
+              >
+                {m.label}
+              </Button>
+            ))}
+          </div>
+
+          {settings.targetingMode === 'manual' && (
+            <div className="bg-muted/60 p-3 rounded-2xl border border-border/60 space-y-2">
+              <div className="text-xs font-semibold text-muted-foreground">{t('settings.targetingSubTitle')}</div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {SECTOR_KEYS.map((name, idx) => {
+                  const selected = (settings.manualTargetSectors ?? []).includes(idx);
+                  const label = t(name);
+                  return (
+                    <Button
+                      key={name}
+                      variant={selected ? 'accent' : 'outline'}
+                      size="sm"
+                      onClick={() => {
+                        const current = settings.manualTargetSectors ?? [];
+                        const next = current.includes(idx)
+                          ? current.filter((s) => s !== idx)
+                          : [...current, idx];
+                        updateSettings({ manualTargetSectors: next });
+                      }}
+                      className="py-1.5 px-1 text-xs h-auto"
+                    >
+                      {label}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     );
   },
