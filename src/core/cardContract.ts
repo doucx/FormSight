@@ -91,27 +91,15 @@ export interface CardManifest<
     'en-US': Record<string, unknown>;
   };
 
-  /** 3. 核心领域逻辑 (推荐) */
-  engine?: CardEngineContract<TQuestion, THitResult, TAnswerVal, TSettings>;
+  /** 3. 核心领域逻辑 */
+  engine: CardEngineContract<TQuestion, THitResult, TAnswerVal, TSettings>;
 
-  /** 4. 表现层绑定 (推荐) */
-  ui?: CardUIContract<TQuestion, THitResult, TAnswerVal, TSettings>;
+  /** 4. 表现层绑定 */
+  ui: CardUIContract<TQuestion, THitResult, TAnswerVal, TSettings>;
 
   /** 5. 专属能力分析视图 (可选) */
   analytics?: {
     views: CardAnalyticsView[];
     fetchRecords?: (cardId: string) => Promise<UnifiedTrialRecord[]>;
-  };
-
-  // --- 兼容旧字段 (过渡期向后兼容) ---
-  icon?: (props: { className?: string }) => ComponentChildren;
-  renderSettings?: (props: {
-    settings: TSettings;
-    updateSettings: (patch: Partial<TSettings>) => void;
-  }) => ComponentChildren;
-  training?: CardEngineContract<TQuestion, THitResult, TAnswerVal, TSettings> & {
-    renderCanvas: (
-      props: CardCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
-    ) => ComponentChildren;
   };
 }
