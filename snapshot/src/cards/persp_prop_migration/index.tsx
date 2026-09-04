@@ -15,7 +15,6 @@ export const perspPropMigrationCard: CardManifest<
 > = {
   id: 'persp_prop_migration',
   domain: 'form_and_proportion',
-  icon: ArrowRightLeft,
   tags: {
     domain: ['form_and_proportion', 'spatial_structure'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const perspPropMigrationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -40,6 +39,9 @@ export const perspPropMigrationCard: CardManifest<
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: ArrowRightLeft,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspPropMigrationView
         key={question.id}

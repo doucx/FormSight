@@ -15,7 +15,6 @@ export const angleComparison2AfcCard: CardManifest<
 > = {
   id: 'angle_comparison_2afc',
   domain: 'form_and_proportion',
-  icon: Columns,
   tags: {
     domain: ['form_and_proportion', 'spatial_structure'],
     path: ['relational_mapping'],
@@ -26,7 +25,7 @@ export const angleComparison2AfcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -38,6 +37,9 @@ export const angleComparison2AfcCard: CardManifest<
       angleB: q.angleB,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Columns,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <AngleComparison2AfcView
         key={question.id}

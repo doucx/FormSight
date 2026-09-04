@@ -25,7 +25,6 @@ export const angleEstimationCard: CardManifest<
 > = {
   id: 'angle_estimation',
   domain: 'form_and_proportion',
-  icon: Compass,
   tags: {
     domain: ['form_and_proportion', 'spatial_structure'],
     path: ['absolute_estimation'],
@@ -36,24 +35,11 @@ export const angleEstimationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('angle_estimation');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -64,6 +50,22 @@ export const angleEstimationCard: CardManifest<
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Compass,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('angle_estimation');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AngleEstimationView
         key={question.id}

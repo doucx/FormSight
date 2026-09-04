@@ -25,7 +25,6 @@ export const perspVpConvergenceCard: CardManifest<
 > = {
   id: 'persp_vp_convergence',
   domain: 'spatial_structure',
-  icon: Sliders,
   tags: {
     domain: ['spatial_structure'],
     path: ['relational_mapping'],
@@ -36,24 +35,11 @@ export const perspVpConvergenceCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('persp_vp_convergence');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -64,6 +50,22 @@ export const perspVpConvergenceCard: CardManifest<
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Sliders,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('persp_vp_convergence');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <PerspVpConvergenceView
         key={question.id}

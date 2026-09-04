@@ -16,7 +16,6 @@ export const absGestureAxisCard: CardManifest<QuestionData, HitResult, number, B
   {
     id: 'abs_gesture_axis',
     domain: 'rhythm_and_notan',
-    icon: RotateCw,
     tags: {
       domain: ['rhythm_and_notan'],
       path: ['extraction'],
@@ -27,24 +26,11 @@ export const absGestureAxisCard: CardManifest<QuestionData, HitResult, number, B
       'zh-CN': zhCN,
       'en-US': enUS,
     },
-    renderSettings: ({ settings, updateSettings }) => {
-      const { t } = useCardTranslation('abs_gesture_axis');
-      return (
-        <div className="space-y-4">
-          <SettingToggleItem
-            title={t('settings.showToleranceBandTitle')}
-            description={t('settings.showToleranceBandDesc')}
-            checked={(settings.showToleranceBand as boolean) ?? true}
-            onChange={(val) => updateSettings({ showToleranceBand: val })}
-          />
-        </div>
-      );
-    },
     defaultSettings: {
       sliderHitMargin: 12,
       showToleranceBand: true,
     },
-    training: {
+    engine: {
       generateQuestion: (level) => generateQuestion(level),
       evaluateAnswer: (userVal, question) => checkHit(userVal, question),
       isHit: (res) => res.isHit,
@@ -54,6 +40,22 @@ export const absGestureAxisCard: CardManifest<QuestionData, HitResult, number, B
         targetValue: q.targetAngleDeg,
         errorValue: hitResult.errorValue,
       }),
+    },
+    ui: {
+      icon: RotateCw,
+      renderSettings: ({ settings, updateSettings }) => {
+        const { t } = useCardTranslation('abs_gesture_axis');
+        return (
+          <div className="space-y-4">
+            <SettingToggleItem
+              title={t('settings.showToleranceBandTitle')}
+              description={t('settings.showToleranceBandDesc')}
+              checked={(settings.showToleranceBand as boolean) ?? true}
+              onChange={(val) => updateSettings({ showToleranceBand: val })}
+            />
+          </div>
+        );
+      },
       renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
         <AbsGestureAxisView
           key={question.id}

@@ -15,7 +15,6 @@ export const relHueInductionCard: CardManifest<
 > = {
   id: 'rel_hue_induction',
   domain: 'color_and_value',
-  icon: Palette,
   tags: {
     domain: ['color_and_value'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const relHueInductionCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
@@ -42,6 +41,9 @@ export const relHueInductionCard: CardManifest<
       correctIndex: q.correctIndex,
       deltaEError: hitResult.deltaEError,
     }),
+  },
+  ui: {
+    icon: Palette,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <RelHueInductionView
         question={question}

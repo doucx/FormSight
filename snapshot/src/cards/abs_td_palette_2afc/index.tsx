@@ -15,7 +15,6 @@ export const absTdPalette2afcCard: CardManifest<
 > = {
   id: 'abs_td_palette_2afc',
   domain: 'color_and_value',
-  icon: Sparkles,
   tags: {
     domain: ['color_and_value'],
     path: ['concretization'],
@@ -26,7 +25,7 @@ export const absTdPalette2afcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -36,6 +35,9 @@ export const absTdPalette2afcCard: CardManifest<
       correctIndex: q.correctPatternIndex,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Sparkles,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsTdPalette2afcView
         key={question.id}

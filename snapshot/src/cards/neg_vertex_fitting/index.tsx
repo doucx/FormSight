@@ -15,7 +15,6 @@ export const negVertexFittingCard: CardManifest<
 > = {
   id: 'neg_vertex_fitting',
   domain: 'form_and_proportion',
-  icon: Crosshair,
   tags: {
     domain: ['form_and_proportion', 'spatial_structure'],
     path: ['absolute_estimation'],
@@ -27,7 +26,7 @@ export const negVertexFittingCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userPoint, question) => evaluateAnswer(userPoint, question),
     isHit: (res) => res.isHit,
@@ -38,6 +37,9 @@ export const negVertexFittingCard: CardManifest<
       userClick: [userVal.x, userVal.y],
       errorPixelDistance: hitResult.errorDistance,
     }),
+  },
+  ui: {
+    icon: Crosshair,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <NegVertexFittingView
         question={question}

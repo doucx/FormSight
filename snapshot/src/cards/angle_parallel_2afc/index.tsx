@@ -15,7 +15,6 @@ export const angleParallel2AfcCard: CardManifest<
 > = {
   id: 'angle_parallel_2afc',
   domain: 'form_and_proportion',
-  icon: Split,
   tags: {
     domain: ['form_and_proportion', 'spatial_structure'],
     path: ['relational_mapping'],
@@ -26,7 +25,7 @@ export const angleParallel2AfcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -37,6 +36,9 @@ export const angleParallel2AfcCard: CardManifest<
       angularDeviation: q.angularDeviation,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Split,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <AngleParallel2AfcView
         key={question.id}

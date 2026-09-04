@@ -15,7 +15,6 @@ export const perspStructure3DCard: CardManifest<
 > = {
   id: 'persp_structure_3d',
   domain: 'spatial_structure',
-  icon: Box,
   tags: {
     domain: ['spatial_structure'],
     path: ['absolute_estimation'],
@@ -27,7 +26,7 @@ export const perspStructure3DCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -39,6 +38,9 @@ export const perspStructure3DCard: CardManifest<
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Box,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspStructure3DView
         question={question}

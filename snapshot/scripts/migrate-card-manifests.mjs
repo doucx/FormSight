@@ -60,7 +60,8 @@ function extractProperty(source, propName) {
 }
 
 const cardsDir = path.resolve('src/cards');
-const cardDirs = fs.readdirSync(cardsDir, { withFileTypes: true })
+const cardDirs = fs
+  .readdirSync(cardsDir, { withFileTypes: true })
   .filter((d) => d.isDirectory())
   .map((d) => d.name);
 

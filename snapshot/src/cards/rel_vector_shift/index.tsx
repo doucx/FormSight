@@ -20,7 +20,6 @@ export const relVectorShiftCard: CardManifest<
 > = {
   id: 'rel_vector_shift',
   domain: 'color_and_value',
-  icon: Shuffle,
   tags: {
     domain: ['color_and_value'],
     path: ['relational_mapping'],
@@ -32,24 +31,11 @@ export const relVectorShiftCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('rel_vector_shift');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
@@ -62,6 +48,22 @@ export const relVectorShiftCard: CardManifest<
       userD: userVal,
       deltaEError: hitResult.deltaEError,
     }),
+  },
+  ui: {
+    icon: Shuffle,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('rel_vector_shift');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <RelVectorShiftView
         question={question}

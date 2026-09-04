@@ -20,7 +20,6 @@ export const relLightnessInductionCard: CardManifest<
 > = {
   id: 'rel_lightness_induction',
   domain: 'color_and_value',
-  icon: Sun,
   tags: {
     domain: ['color_and_value'],
     path: ['relational_mapping'],
@@ -32,24 +31,11 @@ export const relLightnessInductionCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('rel_lightness_induction');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
@@ -62,6 +48,22 @@ export const relLightnessInductionCard: CardManifest<
       userRightColor: userVal,
       deltaEError: hitResult.deltaEError,
     }),
+  },
+  ui: {
+    icon: Sun,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('rel_lightness_induction');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <RelLightnessInductionView
         question={question}

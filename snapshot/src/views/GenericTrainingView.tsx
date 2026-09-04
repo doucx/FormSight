@@ -49,7 +49,7 @@ export function GenericTrainingView<
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const domain = card.domain;
   const engine = manifest.engine ?? manifest.training!;
-  const renderCanvas = manifest.ui?.renderCanvas ?? manifest.training!.renderCanvas;
+  const renderCanvas = manifest.ui?.renderCanvas ?? manifest.training?.renderCanvas;
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,

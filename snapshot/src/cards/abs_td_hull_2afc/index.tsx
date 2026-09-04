@@ -15,7 +15,6 @@ export const absTdHull2afcCard: CardManifest<
 > = {
   id: 'abs_td_hull_2afc',
   domain: 'form_and_proportion',
-  icon: Columns,
   tags: {
     domain: ['form_and_proportion'],
     path: ['concretization'],
@@ -26,7 +25,7 @@ export const absTdHull2afcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -36,6 +35,9 @@ export const absTdHull2afcCard: CardManifest<
       correctChoice: q.correctHullChoice,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Columns,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsTdHull2afcView
         key={question.id}
