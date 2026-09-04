@@ -176,7 +176,6 @@ export function useCardTranslation(cardId: string) {
       key.startsWith('global.') ||
       key.startsWith('tags.') ||
       key.startsWith('nav.') ||
-      key.startsWith('settings.') ||
       key.startsWith('stats.') ||
       key.startsWith('plan.') ||
       key.startsWith('home.');

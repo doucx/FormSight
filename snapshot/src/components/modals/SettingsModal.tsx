@@ -2,11 +2,10 @@ import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-  saveSettings,
+import { updateCardSettings } from '../../stores/settingsStore';
+import type {
+  BaseModuleSettings,
+  UserSettings,
 } from '../../storage/settings';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
@@ -28,23 +27,10 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
 
   const cardTitle = getCardTitle(card, t);
 
-  const updateCardConfig = (patch: Partial<BaseModuleSettings>) => {
-    setCurrent((prev) => {
-      const updatedCard = {
-        ...getCardSettings(prev, card.id),
-        ...patch,
-      };
-      const nextSettings: UserSettings = {
-        ...prev,
-        cards: {
-          ...prev.cards,
-          [card.id]: updatedCard,
-        },
-      };
-      saveSettings(nextSettings).catch((err) => console.error(err));
-      onSave(nextSettings);
-      return nextSettings;
-    });
+  const updateCardConfig = async (patch: Partial<BaseModuleSettings>) => {
+    const next = await updateCardSettings(card.id, patch);
+    setCurrent(next);
+    onSave(next);
   };
 
   return (
