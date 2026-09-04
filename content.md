@@ -1,163 +1,55 @@
-经过与代码库当前架构的比对，主要发现了以下过时与缺失项：
-1. **废弃的 Packs 目录**：工程已完成 Flat Cards 架构升级，`src/packs/` 目录已不存在，原 `packs` 预设已失效。
-2. **新增的 SDK 与 Signals 响应式 Store**：新增的 `@formsight/card-sdk`（`src/card-sdk/index.ts`）和全局响应式状态层 `src/stores/`（包含 `planStore.ts`、`profileStore.ts` 等）尚未纳入预设。
-3. **失效的设置组件路径**：`src/components/settings/DynamicDomainSettings.tsx` 已被拆解为 `sections/` 与 `common/` 模块。
+好的，我们已经完成了路径别名配置、`@formsight/card-sdk` 基础设施搭建，并将 `src/cards/` 目录下的所有卡片文件迁移到了 SDK 统一导入，同时同步更新了 `piconfig.json`。现在我们将这一逻辑完整的工作单元提交到 Git 仓库。
 
-我将生成一个计划，更新 `piconfig.json`，使其与当前架构完全对齐。
-
-## [WIP] chore: 同步更新 piconfig.json 预设配置以匹配当前工程架构
+## [COMMIT] feat(sdk): establish card sdk and migrate card host imports to alias
 
 ### 用户需求
-根据当前代码库的实际目录结构和最新演进状态，更新项目上下文抓取配置 `piconfig.json`，清理不存在的废弃路径并纳入新增的 Card SDK 与状态管理层。
+将本次“路径别名配置、Card SDK 基础设施构建、卡片跨级依赖收敛以及上下文工具配置更新”的改动打包为一个标准的 Git 提交。
 
 ### 评论
-维护精准的上下文探查配置（PathInspector config）对于 AI 代理在后续跨会话重构时准确、高效地获取完整依赖图至关重要。
+本次改造彻底消除了所有卡片对宿主内部物理目录路径（`../../../../core/...`、`../../../utils/...` 等）的强耦合，为后续卡片独立化、第三方扩展接入以及 UI 原子化重构打下了坚实的防腐地基。
 
 ### 目标
-1. 移除已废弃的 `packs` 预设，或将其收敛更新。
-2. 将 `src/card-sdk/index.ts` 分别纳入 `core` 和 `cards` 预设。
-3. 将 `src/stores/` 状态管理层按需加入 `core`、`plan` 和 `stats` 预设。
-4. 修正 `cards` 预设中已删除的 `DynamicDomainSettings.tsx`，补充 `src/components/settings/sections/`。
+1. 将所有涉及别名配置、SDK 导出、卡片导入替换及配置更新的文件暂存到 Git。
+2. 提交一份详尽遵循 Conventional Commits 规范的 Git 提交信息。
 
 ### 基本原理
-`piconfig.json` 充当模块上下文过滤器。去除 404 死路径并补充核心架构防腐层与状态驱动层后，能确保提取的上下文无噪点且完备。
+完成卡片层与宿主内核解耦这一完整里程碑，将架构演进的第一阶段成果进行固化与持久化记录。
 
 ### 标签
-#intent/tooling #flow/ready #priority/medium #comp/build #concept/config #scope/dx #ai/instruct #task/domain/tooling #task/object/piconfig #task/action/update #task/state/begin #task/status/active
+#intent/build #flow/done #priority/high #comp/interfaces #concept/config #scope/core #scope/dx #ai/instruct #task/domain/architecture #task/object/card-sdk #task/action/setup #task/state/end #task/status/completed
 
 ---
 
 ### Script
 
-#### Acts 1: 更新 `piconfig.json` 预设配置
+#### Acts 1: 暂存并提交代码变更
 
-我们将更新 `piconfig.json`，匹配当前系统的真实文件布局。
+我们将修改后的别名配置、新增的 SDK 文件、批量迁移后的卡片源文件以及更新后的 `piconfig.json` 提交到版本控制中。
 
 ~~~~~act
-write_file
+git_add
+tsconfig.json
+vite.config.ts
 piconfig.json
+src/card-sdk/index.ts
+src/cards
 ~~~~~
-~~~~~json
-{
-  "presets": {
-    "core": {
-      "format": "xml",
-      "extension": ["ts", "tsx"],
-      "paths": [
-        "src/types/plan.ts",
-        "src/types/card.ts",
-        "src/types/index.ts",
-        "src/config/planTemplates.ts",
-        "src/config/tags.ts",
-        "src/card-sdk/index.ts",
-        "src/core/i18n.ts",
-        "src/core/registry.ts",
-        "src/core/contracts.ts",
-        "src/core/cardContract.ts",
-        "src/core/engine/adaptiveEngine.ts",
-        "src/stores/",
-        "src/storage/settings.ts",
-        "src/storage/planStorage.ts",
-        "src/storage/repository.ts",
-        "src/storage/db/schema.ts",
-        "src/storage/db/queries.ts",
-        "src/storage/db/importExport.ts",
-        "src/hooks/useAppBootstrap.ts",
-        "src/hooks/useTrainingSession.ts",
-        "src/hooks/session/useIdleProtection.ts",
-        "src/hooks/session/useTrainingKeybindings.ts",
-        "src/hooks/useHashRoute.ts",
-        "src/hooks/useTodayStats.ts",
-        "src/hooks/useTheme.ts",
-        "src/components/routing/AppRouter.tsx",
-        "src/components/navigation/AppNavigation.tsx",
-        "src/components/training/TrainingShell.tsx",
-        "src/components/modals/SessionSummaryModal.tsx",
-        "src/components/modals/GlobalSettingsModal.tsx",
-        "src/components/modals/SettingsModal.tsx",
-        "src/views/HomeView.tsx",
-        "src/views/GenericTrainingView.tsx",
-        "src/views/DiscoveryView.tsx",
-        "src/app.tsx"
-      ]
-    },
-    "cards": {
-      "format": "xml",
-      "extension": ["ts", "tsx", "json"],
-      "paths": [
-        "src/card-sdk/index.ts",
-        "src/types/card.ts",
-        "src/types/index.ts",
-        "src/config/tags.ts",
-        "src/core/cardContract.ts",
-        "src/core/contracts.ts",
-        "src/core/i18n.ts",
-        "src/storage/settings.ts",
-        "src/components/common/",
-        "src/components/ui/",
-        "src/components/settings/common/",
-        "src/components/settings/sections/",
-        "src/core/math/",
-        "src/core/geometry/",
-        "src/core/color/",
-        "src/core/canvas/hidpi.ts",
-        "src/core/canvas/drawPointGrid.ts",
-        "src/core/canvas/drawPolygon.ts",
-        "src/utils/theme.ts",
-        "src/utils/cn.ts",
-        "src/cards/star_single/",
-        "src/cards/color_hue/",
-        "src/cards/neg_shape_match_2afc/"
-      ]
-    },
-    "plan": {
-      "format": "xml",
-      "extension": ["ts", "tsx"],
-      "paths": [
-        "src/types/plan.ts",
-        "src/config/planTemplates.ts",
-        "src/storage/planStorage.ts",
-        "src/stores/planStore.ts",
-        "src/components/plan/PlanHeroCard.tsx",
-        "src/components/plan/PlanSummaryModal.tsx",
-        "src/components/plan/editor/PlanEditorHeader.tsx",
-        "src/components/plan/editor/PlanStageList.tsx",
-        "src/components/plan/editor/PlanLibraryDrawer.tsx",
-        "src/components/plan/editor/CardPickerPanel.tsx",
-        "src/components/plan/editor/planItemUtils.ts",
-        "src/components/plan/editor/usePlanEditorState.ts",
-        "src/views/PlanEditorView.tsx",
-        "src/views/PlanTrainingView.tsx"
-      ]
-    },
-    "stats": {
-      "format": "xml",
-      "extension": ["ts", "tsx"],
-      "paths": [
-        "src/core/analytics/",
-        "src/core/canvas/charts/",
-        "src/core/math/downsample.ts",
-        "src/core/worker/workerClient.ts",
-        "src/workers/compute.worker.ts",
-        "src/stores/profileStore.ts",
-        "src/components/stats/ActivityHeatmapCard.tsx",
-        "src/components/stats/CognitiveMasteryGrid.tsx",
-        "src/components/stats/StatsMetricCards.tsx",
-        "src/hooks/useGlobalStatsData.ts",
-        "src/hooks/useTodayStats.ts",
-        "src/views/GlobalStatsView.tsx",
-        "src/views/CardAnalyticsView.tsx"
-      ]
-    },
-    "full": {
-      "format": "xml",
-      "extension": ["ts", "tsx", "json", "css", "html"],
-      "paths": ["src/", "./index.html"],
-      "ignore": ["*.test.ts", "*.test.tsx"]
-    }
-  }
-}
+
+~~~~~act
+git_commit
+~~~~~
+~~~~~text
+feat(sdk): establish card sdk and migrate card host imports to alias
+
+- Configure path aliases '@/*' and '@formsight/card-sdk' in tsconfig.json and vite.config.ts
+- Create src/card-sdk/index.ts exporting math, procedural noise, geometry, OKLab color models, HiDPI canvas utilities, analytics charts, point loupe hook, i18n, theme tokens, and common UI primitives
+- Mark legacy view wrappers (StandardNafcView, Standard2AfcView, StandardSliderView) as @deprecated in the SDK for graceful migration
+- Batch migrate all 20+ cards under src/cards/ to import host utilities strictly from '@formsight/card-sdk', eliminating deep relative paths (../../../../)
+- Update piconfig.json to reflect current project architecture and remove stale pack paths
 ~~~~~
 
 ### 下一步建议
-配置已完全同步，您可以使用相应的预设（例如 `core`、`cards`、`plan` 等）提取最新、最干净的代码上下文。接下来可以继续推进**“倒置 UI 控制权：解散 StandardNafcView”**的任务。
+- **重构 UI 控制权**：目前 SDK 基础设施已全部到位，所有卡片均已接入 `@formsight/card-sdk`。下一步可以推进文档中指出的第二大痛点——**“倒置的 UI 控制权”**：
+  1. 提炼 `useNafcShortcuts`、`use2AfcShortcuts` 等原子键盘快捷键 Hook。
+  2. 将原子 Hook 通过 `@formsight/card-sdk` 导出。
+  3. 改造 `src/cards/` 中使用 `StandardNafcView` 的各个卡片（如 `rel_vector_shift`, `abs_palette_clustering` 等），让卡片自行进行原生组合式布局，逐步淘汰并彻底删除老旧的 `StandardNafcView` 包装器。
