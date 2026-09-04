@@ -1,4 +1,5 @@
 import { computed, signal } from '@preact/signals';
+import { i18n } from '../core/i18n';
 import { applyThemeToDocument } from '../hooks/useTheme';
 import {
   type BaseModuleSettings,
@@ -19,6 +20,9 @@ export async function initSettingsStore(): Promise<UserSettings> {
   const loaded = await loadSettingsFromDB();
   $settings.value = loaded;
   applyThemeToDocument(loaded.global.theme);
+  if (loaded.global.locale) {
+    i18n.setLocale(loaded.global.locale);
+  }
   return loaded;
 }
 
@@ -35,6 +39,9 @@ export async function updateGlobalSettings(
   $settings.value = next;
   if (patch.theme) {
     applyThemeToDocument(patch.theme);
+  }
+  if (patch.locale) {
+    i18n.setLocale(patch.locale);
   }
   await saveSettingsToDB(next);
   return next;

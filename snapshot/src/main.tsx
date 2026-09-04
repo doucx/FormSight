@@ -1,5 +1,6 @@
 import { render } from 'preact';
 import { App } from './app';
+import { i18n } from './core/i18n';
 import { applyThemeToDocument } from './hooks/useTheme';
 import { getCachedBypassTheme, loadSettings } from './storage/settings';
 import './index.css';
@@ -9,7 +10,10 @@ applyThemeToDocument(getCachedBypassTheme());
 
 // 异步引导 IndexedDB 并渲染主应用
 async function bootstrap() {
-  await loadSettings();
+  const settings = await loadSettings();
+  if (settings.global.locale) {
+    i18n.setLocale(settings.global.locale);
+  }
   const appElement = document.getElementById('app');
   if (appElement) {
     render(<App />, appElement);

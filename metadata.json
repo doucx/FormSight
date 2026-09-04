@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(cards): 重构设置渲染范式与分析视图作用域翻译体系", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788513485.1301923, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复语言持久化与 IndexedDB 状态同步问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788514345.178463, "duration_ms": 0}}

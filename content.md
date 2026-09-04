@@ -1,50 +1,376 @@
-好的，根据你的指示，我将为当前工作区的这批改动生成一个标准的 `[COMMIT]` 计划，将设置渲染机制改造（Schema 转向内联 `renderSettings`）、分析视图作用域翻译支持（`ScopedTranslator`）、卡片逻辑微调与 i18n 检查脚本等变更作为一个完整的工作单元进行提交。
+好的，我将为你修复语言设置在页面刷新后回退为中文的问题，并将语言状态完全收敛同步至 IndexedDB，消除对 `localStorage` 的无效依赖。
 
-## [COMMIT] refactor(cards): 重构设置渲染范式与分析视图作用域翻译体系
+## [WIP] fix: 修复语言持久化与 IndexedDB 状态同步问题
+
+### 错误分析
+
+1. **缓存 Key 失配与脱节**：`src/core/i18n.ts` 的 `getSavedLocale` 读取的是早期遗留的不存在的 key `formsight_user_settings`，导致初始化时始终被降级回退至默认值 `'zh-CN'`。
+2. **异步初始化未同步 i18n 实例**：应用启动时 `main.tsx` 和 `initSettingsStore` 仅从 IndexedDB 加载了设置并同步了暗色主题，但未将读取到的 `settings.global.locale` 同步调用 `i18n.setLocale()`，导致应用层 Signal 状态与底层 i18n 翻译实例脱节。
+3. **渲染时序颠倒**：主应用渲染挂载先于或未等待语言实例注入，使得组件首帧按照默认的中文词典完成初始渲染。
 
 ### 用户需求
-将工作区中已完成的重构与调整提交到 Git 仓库，包括去除动态设置 Schema 转向组件化 `renderSettings`、在分析视图中注入作用域翻译器、完善词典与添加静态多语言检查脚本等。
+
+彻底修复在中文系统环境中切换至英文后刷新页面变回中文的问题；将语言配置的持久化与读取完全基于 IndexedDB，弃用并移除多余的 `localStorage` 语言旁路缓存。
 
 ### 评论
-本次修改彻底移除了配置繁琐且缺乏表现力的 `DynamicDomainSettings` Schema 体系，改为在各卡片的 `CardManifest` 中显式声明 `renderSettings` Preact 渲染函数，极大提升了灵活性；同时为 Canvas/分析组件引入卡片级别的 `ScopedTranslator`，解决了之前分析视图侵入性拼接全局 key 的问题。这是一次高质量的解耦与重构。
+
+这是一个典型的客户端多状态源不一致问题。语言配置应当遵从“单一真实数据源（SSOT）”原则。通过在主入口挂载渲染前等待 IndexedDB 加载并统一派发 `i18n.setLocale()`，可以确保应用在第一帧挂载时即可正确显示用户指定的语言。
 
 ### 目标
-1. 暂存工作区中的所有新增、修改与删除的文件。
-2. 遵循 Conventional Commits 规范，创建清晰严谨的 Git 提交。
+
+1. 修复 `src/core/i18n.ts`，移除失效的 `localStorage` 读取代码，确立纯内存单例初始化。
+2. 在 `src/main.tsx` 挂载 DOM 前，使用从 IndexedDB 读取的 `settings.global.locale` 初始化 `i18n` 语言实例。
+3. 在 `src/stores/settingsStore.ts` 的 `initSettingsStore` 和 `updateGlobalSettings` 中联动 `i18n.setLocale()`，保证 Signal 与 i18n 实例强一致。
+4. 清理 `src/storage/settings.ts` 中关于 locale 的 `localStorage` 冗余代码。
 
 ### 基本原理
-按照 ACA 规范，将纯净的文件系统变更与 Git 提交操作严格隔离。用户确认提交后，通过 `git_add` 与 `git_commit` 指令将代码变动固化在版本历史中。
+
+在入口函数 `bootstrap` 中，`await loadSettings()` 获取到 IndexedDB 中的 `UserSettings` 后，优先调用 `i18n.setLocale(settings.global.locale)`，然后再调用 `render(<App />, appElement)`。这样 Preact 在挂载首帧虚拟 DOM 时，所有 `useTranslation()` 组件都直接以数据库中已保存的目标语言进行渲染，彻底解决页面刷新回退中文的问题。
 
 ### 标签
-#intent/refine #flow/ready #priority/medium #comp/interfaces #comp/build #scope/core #scope/api #ai/instruct #task/domain/ui #task/object/card-settings-i18n #task/action/refactor #task/state/end #task/status/completed
+
+#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/locale-persistence #task/action/bug-fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交所有变更
-
-我们将把已完成的设置渲染重构、作用域翻译注入及相关卡片逻辑统一提交。
+#### Acts 1: 移除 `i18n.ts` 中失效的 `localStorage` 读取代码
 
 ~~~~~act
-git_add
-.
+patch_file
+src/core/i18n.ts
 ~~~~~
+~~~~~typescript
+export type LocaleDictionary = Record<string, unknown>;
+
+function getSavedLocale(): string {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return 'zh-CN';
+  }
+  try {
+    const raw = localStorage.getItem('formsight_user_settings');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.global?.locale) {
+        return parsed.global.locale;
+      }
+    }
+  } catch {}
+  return 'zh-CN';
+}
+
+class I18nManager {
+  private currentLocale = 'zh-CN';
+  private fallbackLocale = 'zh-CN';
+  private dictionaries: Record<string, LocaleDictionary> = {};
+  private listeners = new Set<(locale: string) => void>();
+
+  constructor() {
+    this.currentLocale = getSavedLocale();
+    this.registerGlobalLocales({
+      'zh-CN': zhCNGlobal as LocaleDictionary,
+      'en-US': enUSGlobal as LocaleDictionary,
+    });
+  }
+
+  public init(initialLocale?: string): void {
+    if (initialLocale) {
+      this.setLocale(initialLocale);
+    } else {
+      const saved = getSavedLocale();
+      if (saved && saved !== this.currentLocale) {
+        this.setLocale(saved);
+      }
+    }
+  }
+~~~~~
+~~~~~typescript
+export type LocaleDictionary = Record<string, unknown>;
+
+function getSavedLocale(): string {
+  return 'zh-CN';
+}
+
+class I18nManager {
+  private currentLocale = 'zh-CN';
+  private fallbackLocale = 'zh-CN';
+  private dictionaries: Record<string, LocaleDictionary> = {};
+  private listeners = new Set<(locale: string) => void>();
+
+  constructor() {
+    this.currentLocale = getSavedLocale();
+    this.registerGlobalLocales({
+      'zh-CN': zhCNGlobal as LocaleDictionary,
+      'en-US': enUSGlobal as LocaleDictionary,
+    });
+  }
+
+  public init(initialLocale?: string): void {
+    if (initialLocale) {
+      this.setLocale(initialLocale);
+    }
+  }
+~~~~~
+
+#### Acts 2: 清理 `settings.ts` 中 locale 相关的 `localStorage` 缓存
 
 ~~~~~act
-git_commit
+patch_file
+src/storage/settings.ts
 ~~~~~
-~~~~~text
-refactor(cards): refactor settings rendering paradigm and analytics i18n scoping
+~~~~~typescript
+function syncBypassCache(settings: UserSettings): void {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+  try {
+    if (settings.global.theme) {
+      localStorage.setItem('formsight_theme_cache', settings.global.theme);
+    }
+    if (settings.global.locale) {
+      localStorage.setItem('formsight_locale_cache', settings.global.locale);
+    }
+  } catch {}
+}
 
-- Deprecate SettingFieldSchema and DynamicDomainSettings in favor of renderSettings component function in CardManifest
-- Introduce ScopedTranslator and createScopedTranslator for isolated card-level translations in canvas visualizers and analytics diagnostics
-- Update analytics signatures across all cards to accept scoped translator `t`
-- Fix type definitions and evaluation in neg_shape_match_2afc and persp_structure_3d
-- Add scripts/check-i18n.mjs to statically validate missing i18n keys across codebase
-- Clean up unused exports and dependencies
+export function getCachedBypassTheme(): ThemeMode {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'system';
+  try {
+    const t = localStorage.getItem('formsight_theme_cache');
+    if (t === 'light' || t === 'dark' || t === 'system') return t;
+  } catch {}
+  return 'system';
+}
+
+export function getCachedBypassLocale(): string {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'zh-CN';
+  try {
+    const l = localStorage.getItem('formsight_locale_cache');
+    if (l) return l;
+  } catch {}
+  return 'zh-CN';
+}
+
+/**
+ * 从 IndexedDB 异步加载全局设置并更新内存缓存
+ */
+export async function loadSettings(): Promise<UserSettings> {
+  try {
+    const db = await getDB();
+    const stored = await db.get('app_settings', 'global_settings');
+    const defaultCards = buildDefaultCardSettings();
+
+    if (!stored) {
+      const initialSettings: UserSettings = {
+        global: {
+          ...DEFAULT_SETTINGS.global,
+          locale: getCachedBypassLocale(),
+          theme: getCachedBypassTheme(),
+        },
+        cards: defaultCards,
+      };
+      cachedSettings = initialSettings;
+      await db.put('app_settings', initialSettings, 'global_settings');
+      syncBypassCache(initialSettings);
+      return initialSettings;
+    }
+~~~~~
+~~~~~typescript
+function syncBypassCache(settings: UserSettings): void {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+  try {
+    if (settings.global.theme) {
+      localStorage.setItem('formsight_theme_cache', settings.global.theme);
+    }
+  } catch {}
+}
+
+export function getCachedBypassTheme(): ThemeMode {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return 'system';
+  try {
+    const t = localStorage.getItem('formsight_theme_cache');
+    if (t === 'light' || t === 'dark' || t === 'system') return t;
+  } catch {}
+  return 'system';
+}
+
+/**
+ * 从 IndexedDB 异步加载全局设置并更新内存缓存
+ */
+export async function loadSettings(): Promise<UserSettings> {
+  try {
+    const db = await getDB();
+    const stored = await db.get('app_settings', 'global_settings');
+    const defaultCards = buildDefaultCardSettings();
+
+    if (!stored) {
+      const initialSettings: UserSettings = {
+        global: {
+          ...DEFAULT_SETTINGS.global,
+          theme: getCachedBypassTheme(),
+        },
+        cards: defaultCards,
+      };
+      cachedSettings = initialSettings;
+      await db.put('app_settings', initialSettings, 'global_settings');
+      syncBypassCache(initialSettings);
+      return initialSettings;
+    }
+~~~~~
+
+#### Acts 3: 在 `settingsStore.ts` 初始化与更新时同步 `i18n` 语言实例
+
+~~~~~act
+patch_file
+src/stores/settingsStore.ts
+~~~~~
+~~~~~typescript
+import { computed, signal } from '@preact/signals';
+import { applyThemeToDocument } from '../hooks/useTheme';
+import {
+  type BaseModuleSettings,
+  DEFAULT_BASE_SETTINGS,
+  DEFAULT_SETTINGS,
+  type ThemeMode,
+  type UserSettings,
+  loadSettings as loadSettingsFromDB,
+  saveSettings as saveSettingsToDB,
+} from '../storage/settings';
+
+export const $settings = signal<UserSettings>(DEFAULT_SETTINGS);
+
+export const $currentTheme = computed<ThemeMode>(() => $settings.value.global.theme || 'system');
+export const $currentLocale = computed<string>(() => $settings.value.global.locale || 'zh-CN');
+
+export async function initSettingsStore(): Promise<UserSettings> {
+  const loaded = await loadSettingsFromDB();
+  $settings.value = loaded;
+  applyThemeToDocument(loaded.global.theme);
+  return loaded;
+}
+
+export async function updateGlobalSettings(
+  patch: Partial<UserSettings['global']>,
+): Promise<UserSettings> {
+  const next: UserSettings = {
+    ...$settings.value,
+    global: {
+      ...$settings.value.global,
+      ...patch,
+    },
+  };
+  $settings.value = next;
+  if (patch.theme) {
+    applyThemeToDocument(patch.theme);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
+~~~~~
+~~~~~typescript
+import { computed, signal } from '@preact/signals';
+import { i18n } from '../core/i18n';
+import { applyThemeToDocument } from '../hooks/useTheme';
+import {
+  type BaseModuleSettings,
+  DEFAULT_BASE_SETTINGS,
+  DEFAULT_SETTINGS,
+  type ThemeMode,
+  type UserSettings,
+  loadSettings as loadSettingsFromDB,
+  saveSettings as saveSettingsToDB,
+} from '../storage/settings';
+
+export const $settings = signal<UserSettings>(DEFAULT_SETTINGS);
+
+export const $currentTheme = computed<ThemeMode>(() => $settings.value.global.theme || 'system');
+export const $currentLocale = computed<string>(() => $settings.value.global.locale || 'zh-CN');
+
+export async function initSettingsStore(): Promise<UserSettings> {
+  const loaded = await loadSettingsFromDB();
+  $settings.value = loaded;
+  applyThemeToDocument(loaded.global.theme);
+  if (loaded.global.locale) {
+    i18n.setLocale(loaded.global.locale);
+  }
+  return loaded;
+}
+
+export async function updateGlobalSettings(
+  patch: Partial<UserSettings['global']>,
+): Promise<UserSettings> {
+  const next: UserSettings = {
+    ...$settings.value,
+    global: {
+      ...$settings.value.global,
+      ...patch,
+    },
+  };
+  $settings.value = next;
+  if (patch.theme) {
+    applyThemeToDocument(patch.theme);
+  }
+  if (patch.locale) {
+    i18n.setLocale(patch.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
+~~~~~
+
+#### Acts 4: 在 `main.tsx` 挂载应用前，从 IndexedDB 取回配置并同步 `i18n`
+
+~~~~~act
+patch_file
+src/main.tsx
+~~~~~
+~~~~~typescript
+import { render } from 'preact';
+import { App } from './app';
+import { applyThemeToDocument } from './hooks/useTheme';
+import { getCachedBypassTheme, loadSettings } from './storage/settings';
+import './index.css';
+
+// 使用旁路缓存极速应用外观主题，避免首屏渲染闪烁
+applyThemeToDocument(getCachedBypassTheme());
+
+// 异步引导 IndexedDB 并渲染主应用
+async function bootstrap() {
+  await loadSettings();
+  const appElement = document.getElementById('app');
+  if (appElement) {
+    render(<App />, appElement);
+  }
+}
+
+bootstrap();
+~~~~~
+~~~~~typescript
+import { render } from 'preact';
+import { App } from './app';
+import { i18n } from './core/i18n';
+import { applyThemeToDocument } from './hooks/useTheme';
+import { getCachedBypassTheme, loadSettings } from './storage/settings';
+import './index.css';
+
+// 使用旁路缓存极速应用外观主题，避免首屏渲染闪烁
+applyThemeToDocument(getCachedBypassTheme());
+
+// 异步引导 IndexedDB 并渲染主应用
+async function bootstrap() {
+  const settings = await loadSettings();
+  if (settings.global.locale) {
+    i18n.setLocale(settings.global.locale);
+  }
+  const appElement = document.getElementById('app');
+  if (appElement) {
+    render(<App />, appElement);
+  }
+}
+
+bootstrap();
 ~~~~~
 
 ### 下一步建议
-- **多语言完整性验证**: 建议在终端运行 `node scripts/check-i18n.mjs`，确保代码中新增的全部词条在 `zh-CN.json` 和 `en-US.json` 中均已正确定位。
-- **全量类型检查**: 运行 `npm run build` 或 `tsc --noEmit`，确保所有移除了旧 Schema 的卡片与设置组件均通过严格类型校验。
+
+1. **测试验证**：在开发服务器上测试语言切换流程：在设置中切换为 English，刷新浏览器页面，确认界面仍稳定显示为英文。
+2. **主题首屏变亮动画优化**：接下来可以继续处理第 2 个问题——移除最外层容器 `src/app.tsx` 中的 `transition-colors duration-200`，并统一通过 IDB/挂载前状态消除浅色/深色模式下的过渡闪烁。
