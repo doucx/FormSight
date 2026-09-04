@@ -1,9 +1,12 @@
 import { Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-import { Choice2AfcContainer } from '../../components/common/Choice2AfcContainer';
-import { QuestionCardShell } from '../../components/common/QuestionCardShell';
-import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { useCardTranslation } from '../../core/i18n';
+
+import {
+  Choice2AfcContainer,
+  QuestionCardShell,
+  drawPolygonCanvas,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegShapeMatch2AfcViewProps {

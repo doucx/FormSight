@@ -1,9 +1,12 @@
 import { Sparkles } from 'lucide-preact';
-import { CanvasView } from '../../components/common/CanvasView';
-import { StandardNafcView } from '../../components/common/StandardNafcView';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import { CANVAS_THEME } from '../../utils/theme';
+
+import {
+  CANVAS_THEME,
+  CanvasView,
+  StandardNafcView,
+  hsvToHex,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 

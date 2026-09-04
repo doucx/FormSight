@@ -1,13 +1,16 @@
 import { Eye } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { DualViewportContainer } from '../../components/common/DualViewportContainer';
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import { QuestionCardShell } from '../../components/common/QuestionCardShell';
-import { Button } from '../../components/ui/button';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import type { RelativeColorSettings } from '../../storage/settings';
-import { PALETTE } from '../../utils/theme';
+
+import {
+  Button,
+  DualViewportContainer,
+  HsvTrackSlider,
+  PALETTE,
+  QuestionCardShell,
+  type RelativeColorSettings,
+  hsvToHex,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 
 export interface RelLightnessInductionViewProps {

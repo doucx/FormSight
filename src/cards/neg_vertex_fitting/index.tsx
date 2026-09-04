@@ -1,7 +1,6 @@
 import { Crosshair } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
-import type { Point } from '../../types';
+
+import type { BaseModuleSettings, CardManifest, Point } from '@formsight/card-sdk';
 import { NegVertexFittingView } from './NegVertexFittingView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

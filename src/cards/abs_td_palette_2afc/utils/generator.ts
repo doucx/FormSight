@@ -1,12 +1,13 @@
-import { setup2DCanvas } from '../../../core/canvas/hidpi';
-import { hsvToHex } from '../../../core/color/colorUtils';
 import {
+  CANVAS_THEME,
+  createShuffledChoices,
   generateTetrahedralDistractors,
   getDistractorDistanceForLevel,
+  hexToRgba,
+  hsvToHex,
   hsvToOkLab,
-} from '../../../core/color/oklchUtils';
-import { createShuffledChoices } from '../../../core/math/mathUtils';
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
+  setup2DCanvas,
+} from '@formsight/card-sdk';
 import type { HitResult, PaletteTile, QuestionData } from '../types';
 
 export const OPTION_SIZE = 260;

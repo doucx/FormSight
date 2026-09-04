@@ -1,6 +1,6 @@
 import { Palette } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { RelativeColorSettings } from '../../storage/settings';
+
+import type { CardManifest, RelativeColorSettings } from '@formsight/card-sdk';
 import { RelHueInductionView } from './RelHueInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

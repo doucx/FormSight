@@ -1,7 +1,6 @@
 import { AlertCircle, BarChart2, Sparkles } from 'lucide-preact';
-import { Callout } from '../../components/ui/callout';
-import type { CardAnalyticsView } from '../../core/cardContract';
-import { calculateBasicOverallStats } from '../../core/contracts';
+
+import { Callout, type CardAnalyticsView, calculateBasicOverallStats } from '@formsight/card-sdk';
 import type { FractalEdgeRoughnessTrialRecord } from './types';
 import { renderRoughnessBandChart, renderRoughnessBiasChart } from './utils/charts';
 import { getRoughnessSectorIdx } from './utils/generator';

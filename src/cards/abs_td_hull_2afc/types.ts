@@ -1,5 +1,4 @@
-import type { Point } from '../../types';
-
+import type { Point } from '@formsight/card-sdk';
 export interface QuestionData {
   id: string;
   difficultyLevel: number;

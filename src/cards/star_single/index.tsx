@@ -1,9 +1,12 @@
 import { Crosshair, Target } from 'lucide-preact';
-import { Button } from '../../components/ui/button';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { StarSettings } from '../../storage/settings';
-import type { Point } from '../../types';
+
+import {
+  Button,
+  type CardManifest,
+  type Point,
+  type StarSettings,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { StarSingleView } from './StarSingleView';
 import { createStarSingleAnalytics } from './analytics';
 import enUS from './locales/en-US.json';

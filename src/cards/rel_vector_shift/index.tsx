@@ -1,8 +1,11 @@
 import { Shuffle } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { RelativeColorSettings } from '../../storage/settings';
+
+import {
+  type CardManifest,
+  type RelativeColorSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { RelVectorShiftView } from './RelVectorShiftView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

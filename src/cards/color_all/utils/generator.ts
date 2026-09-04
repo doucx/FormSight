@@ -3,7 +3,7 @@ import {
   getOkChroma,
   getTargetDeltaEForLevel,
   hsvToOkLab,
-} from '../../../core/color/oklchUtils';
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
 
 export function generateQuestion(level: number): QuestionData {

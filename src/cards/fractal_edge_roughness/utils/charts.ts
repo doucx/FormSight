@@ -1,7 +1,11 @@
-import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
-import type { ScopedTranslator } from '../../../core/i18n';
-import type { UnifiedTrialRecord } from '../../../storage/db/schema';
-import { CANVAS_THEME, getAccuracyColor, hexToRgba } from '../../../utils/theme';
+import {
+  CANVAS_THEME,
+  type ScopedTranslator,
+  type UnifiedTrialRecord,
+  getAccuracyColor,
+  hexToRgba,
+  setupHiDpiCanvas,
+} from '@formsight/card-sdk';
 import type { FractalEdgeRoughnessTrialRecord } from '../types';
 import { getRoughnessSectorIdx } from './generator';
 

@@ -1,6 +1,6 @@
 import { Columns } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { RelativeColorSettings } from '../../storage/settings';
+
+import type { CardManifest, RelativeColorSettings } from '@formsight/card-sdk';
 import { RelDecontextual2AfcView } from './RelDecontextual2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

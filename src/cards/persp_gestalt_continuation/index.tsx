@@ -1,6 +1,6 @@
 import { Eye } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 import { PerspGestaltContinuationView } from './PerspGestaltContinuationView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

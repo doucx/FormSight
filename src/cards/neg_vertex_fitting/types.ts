@@ -1,5 +1,4 @@
-import type { Point } from '../../types';
-
+import type { Point } from '@formsight/card-sdk';
 export const FITTING_CANVAS_SIZE = 340;
 
 export interface QuestionData {

@@ -1,9 +1,12 @@
 import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
-import { CanvasView } from '../../components/common/CanvasView';
-import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { useCardTranslation } from '../../core/i18n';
-import { CANVAS_THEME } from '../../utils/theme';
+
+import {
+  CANVAS_THEME,
+  CanvasView,
+  StandardSliderView,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, drawParticlesCanvas } from './utils/generator';
 

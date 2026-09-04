@@ -1,6 +1,6 @@
 import { Sparkles } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
+
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 import { FractalEdgeRoughnessView } from './FractalEdgeRoughnessView';
 import { createFractalEdgeRoughnessAnalytics } from './analytics';
 import enUS from './locales/en-US.json';

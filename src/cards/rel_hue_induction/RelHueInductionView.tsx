@@ -1,9 +1,12 @@
 import { Sparkles } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { DualViewportContainer } from '../../components/common/DualViewportContainer';
-import { StandardNafcView } from '../../components/common/StandardNafcView';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
+
+import {
+  DualViewportContainer,
+  StandardNafcView,
+  hsvToHex,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 
 export interface RelHueInductionViewProps {

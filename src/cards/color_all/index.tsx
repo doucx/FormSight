@@ -1,8 +1,11 @@
 import { Palette } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
+
+import {
+  type CardManifest,
+  type ColorSenseSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { ColorAllView } from './ColorAllView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

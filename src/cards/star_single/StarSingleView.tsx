@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'preact/hooks';
-import { PointClickCanvas } from '../../components/common/PointClickCanvas';
-import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import type { Point } from '../../types';
-import { CANVAS_THEME } from '../../utils/theme';
+
+import {
+  CANVAS_THEME,
+  type Point,
+  PointClickCanvas,
+  drawDot,
+  findNearestPointInGrid,
+  getDynamicDotRadius,
+  setupHiDpiCanvas,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE } from './utils/generator';
 

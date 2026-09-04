@@ -1,5 +1,4 @@
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
+import { type Point, expDecayInterpolate } from '@formsight/card-sdk';
 import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from '../types';
 
 export function calcPolygonArea(vertices: Point[]): number {

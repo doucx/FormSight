@@ -1,5 +1,9 @@
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import { calculateOtsuThreshold, createNoise2D, fbm2D } from '../../../core/math/noiseUtils';
+import {
+  calculateOtsuThreshold,
+  createNoise2D,
+  expDecayInterpolate,
+  fbm2D,
+} from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
 
 export const CANVAS_SIZE = 260;

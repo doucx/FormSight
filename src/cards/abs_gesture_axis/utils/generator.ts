@@ -1,7 +1,4 @@
-import { setup2DCanvas } from '../../../core/canvas/hidpi';
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
-import { CANVAS_THEME } from '../../../utils/theme';
+import { CANVAS_THEME, type Point, expDecayInterpolate, setup2DCanvas } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
 
 export const CANVAS_SIZE = 400;

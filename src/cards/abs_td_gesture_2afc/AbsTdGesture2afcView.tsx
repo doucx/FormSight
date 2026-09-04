@@ -1,7 +1,6 @@
 import { Columns } from 'lucide-preact';
-import { CanvasView } from '../../components/common/CanvasView';
-import { Standard2AfcView } from '../../components/common/Standard2AfcView';
-import { useCardTranslation } from '../../core/i18n';
+
+import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import {
   OPTION_SIZE,

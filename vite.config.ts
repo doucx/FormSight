@@ -1,3 +1,4 @@
+import path from 'node:path';
 import preact from '@preact/preset-vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig } from 'vitest/config';
@@ -6,6 +7,12 @@ import packageJson from './package.json';
 // https://vitejs.dev/config/
 export default defineConfig({
   base: './',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@formsight/card-sdk': path.resolve(__dirname, './src/card-sdk/index.ts'),
+    },
+  },
   plugins: [
     preact(),
     VitePWA({

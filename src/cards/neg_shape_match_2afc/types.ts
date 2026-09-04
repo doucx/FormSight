@@ -1,5 +1,4 @@
-import type { Point } from '../../types';
-
+import type { Point } from '@formsight/card-sdk';
 export const NEGATIVE_SPACE_CANVAS_SIZE = 400;
 
 export interface QuestionData {

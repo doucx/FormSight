@@ -19,7 +19,14 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* Path Aliasing */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@formsight/card-sdk": ["src/card-sdk/index.ts"]
+    }
   },
   "include": ["src"]
 }

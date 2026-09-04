@@ -1,8 +1,11 @@
 import { Sliders } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { BaseModuleSettings } from '../../storage/settings';
+
+import {
+  type BaseModuleSettings,
+  type CardManifest,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { PerspVpConvergenceView } from './PerspVpConvergenceView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';

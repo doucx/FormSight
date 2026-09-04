@@ -1,5 +1,4 @@
-import { evaluatePointGridHit } from '../../../core/geometry/pointGrid';
-import type { Point } from '../../../types';
+import { type Point, evaluatePointGridHit } from '@formsight/card-sdk';
 import { FITTING_CANVAS_SIZE, type HitResult, type QuestionData } from '../types';
 
 export function generateRandomPolygon(level: number, canvasSize = FITTING_CANVAS_SIZE): Point[] {

@@ -1,15 +1,16 @@
 import { Crosshair, RotateCw } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import { Button } from '../../components/ui/button';
-import type { CardManifest } from '../../core/cardContract';
+
 import {
+  Button,
+  type CardManifest,
   type ColorHitResult,
   type ColorQuestionData,
+  type ColorSenseSettings,
+  SettingToggleItem,
   checkColorHit,
   generateColorQuestion,
-} from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { ColorHueView } from './ColorHueView';
 import { createColorHueAnalytics } from './analytics';
 import enUS from './locales/en-US.json';

@@ -1,8 +1,11 @@
 import { Maximize2 } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { NegativeSpaceSettings } from '../../storage/settings';
+
+import {
+  type CardManifest,
+  type NegativeSpaceSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { NegRatioEstimationView } from './NegRatioEstimationView';
 import { createNegRatioAnalytics } from './analytics';
 import enUS from './locales/en-US.json';

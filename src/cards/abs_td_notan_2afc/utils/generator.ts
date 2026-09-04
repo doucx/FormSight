@@ -1,4 +1,4 @@
-import { calculateOtsuThreshold, createNoise2D, fbm2D } from '../../../core/math/noiseUtils';
+import { calculateOtsuThreshold, createNoise2D, fbm2D } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
 
 export const THUMB_SIZE = 160;
