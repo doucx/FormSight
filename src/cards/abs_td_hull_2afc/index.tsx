@@ -38,6 +38,7 @@ export const absTdHull2afcCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsTdHull2afcView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

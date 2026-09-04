@@ -1,7 +1,13 @@
 import { Sliders } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
-import { CanvasView, StandardSliderView, useCardTranslation } from '@formsight/card-sdk';
+import {
+  CanvasView,
+  QuestionCardShell,
+  SliderTrack,
+  useCardTranslation,
+  useTrackPointer,
+} from '@formsight/card-sdk';
 import type { PerspVpHitResult, PerspVpQuestion } from './types';
 import { PERSPECTIVE_CANVAS_SIZE, drawVpConvergenceCanvas } from './utils/generator';
 
@@ -27,74 +33,91 @@ export function PerspVpConvergenceView({
   showCanvasHints = true,
 }: PerspVpConvergenceViewProps) {
   const { t } = useCardTranslation('persp_vp_convergence');
+  const [currentVal, setCurrentVal] = useState<number>(180);
+
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
+    max: 360,
+    step: 0.5,
+    disabled: disabled || showAnswer,
+    onValChange: (val) => setCurrentVal(val),
+    onCommit: (val) => {
+      if (!disabled && !showAnswer) onAnswer(val);
+    },
+  });
+
   const targetVal = question.targetAngleDeg ?? 0;
   const tolerance = question.tolerance;
   const isHit = Boolean(userAnswer?.isHit);
   const userVal = userAnswer?.userValue;
-
-  const [liveAngle, setLiveAngle] = useState<number>(180);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset liveAngle on new question
-  useEffect(() => {
-    setLiveAngle(180);
-  }, [question.id]);
-
-  const currentActiveAngle = showAnswer && userVal !== undefined ? userVal : liveAngle;
+  const activeVal = hoverVal !== null ? hoverVal : currentVal;
+  const currentActiveAngle = showAnswer && userVal !== undefined ? userVal : activeVal;
 
   return (
-    <StandardSliderView
-      questionId={question.id}
+    <QuestionCardShell
       hintText={t('hint')}
       hintIcon={Sliders}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      label={t('rayAngle')}
-      max={360}
-      step={0.5}
-      initialValue={180}
-      unit="°"
-      targetValue={targetVal}
-      tolerance={tolerance}
-      showToleranceBand={showToleranceBand}
-      showAnswer={showAnswer}
-      isHit={isHit}
-      userValue={userVal}
-      disabled={disabled}
-      hitMargin={hitMargin}
-      submitMode="commit_on_release"
-      onValueChange={(_cur, active) => setLiveAngle(active)}
-      onAnswer={onAnswer}
-      preview={
-        <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center">
-          <CanvasView
-            width={PERSPECTIVE_CANVAS_SIZE}
-            height={PERSPECTIVE_CANVAS_SIZE}
-            className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-            draw={(canvas) => {
-              drawVpConvergenceCanvas(
-                canvas,
-                question.referenceLines,
-                question.testLineAnchor,
-                currentActiveAngle,
-                question.testLineLength ?? 95,
-                PERSPECTIVE_CANVAS_SIZE,
-                showAnswer,
-                targetVal,
-              );
-            }}
-            deps={[
+    >
+      {/* 透视线灭点汇聚画布 */}
+      <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center w-full">
+        <CanvasView
+          width={PERSPECTIVE_CANVAS_SIZE}
+          height={PERSPECTIVE_CANVAS_SIZE}
+          className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
+          draw={(canvas) => {
+            drawVpConvergenceCanvas(
+              canvas,
               question.referenceLines,
               question.testLineAnchor,
-              question.testLineLength,
               currentActiveAngle,
+              question.testLineLength ?? 95,
+              PERSPECTIVE_CANVAS_SIZE,
               showAnswer,
               targetVal,
-            ]}
-          />
+            );
+          }}
+          deps={[
+            question.referenceLines,
+            question.testLineAnchor,
+            question.testLineLength,
+            currentActiveAngle,
+            showAnswer,
+            targetVal,
+          ]}
+        />
+      </div>
+
+      {/* 射线倾角滑块与误差反馈 */}
+      <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
+        <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+          <span>{t('rayAngle')}</span>
+          <span className="font-mono text-base font-black text-primary">
+            {showAnswer && userVal !== undefined ? `${userVal}°` : `${activeVal}°`}
+          </span>
         </div>
-      }
-      footerDetails={
-        showAnswer && userVal !== undefined ? (
+
+        <div className="flex items-center gap-3 w-full">
+          <span className="font-bold font-mono text-muted-foreground text-xs">0°</span>
+          <SliderTrack
+            trackRef={trackRef}
+            pointerProps={pointerProps}
+            activeVal={activeVal}
+            max={360}
+            min={0}
+            hitMargin={hitMargin}
+            disabled={disabled}
+            showAnswer={showAnswer}
+            targetValue={targetVal}
+            userValue={userVal}
+            tolerance={tolerance}
+            showToleranceBand={showToleranceBand}
+            isHit={isHit}
+          />
+          <span className="font-bold font-mono text-muted-foreground text-xs">360°</span>
+        </div>
+
+        {showAnswer && userVal !== undefined && (
           <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
             <span className="text-muted-foreground">
               {t('vpTrueAngle')}{' '}
@@ -113,8 +136,8 @@ export function PerspVpConvergenceView({
               })}
             </span>
           </div>
-        ) : null
-      }
-    />
+        )}
+      </div>
+    </QuestionCardShell>
   );
 }

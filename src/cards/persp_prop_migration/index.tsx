@@ -42,6 +42,7 @@ export const perspPropMigrationCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspPropMigrationView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

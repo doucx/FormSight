@@ -39,6 +39,7 @@ export const angleParallel2AfcCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <AngleParallel2AfcView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

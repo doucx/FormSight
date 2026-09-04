@@ -38,6 +38,7 @@ export const absPaletteClusteringCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsPaletteClusteringView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

@@ -17,10 +17,10 @@ export function useAppBootstrap(route: RouteLocation) {
   const { t } = useTranslation();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
 
+  const activePlanName = $activePlan.value.name;
+
   // 动态更新页面标题
-  // biome-ignore lint/correctness/useExhaustiveDependencies: update document title when plan name or route changes
   useEffect(() => {
-    const currentPlanName = $activePlan.value.name;
     if (route.type === 'home') {
       lastHomeRouteRef.current = route;
       document.title = `${t('nav.dashboard')} - ${t('common.appName')}`;
@@ -30,7 +30,7 @@ export function useAppBootstrap(route: RouteLocation) {
     } else if (route.type === 'plan-editor') {
       document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-train') {
-      document.title = `${currentPlanName || t('plan.todayPlan')} - ${t('common.appName')}`;
+      document.title = `${activePlanName || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'stats') {
       document.title = `${t('stats.title')} - ${t('common.appName')}`;
     } else if (route.type === 'analytics') {
@@ -42,7 +42,7 @@ export function useAppBootstrap(route: RouteLocation) {
       const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
       document.title = `${cardTitle} - ${t('common.appName')}`;
     }
-  }, [route, $activePlan.value.name, t]);
+  }, [route, activePlanName, t]);
 
   const handleSelectPlanOnHome = useCallback(
     async (planId: string) => {

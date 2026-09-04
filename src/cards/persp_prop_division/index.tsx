@@ -41,6 +41,7 @@ export const perspPropDivisionCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspPropDivisionView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

@@ -42,6 +42,7 @@ export const negAreaComparison2AfcCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <NegAreaComparison2AfcView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

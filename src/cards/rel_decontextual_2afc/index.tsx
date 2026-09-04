@@ -39,6 +39,7 @@ export const relDecontextual2AfcCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <RelDecontextual2AfcView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

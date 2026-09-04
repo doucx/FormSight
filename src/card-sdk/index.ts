@@ -102,6 +102,14 @@ export {
   useTrackPointer,
   type UseTrackPointerOptions,
 } from '../hooks/useTrackPointer';
+export {
+  useChoiceShortcuts,
+  type UseChoiceShortcutsOptions,
+} from '../hooks/useChoiceShortcuts';
+export {
+  useSubmitShortcut,
+  type UseSubmitShortcutOptions,
+} from '../hooks/useSubmitShortcut';
 
 // ----------------------------------------------------------------------------
 // 7. 国际化与契约规范 (I18n & Card Contracts)
@@ -179,20 +187,13 @@ export type {
 // ----------------------------------------------------------------------------
 export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
 export { DualViewportContainer } from '../components/common/DualViewportContainer';
+export { SliderTrack, type SliderTrackProps } from '../components/common/SliderTrack';
 export {
   PointClickCanvas,
   type PointClickCanvasProps,
 } from '../components/common/PointClickCanvas';
 export { HsvTrackSlider, type HsvTrackSliderProps } from '../components/common/HsvTrackSlider';
 export { QuestionCardShell } from '../components/common/QuestionCardShell';
-export {
-  Choice2AfcContainer,
-  type Choice2AfcOption,
-} from '../components/common/Choice2AfcContainer';
-export {
-  ChoiceNafcContainer,
-  type ChoiceNafcOption,
-} from '../components/common/ChoiceNafcContainer';
 export {
   ChoiceCard,
   getChoiceCardState,
@@ -204,24 +205,3 @@ export { Button, type ButtonProps } from '../components/ui/button';
 export { Badge, type BadgeProps } from '../components/ui/badge';
 export { SettingToggleItem } from '../components/settings/common/SettingToggleItem';
 export { SliderMarginGroup } from '../components/settings/common/SliderMarginGroup';
-
-// ----------------------------------------------------------------------------
-// 11. 废弃标记的过渡视图包装器 (Deprecated Standard Views for Graceful Migration)
-// ----------------------------------------------------------------------------
-/** @deprecated 建议优先使用组合排版与原子 Hook，后续将移除此包装器 */
-export {
-  StandardSliderView,
-  type StandardSliderViewProps,
-} from '../components/common/StandardSliderView';
-
-/** @deprecated 建议优先使用组合排版与原子 Hook，后续将移除此包装器 */
-export {
-  Standard2AfcView,
-  type Standard2AfcViewProps,
-} from '../components/common/Standard2AfcView';
-
-/** @deprecated 建议优先使用组合排版与原子 Hook，后续将移除此包装器 */
-export {
-  StandardNafcView,
-  type StandardNafcViewProps,
-} from '../components/common/StandardNafcView';
