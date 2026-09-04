@@ -20,7 +20,6 @@
         "src/storage/db/schema.ts",
         "src/storage/db/queries.ts",
         "src/storage/db/importExport.ts",
-        "src/storage/db/prune.ts",
         "src/hooks/useAppBootstrap.ts",
         "src/hooks/useTrainingSession.ts",
         "src/hooks/session/useIdleProtection.ts",
