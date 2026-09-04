@@ -1,48 +1,42 @@
-现在开始执行**阶段一·批次 A**：重构全部二分选择（2AFC）卡片视图。
+现在开始执行**阶段一·批次 B：多元选择卡片（N-AFC）**。
 
-我们将移除对废弃容器 `Standard2AfcView` 及 `Choice2AfcContainer` 的所有依赖，就地展开原生扁平布局，全面接入 `QuestionCardShell`、`ChoiceCard`、`getChoiceCardState` 与无头 Hook `useChoiceShortcuts`。
+我们将重构全部 4 张多元选择题型视图（`abs_palette_clustering`、`abs_td_palette_2afc`、`rel_hue_induction` 和 `rel_vector_shift`），彻底废除对 `StandardNafcView` 和 `ChoiceNafcContainer` 的依赖，展开即时预览和网格选项的扁平组合布局，并原生接入数字键 1~4 和空格提交。
 
-## [WIP] refactor: 重构批次 A 全量 2AFC 卡片至原子组合架构
+## [WIP] refactor: 重构批次 B 全量 N-AFC 多元选择卡片至原子组合架构
 
 ### 用户需求
-落实路线图中的批次 A：将全部 2AFC 模式业务卡片彻底解构，淘汰 `Standard2AfcView` 包装层，转向纯粹的原子组件组合并接入数字键 1/2 快捷键。
+落实路线图中的批次 B：将全部多元选择（4AFC）卡片解构重塑，剥离 `StandardNafcView`，将复杂的题干对比和动态预览（如双视口残像对比、矢量迁移对）就地展开为扁平的 JSX，并将选项渲染收敛为纯粹的 `ChoiceCard` 网格。
 
 ### 评论
-批次 A 涵盖了系统中占比最高的二分判定题型（共 10 张视图）。将原本塞在 `optionA`、`optionB`、`prompt` 插槽中的代码就地展开后，组件层级将缩减 3 层，渲染流向清晰透明，并彻底抹除旧包装器所带来的 Leaky Abstraction。
+多元选择卡片是此前“属性地狱”最严重的区域。例如 `RelHueInductionView` 过去将整个实时联动的 `DualViewportContainer` 和自定义底部提交按钮塞入包装器的各个插槽，不仅阻断了上下文状态的自然传递，还造成了大量的无谓重渲染。解构后，题干预览、选项网格和确认按钮的排列自上而下一目了然。
 
 ### 目标
-1. 重构 9 张原本使用 `Standard2AfcView` 的卡片视图：
-   - `angle_comparison_2afc/AngleComparison2AfcView.tsx`
-   - `angle_parallel_2afc/AngleParallel2AfcView.tsx`
-   - `persp_gestalt_continuation/PerspGestaltContinuationView.tsx`
-   - `neg_area_comparison_2afc/NegAreaComparison2AfcView.tsx`
-   - `rel_decontextual_2afc/RelDecontextual2AfcView.tsx`
-   - `abs_polygon_decimation/AbsPolygonDecimationView.tsx`
-   - `abs_td_gesture_2afc/AbsTdGesture2afcView.tsx`
-   - `abs_td_hull_2afc/AbsTdHull2afcView.tsx`
-   - `abs_td_notan_2afc/AbsTdNotan2afcView.tsx`
-2. 同步重构使用 `Choice2AfcContainer` 的记忆匹配卡片：
-   - `neg_shape_match_2afc/NegShapeMatch2AfcView.tsx`
-3. 保证视觉设计、暗色模式、快捷键响应、即时作答与答案揭晓动画完全 100% 体验对齐。
+1. 重构即时提交型 4AFC 卡片：
+   - `abs_palette_clustering/AbsPaletteClusteringView.tsx`（主调色群提炼）
+   - `abs_td_palette_2afc/AbsTdPalette2afcView.tsx`（调性基底归位）
+2. 重构带实时预览与二段确认的 4AFC 卡片：
+   - `rel_hue_induction/RelHueInductionView.tsx`（补色残像调和）
+   - `rel_vector_shift/RelVectorShiftView.tsx`（色彩矢量迁移）
+3. 确保数字键 1~4 选择与空格键提交行为完全稳定。
 
 ### 基本原理
-通过 `<QuestionCardShell>` 作为外壳承载引导胶囊与外围边距，内部直接使用两列 CSS Grid 网格排列 `<ChoiceCard>`。卡片内部状态由纯函数 `getChoiceCardState` 同步映射，键盘事件由 `useChoiceShortcuts` 驱动，彻底消除属性中转与深层 DOM 嵌套。
+利用 `<QuestionCardShell>` 作为外壳容器，卡片顶层状态（如当前选中索引 `selectedIdx`）可直接无损流向下方的实时预览视口（`DualViewportContainer`）与底部的 `Button`，不再需要经过包装层的反向属性回调（`onSelectIndex`、`submitMode` 等），最大化组件内聚性。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/ui #task/object/batch-a-2afc #task/action/refactor #task/state/continue #task/status/active
+#intent/refine #flow/ready #priority/high #comp/runtime #concept/ui #scope/dx #scope/ux #ai/instruct #task/domain/ui #task/object/batch-b-nafc #task/action/refactor #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 重构几何与空间类 2AFC 卡片视图
+#### Acts 1: 重构即时选择型 4AFC 视图
 
 ~~~~~act
 write_file
-src/cards/angle_comparison_2afc/AngleComparison2AfcView.tsx
+src/cards/abs_palette_clustering/AbsPaletteClusteringView.tsx
 ~~~~~
 ~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 
 import {
@@ -51,341 +45,103 @@ import {
   ChoiceCard,
   QuestionCardShell,
   getChoiceCardState,
+  hsvToHex,
   useCardTranslation,
   useChoiceShortcuts,
 } from '@formsight/card-sdk';
-import type { AngleComparisonHitResult, AngleComparisonQuestion } from './types';
-import { ANGLE_2AFC_SIZE, drawAngleCanvas } from './utils/generator';
+import type { HitResult, QuestionData } from './types';
+import { CANVAS_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 
-export interface AngleComparison2AfcViewProps {
-  question: AngleComparisonQuestion;
+export interface AbsPaletteClusteringViewProps {
+  question: QuestionData;
   showAnswer: boolean;
-  userAnswer: AngleComparisonHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
+  userAnswer: HitResult | null;
+  onAnswer: (idx: number) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function AngleComparison2AfcView({
+export function AbsPaletteClusteringView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: AngleComparison2AfcViewProps) {
-  const { t } = useCardTranslation('angle_comparison_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
+}: AbsPaletteClusteringViewProps) {
+  const { t } = useCardTranslation('abs_palette_clustering');
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setSelectedChoice(null);
+    setSelectedIndex(null);
   }, [question.id]);
 
-  const handleSelect = (choice: 'A' | 'B') => {
+  const handleSelect = (idx: number) => {
     if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
+    setSelectedIndex(idx);
+    onAnswer(idx);
   };
 
   useChoiceShortcuts({
-    optionsCount: 2,
+    optionsCount: (question.paletteOptions || []).length,
     disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
+    onSelect: handleSelect,
   });
 
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isAHit = question.largerSide === 'A';
-  const isBHit = question.largerSide === 'B';
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isAHit,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isBHit,
-    isSelected: effectiveChoice === 'B',
-  });
+  const effectiveIndex = selectedIndex ?? (userAnswer?.isHit !== undefined ? userAnswer.userChoiceIndex : null);
 
   return (
     <QuestionCardShell
       hintText={t('hint')}
-      hintIcon={Columns}
+      hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-lg"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {t('areaA')}
-            </span>
-
-            {showAnswer && isAHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {`${question.angleA}°`}
-              </span>
-            )}
-            {showAnswer && !isAHit && (
-              <span className="text-xs font-semibold text-muted-foreground">{`${question.angleA}°`}</span>
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesA, ANGLE_2AFC_SIZE)}
-              deps={[question.linesA]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {t('areaB')}
-            </span>
-
-            {showAnswer && isBHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {`${question.angleB}°`}
-              </span>
-            )}
-            {showAnswer && !isBHit && (
-              <span className="text-xs font-semibold text-muted-foreground">{`${question.angleB}°`}</span>
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) => drawAngleCanvas(canvas, question.linesB, ANGLE_2AFC_SIZE)}
-              deps={[question.linesB]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/angle_parallel_2afc/AngleParallel2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Split } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CANVAS_THEME,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { AngleParallelHitResult, AngleParallelQuestion } from './types';
-import { ANGLE_2AFC_SIZE, ANGLE_PROMPT_SIZE, drawSingleLineCanvas } from './utils/generator';
-
-export interface AngleParallel2AfcViewProps {
-  question: AngleParallelQuestion;
-  showAnswer: boolean;
-  userAnswer: AngleParallelHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AngleParallel2AfcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AngleParallel2AfcViewProps) {
-  const { t } = useCardTranslation('angle_parallel_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isAHit = question.parallelSide === 'A';
-  const isBHit = question.parallelSide === 'B';
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isAHit,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isBHit,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Split}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-    >
-      {/* 题干上方平行基准线 */}
-      <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-2.5 rounded-2xl border border-border shadow-inner">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t('promptTitle')}
-        </span>
+      {/* 调色板马赛克原图 */}
+      <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center w-full">
         <CanvasView
-          width={ANGLE_PROMPT_SIZE}
-          height={ANGLE_PROMPT_SIZE}
-          className="w-28 h-28 rounded-xl border border-border shadow-sm bg-card"
-          draw={(canvas) =>
-            drawSingleLineCanvas(
-              canvas,
-              question.promptLine,
-              ANGLE_PROMPT_SIZE,
-              CANVAS_THEME.status.accent,
-              3.0,
-            )
-          }
-          deps={[question.promptLine]}
+          width={CANVAS_SIZE}
+          height={CANVAS_SIZE}
+          className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
+          draw={(canvas) => drawPaletteTilesCanvas(canvas, question.paletteTiles, CANVAS_SIZE)}
+          deps={[question.paletteTiles]}
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {t('optionA')}
-            </span>
+      {/* 4AFC 候选色块网格 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+        {(question.paletteOptions || []).map((hsv, idx) => {
+          const hex = hsvToHex(...hsv);
+          const isTarget = idx === question.correctPaletteIndex;
+          const isSelected = effectiveIndex === idx;
+          const state = getChoiceCardState({ showAnswer, isTarget, isSelected });
 
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
-                  isAHit ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-muted-foreground'
-                }`}
-              >
-                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isAHit ? t('absoluteParallel') : t('deviationBadge', { deg: question.angularDeviation ?? 0 })}
-              </span>
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionA,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionA]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {t('optionB')}
-            </span>
-
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
-                  isBHit ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-muted-foreground'
-                }`}
-              >
-                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isBHit ? t('absoluteParallel') : t('deviationBadge', { deg: question.angularDeviation ?? 0 })}
-              </span>
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={ANGLE_2AFC_SIZE}
-              height={ANGLE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawSingleLineCanvas(
-                  canvas,
-                  question.lineOptionB,
-                  ANGLE_2AFC_SIZE,
-                  CANVAS_THEME.shape.fill,
-                  2.5,
-                )
-              }
-              deps={[question.lineOptionB]}
-            />
-          </div>
-        </ChoiceCard>
+          return (
+            <ChoiceCard
+              key={`palette-opt-${idx}-${hex}`}
+              state={state}
+              size="sm"
+              disabled={disabled || showAnswer}
+              onClick={() => handleSelect(idx)}
+            >
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
+                  <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                    {idx + 1}
+                  </Badge>
+                  {t('common.optionN', { num: idx + 1 })}
+                </span>
+                {showAnswer && isTarget && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+                )}
+              </div>
+              <div
+                className="w-full aspect-square rounded-xl shadow-inner border border-white/60"
+                style={{ backgroundColor: hex }}
+              />
+            </ChoiceCard>
+          );
+        })}
       </div>
     </QuestionCardShell>
   );
@@ -394,173 +150,10 @@ export function AngleParallel2AfcView({
 
 ~~~~~act
 write_file
-src/cards/persp_gestalt_continuation/PerspGestaltContinuationView.tsx
+src/cards/abs_td_palette_2afc/AbsTdPalette2afcView.tsx
 ~~~~~
 ~~~~~typescript
-import { Check, Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { PerspGestaltHitResult, PerspGestaltQuestion } from './types';
-import { PERSPECTIVE_2AFC_SIZE, drawGestaltCanvas } from './utils/generator';
-
-export interface PerspGestaltContinuationViewProps {
-  question: PerspGestaltQuestion;
-  showAnswer: boolean;
-  userAnswer: PerspGestaltHitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function PerspGestaltContinuationView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: PerspGestaltContinuationViewProps) {
-  const { t } = useCardTranslation('persp_gestalt_continuation');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isAHit = question.correctChoice === 'A';
-  const isBHit = question.correctChoice === 'B';
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isAHit,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isBHit,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Eye}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {t('optionA')}
-            </span>
-
-            {showAnswer && isAHit && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionA,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionA]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {t('optionB')}
-            </span>
-
-            {showAnswer && isBHit && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionB,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionB]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-#### Acts 2: 重构负形与色彩视错觉 2AFC 卡片视图
-
-~~~~~act
-write_file
-src/cards/neg_area_comparison_2afc/NegAreaComparison2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
+import { Check, Sparkles } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 
 import {
@@ -569,182 +162,134 @@ import {
   CanvasView,
   ChoiceCard,
   QuestionCardShell,
-  drawPolygonCanvas,
   getChoiceCardState,
+  hsvToHex,
   useCardTranslation,
   useChoiceShortcuts,
 } from '@formsight/card-sdk';
-import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from './types';
+import type { HitResult, QuestionData } from './types';
+import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 
-export interface NegAreaComparison2AfcViewProps {
+export interface AbsTdPalette2afcViewProps {
   question: QuestionData;
   showAnswer: boolean;
-  userAnswer?: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
+  userAnswer: HitResult | null;
+  onAnswer: (idx: number) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function NegAreaComparison2AfcView({
+export function AbsTdPalette2afcView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: NegAreaComparison2AfcViewProps) {
-  const { t } = useCardTranslation('neg_area_comparison_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
+}: AbsTdPalette2afcViewProps) {
+  const { t } = useCardTranslation('abs_td_palette_2afc');
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setSelectedChoice(null);
+    setSelectedIndex(null);
   }, [question.id]);
 
-  const handleSelect = (choice: 'A' | 'B') => {
+  const handleSelect = (idx: number) => {
     if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
+    setSelectedIndex(idx);
+    onAnswer(idx);
   };
 
   useChoiceShortcuts({
-    optionsCount: 2,
+    optionsCount: (question.palettePatternOptions || []).length,
     disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
+    onSelect: handleSelect,
   });
 
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isAHit = question.largerSide === 'A';
-  const isBHit = question.largerSide === 'B';
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isAHit,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isBHit,
-    isSelected: effectiveChoice === 'B',
-  });
+  const promptHex = question.promptDominantColor
+    ? hsvToHex(...question.promptDominantColor)
+    : CANVAS_THEME.status.accentHover;
+  const targetIdx = question.correctPatternIndex ?? 0;
+  const effectiveIndex = selectedIndex ?? (userAnswer?.isHit !== undefined ? userAnswer.userChoiceIndex : null);
 
   return (
     <QuestionCardShell
-      hintText={t('areaHint')}
-      hintIcon={Columns}
+      hintText={t('hint')}
+      hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
+      maxWidth="max-w-3xl"
     >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {t('common.areaA')}
-            </span>
+      {/* 题干上方基准主调色块 */}
+      <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {t('promptTitle')}
+        </span>
+        <div
+          className="w-16 h-16 rounded-2xl border-4 border-card dark:border-border shadow-md ring-1 ring-border/60"
+          style={{ backgroundColor: promptHex }}
+        />
+      </div>
 
-            {showAnswer && isAHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {t('whiteSpace', { ratio: question.negRatioA ?? 50 })}
-              </span>
-            )}
-            {showAnswer && !isAHit && (
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t('whiteSpace', { ratio: question.negRatioA ?? 50 })}
-              </span>
-            )}
-          </div>
+      {/* 4AFC 候选图案网格 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+        {(question.palettePatternOptions || []).map((pat, idx) => {
+          const isTarget = idx === targetIdx;
+          const isSelected = effectiveIndex === idx;
+          const state = getChoiceCardState({ showAnswer, isTarget, isSelected });
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesA,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesA]}
-            />
-          </div>
-        </ChoiceCard>
+          return (
+            <ChoiceCard
+              key={`td-pattern-${question.id}-${idx}`}
+              state={state}
+              size="sm"
+              disabled={disabled || showAnswer}
+              onClick={() => handleSelect(idx)}
+            >
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
+                  <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                    {idx + 1}
+                  </Badge>
+                  {t('common.screenN', { num: idx + 1 })}
+                </span>
+                {showAnswer && isTarget && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+                )}
+              </div>
 
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {t('common.areaB')}
-            </span>
-
-            {showAnswer && isBHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {t('whiteSpace', { ratio: question.negRatioB ?? 50 })}
-              </span>
-            )}
-            {showAnswer && !isBHit && (
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t('whiteSpace', { ratio: question.negRatioB ?? 50 })}
-              </span>
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesB,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesB]}
-            />
-          </div>
-        </ChoiceCard>
+              <div className="w-full aspect-square bg-white p-1 rounded-xl border border-border shadow-inner flex items-center justify-center">
+                <CanvasView
+                  width={OPTION_SIZE}
+                  height={OPTION_SIZE}
+                  className="w-full aspect-square rounded-lg shadow-sm"
+                  draw={(canvas) => drawPaletteTilesCanvas(canvas, pat, OPTION_SIZE)}
+                  deps={[pat]}
+                />
+              </div>
+            </ChoiceCard>
+          );
+        })}
       </div>
     </QuestionCardShell>
   );
 }
 ~~~~~
 
+#### Acts 2: 重构带实时联动与二段确认的 4AFC 视图
+
 ~~~~~act
 write_file
-src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx
+src/cards/rel_hue_induction/RelHueInductionView.tsx
 ~~~~~
 ~~~~~typescript
-import { Check, Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { Check, Sparkles } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
 
 import {
   Badge,
+  Button,
   ChoiceCard,
-  PALETTE,
+  DualViewportContainer,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -753,1071 +298,307 @@ import {
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 
-export interface RelDecontextual2AfcViewProps {
+export interface RelHueInductionViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer?: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
+  onAnswer: (chosenColor: [number, number, number]) => void;
   disabled?: boolean;
   showCanvasHints?: boolean;
 }
 
-export function RelDecontextual2AfcView({
+export function RelHueInductionView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: RelDecontextual2AfcViewProps) {
-  const { t } = useCardTranslation('rel_decontextual_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
+}: RelHueInductionViewProps) {
+  const { t } = useCardTranslation('rel_hue_induction');
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
+
+  const { bgLeft, bgRight, targetLeftCenter, idealRightCenter, options, correctIndex } = question;
 
   useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isAHit = question.largerPhysicalSide === 'A';
-  const isBHit = question.largerPhysicalSide === 'B';
-
-  const hexBgA = hsvToHex(...question.bgLeft);
-  const hexBgB = hsvToHex(...question.bgRight);
-  const hexCenterA = hsvToHex(...question.centerColorA);
-  const hexCenterB = hsvToHex(...question.centerColorB);
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isAHit,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isBHit,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Eye}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {t('common.areaA')}
-            </span>
-
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
-                  isAHit ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-muted-foreground'
-                }`}
-              >
-                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isAHit
-                  ? t('physicallyBrighter', { v: question.centerColorA[2] })
-                  : t('physicallyDarker', { v: question.centerColorA[2] })}
-              </span>
-            )}
-          </div>
-
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
-          >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {t('common.areaB')}
-            </span>
-
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
-                  isBHit ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' : 'text-muted-foreground'
-                }`}
-              >
-                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isBHit
-                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
-                  : t('physicallyDarker', { v: question.centerColorB[2] })}
-              </span>
-            )}
-          </div>
-
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
-          >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-#### Acts 3: 重构抽象认知与具象寻形 2AFC 卡片视图
-
-~~~~~act
-write_file
-src/cards/abs_polygon_decimation/AbsPolygonDecimationView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CANVAS_THEME,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  drawPolygonCanvas,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, OPTION_SIZE } from './utils/generator';
-
-const CANVAS_OPTION_CLASS =
-  'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';
-
-export interface AbsPolygonDecimationViewProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AbsPolygonDecimationView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AbsPolygonDecimationViewProps) {
-  const { t } = useCardTranslation('abs_polygon_decimation');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isTargetA = question.correctPolyChoice === 'A';
-  const isTargetB = !isTargetA;
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetA,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetB,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
-    >
-      {/* 题干提示细碎原图 */}
-      <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t('promptTitle')}
-        </span>
-        <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-          <CanvasView
-            width={CANVAS_SIZE}
-            height={CANVAS_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.detailedPolygon,
-                size: CANVAS_SIZE,
-              })
-            }
-            deps={[question.detailedPolygon]}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {`${t('common.areaA')} (${t('common.optionA')})`}
-            </span>
-            {showAnswer && isTargetA && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.simplifiedOptions[0],
-                  size: OPTION_SIZE,
-                  fillColor: CANVAS_THEME.status.accent,
-                })
-              }
-              deps={[question.simplifiedOptions]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {`${t('common.areaB')} (${t('common.optionB')})`}
-            </span>
-            {showAnswer && isTargetB && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.simplifiedOptions[1],
-                  size: OPTION_SIZE,
-                  fillColor: CANVAS_THEME.status.accent,
-                })
-              }
-              deps={[question.simplifiedOptions]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/abs_td_gesture_2afc/AbsTdGesture2afcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { HitResult, QuestionData } from './types';
-import {
-  OPTION_SIZE,
-  THUMB_SIZE,
-  drawParticlesCanvas,
-  drawSpinePromptCanvas,
-} from './utils/generator';
-
-const CANVAS_OPTION_CLASS =
-  'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';
-
-export interface AbsTdGesture2afcViewProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AbsTdGesture2afcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AbsTdGesture2afcViewProps) {
-  const { t } = useCardTranslation('abs_td_gesture_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isTargetA = question.correctParticleChoice === 'A';
-  const isTargetB = !isTargetA;
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetA,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetB,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
-    >
-      <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t('promptTitle')}
-        </span>
-        <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-          <CanvasView
-            width={THUMB_SIZE}
-            height={THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) => drawSpinePromptCanvas(canvas, question.promptSpine, THUMB_SIZE)}
-            deps={[question.promptSpine]}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {`${t('common.areaA')} (${t('common.optionA')})`}
-            </span>
-            {showAnswer && isTargetA && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) => drawParticlesCanvas(canvas, question.particlesA, OPTION_SIZE)}
-              deps={[question.particlesA]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {`${t('common.areaB')} (${t('common.optionB')})`}
-            </span>
-            {showAnswer && isTargetB && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) => drawParticlesCanvas(canvas, question.particlesB, OPTION_SIZE)}
-              deps={[question.particlesB]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/abs_td_hull_2afc/AbsTdHull2afcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CANVAS_THEME,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  drawPolygonCanvas,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { HitResult, QuestionData } from './types';
-import { OPTION_SIZE, THUMB_SIZE } from './utils/generator';
-
-const CANVAS_OPTION_CLASS =
-  'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';
-
-export interface AbsTdHull2afcViewProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AbsTdHull2afcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AbsTdHull2afcViewProps) {
-  const { t } = useCardTranslation('abs_td_hull_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isTargetA = question.correctHullChoice === 'A';
-  const isTargetB = !isTargetA;
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetA,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetB,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
-    >
-      <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t('promptTitle')}
-        </span>
-        <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-          <CanvasView
-            width={THUMB_SIZE}
-            height={THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawPolygonCanvas({
-                canvas,
-                vertices: question.promptHull,
-                size: THUMB_SIZE,
-                fillColor: CANVAS_THEME.status.accent,
-                strokeColor: CANVAS_THEME.status.accentDark,
-              })
-            }
-            deps={[question.promptHull]}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {`${t('common.areaA')} (${t('common.optionA')})`}
-            </span>
-            {showAnswer && isTargetA && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.hullDetailedA,
-                  size: OPTION_SIZE,
-                })
-              }
-              deps={[question.hullDetailedA]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {`${t('common.areaB')} (${t('common.optionB')})`}
-            </span>
-            {showAnswer && isTargetB && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.hullDetailedB,
-                  size: OPTION_SIZE,
-                })
-              }
-              deps={[question.hullDetailedB]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-~~~~~act
-write_file
-src/cards/abs_td_notan_2afc/AbsTdNotan2afcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Columns } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  CanvasView,
-  ChoiceCard,
-  QuestionCardShell,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import type { HitResult, QuestionData } from './types';
-import { OPTION_SIZE, THUMB_SIZE, drawRawGrayscaleNoiseField } from './utils/generator';
-
-const CANVAS_OPTION_CLASS =
-  'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';
-
-export interface AbsTdNotan2afcViewProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function AbsTdNotan2afcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: AbsTdNotan2afcViewProps) {
-  const { t } = useCardTranslation('abs_td_notan_2afc');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  const handleSelect = (choice: 'A' | 'B') => {
-    if (disabled || showAnswer) return;
-    setSelectedChoice(choice);
-    onAnswer(choice);
-  };
-
-  useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer,
-    onSelect: (idx) => handleSelect(idx === 0 ? 'A' : 'B'),
-  });
-
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isTargetA = question.correctNotanChoice === 'A';
-  const isTargetB = !isTargetA;
-
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetA,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetB,
-    isSelected: effectiveChoice === 'B',
-  });
-
-  return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      hintIcon={Columns}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-3xl"
-    >
-      <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner w-full max-w-[250px] sm:max-w-[270px] mx-auto">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-          {t('promptTitle')}
-        </span>
-        <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-          <CanvasView
-            width={THUMB_SIZE}
-            height={THUMB_SIZE}
-            className={CANVAS_OPTION_CLASS}
-            draw={(canvas) =>
-              drawRawGrayscaleNoiseField(
-                canvas,
-                question.promptNotanBuffer,
-                question.notanFieldDim ?? 120,
-                THUMB_SIZE,
-              )
-            }
-            deps={[question.promptNotanBuffer, question.notanFieldDim]}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-        <ChoiceCard
-          state={stateA}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('A')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                1
-              </Badge>
-              {`${t('common.areaA')} (${t('common.optionA')})`}
-            </span>
-            {showAnswer && isTargetA && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawRawGrayscaleNoiseField(
-                  canvas,
-                  question.notanSceneBufferA,
-                  question.notanFieldDim ?? 120,
-                  OPTION_SIZE,
-                )
-              }
-              deps={[question.notanSceneBufferA, question.notanFieldDim]}
-            />
-          </div>
-        </ChoiceCard>
-
-        <ChoiceCard
-          state={stateB}
-          size="lg"
-          disabled={disabled || showAnswer}
-          onClick={() => handleSelect('B')}
-        >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                2
-              </Badge>
-              {`${t('common.areaB')} (${t('common.optionB')})`}
-            </span>
-            {showAnswer && isTargetB && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-            )}
-          </div>
-
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawRawGrayscaleNoiseField(
-                  canvas,
-                  question.notanSceneBufferB,
-                  question.notanFieldDim ?? 120,
-                  OPTION_SIZE,
-                )
-              }
-              deps={[question.notanSceneBufferB, question.notanFieldDim]}
-            />
-          </div>
-        </ChoiceCard>
-      </div>
-    </QuestionCardShell>
-  );
-}
-~~~~~
-
-#### Acts 4: 重构 `neg_shape_match_2afc` 视图，解构 `Choice2AfcContainer`
-
-~~~~~act
-write_file
-src/cards/neg_shape_match_2afc/NegShapeMatch2AfcView.tsx
-~~~~~
-~~~~~typescript
-import { Check, Sparkles } from 'lucide-preact';
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
-
-import {
-  Badge,
-  ChoiceCard,
-  QuestionCardShell,
-  drawPolygonCanvas,
-  getChoiceCardState,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
-
-export interface NegShapeMatch2AfcViewProps {
-  question: QuestionData;
-  showAnswer: boolean;
-  userAnswer?: HitResult | null;
-  onAnswer: (choice: 'A' | 'B') => void;
-  disabled?: boolean;
-  showCanvasHints?: boolean;
-}
-
-export function NegShapeMatch2AfcView({
-  question,
-  showAnswer,
-  userAnswer,
-  onAnswer,
-  disabled = false,
-  showCanvasHints = true,
-}: NegShapeMatch2AfcViewProps) {
-  const { t } = useCardTranslation('neg_shape_match_2afc');
-  const [matchPhase, setMatchPhase] = useState<'stimulus' | 'recall'>('stimulus');
-  const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const matchOptionRefA = useRef<HTMLCanvasElement | null>(null);
-  const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    setMatchPhase('stimulus');
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  useEffect(() => {
-    if (matchPhase === 'stimulus' && !showAnswer) {
-      const timer = setTimeout(() => {
-        setMatchPhase('recall');
-      }, question.displayTimeMs || 1500);
-      return () => clearTimeout(timer);
+    if (question.id) {
+      setSelectedIdx(0);
     }
-  }, [matchPhase, question.displayTimeMs, showAnswer]);
+  }, [question.id]);
 
-  useEffect(() => {
-    if (matchPhase === 'stimulus' && question.targetPolygon) {
-      drawPolygonCanvas({
-        canvas: canvasRef.current,
-        vertices: question.targetPolygon,
-        size: NEGATIVE_SPACE_CANVAS_SIZE,
-      });
-    }
-  }, [matchPhase, question.targetPolygon]);
-
-  useEffect(() => {
-    if ((matchPhase === 'recall' || showAnswer) && question.optionsPolygons) {
-      drawPolygonCanvas({
-        canvas: matchOptionRefA.current,
-        vertices: question.optionsPolygons[0],
-        size: NEGATIVE_SPACE_CANVAS_SIZE,
-      });
-      drawPolygonCanvas({
-        canvas: matchOptionRefB.current,
-        vertices: question.optionsPolygons[1],
-        size: NEGATIVE_SPACE_CANVAS_SIZE,
-      });
-    }
-  }, [matchPhase, showAnswer, question.optionsPolygons]);
-
-  const handleSelectChoice = useCallback(
-    (choice: 'A' | 'B') => {
-      if (disabled || showAnswer || matchPhase !== 'recall') return;
-      setSelectedChoice(choice);
-      onAnswer(choice);
-    },
-    [disabled, showAnswer, matchPhase, onAnswer],
-  );
+  const handleSubmit = useCallback(() => {
+    if (disabled || showAnswer) return;
+    const chosen = options[selectedIdx] ?? idealRightCenter;
+    onAnswer(chosen);
+  }, [disabled, showAnswer, options, selectedIdx, idealRightCenter, onAnswer]);
 
   useChoiceShortcuts({
-    optionsCount: 2,
-    disabled: disabled || showAnswer || matchPhase !== 'recall',
-    onSelect: (idx) => handleSelectChoice(idx === 0 ? 'A' : 'B'),
+    optionsCount: options.length,
+    disabled: disabled || showAnswer,
+    onSelect: (idx) => setSelectedIdx(idx),
+    onSubmit: handleSubmit,
   });
 
-  const effectiveChoice = selectedChoice ?? userAnswer?.userChoice ?? null;
-  const isTargetA = question.correctOptionIndex === 0;
-  const isTargetB = question.correctOptionIndex === 1;
+  const bgLeftHex = hsvToHex(...bgLeft);
+  const bgRightHex = hsvToHex(...bgRight);
+  const centerLeftHex = hsvToHex(...targetLeftCenter);
+  const idealRightHex = hsvToHex(...idealRightCenter);
 
-  const stateA = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetA,
-    isSelected: effectiveChoice === 'A',
-  });
-
-  const stateB = getChoiceCardState({
-    showAnswer,
-    isTarget: isTargetB,
-    isSelected: effectiveChoice === 'B',
-  });
+  const activeColor = options[selectedIdx] ?? idealRightCenter;
+  const activeRightHex = hsvToHex(...activeColor);
 
   return (
     <QuestionCardShell
-      hintText={
-        matchPhase === 'stimulus' && !showAnswer
-          ? t('memoryStimulusHint', {
-              ms: question.displayTimeMs ?? 1500,
-            })
-          : t('memoryRecallHint')
-      }
+      hintText={t('hint')}
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-3xl"
     >
-      {matchPhase === 'stimulus' && !showAnswer ? (
-        <div className="bg-muted/60 p-4 rounded-3xl border border-border shadow-inner flex flex-col items-center gap-3 w-full max-w-sm">
-          <canvas
-            ref={canvasRef}
-            width={NEGATIVE_SPACE_CANVAS_SIZE}
-            height={NEGATIVE_SPACE_CANVAS_SIZE}
-            className="w-full aspect-square rounded-2xl border border-border shadow-sm bg-card"
-          />
-          <div className="w-full bg-border h-1.5 rounded-full overflow-hidden">
+      {/* 双视口实时联动残像对比区 */}
+      <DualViewportContainer
+        leftTitle={t('leftBase')}
+        rightTitle={t('rightPreview')}
+        leftContent={
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            style={{ backgroundColor: bgLeftHex }}
+          >
             <div
-              key={`${question.id}-${matchPhase}`}
-              className="bg-indigo-600 h-full"
-              style={{
-                width: '100%',
-                animation: `shrinkWidth ${question.displayTimeMs}ms linear forwards`,
-              }}
+              className="w-16 h-16 rounded-xl transition-all"
+              style={{ backgroundColor: centerLeftHex }}
             />
           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 w-full">
-          <ChoiceCard
-            state={stateA}
-            size="lg"
-            disabled={disabled || matchPhase !== 'recall' || showAnswer}
-            onClick={() => handleSelectChoice('A')}
+        }
+        rightContent={
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            style={{ backgroundColor: bgRightHex }}
           >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                  1
-                </Badge>
-                {t('common.areaA')}
-              </span>
-              {showAnswer && isTargetA && (
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+            <div
+              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
+              style={{ backgroundColor: activeRightHex }}
+            >
+              {showAnswer && (
+                <div
+                  className="absolute bottom-0 left-0 right-0 h-1/2"
+                  style={{ backgroundColor: idealRightHex }}
+                  title={t('splitComparisonTooltip')}
+                />
               )}
             </div>
+          </div>
+        }
+      />
 
-            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-              <canvas
-                ref={matchOptionRefA}
-                width={NEGATIVE_SPACE_CANVAS_SIZE}
-                height={NEGATIVE_SPACE_CANVAS_SIZE}
-                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-              />
-            </div>
-          </ChoiceCard>
+      {/* 4AFC 候选色块网格 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+        {options.map((opt, idx) => {
+          const isTarget = idx === correctIndex;
+          const isSelected = selectedIdx === idx;
+          const hexVal = hsvToHex(...opt);
+          const state = getChoiceCardState({ showAnswer, isTarget, isSelected });
 
-          <ChoiceCard
-            state={stateB}
-            size="lg"
-            disabled={disabled || matchPhase !== 'recall' || showAnswer}
-            onClick={() => handleSelectChoice('B')}
-          >
-            <div className="flex items-center justify-between w-full px-1">
-              <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-                <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
-                  2
-                </Badge>
-                {t('common.areaB')}
-              </span>
-              {showAnswer && isTargetB && (
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
-              )}
-            </div>
+          return (
+            <ChoiceCard
+              key={`hue-opt-${idx}-${hexVal}`}
+              state={state}
+              size="sm"
+              disabled={disabled || showAnswer}
+              onClick={() => setSelectedIdx(idx)}
+            >
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
+                  <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                    {idx + 1}
+                  </Badge>
+                  {t('common.candidateN', { num: idx + 1 })}
+                </span>
+                {showAnswer && isTarget && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+                )}
+              </div>
 
-            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-              <canvas
-                ref={matchOptionRefB}
-                width={NEGATIVE_SPACE_CANVAS_SIZE}
-                height={NEGATIVE_SPACE_CANVAS_SIZE}
-                className="w-full max-w-[260px] aspect-square rounded-xl shadow-sm bg-card"
-              />
-            </div>
-          </ChoiceCard>
+              <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-border/60 p-1 flex items-center justify-center bg-card">
+                <div
+                  className="w-full h-full rounded-lg shadow-sm border border-border/50"
+                  style={{ backgroundColor: hexVal }}
+                />
+              </div>
+            </ChoiceCard>
+          );
+        })}
+      </div>
+
+      {/* 空格/手动确认按钮 */}
+      {!showAnswer && (
+        <Button
+          variant="default"
+          onClick={handleSubmit}
+          disabled={disabled}
+          className="w-full py-3 h-auto rounded-2xl"
+        >
+          {t('common.confirmSpace')}
+        </Button>
+      )}
+    </QuestionCardShell>
+  );
+}
+~~~~~
+
+~~~~~act
+write_file
+src/cards/rel_vector_shift/RelVectorShiftView.tsx
+~~~~~
+~~~~~typescript
+import { ArrowRight, Check, Shuffle } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+
+import {
+  Badge,
+  Button,
+  ChoiceCard,
+  QuestionCardShell,
+  getChoiceCardState,
+  hsvToHex,
+  useCardTranslation,
+  useChoiceShortcuts,
+} from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
+
+export interface RelVectorShiftViewProps {
+  question: QuestionData;
+  showAnswer: boolean;
+  userAnswer?: HitResult | null;
+  onAnswer: (userVal: [number, number, number]) => void;
+  disabled?: boolean;
+  showCanvasHints?: boolean;
+}
+
+export function RelVectorShiftView({
+  question,
+  showAnswer,
+  onAnswer,
+  disabled = false,
+  showCanvasHints = true,
+}: RelVectorShiftViewProps) {
+  const { t } = useCardTranslation('rel_vector_shift');
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+
+  const { colorA, colorB, colorC, targetD, options, correctIndex } = question;
+
+  useEffect(() => {
+    if (question.id) {
+      setSelectedIndex(0);
+    }
+  }, [question.id]);
+
+  const handleSubmit = useCallback(() => {
+    if (disabled || showAnswer) return;
+    const chosenColor = options[selectedIndex] ?? targetD;
+    onAnswer(chosenColor);
+  }, [disabled, showAnswer, options, selectedIndex, targetD, onAnswer]);
+
+  useChoiceShortcuts({
+    optionsCount: options.length,
+    disabled: disabled || showAnswer,
+    onSelect: (idx) => setSelectedIndex(idx),
+    onSubmit: handleSubmit,
+  });
+
+  const activeColor = options[selectedIndex] ?? targetD;
+  const hexA = hsvToHex(...colorA);
+  const hexB = hsvToHex(...colorB);
+  const hexC = hsvToHex(...colorC);
+  const hexSelectedD = hsvToHex(...activeColor);
+  const hexTargetD = hsvToHex(...targetD);
+
+  return (
+    <QuestionCardShell
+      hintText={t('prompt')}
+      hintIcon={Shuffle}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+    >
+      {/* 题干 A->B 与 C->D 矢量推移展示区 */}
+      <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            style={{ backgroundColor: hexA }}
+          />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
+          <div
+            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            style={{ backgroundColor: hexB }}
+          />
         </div>
+
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            style={{ backgroundColor: hexC }}
+          />
+          <ArrowRight className="w-4 h-4 text-indigo-400" />
+          <div
+            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md transition-all duration-150 relative overflow-hidden"
+            style={{ backgroundColor: hexSelectedD }}
+          >
+            {showAnswer && (
+              <div
+                className="absolute bottom-0 left-0 right-0 h-1/2"
+                style={{ backgroundColor: hexTargetD }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 4AFC 候选推移色网格 */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
+        {options.map((opt, idx) => {
+          const isTarget = idx === correctIndex;
+          const isSelected = selectedIndex === idx;
+          const hexVal = hsvToHex(...opt);
+          const state = getChoiceCardState({ showAnswer, isTarget, isSelected });
+
+          return (
+            <ChoiceCard
+              key={`vector-shift-opt-${idx}-${hexVal}`}
+              state={state}
+              size="sm"
+              disabled={disabled || showAnswer}
+              onClick={() => setSelectedIndex(idx)}
+            >
+              <div className="flex items-center justify-between w-full px-1">
+                <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
+                  <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                    {idx + 1}
+                  </Badge>
+                  {t('common.candidateN', { num: idx + 1 })}
+                </span>
+                {showAnswer && isTarget && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+                )}
+              </div>
+
+              <div
+                className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+                style={{ backgroundColor: hexVal }}
+              />
+            </ChoiceCard>
+          );
+        })}
+      </div>
+
+      {/* 空格/手动确认按钮 */}
+      {!showAnswer && (
+        <Button
+          variant="default"
+          onClick={handleSubmit}
+          disabled={disabled}
+          className="w-full py-3 h-auto rounded-2xl"
+        >
+          {t('common.confirmSpace')}
+        </Button>
       )}
     </QuestionCardShell>
   );
@@ -1828,7 +609,7 @@ export function NegShapeMatch2AfcView({
 
 ### 下一步建议
 
-**批次 A（全部 10 张 2AFC 视图）重构已全部完成**。现在系统中已没有任何卡片依赖 `Standard2AfcView` 和 `Choice2AfcContainer`。
+**批次 B（全部 4 张 N-AFC 视图）重构已全部交付**。当前项目中对 `StandardNafcView` 和 `ChoiceNafcContainer` 的所有依赖已彻底清零。
 
-下一步建议推进**阶段一·批次 B：多元选择卡片（N-AFC）**：
-重构 `abs_palette_clustering`、`abs_td_palette_2afc`、`rel_hue_induction` 和 `rel_vector_shift`，移除 `StandardNafcView`，将色彩预览与选项网格展开为扁平组合。
+下一步建议推进**阶段一·批次 C：连续滑块卡片（Continuous Slider）**：
+重构剩余使用 `StandardSliderView` 的 6 张卡片（`angle_estimation`、`persp_vp_convergence`、`abs_gesture_axis`、`abs_notan_threshold`、`fractal_edge_roughness`、`neg_ratio_estimation`），改用 `useTrackPointer` + `SliderTrack` 进行纯原子组合。
