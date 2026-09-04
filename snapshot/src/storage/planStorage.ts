@@ -3,10 +3,26 @@ import { i18n } from '../core/i18n';
 import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
 import { getDB } from './db/schema';
 
+export function createEmptyTrainingPlan(): TrainingPlan {
+  return {
+    id: 'custom_plan_default',
+    name: i18n.t('common.defaultCustomPlanName'),
+    description: i18n.t('common.defaultCustomPlanDesc'),
+    items: [],
+    isFavorite: true,
+    isBuiltin: false,
+    updatedAt: Date.now(),
+  };
+}
+
 export const EMPTY_TRAINING_PLAN: TrainingPlan = {
   id: 'custom_plan_default',
-  name: i18n.t('common.defaultCustomPlanName'),
-  description: i18n.t('common.defaultCustomPlanDesc'),
+  get name() {
+    return i18n.t('common.defaultCustomPlanName');
+  },
+  get description() {
+    return i18n.t('common.defaultCustomPlanDesc');
+  },
   items: [],
   isFavorite: true,
   isBuiltin: false,

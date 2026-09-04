@@ -27,17 +27,9 @@ const COLOR_SECTOR_KEYS = [
   'sectors.rose',
 ];
 
-/**
- * 运行时安全守卫：将未知的试炼记录字段转换为合法的 HSV 三元组
- */
-function parseHsvTuple(
-  raw: unknown,
-  fallback: [number, number, number] = [0, 0, 0],
-): [number, number, number] {
-  if (Array.isArray(raw) && raw.length === 3) {
-    return [Number(raw[0]) || 0, Number(raw[1]) || 0, Number(raw[2]) || 0];
-  }
-  return fallback;
+interface ColorHueTrialRecord extends UnifiedTrialRecord {
+  targetHSV?: [number, number, number];
+  userHSV?: [number, number, number];
 }
 
 /**
@@ -50,8 +42,9 @@ function calculateHueSectorStats(records: UnifiedTrialRecord[]): SectorStat[] {
     sumError: 0,
   }));
 
-  for (const r of records) {
-    const tHsv = parseHsvTuple(r.targetHSV);
+  for (const rec of records) {
+    const r = rec as ColorHueTrialRecord;
+    const tHsv = r.targetHSV || [0, 0, 0];
     const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
     sectorBuckets[idx].total += 1;
     if (r.isHit) sectorBuckets[idx].hits += 1;
@@ -89,9 +82,10 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
           sumBias: 0,
         }));
 
-        for (const r of records) {
-          const tHsv = parseHsvTuple(r.targetHSV);
-          const uHsv = parseHsvTuple(r.userHSV, tHsv);
+        for (const rec of records) {
+          const r = rec as ColorHueTrialRecord;
+          const tHsv = r.targetHSV || [0, 0, 0];
+          const uHsv = r.userHSV || tHsv;
           const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
           sumSignedBias += bias;
 

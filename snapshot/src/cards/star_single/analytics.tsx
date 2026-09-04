@@ -17,6 +17,12 @@ const SECTOR_KEYS = [
   'sectors.se',
 ];
 
+interface StarSingleTrialRecord extends UnifiedTrialRecord {
+  userClick?: [number, number];
+  targetB?: [number, number];
+  errorPixelDistance?: number;
+}
+
 export function createStarSingleAnalytics(): CardAnalyticsView[] {
   return [
     {
@@ -29,15 +35,10 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
         const totalCount = records.length;
         let sumDx = 0;
         let sumDy = 0;
-        for (const r of records) {
-          const uClick: [number, number] =
-            Array.isArray(r.userClick) && r.userClick.length === 2
-              ? [Number(r.userClick[0]), Number(r.userClick[1])]
-              : [0, 0];
-          const tB: [number, number] =
-            Array.isArray(r.targetB) && r.targetB.length === 2
-              ? [Number(r.targetB[0]), Number(r.targetB[1])]
-              : [0, 0];
+        for (const rec of records) {
+          const r = rec as StarSingleTrialRecord;
+          const uClick = r.userClick || [0, 0];
+          const tB = r.targetB || [0, 0];
           sumDx += uClick[0] - tB[0];
           sumDy += uClick[1] - tB[1];
         }
@@ -52,15 +53,10 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
         let sumDx = 0;
         let sumDy = 0;
         let sumDist = 0;
-        for (const r of records) {
-          const uClick: [number, number] =
-            Array.isArray(r.userClick) && r.userClick.length === 2
-              ? [Number(r.userClick[0]), Number(r.userClick[1])]
-              : [0, 0];
-          const tB: [number, number] =
-            Array.isArray(r.targetB) && r.targetB.length === 2
-              ? [Number(r.targetB[0]), Number(r.targetB[1])]
-              : [0, 0];
+        for (const rec of records) {
+          const r = rec as StarSingleTrialRecord;
+          const uClick = r.userClick || [0, 0];
+          const tB = r.targetB || [0, 0];
           sumDx += uClick[0] - tB[0];
           sumDy += uClick[1] - tB[1];
           sumDist += Number(r.errorPixelDistance || 0);
