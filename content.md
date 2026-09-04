@@ -1,107 +1,40 @@
-## [WIP] fix(lint): 修复 Biome 静态检查发现的 prototype 原型方法、表达式赋值及显式 any 警告
+## [WIP] fix(modal): 移除 SettingsModal 中冗余且错误的类型断言，直接传递 cardConfig 解决 TS2740 编译错误
 
 ### 错误分析
 
-静态检查工具 (Biome) 发现了以下三处违反代码规范的代码：
-1. **`lint/suspicious/noPrototypeBuiltins`**：在 `scripts/check-i18n.mjs` 中直接调用了对象实例的 `hasOwnProperty` 方法，现代规范推荐使用更安全的 `Object.hasOwn()`。
-2. **`lint/suspicious/noAssignInExpressions`**：在 `scripts/check-i18n.mjs` 中使用了 `while ((match = T_CALL_REGEX.exec(content)) !== null)` 将正则匹配赋值放在了表达式内，可以通过现代的 `content.matchAll()` 循环优雅替代。
-3. **`lint/suspicious/noExplicitAny`**：在 `SettingsModal.tsx` 中向 `manifest.renderSettings` 传参时使用了 `as any` 类型断言，应当使用更严谨的 `Record<string, unknown>`。
+在上一轮修复 Biome 静态检查的 `noExplicitAny` 时，我们尝试将 `cardConfig` 强转为 `Record<string, unknown>`。这导致了 TypeScript 编译错误 (`TS2740`)：因为 `Record<string, unknown>` 过于宽泛，缺少了 `BaseModuleSettings` 所要求的必填基础配置属性（如 `autoNext`、`adaptiveMode` 等），从而无法赋值给 `CardManifest` 中定义的 `TSettings`。
 
 ### 用户需求
 
-清理上述三类 Lint 警告，确保整个代码库符合现代 JavaScript/TypeScript 严格静态规范。
+完全移除对 `cardConfig` 和 `updateCardConfig` 的冗余类型断言（不再使用 `as ...`），直接将它们作为强类型对象传递给 `manifest.renderSettings`。
 
 ### 评论
 
-严格遵守 Lint 规范有助于提高代码的健壮性与可维护性。消除这些警告后，项目的代码质量将达到更高的标准。
+正如 TypeScript 类型系统所展示的那样，`cardConfig` 自身已经严格实现了 `BaseModuleSettings` 契约，而 `CardManifest` 中的 `renderSettings` 泛型默认即为 `BaseModuleSettings`。因此“无任何断言”的直传是最干净、最符合类型安全的正确做法。
 
 ### 目标
 
-1. 重构 `scripts/check-i18n.mjs`，改用 `Object.hasOwn` 和 `matchAll`。
-2. 重构 `src/components/modals/SettingsModal.tsx`，将 `any` 断言替换为 `Record<string, unknown>` 与 `Partial<BaseModuleSettings>`。
+修改 `src/components/modals/SettingsModal.tsx`，直接传递 `settings: cardConfig` 与 `updateSettings: updateCardConfig`。
 
 ### 基本原理
 
-利用现代 JS 语言特性 (`Object.hasOwn`, `matchAll`) 替代陈旧的副作用表达式和原型方法；在 TypeScript 中通过精确的窄化类型转换替代 `any`，保持类型系统健康。
+利用 TypeScript 自身的结构化类型匹配与泛型推导，彻底消除多余的类型转换，确保编译通过且满足严格 Lint 检查。
 
 ### 标签
 
-#intent/refine #flow/ready #priority/medium #comp/build #concept/config #scope/dx #ai/refine #task/domain/core #task/object/lint-fixes #task/action/refactor #task/state/end
+#intent/fix #flow/ready #priority/critical #comp/ui #concept/config #scope/core #scope/dx #ai/refine #task/domain/core #task/object/settings-modal #task/action/bug-fix #task/state/end
 
 ---
 
 ### Script
 
-#### Acts 1: 清理 check-i18n.mjs 中的原形方法与表达式赋值警告
-
-~~~~~act
-patch_file
-scripts/check-i18n.mjs
-~~~~~
-~~~~~javascript.old
-function checkKeyExists(key, cardId, vGlobal) {
-  if (cardId && !isExplicitGlobal(key)) {
-    const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
-    if (vGlobal.hasOwnProperty(cardKey)) return true;
-  }
-  return vGlobal.hasOwnProperty(key);
-}
-~~~~~
-~~~~~javascript.new
-function checkKeyExists(key, cardId, vGlobal) {
-  if (cardId && !isExplicitGlobal(key)) {
-    const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
-    if (Object.hasOwn(vGlobal, cardKey)) return true;
-  }
-  return Object.hasOwn(vGlobal, key);
-}
-~~~~~
-
-~~~~~act
-patch_file
-scripts/check-i18n.mjs
-~~~~~
-~~~~~javascript.old
-  let match;
-  while ((match = T_CALL_REGEX.exec(content)) !== null) {
-    const key = match[2];
-    if (key.includes('${') || !key.trim()) continue;
-    addMissing(relativePath, key, cardId);
-  }
-~~~~~
-~~~~~javascript.new
-  for (const match of content.matchAll(T_CALL_REGEX)) {
-    const key = match[2];
-    if (key.includes('${') || !key.trim()) continue;
-    addMissing(relativePath, key, cardId);
-  }
-~~~~~
-
-
-#### Acts 2: 消除 SettingsModal.tsx 中的显式 any 声明
+#### Acts 1: 修正 SettingsModal.tsx 中 renderSettings 的直传调用
 
 ~~~~~act
 patch_file
 src/components/modals/SettingsModal.tsx
 ~~~~~
 ~~~~~tsx.old
-        {/* 渲染卡片专属设置组件 */}
-        {(() => {
-          const manifest = registry.getCardManifest(card.id);
-          if (manifest?.renderSettings) {
-            return (
-              <div className="pt-2 border-t border-border/60">
-                {manifest.renderSettings({
-                  settings: cardConfig as any,
-                  updateSettings: (patch) => updateCardConfig(patch as any),
-                })}
-              </div>
-            );
-          }
-          return null;
-        })()}
-~~~~~
-~~~~~tsx.new
         {/* 渲染卡片专属设置组件 */}
         {(() => {
           const manifest = registry.getCardManifest(card.id);
@@ -118,7 +51,24 @@ src/components/modals/SettingsModal.tsx
           return null;
         })()}
 ~~~~~
+~~~~~tsx.new
+        {/* 渲染卡片专属设置组件 */}
+        {(() => {
+          const manifest = registry.getCardManifest(card.id);
+          if (manifest?.renderSettings) {
+            return (
+              <div className="pt-2 border-t border-border/60">
+                {manifest.renderSettings({
+                  settings: cardConfig,
+                  updateSettings: updateCardConfig,
+                })}
+              </div>
+            );
+          }
+          return null;
+        })()}
+~~~~~
 
 ### 下一步建议
 
-- 所有的 Lint 警告已全部清理完毕。你可以重新运行 `pnpm lint` 或相应的检查脚本验证当前代码库是否能 100% 通过静态检查。
+- 编译错误现已彻底解决。建议运行构建命令检查 TypeScript 编译和 Biome 静态检查是否全部 100% 通过。

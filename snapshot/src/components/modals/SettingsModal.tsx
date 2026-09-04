@@ -190,8 +190,8 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
             return (
               <div className="pt-2 border-t border-border/60">
                 {manifest.renderSettings({
-                  settings: cardConfig as Record<string, unknown>,
-                  updateSettings: (patch) => updateCardConfig(patch as Partial<BaseModuleSettings>),
+                  settings: cardConfig,
+                  updateSettings: updateCardConfig,
                 })}
               </div>
             );
