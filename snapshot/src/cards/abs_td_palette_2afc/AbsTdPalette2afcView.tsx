@@ -55,7 +55,8 @@ export function AbsTdPalette2afcView({
     ? hsvToHex(...question.promptDominantColor)
     : CANVAS_THEME.status.accentHover;
   const targetIdx = question.correctPatternIndex ?? 0;
-  const effectiveIndex = selectedIndex ?? (userAnswer?.isHit !== undefined ? userAnswer.userChoiceIndex : null);
+  const effectiveIndex =
+    selectedIndex ?? (userAnswer?.isHit !== undefined ? userAnswer.userChoiceIndex : null);
 
   return (
     <QuestionCardShell
@@ -92,7 +93,11 @@ export function AbsTdPalette2afcView({
             >
               <div className="flex items-center justify-between w-full px-1">
                 <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
-                  <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+                  <Badge
+                    variant="secondary"
+                    size="sm"
+                    className="w-5 h-5 p-0 justify-center font-mono text-xs"
+                  >
                     {idx + 1}
                   </Badge>
                   {t('common.screenN', { num: idx + 1 })}

@@ -97,7 +97,9 @@ export function NegRatioEstimationView({
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>{t('ratioLabel')}</span>
           <span className="font-mono text-base font-black text-primary">
-            {showAnswer && userAnswer?.userRatio !== undefined ? `${userAnswer.userRatio}%` : `${activeVal.toFixed(1)}%`}
+            {showAnswer && userAnswer?.userRatio !== undefined
+              ? `${userAnswer.userRatio}%`
+              : `${activeVal.toFixed(1)}%`}
           </span>
         </div>
 

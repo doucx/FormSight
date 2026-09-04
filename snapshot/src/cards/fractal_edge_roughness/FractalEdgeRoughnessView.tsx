@@ -73,7 +73,8 @@ export function FractalEdgeRoughnessView({
   }, [question.targetH, question.targetSeed]);
 
   // 2. 绘制用户当前调节边缘波形
-  const activeH = showAnswer && userAnswer ? userAnswer.userH : hoverVal !== null ? hoverVal : currentH;
+  const activeH =
+    showAnswer && userAnswer ? userAnswer.userH : hoverVal !== null ? hoverVal : currentH;
   useEffect(() => {
     const canvas = userCanvasRef.current;
     if (!canvas) return;
@@ -104,10 +105,7 @@ export function FractalEdgeRoughnessView({
   }, [activeH, question.userSeed, showAnswer, userAnswer]);
 
   return (
-    <QuestionCardShell
-      hintText={t('instruction')}
-      maxWidth="max-w-2xl"
-    >
+    <QuestionCardShell hintText={t('instruction')} maxWidth="max-w-2xl">
       {/* 边缘对比视口 */}
       <div className="w-full space-y-3">
         <div className="relative rounded-2xl border border-border bg-card p-3 shadow-inner">
@@ -139,9 +137,7 @@ export function FractalEdgeRoughnessView({
       <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>{t('hurstExponent')}</span>
-          <span className="font-mono text-base font-black text-primary">
-            {activeH.toFixed(2)}
-          </span>
+          <span className="font-mono text-base font-black text-primary">{activeH.toFixed(2)}</span>
         </div>
 
         <div className="flex items-center gap-3 w-full">

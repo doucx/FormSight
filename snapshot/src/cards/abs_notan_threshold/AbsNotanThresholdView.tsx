@@ -120,7 +120,9 @@ export function AbsNotanThresholdView({
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>{t('label')}</span>
           <span className="font-mono text-base font-black text-primary">
-            {showAnswer && userAnswer?.userValue !== undefined ? `${userAnswer.userValue}%` : `${activeVal}%`}
+            {showAnswer && userAnswer?.userValue !== undefined
+              ? `${userAnswer.userValue}%`
+              : `${activeVal}%`}
           </span>
         </div>
 

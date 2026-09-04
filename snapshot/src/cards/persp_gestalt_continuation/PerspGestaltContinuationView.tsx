@@ -81,7 +81,11 @@ export function PerspGestaltContinuationView({
         >
           <div className="flex items-center justify-between w-full px-1">
             <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
                 1
               </Badge>
               {t('optionA')}
@@ -119,7 +123,11 @@ export function PerspGestaltContinuationView({
         >
           <div className="flex items-center justify-between w-full px-1">
             <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge variant="secondary" size="sm" className="w-5 h-5 p-0 justify-center font-mono text-xs">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
                 2
               </Badge>
               {t('optionB')}
