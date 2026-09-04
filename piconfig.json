@@ -119,8 +119,8 @@
     },
     "full": {
       "format": "xml",
-      "extension": ["ts", "tsx", "json", "css"],
-      "paths": ["src/"],
+      "extension": ["ts", "tsx", "json", "css", "html"],
+      "paths": ["src/", "./index.html"],
       "ignore": ["*.test.ts", "*.test.tsx"]
     }
   }
