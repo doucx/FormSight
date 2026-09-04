@@ -56,9 +56,7 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
 
         const avgRatioErr =
           totalCount > 0
-            ? Math.round(
-                (records.reduce((acc, c) => acc + c.errorValue, 0) / totalCount) * 10,
-              ) / 10
+            ? Math.round((records.reduce((acc, c) => acc + c.errorValue, 0) / totalCount) * 10) / 10
             : 0;
 
         return (

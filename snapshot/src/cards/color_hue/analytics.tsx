@@ -36,7 +36,10 @@ interface ColorHueTrialRecord extends UnifiedTrialRecord {
 /**
  * 聚合 12 个色相扇区的样本量、命中数与平均误差统计
  */
-function calculateHueSectorStats(rawRecords: UnifiedTrialRecord[], t: ScopedTranslator): SectorStat[] {
+function calculateHueSectorStats(
+  rawRecords: UnifiedTrialRecord[],
+  t: ScopedTranslator,
+): SectorStat[] {
   const records = rawRecords as ColorHueTrialRecord[];
   const sectorBuckets = Array.from({ length: 12 }, () => ({
     total: 0,
