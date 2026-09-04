@@ -33,6 +33,46 @@ export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedT
   };
 }
 
+/**
+ * 纯领域计算与规则契约 (0 UI 依赖理念，仅负责出题、判分与数据提取)
+ */
+export interface CardEngineContract<
+  TQuestion = unknown,
+  THitResult = unknown,
+  TAnswerVal = unknown,
+  TSettings extends BaseModuleSettings = BaseModuleSettings,
+> {
+  isTargeting?: (settings: TSettings) => boolean;
+  generateQuestion: (level: number, settings: TSettings) => TQuestion;
+  evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
+  isHit: (hitResult: THitResult) => boolean;
+  getQuestionLevel?: (question: TQuestion) => number;
+  extractRecordDetails?: (
+    question: TQuestion,
+    hitResult: THitResult,
+    userVal: TAnswerVal,
+  ) => Record<string, unknown>;
+}
+
+/**
+ * 表现层绑定契约 (声明 Web 视图渲染、图标与设置弹窗组件注入)
+ */
+export interface CardUIContract<
+  TQuestion = unknown,
+  THitResult = unknown,
+  TAnswerVal = unknown,
+  TSettings extends BaseModuleSettings = BaseModuleSettings,
+> {
+  icon: (props: { className?: string }) => ComponentChildren;
+  renderCanvas: (
+    props: CardCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
+  ) => ComponentChildren;
+  renderSettings?: (props: {
+    settings: TSettings;
+    updateSettings: (patch: Partial<TSettings>) => void;
+  }) => ComponentChildren;
+}
+
 export interface CardManifest<
   TQuestion = unknown,
   THitResult = unknown,
@@ -43,41 +83,35 @@ export interface CardManifest<
   id: string;
   domain: VisualDomainTag;
   tags: CardTags;
-  icon: (props: { className?: string }) => ComponentChildren;
-
-  /** 2. 个性化设置项定义与默认值 */
-  renderSettings?: (props: {
-    settings: TSettings;
-    updateSettings: (patch: Partial<TSettings>) => void;
-  }) => ComponentChildren;
   defaultSettings?: Partial<TSettings>;
 
-  /** 3. 自包含多语言词典 */
+  /** 2. 自包含多语言词典 */
   locales?: {
     'zh-CN': Record<string, unknown>;
     'en-US': Record<string, unknown>;
   };
 
-  /** 4. 训练引擎核心逻辑闭环 */
-  training: {
-    isTargeting?: (settings: TSettings) => boolean;
-    generateQuestion: (level: number, settings: TSettings) => TQuestion;
-    evaluateAnswer: (userVal: TAnswerVal, question: TQuestion) => THitResult;
-    isHit: (hitResult: THitResult) => boolean;
-    getQuestionLevel?: (question: TQuestion) => number;
-    extractRecordDetails?: (
-      question: TQuestion,
-      hitResult: THitResult,
-      userVal: TAnswerVal,
-    ) => Record<string, unknown>;
-    renderCanvas: (
-      props: CardCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
-    ) => ComponentChildren;
-  };
+  /** 3. 核心领域逻辑 (推荐) */
+  engine?: CardEngineContract<TQuestion, THitResult, TAnswerVal, TSettings>;
+
+  /** 4. 表现层绑定 (推荐) */
+  ui?: CardUIContract<TQuestion, THitResult, TAnswerVal, TSettings>;
 
   /** 5. 专属能力分析视图 (可选) */
   analytics?: {
     views: CardAnalyticsView[];
     fetchRecords?: (cardId: string) => Promise<UnifiedTrialRecord[]>;
+  };
+
+  // --- 兼容旧字段 (过渡期向后兼容) ---
+  icon?: (props: { className?: string }) => ComponentChildren;
+  renderSettings?: (props: {
+    settings: TSettings;
+    updateSettings: (patch: Partial<TSettings>) => void;
+  }) => ComponentChildren;
+  training?: CardEngineContract<TQuestion, THitResult, TAnswerVal, TSettings> & {
+    renderCanvas: (
+      props: CardCanvasProps<TQuestion, THitResult, TAnswerVal, TSettings>,
+    ) => ComponentChildren;
   };
 }

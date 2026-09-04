@@ -157,10 +157,11 @@ class SystemDomainRegistry {
     }
 
     // 2. 构建标准 CardDefinition
+    const icon = card.ui?.icon ?? card.icon!;
     const cardDef: CardDefinition = {
       id: card.id,
       domain: card.domain,
-      icon: card.icon,
+      icon,
       tags: card.tags,
       hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),
       defaultSettings: card.defaultSettings,
