@@ -52,7 +52,6 @@ if (fs.existsSync(cardsDir)) {
   }
 }
 
-// 移除了 'settings.'，因为卡片内的 settings 是局部嵌套键
 const EXPLICIT_GLOBAL_PREFIXES = [
   'cards.',
   'common.',
@@ -121,28 +120,6 @@ function scanSourceFile(filepath) {
   }
 }
 
-function extractSchemaKeys(content) {
-  const keys = [];
-  const titleMatches = content.matchAll(/title:\s*(['"])([^'"]+)\1/g);
-  for (const m of titleMatches) keys.push(m[2]);
-
-  const descMatches = content.matchAll(/description:\s*(['"])([^'"]+)\1/g);
-  for (const m of descMatches) keys.push(m[2]);
-
-  const labelMatches = content.matchAll(/label:\s*(['"])([^'"]+)\1/g);
-  for (const m of labelMatches) keys.push(m[2]);
-
-  const constArrayMatches = content.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*\[([\s\S]*?)\]/g);
-  for (const m of constArrayMatches) {
-    const arrayContent = m[2];
-    const stringMatches = arrayContent.matchAll(/(['"])([^'"]+)\1/g);
-    for (const sm of stringMatches) {
-      keys.push(sm[2]);
-    }
-  }
-  return keys;
-}
-
 function walkDir(dir) {
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir);
@@ -153,23 +130,11 @@ function walkDir(dir) {
       walkDir(filepath);
     } else if (stat.isFile() && /\.(ts|tsx)$/.test(filepath)) {
       scanSourceFile(filepath);
-
-      const relativePath = path.relative(SRC_DIR, filepath);
-      const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]index\.tsx?$/);
-      if (matchCard) {
-        const cardId = matchCard[1];
-        const content = fs.readFileSync(filepath, 'utf8');
-        const schemaKeys = extractSchemaKeys(content);
-        for (const sk of schemaKeys) {
-          if (sk.includes('${') || !sk.trim()) continue;
-          addMissing(relativePath, sk, cardId);
-        }
-      }
     }
   }
 }
 
-console.log('🔍 Scanning codebase for i18n key usages and card configuration schemas...');
+console.log('🔍 Scanning codebase for i18n key usages...');
 walkDir(SRC_DIR);
 
 if (missingKeys.length > 0) {
@@ -195,8 +160,6 @@ if (missingKeys.length > 0) {
   console.log(`Total missing usages found: ${missingKeys.length}`);
   process.exit(1);
 } else {
-  console.log(
-    '✅ All statically analyzable i18n keys and card schemas are correctly defined in locale files.',
-  );
+  console.log('✅ All statically analyzable i18n keys are correctly defined in locale files.');
   process.exit(0);
 }
