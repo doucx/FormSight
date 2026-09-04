@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(dx): 简化 check-i18n.mjs 静态检查脚本，彻底移除已废弃的 Schema 解析逻辑", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788491264.17175, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "update_script Capture: M check-i18n.mjs", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788491630.885722, "duration_ms": 0}}
