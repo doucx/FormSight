@@ -1,20 +1,3 @@
-# [WIP] 创建自动扫描命名空间脚本
-
-## 计划说明
-
-根据您的要求，我将创建一个健壮的 Node.js 脚本 (`scripts/check-i18n.mjs`)。该脚本完美符合以下设计目标：
-1. **自动扫描命名空间**：自动加载 `src/locales/*.json` 与所有 `src/cards/*/locales/*.json` 并动态挂载至内存字典树。
-2. **源码正则解析**：递归遍历 `src/` 下所有 `.ts` 与 `.tsx` 文件，精准捕获 `t(...)`、`cardT(...)`、`commonT(...)` 的调用字面量 Key。
-3. **智能回退与作用域匹配**：精准识别带显式前缀的全局 Key，以及卡片目录下的相对 Key（自动推导 `cards.<cardId>.<key>` 并支持向全局回退）。
-4. **CI 友好**：若发现幽灵 Key，打印详细的错误文件与缺失路径，并以 `process.exit(1)` 非零状态码退出。
-
-下面是创建该脚本的 Quipu 操作指令：
-
-~~~~~act
-write_file
-scripts/check-i18n.mjs
-~~~~~
-~~~~~javascript
 import fs from 'fs';
 import path from 'path';
 
@@ -159,4 +142,3 @@ if (missingCount > 0) {
   console.log('✨ i18n Check Passed: All translation keys have corresponding entries in locale dictionaries.');
   process.exit(0);
 }
-~~~~~
