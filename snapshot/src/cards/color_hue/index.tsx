@@ -82,7 +82,9 @@ export const colorHueCard: CardManifest<
 
           {settings.targetingMode === 'manual' && (
             <div className="bg-muted/60 p-3 rounded-2xl border border-border/60 space-y-2">
-              <div className="text-xs font-semibold text-muted-foreground">{t('settings.targetingSubTitle')}</div>
+              <div className="text-xs font-semibold text-muted-foreground">
+                {t('settings.targetingSubTitle')}
+              </div>
               <div className="grid grid-cols-3 gap-1.5">
                 {COLOR_SECTOR_KEYS.map((name, idx) => {
                   const selected = (settings.manualTargetSectors ?? []).includes(idx);
