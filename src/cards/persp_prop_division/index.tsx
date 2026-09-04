@@ -15,7 +15,6 @@ export const perspPropDivisionCard: CardManifest<
 > = {
   id: 'persp_prop_division',
   domain: 'form_and_proportion',
-  icon: Layers,
   tags: {
     domain: ['form_and_proportion'],
     path: ['absolute_estimation'],
@@ -26,7 +25,7 @@ export const perspPropDivisionCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -39,6 +38,9 @@ export const perspPropDivisionCard: CardManifest<
       errorValue: hitResult.errorValue,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Layers,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspPropDivisionView
         key={question.id}

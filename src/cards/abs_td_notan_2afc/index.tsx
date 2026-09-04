@@ -15,7 +15,6 @@ export const absTdNotan2afcCard: CardManifest<
 > = {
   id: 'abs_td_notan_2afc',
   domain: 'rhythm_and_notan',
-  icon: Droplet,
   tags: {
     domain: ['rhythm_and_notan'],
     path: ['concretization'],
@@ -27,7 +26,7 @@ export const absTdNotan2afcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -37,6 +36,9 @@ export const absTdNotan2afcCard: CardManifest<
       correctChoice: q.correctNotanChoice,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Droplet,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsTdNotan2afcView
         key={question.id}

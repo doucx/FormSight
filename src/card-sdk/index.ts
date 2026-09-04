@@ -125,6 +125,8 @@ export type {
   CardManifest,
   CardCanvasProps,
   CardAnalyticsView,
+  CardEngineContract,
+  CardUIContract,
 } from '../core/cardContract';
 export {
   calculateBasicOverallStats,

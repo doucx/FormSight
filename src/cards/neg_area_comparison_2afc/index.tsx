@@ -15,7 +15,6 @@ export const negAreaComparison2AfcCard: CardManifest<
 > = {
   id: 'neg_area_comparison_2afc',
   domain: 'form_and_proportion',
-  icon: Columns,
   tags: {
     domain: ['form_and_proportion'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const negAreaComparison2AfcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => evaluateAnswer(userVal, question),
     isHit: (res) => res.isHit,
@@ -40,6 +39,9 @@ export const negAreaComparison2AfcCard: CardManifest<
       areaDeltaPercent: q.areaDeltaPercent,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Columns,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <NegAreaComparison2AfcView
         key={question.id}

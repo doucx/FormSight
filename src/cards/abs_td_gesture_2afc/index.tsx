@@ -15,7 +15,6 @@ export const absTdGesture2afcCard: CardManifest<
 > = {
   id: 'abs_td_gesture_2afc',
   domain: 'rhythm_and_notan',
-  icon: Shuffle,
   tags: {
     domain: ['rhythm_and_notan'],
     path: ['concretization'],
@@ -26,7 +25,7 @@ export const absTdGesture2afcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -36,6 +35,9 @@ export const absTdGesture2afcCard: CardManifest<
       correctChoice: q.correctParticleChoice,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Shuffle,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsTdGesture2afcView
         key={question.id}

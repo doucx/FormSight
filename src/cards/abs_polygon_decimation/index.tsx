@@ -15,7 +15,6 @@ export const absPolygonDecimationCard: CardManifest<
 > = {
   id: 'abs_polygon_decimation',
   domain: 'form_and_proportion',
-  icon: Maximize2,
   tags: {
     domain: ['form_and_proportion'],
     path: ['extraction'],
@@ -26,7 +25,7 @@ export const absPolygonDecimationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -36,6 +35,9 @@ export const absPolygonDecimationCard: CardManifest<
       correctChoice: q.correctPolyChoice,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Maximize2,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsPolygonDecimationView
         key={question.id}

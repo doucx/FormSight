@@ -15,7 +15,6 @@ export const absPaletteClusteringCard: CardManifest<
 > = {
   id: 'abs_palette_clustering',
   domain: 'color_and_value',
-  icon: Palette,
   tags: {
     domain: ['color_and_value'],
     path: ['extraction'],
@@ -26,7 +25,7 @@ export const absPaletteClusteringCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -36,6 +35,9 @@ export const absPaletteClusteringCard: CardManifest<
       correctIndex: q.correctPaletteIndex,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Palette,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsPaletteClusteringView
         key={question.id}

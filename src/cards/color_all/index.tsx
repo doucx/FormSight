@@ -20,7 +20,6 @@ export const colorAllCard: CardManifest<
 > = {
   id: 'color_all',
   domain: 'color_and_value',
-  icon: Palette,
   tags: {
     domain: ['color_and_value'],
     path: ['absolute_estimation'],
@@ -31,31 +30,12 @@ export const colorAllCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('color_all');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-        <SettingToggleItem
-          title={t('settings.enableHoverColorPreviewTitle')}
-          description={t('settings.enableHoverColorPreviewDesc')}
-          checked={(settings.enableHoverColorPreview as boolean) ?? true}
-          onChange={(val) => updateSettings({ enableHoverColorPreview: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
     enableHoverColorPreview: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
@@ -65,6 +45,28 @@ export const colorAllCard: CardManifest<
       userHSV: userVal,
       deltaEError: hitResult.deltaEError,
     }),
+  },
+  ui: {
+    icon: Palette,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('color_all');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+          <SettingToggleItem
+            title={t('settings.enableHoverColorPreviewTitle')}
+            description={t('settings.enableHoverColorPreviewDesc')}
+            checked={(settings.enableHoverColorPreview as boolean) ?? true}
+            onChange={(val) => updateSettings({ enableHoverColorPreview: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <ColorAllView
         question={question}

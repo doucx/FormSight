@@ -22,7 +22,6 @@ export const colorSatCard: CardManifest<
 > = {
   id: 'color_sat',
   domain: 'color_and_value',
-  icon: Droplet,
   tags: {
     domain: ['color_and_value'],
     path: ['absolute_estimation'],
@@ -33,24 +32,11 @@ export const colorSatCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('color_sat');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateColorQuestion('S', level),
     evaluateAnswer: (userVal, q) => checkColorHit('S', userVal, q),
     isHit: (res) => res.isHit,
@@ -60,6 +46,22 @@ export const colorSatCard: CardManifest<
       userHSV: [q.targetH, userVal, q.targetV],
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Droplet,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('color_sat');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <ColorSatView
         question={question}

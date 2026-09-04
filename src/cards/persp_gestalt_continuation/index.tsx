@@ -15,7 +15,6 @@ export const perspGestaltContinuationCard: CardManifest<
 > = {
   id: 'persp_gestalt_continuation',
   domain: 'spatial_structure',
-  icon: Eye,
   tags: {
     domain: ['spatial_structure'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const perspGestaltContinuationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -38,6 +37,9 @@ export const perspGestaltContinuationCard: CardManifest<
       parallelOffset: q.parallelOffset,
       tolerance: hitResult.tolerance,
     }),
+  },
+  ui: {
+    icon: Eye,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <PerspGestaltContinuationView
         key={question.id}

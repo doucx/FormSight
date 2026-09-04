@@ -15,7 +15,6 @@ export const negShapeMatch2AfcCard: CardManifest<
 > = {
   id: 'neg_shape_match_2afc',
   domain: 'form_and_proportion',
-  icon: Sparkles,
   tags: {
     domain: ['form_and_proportion'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const negShapeMatch2AfcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => evaluateAnswer(userVal, question),
     isHit: (res) => res.isHit,
@@ -38,6 +37,9 @@ export const negShapeMatch2AfcCard: CardManifest<
       displayTimeMs: q.displayTimeMs,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Sparkles,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <NegShapeMatch2AfcView
         key={question.id}

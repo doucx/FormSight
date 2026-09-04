@@ -15,7 +15,6 @@ export const relDecontextual2AfcCard: CardManifest<
 > = {
   id: 'rel_decontextual_2afc',
   domain: 'color_and_value',
-  icon: Columns,
   tags: {
     domain: ['color_and_value'],
     path: ['relational_mapping'],
@@ -27,7 +26,7 @@ export const relDecontextual2AfcCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, q) => checkHit(userVal, q),
     isHit: (res) => res.isHit,
@@ -37,6 +36,9 @@ export const relDecontextual2AfcCard: CardManifest<
       correctChoice: q.largerPhysicalSide,
       physicalValueDiff: q.physicalValueDiff,
     }),
+  },
+  ui: {
+    icon: Columns,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <RelDecontextual2AfcView
         key={question.id}

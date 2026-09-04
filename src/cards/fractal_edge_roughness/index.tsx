@@ -16,7 +16,6 @@ export const fractalEdgeRoughnessCard: CardManifest<
 > = {
   id: 'fractal_edge_roughness',
   domain: 'rhythm_and_notan',
-  icon: Sparkles,
   tags: {
     domain: ['rhythm_and_notan'],
     path: ['extraction', 'absolute_estimation'],
@@ -32,7 +31,7 @@ export const fractalEdgeRoughnessCard: CardManifest<
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => evaluateAnswer(userVal, question),
     isHit: (res) => res.isHit,
@@ -43,6 +42,9 @@ export const fractalEdgeRoughnessCard: CardManifest<
       errorValue: hitResult.errorValue,
       signedBias: hitResult.signedBias,
     }),
+  },
+  ui: {
+    icon: Sparkles,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <FractalEdgeRoughnessView
         key={question.id}

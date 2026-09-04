@@ -48,7 +48,12 @@ export function GenericTrainingView<
   onExit,
 }: GenericTrainingViewProps<TQuestion, THitResult, TAnswerVal, TSettings>) {
   const domain = card.domain;
-  const training = manifest.training;
+  const engine = manifest.engine ?? manifest.training;
+  const renderCanvas = manifest.ui?.renderCanvas ?? manifest.training?.renderCanvas;
+
+  if (!engine || !renderCanvas) {
+    throw new Error(`Card [${card.id}] is missing engine or renderCanvas implementation`);
+  }
 
   const session = useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     domain,
@@ -65,9 +70,9 @@ export function GenericTrainingView<
     onTargetLimitReached,
     onIdleChange,
     onIdleResume,
-    generateQuestion: (level) => training.generateQuestion(level, settings),
-    evaluateAnswer: (userVal, q) => training.evaluateAnswer(userVal, q),
-    isHit: (hitResult) => training.isHit(hitResult),
+    generateQuestion: (level) => engine.generateQuestion(level, settings),
+    evaluateAnswer: (userVal, q) => engine.evaluateAnswer(userVal, q),
+    isHit: (hitResult) => engine.isHit(hitResult),
     saveTrialRecord: async ({
       sessionId,
       question: q,
@@ -77,7 +82,7 @@ export function GenericTrainingView<
       currentProfileLevel,
     }) => {
       const qLevel =
-        training.getQuestionLevel?.(q) ??
+        engine.getQuestionLevel?.(q) ??
         (q as { difficultyLevel?: number })?.difficultyLevel ??
         initialLevel;
 
@@ -89,9 +94,9 @@ export function GenericTrainingView<
           domain,
           timestamp: Date.now(),
           difficultyLevel: qLevel,
-          isHit: training.isHit(hitResult),
+          isHit: engine.isHit(hitResult),
           responseTimeMs,
-          details: training.extractRecordDetails?.(q, hitResult, userVal) ?? {},
+          details: engine.extractRecordDetails?.(q, hitResult, userVal) ?? {},
         },
         currentProfileLevel,
       );
@@ -120,10 +125,10 @@ export function GenericTrainingView<
     onExit,
   });
 
-  const isTargeting = training.isTargeting ? training.isTargeting(settings) : false;
+  const isTargeting = engine.isTargeting ? engine.isTargeting(settings) : false;
 
   const currentLevel = session.question
-    ? (training.getQuestionLevel?.(session.question) ??
+    ? (engine.getQuestionLevel?.(session.question) ??
       (session.question as { difficultyLevel?: number })?.difficultyLevel ??
       initialLevel)
     : initialLevel;
@@ -141,7 +146,7 @@ export function GenericTrainingView<
       onExit={onExit}
     >
       {({ disabled, isIdle }) =>
-        training.renderCanvas({
+        renderCanvas({
           question: session.question,
           showAnswer: session.showAnswer,
           userAnswer: session.userAnswer,

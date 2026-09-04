@@ -21,7 +21,6 @@ export const negRatioEstimationCard: CardManifest<
 > = {
   id: 'neg_ratio_estimation',
   domain: 'form_and_proportion',
-  icon: Maximize2,
   tags: {
     domain: ['form_and_proportion'],
     path: ['absolute_estimation'],
@@ -33,24 +32,11 @@ export const negRatioEstimationCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('neg_ratio_estimation');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => evaluateAnswer(userVal, question),
     isHit: (res) => res.isHit,
@@ -62,6 +48,22 @@ export const negRatioEstimationCard: CardManifest<
       positiveArea: q.positiveArea,
       negativeArea: q.negativeArea,
     }),
+  },
+  ui: {
+    icon: Maximize2,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('neg_ratio_estimation');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <NegRatioEstimationView
         key={question.id}

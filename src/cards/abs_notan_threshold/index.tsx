@@ -20,7 +20,6 @@ export const absNotanThresholdCard: CardManifest<
 > = {
   id: 'abs_notan_threshold',
   domain: 'rhythm_and_notan',
-  icon: Sun,
   tags: {
     domain: ['rhythm_and_notan'],
     path: ['extraction'],
@@ -32,24 +31,11 @@ export const absNotanThresholdCard: CardManifest<
     'zh-CN': zhCN,
     'en-US': enUS,
   },
-  renderSettings: ({ settings, updateSettings }) => {
-    const { t } = useCardTranslation('abs_notan_threshold');
-    return (
-      <div className="space-y-4">
-        <SettingToggleItem
-          title={t('settings.showToleranceBandTitle')}
-          description={t('settings.showToleranceBandDesc')}
-          checked={(settings.showToleranceBand as boolean) ?? true}
-          onChange={(val) => updateSettings({ showToleranceBand: val })}
-        />
-      </div>
-    );
-  },
   defaultSettings: {
     sliderHitMargin: 12,
     showToleranceBand: true,
   },
-  training: {
+  engine: {
     generateQuestion: (level) => generateQuestion(level),
     evaluateAnswer: (userVal, question) => checkHit(userVal, question),
     isHit: (res) => res.isHit,
@@ -59,6 +45,22 @@ export const absNotanThresholdCard: CardManifest<
       targetValue: q.idealNotanThreshold,
       errorValue: hitResult.errorValue,
     }),
+  },
+  ui: {
+    icon: Sun,
+    renderSettings: ({ settings, updateSettings }) => {
+      const { t } = useCardTranslation('abs_notan_threshold');
+      return (
+        <div className="space-y-4">
+          <SettingToggleItem
+            title={t('settings.showToleranceBandTitle')}
+            description={t('settings.showToleranceBandDesc')}
+            checked={(settings.showToleranceBand as boolean) ?? true}
+            onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+        </div>
+      );
+    },
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AbsNotanThresholdView
         key={question.id}
