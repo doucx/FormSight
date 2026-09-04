@@ -1,5 +1,9 @@
 {
   "title": "Horizontal Double Anchors",
+  "2x2": "2x2",
+  "3x3": "3x3",
+  "4x4": "4x4",
+  "5x5": "5x5",
   "desc": "Horizontal dual anchors to train proportion and orthogonal projection intuition.",
   "instruction": "Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.",
   "settings": {

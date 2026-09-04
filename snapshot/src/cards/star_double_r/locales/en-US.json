@@ -1,5 +1,9 @@
 {
   "title": "Rotated Double Anchors",
+  "2x2": "2x2",
+  "3x3": "3x3",
+  "4x4": "4x4",
+  "5x5": "5x5",
   "desc": "Tilted dual anchors to master complex rotated coordinate mapping.",
   "instruction": "Observe the rotated dual anchors on the left, then locate the target on the right.",
   "settings": {
