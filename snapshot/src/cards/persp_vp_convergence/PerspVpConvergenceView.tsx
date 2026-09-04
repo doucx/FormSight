@@ -45,6 +45,7 @@ export function PerspVpConvergenceView({
     },
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setCurrentVal(180);
     setHoverVal(null);

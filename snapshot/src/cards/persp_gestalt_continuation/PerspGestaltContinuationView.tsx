@@ -33,6 +33,7 @@ export function PerspGestaltContinuationView({
   const { t } = useCardTranslation('persp_gestalt_continuation');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

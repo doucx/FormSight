@@ -37,6 +37,7 @@ export function NegShapeMatch2AfcView({
   const matchOptionRefA = useRef<HTMLCanvasElement | null>(null);
   const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setMatchPhase('stimulus');
     setSelectedChoice(null);

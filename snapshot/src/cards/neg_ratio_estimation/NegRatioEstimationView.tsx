@@ -45,6 +45,7 @@ export function NegRatioEstimationView({
     onValChange: (val) => setCurrentVal(val),
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setCurrentVal(50.0);
     setHoverVal(null);

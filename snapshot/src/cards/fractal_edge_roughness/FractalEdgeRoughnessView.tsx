@@ -42,6 +42,7 @@ export function FractalEdgeRoughnessView({
     },
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setCurrentH(0.5);
     setHoverVal(null);

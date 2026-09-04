@@ -38,6 +38,7 @@ export function AbsPolygonDecimationView({
   const { t } = useCardTranslation('abs_polygon_decimation');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

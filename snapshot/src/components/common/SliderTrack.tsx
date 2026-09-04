@@ -1,7 +1,7 @@
-import type { JSX, RefObject } from 'preact';
+import type { JSX, Ref } from 'preact';
 
 export interface SliderTrackProps {
-  trackRef?: RefObject<HTMLDivElement | null>;
+  trackRef?: Ref<HTMLDivElement>;
   pointerProps?: JSX.HTMLAttributes<HTMLDivElement>;
   activeVal: number;
   max: number;

@@ -34,6 +34,7 @@ export function AbsPaletteClusteringView({
   const { t } = useCardTranslation('abs_palette_clustering');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedIndex(null);
   }, [question.id]);

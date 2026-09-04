@@ -45,6 +45,7 @@ export function AngleEstimationView({
     },
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setCurrentVal(90);
     setHoverVal(null);

@@ -34,6 +34,7 @@ export function AngleParallel2AfcView({
   const { t } = useCardTranslation('angle_parallel_2afc');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

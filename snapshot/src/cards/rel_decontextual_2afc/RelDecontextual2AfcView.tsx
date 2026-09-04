@@ -33,6 +33,7 @@ export function RelDecontextual2AfcView({
   const { t } = useCardTranslation('rel_decontextual_2afc');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

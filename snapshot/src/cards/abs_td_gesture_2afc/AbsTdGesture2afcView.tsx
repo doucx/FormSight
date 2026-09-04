@@ -41,6 +41,7 @@ export function AbsTdGesture2afcView({
   const { t } = useCardTranslation('abs_td_gesture_2afc');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedChoice(null);
   }, [question.id]);

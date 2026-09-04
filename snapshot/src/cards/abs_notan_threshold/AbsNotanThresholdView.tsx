@@ -46,6 +46,7 @@ export function AbsNotanThresholdView({
     },
   });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setCurrentVal(50);
     setHoverVal(null);

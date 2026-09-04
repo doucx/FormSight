@@ -35,6 +35,7 @@ export function AbsTdPalette2afcView({
   const { t } = useCardTranslation('abs_td_palette_2afc');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
   useEffect(() => {
     setSelectedIndex(null);
   }, [question.id]);
