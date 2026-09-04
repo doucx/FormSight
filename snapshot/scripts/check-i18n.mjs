@@ -7,7 +7,6 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 
-// 1. JSON 键值展平工具
 function flattenObject(obj, prefix = '') {
   let result = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -21,7 +20,6 @@ function flattenObject(obj, prefix = '') {
   return result;
 }
 
-// 2. 加载并挂载虚拟全量字典 (vGlobalZh / vGlobalEn)
 const vGlobalZh = {};
 const vGlobalEn = {};
 
@@ -52,9 +50,9 @@ if (fs.existsSync(cardsDir)) {
   }
 }
 
-// 3. 校验逻辑
+// 移除了 'settings.'，因为卡片内的 settings 是局部嵌套键
 const EXPLICIT_GLOBAL_PREFIXES = [
-  'cards.', 'common.', 'global.', 'tags.', 'nav.', 'settings.', 'stats.', 'plan.', 'home.', 'shell.', 'summary.', 'analyticsModal.', 'settingsModal.', 'templates.'
+  'cards.', 'common.', 'global.', 'tags.', 'nav.', 'stats.', 'plan.', 'home.', 'shell.', 'summary.', 'analyticsModal.', 'settingsModal.', 'templates.'
 ];
 
 function isExplicitGlobal(key) {
@@ -91,7 +89,6 @@ function addMissing(filepath, key, cardId) {
   }
 }
 
-// 3A. 扫描源码中的 t(...) 调用
 function scanSourceFile(filepath) {
   const content = fs.readFileSync(filepath, 'utf8');
   const T_CALL_REGEX = /(?:(?<![a-zA-Z0-9_$])(?:t|cardT|commonT)|i18n\.t)\s*\(\s*(['"`])(.*?)\1/g;
@@ -111,7 +108,6 @@ function scanSourceFile(filepath) {
   }
 }
 
-// 3B. 静态解析卡片 settingSchemas 配置项（如 buttonGroup options label / title / sectors）
 function extractSchemaKeys(content) {
   const keys = [];
   const titleMatches = content.matchAll(/title:\s*(['"])([^'"]+)\1/g);
@@ -145,7 +141,6 @@ function walkDir(dir) {
     } else if (stat.isFile() && /\.(ts|tsx)$/.test(filepath)) {
       scanSourceFile(filepath);
 
-      // 如果是卡片定义主入口 index.tsx，同时扫描其 schema 配置项
       const relativePath = path.relative(SRC_DIR, filepath);
       const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]index\.tsx?$/);
       if (matchCard) {
@@ -164,7 +159,6 @@ function walkDir(dir) {
 console.log('🔍 Scanning codebase for i18n key usages and card configuration schemas...');
 walkDir(SRC_DIR);
 
-// 4. 报告并控制退出码
 if (missingKeys.length > 0) {
   console.log('\n❌ Found missing i18n keys:\n');
   

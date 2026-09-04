@@ -7,6 +7,6 @@ update_script
 
 ### 📝 变更文件摘要:
 ```
-scripts/check-i18n.mjs | 98 ++++++++++++++++++++++++++++++++++----------------
- 1 file changed, 67 insertions(+), 31 deletions(-)
+scripts/check-i18n.mjs | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
 ```
