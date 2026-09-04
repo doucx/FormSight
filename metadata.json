@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M generator.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788520080.9898477, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] chore: 同步更新 piconfig.json 预设配置以匹配当前工程架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788520385.3075778, "duration_ms": 0}}

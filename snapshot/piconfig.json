@@ -9,11 +9,13 @@
         "src/types/index.ts",
         "src/config/planTemplates.ts",
         "src/config/tags.ts",
+        "src/card-sdk/index.ts",
         "src/core/i18n.ts",
         "src/core/registry.ts",
         "src/core/contracts.ts",
         "src/core/cardContract.ts",
         "src/core/engine/adaptiveEngine.ts",
+        "src/stores/",
         "src/storage/settings.ts",
         "src/storage/planStorage.ts",
         "src/storage/repository.ts",
@@ -43,6 +45,7 @@
       "format": "xml",
       "extension": ["ts", "tsx", "json"],
       "paths": [
+        "src/card-sdk/index.ts",
         "src/types/card.ts",
         "src/types/index.ts",
         "src/config/tags.ts",
@@ -52,8 +55,8 @@
         "src/storage/settings.ts",
         "src/components/common/",
         "src/components/ui/",
-        "src/components/settings/DynamicDomainSettings.tsx",
         "src/components/settings/common/",
+        "src/components/settings/sections/",
         "src/core/math/",
         "src/core/geometry/",
         "src/core/color/",
@@ -67,19 +70,6 @@
         "src/cards/neg_shape_match_2afc/"
       ]
     },
-    "packs": {
-      "format": "xml",
-      "extension": ["ts", "tsx", "json"],
-      "paths": [
-        "src/packs/star/index.ts",
-        "src/packs/color/index.ts",
-        "src/packs/relative_color/index.ts",
-        "src/packs/negative_space/index.ts",
-        "src/packs/abstraction/index.ts",
-        "src/packs/angle/index.ts",
-        "src/packs/perspective/index.ts"
-      ]
-    },
     "plan": {
       "format": "xml",
       "extension": ["ts", "tsx"],
@@ -87,6 +77,7 @@
         "src/types/plan.ts",
         "src/config/planTemplates.ts",
         "src/storage/planStorage.ts",
+        "src/stores/planStore.ts",
         "src/components/plan/PlanHeroCard.tsx",
         "src/components/plan/PlanSummaryModal.tsx",
         "src/components/plan/editor/PlanEditorHeader.tsx",
@@ -108,6 +99,7 @@
         "src/core/math/downsample.ts",
         "src/core/worker/workerClient.ts",
         "src/workers/compute.worker.ts",
+        "src/stores/profileStore.ts",
         "src/components/stats/ActivityHeatmapCard.tsx",
         "src/components/stats/CognitiveMasteryGrid.tsx",
         "src/components/stats/StatsMetricCards.tsx",
