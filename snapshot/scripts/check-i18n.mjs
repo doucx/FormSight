@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, '..');
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 
-// 1. JSON 键值展平工具，支持数组处理 (例如 heatmapMonths)
+// 1. JSON 键值展平工具
 function flattenObject(obj, prefix = '') {
   let result = {};
   for (const [k, v] of Object.entries(obj)) {
@@ -52,7 +52,7 @@ if (fs.existsSync(cardsDir)) {
   }
 }
 
-// 3. 代码扫码逻辑：精细区分“显式全局”与“相对私有”
+// 3. 校验逻辑
 const EXPLICIT_GLOBAL_PREFIXES = [
   'cards.', 'common.', 'global.', 'tags.', 'nav.', 'settings.', 'stats.', 'plan.', 'home.', 'shell.', 'summary.', 'analyticsModal.', 'settingsModal.', 'templates.'
 ];
@@ -62,43 +62,26 @@ function isExplicitGlobal(key) {
 }
 
 function checkKeyExists(key, cardId, vGlobal) {
-  // 如果此文件属于某个 Card 且其不含有全局显式前缀，尝试将其作为该卡片私有 Key 查询
   if (cardId && !isExplicitGlobal(key)) {
     const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
     if (vGlobal.hasOwnProperty(cardKey)) return true;
   }
-  // 回退或直查全局
   return vGlobal.hasOwnProperty(key);
 }
 
 const missingKeys = [];
+const recordedUsages = new Set();
 
-function scanFile(filepath) {
-  const content = fs.readFileSync(filepath, 'utf8');
-  // 匹配形式：t('xxx') / cardT("xxx") / commonT(`xxx`) / i18n.t('xxx')
-  const T_CALL_REGEX = /(?:(?<![a-zA-Z0-9_$])(?:t|cardT|commonT)|i18n\.t)\s*\(\s*(['"`])(.*?)\1/g;
-  
-  let match;
-  
-  // 探明所处的卡片作用域：例如 src/cards/star_single/... -> star_single
-  const relativePath = path.relative(SRC_DIR, filepath);
-  let cardId = null;
-  const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]/);
-  if (matchCard) {
-    cardId = matchCard[1];
-  }
+function addMissing(filepath, key, cardId) {
+  const zhExists = checkKeyExists(key, cardId, vGlobalZh);
+  const enExists = checkKeyExists(key, cardId, vGlobalEn);
 
-  while ((match = T_CALL_REGEX.exec(content)) !== null) {
-    const key = match[2];
-    // 忽略动态模板插值 `${...}`
-    if (key.includes('${') || !key.trim()) continue; 
-    
-    const zhExists = checkKeyExists(key, cardId, vGlobalZh);
-    const enExists = checkKeyExists(key, cardId, vGlobalEn);
-    
-    if (!zhExists || !enExists) {
+  if (!zhExists || !enExists) {
+    const uniqueId = `${filepath}:${cardId || 'global'}:${key}`;
+    if (!recordedUsages.has(uniqueId)) {
+      recordedUsages.add(uniqueId);
       missingKeys.push({
-        filepath: relativePath,
+        filepath,
         key,
         zhMissing: !zhExists,
         enMissing: !enExists,
@@ -106,6 +89,49 @@ function scanFile(filepath) {
       });
     }
   }
+}
+
+// 3A. 扫描源码中的 t(...) 调用
+function scanSourceFile(filepath) {
+  const content = fs.readFileSync(filepath, 'utf8');
+  const T_CALL_REGEX = /(?:(?<![a-zA-Z0-9_$])(?:t|cardT|commonT)|i18n\.t)\s*\(\s*(['"`])(.*?)\1/g;
+  
+  const relativePath = path.relative(SRC_DIR, filepath);
+  let cardId = null;
+  const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]/);
+  if (matchCard) {
+    cardId = matchCard[1];
+  }
+
+  let match;
+  while ((match = T_CALL_REGEX.exec(content)) !== null) {
+    const key = match[2];
+    if (key.includes('${') || !key.trim()) continue;
+    addMissing(relativePath, key, cardId);
+  }
+}
+
+// 3B. 静态解析卡片 settingSchemas 配置项（如 buttonGroup options label / title / sectors）
+function extractSchemaKeys(content) {
+  const keys = [];
+  const titleMatches = content.matchAll(/title:\s*(['"])([^'"]+)\1/g);
+  for (const m of titleMatches) keys.push(m[2]);
+
+  const descMatches = content.matchAll(/description:\s*(['"])([^'"]+)\1/g);
+  for (const m of descMatches) keys.push(m[2]);
+
+  const labelMatches = content.matchAll(/label:\s*(['"])([^'"]+)\1/g);
+  for (const m of labelMatches) keys.push(m[2]);
+
+  const constArrayMatches = content.matchAll(/(?:const|let|var)\s+(\w+)\s*=\s*\[([\s\S]*?)\]/g);
+  for (const m of constArrayMatches) {
+    const arrayContent = m[2];
+    const stringMatches = arrayContent.matchAll(/(['"])([^'"]+)\1/g);
+    for (const sm of stringMatches) {
+      keys.push(sm[2]);
+    }
+  }
+  return keys;
 }
 
 function walkDir(dir) {
@@ -117,25 +143,35 @@ function walkDir(dir) {
     if (stat.isDirectory()) {
       walkDir(filepath);
     } else if (stat.isFile() && /\.(ts|tsx)$/.test(filepath)) {
-      scanFile(filepath);
+      scanSourceFile(filepath);
+
+      // 如果是卡片定义主入口 index.tsx，同时扫描其 schema 配置项
+      const relativePath = path.relative(SRC_DIR, filepath);
+      const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]index\.tsx?$/);
+      if (matchCard) {
+        const cardId = matchCard[1];
+        const content = fs.readFileSync(filepath, 'utf8');
+        const schemaKeys = extractSchemaKeys(content);
+        for (const sk of schemaKeys) {
+          if (sk.includes('${') || !sk.trim()) continue;
+          addMissing(relativePath, sk, cardId);
+        }
+      }
     }
   }
 }
 
-console.log('🔍 Scanning codebase for i18n key usages...');
+console.log('🔍 Scanning codebase for i18n key usages and card configuration schemas...');
 walkDir(SRC_DIR);
 
-// 4. 分析报告与退出
+// 4. 报告并控制退出码
 if (missingKeys.length > 0) {
   console.log('\n❌ Found missing i18n keys:\n');
   
   const byFile = {};
   for (const m of missingKeys) {
     if (!byFile[m.filepath]) byFile[m.filepath] = [];
-    // 基础去重
-    if (!byFile[m.filepath].some(x => x.key === m.key)) {
-      byFile[m.filepath].push(m);
-    }
+    byFile[m.filepath].push(m);
   }
   
   for (const [file, keys] of Object.entries(byFile)) {
@@ -152,6 +188,6 @@ if (missingKeys.length > 0) {
   console.log(`Total missing usages found: ${missingKeys.length}`);
   process.exit(1);
 } else {
-  console.log('✅ All statically analyzable i18n keys are correctly defined in locale files.');
+  console.log('✅ All statically analyzable i18n keys and card schemas are correctly defined in locale files.');
   process.exit(0);
 }
