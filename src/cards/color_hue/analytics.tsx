@@ -28,27 +28,30 @@ const COLOR_SECTOR_KEYS = [
 ];
 
 interface ColorHueTrialRecord extends UnifiedTrialRecord {
-  targetHSV?: [number, number, number];
-  userHSV?: [number, number, number];
+  targetHSV: [number, number, number];
+  userHSV: [number, number, number];
+  errorValue: number;
 }
 
 /**
  * 聚合 12 个色相扇区的样本量、命中数与平均误差统计
  */
-function calculateHueSectorStats(records: UnifiedTrialRecord[], t: ScopedTranslator): SectorStat[] {
+function calculateHueSectorStats(
+  rawRecords: UnifiedTrialRecord[],
+  t: ScopedTranslator,
+): SectorStat[] {
+  const records = rawRecords as ColorHueTrialRecord[];
   const sectorBuckets = Array.from({ length: 12 }, () => ({
     total: 0,
     hits: 0,
     sumError: 0,
   }));
 
-  for (const rec of records) {
-    const r = rec as ColorHueTrialRecord;
-    const tHsv = r.targetHSV || [0, 0, 0];
-    const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
+  for (const r of records) {
+    const idx = Math.max(0, Math.min(11, Math.floor(r.targetHSV[0] / 30)));
     sectorBuckets[idx].total += 1;
     if (r.isHit) sectorBuckets[idx].hits += 1;
-    sectorBuckets[idx].sumError += Number(r.errorValue ?? 0);
+    sectorBuckets[idx].sumError += r.errorValue;
   }
 
   return sectorBuckets.map((b, i) => ({
@@ -71,7 +74,8 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
       renderVisualizer: (canvas, records) => {
         renderHueBiasChartCanvas(canvas, records);
       },
-      renderDiagnostics: (records, t) => {
+      renderDiagnostics: (rawRecords, t) => {
+        const records = rawRecords as ColorHueTrialRecord[];
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -82,14 +86,11 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
           sumBias: 0,
         }));
 
-        for (const rec of records) {
-          const r = rec as ColorHueTrialRecord;
-          const tHsv = r.targetHSV || [0, 0, 0];
-          const uHsv = r.userHSV || tHsv;
-          const bias = calcSignedHueBias(tHsv[0], uHsv[0]);
+        for (const r of records) {
+          const bias = calcSignedHueBias(r.targetHSV[0], r.userHSV[0]);
           sumSignedBias += bias;
 
-          const idx = Math.max(0, Math.min(11, Math.floor(tHsv[0] / 30)));
+          const idx = Math.max(0, Math.min(11, Math.floor(r.targetHSV[0] / 30)));
           sectorBuckets[idx].total += 1;
           if (r.isHit) sectorBuckets[idx].hits += 1;
           sectorBuckets[idx].sumBias += bias;

@@ -2,6 +2,7 @@ import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
 import type { ScopedTranslator } from '../../../core/i18n';
 import type { UnifiedTrialRecord } from '../../../storage/db/schema';
 import { CANVAS_THEME, getAccuracyColor, hexToRgba } from '../../../utils/theme';
+import type { FractalEdgeRoughnessTrialRecord } from '../types';
 import { getRoughnessSectorIdx } from './generator';
 
 const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
@@ -13,9 +14,10 @@ const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sector
  */
 export function renderRoughnessBiasChart(
   canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
+  rawRecords: UnifiedTrialRecord[],
   t: ScopedTranslator,
 ): void {
+  const records = rawRecords as FractalEdgeRoughnessTrialRecord[];
   const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
   const width = Math.min(540, Math.max(300, parentWidth));
   const height = 260;
@@ -96,12 +98,9 @@ export function renderRoughnessBiasChart(
 
   // 2. 绘制散点
   for (const r of records) {
-    const targetH = Number(r.targetH ?? 0.5);
-    const signedBias = Number(r.signedBias ?? 0);
-    const isHit = Boolean(r.isHit);
-
-    const cx = getX(targetH);
-    const cy = getY(signedBias);
+    const cx = getX(r.targetH);
+    const cy = getY(r.signedBias);
+    const isHit = r.isHit;
 
     ctx.beginPath();
     ctx.arc(cx, cy, isHit ? 3.5 : 4, 0, Math.PI * 2);
@@ -123,11 +122,9 @@ export function renderRoughnessBiasChart(
   ];
 
   for (const r of records) {
-    const targetH = Number(r.targetH ?? 0.5);
-    const signedBias = Number(r.signedBias ?? 0);
     for (const b of buckets) {
-      if (targetH >= b.min && targetH < b.max) {
-        b.sum += signedBias;
+      if (r.targetH >= b.min && r.targetH < b.max) {
+        b.sum += r.signedBias;
         b.count++;
         break;
       }
@@ -168,9 +165,10 @@ export function renderRoughnessBiasChart(
  */
 export function renderRoughnessBandChart(
   canvas: HTMLCanvasElement,
-  records: UnifiedTrialRecord[],
+  rawRecords: UnifiedTrialRecord[],
   t: ScopedTranslator,
 ): void {
+  const records = rawRecords as FractalEdgeRoughnessTrialRecord[];
   const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
   const width = Math.min(540, Math.max(300, parentWidth));
   const height = 230;
@@ -191,11 +189,10 @@ export function renderRoughnessBandChart(
   }));
 
   for (const r of records) {
-    const targetH = Number(r.targetH ?? 0.5);
-    const sIdx = getRoughnessSectorIdx(targetH);
+    const sIdx = getRoughnessSectorIdx(r.targetH);
     sectorBuckets[sIdx].total += 1;
     if (r.isHit) sectorBuckets[sIdx].hits += 1;
-    sectorBuckets[sIdx].sumError += Number(r.errorValue ?? 0);
+    sectorBuckets[sIdx].sumError += r.errorValue;
   }
 
   const startY = 32;
