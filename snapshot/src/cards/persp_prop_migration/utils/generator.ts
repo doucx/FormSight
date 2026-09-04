@@ -1,12 +1,15 @@
-import { setup2DCanvas } from '../../../core/canvas/hidpi';
-import { expDecayInterpolate } from '../../../core/math/mathUtils';
-import type { Point } from '../../../types';
-import { CANVAS_THEME, hexToRgba } from '../../../utils/theme';
 import type {
   LineSegment,
   PerspPropMigrationHitResult,
   PerspPropMigrationQuestion,
 } from '../types';
+import {
+  CANVAS_THEME,
+  expDecayInterpolate,
+  hexToRgba,
+  setup2DCanvas,
+} from '@formsight/card-sdk';
+import type { Point } from '@formsight/card-sdk';
 
 export const PERSPECTIVE_CANVAS_SIZE = 340;
 

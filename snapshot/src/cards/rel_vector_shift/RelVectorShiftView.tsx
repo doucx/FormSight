@@ -1,9 +1,7 @@
 import { ArrowRight, Shuffle } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
-import { StandardNafcView } from '../../components/common/StandardNafcView';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
 import type { HitResult, QuestionData } from './types';
+import { StandardNafcView, hsvToHex, useCardTranslation } from '@formsight/card-sdk';
 
 export interface RelVectorShiftViewProps {
   question: QuestionData;

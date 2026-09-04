@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { useCardTranslation } from '../../core/i18n';
-import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
-import { CANVAS_HEIGHT, CANVAS_WIDTH, generateFractalLine } from './utils/generator';
+import {
+  CANVAS_HEIGHT,
+  CANVAS_THEME,
+  CANVAS_WIDTH,
+  StandardSliderView,
+  generateFractalLine,
+  setupHiDpiCanvas,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 
 export interface FractalEdgeRoughnessViewProps {
   question: QuestionData;

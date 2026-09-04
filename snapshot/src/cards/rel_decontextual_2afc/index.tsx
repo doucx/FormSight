@@ -1,11 +1,10 @@
 import { Columns } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { RelativeColorSettings } from '../../storage/settings';
 import { RelDecontextual2AfcView } from './RelDecontextual2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { checkHit, generateQuestion } from './utils/generator';
+import { checkHit, generateQuestion } from '@formsight/card-sdk';
+import type { CardManifest, RelativeColorSettings } from '@formsight/card-sdk';
 
 export const relDecontextual2AfcCard: CardManifest<
   QuestionData,

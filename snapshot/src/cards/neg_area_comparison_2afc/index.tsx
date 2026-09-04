@@ -1,11 +1,10 @@
 import { Columns } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
 import { NegAreaComparison2AfcView } from './NegAreaComparison2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { evaluateAnswer, generateQuestion } from './utils/generator';
+import { evaluateAnswer, generateQuestion } from '@formsight/card-sdk';
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const negAreaComparison2AfcCard: CardManifest<
   QuestionData,

@@ -1,5 +1,5 @@
-import type { Point } from '../../../types';
 import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from '../types';
+import type { Point } from '@formsight/card-sdk';
 
 export function generateRandomPolygon(
   level: number,

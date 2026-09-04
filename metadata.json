@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 初始化路径别名配置并构建 Card SDK 聚合导出入口", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788519150.6564877, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 自动化重构 cards 目录深层路径为 SDK 统一导入", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788519281.2689216, "duration_ms": 0}}

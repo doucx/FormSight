@@ -1,11 +1,10 @@
 import { Columns } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { BaseModuleSettings } from '../../storage/settings';
 import { AngleComparison2AfcView } from './AngleComparison2AfcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { AngleComparisonHitResult, AngleComparisonQuestion } from './types';
-import { checkHit, generateQuestion } from './utils/generator';
+import { checkHit, generateQuestion } from '@formsight/card-sdk';
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const angleComparison2AfcCard: CardManifest<
   AngleComparisonQuestion,

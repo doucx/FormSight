@@ -1,11 +1,14 @@
 import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
-import { CanvasView } from '../../components/common/CanvasView';
-import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { useCardTranslation } from '../../core/i18n';
-import { CANVAS_THEME } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, drawParticlesCanvas } from './utils/generator';
+import {
+  CANVAS_SIZE,
+  CANVAS_THEME,
+  CanvasView,
+  StandardSliderView,
+  drawParticlesCanvas,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 
 export interface AbsGestureAxisViewProps {
   question: QuestionData;

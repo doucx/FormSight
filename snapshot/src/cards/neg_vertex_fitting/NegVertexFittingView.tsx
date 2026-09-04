@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { drawDot, getDynamicDotRadius } from '../../core/canvas/drawPointGrid';
-import { drawPolygonCanvas } from '../../core/canvas/drawPolygon';
-import { setupHiDpiCanvas } from '../../core/canvas/hidpi';
-import { findNearestPointInGrid } from '../../core/geometry/pointGrid';
-import { useCardTranslation } from '../../core/i18n';
-import { LOUPE_DIAMETER, usePointLoupe } from '../../hooks/usePointLoupe';
-import type { Point } from '../../types';
-import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 import { FITTING_CANVAS_SIZE, type HitResult, type QuestionData } from './types';
+import {
+  CANVAS_THEME,
+  LOUPE_DIAMETER,
+  drawDot,
+  drawPolygonCanvas,
+  findNearestPointInGrid,
+  getDynamicDotRadius,
+  hexToRgba,
+  setupHiDpiCanvas,
+  useCardTranslation,
+  usePointLoupe,
+} from '@formsight/card-sdk';
+import type { Point } from '@formsight/card-sdk';
 
 export interface NegVertexFittingViewProps {
   question: QuestionData;

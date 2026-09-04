@@ -1,13 +1,15 @@
 import { RotateCw } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import { useCardTranslation } from '../../core/i18n';
-import type { BaseModuleSettings } from '../../storage/settings';
 import { AbsGestureAxisView } from './AbsGestureAxisView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
-import { checkHit, generateQuestion } from './utils/generator';
+import {
+  SettingToggleItem,
+  checkHit,
+  generateQuestion,
+  useCardTranslation,
+} from '@formsight/card-sdk';
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const absGestureAxisCard: CardManifest<QuestionData, HitResult, number, BaseModuleSettings> =
   {

@@ -1,5 +1,5 @@
-import type { Point } from '../../../types';
 import type { HitResult, QuestionData } from '../types';
+import type { Point } from '@formsight/card-sdk';
 
 export const THUMB_SIZE = 160;
 export const OPTION_SIZE = 260;

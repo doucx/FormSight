@@ -1,9 +1,12 @@
 import { Eye } from 'lucide-preact';
-import { CanvasView } from '../../components/common/CanvasView';
-import { StandardSliderView } from '../../components/common/StandardSliderView';
-import { useCardTranslation } from '../../core/i18n';
 import type { AngleEstimationHitResult, AngleEstimationQuestion } from './types';
-import { ANGLE_CANVAS_SIZE, drawAngleCanvas } from './utils/generator';
+import {
+  ANGLE_CANVAS_SIZE,
+  CanvasView,
+  StandardSliderView,
+  drawAngleCanvas,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 
 export interface AngleEstimationViewProps {
   question: AngleEstimationQuestion;

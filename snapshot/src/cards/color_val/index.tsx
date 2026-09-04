@@ -1,17 +1,19 @@
 import { Sun } from 'lucide-preact';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import type { CardManifest } from '../../core/cardContract';
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  checkColorHit,
-  generateColorQuestion,
-} from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorValView } from './ColorValView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
+import {
+  SettingToggleItem,
+  checkColorHit,
+  generateColorQuestion,
+  useCardTranslation,
+} from '@formsight/card-sdk';
+import type {
+  CardManifest,
+  ColorHitResult,
+  ColorQuestionData,
+  ColorSenseSettings,
+} from '@formsight/card-sdk';
 
 export const colorValCard: CardManifest<
   ColorQuestionData,

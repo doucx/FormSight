@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
-import { HsvTrackSlider } from '../../components/common/HsvTrackSlider';
-import { Button } from '../../components/ui/button';
-import { hsvToHex } from '../../core/color/colorUtils';
-import { useCardTranslation } from '../../core/i18n';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { HUE_SPECTRUM_GRADIENT, PALETTE } from '../../utils/theme';
 import type { HitResult, QuestionData } from './types';
+import {
+  Button,
+  HUE_SPECTRUM_GRADIENT,
+  HsvTrackSlider,
+  PALETTE,
+  hsvToHex,
+  useCardTranslation,
+} from '@formsight/card-sdk';
+import type { ColorSenseSettings } from '@formsight/card-sdk';
 
 export interface ColorAllViewProps {
   question: QuestionData;
