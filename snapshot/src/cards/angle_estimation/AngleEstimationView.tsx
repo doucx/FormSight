@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   CanvasView,
@@ -35,7 +35,7 @@ export function AngleEstimationView({
   const { t } = useCardTranslation('angle_estimation');
   const [currentVal, setCurrentVal] = useState<number>(90);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 180,
     step: 0.5,
     disabled: disabled || showAnswer,
@@ -44,11 +44,6 @@ export function AngleEstimationView({
       if (!disabled && !showAnswer) onAnswer(val);
     },
   });
-
-  useEffect(() => {
-    setCurrentVal(90);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   const targetVal = question.targetAngleDeg ?? 90;
   const tolerance = question.tolerance;

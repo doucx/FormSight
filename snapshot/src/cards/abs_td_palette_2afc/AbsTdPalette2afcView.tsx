@@ -1,5 +1,5 @@
 import { Check, Sparkles } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Badge,
@@ -34,10 +34,6 @@ export function AbsTdPalette2afcView({
 }: AbsTdPalette2afcViewProps) {
   const { t } = useCardTranslation('abs_td_palette_2afc');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    setSelectedIndex(null);
-  }, [question.id]);
 
   const handleSelect = (idx: number) => {
     if (disabled || showAnswer) return;

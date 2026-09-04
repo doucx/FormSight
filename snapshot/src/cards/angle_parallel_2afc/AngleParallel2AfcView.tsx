@@ -1,5 +1,5 @@
 import { Check, Split } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Badge,
@@ -33,10 +33,6 @@ export function AngleParallel2AfcView({
 }: AngleParallel2AfcViewProps) {
   const { t } = useCardTranslation('angle_parallel_2afc');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
 
   const handleSelect = (choice: 'A' | 'B') => {
     if (disabled || showAnswer) return;

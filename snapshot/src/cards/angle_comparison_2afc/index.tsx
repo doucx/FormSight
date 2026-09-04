@@ -40,6 +40,7 @@ export const angleComparison2AfcCard: CardManifest<
     }),
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
       <AngleComparison2AfcView
+        key={question.id}
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}

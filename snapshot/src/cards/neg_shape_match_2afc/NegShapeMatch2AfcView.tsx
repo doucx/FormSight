@@ -38,11 +38,6 @@ export function NegShapeMatch2AfcView({
   const matchOptionRefB = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    setMatchPhase('stimulus');
-    setSelectedChoice(null);
-  }, [question.id]);
-
-  useEffect(() => {
     if (matchPhase === 'stimulus' && !showAnswer) {
       const timer = setTimeout(() => {
         setMatchPhase('recall');

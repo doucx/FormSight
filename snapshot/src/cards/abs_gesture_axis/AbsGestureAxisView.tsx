@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   CANVAS_THEME,
@@ -36,7 +36,7 @@ export function AbsGestureAxisView({
   const { t } = useCardTranslation('abs_gesture_axis');
   const [currentVal, setCurrentVal] = useState<number>(90);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 180,
     step: 0.5,
     disabled: disabled || showAnswer,
@@ -45,11 +45,6 @@ export function AbsGestureAxisView({
       if (!disabled && !showAnswer) onAnswer(val);
     },
   });
-
-  useEffect(() => {
-    setCurrentVal(90);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   const targetVal = question.targetAngleDeg;
   const isHit = Boolean(userAnswer?.isHit);

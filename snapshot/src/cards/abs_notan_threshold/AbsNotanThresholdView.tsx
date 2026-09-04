@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   CanvasView,
@@ -36,7 +36,7 @@ export function AbsNotanThresholdView({
   const { t } = useCardTranslation('abs_notan_threshold');
   const [currentVal, setCurrentVal] = useState<number>(50);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 100,
     step: 0.5,
     disabled: disabled || showAnswer,
@@ -45,11 +45,6 @@ export function AbsNotanThresholdView({
       if (!disabled && !showAnswer) onAnswer(val);
     },
   });
-
-  useEffect(() => {
-    setCurrentVal(50);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   const targetVal = question.idealNotanThreshold;
   const isHit = Boolean(userAnswer?.isHit);

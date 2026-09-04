@@ -56,6 +56,7 @@ export const absGestureAxisCard: CardManifest<QuestionData, HitResult, number, B
       }),
       renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
         <AbsGestureAxisView
+          key={question.id}
           question={question}
           showAnswer={showAnswer}
           userAnswer={userAnswer}

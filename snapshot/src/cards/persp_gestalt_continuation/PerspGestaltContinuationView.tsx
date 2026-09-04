@@ -1,5 +1,5 @@
 import { Check, Eye } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Badge,
@@ -32,10 +32,6 @@ export function PerspGestaltContinuationView({
 }: PerspGestaltContinuationViewProps) {
   const { t } = useCardTranslation('persp_gestalt_continuation');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
 
   const handleSelect = (choice: 'A' | 'B') => {
     if (disabled || showAnswer) return;

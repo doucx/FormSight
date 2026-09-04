@@ -32,7 +32,7 @@ export function FractalEdgeRoughnessView({
   const targetCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const userCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 1.0,
     step: 0.01,
     disabled: disabled || showAnswer,
@@ -41,11 +41,6 @@ export function FractalEdgeRoughnessView({
       if (!disabled && !showAnswer) onAnswer(val);
     },
   });
-
-  useEffect(() => {
-    setCurrentH(0.5);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   // 1. 绘制目标边缘波形
   useEffect(() => {

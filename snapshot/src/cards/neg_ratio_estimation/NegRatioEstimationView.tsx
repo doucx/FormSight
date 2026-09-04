@@ -1,5 +1,5 @@
 import { Maximize2 } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Button,
@@ -38,17 +38,12 @@ export function NegRatioEstimationView({
   const { t } = useCardTranslation('neg_ratio_estimation');
   const [currentVal, setCurrentVal] = useState<number>(50.0);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 100,
     step: 0.1,
     disabled: disabled || showAnswer,
     onValChange: (val) => setCurrentVal(val),
   });
-
-  useEffect(() => {
-    setCurrentVal(50.0);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   const handleSubmit = () => {
     if (!disabled && !showAnswer) onAnswer(currentVal);

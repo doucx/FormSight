@@ -1,5 +1,5 @@
 import { Check, Sparkles } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Badge,
@@ -33,10 +33,6 @@ export function AbsPaletteClusteringView({
 }: AbsPaletteClusteringViewProps) {
   const { t } = useCardTranslation('abs_palette_clustering');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-
-  useEffect(() => {
-    setSelectedIndex(null);
-  }, [question.id]);
 
   const handleSelect = (idx: number) => {
     if (disabled || showAnswer) return;

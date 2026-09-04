@@ -1,5 +1,5 @@
 import { Sliders } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   CanvasView,
@@ -35,7 +35,7 @@ export function PerspVpConvergenceView({
   const { t } = useCardTranslation('persp_vp_convergence');
   const [currentVal, setCurrentVal] = useState<number>(180);
 
-  const { trackRef, hoverVal, setHoverVal, pointerProps } = useTrackPointer({
+  const { trackRef, hoverVal, pointerProps } = useTrackPointer({
     max: 360,
     step: 0.5,
     disabled: disabled || showAnswer,
@@ -44,11 +44,6 @@ export function PerspVpConvergenceView({
       if (!disabled && !showAnswer) onAnswer(val);
     },
   });
-
-  useEffect(() => {
-    setCurrentVal(180);
-    setHoverVal(null);
-  }, [question.id, setHoverVal]);
 
   const targetVal = question.targetAngleDeg ?? 0;
   const tolerance = question.tolerance;

@@ -1,5 +1,5 @@
 import { Check, Columns } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
+import { useState } from 'preact/hooks';
 
 import {
   Badge,
@@ -35,10 +35,6 @@ export function AbsTdNotan2afcView({
 }: AbsTdNotan2afcViewProps) {
   const { t } = useCardTranslation('abs_td_notan_2afc');
   const [selectedChoice, setSelectedChoice] = useState<'A' | 'B' | null>(null);
-
-  useEffect(() => {
-    setSelectedChoice(null);
-  }, [question.id]);
 
   const handleSelect = (choice: 'A' | 'B') => {
     if (disabled || showAnswer) return;
