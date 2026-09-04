@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'preact/hooks';
-import { getCardTitle, i18n, useTranslation } from '../core/i18n';
+import { getCardTitle, useTranslation } from '../core/i18n';
 import { registry } from '../core/registry';
-import { $activePlan, $allPlans, initPlanStore, setActivePlanAction } from '../stores/planStore';
+import { $activePlan, $allPlans, setActivePlanAction } from '../stores/planStore';
 import {
   $isProfilesLoaded,
   $profiles,
@@ -9,18 +9,13 @@ import {
   $totalTimeMs,
   refreshAppData,
 } from '../stores/profileStore';
-import { $settings, initSettingsStore } from '../stores/settingsStore';
+import { $settings } from '../stores/settingsStore';
 import { $toasts, dismissToast, showToast } from '../stores/toastStore';
 import type { RouteLocation } from './useHashRoute';
 
 export function useAppBootstrap(route: RouteLocation) {
   const { t } = useTranslation();
   const lastHomeRouteRef = useRef<RouteLocation>({ type: 'home' });
-
-  useEffect(() => {
-    i18n.init();
-    Promise.all([initSettingsStore(), initPlanStore(), refreshAppData()]);
-  }, []);
 
   // 动态更新页面标题
   // biome-ignore lint/correctness/useExhaustiveDependencies: update document title when plan name or route changes
