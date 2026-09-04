@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -8,7 +8,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 
 function flattenObject(obj, prefix = '') {
-  let result = {};
+  const result = {};
   for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}.${k}` : k;
     if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
@@ -35,7 +35,9 @@ if (fs.existsSync(globalEnPath)) {
 
 const cardsDir = path.join(SRC_DIR, 'cards');
 if (fs.existsSync(cardsDir)) {
-  const cardDirs = fs.readdirSync(cardsDir).filter(d => fs.statSync(path.join(cardsDir, d)).isDirectory());
+  const cardDirs = fs
+    .readdirSync(cardsDir)
+    .filter((d) => fs.statSync(path.join(cardsDir, d)).isDirectory());
   for (const cardId of cardDirs) {
     const zhPath = path.join(cardsDir, cardId, 'locales', 'zh-CN.json');
     if (fs.existsSync(zhPath)) {
@@ -52,11 +54,23 @@ if (fs.existsSync(cardsDir)) {
 
 // 移除了 'settings.'，因为卡片内的 settings 是局部嵌套键
 const EXPLICIT_GLOBAL_PREFIXES = [
-  'cards.', 'common.', 'global.', 'tags.', 'nav.', 'stats.', 'plan.', 'home.', 'shell.', 'summary.', 'analyticsModal.', 'settingsModal.', 'templates.'
+  'cards.',
+  'common.',
+  'global.',
+  'tags.',
+  'nav.',
+  'stats.',
+  'plan.',
+  'home.',
+  'shell.',
+  'summary.',
+  'analyticsModal.',
+  'settingsModal.',
+  'templates.',
 ];
 
 function isExplicitGlobal(key) {
-  return EXPLICIT_GLOBAL_PREFIXES.some(prefix => key.startsWith(prefix));
+  return EXPLICIT_GLOBAL_PREFIXES.some((prefix) => key.startsWith(prefix));
 }
 
 function checkKeyExists(key, cardId, vGlobal) {
@@ -83,7 +97,7 @@ function addMissing(filepath, key, cardId) {
         key,
         zhMissing: !zhExists,
         enMissing: !enExists,
-        cardId
+        cardId,
       });
     }
   }
@@ -92,7 +106,7 @@ function addMissing(filepath, key, cardId) {
 function scanSourceFile(filepath) {
   const content = fs.readFileSync(filepath, 'utf8');
   const T_CALL_REGEX = /(?:(?<![a-zA-Z0-9_$])(?:t|cardT|commonT)|i18n\.t)\s*\(\s*(['"`])(.*?)\1/g;
-  
+
   const relativePath = path.relative(SRC_DIR, filepath);
   let cardId = null;
   const matchCard = relativePath.match(/^cards[\\/]([^\\/]+)[\\/]/);
@@ -161,13 +175,13 @@ walkDir(SRC_DIR);
 
 if (missingKeys.length > 0) {
   console.log('\n❌ Found missing i18n keys:\n');
-  
+
   const byFile = {};
   for (const m of missingKeys) {
     if (!byFile[m.filepath]) byFile[m.filepath] = [];
     byFile[m.filepath].push(m);
   }
-  
+
   for (const [file, keys] of Object.entries(byFile)) {
     console.log(`📄 ${file}`);
     for (const m of keys) {
@@ -178,10 +192,12 @@ if (missingKeys.length > 0) {
     }
     console.log('');
   }
-  
+
   console.log(`Total missing usages found: ${missingKeys.length}`);
   process.exit(1);
 } else {
-  console.log('✅ All statically analyzable i18n keys and card schemas are correctly defined in locale files.');
+  console.log(
+    '✅ All statically analyzable i18n keys and card schemas are correctly defined in locale files.',
+  );
   process.exit(0);
 }

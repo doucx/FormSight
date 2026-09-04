@@ -1,4 +1,6 @@
 import { RotateCw } from 'lucide-preact';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import { TargetingSection } from '../../components/settings/common/TargetingSection';
 import type { CardManifest } from '../../core/cardContract';
 import {
   type ColorHitResult,
@@ -6,8 +8,6 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../../core/color/colorUtils';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
-import { TargetingSection } from '../../components/settings/common/TargetingSection';
 import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorHueView } from './ColorHueView';
@@ -56,7 +56,7 @@ export const colorHueCard: CardManifest<
         <SettingToggleItem
           title={t('settings.showToleranceBandTitle')}
           description={t('settings.showToleranceBandDesc')}
-          checked={settings.showToleranceBand as boolean ?? true}
+          checked={(settings.showToleranceBand as boolean) ?? true}
           onChange={(val) => updateSettings({ showToleranceBand: val })}
         />
         <TargetingSection

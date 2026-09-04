@@ -1,7 +1,7 @@
 import { RotateCw } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
 import { TargetingSection } from '../../components/settings/common/TargetingSection';
 import { Button } from '../../components/ui/button';
+import type { CardManifest } from '../../core/cardContract';
 import { useCardTranslation } from '../../core/i18n';
 import type { StarSettings } from '../../storage/settings';
 import type { Point } from '../../types';

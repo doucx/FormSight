@@ -1,6 +1,6 @@
 import { Palette } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
 import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import type { CardManifest } from '../../core/cardContract';
 import { useCardTranslation } from '../../core/i18n';
 import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorAllView } from './ColorAllView';
@@ -35,13 +35,13 @@ export const colorAllCard: CardManifest<
         <SettingToggleItem
           title={t('settings.showToleranceBandTitle')}
           description={t('settings.showToleranceBandDesc')}
-          checked={settings.showToleranceBand as boolean ?? true}
+          checked={(settings.showToleranceBand as boolean) ?? true}
           onChange={(val) => updateSettings({ showToleranceBand: val })}
         />
         <SettingToggleItem
           title={t('settings.enableHoverColorPreviewTitle')}
           description={t('settings.enableHoverColorPreviewDesc')}
-          checked={settings.enableHoverColorPreview as boolean ?? true}
+          checked={(settings.enableHoverColorPreview as boolean) ?? true}
           onChange={(val) => updateSettings({ enableHoverColorPreview: val })}
         />
       </div>

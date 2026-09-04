@@ -1,6 +1,7 @@
 import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
 import {
   type BaseModuleSettings,
   type UserSettings,
@@ -8,7 +9,6 @@ import {
   saveSettings,
 } from '../../storage/settings';
 import type { CardDefinition } from '../../types/card';
-import { registry } from '../../core/registry';
 import { ModalShell } from '../common/ModalShell';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -204,7 +204,7 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
               <div className="pt-2 border-t border-border/60">
                 {manifest.renderSettings({
                   settings: cardConfig as any,
-                  updateSettings: (patch) => updateCardConfig(patch as any)
+                  updateSettings: (patch) => updateCardConfig(patch as any),
                 })}
               </div>
             );

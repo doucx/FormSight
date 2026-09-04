@@ -1,8 +1,8 @@
 import { Maximize2 } from 'lucide-preact';
-import type { CardManifest } from '../../core/cardContract';
-import type { NegativeSpaceSettings } from '../../storage/settings';
 import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
+import type { CardManifest } from '../../core/cardContract';
 import { useCardTranslation } from '../../core/i18n';
+import type { NegativeSpaceSettings } from '../../storage/settings';
 import { NegRatioEstimationView } from './NegRatioEstimationView';
 import { createNegRatioAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
@@ -37,7 +37,7 @@ export const negRatioEstimationCard: CardManifest<
         <SettingToggleItem
           title={t('settings.showToleranceBandTitle')}
           description={t('settings.showToleranceBandDesc')}
-          checked={settings.showToleranceBand as boolean ?? true}
+          checked={(settings.showToleranceBand as boolean) ?? true}
           onChange={(val) => updateSettings({ showToleranceBand: val })}
         />
       </div>

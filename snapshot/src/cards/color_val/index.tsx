@@ -1,4 +1,5 @@
 import { Sun } from 'lucide-preact';
+import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
 import type { CardManifest } from '../../core/cardContract';
 import {
   type ColorHitResult,
@@ -6,9 +7,8 @@ import {
   checkColorHit,
   generateColorQuestion,
 } from '../../core/color/colorUtils';
-import type { ColorSenseSettings } from '../../storage/settings';
-import { SettingToggleItem } from '../../components/settings/common/SettingToggleItem';
 import { useCardTranslation } from '../../core/i18n';
+import type { ColorSenseSettings } from '../../storage/settings';
 import { ColorValView } from './ColorValView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
@@ -39,7 +39,7 @@ export const colorValCard: CardManifest<
         <SettingToggleItem
           title={t('settings.showToleranceBandTitle')}
           description={t('settings.showToleranceBandDesc')}
-          checked={settings.showToleranceBand as boolean ?? true}
+          checked={(settings.showToleranceBand as boolean) ?? true}
           onChange={(val) => updateSettings({ showToleranceBand: val })}
         />
       </div>
