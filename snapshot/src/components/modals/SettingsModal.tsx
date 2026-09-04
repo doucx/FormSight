@@ -2,12 +2,12 @@ import { Flame, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import { updateCardSettings } from '../../stores/settingsStore';
 import {
   type BaseModuleSettings,
   type UserSettings,
   getCardSettings,
 } from '../../storage/settings';
+import { updateCardSettings } from '../../stores/settingsStore';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
 import { Button } from '../ui/button';

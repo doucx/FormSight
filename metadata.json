@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix(modal): 修复 SettingsModal 因遗漏导入 `getCardSettings` 导致模态窗渲染崩溃的 Bug", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788490106.792725, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M SettingsModal.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788490366.9343379, "duration_ms": 0}}
