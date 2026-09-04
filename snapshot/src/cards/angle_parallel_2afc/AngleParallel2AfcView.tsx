@@ -1,13 +1,13 @@
 import { Split } from 'lucide-preact';
 
-import type { AngleParallelHitResult, AngleParallelQuestion } from './types';
-import { ANGLE_2AFC_SIZE, ANGLE_PROMPT_SIZE, drawSingleLineCanvas } from './utils/generator';
 import {
   CANVAS_THEME,
   CanvasView,
   Standard2AfcView,
-  useCardTranslation
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import type { AngleParallelHitResult, AngleParallelQuestion } from './types';
+import { ANGLE_2AFC_SIZE, ANGLE_PROMPT_SIZE, drawSingleLineCanvas } from './utils/generator';
 
 export interface AngleParallel2AfcViewProps {
   question: AngleParallelQuestion;

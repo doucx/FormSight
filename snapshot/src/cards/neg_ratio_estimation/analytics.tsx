@@ -1,12 +1,12 @@
-import { Crosshair } from 'lucide-preact';
 import {
-  calculateBasicOverallStats,
-  Callout,
   CANVAS_THEME,
-  CardAnalyticsView,
+  Callout,
+  type CardAnalyticsView,
+  type UnifiedTrialRecord,
+  calculateBasicOverallStats,
   hexToRgba,
-  UnifiedTrialRecord
 } from '@formsight/card-sdk';
+import { Crosshair } from 'lucide-preact';
 
 interface NegRatioTrialRecord extends UnifiedTrialRecord {
   targetNegativeRatio: number;

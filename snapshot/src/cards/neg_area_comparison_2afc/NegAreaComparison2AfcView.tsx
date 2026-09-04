@@ -1,13 +1,13 @@
 import { Columns } from 'lucide-preact';
 
-import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from './types';
 import {
   CANVAS_THEME,
   CanvasView,
-  drawPolygonCanvas,
   Standard2AfcView,
-  useCardTranslation
+  drawPolygonCanvas,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from './types';
 
 export interface NegAreaComparison2AfcViewProps {
   question: QuestionData;

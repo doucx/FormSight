@@ -179,7 +179,10 @@ export type {
 // ----------------------------------------------------------------------------
 export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
 export { DualViewportContainer } from '../components/common/DualViewportContainer';
-export { PointClickCanvas, type PointClickCanvasProps } from '../components/common/PointClickCanvas';
+export {
+  PointClickCanvas,
+  type PointClickCanvasProps,
+} from '../components/common/PointClickCanvas';
 export { HsvTrackSlider, type HsvTrackSliderProps } from '../components/common/HsvTrackSlider';
 export { QuestionCardShell } from '../components/common/QuestionCardShell';
 export {

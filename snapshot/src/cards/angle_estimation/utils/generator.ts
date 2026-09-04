@@ -1,12 +1,5 @@
-
-
+import { CANVAS_THEME, type Point, expDecayInterpolate, setup2DCanvas } from '@formsight/card-sdk';
 import type { AngleEstimationHitResult, AngleEstimationQuestion, LineSegment } from '../types';
-import {
-  CANVAS_THEME,
-  expDecayInterpolate,
-  Point,
-  setup2DCanvas
-} from '@formsight/card-sdk';
 
 export const ANGLE_CANVAS_SIZE = 340;
 

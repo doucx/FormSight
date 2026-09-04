@@ -1,16 +1,16 @@
 import { useEffect, useRef } from 'preact/hooks';
 
-import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE } from './utils/generator';
 import {
   CANVAS_THEME,
+  type Point,
+  PointClickCanvas,
   drawDot,
   findNearestPointInGrid,
   getDynamicDotRadius,
-  Point,
-  PointClickCanvas,
-  setupHiDpiCanvas
+  setupHiDpiCanvas,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
+import { CANVAS_SIZE } from './utils/generator';
 
 export interface StarSingleViewProps {
   question: QuestionData;

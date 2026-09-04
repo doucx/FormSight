@@ -1,11 +1,11 @@
 import { Layers } from 'lucide-preact';
 
+import type { BaseModuleSettings, CardManifest, Point } from '@formsight/card-sdk';
 import { PerspPropDivisionView } from './PerspPropDivisionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { PerspPropDivisionHitResult, PerspPropDivisionQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import { BaseModuleSettings, CardManifest, Point } from '@formsight/card-sdk';
 
 export const perspPropDivisionCard: CardManifest<
   PerspPropDivisionQuestion,

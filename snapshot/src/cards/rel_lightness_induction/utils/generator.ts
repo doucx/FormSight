@@ -1,11 +1,5 @@
-
+import { calcDeltaEOk, getTargetDeltaEForLevel, hsvToOkLab, okLabToHsv } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
-import {
-  calcDeltaEOk,
-  getTargetDeltaEForLevel,
-  hsvToOkLab,
-  okLabToHsv
-} from '@formsight/card-sdk';
 
 export function calcInductionShift(
   bgLab: [number, number, number],

@@ -1,13 +1,13 @@
 import { Maximize2 } from 'lucide-preact';
 
-import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 import {
   CANVAS_THEME,
   CanvasView,
-  drawPolygonCanvas,
   StandardSliderView,
-  useCardTranslation
+  drawPolygonCanvas,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegRatioEstimationViewProps {
   question: QuestionData;

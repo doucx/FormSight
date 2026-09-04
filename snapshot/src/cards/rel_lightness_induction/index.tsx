@@ -1,16 +1,16 @@
 import { Sun } from 'lucide-preact';
 
+import {
+  type CardManifest,
+  type RelativeColorSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { RelLightnessInductionView } from './RelLightnessInductionView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import {
-  CardManifest,
-  RelativeColorSettings,
-  SettingToggleItem,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export const relLightnessInductionCard: CardManifest<
   QuestionData,

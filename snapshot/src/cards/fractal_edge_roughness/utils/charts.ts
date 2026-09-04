@@ -1,15 +1,13 @@
-
-
-import type { FractalEdgeRoughnessTrialRecord } from '../types';
-import { getRoughnessSectorIdx } from './generator';
 import {
   CANVAS_THEME,
+  type ScopedTranslator,
+  type UnifiedTrialRecord,
   getAccuracyColor,
   hexToRgba,
-  ScopedTranslator,
   setupHiDpiCanvas,
-  UnifiedTrialRecord
 } from '@formsight/card-sdk';
+import type { FractalEdgeRoughnessTrialRecord } from '../types';
+import { getRoughnessSectorIdx } from './generator';
 
 const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
 

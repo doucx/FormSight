@@ -1,14 +1,14 @@
 import { Eye } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 
-import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, drawNotanNoiseField, drawRawGrayscaleNoiseField } from './utils/generator';
 import {
   CanvasView,
   DualViewportContainer,
   StandardSliderView,
-  useCardTranslation
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
+import { CANVAS_SIZE, drawNotanNoiseField, drawRawGrayscaleNoiseField } from './utils/generator';
 
 export interface AbsNotanThresholdViewProps {
   question: QuestionData;

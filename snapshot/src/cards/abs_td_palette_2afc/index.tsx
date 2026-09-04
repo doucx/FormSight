@@ -1,11 +1,11 @@
 import { Sparkles } from 'lucide-preact';
 
+import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 import { AbsTdPalette2afcView } from './AbsTdPalette2afcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
 
 export const absTdPalette2afcCard: CardManifest<
   QuestionData,

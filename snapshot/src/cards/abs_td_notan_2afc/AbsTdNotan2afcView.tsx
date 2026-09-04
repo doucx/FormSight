@@ -1,8 +1,8 @@
 import { Columns } from 'lucide-preact';
 
+import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { OPTION_SIZE, THUMB_SIZE, drawRawGrayscaleNoiseField } from './utils/generator';
-import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 
 const CANVAS_OPTION_CLASS =
   'w-full max-w-[200px] sm:max-w-[220px] aspect-square rounded-xl shadow-sm block';

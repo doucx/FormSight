@@ -1,16 +1,16 @@
 import { Sliders } from 'lucide-preact';
 
+import {
+  type BaseModuleSettings,
+  type CardManifest,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { PerspVpConvergenceView } from './PerspVpConvergenceView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { PerspVpHitResult, PerspVpQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import {
-  BaseModuleSettings,
-  CardManifest,
-  SettingToggleItem,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export interface PerspVpSettings extends BaseModuleSettings {
   sliderHitMargin?: number;

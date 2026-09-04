@@ -1,8 +1,8 @@
 import { Eye } from 'lucide-preact';
 
+import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 import type { PerspGestaltHitResult, PerspGestaltQuestion } from './types';
 import { PERSPECTIVE_2AFC_SIZE, drawGestaltCanvas } from './utils/generator';
-import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 
 export interface PerspGestaltContinuationViewProps {
   question: PerspGestaltQuestion;

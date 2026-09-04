@@ -1,18 +1,18 @@
 import { Crosshair, RotateCw } from 'lucide-preact';
 
+import {
+  Button,
+  type CardManifest,
+  type Point,
+  type StarSettings,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { StarDoubleRView } from './StarDoubleRView';
 import { createStarDoubleRAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import {
-  Button,
-  CardManifest,
-  Point,
-  StarSettings,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 const SECTOR_KEYS = [
   'sectors.e',

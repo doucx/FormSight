@@ -1,20 +1,20 @@
 import { Crosshair, RotateCw } from 'lucide-preact';
 
+import {
+  Button,
+  type CardManifest,
+  type ColorHitResult,
+  type ColorQuestionData,
+  type ColorSenseSettings,
+  SettingToggleItem,
+  checkColorHit,
+  generateColorQuestion,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { ColorHueView } from './ColorHueView';
 import { createColorHueAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
-import {
-  Button,
-  CardManifest,
-  checkColorHit,
-  ColorSenseSettings,
-  generateColorQuestion,
-  SettingToggleItem,
-  useCardTranslation,
-  type ColorHitResult,
-  type ColorQuestionData
-} from '@formsight/card-sdk';
 
 const COLOR_SECTOR_KEYS = [
   'sectors.red',

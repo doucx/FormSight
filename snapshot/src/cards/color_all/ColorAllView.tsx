@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from 'preact/hooks';
 
-import type { HitResult, QuestionData } from './types';
 import {
   Button,
-  ColorSenseSettings,
-  hsvToHex,
-  HsvTrackSlider,
+  type ColorSenseSettings,
   HUE_SPECTRUM_GRADIENT,
+  HsvTrackSlider,
   PALETTE,
-  useCardTranslation
+  hsvToHex,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
 
 export interface ColorAllViewProps {
   question: QuestionData;

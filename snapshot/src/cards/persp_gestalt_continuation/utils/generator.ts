@@ -1,12 +1,5 @@
-
-
+import { CANVAS_THEME, type Point, expDecayInterpolate, setup2DCanvas } from '@formsight/card-sdk';
 import type { LineSegment, Obstacle, PerspGestaltHitResult, PerspGestaltQuestion } from '../types';
-import {
-  CANVAS_THEME,
-  expDecayInterpolate,
-  Point,
-  setup2DCanvas
-} from '@formsight/card-sdk';
 
 export const PERSPECTIVE_2AFC_SIZE = 240;
 

@@ -1,17 +1,17 @@
 import { Maximize2 } from 'lucide-preact';
 
+import {
+  type CardManifest,
+  type NegativeSpaceSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { NegRatioEstimationView } from './NegRatioEstimationView';
 import { createNegRatioAnalytics } from './analytics';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { evaluateAnswer, generateQuestion } from './utils/generator';
-import {
-  CardManifest,
-  NegativeSpaceSettings,
-  SettingToggleItem,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export const negRatioEstimationCard: CardManifest<
   QuestionData,

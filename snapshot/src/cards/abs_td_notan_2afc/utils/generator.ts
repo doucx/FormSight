@@ -1,6 +1,5 @@
-
-import type { HitResult, QuestionData } from '../types';
 import { calculateOtsuThreshold, createNoise2D, fbm2D } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from '../types';
 
 export const THUMB_SIZE = 160;
 export const OPTION_SIZE = 260;

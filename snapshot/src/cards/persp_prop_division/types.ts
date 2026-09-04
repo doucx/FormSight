@@ -1,6 +1,4 @@
-
-
-import { Point } from '@formsight/card-sdk';
+import type { Point } from '@formsight/card-sdk';
 export interface LineSegment {
   p1: Point;
   p2: Point;

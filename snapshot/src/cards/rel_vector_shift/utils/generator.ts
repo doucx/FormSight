@@ -1,6 +1,3 @@
-
-
-import type { HitResult, QuestionData } from '../types';
 import {
   calcDeltaEOk,
   createShuffledChoices,
@@ -9,8 +6,9 @@ import {
   getTargetDeltaEForLevel,
   hasGamutMargin,
   hsvToOkLab,
-  okLabToHsv
+  okLabToHsv,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from '../types';
 
 export function generateQuestion(level: number): QuestionData {
   const id = `rcq_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;

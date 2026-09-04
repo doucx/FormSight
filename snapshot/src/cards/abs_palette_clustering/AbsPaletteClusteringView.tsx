@@ -1,13 +1,8 @@
 import { Sparkles } from 'lucide-preact';
 
+import { CanvasView, StandardNafcView, hsvToHex, useCardTranslation } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE, drawPaletteTilesCanvas } from './utils/generator';
-import {
-  CanvasView,
-  hsvToHex,
-  StandardNafcView,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export interface AbsPaletteClusteringViewProps {
   question: QuestionData;

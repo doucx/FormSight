@@ -1,6 +1,3 @@
-
-
-import type { HitResult, QuestionData } from '../types';
 import {
   calcDeltaEOk,
   createShuffledChoices,
@@ -8,8 +5,9 @@ import {
   getDistractorDistanceForLevel,
   getTargetDeltaEForLevel,
   hsvToOkLab,
-  okLabToHsv
+  okLabToHsv,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from '../types';
 
 export function calcInductionShift(
   bgLab: [number, number, number],

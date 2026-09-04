@@ -1,20 +1,20 @@
 import { Box } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 
-import type { PerspStructure3DHitResult, PerspStructure3DQuestion } from './types';
-import { PERSPECTIVE_CANVAS_SIZE, draw3DCubeWireframe } from './utils/generator';
 import {
   CANVAS_THEME,
+  LOUPE_DIAMETER,
+  type Point,
+  QuestionCardShell,
   drawDot,
   findNearestPointInGrid,
   getDynamicDotRadius,
-  LOUPE_DIAMETER,
-  Point,
-  QuestionCardShell,
   setupHiDpiCanvas,
   useCardTranslation,
-  usePointLoupe
+  usePointLoupe,
 } from '@formsight/card-sdk';
+import type { PerspStructure3DHitResult, PerspStructure3DQuestion } from './types';
+import { PERSPECTIVE_CANVAS_SIZE, draw3DCubeWireframe } from './utils/generator';
 
 export interface PerspStructure3DViewProps {
   question: PerspStructure3DQuestion;

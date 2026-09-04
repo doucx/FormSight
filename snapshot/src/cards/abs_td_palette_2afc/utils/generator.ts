@@ -1,6 +1,3 @@
-
-
-import type { HitResult, PaletteTile, QuestionData } from '../types';
 import {
   CANVAS_THEME,
   createShuffledChoices,
@@ -9,8 +6,9 @@ import {
   hexToRgba,
   hsvToHex,
   hsvToOkLab,
-  setup2DCanvas
+  setup2DCanvas,
 } from '@formsight/card-sdk';
+import type { HitResult, PaletteTile, QuestionData } from '../types';
 
 export const OPTION_SIZE = 260;
 

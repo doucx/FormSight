@@ -1,14 +1,14 @@
 import { Sparkles } from 'lucide-preact';
 
-import type { HitResult, QuestionData } from './types';
-import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 import {
   CANVAS_THEME,
   CanvasView,
-  hsvToHex,
   StandardNafcView,
-  useCardTranslation
+  hsvToHex,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
+import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 
 export interface AbsTdPalette2afcViewProps {
   question: QuestionData;

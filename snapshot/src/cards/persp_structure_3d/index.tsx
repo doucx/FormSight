@@ -1,11 +1,11 @@
 import { Box } from 'lucide-preact';
 
+import type { BaseModuleSettings, CardManifest, Point } from '@formsight/card-sdk';
 import { PerspStructure3DView } from './PerspStructure3DView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { PerspStructure3DHitResult, PerspStructure3DQuestion } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import { BaseModuleSettings, CardManifest, Point } from '@formsight/card-sdk';
 
 export const perspStructure3DCard: CardManifest<
   PerspStructure3DQuestion,

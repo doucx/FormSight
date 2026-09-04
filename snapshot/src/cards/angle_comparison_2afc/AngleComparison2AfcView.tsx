@@ -1,8 +1,8 @@
 import { Columns } from 'lucide-preact';
 
+import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 import type { AngleComparisonHitResult, AngleComparisonQuestion } from './types';
 import { ANGLE_2AFC_SIZE, drawAngleCanvas } from './utils/generator';
-import { CanvasView, Standard2AfcView, useCardTranslation } from '@formsight/card-sdk';
 
 export interface AngleComparison2AfcViewProps {
   question: AngleComparisonQuestion;

@@ -1,14 +1,9 @@
 import { Disc } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
+import { Badge, type Point, QuestionCardShell, useCardTranslation } from '@formsight/card-sdk';
 import type { PerspPropDivisionHitResult, PerspPropDivisionQuestion } from './types';
 import { PERSPECTIVE_CANVAS_SIZE, drawProportionCanvas } from './utils/generator';
-import {
-  Badge,
-  Point,
-  QuestionCardShell,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export interface PerspPropDivisionViewProps {
   question: PerspPropDivisionQuestion;

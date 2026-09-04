@@ -1,7 +1,5 @@
-
-
+import { type Point, evaluatePointGridHit } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from '../types';
-import { evaluatePointGridHit, Point } from '@formsight/card-sdk';
 
 export const CANVAS_SIZE = 500;
 export const CX = CANVAS_SIZE / 2;

@@ -1,12 +1,5 @@
-
-
+import { CANVAS_THEME, type Point, expDecayInterpolate, setup2DCanvas } from '@formsight/card-sdk';
 import type { AngleParallelHitResult, AngleParallelQuestion, LineSegment } from '../types';
-import {
-  CANVAS_THEME,
-  expDecayInterpolate,
-  Point,
-  setup2DCanvas
-} from '@formsight/card-sdk';
 
 export const ANGLE_2AFC_SIZE = 240;
 export const ANGLE_PROMPT_SIZE = 140;

@@ -1,4 +1,4 @@
-import { UnifiedTrialRecord } from '@formsight/card-sdk';
+import type { UnifiedTrialRecord } from '@formsight/card-sdk';
 export interface QuestionData {
   id: string;
   difficultyLevel: number;

@@ -1,13 +1,11 @@
-
-
-import type { LineSegment, PerspPropDivisionHitResult, PerspPropDivisionQuestion } from '../types';
 import {
   CANVAS_THEME,
+  type Point,
   expDecayInterpolate,
   hexToRgba,
-  Point,
-  setup2DCanvas
+  setup2DCanvas,
 } from '@formsight/card-sdk';
+import type { LineSegment, PerspPropDivisionHitResult, PerspPropDivisionQuestion } from '../types';
 
 export const PERSPECTIVE_CANVAS_SIZE = 340;
 

@@ -1,16 +1,16 @@
-import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 import {
+  Callout,
+  type CardAnalyticsView,
+  type ScopedTranslator,
+  type SectorStat,
+  type UnifiedTrialRecord,
   calcSignedHueBias,
   calculateBasicOverallStats,
-  Callout,
-  CardAnalyticsView,
   hsvToHex,
   renderHueBiasChartCanvas,
   renderHueRingCanvas,
-  ScopedTranslator,
-  SectorStat,
-  UnifiedTrialRecord
 } from '@formsight/card-sdk';
+import { AlertCircle, PieChart, Sparkles } from 'lucide-preact';
 
 const COLOR_SECTOR_KEYS = [
   'sectors.red',

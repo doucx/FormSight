@@ -1,13 +1,11 @@
-
-
 import {
-  ColorSenseSettings,
-  hsvToHex,
-  HsvTrackSlider,
-  HUE_SPECTRUM_GRADIENT,
-  PALETTE,
   type ColorHitResult,
-  type ColorQuestionData
+  type ColorQuestionData,
+  type ColorSenseSettings,
+  HUE_SPECTRUM_GRADIENT,
+  HsvTrackSlider,
+  PALETTE,
+  hsvToHex,
 } from '@formsight/card-sdk';
 export interface ColorSatViewProps {
   question: ColorQuestionData;

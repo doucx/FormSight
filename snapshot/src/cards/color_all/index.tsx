@@ -1,16 +1,16 @@
 import { Palette } from 'lucide-preact';
 
+import {
+  type CardManifest,
+  type ColorSenseSettings,
+  SettingToggleItem,
+  useCardTranslation,
+} from '@formsight/card-sdk';
 import { ColorAllView } from './ColorAllView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
-import {
-  CardManifest,
-  ColorSenseSettings,
-  SettingToggleItem,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export const colorAllCard: CardManifest<
   QuestionData,

@@ -1,9 +1,9 @@
 import { Sliders } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 
+import { CanvasView, StandardSliderView, useCardTranslation } from '@formsight/card-sdk';
 import type { PerspVpHitResult, PerspVpQuestion } from './types';
 import { PERSPECTIVE_CANVAS_SIZE, drawVpConvergenceCanvas } from './utils/generator';
-import { CanvasView, StandardSliderView, useCardTranslation } from '@formsight/card-sdk';
 
 export interface PerspVpConvergenceViewProps {
   question: PerspVpQuestion;

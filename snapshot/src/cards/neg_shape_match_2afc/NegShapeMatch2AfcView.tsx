@@ -1,13 +1,13 @@
 import { Sparkles } from 'lucide-preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 
-import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 import {
   Choice2AfcContainer,
-  drawPolygonCanvas,
   QuestionCardShell,
-  useCardTranslation
+  drawPolygonCanvas,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import { type HitResult, NEGATIVE_SPACE_CANVAS_SIZE, type QuestionData } from './types';
 
 export interface NegShapeMatch2AfcViewProps {
   question: QuestionData;

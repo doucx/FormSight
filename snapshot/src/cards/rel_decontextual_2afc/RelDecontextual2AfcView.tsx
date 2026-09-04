@@ -1,12 +1,7 @@
 import { Eye } from 'lucide-preact';
 
+import { PALETTE, Standard2AfcView, hsvToHex, useCardTranslation } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
-import {
-  hsvToHex,
-  PALETTE,
-  Standard2AfcView,
-  useCardTranslation
-} from '@formsight/card-sdk';
 
 export interface RelDecontextual2AfcViewProps {
   question: QuestionData;

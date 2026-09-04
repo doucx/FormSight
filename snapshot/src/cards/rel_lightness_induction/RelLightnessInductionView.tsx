@@ -1,17 +1,17 @@
 import { Eye } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 
-import type { HitResult, QuestionData } from './types';
 import {
   Button,
   DualViewportContainer,
-  hsvToHex,
   HsvTrackSlider,
   PALETTE,
   QuestionCardShell,
-  RelativeColorSettings,
-  useCardTranslation
+  type RelativeColorSettings,
+  hsvToHex,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+import type { HitResult, QuestionData } from './types';
 
 export interface RelLightnessInductionViewProps {
   question: QuestionData;

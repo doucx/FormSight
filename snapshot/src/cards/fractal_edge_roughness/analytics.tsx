@@ -1,9 +1,9 @@
 import { AlertCircle, BarChart2, Sparkles } from 'lucide-preact';
 
+import { Callout, type CardAnalyticsView, calculateBasicOverallStats } from '@formsight/card-sdk';
 import type { FractalEdgeRoughnessTrialRecord } from './types';
 import { renderRoughnessBandChart, renderRoughnessBiasChart } from './utils/charts';
 import { getRoughnessSectorIdx } from './utils/generator';
-import { calculateBasicOverallStats, Callout, CardAnalyticsView } from '@formsight/card-sdk';
 
 const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
 

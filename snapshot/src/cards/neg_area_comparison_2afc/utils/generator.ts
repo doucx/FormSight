@@ -1,7 +1,5 @@
-
-
+import { type Point, expDecayInterpolate } from '@formsight/card-sdk';
 import { type HitResult, type QuestionData, TWO_AFC_CANVAS_SIZE } from '../types';
-import { expDecayInterpolate, Point } from '@formsight/card-sdk';
 
 export function calcPolygonArea(vertices: Point[]): number {
   const n = vertices.length;
