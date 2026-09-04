@@ -4,11 +4,7 @@ import type { UnifiedTrialRecord } from '../../../storage/db/schema';
 import { CANVAS_THEME, getAccuracyColor, hexToRgba } from '../../../utils/theme';
 import { getRoughnessSectorIdx } from './generator';
 
-const SECTOR_KEYS = [
-  'sectors.highFrequency',
-  'sectors.mediumFrequency',
-  'sectors.lowFrequency',
-];
+const SECTOR_KEYS = ['sectors.highFrequency', 'sectors.mediumFrequency', 'sectors.lowFrequency'];
 
 /**
  * 绘制粗糙度偏置散点与趋势图 (Roughness Bias Chart)
@@ -226,10 +222,7 @@ export function renderRoughnessBandChart(
     ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '11px ui-monospace, monospace';
     const trialsUnit = t('common.trialsUnit');
-    const errInfo =
-      b.total > 0
-        ? ` · ${t('chartAvgDelta', { val: avgErr })}`
-        : '';
+    const errInfo = b.total > 0 ? ` · ${t('chartAvgDelta', { val: avgErr })}` : '';
     ctx.fillText(`${b.total} ${trialsUnit}${errInfo}`, 16, y + 18);
 
     // 背景槽

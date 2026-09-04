@@ -23,7 +23,10 @@ export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedT
   icon?: (props: { className?: string }) => ComponentChildren;
   renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[], t: ScopedTranslator) => void;
   renderDiagnostics: (records: TRecord[], t: ScopedTranslator) => ComponentChildren;
-  getOverallStats?: (records: TRecord[], t: ScopedTranslator) => {
+  getOverallStats?: (
+    records: TRecord[],
+    t: ScopedTranslator,
+  ) => {
     accuracy: number;
     total: number;
     customSummary?: ComponentChildren;

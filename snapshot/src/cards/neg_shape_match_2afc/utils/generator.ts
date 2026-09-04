@@ -90,10 +90,7 @@ export function generateQuestion(difficultyLevel: number): QuestionData {
   };
 }
 
-export function evaluateAnswer(
-  userChoice: 'A' | 'B',
-  question: QuestionData,
-): HitResult {
+export function evaluateAnswer(userChoice: 'A' | 'B', question: QuestionData): HitResult {
   const userChoiceIndex = userChoice === 'A' ? 0 : 1;
   const isHit = userChoice === question.correctChoice;
 

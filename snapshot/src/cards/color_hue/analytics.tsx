@@ -35,10 +35,7 @@ interface ColorHueTrialRecord extends UnifiedTrialRecord {
 /**
  * 聚合 12 个色相扇区的样本量、命中数与平均误差统计
  */
-function calculateHueSectorStats(
-  records: UnifiedTrialRecord[],
-  t: ScopedTranslator,
-): SectorStat[] {
+function calculateHueSectorStats(records: UnifiedTrialRecord[], t: ScopedTranslator): SectorStat[] {
   const sectorBuckets = Array.from({ length: 12 }, () => ({
     total: 0,
     hits: 0,
@@ -124,11 +121,7 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
               : '0°';
 
         return (
-          <Callout
-            variant="warning"
-            icon={AlertCircle}
-            title={t('analytics.hueBias.cardTitle')}
-          >
+          <Callout variant="warning" icon={AlertCircle} title={t('analytics.hueBias.cardTitle')}>
             <div className="space-y-2 text-xs text-foreground pt-1">
               <div className="flex justify-between bg-card p-2 rounded-xl border border-amber-200/60 dark:border-amber-800/60 shadow-xs font-mono">
                 <span className="text-muted-foreground">
@@ -223,11 +216,7 @@ export function createColorHueAnalytics(): CardAnalyticsView[] {
             : null;
 
         return (
-          <Callout
-            variant="warning"
-            icon={AlertCircle}
-            title={t('analytics.hueRing.cardTitle')}
-          >
+          <Callout variant="warning" icon={AlertCircle} title={t('analytics.hueRing.cardTitle')}>
             {weakestSector ? (
               <div className="space-y-2 pt-1">
                 <p className="text-foreground text-xs">

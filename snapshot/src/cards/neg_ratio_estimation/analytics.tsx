@@ -53,11 +53,7 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
             : 0;
 
         return (
-          <Callout
-            variant="success"
-            icon={Crosshair}
-            title={t('analytics.ratioScatter.cardTitle')}
-          >
+          <Callout variant="success" icon={Crosshair} title={t('analytics.ratioScatter.cardTitle')}>
             <div className="space-y-1.5 text-xs text-foreground pt-1">
               <div className="flex justify-between font-mono bg-card p-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs">
                 <span className="text-muted-foreground">

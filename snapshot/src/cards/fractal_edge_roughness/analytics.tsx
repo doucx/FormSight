@@ -44,11 +44,7 @@ export function createFractalEdgeRoughnessAnalytics(): CardAnalyticsView[] {
               : t('analytics.roughnessBias.neutral');
 
         return (
-          <Callout
-            variant="info"
-            icon={AlertCircle}
-            title={t('analytics.roughnessBias.cardTitle')}
-          >
+          <Callout variant="info" icon={AlertCircle} title={t('analytics.roughnessBias.cardTitle')}>
             <div className="space-y-2 text-xs text-foreground pt-1">
               <p className="text-muted-foreground leading-relaxed">
                 {t('analytics.roughnessBias.desc')}

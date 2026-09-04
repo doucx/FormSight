@@ -80,25 +80,17 @@ export function createStarSingleAnalytics(): CardAnalyticsView[] {
               : '0';
 
         return (
-          <Callout
-            variant="info"
-            icon={Target}
-            title={t('analytics.spatialBias.cardTitle')}
-          >
+          <Callout variant="info" icon={Target} title={t('analytics.spatialBias.cardTitle')}>
             <p className="text-muted-foreground leading-relaxed text-xs">
               {t('analytics.spatialBias.desc')}
             </p>
             <div className="pt-1.5 space-y-1 font-mono text-foreground">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {t('analytics.spatialBias.avgDx')}
-                </span>
+                <span className="text-muted-foreground">{t('analytics.spatialBias.avgDx')}</span>
                 <span className="font-bold">{dxText}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {t('analytics.spatialBias.avgDy')}
-                </span>
+                <span className="text-muted-foreground">{t('analytics.spatialBias.avgDy')}</span>
                 <span className="font-bold">{dyText}</span>
               </div>
               <div className="flex justify-between text-primary font-bold border-t border-border/60 pt-1">
