@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复语言持久化与 IndexedDB 状态同步问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788514345.178463, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] fix(i18n): Fix language persistence and IDB state synchronization", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788514475.5413806, "duration_ms": 0}}
