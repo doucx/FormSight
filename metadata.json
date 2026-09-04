@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788492186.6767719, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "remode_useless_key Capture: M en-US.json, M zh-CN.json, M en-US.json ... and 3 more files", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788492722.7644083, "duration_ms": 0}}

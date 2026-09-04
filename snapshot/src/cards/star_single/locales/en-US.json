@@ -1,9 +1,5 @@
 {
   "title": "Single Anchor",
-  "2x2": "2x2",
-  "3x3": "3x3",
-  "4x4": "4x4",
-  "5x5": "5x5",
   "desc": "Single central anchor to evaluate polar angle and distance estimation.",
   "instruction": "Observe the target relative to the central anchor on the left, then locate it in the grid on the right.",
   "settings": {
