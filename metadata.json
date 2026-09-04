@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 重构残留的题目生命周期与多语言依赖并审查系统级 ignore", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788522854.210043, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 消除 useAppBootstrap 中的动态标题依赖 ignore", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788522902.877484, "duration_ms": 0}}

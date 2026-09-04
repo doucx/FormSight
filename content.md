@@ -1,25 +1,25 @@
-下面生成针对类别 A、B 的重构与类别 C 源码读取的执行计划。
+分析结果显示，`useAppBootstrap.ts` 处的 `biome-ignore` 同样属于可以完全消除的不规范写法：开发者在 `useEffect` 依赖数组中直接传入了深入读取的 signal 属性 `$activePlan.value.name`，而函数体内部又用了一个局部变量 `currentPlanName` 进行二次赋值，导致依赖声明复杂化并触发 Biome 报警。
 
-## [WIP] refactor: 重构残留的题目生命周期与多语言依赖并审查系统级 ignore
+我们将 `activePlanName` 提升至 hook 顶层响应式提取，使 `useEffect` 仅依赖基础纯净变量 `[route, activePlanName, t]`，从而彻底移除该处的 `biome-ignore`。
+
+## [WIP] refactor: 消除 useAppBootstrap 中的动态标题依赖 ignore
 
 ### 用户需求
 
-消除代码库中残留的卡片换题 reset effect 与统计图表中的虚假依赖，移除不必要的 `biome-ignore` 注释，使架构与代码规范保持一致。
+重写 `src/hooks/useAppBootstrap.ts` 中的动态标题更新 effect，规范其响应式依赖声明，移除 `biome-ignore`。
 
 ### 评论
 
-这次清理将使所有卡片完全统一到基于 `key` 的生命周期重置体系下，并简化图表组件中的多语言响应计算。
+通过在组件/hook 作用域层规范响应式变量提炼，`useEffect` 的依赖项转为静态分析友好的扁平标识符 `[route, activePlanName, t]`，完全符合 hooks 依赖完整性规范。
 
 ### 目标
 
-1. 在 `persp_prop_migration/index.tsx` 与 `persp_prop_division/index.tsx` 中补全 `key={question.id}`。
-2. 从 `PerspPropMigrationView.tsx` 与 `PerspPropDivisionView.tsx` 中彻底删除重置 `useEffect` 与 `biome-ignore`。
-3. 重构 `ActivityHeatmapCard.tsx` 中 `monthNames` 的解析方式，清除其 `biome-ignore`。
-4. 读取 `src/hooks/useAppBootstrap.ts` 源码以便在下一步彻底修复其依赖声明。
+1. 在 `useAppBootstrap.ts` 中将 `$activePlan.value.name` 提前为顶层响应式常量 `activePlanName`。
+2. 消除 `useAppBootstrap.ts` 中的 `// biome-ignore lint/correctness/useExhaustiveDependencies` 注释。
 
 ### 基本原理
 
-通过消除多余的命令式 Effect 与过度优化的 `useMemo`，恢复纯粹声明式的数据流，让静态分析器无需依赖任何 ignore 规则即可验证通过。
+通过解耦 signal 深度属性访问与 Effect 内部变量引用，使静态分析器能够精确追踪依赖映射关系。
 
 ### 标签
 
@@ -29,124 +29,72 @@
 
 ### Script
 
-#### Acts 1: 重构 `persp_prop_division` 与 `persp_prop_migration`
+#### Acts 1: 重写 `useAppBootstrap.ts` 动态标题监听
 
-为两张卡片赋予 `key={question.id}`，并从对应视图组件中彻底删除命令式 reset `useEffect` 及 `biome-ignore`。
-
-~~~~~act
-patch_file
-src/cards/persp_prop_division/index.tsx
-~~~~~
-~~~~~typescript
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
-      <PerspPropDivisionView
-        question={question}
-~~~~~
-~~~~~typescript
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
-      <PerspPropDivisionView
-        key={question.id}
-        question={question}
-~~~~~
+提炼 `activePlanName` 为顶层变量，使 `useEffect` 依赖清晰规范并消除 ignore 注释。
 
 ~~~~~act
 patch_file
-src/cards/persp_prop_division/PerspPropDivisionView.tsx
-~~~~~
-~~~~~typescript
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
-  useEffect(() => {
-    setUserClickedPoint(null);
-    setHoverPoint(null);
-  }, [question.id]);
-
-  const getProjectedPoint = useCallback(
-~~~~~
-~~~~~typescript
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  const getProjectedPoint = useCallback(
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/persp_prop_migration/index.tsx
-~~~~~
-~~~~~typescript
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
-      <PerspPropMigrationView
-        question={question}
-~~~~~
-~~~~~typescript
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
-      <PerspPropMigrationView
-        key={question.id}
-        question={question}
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/persp_prop_migration/PerspPropMigrationView.tsx
-~~~~~
-~~~~~typescript
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reset state on new question
-  useEffect(() => {
-    setUserClickedPoint(null);
-    setHoverPoint(null);
-  }, [question.id]);
-
-  const getProjectedPoint = useCallback(
-~~~~~
-~~~~~typescript
-  const [userClickedPoint, setUserClickedPoint] = useState<Point | null>(null);
-  const [hoverPoint, setHoverPoint] = useState<Point | null>(null);
-
-  const getProjectedPoint = useCallback(
-~~~~~
-
-#### Acts 2: 重构 `ActivityHeatmapCard.tsx` 的多语言月份计算
-
-移除伪依赖 `[t, locale]` 与不必要的局部 `useMemo`，直接在渲染时以轻量纯函数形式解析多语言月份，清除 `biome-ignore`。
-
-~~~~~act
-patch_file
-src/components/stats/ActivityHeatmapCard.tsx
-~~~~~
-~~~~~typescript
-  // 2. 解析多语言月份数组
-  // biome-ignore lint/correctness/useExhaustiveDependencies: recalculate month translations on locale switch
-  const monthNames = useMemo(() => {
-    const raw = t<string[]>('stats.heatmapMonths');
-    if (Array.isArray(raw)) return raw;
-    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  }, [t, locale]);
-~~~~~
-~~~~~typescript
-  // 2. 解析多语言月份数组
-  const rawMonths = t<string[]>('stats.heatmapMonths');
-  const monthNames = useMemo(() => {
-    if (Array.isArray(rawMonths)) return rawMonths;
-    return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  }, [rawMonths]);
-~~~~~
-
-#### Acts 3: 读取 `useAppBootstrap.ts` 源码
-
-读取 `src/hooks/useAppBootstrap.ts` 文件以分析标题监听副作用的具体实现。
-
-~~~~~act
-read_file
 src/hooks/useAppBootstrap.ts
+~~~~~
+~~~~~typescript
+  // 动态更新页面标题
+  // biome-ignore lint/correctness/useExhaustiveDependencies: update document title when plan name or route changes
+  useEffect(() => {
+    const currentPlanName = $activePlan.value.name;
+    if (route.type === 'home') {
+      lastHomeRouteRef.current = route;
+      document.title = `${t('nav.dashboard')} - ${t('common.appName')}`;
+    } else if (route.type === 'discovery') {
+      lastHomeRouteRef.current = route;
+      document.title = `${t('nav.discovery')} - ${t('common.appName')}`;
+    } else if (route.type === 'plan-editor') {
+      document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'plan-train') {
+      document.title = `${currentPlanName || t('plan.todayPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'stats') {
+      document.title = `${t('stats.title')} - ${t('common.appName')}`;
+    } else if (route.type === 'analytics') {
+      const card = registry.getCardById(route.cardId);
+      const cardTitle = card ? getCardTitle(card, t) : t('common.stats');
+      document.title = `${cardTitle} - ${t('common.stats')} - ${t('common.appName')}`;
+    } else if (route.type === 'train') {
+      const card = registry.getCardById(route.cardId);
+      const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
+      document.title = `${cardTitle} - ${t('common.appName')}`;
+    }
+  }, [route, $activePlan.value.name, t]);
+~~~~~
+~~~~~typescript
+  const activePlanName = $activePlan.value.name;
+
+  // 动态更新页面标题
+  useEffect(() => {
+    if (route.type === 'home') {
+      lastHomeRouteRef.current = route;
+      document.title = `${t('nav.dashboard')} - ${t('common.appName')}`;
+    } else if (route.type === 'discovery') {
+      lastHomeRouteRef.current = route;
+      document.title = `${t('nav.discovery')} - ${t('common.appName')}`;
+    } else if (route.type === 'plan-editor') {
+      document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'plan-train') {
+      document.title = `${activePlanName || t('plan.todayPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'stats') {
+      document.title = `${t('stats.title')} - ${t('common.appName')}`;
+    } else if (route.type === 'analytics') {
+      const card = registry.getCardById(route.cardId);
+      const cardTitle = card ? getCardTitle(card, t) : t('common.stats');
+      document.title = `${cardTitle} - ${t('common.stats')} - ${t('common.appName')}`;
+    } else if (route.type === 'train') {
+      const card = registry.getCardById(route.cardId);
+      const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
+      document.title = `${cardTitle} - ${t('common.appName')}`;
+    }
+  }, [route, activePlanName, t]);
 ~~~~~
 
 ### 下一步建议
 
-1. 根据 `useAppBootstrap.ts` 的读取结果，消除该 hook 内部的 `biome-ignore`，使其符合完整的响应式依赖声明。
-2. 再次执行 `rg biome-ignore`，确认全工程仅保留 `CanvasView.tsx`（底层桥接组件）这一处正当封装注释。
+1. **执行检索**: 运行 `rg biome-ignore`，验证此时全工程仅剩下 `src/components/common/CanvasView.tsx`（用于转发外部动态 `deps` 的底层元组件封装），其余业务卡片与 hook 中的 ignore 注释已全部清零。
+2. **校验构建**: 执行 `pnpm check`（包含 `biome check` 与 `tsc`），确保整体代码库实现 0 错误、0 警告。
