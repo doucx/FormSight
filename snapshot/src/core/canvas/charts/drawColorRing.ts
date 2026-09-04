@@ -1,10 +1,14 @@
 import { CANVAS_THEME, getAccuracyFillColor, hexToRgba } from '../../../utils/theme';
 import { hsvToHex } from '../../color/colorUtils';
-import { i18n } from '../../i18n';
 import { initSquareHiDpiCanvas } from '../hidpi';
 import type { SectorStat } from './drawCompass';
 
-export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: SectorStat[]) {
+export function renderHueRingCanvas(
+  canvas: HTMLCanvasElement,
+  sectorStats: SectorStat[],
+  titleText = 'Hue',
+  accuracyText = 'Accuracy',
+) {
   const init = initSquareHiDpiCanvas(canvas, 340);
   if (!init) return;
   const { ctx, size } = init;
@@ -81,8 +85,8 @@ export function renderHueRingCanvas(canvas: HTMLCanvasElement, sectorStats: Sect
   ctx.fillStyle = CANVAS_THEME.text.primary;
   ctx.font = 'bold 11px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(i18n.t('cards.color_hue.title'), cx, cy - 5);
+  ctx.fillText(titleText, cx, cy - 5);
   ctx.fillStyle = CANVAS_THEME.text.secondary;
   ctx.font = '9px sans-serif';
-  ctx.fillText(i18n.t('common.accuracy'), cx, cy + 8);
+  ctx.fillText(accuracyText, cx, cy + 8);
 }

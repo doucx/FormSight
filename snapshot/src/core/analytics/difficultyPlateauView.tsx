@@ -44,6 +44,7 @@ export function calculateLevelStats(records: UnifiedTrialRecord[]): LevelBinStat
 export function renderDifficultyPlateauVisualizer(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
+  _t?: unknown,
 ) {
   const init = initSquareHiDpiCanvas(canvas, 340);
   if (!init) return;
@@ -146,7 +147,10 @@ export function renderDifficultyPlateauVisualizer(
   }
 }
 
-export function diagnoseDifficultyPlateau(records: UnifiedTrialRecord[]): ComponentChildren {
+export function diagnoseDifficultyPlateau(
+  records: UnifiedTrialRecord[],
+  _t?: unknown,
+): ComponentChildren {
   const levelStats = calculateLevelStats(records);
   const totalTrials = records.length;
 

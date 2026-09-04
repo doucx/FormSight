@@ -91,6 +91,7 @@ export function calculateSpeedBins(records: UnifiedTrialRecord[]): SatBinStat[] 
 export function renderSpeedAccuracyVisualizer(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
+  _t?: unknown,
 ) {
   const init = initSquareHiDpiCanvas(canvas, 340);
   if (!init) return;
@@ -202,7 +203,10 @@ export function renderSpeedAccuracyVisualizer(
   }
 }
 
-export function diagnoseSpeedAccuracy(records: UnifiedTrialRecord[]): ComponentChildren {
+export function diagnoseSpeedAccuracy(
+  records: UnifiedTrialRecord[],
+  _t?: unknown,
+): ComponentChildren {
   const bins = calculateSpeedBins(records);
   const totalTrials = records.length;
 

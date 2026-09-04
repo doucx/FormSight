@@ -2,7 +2,6 @@ import { Crosshair } from 'lucide-preact';
 import { Callout } from '../../components/ui/callout';
 import type { CardAnalyticsView } from '../../core/cardContract';
 import { calculateBasicOverallStats } from '../../core/contracts';
-import { i18n } from '../../core/i18n';
 import { CANVAS_THEME, hexToRgba } from '../../utils/theme';
 
 export function createNegRatioAnalytics(): CardAnalyticsView[] {
@@ -42,7 +41,7 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
           ctx.fill();
         }
       },
-      renderDiagnostics: (records) => {
+      renderDiagnostics: (records, t) => {
         const totalCount = records.length;
         if (totalCount === 0) return null;
 
@@ -57,19 +56,19 @@ export function createNegRatioAnalytics(): CardAnalyticsView[] {
           <Callout
             variant="success"
             icon={Crosshair}
-            title={i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.cardTitle')}
+            title={t('analytics.ratioScatter.cardTitle')}
           >
             <div className="space-y-1.5 text-xs text-foreground pt-1">
               <div className="flex justify-between font-mono bg-card p-2 rounded-xl border border-emerald-200/60 dark:border-emerald-800/60 shadow-xs">
                 <span className="text-muted-foreground">
-                  {i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.avgError')}
+                  {t('analytics.ratioScatter.avgError')}
                 </span>
                 <span className="font-bold text-emerald-700 dark:text-emerald-300">
                   ±{avgRatioErr}%
                 </span>
               </div>
               <p className="text-muted-foreground leading-relaxed">
-                {i18n.t('cards.neg_ratio_estimation.analytics.ratioScatter.desc')}
+                {t('analytics.ratioScatter.desc')}
               </p>
             </div>
           </Callout>

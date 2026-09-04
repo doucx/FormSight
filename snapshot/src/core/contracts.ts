@@ -17,15 +17,17 @@ export function calculateBasicOverallStats<TRecord extends UnifiedTrialRecord = 
   return { accuracy, total };
 }
 
+import type { ScopedTranslator } from './i18n';
+
 export interface CardAnalyticsView<TRecord extends UnifiedTrialRecord = UnifiedTrialRecord> {
   id: string;
   tabLabel: string;
   title: string;
   subTitle: string;
   icon?: (props: { className?: string }) => ComponentChildren;
-  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[]) => void;
-  renderDiagnostics: (records: TRecord[]) => ComponentChildren;
-  getOverallStats?: (records: TRecord[]) => {
+  renderVisualizer: (canvas: HTMLCanvasElement, records: TRecord[], t: ScopedTranslator) => void;
+  renderDiagnostics: (records: TRecord[], t: ScopedTranslator) => ComponentChildren;
+  getOverallStats?: (records: TRecord[], t: ScopedTranslator) => {
     accuracy: number;
     total: number;
     customSummary?: ComponentChildren;

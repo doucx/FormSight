@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor: 收敛 i18n 边缘调用与落实分析层数据信任链", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788511983.2815335, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(i18n): 根治卡片分析与图表工具中的多语言绝对长路径硬编码", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788513352.8688247, "duration_ms": 0}}

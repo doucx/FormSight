@@ -1,13 +1,13 @@
 import { setupHiDpiCanvas } from '../../../core/canvas/hidpi';
-import { i18n } from '../../../core/i18n';
+import type { ScopedTranslator } from '../../../core/i18n';
 import type { UnifiedTrialRecord } from '../../../storage/db/schema';
 import { CANVAS_THEME, getAccuracyColor, hexToRgba } from '../../../utils/theme';
 import { getRoughnessSectorIdx } from './generator';
 
 const SECTOR_KEYS = [
-  'cards.fractal_edge_roughness.sectors.highFrequency',
-  'cards.fractal_edge_roughness.sectors.mediumFrequency',
-  'cards.fractal_edge_roughness.sectors.lowFrequency',
+  'sectors.highFrequency',
+  'sectors.mediumFrequency',
+  'sectors.lowFrequency',
 ];
 
 /**
@@ -18,6 +18,7 @@ const SECTOR_KEYS = [
 export function renderRoughnessBiasChart(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
+  t: ScopedTranslator,
 ): void {
   const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
   const width = Math.min(540, Math.max(300, parentWidth));
@@ -89,11 +90,11 @@ export function renderRoughnessBiasChart(
   ctx.font = '10px sans-serif';
   ctx.fillStyle = CANVAS_THEME.status.warning;
   ctx.textAlign = 'left';
-  ctx.fillText(i18n.t('cards.fractal_edge_roughness.chartBiasUnder'), padding.left, 14);
+  ctx.fillText(t('chartBiasUnder'), padding.left, 14);
 
   ctx.fillStyle = CANVAS_THEME.status.accent;
   ctx.textAlign = 'right';
-  ctx.fillText(i18n.t('cards.fractal_edge_roughness.chartBiasOver'), width - padding.right, 14);
+  ctx.fillText(t('chartBiasOver'), width - padding.right, 14);
 
   if (records.length === 0) return;
 
@@ -172,6 +173,7 @@ export function renderRoughnessBiasChart(
 export function renderRoughnessBandChart(
   canvas: HTMLCanvasElement,
   records: UnifiedTrialRecord[],
+  t: ScopedTranslator,
 ): void {
   const parentWidth = canvas.parentElement ? canvas.parentElement.clientWidth - 48 : 500;
   const width = Math.min(540, Math.max(300, parentWidth));
@@ -218,15 +220,15 @@ export function renderRoughnessBandChart(
     ctx.font = 'bold 12px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(i18n.t(SECTOR_KEYS[i]), 16, y);
+    ctx.fillText(t(SECTOR_KEYS[i]), 16, y);
 
     // 题目样本与误差信息
     ctx.fillStyle = CANVAS_THEME.text.muted;
     ctx.font = '11px ui-monospace, monospace';
-    const trialsUnit = i18n.t('common.trialsUnit');
+    const trialsUnit = t('common.trialsUnit');
     const errInfo =
       b.total > 0
-        ? ` · ${i18n.t('cards.fractal_edge_roughness.chartAvgDelta', { val: avgErr })}`
+        ? ` · ${t('chartAvgDelta', { val: avgErr })}`
         : '';
     ctx.fillText(`${b.total} ${trialsUnit}${errInfo}`, 16, y + 18);
 
