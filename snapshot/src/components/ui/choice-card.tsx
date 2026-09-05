@@ -13,7 +13,7 @@ export const choiceCardVariants = cva(
         correct:
           'bg-emerald-50/50 dark:bg-emerald-950/40 border-emerald-500 shadow-md ring-2 ring-emerald-500/20 cursor-default',
         wrong: 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm cursor-default',
-        faded: 'bg-muted/40 border-border opacity-50 cursor-default pointer-events-none',
+        faded: 'bg-muted/40 border-border cursor-default pointer-events-none',
       },
       size: {
         default: 'gap-3 p-4 rounded-3xl',

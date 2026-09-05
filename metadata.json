@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 ColorSwatch 中 sizeStyles 的类型索引错误", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788603129.9367821, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 彻底移除 ChoiceCard faded 状态的透明度衰减以消除色偏", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788603592.0439873, "duration_ms": 0}}

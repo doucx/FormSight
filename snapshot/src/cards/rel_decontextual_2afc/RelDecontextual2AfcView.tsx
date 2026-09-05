@@ -114,7 +114,7 @@ export function RelDecontextual2AfcView({
           <ColorSwatch
             color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgA}
             variant="container"
-            className="w-full h-44 shadow-inner"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
           >
             <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
           </ColorSwatch>
@@ -157,7 +157,7 @@ export function RelDecontextual2AfcView({
           <ColorSwatch
             color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgB}
             variant="container"
-            className="w-full h-44 shadow-inner"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
           >
             <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
           </ColorSwatch>

@@ -1,62 +1,159 @@
-这是一个由于在无索引签名（Index Signature）的字面量对象上使用可能为空字符串的 key (`size || ''`) 进行索引而引起的 TypeScript 类型检查错误。
+我将通过一个工作计划彻底解决该问题，直接从底层基础组件 `ChoiceCard` 中剔除 `faded` 状态的 `opacity-50` 样式，杜绝一切级联半透明混色，同时优化环境穿透模块在答案揭晓时的纯平中性背景呈现。
 
-我将生成一个计划，使用安全的三元条件判断来索引 `size` 对应的样式映射，以消除该类型报错。
-
-## [WIP] fix: 修复 ColorSwatch 中 sizeStyles 的类型索引错误
+## [WIP] fix: 彻底移除 ChoiceCard faded 状态的透明度衰减以消除色偏
 
 ### 错误分析
-TypeScript 报告错误 `TS2339: Property '' does not exist on type '{ sm: string; md: string; lg: string; full: string; }'`。
-- **原因分析**: `size` 属性是可选的（类型为 `'sm' | 'md' | 'lg' | 'full' | undefined`）。代码中使用 `[size || '']` 尝试在未传 `size` 时回退到空字符串 `''`。但内联对象字面量只定义了 `sm`、`md`、`lg` 和 `full` 四个键，并不存在空字符串 `''` 键，因此在 TypeScript 严格类型检查下判定索引越界报错。
-- **解决方案**: 将索引改写为三元表达式 `size ? { ... }[size] : ''`。当 `size` 存在时，其被类型收窄为合法键；当 `size` 为 `undefined` 时直接返回空字符串，既安全又符合原有逻辑。
+1. **根本原因**：`src/components/ui/choice-card.tsx` 中定义 `faded` 状态样式为 `'bg-muted/40 border-border opacity-50 cursor-default pointer-events-none'`。
+2. **级联破坏**：CSS 的 `opacity` 属性会在父级元素上创建层叠上下文。当选择题揭晓答案时，未选中的非目标选项被置为 `faded`，导致父容器被强制施加 `opacity: 0.5`。由于透明度的层叠继承性，卡片内包含的任何色块（如 `ColorSwatch`、Canvas、SVG）都连带变成了 50% 半透明，并与底层卡片背景产生减法混色（Subtractive Color Mixing），造成严重色相漂移、明度损失以及两边背景一黑一灰的视觉割裂。
 
 ### 用户需求
-修复 `src/components/common/ColorSwatch.tsx` 中的类型错误，使 TypeScript 类型检查正常通过。
+完全消除 `ChoiceCard` 上的透明度 `faded` 效果，避免所有与色彩、明度相关的卡片在揭晓答案时因透明度级联导致色彩真值失真。
 
 ### 评论
-这是一个常见的 TypeScript 对象属性访问模式问题。通过基于条件守卫（三元表达式或映射抽取）来收窄联合类型，能够保持代码简洁的同时满足严格模式检查。
+在视知觉与心理物理学测试中，色块的物理属性（HSV/RGB）呈现必须保持 100% 绝对中立与保真。通过从通用基础基元中彻底剥离 `opacity-50`，能够一劳永逸地保障整套系统中所有选择题型卡片视觉色彩的严格一致性。
 
 ### 目标
-1. 修改 `src/components/common/ColorSwatch.tsx` 中的 `sizeStyles` 索引计算逻辑。
-2. 消除 TS2339 错误，确保类型检查与代码逻辑行为一致。
+1. 修改 `src/components/ui/choice-card.tsx`，将 `faded` 变体中的 `opacity-50` 彻底移除，保留不可交互与中性静态边框特性。
+2. 在 `src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx` 中，优化揭晓答案时的背景内阴影处理，避免边缘二次明度衰减。
 
 ### 基本原理
-当 `size` 未传入时直接短路返回空字符串 `''`；仅当 `size` 有值时才访问尺寸字典。此时 TypeScript 能够准确推断 `size` 为 `'sm' | 'md' | 'lg' | 'full'`，确保索引完全类型安全。
+直接修改公共组件 `choiceCardVariants` 中的 `faded` 样式定义，使其仅保留 `bg-muted/40 border-border cursor-default pointer-events-none`。由于没有了 `opacity` 衰减，子树内的所有像素均能保持 100% 物理真值渲染；在视觉语义上，未选中项通过缺失高亮外环与纯中立边框自然表达落选状态，完全满足交互设计与物理色彩真值的双重规范。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/ui #concept/type #scope/dx #ai/instruct #task/domain/ui #task/object/color-swatch #task/action/bug-fix #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/core #ai/instruct #task/domain/ui #task/object/choice-card-opacity #task/action/bug-fix #task/state/begin #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 修复 `ColorSwatch.tsx` 的属性索引逻辑
-
-我们将修改 `ColorSwatch.tsx` 中 `sizeStyles` 的取值方式，使用三元运算符在确保 `size` 存在时再进行对象索引。
+#### Acts 1: 移除 ChoiceCard faded 变体中的 opacity-50
 
 ~~~~~act
 patch_file
-src/components/common/ColorSwatch.tsx
+src/components/ui/choice-card.tsx
 ~~~~~
-~~~~~tsx
-  const sizeStyles =
-    {
-      sm: 'w-16 h-16',
-      md: 'w-20 h-20',
-      lg: 'w-32 h-32',
-      full: 'w-full h-full',
-    }[size || ''] || '';
+~~~~~typescript
+        wrong: 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm cursor-default',
+        faded: 'bg-muted/40 border-border opacity-50 cursor-default pointer-events-none',
+      },
 ~~~~~
-~~~~~tsx
-  const sizeStyles = size
-    ? {
-        sm: 'w-16 h-16',
-        md: 'w-20 h-20',
-        lg: 'w-32 h-32',
-        full: 'w-full h-full',
-      }[size]
-    : '';
+~~~~~typescript
+        wrong: 'bg-rose-50/50 dark:bg-rose-950/40 border-rose-400 shadow-sm cursor-default',
+        faded: 'bg-muted/40 border-border cursor-default pointer-events-none',
+      },
+~~~~~
+
+#### Acts 2: 优化环境穿透卡片在揭晓时的纯平黑色背景呈现
+
+~~~~~act
+patch_file
+src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx
+~~~~~
+~~~~~typescript
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgA}
+            variant="container"
+            className="w-full h-44 shadow-inner"
+          >
+            <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
+          </ColorSwatch>
+        </ChoiceCard>
+
+        <ChoiceCard
+          state={stateB}
+          size="lg"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelect('B')}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
+                2
+              </Badge>
+              {t('common.areaB')}
+            </span>
+
+            {showAnswer && (
+              <span
+                className={`text-xs font-semibold flex items-center gap-1 ${
+                  isBHit
+                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {isBHit
+                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
+                  : t('physicallyDarker', { v: question.centerColorB[2] })}
+              </span>
+            )}
+          </div>
+
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgB}
+            variant="container"
+            className="w-full h-44 shadow-inner"
+          >
+            <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
+          </ColorSwatch>
+~~~~~
+~~~~~typescript
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgA}
+            variant="container"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
+          >
+            <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
+          </ColorSwatch>
+        </ChoiceCard>
+
+        <ChoiceCard
+          state={stateB}
+          size="lg"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelect('B')}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
+                2
+              </Badge>
+              {t('common.areaB')}
+            </span>
+
+            {showAnswer && (
+              <span
+                className={`text-xs font-semibold flex items-center gap-1 ${
+                  isBHit
+                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {isBHit
+                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
+                  : t('physicallyDarker', { v: question.centerColorB[2] })}
+              </span>
+            )}
+          </div>
+
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgB}
+            variant="container"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
+          >
+            <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
+          </ColorSwatch>
 ~~~~~
 
 ### 下一步建议
-- 重新运行类型检查命令（例如 `npx tsc --noEmit` 或项目构建命令），确认 `ColorSwatch.tsx` 中的类型错误已被完全消除。
-- 检查是否存在其他类似的可选属性对象查表模式，统一为安全的类型收窄写法。
+1. 执行测试用例并实际在浏览器中体验 `rel_decontextual_2afc`，验证答题揭晓时两张卡片背景是否均呈现 100% 相同且纯正的平黑基准色。
+2. 检查其他涉及选择交互的色彩卡片（如多选一辨色、色调判别等），确保其在揭晓答案时同样保持无衰减的色彩真值。
