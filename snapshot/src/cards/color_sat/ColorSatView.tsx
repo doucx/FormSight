@@ -4,6 +4,7 @@ import {
   type ColorHitResult,
   type ColorQuestionData,
   type ColorSenseSettings,
+  ColorSwatch,
   HUE_SPECTRUM_GRADIENT,
   HsvTrackSlider,
   PALETTE,
@@ -51,10 +52,7 @@ export function ColorSatView({
       className="gap-6"
     >
       <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
+        <ColorSwatch color={targetHex} size="lg" />
       </div>
 
       <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">

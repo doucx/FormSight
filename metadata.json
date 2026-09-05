@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M locales-schema.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601768.8686259, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 提取标准色彩展示块组件 ColorSwatch 并重构色彩卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788602455.7831433, "duration_ms": 0}}

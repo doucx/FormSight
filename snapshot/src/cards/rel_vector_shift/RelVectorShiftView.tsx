@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   ChoiceCard,
+  ColorSwatch,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -70,34 +71,21 @@ export function RelVectorShiftView({
       {/* 题干 A->B 与 C->D 矢量推移展示区 */}
       <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
         <div className="flex items-center justify-center gap-4">
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexA }}
-          />
+          <ColorSwatch color={hexA} variant="compact" size="md" />
           <ArrowRight className="w-4 h-4 text-indigo-400" />
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexB }}
-          />
+          <ColorSwatch color={hexB} variant="compact" size="md" />
         </div>
 
         <div className="flex items-center justify-center gap-4">
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexC }}
-          />
+          <ColorSwatch color={hexC} variant="compact" size="md" />
           <ArrowRight className="w-4 h-4 text-indigo-400" />
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md transition-all duration-150 relative overflow-hidden"
-            style={{ backgroundColor: hexSelectedD }}
-          >
-            {showAnswer && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-1/2"
-                style={{ backgroundColor: hexTargetD }}
-              />
-            )}
-          </div>
+          <ColorSwatch
+            color={hexSelectedD}
+            compareColor={showAnswer ? hexTargetD : undefined}
+            variant="compact"
+            size="md"
+            transition="realtime"
+          />
         </div>
       </div>
 
