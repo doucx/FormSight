@@ -122,6 +122,33 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     }
   }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
 
+  const handleEarlyExit = useCallback(
+    (history: SessionHistoryItem[]) => {
+      if (!currentCard) {
+        onExit();
+        return;
+      }
+
+      let updatedResults = stageResults;
+      if (history.length > 0) {
+        const currentRes: PlanStageResult = {
+          card: currentCard,
+          targetTrials: currentStep.targetTrials,
+          history,
+        };
+        updatedResults = [...stageResults, currentRes];
+        setStageResults(updatedResults);
+      }
+
+      if (updatedResults.length > 0) {
+        setShowSummaryModal(true);
+      } else {
+        onExit();
+      }
+    },
+    [currentCard, currentStep, stageResults, onExit],
+  );
+
   const handleRequestExit = useCallback(() => {
     if (stageResults.length > 0) {
       setShowSummaryModal(true);
@@ -180,6 +207,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           planContext={planContext}
           targetLimitTrials={currentStep.targetTrials}
           onTargetLimitReached={handleStageReached}
+          onEarlyExit={handleEarlyExit}
           onIdleChange={handleIdleChange}
           onIdleResume={handleIdleResume}
           showExitButton={true}

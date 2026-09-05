@@ -225,8 +225,8 @@ export function TrainingShell({
         </div>
       </footer>
 
-      {/* 统一结课总结弹窗 */}
-      {showSummaryModal && (
+      {/* 统一结课总结弹窗 (在训练计划流中禁用单卡片弹窗，由外层 PlanSummaryModal 统一承接) */}
+      {showSummaryModal && !planContext && (
         <SessionSummaryModal
           card={card}
           sessionType={sessionType}

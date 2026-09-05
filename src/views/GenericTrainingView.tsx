@@ -21,6 +21,7 @@ export interface GenericTrainingViewProps<
   planContext?: PlanTrainingContext;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onEarlyExit?: (history: SessionHistoryItem[]) => void;
   onIdleChange?: (isIdle: boolean) => void;
   onIdleResume?: (idleDurationMs: number) => void;
   showExitButton?: boolean;
@@ -43,6 +44,7 @@ export function GenericTrainingView<
   planContext,
   targetLimitTrials,
   onTargetLimitReached,
+  onEarlyExit,
   onIdleChange,
   onIdleResume,
   showExitButton = true,
@@ -66,6 +68,7 @@ export function GenericTrainingView<
     blockSize: settings.blockSize,
     targetLimitTrials,
     onTargetLimitReached,
+    onEarlyExit,
     onIdleChange,
     onIdleResume,
     generateQuestion: (level) => engine.generateQuestion(level, settings),
