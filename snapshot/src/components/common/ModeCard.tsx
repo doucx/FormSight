@@ -59,42 +59,6 @@ export function ModeCard({
 
   const effectiveBestLevel = Math.max(currentLevel, bestLevel || currentLevel);
 
-  // 稳态算法指示解析 (5.1)
-  const renderConvergenceStatus = () => {
-    if (isNeverPracticed || totalTrials < 5) return null;
-    if (accuracy >= 70 && accuracy <= 85) {
-      return (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md"
-          title={`${accuracy}% 正确率：处在心理物理学最佳稳态调优区间`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          {t('card.statusOptimal')}
-        </span>
-      );
-    }
-    if (accuracy > 85) {
-      return (
-        <span
-          className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md"
-          title={`${accuracy}% 正确率：表现优异，难度正在快速攀升`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-          {t('card.statusAscending')}
-        </span>
-      );
-    }
-    return (
-      <span
-        className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-md"
-        title={`${accuracy}% 正确率：当前处在深水极限摸索区`}
-      >
-        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-        {t('card.statusExploring')}
-      </span>
-    );
-  };
-
   return (
     <div
       role="presentation"
@@ -187,28 +151,17 @@ export function ModeCard({
         onKeyDown={(e) => e.stopPropagation()}
         role="presentation"
       >
-        {/* 左侧：当前层阶大字显示与稳态指示 */}
-        <div className="space-y-1">
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <span>{t('card.skillLevel')}</span>
-            {renderConvergenceStatus()}
-          </div>
-          <div className="text-sm font-black text-foreground font-mono flex items-baseline gap-2">
-            <span
-              className={
-                isNeverPracticed
-                  ? 'text-muted-foreground text-base'
-                  : 'text-primary font-black text-lg'
-              }
-            >
-              {isNeverPracticed ? '--' : `Lvl ${currentLevel}`}
-            </span>
-            {!isNeverPracticed && (
-              <span className="text-[11px] font-normal text-muted-foreground font-sans">
-                ({totalTrials} {t('common.trialsUnit')})
-              </span>
-            )}
-          </div>
+        {/* 左侧：当前层阶纯粹大字展示 */}
+        <div className="flex items-baseline">
+          <span
+            className={
+              isNeverPracticed
+                ? 'text-muted-foreground font-mono font-black text-lg'
+                : 'text-primary font-mono font-black text-lg'
+            }
+          >
+            {isNeverPracticed ? '--' : `Lvl ${currentLevel}`}
+          </span>
         </div>
 
         {/* 右侧：紧凑动作按钮组 */}
