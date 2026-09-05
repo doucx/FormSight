@@ -75,40 +75,35 @@ export function PerspGestaltContinuationView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('A')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                1
-              </Badge>
-              {t('optionA')}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              1
+            </Badge>
 
             {showAnswer && isAHit && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionA,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionA]}
-            />
-          </div>
+          <CanvasView
+            width={PERSPECTIVE_2AFC_SIZE}
+            height={PERSPECTIVE_2AFC_SIZE}
+            className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card block"
+            draw={(canvas) =>
+              drawGestaltCanvas(
+                canvas,
+                question.obstacle,
+                question.incomingLine,
+                question.lineOptionA,
+                PERSPECTIVE_2AFC_SIZE,
+              )
+            }
+            deps={[question.incomingLine, question.lineOptionA]}
+          />
         </ChoiceCard>
 
         <ChoiceCard
@@ -117,40 +112,35 @@ export function PerspGestaltContinuationView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('B')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                2
-              </Badge>
-              {t('optionB')}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              2
+            </Badge>
 
             {showAnswer && isBHit && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={PERSPECTIVE_2AFC_SIZE}
-              height={PERSPECTIVE_2AFC_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawGestaltCanvas(
-                  canvas,
-                  question.obstacle,
-                  question.incomingLine,
-                  question.lineOptionB,
-                  PERSPECTIVE_2AFC_SIZE,
-                )
-              }
-              deps={[question.incomingLine, question.lineOptionB]}
-            />
-          </div>
+          <CanvasView
+            width={PERSPECTIVE_2AFC_SIZE}
+            height={PERSPECTIVE_2AFC_SIZE}
+            className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card block"
+            draw={(canvas) =>
+              drawGestaltCanvas(
+                canvas,
+                question.obstacle,
+                question.incomingLine,
+                question.lineOptionB,
+                PERSPECTIVE_2AFC_SIZE,
+              )
+            }
+            deps={[question.incomingLine, question.lineOptionB]}
+          />
         </ChoiceCard>
       </div>
     </QuestionCardShell>
