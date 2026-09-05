@@ -24,6 +24,7 @@ interface ModeCardProps {
   todayCount: number;
   todayTimeMs?: number;
   currentLevel: number;
+  bestLevel?: number;
   accuracy: number;
   totalTrials?: number;
   hasAnalytics?: boolean;
@@ -41,6 +42,7 @@ export function ModeCard({
   todayCount,
   todayTimeMs = 0,
   currentLevel,
+  bestLevel,
   accuracy,
   totalTrials = 0,
   isExperimental = false,
@@ -54,6 +56,44 @@ export function ModeCard({
 
   // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
   const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
+
+  const effectiveBestLevel = Math.max(currentLevel, bestLevel || currentLevel);
+
+  // 稳态算法指示解析 (5.1)
+  const renderConvergenceStatus = () => {
+    if (isNeverPracticed || totalTrials < 5) return null;
+    if (accuracy >= 70 && accuracy <= 85) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded-md"
+          title={`${accuracy}% 正确率：处在心理物理学最佳稳态调优区间`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          {t('card.statusOptimal')}
+        </span>
+      );
+    }
+    if (accuracy > 85) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md"
+          title={`${accuracy}% 正确率：表现优异，难度正在快速攀升`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+          {t('card.statusAscending')}
+        </span>
+      );
+    }
+    return (
+      <span
+        className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-md"
+        title={`${accuracy}% 正确率：当前处在深水极限摸索区`}
+      >
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+        {t('card.statusExploring')}
+      </span>
+    );
+  };
 
   return (
     <div
@@ -98,11 +138,13 @@ export function ModeCard({
             </div>
           </div>
 
-          {/* 右上角：等级胶囊与快捷操作 */}
+          {/* 右上角：巅峰/基准层阶与快捷操作 */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            <Badge variant="secondary" size="default" className="font-mono font-black">
-              Lvl {currentLevel}
-            </Badge>
+            {!isNeverPracticed && effectiveBestLevel > currentLevel ? (
+              <Badge variant="secondary" size="default" className="font-mono text-xs font-bold text-muted-foreground">
+                Peak L{effectiveBestLevel}
+              </Badge>
+            ) : null}
 
             <div
               className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
@@ -138,43 +180,41 @@ export function ModeCard({
         </p>
       </div>
 
-      {/* 底部指标栏与浮动操作按钮 */}
+      {/* 底部指标栏与浮动操作按钮（Level 作为主宰一等公民大字） */}
       <div
         className="flex items-end justify-between border-t border-border/60 pt-4"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         role="presentation"
       >
-        {/* 左侧：正确率综合指示 */}
-        <div className="space-y-0.5">
-          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-            {t('card.accuracy')}
+        {/* 左侧：当前层阶大字显示与稳态指示 */}
+        <div className="space-y-1">
+          <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <span>{t('card.skillLevel')}</span>
+            {renderConvergenceStatus()}
           </div>
-          <div className="text-sm font-black text-foreground font-mono flex items-baseline gap-1.5">
+          <div className="text-sm font-black text-foreground font-mono flex items-baseline gap-2">
             <span
               className={
                 isNeverPracticed
-                  ? 'text-muted-foreground'
-                  : accuracy >= 80
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-foreground'
+                  ? 'text-muted-foreground text-base'
+                  : 'text-primary font-black text-lg'
               }
             >
-              {isNeverPracticed ? '--' : `${accuracy}%`}
+              {isNeverPracticed ? '--' : `Lvl ${currentLevel}`}
             </span>
-            {todayCount > 0 && (
-              <span className="text-xs font-normal text-muted-foreground font-sans">
-                ({todayCount} {t('common.trialsUnit')})
+            {!isNeverPracticed && (
+              <span className="text-[11px] font-normal text-muted-foreground font-sans">
+                ({totalTrials} {t('common.trialsUnit')})
               </span>
             )}
           </div>
         </div>
 
-        {/* 右侧：紧凑动作按钮组（根据 isNeverPracticed 动态倒转权重） */}
+        {/* 右侧：紧凑动作按钮组 */}
         <div className="flex items-center gap-2">
           {isNeverPracticed ? (
             <>
-              {/* 次级：仅显示三角形 Play 图标的自适应训练按钮 */}
               <Button
                 variant="secondary"
                 size="icon"
@@ -184,7 +224,6 @@ export function ModeCard({
                 <Play className="w-4 h-4 fill-current text-muted-foreground" />
               </Button>
 
-              {/* 主要：高亮文字「基准测试」按钮 */}
               <Button
                 variant="default"
                 size="sm"
@@ -197,7 +236,6 @@ export function ModeCard({
             </>
           ) : (
             <>
-              {/* 次级：仅显示靶心 Target 图标的基准测试按钮 */}
               <Button
                 variant="secondary"
                 size="icon"
@@ -207,7 +245,6 @@ export function ModeCard({
                 <Target className="w-4 h-4 text-muted-foreground" />
               </Button>
 
-              {/* 主要：高亮文字「自适应训练」按钮 */}
               <Button
                 variant="default"
                 size="sm"

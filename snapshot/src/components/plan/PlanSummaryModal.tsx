@@ -1,4 +1,4 @@
-import { ArrowRight, Award, CheckCircle, Clock, Home, RotateCcw, Target } from 'lucide-preact';
+import { ArrowRight, Award, Clock, Home, Layers, RotateCcw, Zap } from 'lucide-preact';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
@@ -32,8 +32,13 @@ export function PlanSummaryModal({
   const { t } = useTranslation();
   const allHistory = stageResults.flatMap((s) => s.history);
   const totalTrials = allHistory.length;
-  const hitCount = allHistory.filter((h) => h.isHit).length;
-  const accuracy = totalTrials > 0 ? Math.round((hitCount / totalTrials) * 100) : 0;
+
+  // 统计各阶段的最终层阶与峰值
+  const endLevels = stageResults.map((s) => {
+    if (s.history.length === 0) return 5;
+    return s.history[s.history.length - 1].levelAfter;
+  });
+  const peakLevelAchieved = endLevels.length > 0 ? Math.max(...endLevels) : 5;
 
   const subTitle = t('common.planSummaryCompleted', {
     name: planName,
@@ -49,31 +54,33 @@ export function PlanSummaryModal({
       maxWidth="max-w-xl"
     >
       <div className="flex flex-col gap-5">
-        {/* 核心综合大盘卡片 */}
+        {/* 核心综合指标卡片 (以突破峰值与完成规模为核心) */}
         <div className="grid grid-cols-3 gap-3">
           <MetricCard variant="accent" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              {t('common.overallAccuracy')}
+              <Zap className="w-3.5 h-3.5 text-primary" />
+              <span>{t('stats.todayPeakLevel')}</span>
             </div>
-            <div className="text-2xl font-black text-foreground">{accuracy}%</div>
+            <div className="text-2xl font-black text-foreground font-mono">
+              Lvl {peakLevelAchieved}
+            </div>
           </MetricCard>
 
-          <MetricCard variant="success" padding="dense" className="space-y-1">
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-              {t('common.totalHits')}
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              <span>{t('plan.stageCount', { count: stageResults.length })}</span>
             </div>
-            <div className="text-2xl font-black text-foreground">
-              {hitCount}{' '}
-              <span className="text-xs font-normal text-muted-foreground">/ {totalTrials}</span>
+            <div className="text-2xl font-black text-foreground font-mono">
+              {totalTrials}{' '}
+              <span className="text-xs font-normal text-muted-foreground">{t('common.trialsUnit')}</span>
             </div>
           </MetricCard>
 
           <MetricCard variant="subtle" padding="dense" className="space-y-1">
             <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
               <Clock className="w-3.5 h-3.5 text-primary" />
-              {t('common.totalTimeSpent')}
+              <span>{t('common.totalTimeSpent')}</span>
             </div>
             <div className="text-2xl font-black text-foreground font-mono">
               {formatSecondsToTimer(totalElapsedSeconds)}
@@ -81,16 +88,13 @@ export function PlanSummaryModal({
           </MetricCard>
         </div>
 
-        {/* 分阶段明细成果 */}
+        {/* 分阶段明细成果 (右侧大徽章突出最终晋级 Level) */}
         <div className="space-y-2.5">
           <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
             {t('common.stageBreakdown')}
           </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
-              const stageHits = stage.history.filter((h) => h.isHit).length;
-              const stageAcc =
-                stage.history.length > 0 ? Math.round((stageHits / stage.history.length) * 100) : 0;
               const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : 5;
               const endLvl =
                 stage.history.length > 0
@@ -104,25 +108,22 @@ export function PlanSummaryModal({
                   key={`${stage.card.id}-${idx}`}
                   className="p-3 bg-muted/60 border border-border rounded-2xl flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-xs font-black flex items-center justify-center">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-5 h-5 rounded-lg bg-foreground text-background font-mono text-xs font-black flex items-center justify-center flex-shrink-0">
                       {idx + 1}
                     </div>
-                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs">
+                    <div className="p-1.5 rounded-xl bg-card text-primary border border-border/60 shadow-xs flex-shrink-0">
                       <Icon className="w-3.5 h-3.5" />
                     </div>
-                    <div>
-                      <div className="text-xs font-bold text-foreground">{cardTitle}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {t('common.trialsCorrect', {
-                          hits: stageHits,
-                          total: stage.history.length,
-                        })}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {stage.history.length} {t('common.trialsUnit')}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5 flex-shrink-0">
                     <div className="flex items-center gap-1 font-mono text-xs font-bold text-muted-foreground bg-card px-2 py-1 rounded-xl border border-border/60">
                       <span>L{startLvl}</span>
                       <ArrowRight className="w-3 h-3 text-muted-foreground/60" />
@@ -130,13 +131,11 @@ export function PlanSummaryModal({
                     </div>
 
                     <Badge
-                      variant={
-                        stageAcc >= 80 ? 'success' : stageAcc >= 60 ? 'warning' : 'destructive'
-                      }
+                      variant={endLvl >= startLvl ? 'accent' : 'secondary'}
                       size="default"
-                      className="font-mono text-xs"
+                      className="font-mono text-xs font-black"
                     >
-                      {stageAcc}%
+                      Lvl {endLvl}
                     </Badge>
                   </div>
                 </div>

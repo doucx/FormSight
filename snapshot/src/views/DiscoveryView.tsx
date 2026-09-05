@@ -85,6 +85,7 @@ export function DiscoveryView({
             const accuracy =
               totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
             const currentLevel = profile?.currentLevel || 5;
+            const bestLevel = profile?.bestLevel || currentLevel;
             const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
             const cardTitle = getCardTitle(card, t);
             const cardDesc = getCardDesc(card, t);
@@ -98,6 +99,7 @@ export function DiscoveryView({
                 todayCount={stat.count}
                 todayTimeMs={stat.timeMs}
                 currentLevel={currentLevel}
+                bestLevel={bestLevel}
                 accuracy={accuracy}
                 totalTrials={totalTrials}
                 hasAnalytics={Boolean(card.hasWeaknessAnalytics)}

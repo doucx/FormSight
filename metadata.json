@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json, M zh-CN.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788609300.2225096, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 重构全局认知度量体系为 Level 优先", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788609971.4932158, "duration_ms": 0}}
