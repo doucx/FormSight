@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 将动态势线提取卡片重构为双视口分离渲染", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606571.775308, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(card): 修复 drawAxisCanvas 中引用不存在的主题属性导致构建失败", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606628.9849186, "duration_ms": 0}}

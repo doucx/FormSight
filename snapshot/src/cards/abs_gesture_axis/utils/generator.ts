@@ -95,7 +95,7 @@ export function drawAxisCanvas(
   // 绘制中心基准弱锚点
   ctx.beginPath();
   ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-  ctx.fillStyle = CANVAS_THEME.shape.border;
+  ctx.fillStyle = CANVAS_THEME.shape.stroke;
   ctx.fill();
 
   if (userAxisAngle !== undefined && userAxisAngle !== axisAngle) {
