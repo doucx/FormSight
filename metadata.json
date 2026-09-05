@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(card): 将 abs_gesture_axis 拆分为双视口并列渲染并修复主题类型", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606727.9472733, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] style: 将 SliderTrack 悬停光标样式修改为 cursor-none", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606955.078569, "duration_ms": 0}}

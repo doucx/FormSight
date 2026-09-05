@@ -1,50 +1,50 @@
-好的，既然我们已经完成了代码修改并通过了类型检查，现在将这些变更作为一个完整的逻辑单元提交到 Git 仓库中。
+我们将 `SliderTrack` 的交互悬停状态由 `cursor-pointer` 修改为 `cursor-none`，与已支持无指针观察的 `HsvTrackSlider` 保持体验一致。这样在连续拖动或悬停滑块进行微观势线与特征观察时，光标不会遮挡画面关键像素。
 
-我将生成一个 `[COMMIT]` 计划来完成暂存和提交。
-
-## [COMMIT] refactor(card): 将 abs_gesture_axis 拆分为双视口并列渲染并修复主题类型
+## [WIP] style: 将 SliderTrack 悬停光标样式修改为 cursor-none
 
 ### 用户需求
-将“动态势线提取”(abs_gesture_axis) 模块重构为左右双视口并列渲染，并提交所有代码改动。
+在滑块交互区域悬停与调节时隐藏系统鼠标指针（应用 `cursor-none` 样式），防止默认指针阻挡用户对图形微小形变、角度与流向的观察。
 
 ### 评论
-此次重构成功将粒子散点流场与提取势线在视觉上解耦，不仅显著提升了写生临摹的真实体验，还与“动态势线寻源”模块保持了高度一致的组件标准。
+这是一个对感知训练卡片体验至关重要的细节优化。在进行势线判断或微小量值微调时，箭头指针会占据局部视觉中心并造成信息遮挡；通过将滑块交互容器的光标样式设置为 `cursor-none`，配合滑块自带的高亮准心/指示线，可以提供不受遮挡的沉浸式观察环境。
 
 ### 目标
-1. 将修改后的本地文件添加到 Git 暂存区。
-2. 创建符合 Conventional Commits 规范的 Git 提交。
+1. 修改 `src/components/common/SliderTrack.tsx` 中的外层交互容器样式。
+2. 将非禁用且未揭晓答案状态下的光标类名由 `cursor-pointer` 调整为 `cursor-none`。
 
 ### 基本原理
-按照系统规范，文件系统变更与 Git 提交操作必须严格隔离在不同的计划中执行。在确认代码和类型编译无误后，通过 `git add` 与 `git commit` 将本次演进安全封存。
+`HsvTrackSlider` 已经遵循了该无指针规范（`!showAnswer && !disabled ? 'cursor-none' : 'cursor-default'`）。`SliderTrack` 作为通用连续量调节基元，同样在外层包络容器中接收指针事件，将其调整为 `cursor-none` 可以保持整套卡片组件库在悬停调节行为上的一致性。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/cards #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/gesture-axis-viewports #task/action/refactor #task/state/end #task/status/completed
+#intent/tune #flow/ready #priority/medium
+#comp/ui #concept/ui #scope/ux
+#ai/instruct
+#task/domain/ui #task/object/slider-cursor #task/action/tune
+#task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 将变更添加到暂存区并创建 Git 提交
+#### Acts 1: 更新 SliderTrack 的悬停光标样式
+
+将未揭晓且未禁用状态下的指针由 `cursor-pointer` 调整为 `cursor-none`。
 
 ~~~~~act
-git_add
-src/cards/abs_gesture_axis/locales/zh-CN.json
-src/cards/abs_gesture_axis/locales/en-US.json
-src/cards/abs_gesture_axis/utils/generator.ts
-src/cards/abs_gesture_axis/AbsGestureAxisView.tsx
+patch_file
+src/components/common/SliderTrack.tsx
 ~~~~~
-
-~~~~~act
-git_commit
+~~~~~old
+      className={`relative flex-1 flex items-center select-none touch-none ${
+        !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
+      } ${className}`}
 ~~~~~
-~~~~~text
-refactor(card): split abs_gesture_axis into dual viewports and fix theme type
-
-- Refactored 'abs_gesture_axis' card to decouple the particle flow field and the extracted gesture axis into two independent side-by-side viewports using DualViewportContainer, aligning with the UX symmetry of 'abs_td_gesture_2afc'.
-- Updated locales in both zh-CN and en-US with dedicated viewport titles.
-- Fixed a TypeScript compilation error in generator.ts by replacing 'CANVAS_THEME.shape.border' with 'CANVAS_THEME.shape.stroke'.
+~~~~~new
+      className={`relative flex-1 flex items-center select-none touch-none ${
+        !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
+      } ${className}`}
 ~~~~~
 
 ### 下一步建议
-- **运行全量测试**: 可以执行项目的自动化测试套件（如 `pnpm test`），确保所有卡片契约和交互逻辑保持完全健康。
-- **继续探索其他卡片**: 如果需要对其他卡片进行类似的视口或交互优化，我们可以继续规划下一步工作。
+1. 在浏览器中打开包含滑块题型的卡片（如 `abs_gesture_axis`），测试鼠标移入滑块感应区以及拖拽过程中光标是否顺利隐去。
+2. 确认在移动端/触屏设备上该样式调整不会影响触摸滑动与跟手体验。
