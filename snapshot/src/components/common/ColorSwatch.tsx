@@ -43,13 +43,14 @@ export function ColorSwatch({
     option: 'rounded-xl border border-white/70 shadow-inner',
   }[variant];
 
-  const sizeStyles =
-    {
-      sm: 'w-16 h-16',
-      md: 'w-20 h-20',
-      lg: 'w-32 h-32',
-      full: 'w-full h-full',
-    }[size || ''] || '';
+  const sizeStyles = size
+    ? {
+        sm: 'w-16 h-16',
+        md: 'w-20 h-20',
+        lg: 'w-32 h-32',
+        full: 'w-full h-full',
+      }[size]
+    : '';
 
   const transitionStyles = {
     realtime: 'transition-all duration-75',
