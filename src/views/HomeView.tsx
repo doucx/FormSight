@@ -35,12 +35,16 @@ export function HomeView({
   // 统计今日已练习题数与总题量
   const todayTotalCount = Object.values(todayStats).reduce((acc, c) => acc + c.count, 0);
 
-  // 统计所有模块的平均正确率
-  const allProfilesList = Object.values(profiles);
-  const allTotalTrials = allProfilesList.reduce((acc, p) => acc + p.totalTrials, 0);
-  const allTotalHits = allProfilesList.reduce((acc, p) => acc + p.totalHits, 0);
-  const overallAccuracy =
-    allTotalTrials > 0 ? Math.round((allTotalHits / allTotalTrials) * 100) : 0;
+  // 统计今日活跃模块的挑战峰值与平均层阶
+  const activeTodayCardIds = Object.keys(todayStats).filter(
+    (id) => (todayStats[id]?.count || 0) > 0,
+  );
+  const todayLevels = activeTodayCardIds.map((id) => profiles[id]?.currentLevel || 5);
+  const todayPeakLevel = todayLevels.length > 0 ? Math.max(...todayLevels) : 0;
+  const todayAvgLevel =
+    todayLevels.length > 0
+      ? (todayLevels.reduce((a, b) => a + b, 0) / todayLevels.length).toFixed(1)
+      : null;
 
   // 获取当前计划的所有有效阶段卡片
   const validPlanItems = (trainingPlan.items || []).filter((item) =>
@@ -156,9 +160,16 @@ export function HomeView({
               {t('common.trialsUnit')}
             </span>
           </div>
-          <div className="text-xs text-muted-foreground pt-0.5">
-            {t('common.accuracy')}:{' '}
-            <span className="font-bold text-foreground font-mono">{overallAccuracy}%</span>
+          <div className="text-xs text-muted-foreground pt-0.5 flex items-center gap-1">
+            <span>{t('stats.todayPeakLevel')}:</span>
+            <span className="font-bold text-primary font-mono">
+              {todayPeakLevel > 0 ? `Lvl ${todayPeakLevel}` : '--'}
+            </span>
+            {todayAvgLevel && (
+              <span className="text-muted-foreground font-sans">
+                ({t('stats.avgLevelLabel', { level: todayAvgLevel })})
+              </span>
+            )}
           </div>
         </div>
 

@@ -54,6 +54,16 @@ export function SessionSummaryModal({
         )
       : '0.0';
 
+  const getConvergenceStatusText = () => {
+    if (accuracy >= 70 && accuracy <= 85) {
+      return t('card.statusOptimal');
+    }
+    if (accuracy > 85) {
+      return t('card.statusAscending');
+    }
+    return t('card.statusExploring');
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas && history.length > 0) {
@@ -74,46 +84,17 @@ export function SessionSummaryModal({
       maxWidth="max-w-lg"
     >
       <div className="flex flex-col gap-4">
-        {/* 核心指标统计卡片 */}
-        <div className="grid grid-cols-2 gap-3">
-          <MetricCard variant="subtle" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              {t('summary.accuracyCount')}
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-foreground">{accuracy}%</span>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t('summary.trialsDone', { hits: hitCount, total: totalTrials })}
-              </span>
-            </div>
-          </MetricCard>
-
-          <MetricCard variant="subtle" padding="dense" className="space-y-1">
-            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
-              <Clock className="w-3.5 h-3.5 text-primary" />
-              {t('summary.duration')}
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-2xl font-black text-foreground">
-                {formatSecondsToTimer(elapsedSeconds)}
-              </span>
-              <span className="text-xs font-semibold text-muted-foreground">
-                {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
-              </span>
-            </div>
-          </MetricCard>
-        </div>
-
-        {/* 层阶提升高亮卡片 */}
-        <div className="bg-accent border border-border/60 dark:border-border/60 p-4 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-primary text-primary-foreground rounded-xl shadow-xs">
-              <Zap className="w-4 h-4 fill-current" />
+        {/* 1. 核心第一视觉主角：层阶演进与突破大卡 (Level Evolution Hero) */}
+        <div className="bg-accent border border-border/60 dark:border-border/60 p-4 sm:p-5 rounded-2xl flex items-center justify-between shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-primary text-primary-foreground rounded-2xl shadow-xs">
+              <Zap className="w-5 h-5 fill-current" />
             </div>
             <div>
-              <div className="text-xs font-bold text-foreground">{t('summary.levelEvolution')}</div>
-              <div className="text-xs text-primary font-medium">
+              <div className="text-xs font-black uppercase tracking-wider text-muted-foreground">
+                {t('summary.levelEvolution')}
+              </div>
+              <div className="text-sm text-foreground font-black mt-0.5">
                 {levelDiff > 0
                   ? t('summary.levelUp', { diff: levelDiff })
                   : levelDiff < 0
@@ -124,17 +105,52 @@ export function SessionSummaryModal({
           </div>
 
           <div className="flex items-center gap-2 font-mono font-black text-foreground text-sm">
-            <Badge variant="secondary" size="default" className="font-mono">
+            <Badge variant="secondary" size="default" className="font-mono text-xs">
               Lvl {startLevel}
             </Badge>
             <ArrowRight className="w-4 h-4 text-primary" />
-            <Badge variant="default" size="default" className="font-mono">
+            <Badge
+              variant="default"
+              size="default"
+              className="font-mono text-sm px-3 py-1 bg-primary text-primary-foreground"
+            >
               Lvl {endLevel}
             </Badge>
           </div>
         </div>
 
-        {/* 折线图 Canvas 区 */}
+        {/* 2. 次级指标卡片 (时长与做答节奏，正确率降为辅助) */}
+        <div className="grid grid-cols-2 gap-3">
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              {t('summary.duration')}
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground font-mono">
+                {formatSecondsToTimer(elapsedSeconds)}
+              </span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t('summary.secPerTrial', { sec: avgResponseTimeSec })}
+              </span>
+            </div>
+          </MetricCard>
+
+          <MetricCard variant="subtle" padding="dense" className="space-y-1">
+            <div className="flex items-center gap-1 text-xs uppercase font-bold text-muted-foreground">
+              <Target className="w-3.5 h-3.5 text-primary" />
+              <span>{t('summary.accuracyCount')}</span>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-black text-foreground font-mono">{totalTrials}</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {t('common.trialsUnit')} ({accuracy}% • {getConvergenceStatusText()})
+              </span>
+            </div>
+          </MetricCard>
+        </div>
+
+        {/* 3. 折线图 Canvas 区 */}
         <div className="bg-muted/60 p-3.5 rounded-2xl border border-border w-full overflow-hidden">
           <div className="flex justify-between items-center px-1 mb-2">
             <span className="text-xs font-bold text-muted-foreground">
@@ -167,7 +183,7 @@ export function SessionSummaryModal({
           />
         </div>
 
-        {/* 底部操作按钮 */}
+        {/* 4. 底部操作按钮 */}
         <div className="grid grid-cols-2 gap-3 pt-1">
           <Button variant="secondary" onClick={onClose} className="h-11 gap-1.5">
             <Home className="w-4 h-4" />
