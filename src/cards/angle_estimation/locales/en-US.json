@@ -3,7 +3,18 @@
   "desc": "Observe the angle formed by two rays and estimate its degree using a slider (0°~180°).",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Band",
-    "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"
+    "showToleranceBandDesc": "Display dynamic tolerance band around current slider position",
+    "angleRangesTitle": "Target Angle Ranges",
+    "angleRangesDesc": "Select target angle ranges for generated questions (multi-select union)",
+    "presetAll": "All (0°~180°)",
+    "presetAcute": "Acute (0°~90°)",
+    "presetObtuse": "Obtuse (90°~180°)",
+    "ranges": {
+      "0_45": "0° ~ 45°",
+      "45_90": "45° ~ 90°",
+      "90_135": "90° ~ 135°",
+      "135_180": "135° ~ 180°"
+    }
   },
   "hint": "Observe the angle formed by rays and modulate the slider to match (0°~180°)",
   "label": "Angle Estimation Value:",

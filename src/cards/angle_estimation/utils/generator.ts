@@ -1,7 +1,22 @@
 import { CANVAS_THEME, type Point, expDecayInterpolate, setup2DCanvas } from '@formsight/card-sdk';
-import type { AngleEstimationHitResult, AngleEstimationQuestion, LineSegment } from '../types';
+import type {
+  AngleEstimationGenerateOptions,
+  AngleEstimationHitResult,
+  AngleEstimationQuestion,
+  AngleRangePreset,
+  LineSegment,
+} from '../types';
 
 export const ANGLE_CANVAS_SIZE = 340;
+
+const RANGE_BOUNDS: Record<AngleRangePreset, [number, number]> = {
+  '0_45': [5, 45],
+  '45_90': [45, 90],
+  '90_135': [90, 135],
+  '135_180': [135, 175],
+};
+
+const ALL_RANGES: AngleRangePreset[] = ['0_45', '45_90', '90_135', '135_180'];
 
 export function drawAngleCanvas(
   canvas: HTMLCanvasElement | null,
@@ -38,11 +53,20 @@ function createRadialLine(center: Point, angleDeg: number, length: number): Line
   };
 }
 
-export function generateQuestion(level: number): AngleEstimationQuestion {
+export function generateQuestion(
+  level: number,
+  options?: AngleEstimationGenerateOptions,
+): AngleEstimationQuestion {
   const id = `ang_est_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
 
-  const targetAngleDeg = Math.floor(Math.random() * 150) + 15;
+  const activeRanges =
+    options?.angleRanges && options.angleRanges.length > 0 ? options.angleRanges : ALL_RANGES;
+
+  const chosenPreset = activeRanges[Math.floor(Math.random() * activeRanges.length)];
+  const [minDeg, maxDeg] = RANGE_BOUNDS[chosenPreset] ?? [15, 165];
+  const targetAngleDeg = Math.floor(Math.random() * (maxDeg - minDeg + 1)) + minDeg;
+
   const startAngleDeg = Math.floor(Math.random() * 360);
   const endAngleDeg = (startAngleDeg + targetAngleDeg) % 360;
 
