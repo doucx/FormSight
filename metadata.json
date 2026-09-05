@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788604922.1171615, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为夹角估算卡片增加可配置的角度生成区间与并集筛选", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606049.473173, "duration_ms": 0}}
