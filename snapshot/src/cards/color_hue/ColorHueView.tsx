@@ -47,7 +47,7 @@ export function ColorHueView({
     >
       <div className="flex flex-col items-center gap-2 w-full">
         <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
+          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-white shadow-md ring-1 ring-black/10 transition-all duration-300"
           style={{ backgroundColor: targetHex }}
         />
       </div>

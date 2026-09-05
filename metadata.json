@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "checkf Capture: M locales-schema.test.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601768.8686259, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 统一各色彩卡片展示色块的恒定白边样式", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788602251.6560895, "duration_ms": 0}}

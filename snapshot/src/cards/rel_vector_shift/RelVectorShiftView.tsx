@@ -71,24 +71,24 @@ export function RelVectorShiftView({
       <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexA }}
           />
           <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexB }}
           />
         </div>
 
         <div className="flex items-center justify-center gap-4">
           <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md"
             style={{ backgroundColor: hexC }}
           />
           <ArrowRight className="w-4 h-4 text-indigo-400" />
           <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md transition-all duration-150 relative overflow-hidden"
+            className="w-20 h-20 rounded-2xl border-2 border-white shadow-md transition-all duration-150 relative overflow-hidden"
             style={{ backgroundColor: hexSelectedD }}
           >
             {showAnswer && (

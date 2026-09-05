@@ -115,11 +115,11 @@ export function ColorAllView({
       <div className="flex flex-col items-center gap-2 w-full">
         <div className="flex items-center justify-center gap-4 w-full">
           <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
+            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white shadow-md ring-1 ring-black/10 transition-all duration-300"
             style={{ backgroundColor: targetHex }}
           />
           <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-75"
+            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-white shadow-md ring-1 ring-black/10 transition-all duration-75"
             style={{
               backgroundColor: hsvToHex(
                 draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)

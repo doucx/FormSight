@@ -82,7 +82,7 @@ export function RelLightnessInductionView({
         rightTitle={t('rightModulate')}
         leftContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
             style={{ backgroundColor: bgLeftHex }}
           >
             <div
@@ -93,7 +93,7 @@ export function RelLightnessInductionView({
         }
         rightContent={
           <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-white shadow-md relative"
             style={{ backgroundColor: bgRightHex }}
           >
             <div
