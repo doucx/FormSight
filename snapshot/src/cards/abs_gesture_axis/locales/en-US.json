@@ -3,6 +3,8 @@
   "desc": "Extract the primary PCA gesture axis angle from flowing particle fields.",
   "badge": "Gesture Axis",
   "hint": "Rotate the primary axis to align with the particle flow (0°~180°)",
+  "sourceTitle": "Particle Flow",
+  "axisTitle": "Extracted Axis",
   "label": "Gesture Axis Angle:",
   "settings": {
     "showToleranceBandTitle": "Show Slider Tolerance Band",

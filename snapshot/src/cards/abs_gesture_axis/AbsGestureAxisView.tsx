@@ -10,7 +10,14 @@ import {
   useTrackPointer,
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, drawParticlesCanvas } from './utils/generator';
+import {
+  CANVAS_SIZE,
+  drawAxisSpineCanvas,
+  drawParticlesOnlyCanvas,
+} from './utils/generator';
+
+const CANVAS_VIEW_CLASS =
+  'w-full max-w-[260px] aspect-square rounded-xl border border-border shadow-sm bg-card block';
 
 export interface AbsGestureAxisViewProps {
   question: QuestionData;
@@ -56,27 +63,52 @@ export function AbsGestureAxisView({
       hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
+      maxWidth="max-w-2xl"
     >
-      {/* 粒子流向预览画布 */}
-      <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center w-full">
-        <CanvasView
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-          draw={(canvas) => {
-            drawParticlesCanvas(
-              canvas,
-              question.particles,
-              CANVAS_SIZE,
-              showAnswer ? targetVal : activeSliderVal,
-              showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover,
-              showAnswer ? userVal : undefined,
-              isHit,
-            );
-          }}
-          deps={[question.particles, activeSliderVal, showAnswer, targetVal, userVal, isHit]}
-        />
+      {/* 双视窗对称呈现：观察源（粒子群）与提取骨架（势线） */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+        {/* 视窗 1: 粒子流向 */}
+        <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            {t('sourceTitle')}
+          </span>
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+            <CanvasView
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+              className={CANVAS_VIEW_CLASS}
+              draw={(canvas) => {
+                drawParticlesOnlyCanvas(canvas, question.particles, CANVAS_SIZE);
+              }}
+              deps={[question.particles]}
+            />
+          </div>
+        </div>
+
+        {/* 视窗 2: 提取势线 */}
+        <div className="flex flex-col items-center gap-2 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+            {t('axisTitle')}
+          </span>
+          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+            <CanvasView
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
+              className={CANVAS_VIEW_CLASS}
+              draw={(canvas) => {
+                drawAxisSpineCanvas(
+                  canvas,
+                  CANVAS_SIZE,
+                  showAnswer ? targetVal : activeSliderVal,
+                  showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover,
+                  showAnswer ? userVal : undefined,
+                  isHit,
+                );
+              }}
+              deps={[activeSliderVal, showAnswer, targetVal, userVal, isHit]}
+            />
+          </div>
+        </div>
       </div>
 
       {/* 势线角度连续调节滑块 */}
