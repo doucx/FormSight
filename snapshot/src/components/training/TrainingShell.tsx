@@ -15,7 +15,7 @@ export interface PlanTrainingContext {
   currentStage: number;
   totalStages: number;
   targetTrials: number;
-  onSkipStage: () => void;
+  onSkipStage: (history?: SessionHistoryItem[]) => void;
 }
 
 export interface TrainingSessionHandle {
@@ -150,7 +150,7 @@ export function TrainingShell({
             <Button
               variant="ghost"
               size="iconSm"
-              onClick={planContext.onSkipStage}
+              onClick={() => planContext.onSkipStage(sessionHistory)}
               className="h-7 w-7 text-muted-foreground hover:text-primary"
               title={t('plan.skipStage')}
             >

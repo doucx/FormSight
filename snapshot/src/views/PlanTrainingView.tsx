@@ -89,6 +89,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         card: currentCard,
         targetTrials: currentStep.targetTrials,
         history,
+        initialLevel: stageInitialLevel,
       };
 
       const nextResults = [...stageResults, stageRes];
@@ -104,23 +105,27 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
   );
 
-  const handleSkipCurrentStage = useCallback(() => {
-    if (!currentCard) return;
-    const skippedRes: PlanStageResult = {
-      card: currentCard,
-      targetTrials: currentStep.targetTrials,
-      history: [],
-    };
-    const nextResults = [...stageResults, skippedRes];
-    setStageResults(nextResults);
+  const handleSkipCurrentStage = useCallback(
+    (history: SessionHistoryItem[] = []) => {
+      if (!currentCard) return;
+      const skippedRes: PlanStageResult = {
+        card: currentCard,
+        targetTrials: currentStep.targetTrials,
+        history,
+        initialLevel: stageInitialLevel,
+      };
+      const nextResults = [...stageResults, skippedRes];
+      setStageResults(nextResults);
 
-    if (currentStepIndex + 1 < validItems.length) {
-      setIsLevelLoaded(false);
-      setCurrentStepIndex((prev) => prev + 1);
-    } else {
-      setShowSummaryModal(true);
-    }
-  }, [currentCard, currentStep, currentStepIndex, stageResults, validItems.length]);
+      if (currentStepIndex + 1 < validItems.length) {
+        setIsLevelLoaded(false);
+        setCurrentStepIndex((prev) => prev + 1);
+      } else {
+        setShowSummaryModal(true);
+      }
+    },
+    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length, stageInitialLevel],
+  );
 
   const handleEarlyExit = useCallback(
     (history: SessionHistoryItem[]) => {
@@ -135,6 +140,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
           card: currentCard,
           targetTrials: currentStep.targetTrials,
           history,
+          initialLevel: stageInitialLevel,
         };
         updatedResults = [...stageResults, currentRes];
         setStageResults(updatedResults);

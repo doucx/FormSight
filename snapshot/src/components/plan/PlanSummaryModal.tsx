@@ -12,6 +12,7 @@ export interface PlanStageResult {
   card: CardDefinition;
   targetTrials: number;
   history: SessionHistoryItem[];
+  initialLevel?: number;
 }
 
 interface PlanSummaryModalProps {
@@ -35,7 +36,7 @@ export function PlanSummaryModal({
 
   // 统计各阶段的最终层阶与峰值
   const endLevels = stageResults.map((s) => {
-    if (s.history.length === 0) return 5;
+    if (s.history.length === 0) return s.initialLevel ?? 5;
     return s.history[s.history.length - 1].levelAfter;
   });
   const peakLevelAchieved = endLevels.length > 0 ? Math.max(...endLevels) : 5;
@@ -97,11 +98,12 @@ export function PlanSummaryModal({
           </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
-              const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : 5;
+              const fallbackLvl = stage.initialLevel ?? 5;
+              const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : fallbackLvl;
               const endLvl =
                 stage.history.length > 0
                   ? stage.history[stage.history.length - 1].levelAfter
-                  : startLvl;
+                  : fallbackLvl;
               const Icon = stage.card.icon;
               const cardTitle = getCardTitle(stage.card, t);
 
