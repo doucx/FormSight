@@ -1,5 +1,5 @@
 import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
-import { TrainingShell } from '../components/training/TrainingShell';
+import { type PlanTrainingContext, TrainingShell } from '../components/training/TrainingShell';
 import type { CardManifest } from '../core/cardContract';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import { saveSession, saveTrialRecord } from '../storage/index';
@@ -18,6 +18,7 @@ export interface GenericTrainingViewProps<
   initialLevel: number;
   settings: TSettings;
   globalSettings?: GlobalSettings;
+  planContext?: PlanTrainingContext;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   onIdleChange?: (isIdle: boolean) => void;
@@ -39,6 +40,7 @@ export function GenericTrainingView<
   initialLevel,
   settings,
   globalSettings,
+  planContext,
   targetLimitTrials,
   onTargetLimitReached,
   onIdleChange,
@@ -137,6 +139,7 @@ export function GenericTrainingView<
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}
+      planContext={planContext}
       showExitButton={showExitButton}
       showTimer={showTimer}
       onExit={onExit}
