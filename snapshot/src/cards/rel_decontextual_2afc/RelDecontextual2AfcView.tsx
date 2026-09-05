@@ -103,7 +103,9 @@ export function RelDecontextual2AfcView({
                     : 'text-muted-foreground'
                 }`}
               >
-                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
+                {isAHit && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                )}
                 <span className="truncate">
                   {isAHit
                     ? t('physicallyBrighter', { v: question.centerColorA[2] })
@@ -148,7 +150,9 @@ export function RelDecontextual2AfcView({
                     : 'text-muted-foreground'
                 }`}
               >
-                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
+                {isBHit && (
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                )}
                 <span className="truncate">
                   {isBHit
                     ? t('physicallyBrighter', { v: question.centerColorB[2] })
