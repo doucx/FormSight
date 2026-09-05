@@ -99,7 +99,11 @@ export function TrainingShell({
           )}
 
           {planContext && (
-            <Badge variant="accent" size="sm" className="font-mono text-xs px-2 py-0.5 rounded-lg flex-shrink-0">
+            <Badge
+              variant="accent"
+              size="sm"
+              className="font-mono text-xs px-2 py-0.5 rounded-lg flex-shrink-0"
+            >
               {planContext.currentStage}/{planContext.totalStages}
             </Badge>
           )}
@@ -157,7 +161,11 @@ export function TrainingShell({
           <div className="flex items-center gap-1">
             <span className="font-bold text-foreground">{totalTrials}</span>
             <span className="text-muted-foreground">
-              {sessionType === 'benchmark' ? '/20' : planContext ? `/${planContext.targetTrials}` : ` ${t('common.trialsUnit')}`}
+              {sessionType === 'benchmark'
+                ? '/20'
+                : planContext
+                  ? `/${planContext.targetTrials}`
+                  : ` ${t('common.trialsUnit')}`}
             </span>
           </div>
 
