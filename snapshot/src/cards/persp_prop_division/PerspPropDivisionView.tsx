@@ -138,22 +138,27 @@ export function PerspPropDivisionView({
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
       footer={
-        showAnswer ? (
-          <div className="w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">
-              {t('targetRatio')}{' '}
-              <span className="font-bold text-foreground font-mono">
-                {((question.targetRatio ?? 0) * 100).toFixed(1)}%
-              </span>
+        <div
+          className={`w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold min-h-[2rem] transition-opacity duration-150 ${
+            showAnswer ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-hidden={!showAnswer}
+        >
+          <span className="text-muted-foreground">
+            {t('targetRatio')}{' '}
+            <span className="font-bold text-foreground font-mono">
+              {((question.targetRatio ?? 0) * 100).toFixed(1)}%
             </span>
-            <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-              {t('userPosition', {
-                pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
-                error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
-              })}
-            </span>
-          </div>
-        ) : null
+          </span>
+          <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
+            {showAnswer
+              ? t('userPosition', {
+                  pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
+                  error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
+                })
+              : ''}
+          </span>
+        </div>
       }
     >
       <div className="w-full bg-accent/80 border border-border/60 dark:border-border rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">

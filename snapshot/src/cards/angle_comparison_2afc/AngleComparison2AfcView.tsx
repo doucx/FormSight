@@ -75,8 +75,8 @@ export function AngleComparison2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('A')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase flex-shrink-0">
               <Badge
                 variant="secondary"
                 size="sm"
@@ -88,13 +88,13 @@ export function AngleComparison2AfcView({
             </span>
 
             {showAnswer && isAHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
                 <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 {`${question.angleA}°`}
               </span>
             )}
             {showAnswer && !isAHit && (
-              <span className="text-xs font-semibold text-muted-foreground">{`${question.angleA}°`}</span>
+              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">{`${question.angleA}°`}</span>
             )}
           </div>
 
@@ -115,8 +115,8 @@ export function AngleComparison2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('B')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase flex-shrink-0">
               <Badge
                 variant="secondary"
                 size="sm"
@@ -128,13 +128,13 @@ export function AngleComparison2AfcView({
             </span>
 
             {showAnswer && isBHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
                 <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 {`${question.angleB}°`}
               </span>
             )}
             {showAnswer && !isBHit && (
-              <span className="text-xs font-semibold text-muted-foreground">{`${question.angleB}°`}</span>
+              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">{`${question.angleB}°`}</span>
             )}
           </div>
 

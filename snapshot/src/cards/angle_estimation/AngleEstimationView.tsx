@@ -102,26 +102,31 @@ export function AngleEstimationView({
           <span className="font-bold font-mono text-muted-foreground text-xs">180°</span>
         </div>
 
-        {showAnswer && userVal !== undefined && (
-          <div className="pt-2 border-t border-border flex items-center justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">
-              {t('trueAngle')}{' '}
-              <span className="font-bold text-foreground font-mono">{targetVal}°</span>
-            </span>
-            <span
-              className={
-                isHit
-                  ? 'text-emerald-600 dark:text-emerald-400 font-bold'
-                  : 'text-rose-600 dark:text-rose-400 font-bold'
-              }
-            >
-              {t('errorInfo', {
-                error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
-                tolerance,
-              })}
-            </span>
-          </div>
-        )}
+        <div
+          className={`pt-2 border-t border-border flex items-center justify-between text-xs font-semibold min-h-[2rem] transition-opacity duration-150 ${
+            showAnswer && userVal !== undefined ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+          aria-hidden={!showAnswer}
+        >
+          <span className="text-muted-foreground">
+            {t('trueAngle')}{' '}
+            <span className="font-bold text-foreground font-mono">{targetVal}°</span>
+          </span>
+          <span
+            className={
+              isHit
+                ? 'text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'text-rose-600 dark:text-rose-400 font-bold'
+            }
+          >
+            {showAnswer && userVal !== undefined
+              ? t('errorInfo', {
+                  error: Math.round(Math.abs(userVal - targetVal) * 10) / 10,
+                  tolerance,
+                })
+              : ''}
+          </span>
+        </div>
       </div>
     </QuestionCardShell>
   );

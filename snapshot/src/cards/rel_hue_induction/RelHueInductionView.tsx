@@ -108,19 +108,16 @@ export function RelHueInductionView({
               disabled={disabled || showAnswer}
               onClick={() => setSelectedIdx(idx)}
             >
-              <div className="flex items-center justify-between w-full px-1">
-                <span className="flex items-center gap-1.5 text-xs font-black text-foreground">
-                  <Badge
-                    variant="secondary"
-                    size="sm"
-                    className="w-5 h-5 p-0 justify-center font-mono text-xs"
-                  >
-                    {idx + 1}
-                  </Badge>
-                  {t('common.candidateN', { num: idx + 1 })}
-                </span>
+              <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+                <Badge
+                  variant="secondary"
+                  size="sm"
+                  className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+                >
+                  {idx + 1}
+                </Badge>
                 {showAnswer && isTarget && (
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
                 )}
               </div>
 

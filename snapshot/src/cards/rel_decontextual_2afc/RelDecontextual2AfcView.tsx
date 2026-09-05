@@ -83,8 +83,8 @@ export function RelDecontextual2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('A')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem] gap-2">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase flex-shrink-0">
               <Badge
                 variant="secondary"
                 size="sm"
@@ -97,16 +97,18 @@ export function RelDecontextual2AfcView({
 
             {showAnswer && (
               <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
+                className={`text-xs font-semibold flex items-center gap-1 truncate ${
                   isAHit
                     ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
                     : 'text-muted-foreground'
                 }`}
               >
-                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isAHit
-                  ? t('physicallyBrighter', { v: question.centerColorA[2] })
-                  : t('physicallyDarker', { v: question.centerColorA[2] })}
+                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
+                <span className="truncate">
+                  {isAHit
+                    ? t('physicallyBrighter', { v: question.centerColorA[2] })
+                    : t('physicallyDarker', { v: question.centerColorA[2] })}
+                </span>
               </span>
             )}
           </div>
@@ -126,8 +128,8 @@ export function RelDecontextual2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('B')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem] gap-2">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase flex-shrink-0">
               <Badge
                 variant="secondary"
                 size="sm"
@@ -140,16 +142,18 @@ export function RelDecontextual2AfcView({
 
             {showAnswer && (
               <span
-                className={`text-xs font-semibold flex items-center gap-1 ${
+                className={`text-xs font-semibold flex items-center gap-1 truncate ${
                   isBHit
                     ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
                     : 'text-muted-foreground'
                 }`}
               >
-                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isBHit
-                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
-                  : t('physicallyDarker', { v: question.centerColorB[2] })}
+                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />}
+                <span className="truncate">
+                  {isBHit
+                    ? t('physicallyBrighter', { v: question.centerColorB[2] })
+                    : t('physicallyDarker', { v: question.centerColorB[2] })}
+                </span>
               </span>
             )}
           </div>
