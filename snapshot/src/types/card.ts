@@ -51,7 +51,6 @@ export interface CardDefinition {
   domain: VisualDomainTag;
   title?: string;
   desc?: string;
-  instruction?: string;
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;

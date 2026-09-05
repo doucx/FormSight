@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(cards): 清理卡片词典中的废弃 instruction 字段", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601429.0217586, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(core): 收敛系统层对卡片 hint 字段的读取与搜索逻辑", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601548.1756184, "duration_ms": 0}}

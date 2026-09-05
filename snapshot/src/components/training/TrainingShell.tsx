@@ -49,7 +49,7 @@ export function TrainingShell({
 }: TrainingShellProps) {
   const { t } = useTranslation();
   const cardTitle = getCardTitle(card, t);
-  const instruction = t(`cards.${card.id}.instruction`) || card.instruction || '';
+  const hint = t(`cards.${card.id}.hint`) || '';
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
@@ -95,7 +95,7 @@ export function TrainingShell({
                   {t('shell.benchmark')}
                 </span>
               )}
-              {(instruction || desc) && (
+              {(hint || desc) && (
                 <Button
                   variant="ghost"
                   size="iconSm"
@@ -110,13 +110,13 @@ export function TrainingShell({
               )}
             </div>
 
-            {showHelpTooltip && (instruction || desc) && (
+            {showHelpTooltip && (hint || desc) && (
               <div className="absolute left-0 top-full mt-2 z-40 w-72 bg-card dark:bg-muted text-white p-3 rounded-2xl shadow-xl border border-border dark:border-border text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-150">
                 <div className="font-bold text-indigo-300 mb-1 flex items-center gap-1">
                   <HelpCircle className="w-3.5 h-3.5" />
                   {t('shell.instructionTitle')}
                 </div>
-                <p className="text-muted-foreground text-xs">{instruction || desc}</p>
+                <p className="text-muted-foreground text-xs">{hint || desc}</p>
               </div>
             )}
           </div>

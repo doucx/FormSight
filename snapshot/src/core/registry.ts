@@ -266,9 +266,9 @@ class SystemDomainRegistry {
           const desc = getCardDesc(c).toLowerCase();
           if (desc.includes(kw)) return true;
 
-          const instructionKey = `cards.${c.id}.instruction`;
-          const instruction = i18n.t(instructionKey);
-          if (instruction !== instructionKey && instruction.toLowerCase().includes(kw)) {
+          const hintKey = `cards.${c.id}.hint`;
+          const hint = i18n.t(hintKey);
+          if (hint !== hintKey && hint.toLowerCase().includes(kw)) {
             return true;
           }
 
