@@ -45,7 +45,7 @@ export const fractalEdgeRoughnessCard: CardManifest<
   },
   ui: {
     icon: Sparkles,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <FractalEdgeRoughnessView
         key={question.id}
         question={question}
@@ -53,6 +53,7 @@ export const fractalEdgeRoughnessCard: CardManifest<
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

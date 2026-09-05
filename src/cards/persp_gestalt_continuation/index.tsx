@@ -40,7 +40,7 @@ export const perspGestaltContinuationCard: CardManifest<
   },
   ui: {
     icon: Eye,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <PerspGestaltContinuationView
         key={question.id}
         question={question}
@@ -48,6 +48,7 @@ export const perspGestaltContinuationCard: CardManifest<
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

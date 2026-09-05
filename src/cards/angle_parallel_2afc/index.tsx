@@ -39,7 +39,7 @@ export const angleParallel2AfcCard: CardManifest<
   },
   ui: {
     icon: Split,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <AngleParallel2AfcView
         key={question.id}
         question={question}
@@ -47,6 +47,7 @@ export const angleParallel2AfcCard: CardManifest<
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

@@ -76,6 +76,7 @@ export const angleEstimationCard: CardManifest<
         disabled={disabled}
         hitMargin={settings?.sliderHitMargin ?? 12}
         showToleranceBand={settings?.showToleranceBand ?? true}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },
