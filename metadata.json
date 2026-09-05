@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test(cards): 加固卡片词典 Schema 测试门禁以杜绝废弃同义词", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601589.3855262, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package-lock.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601674.8239307, "duration_ms": 0}}
