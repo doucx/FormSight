@@ -1,8 +1,4 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-
-const CARDS_ROOT = path.resolve(__dirname, '..');
 
 /**
  * 废弃别名与前缀黑名单：
@@ -17,15 +13,12 @@ const FORBIDDEN_ALIAS_KEYS = [
   'memoryRecallHint',
 ];
 
-/**
- * 获取所有卡片包目录（排除 __tests__ 等内部辅助目录）
- */
-function getCardDirectories(): string[] {
-  return fs
-    .readdirSync(CARDS_ROOT, { withFileTypes: true })
-    .filter((dirent) => dirent.isDirectory() && !dirent.name.startsWith('__'))
-    .map((dirent) => dirent.name);
-}
+type LocaleModule = { default?: Record<string, unknown> } | Record<string, unknown>;
+
+// 基于 Vite 原生 import.meta.glob 收集所有卡片词典，无需依赖 Node.js 文件系统模块
+const localeModules = import.meta.glob<LocaleModule>('../*/locales/*.json', {
+  eager: true,
+});
 
 /**
  * 递归收集对象中的所有键名
@@ -46,32 +39,39 @@ function getAllKeys(obj: unknown, prefix = ''): string[] {
   return keys;
 }
 
-describe('Card Locales Schema & Deprecated Aliases Guard', () => {
-  const cardDirs = getCardDirectories();
+interface CardLocales {
+  [fileName: string]: Record<string, unknown>;
+}
 
-  it('should have discovered valid cards directories', () => {
-    expect(cardDirs.length).toBeGreaterThan(0);
+// 整理归类每个卡片的语言包内容
+const cardLocalesMap: Record<string, CardLocales> = {};
+
+for (const [modulePath, mod] of Object.entries(localeModules)) {
+  const match = modulePath.match(/([^/]+)\/locales\/([^/]+)$/);
+  if (!match) continue;
+
+  const [, cardName, fileName] = match;
+  if (!cardLocalesMap[cardName]) {
+    cardLocalesMap[cardName] = {};
+  }
+
+  const raw = 'default' in mod && mod.default ? mod.default : mod;
+  cardLocalesMap[cardName][fileName] = raw as Record<string, unknown>;
+}
+
+describe('Card Locales Schema & Deprecated Aliases Guard', () => {
+  const cardNames = Object.keys(cardLocalesMap);
+
+  it('should have discovered card locale modules via import.meta.glob', () => {
+    expect(cardNames.length).toBeGreaterThan(0);
   });
 
-  for (const cardName of cardDirs) {
+  for (const cardName of cardNames) {
     describe(`card: ${cardName}`, () => {
-      const localesDir = path.join(CARDS_ROOT, cardName, 'locales');
-      const hasLocales = fs.existsSync(localesDir);
+      const locales = cardLocalesMap[cardName];
 
-      if (!hasLocales) {
-        return;
-      }
-
-      const localeFiles = ['zh-CN.json', 'en-US.json'];
-
-      for (const file of localeFiles) {
-        const filePath = path.join(localesDir, file);
-
+      for (const [file, json] of Object.entries(locales)) {
         it(`should not contain forbidden/deprecated alias keys in ${file}`, () => {
-          if (!fs.existsSync(filePath)) return;
-
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const json = JSON.parse(content);
           const keys = getAllKeys(json);
 
           for (const forbiddenKey of FORBIDDEN_ALIAS_KEYS) {
@@ -84,13 +84,10 @@ describe('Card Locales Schema & Deprecated Aliases Guard', () => {
       }
 
       it('should maintain symmetric top-level keys between zh-CN.json and en-US.json', () => {
-        const zhPath = path.join(localesDir, 'zh-CN.json');
-        const enPath = path.join(localesDir, 'en-US.json');
+        const zhJson = locales['zh-CN.json'];
+        const enJson = locales['en-US.json'];
 
-        if (fs.existsSync(zhPath) && fs.existsSync(enPath)) {
-          const zhJson = JSON.parse(fs.readFileSync(zhPath, 'utf-8'));
-          const enJson = JSON.parse(fs.readFileSync(enPath, 'utf-8'));
-
+        if (zhJson && enJson) {
           expect(
             Object.keys(zhJson).sort(),
             `Mismatch between keys of zh-CN.json and en-US.json in card "${cardName}"`,
