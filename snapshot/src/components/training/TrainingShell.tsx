@@ -158,30 +158,37 @@ export function TrainingShell({
         {isIdle && <IdlePauseOverlay onResume={resumeFromIdle} />}
       </div>
 
-      {/* 统一手动下一题控制栏 */}
-      {!autoNext && (
-        <div className="flex items-center justify-center">
-          {isFinished ? (
-            <Button
-              variant="default"
-              onClick={handleRequestFinish}
-              className="px-5 py-2.5 h-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-            >
-              {t('shell.viewSummary')}
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              onClick={handleNextQuestion}
-              disabled={!showAnswer}
-              className="px-5 py-2.5 h-auto gap-1"
-            >
-              {t('common.nextQuestion')}
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
-      )}
+      {/* 统一手动/结果确认控制栏：无论是否自动切题，在揭晓答案时常驻展示红/绿判定按钮，杜绝布局跳动 */}
+      <div className="flex items-center justify-center">
+        {isFinished ? (
+          <Button
+            variant="default"
+            onClick={handleRequestFinish}
+            className="px-6 py-3 h-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-md text-sm font-bold rounded-2xl"
+          >
+            {t('shell.viewSummary')}
+          </Button>
+        ) : showAnswer ? (
+          <Button
+            variant="default"
+            onClick={handleNextQuestion}
+            className={`px-8 py-3 h-auto gap-2 text-sm font-black shadow-md rounded-2xl transition-all ${
+              session.userAnswer && (session.userAnswer as { isHit?: boolean }).isHit
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-rose-600 hover:bg-rose-700 text-white'
+            }`}
+          >
+            <span>
+              {session.userAnswer && (session.userAnswer as { isHit?: boolean }).isHit
+                ? '✓ 击中目标 (Next)'
+                : '✕ 未能击中 (Next)'}
+            </span>
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        ) : (
+          <div className="h-11" /* 占位以彻底防止按钮未出现时的布局高度跳动 */ />
+        )}
+      </div>
 
       {/* 统一结课总结弹窗 */}
       {showSummaryModal && (
