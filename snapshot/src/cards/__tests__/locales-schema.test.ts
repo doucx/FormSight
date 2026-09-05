@@ -8,6 +8,8 @@ const FORBIDDEN_ALIAS_KEYS = [
   'areaHint',
   'ratioHint',
   'vertexHint',
+  'instruction', // 全面废弃同义词；操作指引统一归口为 hint
+  'taskHint', // 全面废弃同义词；操作指引统一归口为 hint
   'prompt', // 裸 prompt 废弃；题干标签统一使用 promptTitle，操作说明统一使用 hint
   'memoryStimulusHint',
   'memoryRecallHint',
