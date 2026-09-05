@@ -38,7 +38,9 @@ export function usePlanEditorState({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [storageState, setStorageState] = useState<PlanStorageState>(getPlanStorageStateSnapshot);
-  const [currentPlan, setCurrentPlan] = useState<TrainingPlan>({ ...initialPlan });
+  const [currentPlan, setCurrentPlan] = useState<TrainingPlan>(() =>
+    sanitizePlan(initialPlan, initialPlan.name),
+  );
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
@@ -47,12 +49,14 @@ export function usePlanEditorState({
   useEffect(() => {
     loadPlanStorageState().then((state) => {
       setStorageState(state);
-      const synced = state.plans.find((p) => p.id === currentPlan.id);
-      if (synced && synced.items.length !== currentPlan.items.length) {
-        setCurrentPlan(synced);
+      const synced = state.plans.find((p) => p.id === initialPlan.id);
+      if (synced) {
+        setCurrentPlan((prev) =>
+          prev.id === synced.id && prev.items.length !== synced.items.length ? synced : prev,
+        );
       }
     });
-  }, []);
+  }, [initialPlan.id]);
 
   const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
 
