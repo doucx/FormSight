@@ -76,48 +76,43 @@ export function NegAreaComparison2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('A')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                1
-              </Badge>
-              {t('common.areaA')}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              1
+            </Badge>
 
             {showAnswer && isAHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
                 <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 {t('whiteSpace', { ratio: question.negRatioA ?? 50 })}
               </span>
             )}
             {showAnswer && !isAHit && (
-              <span className="text-xs font-semibold text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">
                 {t('whiteSpace', { ratio: question.negRatioA ?? 50 })}
               </span>
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesA,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesA]}
-            />
-          </div>
+          <CanvasView
+            width={TWO_AFC_CANVAS_SIZE}
+            height={TWO_AFC_CANVAS_SIZE}
+            className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card block"
+            draw={(canvas) =>
+              drawPolygonCanvas({
+                canvas,
+                vertices: question.verticesA,
+                size: TWO_AFC_CANVAS_SIZE,
+                fillColor: CANVAS_THEME.shape.fill,
+                strokeColor: CANVAS_THEME.shape.stroke,
+              })
+            }
+            deps={[question.verticesA]}
+          />
         </ChoiceCard>
 
         <ChoiceCard
@@ -126,48 +121,43 @@ export function NegAreaComparison2AfcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('B')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                2
-              </Badge>
-              {t('common.areaB')}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              2
+            </Badge>
 
             {showAnswer && isBHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
                 <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 {t('whiteSpace', { ratio: question.negRatioB ?? 50 })}
               </span>
             )}
             {showAnswer && !isBHit && (
-              <span className="text-xs font-semibold text-muted-foreground">
+              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">
                 {t('whiteSpace', { ratio: question.negRatioB ?? 50 })}
               </span>
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={TWO_AFC_CANVAS_SIZE}
-              height={TWO_AFC_CANVAS_SIZE}
-              className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card"
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.verticesB,
-                  size: TWO_AFC_CANVAS_SIZE,
-                  fillColor: CANVAS_THEME.shape.fill,
-                  strokeColor: CANVAS_THEME.shape.stroke,
-                })
-              }
-              deps={[question.verticesB]}
-            />
-          </div>
+          <CanvasView
+            width={TWO_AFC_CANVAS_SIZE}
+            height={TWO_AFC_CANVAS_SIZE}
+            className="w-full max-w-[210px] aspect-square rounded-xl shadow-sm bg-card block"
+            draw={(canvas) =>
+              drawPolygonCanvas({
+                canvas,
+                vertices: question.verticesB,
+                size: TWO_AFC_CANVAS_SIZE,
+                fillColor: CANVAS_THEME.shape.fill,
+                strokeColor: CANVAS_THEME.shape.stroke,
+              })
+            }
+            deps={[question.verticesB]}
+          />
         </ChoiceCard>
       </div>
     </QuestionCardShell>

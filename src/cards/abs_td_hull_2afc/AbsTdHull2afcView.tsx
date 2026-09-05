@@ -103,37 +103,32 @@ export function AbsTdHull2afcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('A')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                1
-              </Badge>
-              {`${t('common.areaA')} (${t('common.optionA')})`}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              1
+            </Badge>
             {showAnswer && isTargetA && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.hullDetailedA,
-                  size: OPTION_SIZE,
-                })
-              }
-              deps={[question.hullDetailedA]}
-            />
-          </div>
+          <CanvasView
+            width={OPTION_SIZE}
+            height={OPTION_SIZE}
+            className={CANVAS_OPTION_CLASS}
+            draw={(canvas) =>
+              drawPolygonCanvas({
+                canvas,
+                vertices: question.hullDetailedA,
+                size: OPTION_SIZE,
+              })
+            }
+            deps={[question.hullDetailedA]}
+          />
         </ChoiceCard>
 
         <ChoiceCard
@@ -142,37 +137,32 @@ export function AbsTdHull2afcView({
           disabled={disabled || showAnswer}
           onClick={() => handleSelect('B')}
         >
-          <div className="flex items-center justify-between w-full px-1">
-            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
-              <Badge
-                variant="secondary"
-                size="sm"
-                className="w-5 h-5 p-0 justify-center font-mono text-xs"
-              >
-                2
-              </Badge>
-              {`${t('common.areaB')} (${t('common.optionB')})`}
-            </span>
+          <div className="flex items-center justify-between w-full px-1 min-h-[1.5rem]">
+            <Badge
+              variant="secondary"
+              size="sm"
+              className="w-5 h-5 p-0 justify-center font-mono text-xs flex-shrink-0"
+            >
+              2
+            </Badge>
             {showAnswer && isTargetB && (
-              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
-          <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
-            <CanvasView
-              width={OPTION_SIZE}
-              height={OPTION_SIZE}
-              className={CANVAS_OPTION_CLASS}
-              draw={(canvas) =>
-                drawPolygonCanvas({
-                  canvas,
-                  vertices: question.hullDetailedB,
-                  size: OPTION_SIZE,
-                })
-              }
-              deps={[question.hullDetailedB]}
-            />
-          </div>
+          <CanvasView
+            width={OPTION_SIZE}
+            height={OPTION_SIZE}
+            className={CANVAS_OPTION_CLASS}
+            draw={(canvas) =>
+              drawPolygonCanvas({
+                canvas,
+                vertices: question.hullDetailedB,
+                size: OPTION_SIZE,
+              })
+            }
+            deps={[question.hullDetailedB]}
+          />
         </ChoiceCard>
       </div>
     </QuestionCardShell>
