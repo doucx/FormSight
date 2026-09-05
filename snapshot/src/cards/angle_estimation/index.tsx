@@ -15,7 +15,7 @@ import type {
   AngleEstimationQuestion,
   AngleRangePreset,
 } from './types';
-import { checkHit, generateQuestion } from './utils/generator';
+import { checkHit, generateQuestion, getAngleRangeBounds } from './utils/generator';
 
 const ALL_ANGLE_RANGES: AngleRangePreset[] = ['0_45', '45_90', '90_135', '135_180'];
 
@@ -23,6 +23,7 @@ export interface AngleEstimationSettings extends BaseModuleSettings {
   sliderHitMargin?: number;
   showToleranceBand?: boolean;
   angleRanges?: AngleRangePreset[];
+  adaptiveSliderScale?: boolean;
 }
 
 export const angleEstimationCard: CardManifest<
@@ -47,6 +48,7 @@ export const angleEstimationCard: CardManifest<
     sliderHitMargin: 12,
     showToleranceBand: true,
     angleRanges: ['0_45', '45_90', '90_135', '135_180'],
+    adaptiveSliderScale: true,
   },
   engine: {
     generateQuestion: (level, settings) =>
@@ -88,6 +90,13 @@ export const angleEstimationCard: CardManifest<
             description={t('settings.showToleranceBandDesc')}
             checked={(settings.showToleranceBand as boolean) ?? true}
             onChange={(val) => updateSettings({ showToleranceBand: val })}
+          />
+
+          <SettingToggleItem
+            title={t('settings.adaptiveSliderScaleTitle')}
+            description={t('settings.adaptiveSliderScaleDesc')}
+            checked={(settings.adaptiveSliderScale as boolean) ?? true}
+            onChange={(val) => updateSettings({ adaptiveSliderScale: val })}
           />
 
           <div className="space-y-2.5 pt-2 border-t border-border/65">
@@ -158,19 +167,28 @@ export const angleEstimationCard: CardManifest<
         </div>
       );
     },
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <AngleEstimationView
-        key={question.id}
-        question={question}
-        showAnswer={showAnswer}
-        userAnswer={userAnswer}
-        onAnswer={onAnswer}
-        disabled={disabled}
-        hitMargin={settings?.sliderHitMargin ?? 12}
-        showToleranceBand={settings?.showToleranceBand ?? true}
-        showCanvasHints={settings.showCanvasHints as boolean}
-      />
-    ),
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => {
+      const isAdaptive = settings.adaptiveSliderScale ?? true;
+      const [sliderMin, sliderMax] = isAdaptive
+        ? getAngleRangeBounds(settings.angleRanges)
+        : [0, 180];
+
+      return (
+        <AngleEstimationView
+          key={question.id}
+          question={question}
+          showAnswer={showAnswer}
+          userAnswer={userAnswer}
+          onAnswer={onAnswer}
+          disabled={disabled}
+          hitMargin={settings?.sliderHitMargin ?? 12}
+          showToleranceBand={settings?.showToleranceBand ?? true}
+          showCanvasHints={settings.showCanvasHints as boolean}
+          sliderMin={sliderMin}
+          sliderMax={sliderMax}
+        />
+      );
+    },
   },
 };
 

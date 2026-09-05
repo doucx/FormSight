@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 为夹角估算卡片增加可配置的角度生成区间与并集筛选", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606069.4160495, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 增加自适应滑块刻度支持以提升细分区间的估算微调精度", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788606187.7572057, "duration_ms": 0}}

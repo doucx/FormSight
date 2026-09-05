@@ -4,6 +4,8 @@
   "settings": {
     "showToleranceBandTitle": "显示动态容错带",
     "showToleranceBandDesc": "在滑块周围显示当前难度下的容错区间指示线",
+    "adaptiveSliderScaleTitle": "自适应滑块刻度",
+    "adaptiveSliderScaleDesc": "根据所选角度区间自动收缩滑块量程（如锐角时为 0°~90°），提升微调精度",
     "angleRangesTitle": "目标角度生成范围",
     "angleRangesDesc": "选择题目生成的夹角区间 (支持多选取并集)",
     "presetAll": "全角度 (0°~180°)",

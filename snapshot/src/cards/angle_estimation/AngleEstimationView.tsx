@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-preact';
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 
 import {
   CanvasView,
@@ -20,6 +20,8 @@ export interface AngleEstimationViewProps {
   hitMargin?: number;
   showToleranceBand?: boolean;
   showCanvasHints?: boolean;
+  sliderMin?: number;
+  sliderMax?: number;
 }
 
 export function AngleEstimationView({
@@ -31,12 +33,20 @@ export function AngleEstimationView({
   hitMargin = 12,
   showToleranceBand = true,
   showCanvasHints = true,
+  sliderMin = 0,
+  sliderMax = 180,
 }: AngleEstimationViewProps) {
   const { t } = useCardTranslation('angle_estimation');
-  const [currentVal, setCurrentVal] = useState<number>(90);
+  const initialCenter = Math.round(((sliderMin + sliderMax) / 2) * 2) / 2;
+  const [currentVal, setCurrentVal] = useState<number>(initialCenter);
+
+  useEffect(() => {
+    setCurrentVal(initialCenter);
+  }, [question.id, sliderMin, sliderMax]);
 
   const { trackRef, hoverVal, pointerProps } = useTrackPointer({
-    max: 180,
+    min: sliderMin,
+    max: sliderMax,
     step: 0.5,
     disabled: disabled || showAnswer,
     onValChange: (val) => setCurrentVal(val),
@@ -83,13 +93,13 @@ export function AngleEstimationView({
         </div>
 
         <div className="flex items-center gap-3 w-full">
-          <span className="font-bold font-mono text-muted-foreground text-xs">0°</span>
+          <span className="font-bold font-mono text-muted-foreground text-xs">{sliderMin}°</span>
           <SliderTrack
             trackRef={trackRef}
             pointerProps={pointerProps}
             activeVal={activeVal}
-            max={180}
-            min={0}
+            max={sliderMax}
+            min={sliderMin}
             hitMargin={hitMargin}
             disabled={disabled}
             showAnswer={showAnswer}
@@ -99,7 +109,7 @@ export function AngleEstimationView({
             showToleranceBand={showToleranceBand}
             isHit={isHit}
           />
-          <span className="font-bold font-mono text-muted-foreground text-xs">180°</span>
+          <span className="font-bold font-mono text-muted-foreground text-xs">{sliderMax}°</span>
         </div>
 
         <div

@@ -16,7 +16,30 @@ const RANGE_BOUNDS: Record<AngleRangePreset, [number, number]> = {
   '135_180': [135, 175],
 };
 
+const RANGE_SCALE_BOUNDS: Record<AngleRangePreset, [number, number]> = {
+  '0_45': [0, 45],
+  '45_90': [45, 90],
+  '90_135': [90, 135],
+  '135_180': [135, 180],
+};
+
 const ALL_RANGES: AngleRangePreset[] = ['0_45', '45_90', '90_135', '135_180'];
+
+export function getAngleRangeBounds(ranges?: AngleRangePreset[]): [number, number] {
+  if (!ranges || ranges.length === 0 || ranges.length === 4) {
+    return [0, 180];
+  }
+  let min = 180;
+  let max = 0;
+  for (const r of ranges) {
+    const bounds = RANGE_SCALE_BOUNDS[r];
+    if (bounds) {
+      min = Math.min(min, bounds[0]);
+      max = Math.max(max, bounds[1]);
+    }
+  }
+  return min < max ? [min, max] : [0, 180];
+}
 
 export function drawAngleCanvas(
   canvas: HTMLCanvasElement | null,

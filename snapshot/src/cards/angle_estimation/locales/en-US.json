@@ -4,6 +4,8 @@
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance band around current slider position",
+    "adaptiveSliderScaleTitle": "Adaptive Slider Range",
+    "adaptiveSliderScaleDesc": "Scale slider bounds to fit active range (e.g. 0°~90° for acute angles) for higher precision",
     "angleRangesTitle": "Target Angle Ranges",
     "angleRangesDesc": "Select target angle ranges for generated questions (multi-select union)",
     "presetAll": "All (0°~180°)",
