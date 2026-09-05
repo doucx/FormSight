@@ -1,7 +1,6 @@
 {
   "title": "Proportion Migration",
   "desc": "Migrate proportional divisions from horizontal references onto randomly tilted lines.",
-  "instruction": "Observe the target point above and mark the identical proportion below.",
   "hint": "Observe the horizontal reference above and confirm the corresponding proportion on the tilted segment below",
   "targetRatio": "Target Proportion:",
   "userPosition": "User Position: {{pos}}% (Error: ±{{error}}%)"

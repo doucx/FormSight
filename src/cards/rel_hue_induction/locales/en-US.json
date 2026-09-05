@@ -1,7 +1,6 @@
 {
   "title": "Hue Induction & Harmony",
   "desc": "Select the compensated target color to counteract chromatic induction (4AFC).",
-  "instruction": "Select the hue that compensates for the colored background (Keys 1-4).",
   "hint": "Observe reference and preview candidate compensations below (Keys 1-4, Space)",
   "leftBase": "Left Anchor Reference",
   "rightPreview": "Right Compensated Area (Live Preview)",

@@ -1,13 +1,16 @@
+import { Target } from 'lucide-preact';
 import { useEffect, useRef } from 'preact/hooks';
 
 import {
   CANVAS_THEME,
   type Point,
   PointClickCanvas,
+  QuestionCardShell,
   drawDot,
   findNearestPointInGrid,
   getDynamicDotRadius,
   setupHiDpiCanvas,
+  useCardTranslation,
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
 import { CANVAS_SIZE } from './utils/generator';
@@ -18,6 +21,7 @@ export interface StarSingleViewProps {
   userAnswer: HitResult | null;
   onAnswer: (userVal: Point) => void;
   disabled?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function StarSingleView({
@@ -26,7 +30,9 @@ export function StarSingleView({
   userAnswer,
   onAnswer,
   disabled = false,
+  showCanvasHints = true,
 }: StarSingleViewProps) {
+  const { t } = useCardTranslation('star_single');
   const leftCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -67,30 +73,37 @@ export function StarSingleView({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftCanvasRef}
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
-        />
-      </div>
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={Target}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-5xl"
+    >
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full mx-auto">
+        <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
+          <canvas
+            ref={leftCanvasRef}
+            width={CANVAS_SIZE}
+            height={CANVAS_SIZE}
+            className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
+          />
+        </div>
 
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <PointClickCanvas
-          canvasSize={CANVAS_SIZE}
-          gridPoints={question.distractorPoints}
-          targetPoint={question.targetB}
-          userNearestPoint={userAnswer?.nearestGridPoint}
-          anchors={[question.anchorA]}
-          showAnswer={showAnswer}
-          isHit={userAnswer?.isHit}
-          disabled={disabled}
-          maxDisplayWidth="w-full h-full aspect-square"
-          onCommitPoint={handleCommitPoint}
-        />
+        <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
+          <PointClickCanvas
+            canvasSize={CANVAS_SIZE}
+            gridPoints={question.distractorPoints}
+            targetPoint={question.targetB}
+            userNearestPoint={userAnswer?.nearestGridPoint}
+            anchors={[question.anchorA]}
+            showAnswer={showAnswer}
+            isHit={userAnswer?.isHit}
+            disabled={disabled}
+            maxDisplayWidth="w-full h-full aspect-square"
+            onCommitPoint={handleCommitPoint}
+          />
+        </div>
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }

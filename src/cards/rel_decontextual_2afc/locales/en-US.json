@@ -1,7 +1,6 @@
 {
   "title": "Decontextualized 2AFC",
   "desc": "Pierce through simultaneous contrast illusions to identify the objectively brighter color.",
-  "instruction": "Identify which center square is physically brighter (Keys 1 / 2).",
   "hint": "Pierce background illusion and identify the objectively brighter center square",
   "physicallyBrighter": "Physically Brighter (V: {{v}}%)",
   "physicallyDarker": "Physically Darker (V: {{v}}%)"

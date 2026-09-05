@@ -143,13 +143,14 @@ export const starDoubleHCard: CardManifest<QuestionData, HitResult, Point, StarS
         </div>
       );
     },
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <StarDoubleHView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

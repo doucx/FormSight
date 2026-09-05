@@ -1,7 +1,7 @@
 {
   "title": "Hue",
   "desc": "Identify the exact angle of a color on the 360° color wheel.",
-  "instruction": "Locate the exact degree of the color on the 360° color wheel.",
+  "hint": "Locate the exact degree of the color on the 360° color wheel.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
     "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb",

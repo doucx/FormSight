@@ -60,7 +60,7 @@ export function NegRatioEstimationView({
 
   return (
     <QuestionCardShell
-      hintText={t('ratioHint')}
+      hintText={t('hint')}
       hintIcon={Maximize2}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"

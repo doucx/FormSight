@@ -1,7 +1,7 @@
 {
   "title": "Value",
   "desc": "Given hue, estimate the lightness/darkness value (0%~100%).",
-  "instruction": "Estimate the value/brightness percentage of the color (0%~100%).",
+  "hint": "Estimate the value/brightness percentage of the color (0%~100%).",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
     "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"

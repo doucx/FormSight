@@ -1,11 +1,14 @@
+import { Palette } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 
 import {
   Button,
   type ColorSenseSettings,
+  ColorSwatch,
   HUE_SPECTRUM_GRADIENT,
   HsvTrackSlider,
   PALETTE,
+  QuestionCardShell,
   hsvToHex,
   useCardTranslation,
 } from '@formsight/card-sdk';
@@ -36,6 +39,7 @@ export function ColorAllView({
   const hitMargin = settings.sliderHitMargin ?? 12;
   const showToleranceBand = settings.showToleranceBand ?? true;
   const enableHoverColorPreview = settings.enableHoverColorPreview ?? true;
+  const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
   const [userH, setUserH] = useState<number>(180);
   const [userS, setUserS] = useState<number>(50);
@@ -102,28 +106,30 @@ export function ColorAllView({
   const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={Palette}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-md"
+      className="gap-6"
+    >
       <div className="flex flex-col items-center gap-2 w-full">
         <div className="flex items-center justify-center gap-4 w-full">
-          <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-            style={{ backgroundColor: targetHex }}
-          />
-          <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-75"
-            style={{
-              backgroundColor: hsvToHex(
-                draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                  ? (allHoverVals.H ?? userH)
-                  : userH,
-                draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                  ? (allHoverVals.S ?? userS)
-                  : userS,
-                draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                  ? (allHoverVals.V ?? userV)
-                  : userV,
-              ),
-            }}
+          <ColorSwatch color={targetHex} className="flex-1 h-28" transition="smooth" />
+          <ColorSwatch
+            color={hsvToHex(
+              draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
+                ? (allHoverVals.H ?? userH)
+                : userH,
+              draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
+                ? (allHoverVals.S ?? userS)
+                : userS,
+              draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
+                ? (allHoverVals.V ?? userV)
+                : userV,
+            )}
+            className="flex-1 h-28"
+            transition="realtime"
           />
         </div>
       </div>
@@ -201,6 +207,6 @@ export function ColorAllView({
           {t('common.confirmSpace')}
         </Button>
       )}
-    </div>
+    </QuestionCardShell>
   );
 }

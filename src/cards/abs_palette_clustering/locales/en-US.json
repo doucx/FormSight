@@ -1,7 +1,6 @@
 {
   "title": "Dominant Color Clustering",
   "desc": "Pierce mosaic noise to identify the area-weighted dominant centroid color (4AFC).",
-  "instruction": "Select the dominant color that represents the overall scene palette.",
   "badge": "Color Clustering",
   "hint": "Select the dominant color representing the overall palette (Keys 1-4)"
 }

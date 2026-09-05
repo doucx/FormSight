@@ -4,7 +4,7 @@ import { useState } from 'preact/hooks';
 import {
   Badge,
   ChoiceCard,
-  PALETTE,
+  ColorSwatch,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -12,6 +12,9 @@ import {
   useChoiceShortcuts,
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
+
+/** 揭晓时剥离环境诱导的绝对中性纯黑基准背景 */
+const DECONTEXTUAL_REVEAL_BG = '#000000';
 
 export interface RelDecontextual2AfcViewProps {
   question: QuestionData;
@@ -108,12 +111,13 @@ export function RelDecontextual2AfcView({
             )}
           </div>
 
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgA}
+            variant="container"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
           >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-          </div>
+            <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
+          </ColorSwatch>
         </ChoiceCard>
 
         <ChoiceCard
@@ -150,12 +154,13 @@ export function RelDecontextual2AfcView({
             )}
           </div>
 
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
+          <ColorSwatch
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgB}
+            variant="container"
+            className={`w-full h-44 ${showAnswer ? '' : 'shadow-inner'}`}
           >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-          </div>
+            <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
+          </ColorSwatch>
         </ChoiceCard>
       </div>
     </QuestionCardShell>

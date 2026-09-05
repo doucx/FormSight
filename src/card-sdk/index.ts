@@ -188,6 +188,7 @@ export type {
 // 10. 通用 UI 组件 (UI Primitives & Diagnostic Components)
 // ----------------------------------------------------------------------------
 export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
+export { ColorSwatch, type ColorSwatchProps } from '../components/common/ColorSwatch';
 export { DualViewportContainer } from '../components/common/DualViewportContainer';
 export { SliderTrack, type SliderTrackProps } from '../components/common/SliderTrack';
 export {

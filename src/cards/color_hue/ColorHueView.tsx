@@ -1,11 +1,17 @@
+import { RotateCw } from 'lucide-preact';
+
 import {
   type ColorHitResult,
   type ColorQuestionData,
   type ColorSenseSettings,
+  ColorSwatch,
   HUE_SPECTRUM_GRADIENT,
   HsvTrackSlider,
+  QuestionCardShell,
   hsvToHex,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+
 export interface ColorHueViewProps {
   question: ColorQuestionData;
   showAnswer: boolean;
@@ -23,20 +29,25 @@ export function ColorHueView({
   disabled = false,
   settings,
 }: ColorHueViewProps) {
+  const { t } = useCardTranslation('color_hue');
   const { targetH, targetS, targetV, difficultyLevel } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
   const targetHSV: [number, number, number] = [targetH, targetS, targetV];
 
   const hitMargin = settings.sliderHitMargin ?? 12;
   const showToleranceBand = settings.showToleranceBand ?? true;
+  const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
   return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={RotateCw}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-md"
+      className="gap-6"
+    >
       <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
+        <ColorSwatch color={targetHex} size="lg" />
       </div>
 
       <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
@@ -61,6 +72,6 @@ export function ColorHueView({
           showToleranceBand={showToleranceBand}
         />
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }

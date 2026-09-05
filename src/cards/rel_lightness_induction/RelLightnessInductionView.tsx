@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'preact/hooks';
 
 import {
   Button,
+  ColorSwatch,
   DualViewportContainer,
   HsvTrackSlider,
   PALETTE,
@@ -81,33 +82,19 @@ export function RelLightnessInductionView({
         leftTitle={t('leftBase')}
         rightTitle={t('rightModulate')}
         leftContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgLeftHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all"
-              style={{ backgroundColor: centerLeftHex }}
-            />
-          </div>
+          <ColorSwatch color={bgLeftHex} variant="container" className="w-full h-44">
+            <ColorSwatch color={centerLeftHex} variant="embedded" size="sm" />
+          </ColorSwatch>
         }
         rightContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgRightHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-              style={{ backgroundColor: userRightHex }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: idealRightHex }}
-                />
-              )}
-            </div>
-          </div>
+          <ColorSwatch color={bgRightHex} variant="container" className="w-full h-44">
+            <ColorSwatch
+              color={userRightHex}
+              compareColor={showAnswer ? idealRightHex : undefined}
+              variant="embedded"
+              size="sm"
+            />
+          </ColorSwatch>
         }
       />
 

@@ -64,7 +64,7 @@ export function NegAreaComparison2AfcView({
 
   return (
     <QuestionCardShell
-      hintText={t('areaHint')}
+      hintText={t('hint')}
       hintIcon={Columns}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"

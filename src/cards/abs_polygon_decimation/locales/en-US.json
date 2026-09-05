@@ -1,7 +1,6 @@
 {
   "title": "Polygon Hull Decimation",
   "desc": "Filter high-frequency noise from intricate silhouettes to identify the optimal low-poly hull.",
-  "instruction": "Select the simplified polygon that best preserves key structural vertices.",
   "badge": "Polygon Hull",
   "hint": "Select the simplified polygon that best preserves key structural vertices",
   "promptTitle": "Detailed Silhouette"

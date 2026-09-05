@@ -6,6 +6,7 @@ import {
   CANVAS_THEME,
   CanvasView,
   ChoiceCard,
+  ColorSwatch,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -66,10 +67,7 @@ export function AbsTdPalette2afcView({
         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
           {t('promptTitle')}
         </span>
-        <div
-          className="w-16 h-16 rounded-2xl border-4 border-card dark:border-border shadow-md ring-1 ring-border/60"
-          style={{ backgroundColor: promptHex }}
-        />
+        <ColorSwatch color={promptHex} size="sm" />
       </div>
 
       {/* 4AFC 候选图案网格 */}

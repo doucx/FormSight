@@ -5,6 +5,7 @@ import {
   Badge,
   Button,
   ChoiceCard,
+  ColorSwatch,
   DualViewportContainer,
   QuestionCardShell,
   getChoiceCardState,
@@ -74,34 +75,20 @@ export function RelHueInductionView({
         leftTitle={t('leftBase')}
         rightTitle={t('rightPreview')}
         leftContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgLeftHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all"
-              style={{ backgroundColor: centerLeftHex }}
-            />
-          </div>
+          <ColorSwatch color={bgLeftHex} variant="container" className="w-full h-44">
+            <ColorSwatch color={centerLeftHex} variant="embedded" size="sm" />
+          </ColorSwatch>
         }
         rightContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgRightHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-              style={{ backgroundColor: activeRightHex }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: idealRightHex }}
-                  title={t('splitComparisonTooltip')}
-                />
-              )}
-            </div>
-          </div>
+          <ColorSwatch color={bgRightHex} variant="container" className="w-full h-44">
+            <ColorSwatch
+              color={activeRightHex}
+              compareColor={showAnswer ? idealRightHex : undefined}
+              compareTooltip={t('splitComparisonTooltip')}
+              variant="embedded"
+              size="sm"
+            />
+          </ColorSwatch>
         }
       />
 
@@ -137,12 +124,7 @@ export function RelHueInductionView({
                 )}
               </div>
 
-              <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-border/60 p-1 flex items-center justify-center bg-card">
-                <div
-                  className="w-full h-full rounded-lg shadow-sm border border-border/50"
-                  style={{ backgroundColor: hexVal }}
-                />
-              </div>
+              <ColorSwatch color={hexVal} variant="option" className="w-full aspect-[4/3]" />
             </ChoiceCard>
           );
         })}
