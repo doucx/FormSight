@@ -30,8 +30,8 @@
     "mediumFrequency": "中度纹理带 (H 0.40-0.70)",
     "lowFrequency": "平滑流线带 (H 0.70-1.00)"
   },
-  "targetEdge": "目标边缘 (Target Edge)",
-  "userEdge": "你的调制 (Your Adjustment)",
+  "targetEdge": "目标边缘",
+  "userEdge": "你的调制",
   "hurstExponent": "Hurst 指数 (H)",
   "extremeRough": "极度粗糙 (H=0.1)",
   "smooth": "平滑圆润 (H=1.0)",
