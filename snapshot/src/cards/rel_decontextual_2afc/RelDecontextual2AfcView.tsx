@@ -5,7 +5,6 @@ import {
   Badge,
   ChoiceCard,
   ColorSwatch,
-  PALETTE,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -13,6 +12,9 @@ import {
   useChoiceShortcuts,
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
+
+/** 揭晓时剥离环境诱导的绝对中性纯黑基准背景 */
+const DECONTEXTUAL_REVEAL_BG = '#000000';
 
 export interface RelDecontextual2AfcViewProps {
   question: QuestionData;
@@ -110,7 +112,7 @@ export function RelDecontextual2AfcView({
           </div>
 
           <ColorSwatch
-            color={showAnswer ? PALETTE.slate[500] : hexBgA}
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgA}
             variant="container"
             className="w-full h-44 shadow-inner"
           >
@@ -153,7 +155,7 @@ export function RelDecontextual2AfcView({
           </div>
 
           <ColorSwatch
-            color={showAnswer ? PALETTE.slate[500] : hexBgB}
+            color={showAnswer ? DECONTEXTUAL_REVEAL_BG : hexBgB}
             variant="container"
             className="w-full h-44 shadow-inner"
           >
