@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 保持确认提交按钮常驻并切换为禁用态以防止布局抖动", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788604233.8279283, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "bump Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788604443.6741579, "duration_ms": 0}}
