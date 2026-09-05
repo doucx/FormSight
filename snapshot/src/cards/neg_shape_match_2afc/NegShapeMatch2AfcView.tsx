@@ -106,10 +106,10 @@ export function NegShapeMatch2AfcView({
     <QuestionCardShell
       hintText={
         matchPhase === 'stimulus' && !showAnswer
-          ? t('memoryStimulusHint', {
+          ? t('hint_stimulus', {
               ms: question.displayTimeMs ?? 1500,
             })
-          : t('memoryRecallHint')
+          : t('hint_recall')
       }
       hintIcon={Sparkles}
       showCanvasHints={showCanvasHints}

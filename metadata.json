@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] fix: 修复任务文字指引全局选项在多张卡片中未生效的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788599179.7968564, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor: 统一卡片私有词典指引字段并消除同义词冗余", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788599550.6384041, "duration_ms": 0}}

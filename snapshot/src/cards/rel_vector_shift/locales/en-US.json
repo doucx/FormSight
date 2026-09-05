@@ -6,5 +6,5 @@
     "showToleranceBandTitle": "Show Tolerance Indicator Band",
     "showToleranceBandDesc": "Display tolerance reference on swatches"
   },
-  "prompt": "Observe vector shift A➔B and pick the matching C➔D shift below"
+  "hint": "Observe vector shift A➔B and pick the matching C➔D shift below"
 }

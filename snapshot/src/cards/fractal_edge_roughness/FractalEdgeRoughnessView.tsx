@@ -103,7 +103,7 @@ export function FractalEdgeRoughnessView({
 
   return (
     <QuestionCardShell
-      hintText={t('instruction')}
+      hintText={t('hint')}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"
     >

@@ -62,7 +62,7 @@ export function RelVectorShiftView({
 
   return (
     <QuestionCardShell
-      hintText={t('prompt')}
+      hintText={t('hint')}
       hintIcon={Shuffle}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-2xl"

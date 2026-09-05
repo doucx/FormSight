@@ -16,6 +16,6 @@
       "desc": "The closer points lie to the diagonal, the sharper your spatial area intuition."
     }
   },
-  "ratioHint": "Estimate the area percentage of white negative space relative to the whole scene",
+  "hint": "Estimate the area percentage of white negative space relative to the whole scene",
   "ratioLabel": "Negative Space Ratio Estimation:"
 }

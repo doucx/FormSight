@@ -255,7 +255,7 @@ export function NegVertexFittingView({
           }}
           tabIndex={0}
           role="button"
-          aria-label={t('vertexHint')}
+          aria-label={t('hint')}
           className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
             disabled || showAnswer
               ? 'cursor-default'
