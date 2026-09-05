@@ -124,11 +124,7 @@ export function RelHueInductionView({
                 )}
               </div>
 
-              <ColorSwatch
-                color={hexVal}
-                variant="option"
-                className="w-full aspect-[4/3]"
-              />
+              <ColorSwatch color={hexVal} variant="option" className="w-full aspect-[4/3]" />
             </ChoiceCard>
           );
         })}

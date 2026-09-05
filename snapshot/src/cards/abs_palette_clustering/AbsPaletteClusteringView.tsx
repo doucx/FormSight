@@ -99,11 +99,7 @@ export function AbsPaletteClusteringView({
                   <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
                 )}
               </div>
-              <ColorSwatch
-                color={hex}
-                variant="option"
-                className="w-full aspect-square"
-              />
+              <ColorSwatch color={hex} variant="option" className="w-full aspect-square" />
             </ChoiceCard>
           );
         })}
