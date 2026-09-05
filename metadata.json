@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 重构 locales 测试为基于 Vite import.meta.glob 的无 Node 依赖实现", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788600711.3249843, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(cards): 清理卡片词典中的废弃 instruction 字段", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788601429.0217586, "duration_ms": 0}}

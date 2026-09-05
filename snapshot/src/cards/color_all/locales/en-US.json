@@ -1,7 +1,6 @@
 {
   "title": "Full Color Match",
   "desc": "Simultaneously adjust Hue, Saturation, and Value to match the target color.",
-  "instruction": "Modulate H, S, and V tracks to match the target color on the left.",
   "hint": "Modulate H, S, and V tracks to match the target color on the left.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",

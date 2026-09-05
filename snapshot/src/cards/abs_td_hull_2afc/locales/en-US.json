@@ -1,7 +1,6 @@
 {
   "title": "Top-Down Hull Match",
   "desc": "Given a minimalist convex hull, match its detailed organic silhouette.",
-  "instruction": "Identify which detailed silhouette conforms to the prompt hull (Keys 1 / 2).",
   "badge": "Top-Down Hull",
   "hint": "Identify which detailed silhouette conforms to the prompt hull above",
   "promptTitle": "Prompt Low-Poly Hull"

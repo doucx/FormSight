@@ -1,7 +1,6 @@
 {
   "title": "Saturation",
   "desc": "Given hue and value, estimate the purity and saturation (0%~100%).",
-  "instruction": "Estimate the saturation purity percentage of the color (0%~100%).",
   "hint": "Estimate the saturation purity percentage of the color (0%~100%).",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Indicator Band",

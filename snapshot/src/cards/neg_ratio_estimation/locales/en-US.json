@@ -1,7 +1,6 @@
 {
   "title": "Negative Space Ratio",
   "desc": "Estimate the area percentage of negative space outside the irregular polygon.",
-  "instruction": "Estimate the percentage of white negative space relative to the whole canvas.",
   "settings": {
     "showToleranceBandTitle": "Dynamic Tolerance Guide",
     "showToleranceBandDesc": "Show visual indicator lines on slider for dynamic error tolerance."

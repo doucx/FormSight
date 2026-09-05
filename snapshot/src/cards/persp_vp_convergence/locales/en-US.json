@@ -1,7 +1,6 @@
 {
   "title": "VP Convergence",
   "desc": "Modulate the ray angle to make it converge at the exact same vanishing point.",
-  "instruction": "Adjust the ray angle using the slider so all lines meet at the vanishing point.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"

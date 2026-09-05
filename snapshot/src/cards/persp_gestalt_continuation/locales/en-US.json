@@ -1,7 +1,6 @@
 {
   "title": "Gestalt Continuation 2AFC",
   "desc": "Identify the true collinear continuation penetrating an obstacle (2AFC).",
-  "instruction": "Select the line that maintains true collinear continuation (Keys 1 / 2).",
   "hint": "Observe incoming line and identify the true collinear continuation penetrating the obstacle (Keys 1 / 2)",
   "optionA": "Continuation A",
   "optionB": "Continuation B"

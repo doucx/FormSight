@@ -1,7 +1,6 @@
 {
   "title": "Horizontal Double Anchors",
   "desc": "Horizontal dual anchors to train proportion and orthogonal projection intuition.",
-  "instruction": "Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.",
   "hint": "Observe the relationship between horizontal dual anchors on the left, then locate the target on the right.",
   "settings": {
     "gridSizeTitle": "Distractor Grid Dimensions",
