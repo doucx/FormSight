@@ -47,6 +47,10 @@ export function usePlanEditorState({
   useEffect(() => {
     loadPlanStorageState().then((state) => {
       setStorageState(state);
+      const synced = state.plans.find((p) => p.id === currentPlan.id);
+      if (synced && synced.items.length !== currentPlan.items.length) {
+        setCurrentPlan(synced);
+      }
     });
   }, []);
 

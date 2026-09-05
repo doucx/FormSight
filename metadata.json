@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[COMMIT] refactor(canvas): 将放大镜与交互画布抽离为组合式架构", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788608015.8539624, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 实现训练计划加载时的失效卡片自愈清洗机制", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788608298.3038552, "duration_ms": 0}}

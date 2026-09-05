@@ -1,57 +1,173 @@
-太棒了！我们已经成功完成了重构并通过了代码修改。既然你已经确认创建提交，我将为你生成一个包含 `git_add` 和 `git_commit` 的 `[COMMIT]` 计划。
+我现在将为你实施**方案一：在数据加载与存储层实现“自愈（Self-healing）”机制**。
 
-## [COMMIT] refactor(canvas): 将放大镜与交互画布抽离为组合式架构
+当从 IndexedDB 读取所有训练计划时，系统会自动比对并过滤掉在 `registry` 中已被删除或注销的卡片阶段，同时静默更新数据库，并保证编辑器及各视图在加载时即刻同步更新为真实阶段数。
+
+## [WIP] fix: 实现训练计划加载时的失效卡片自愈清洗机制
+
+### 错误分析
+
+1. **根因定位**：当用户在代码或注册表中移除某张卡片时，持久化在 IndexedDB 中的 `training_plans` 依然保留着该卡片的 `cardId` 引用记录。
+2. **脱节原因**：原有系统中的 `sanitizePlan` 清洗函数仅挂载在手动触发的保存按钮逻辑上。在常规的 `loadPlanStorageState` 启动与加载阶段，系统未对历史记录做有效性校验，导致未被用户重新编辑保存的旧计划一直保留失效阶段，使得总阶段数依然显示为 31（而非实际可用的 30）。
 
 ### 用户需求
-将放大镜浮层、触摸手势与交互画布底座进行模块化拆分与重构，消除 `neg_vertex_fitting` 与 `star_*` 卡片之间的模板代码重复，并保持向后兼容。
+
+在删除某张卡片后，系统在读取训练计划时能够自动识别并清除该卡片的失效训练阶段，使统计数值、卡片列表以及编辑器状态自动自愈回到正确的阶段数（如 30 个），无需用户手动重新保存。
 
 ### 评论
-本次重构严格践行了“组合优于继承”的设计理念。通过提取 `LoupeOverlay` 原子组件和 `InteractivePointCanvas` 通用交互容器，成功将画布渲染、放大镜浮层和触控生命周期从具体的卡片视图中解耦。
+
+数据自愈模式（Self-healing Pattern）是客户端离线存储与动态元数据解耦的标准做法。在加载边界做被动自愈既不侵入卡片生命周期的管理，又能彻底消除幽灵数据条目，防止阶段序号跳号与题量统计虚高。
 
 ### 目标
-1. 将重构涉及的新增及修改文件（`LoupeOverlay.tsx`, `InteractivePointCanvas.tsx`, `PointClickCanvas.tsx`, `NegVertexFittingView.tsx`, `card-sdk/index.ts`）加入 Git 暂存区。
-2. 创建内容详尽的 Git Commit，记录本次画布与放大镜架构重构。
+
+1. 在 `src/storage/planStorage.ts` 中引入 `registry` 并于 `loadPlanStorageState` 中加入有效性校验。
+2. 当检测到含有已失效卡片的阶段项时，自动在内存与 IndexedDB 中清洗更新。
+3. 在 `src/components/plan/editor/usePlanEditorState.ts` 中，确保加载完成后编辑器状态与自愈后的计划内容保持同步。
 
 ### 基本原理
-按照 Quipu 协议规范，代码文件的实际修改与 Git 提交操作必须在独立的计划中执行。当前我们已经完成了代码修改与验证，因此可以安全地发起 `[COMMIT]` 计划来封装本次重构成果。
+
+在 `loadPlanStorageState` 中读取数据库全部计划后，通过 `registry.getCardById(item.cardId)` 对阶段项进行即时过滤。若过滤后数组长度变动（即发现孤儿项），自动调用 `savePlanStorageState` 异步回写修复数据库。同时，在编辑器的 `useEffect` 加载逻辑中同步刷新 `currentPlan`，确保 UI 与真实数据完全对齐。
 
 ### 标签
-#intent/refine #flow/ready #priority/high #comp/interfaces #concept/ui #scope/core #scope/dx #ai/instruct #task/domain/ui #task/object/interactive-point-canvas #task/action/refactor #task/state/end
+
+#intent/fix #flow/ready #priority/high #concept/state #scope/core #ai/instruct #task/domain/storage #task/object/plan-storage #task/action/self-healing #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 添加重构文件至 Git 暂存区
+#### Acts 1: 在 `planStorage.ts` 中增加自愈清洗与异步回写逻辑
 
-我们将本次重构涉及的所有修改后和新建的文件添加到 Git 暂存区。
-
-~~~~~act
-git_add
-src/card-sdk/index.ts
-src/cards/neg_vertex_fitting/NegVertexFittingView.tsx
-src/components/common/InteractivePointCanvas.tsx
-src/components/common/LoupeOverlay.tsx
-src/components/common/PointClickCanvas.tsx
-~~~~~
-
-#### Acts 2: 提交代码更改
-
-为本次重构创建规范的 Git Commit 提交记录。
+我们将引入 `registry`，并在从 IndexedDB 加载训练计划及根据模板创建计划时，自动剔除已注销的卡片引用。
 
 ~~~~~act
-git_commit
+patch_file
+src/storage/planStorage.ts
 ~~~~~
-~~~~~text
-refactor(canvas): extract loupe overlay and compose interactive point canvas
+~~~~~typescript
+import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
+import { i18n } from '../core/i18n';
+import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
+import { getDB } from './db/schema';
+~~~~~
+~~~~~typescript
+import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
+import { i18n } from '../core/i18n';
+import { registry } from '../core/registry';
+import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
+import { getDB } from './db/schema';
+~~~~~
 
-- Extracted 'LoupeOverlay' as a pure presentational component for touch magnification.
-- Created 'InteractivePointCanvas' container to encapsulate HiDPI setup, point snapping, and loupe touch lifecycles, exposing a composable 'onDraw' render hook.
-- Refactored 'PointClickCanvas' to wrap 'InteractivePointCanvas', maintaining 100% backward compatibility for star series cards.
-- Refactored 'NegVertexFittingView' to eliminate 130+ lines of duplicate gesture and loupe code by composing 'InteractivePointCanvas'.
-- Exported new canvas components and types in the Card SDK.
+~~~~~act
+patch_file
+src/storage/planStorage.ts
+~~~~~
+~~~~~typescript
+function createPlanFromTemplateInternal(
+  template: PlanTemplate,
+  isBuiltin = false,
+  isFavorite = true,
+): TrainingPlan {
+  const items: PlanItem[] = template.items.map((item, idx) => ({
+    id: `item_${template.id}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+    cardId: item.cardId,
+    targetTrials: item.targetTrials,
+  }));
+~~~~~
+~~~~~typescript
+function createPlanFromTemplateInternal(
+  template: PlanTemplate,
+  isBuiltin = false,
+  isFavorite = true,
+): TrainingPlan {
+  const items: PlanItem[] = template.items
+    .filter((item) => Boolean(registry.getCardById(item.cardId)))
+    .map((item, idx) => ({
+      id: `item_${template.id}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+      cardId: item.cardId,
+      targetTrials: item.targetTrials,
+    }));
+~~~~~
+
+~~~~~act
+patch_file
+src/storage/planStorage.ts
+~~~~~
+~~~~~typescript
+    if (!activePlanId || !plans.some((p) => p.id === activePlanId)) {
+      activePlanId = plans[0].id;
+      await db.put('app_metadata', activePlanId, 'active_plan_id');
+    }
+
+    cachedPlanState = {
+      activePlanId,
+      plans,
+    };
+    return cachedPlanState;
+~~~~~
+~~~~~typescript
+    let hasDanglingItem = false;
+    const sanitizedPlans = plans.map((p) => {
+      const validItems = (p.items || []).filter((item) =>
+        Boolean(registry.getCardById(item.cardId)),
+      );
+      if (validItems.length !== (p.items || []).length) {
+        hasDanglingItem = true;
+        return {
+          ...p,
+          items: validItems,
+          updatedAt: Date.now(),
+        };
+      }
+      return p;
+    });
+
+    if (!activePlanId || !sanitizedPlans.some((p) => p.id === activePlanId)) {
+      activePlanId = sanitizedPlans[0].id;
+      await db.put('app_metadata', activePlanId, 'active_plan_id');
+    }
+
+    cachedPlanState = {
+      activePlanId,
+      plans: sanitizedPlans,
+    };
+
+    if (hasDanglingItem) {
+      savePlanStorageState(cachedPlanState).catch((err) => {
+        console.error('Failed to auto-heal sanitized plans to IndexedDB:', err);
+      });
+    }
+
+    return cachedPlanState;
+~~~~~
+
+#### Acts 2: 更新 `usePlanEditorState.ts` 以响应加载后的自愈状态
+
+当编辑器载入自愈后的计划状态时，同步刷新 `currentPlan`，确保编辑界面的阶段列表与题量统计保持一致。
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~typescript
+  useEffect(() => {
+    loadPlanStorageState().then((state) => {
+      setStorageState(state);
+    });
+  }, []);
+~~~~~
+~~~~~typescript
+  useEffect(() => {
+    loadPlanStorageState().then((state) => {
+      setStorageState(state);
+      const synced = state.plans.find((p) => p.id === currentPlan.id);
+      if (synced && synced.items.length !== currentPlan.items.length) {
+        setCurrentPlan(synced);
+      }
+    });
+  }, []);
 ~~~~~
 
 ### 下一步建议
-- **全面回归测试**: 启动应用，依次验证所有卡片（包括 star 系列和负形边界反切定点）在桌面鼠标交互与移动端触控放大镜下的表现。
-- **后续扩展**: 后续若有新增的复杂点阵或几何估算卡片，可直接基于 `InteractivePointCanvas` 进行低成本开发。
+
+1. **测试验证**：重新刷新应用，进入包含已被删除卡片的训练计划，验证首页和编辑器顶部的阶段总数是否已经从 31 恢复为 30。
+2. **考虑提交**：若验证无误且显示正常，可执行 Git 提交保存该修复。

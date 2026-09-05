@@ -1,5 +1,6 @@
 import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
 import { i18n } from '../core/i18n';
+import { registry } from '../core/registry';
 import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
 import { getDB } from './db/schema';
 
@@ -34,11 +35,13 @@ function createPlanFromTemplateInternal(
   isBuiltin = false,
   isFavorite = true,
 ): TrainingPlan {
-  const items: PlanItem[] = template.items.map((item, idx) => ({
-    id: `item_${template.id}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
-    cardId: item.cardId,
-    targetTrials: item.targetTrials,
-  }));
+  const items: PlanItem[] = template.items
+    .filter((item) => Boolean(registry.getCardById(item.cardId)))
+    .map((item, idx) => ({
+      id: `item_${template.id}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+      cardId: item.cardId,
+      targetTrials: item.targetTrials,
+    }));
 
   const templateName = i18n.t(`templates.${template.id}.name`) || template.name;
   const templateDesc = i18n.t(`templates.${template.id}.desc`) || template.description;
@@ -90,15 +93,38 @@ export async function loadPlanStorageState(): Promise<PlanStorageState> {
       return cachedPlanState;
     }
 
-    if (!activePlanId || !plans.some((p) => p.id === activePlanId)) {
-      activePlanId = plans[0].id;
+    let hasDanglingItem = false;
+    const sanitizedPlans = plans.map((p) => {
+      const validItems = (p.items || []).filter((item) =>
+        Boolean(registry.getCardById(item.cardId)),
+      );
+      if (validItems.length !== (p.items || []).length) {
+        hasDanglingItem = true;
+        return {
+          ...p,
+          items: validItems,
+          updatedAt: Date.now(),
+        };
+      }
+      return p;
+    });
+
+    if (!activePlanId || !sanitizedPlans.some((p) => p.id === activePlanId)) {
+      activePlanId = sanitizedPlans[0].id;
       await db.put('app_metadata', activePlanId, 'active_plan_id');
     }
 
     cachedPlanState = {
       activePlanId,
-      plans,
+      plans: sanitizedPlans,
     };
+
+    if (hasDanglingItem) {
+      savePlanStorageState(cachedPlanState).catch((err) => {
+        console.error('Failed to auto-heal sanitized plans to IndexedDB:', err);
+      });
+    }
+
     return cachedPlanState;
   } catch (e) {
     console.error('Failed to load plans from IndexedDB:', e);
