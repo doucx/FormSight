@@ -120,16 +120,14 @@ export function NegRatioEstimationView({
       </div>
 
       {/* 二段显式确认按钮（支持空格键） */}
-      {!showAnswer && (
-        <Button
-          variant="default"
-          onClick={handleSubmit}
-          disabled={disabled}
-          className="w-full py-3 h-auto rounded-2xl"
-        >
-          {t('common.confirmSpace')}
-        </Button>
-      )}
+      <Button
+        variant="default"
+        onClick={handleSubmit}
+        disabled={disabled || showAnswer}
+        className="w-full py-3 h-auto rounded-2xl"
+      >
+        {t('common.confirmSpace')}
+      </Button>
     </QuestionCardShell>
   );
 }

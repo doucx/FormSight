@@ -197,16 +197,14 @@ export function ColorAllView({
         />
       </div>
 
-      {!showAnswer && (
-        <Button
-          variant="default"
-          onClick={handleSubmitAll}
-          disabled={disabled}
-          className="w-full py-3 text-xs font-bold rounded-2xl"
-        >
-          {t('common.confirmSpace')}
-        </Button>
-      )}
+      <Button
+        variant="default"
+        onClick={handleSubmitAll}
+        disabled={disabled || showAnswer}
+        className="w-full py-3 text-xs font-bold rounded-2xl"
+      >
+        {t('common.confirmSpace')}
+      </Button>
     </QuestionCardShell>
   );
 }
