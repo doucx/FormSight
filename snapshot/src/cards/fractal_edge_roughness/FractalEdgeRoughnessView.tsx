@@ -102,11 +102,7 @@ export function FractalEdgeRoughnessView({
   }, [activeH, question.userSeed, showAnswer, userAnswer]);
 
   return (
-    <QuestionCardShell
-      hintText={t('hint')}
-      showCanvasHints={showCanvasHints}
-      maxWidth="max-w-2xl"
-    >
+    <QuestionCardShell hintText={t('hint')} showCanvasHints={showCanvasHints} maxWidth="max-w-2xl">
       {/* 边缘对比视口 */}
       <div className="w-full space-y-3">
         <div className="relative rounded-2xl border border-border bg-card p-3 shadow-inner">
