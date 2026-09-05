@@ -4,5 +4,5 @@
   "instruction": "观察上方 Notan 剪影，判别哪侧复杂画面拥有该黑白大结构",
   "badge": "黑白素描骨架",
   "hint": "判别哪一侧具象细节符合上方骨架",
-  "promptTitle": "概括基准 (Prompt)"
+  "promptTitle": "概括基准"
 }
