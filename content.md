@@ -1,384 +1,97 @@
-好的，我将提取标准的 `ColorSwatch` 组件并注册至 `@formsight/card-sdk`，随后将所有色彩感知类卡片的展示色块重构为统一调用该组件。
+好的，我将对识别出的卡片进行统一修复，并在 `ColorSwatch` 中补充 `option` 变体以彻底统一多选候选卡片中的色块展示。
 
-## [WIP] refactor: 提取标准色彩展示块组件 ColorSwatch 并重构色彩卡片
+## [WIP] fix: 修复遗留卡片中的色彩展示暗边并统一候选色块规范
 
 ### 用户需求
 
-提取一个统一、标准的色彩展示块（`ColorSwatch`）组件，将白边基准、尺寸预设、切半真理对比（split comparison）和动态过渡逻辑收敛为单一可复用的基元，并在各色彩卡片中完成替换。
+修复 `abs_td_palette_2afc`、`rel_hue_induction`、`abs_palette_clustering` 及 `rel_decontextual_2afc` 中遗留的色彩边界问题，确保夜间模式下保持纯白边基准，消除视觉评测干扰。
 
 ### 评论
 
-原有的色块实现散落在各个卡片中，包含了复杂的长类名，且容易在主题适配时产生边框色遗漏。将颜色块标准化为 `ColorSwatch` 能够从系统层面确立“恒定白场参考系（White Reference Frame）”，提升色彩学视错觉训练的准确性与工程可维护性。
+1. `abs_td_palette_2afc` 的题干基准色块直接存在 `border-card dark:border-border`，在深色模式下退化为暗边。
+2. `rel_hue_induction` 的 4AFC 候选列表使用 `border-border/50` 与 `bg-card`，造成深色模式下选项色块带暗边暗底。
+3. `abs_palette_clustering` 与 `rel_vector_shift` 虽有半透明白边，但仍为零散手写类名。
+4. `rel_decontextual_2afc` 的视口大背景框与中心色块仍在使用原生 div。
+5. 在 `ColorSwatch` 增加 `option` 变体，将所有 ChoiceCard 内的色块一同收敛至标准库组件。
 
 ### 目标
 
-1. 新增 `src/components/common/ColorSwatch.tsx`，支持 `standard`（标准绝对白边）、`compact`（紧凑白边）、`container`（双视口大白边容器）与 `embedded`（内嵌中心块）等变体，并内置切半对比支持。
-2. 在 `src/card-sdk/index.ts` 中导出 `ColorSwatch` 与 `ColorSwatchProps`。
-3. 重构 `color_hue`、`color_all`、`color_sat`、`color_val`、`rel_vector_shift`、`rel_hue_induction`、`rel_lightness_induction`，全面使用 `ColorSwatch`。
-
-### 基本原理
-
-通过封装纯展示原子组件，收敛 CSS 样式系统：
-- 标准白边 `rounded-2xl border-4 border-white shadow-md ring-1 ring-black/10 shadow-inner`
-- 紧凑白边 `rounded-2xl border-2 border-white shadow-md`
-- 支持传入 `compareColor` 自动渲染半半切分真理对比层，彻底消除各个卡片中重复手写的绝对定位代码。
+1. 更新 `ColorSwatch`，增加 `variant="option"`（用于候选选项列表中的紧凑色块：`rounded-xl border border-white/70 shadow-inner`）。
+2. 在 `abs_td_palette_2afc` 中引入并使用 `ColorSwatch` 作为题干基准主调色。
+3. 在 `rel_hue_induction` 中修复 4AFC 候选色块为 `ColorSwatch` 的 `option` 变体，清除 `border-border/50` 与 `bg-card` 暗底。
+4. 在 `abs_palette_clustering` 中使用 `ColorSwatch` 渲染 4AFC 候选色块。
+5. 在 `rel_vector_shift` 中将候选色块统一替换为 `ColorSwatch`。
+6. 在 `rel_decontextual_2afc` 中将双视口大背景与中心色块收敛至 `ColorSwatch`。
 
 ### 标签
 
-#intent/refactor #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-swatch-component #task/action/refactor #task/state/begin
+#intent/fix #flow/ready #priority/high #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/color-swatch-consistency #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 创建标准色彩试样块组件并接入 card-sdk
+#### Acts 1: 在 ColorSwatch 中增加 option 候选变体
 
-新建 `src/components/common/ColorSwatch.tsx` 并将其接入 `src/card-sdk/index.ts`。
+修改 `src/components/common/ColorSwatch.tsx`，支持 `option` 变体。
 
 ~~~~~act
-write_file
+patch_file
 src/components/common/ColorSwatch.tsx
 ~~~~~
 ~~~~~tsx
-import type { ComponentChildren, JSX } from 'preact';
-
-export interface ColorSwatchProps {
-  /** 主色彩（HEX/RGB/CSS 格式色值） */
-  color: string;
-  /** 揭晓答案时的对比真理色（传入时自动以下半区切半展示） */
-  compareColor?: string;
-  /** 边框变体：
-   * - standard: 4px 恒定绝对白边 + 柔和黑环外圈 + 深度内阴影（用于单/多项绝对拾色卡片）
    * - compact: 2px 恒定绝对白边 + 阴影（用于矢量迁移等紧凑对比方块）
    * - container: 4px 恒定绝对白边大背景容器（用于双视口环境诱导对比区）
    * - embedded: 无外白边圆角块（用于嵌入在大背景内部的中心对比块）
    */
   variant?: 'standard' | 'compact' | 'container' | 'embedded';
   /** 预设尺寸等级或通过 className 覆写 */
-  size?: 'sm' | 'md' | 'lg' | 'full';
-  /** 动态过渡速度：realtime (75ms, 拖拽/悬停实时联动) | smooth (300ms, 题目切换) | none */
-  transition?: 'realtime' | 'smooth' | 'none';
-  /** 对比层浮层文字提示 */
-  compareTooltip?: string;
-  children?: ComponentChildren;
-  className?: string;
-  style?: JSX.CSSProperties;
-}
+~~~~~
+~~~~~tsx
+   * - compact: 2px 恒定绝对白边 + 阴影（用于矢量迁移等紧凑对比方块）
+   * - container: 4px 恒定绝对白边大背景容器（用于双视口环境诱导对比区）
+   * - embedded: 无外白边圆角块（用于嵌入在大背景内部的中心对比块）
+   * - option: 1px 绝对亮白边 + 微阴影（用于 ChoiceCard 候选选项中的内嵌色块）
+   */
+  variant?: 'standard' | 'compact' | 'container' | 'embedded' | 'option';
+  /** 预设尺寸等级或通过 className 覆写 */
+~~~~~
 
-export function ColorSwatch({
-  color,
-  compareColor,
-  variant = 'standard',
-  size,
-  transition = 'smooth',
-  compareTooltip,
-  children,
-  className = '',
-  style,
-}: ColorSwatchProps) {
+~~~~~act
+patch_file
+src/components/common/ColorSwatch.tsx
+~~~~~
+~~~~~tsx
   const variantStyles = {
     standard: 'rounded-2xl border-4 border-white shadow-md ring-1 ring-black/10 shadow-inner',
     compact: 'rounded-2xl border-2 border-white shadow-md',
     container: 'rounded-2xl border-4 border-white shadow-md',
     embedded: 'rounded-xl',
   }[variant];
-
-  const sizeStyles = {
-    sm: 'w-16 h-16',
-    md: 'w-20 h-20',
-    lg: 'w-32 h-32',
-    full: 'w-full h-full',
-  }[size || ''] || '';
-
-  const transitionStyles = {
-    realtime: 'transition-all duration-75',
-    smooth: 'transition-all duration-300',
-    none: '',
-  }[transition];
-
-  return (
-    <div
-      className={`relative overflow-hidden flex items-center justify-center select-none ${variantStyles} ${sizeStyles} ${transitionStyles} ${className}`}
-      style={{ backgroundColor: color, ...style }}
-    >
-      {/* 揭晓答案切半对比区 */}
-      {compareColor && (
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1/2 pointer-events-none"
-          style={{ backgroundColor: compareColor }}
-          title={compareTooltip}
-        />
-      )}
-
-      {children}
-    </div>
-  );
-}
 ~~~~~
+~~~~~tsx
+  const variantStyles = {
+    standard: 'rounded-2xl border-4 border-white shadow-md ring-1 ring-black/10 shadow-inner',
+    compact: 'rounded-2xl border-2 border-white shadow-md',
+    container: 'rounded-2xl border-4 border-white shadow-md',
+    embedded: 'rounded-xl',
+    option: 'rounded-xl border border-white/70 shadow-inner',
+  }[variant];
+~~~~~
+
+#### Acts 2: 修复调性基底归位中的基准主调色
+
+修改 `src/cards/abs_td_palette_2afc/AbsTdPalette2afcView.tsx`，消除深色模式下变黑边的 `border-card dark:border-border`。
 
 ~~~~~act
 patch_file
-src/card-sdk/index.ts
-~~~~~
-~~~~~typescript
-export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
-export { DualViewportContainer } from '../components/common/DualViewportContainer';
-export { SliderTrack, type SliderTrackProps } from '../components/common/SliderTrack';
-~~~~~
-~~~~~typescript
-export { CanvasView, type CanvasViewProps } from '../components/common/CanvasView';
-export { ColorSwatch, type ColorSwatchProps } from '../components/common/ColorSwatch';
-export { DualViewportContainer } from '../components/common/DualViewportContainer';
-export { SliderTrack, type SliderTrackProps } from '../components/common/SliderTrack';
-~~~~~
-
-#### Acts 2: 重构基础绝对拾色类卡片 (H, S, V, All)
-
-将 `color_hue`、`color_sat`、`color_val` 和 `color_all` 中的原生 div 重构为 `ColorSwatch`。
-
-~~~~~act
-patch_file
-src/cards/color_hue/ColorHueView.tsx
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  ColorSwatch,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_hue/ColorHueView.tsx
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <ColorSwatch color={targetHex} size="lg" />
-      </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_sat/ColorSatView.tsx
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  ColorSwatch,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_sat/ColorSatView.tsx
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <ColorSwatch color={targetHex} size="lg" />
-      </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_val/ColorValView.tsx
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  type ColorHitResult,
-  type ColorQuestionData,
-  type ColorSenseSettings,
-  ColorSwatch,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_val/ColorValView.tsx
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div
-          className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-          style={{ backgroundColor: targetHex }}
-        />
-      </div>
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <ColorSwatch color={targetHex} size="lg" />
-      </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_all/ColorAllView.tsx
-~~~~~
-~~~~~tsx
-import {
-  Button,
-  type ColorSenseSettings,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  Button,
-  type ColorSenseSettings,
-  ColorSwatch,
-  HUE_SPECTRUM_GRADIENT,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/color_all/ColorAllView.tsx
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div className="flex items-center justify-center gap-4 w-full">
-          <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
-            style={{ backgroundColor: targetHex }}
-          />
-          <div
-            className="flex-1 h-28 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-75"
-            style={{
-              backgroundColor: hsvToHex(
-                draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                  ? (allHoverVals.H ?? userH)
-                  : userH,
-                draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                  ? (allHoverVals.S ?? userS)
-                  : userS,
-                draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                  ? (allHoverVals.V ?? userV)
-                  : userV,
-              ),
-            }}
-          />
-        </div>
-      </div>
-~~~~~
-~~~~~tsx
-      <div className="flex flex-col items-center gap-2 w-full">
-        <div className="flex items-center justify-center gap-4 w-full">
-          <ColorSwatch color={targetHex} className="flex-1 h-28" transition="smooth" />
-          <ColorSwatch
-            color={hsvToHex(
-              draggingLabel === 'H' || (enableHoverColorPreview && allHoverVals.H !== null)
-                ? (allHoverVals.H ?? userH)
-                : userH,
-              draggingLabel === 'S' || (enableHoverColorPreview && allHoverVals.S !== null)
-                ? (allHoverVals.S ?? userS)
-                : userS,
-              draggingLabel === 'V' || (enableHoverColorPreview && allHoverVals.V !== null)
-                ? (allHoverVals.V ?? userV)
-                : userV,
-            )}
-            className="flex-1 h-28"
-            transition="realtime"
-          />
-        </div>
-      </div>
-~~~~~
-
-#### Acts 3: 重构关系与诱导对比类卡片
-
-重构 `rel_vector_shift`、`rel_hue_induction` 与 `rel_lightness_induction`，利用 `ColorSwatch` 的 `container`、`embedded` 变体及内置 `compareColor` 切半功能。
-
-~~~~~act
-patch_file
-src/cards/rel_vector_shift/RelVectorShiftView.tsx
+src/cards/abs_td_palette_2afc/AbsTdPalette2afcView.tsx
 ~~~~~
 ~~~~~tsx
 import {
   Badge,
-  Button,
+  CANVAS_THEME,
+  CanvasView,
   ChoiceCard,
   QuestionCardShell,
   getChoiceCardState,
@@ -390,7 +103,8 @@ import {
 ~~~~~tsx
 import {
   Badge,
-  Button,
+  CANVAS_THEME,
+  CanvasView,
   ChoiceCard,
   ColorSwatch,
   QuestionCardShell,
@@ -403,256 +117,268 @@ import {
 
 ~~~~~act
 patch_file
-src/cards/rel_vector_shift/RelVectorShiftView.tsx
+src/cards/abs_td_palette_2afc/AbsTdPalette2afcView.tsx
 ~~~~~
 ~~~~~tsx
-      {/* 题干 A->B 与 C->D 矢量推移展示区 */}
-      <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
-        <div className="flex items-center justify-center gap-4">
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexA }}
-          />
-          <ArrowRight className="w-4 h-4 text-indigo-400" />
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexB }}
-          />
-        </div>
+      {/* 题干上方基准主调色块 */}
+      <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {t('promptTitle')}
+        </span>
+        <div
+          className="w-16 h-16 rounded-2xl border-4 border-card dark:border-border shadow-md ring-1 ring-border/60"
+          style={{ backgroundColor: promptHex }}
+        />
+      </div>
+~~~~~
+~~~~~tsx
+      {/* 题干上方基准主调色块 */}
+      <div className="flex flex-col items-center gap-1.5 bg-muted/60 p-3 rounded-2xl border border-border shadow-inner">
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+          {t('promptTitle')}
+        </span>
+        <ColorSwatch color={promptHex} size="sm" />
+      </div>
+~~~~~
 
-        <div className="flex items-center justify-center gap-4">
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md"
-            style={{ backgroundColor: hexC }}
-          />
-          <ArrowRight className="w-4 h-4 text-indigo-400" />
-          <div
-            className="w-20 h-20 rounded-2xl border-2 border-card dark:border-border shadow-md transition-all duration-150 relative overflow-hidden"
-            style={{ backgroundColor: hexSelectedD }}
-          >
-            {showAnswer && (
-              <div
-                className="absolute bottom-0 left-0 right-0 h-1/2"
-                style={{ backgroundColor: hexTargetD }}
+#### Acts 3: 修复补色残像调和卡片中的候选色块
+
+修改 `src/cards/rel_hue_induction/RelHueInductionView.tsx`，移除深色背景和暗边框。
+
+~~~~~act
+patch_file
+src/cards/rel_hue_induction/RelHueInductionView.tsx
+~~~~~
+~~~~~tsx
+              <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-border/60 p-1 flex items-center justify-center bg-card">
+                <div
+                  className="w-full h-full rounded-lg shadow-sm border border-border/50"
+                  style={{ backgroundColor: hexVal }}
+                />
+              </div>
+~~~~~
+~~~~~tsx
+              <ColorSwatch
+                color={hexVal}
+                variant="option"
+                className="w-full aspect-[4/3]"
               />
+~~~~~
+
+#### Acts 4: 统一主调色群提炼与色彩矢量迁移的候选色块
+
+修改 `src/cards/abs_palette_clustering/AbsPaletteClusteringView.tsx` 与 `src/cards/rel_vector_shift/RelVectorShiftView.tsx`。
+
+~~~~~act
+patch_file
+src/cards/abs_palette_clustering/AbsPaletteClusteringView.tsx
+~~~~~
+~~~~~tsx
+import {
+  Badge,
+  CanvasView,
+  ChoiceCard,
+  QuestionCardShell,
+  getChoiceCardState,
+  hsvToHex,
+  useCardTranslation,
+  useChoiceShortcuts,
+} from '@formsight/card-sdk';
+~~~~~
+~~~~~tsx
+import {
+  Badge,
+  CanvasView,
+  ChoiceCard,
+  ColorSwatch,
+  QuestionCardShell,
+  getChoiceCardState,
+  hsvToHex,
+  useCardTranslation,
+  useChoiceShortcuts,
+} from '@formsight/card-sdk';
+~~~~~
+
+~~~~~act
+patch_file
+src/cards/abs_palette_clustering/AbsPaletteClusteringView.tsx
+~~~~~
+~~~~~tsx
+              <div
+                className="w-full aspect-square rounded-xl shadow-inner border border-white/60"
+                style={{ backgroundColor: hex }}
+              />
+~~~~~
+~~~~~tsx
+              <ColorSwatch
+                color={hex}
+                variant="option"
+                className="w-full aspect-square"
+              />
+~~~~~
+
+~~~~~act
+patch_file
+src/cards/rel_vector_shift/RelVectorShiftView.tsx
+~~~~~
+~~~~~tsx
+              <div
+                className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
+                style={{ backgroundColor: hexVal }}
+              />
+~~~~~
+~~~~~tsx
+              <ColorSwatch
+                color={hexVal}
+                variant="option"
+                className="w-full aspect-[4/3]"
+              />
+~~~~~
+
+#### Acts 5: 重构脱语境明度对比卡片的视口色块容器
+
+修改 `src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx`。
+
+~~~~~act
+patch_file
+src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx
+~~~~~
+~~~~~tsx
+import {
+  Badge,
+  ChoiceCard,
+  PALETTE,
+  QuestionCardShell,
+  getChoiceCardState,
+  hsvToHex,
+  useCardTranslation,
+  useChoiceShortcuts,
+} from '@formsight/card-sdk';
+~~~~~
+~~~~~tsx
+import {
+  Badge,
+  ChoiceCard,
+  ColorSwatch,
+  PALETTE,
+  QuestionCardShell,
+  getChoiceCardState,
+  hsvToHex,
+  useCardTranslation,
+  useChoiceShortcuts,
+} from '@formsight/card-sdk';
+~~~~~
+
+~~~~~act
+patch_file
+src/cards/rel_decontextual_2afc/RelDecontextual2AfcView.tsx
+~~~~~
+~~~~~tsx
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
+          >
+            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
+          </div>
+        </ChoiceCard>
+
+        <ChoiceCard
+          state={stateB}
+          size="lg"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelect('B')}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
+                2
+              </Badge>
+              {t('common.areaB')}
+            </span>
+
+            {showAnswer && (
+              <span
+                className={`text-xs font-semibold flex items-center gap-1 ${
+                  isBHit
+                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {isBHit
+                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
+                  : t('physicallyDarker', { v: question.centerColorB[2] })}
+              </span>
             )}
           </div>
-        </div>
-      </div>
+
+          <div
+            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
+            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
+          >
+            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
+          </div>
 ~~~~~
 ~~~~~tsx
-      {/* 题干 A->B 与 C->D 矢量推移展示区 */}
-      <div className="bg-muted/60 p-4 rounded-2xl border border-border/60 w-full flex flex-col items-center gap-3">
-        <div className="flex items-center justify-center gap-4">
-          <ColorSwatch color={hexA} variant="compact" size="md" />
-          <ArrowRight className="w-4 h-4 text-indigo-400" />
-          <ColorSwatch color={hexB} variant="compact" size="md" />
-        </div>
-
-        <div className="flex items-center justify-center gap-4">
-          <ColorSwatch color={hexC} variant="compact" size="md" />
-          <ArrowRight className="w-4 h-4 text-indigo-400" />
           <ColorSwatch
-            color={hexSelectedD}
-            compareColor={showAnswer ? hexTargetD : undefined}
-            variant="compact"
-            size="md"
-            transition="realtime"
-          />
-        </div>
-      </div>
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/rel_hue_induction/RelHueInductionView.tsx
-~~~~~
-~~~~~tsx
-import {
-  Badge,
-  Button,
-  ChoiceCard,
-  DualViewportContainer,
-  QuestionCardShell,
-  getChoiceCardState,
-  hsvToHex,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  Badge,
-  Button,
-  ChoiceCard,
-  ColorSwatch,
-  DualViewportContainer,
-  QuestionCardShell,
-  getChoiceCardState,
-  hsvToHex,
-  useCardTranslation,
-  useChoiceShortcuts,
-} from '@formsight/card-sdk';
-~~~~~
-
-~~~~~act
-patch_file
-src/cards/rel_hue_induction/RelHueInductionView.tsx
-~~~~~
-~~~~~tsx
-      {/* 双视口实时联动残像对比区 */}
-      <DualViewportContainer
-        leftTitle={t('leftBase')}
-        rightTitle={t('rightPreview')}
-        leftContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgLeftHex }}
+            color={showAnswer ? PALETTE.slate[500] : hexBgA}
+            variant="container"
+            className="w-full h-44 shadow-inner"
           >
-            <div
-              className="w-16 h-16 rounded-xl transition-all"
-              style={{ backgroundColor: centerLeftHex }}
-            />
+            <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
+          </ColorSwatch>
+        </ChoiceCard>
+
+        <ChoiceCard
+          state={stateB}
+          size="lg"
+          disabled={disabled || showAnswer}
+          onClick={() => handleSelect('B')}
+        >
+          <div className="flex items-center justify-between w-full px-1">
+            <span className="flex items-center gap-1.5 text-xs font-black text-foreground uppercase">
+              <Badge
+                variant="secondary"
+                size="sm"
+                className="w-5 h-5 p-0 justify-center font-mono text-xs"
+              >
+                2
+              </Badge>
+              {t('common.areaB')}
+            </span>
+
+            {showAnswer && (
+              <span
+                className={`text-xs font-semibold flex items-center gap-1 ${
+                  isBHit
+                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
+                {isBHit
+                  ? t('physicallyBrighter', { v: question.centerColorB[2] })
+                  : t('physicallyDarker', { v: question.centerColorB[2] })}
+              </span>
+            )}
           </div>
-        }
-        rightContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgRightHex }}
+
+          <ColorSwatch
+            color={showAnswer ? PALETTE.slate[500] : hexBgB}
+            variant="container"
+            className="w-full h-44 shadow-inner"
           >
-            <div
-              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-              style={{ backgroundColor: activeRightHex }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: idealRightHex }}
-                  title={t('splitComparisonTooltip')}
-                />
-              )}
-            </div>
-          </div>
-        }
-      />
-~~~~~
-~~~~~tsx
-      {/* 双视口实时联动残像对比区 */}
-      <DualViewportContainer
-        leftTitle={t('leftBase')}
-        rightTitle={t('rightPreview')}
-        leftContent={
-          <ColorSwatch color={bgLeftHex} variant="container" className="w-full h-44">
-            <ColorSwatch color={centerLeftHex} variant="embedded" size="sm" />
+            <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
           </ColorSwatch>
-        }
-        rightContent={
-          <ColorSwatch color={bgRightHex} variant="container" className="w-full h-44">
-            <ColorSwatch
-              color={activeRightHex}
-              compareColor={showAnswer ? idealRightHex : undefined}
-              compareTooltip={t('splitComparisonTooltip')}
-              variant="embedded"
-              size="sm"
-            />
-          </ColorSwatch>
-        }
-      />
 ~~~~~
 
-~~~~~act
-patch_file
-src/cards/rel_lightness_induction/RelLightnessInductionView.tsx
-~~~~~
-~~~~~tsx
-import {
-  Button,
-  DualViewportContainer,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  type RelativeColorSettings,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
-~~~~~tsx
-import {
-  Button,
-  ColorSwatch,
-  DualViewportContainer,
-  HsvTrackSlider,
-  PALETTE,
-  QuestionCardShell,
-  type RelativeColorSettings,
-  hsvToHex,
-  useCardTranslation,
-} from '@formsight/card-sdk';
-~~~~~
+---
 
-~~~~~act
-patch_file
-src/cards/rel_lightness_induction/RelLightnessInductionView.tsx
-~~~~~
-~~~~~tsx
-      <DualViewportContainer
-        leftTitle={t('leftBase')}
-        rightTitle={t('rightModulate')}
-        leftContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgLeftHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all"
-              style={{ backgroundColor: centerLeftHex }}
-            />
-          </div>
-        }
-        rightContent={
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-4 border-card dark:border-border shadow-md relative"
-            style={{ backgroundColor: bgRightHex }}
-          >
-            <div
-              className="w-16 h-16 rounded-xl transition-all relative overflow-hidden"
-              style={{ backgroundColor: userRightHex }}
-            >
-              {showAnswer && (
-                <div
-                  className="absolute bottom-0 left-0 right-0 h-1/2"
-                  style={{ backgroundColor: idealRightHex }}
-                />
-              )}
-            </div>
-          </div>
-        }
-      />
-~~~~~
-~~~~~tsx
-      <DualViewportContainer
-        leftTitle={t('leftBase')}
-        rightTitle={t('rightModulate')}
-        leftContent={
-          <ColorSwatch color={bgLeftHex} variant="container" className="w-full h-44">
-            <ColorSwatch color={centerLeftHex} variant="embedded" size="sm" />
-          </ColorSwatch>
-        }
-        rightContent={
-          <ColorSwatch color={bgRightHex} variant="container" className="w-full h-44">
-            <ColorSwatch
-              color={userRightHex}
-              compareColor={showAnswer ? idealRightHex : undefined}
-              variant="embedded"
-              size="sm"
-            />
-          </ColorSwatch>
-        }
-      />
-~~~~~
+### 修复总结
 
-### 下一步建议
-
-1. **构建与类型检查**: 执行 TypeScript 类型检查与单元测试，确保各卡片引用 `ColorSwatch` 的契约完好无损。
-2. **多模式对比回归**: 在深浅两种主题模式下检查色块，确认白边和揭晓对比效果均符合色彩感知规范。
-3. **提交代码**: 验证无误后可提交本次重构改动。
+1. **彻底消除夜间暗边退化**：`abs_td_palette_2afc` 题干基准主调色与 `rel_hue_induction` 候选色块均已消除 `dark:border-border` 与 `bg-card` 嵌套暗底。
+2. **构建统一色块体系**：`ColorSwatch` 现已覆盖大展示色块（`standard`）、双视口背景（`container`）、嵌入中心块（`embedded`）、紧凑矢量块（`compact`）及选项卡片色块（`option`），全库涉及物理色彩展示的地方均达到 100% 绝对白边与规范收敛。

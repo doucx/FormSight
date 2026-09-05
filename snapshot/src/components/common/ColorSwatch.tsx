@@ -10,8 +10,9 @@ export interface ColorSwatchProps {
    * - compact: 2px 恒定绝对白边 + 阴影（用于矢量迁移等紧凑对比方块）
    * - container: 4px 恒定绝对白边大背景容器（用于双视口环境诱导对比区）
    * - embedded: 无外白边圆角块（用于嵌入在大背景内部的中心对比块）
+   * - option: 1px 绝对亮白边 + 微阴影（用于 ChoiceCard 候选选项中的内嵌色块）
    */
-  variant?: 'standard' | 'compact' | 'container' | 'embedded';
+  variant?: 'standard' | 'compact' | 'container' | 'embedded' | 'option';
   /** 预设尺寸等级或通过 className 覆写 */
   size?: 'sm' | 'md' | 'lg' | 'full';
   /** 动态过渡速度：realtime (75ms, 拖拽/悬停实时联动) | smooth (300ms, 题目切换) | none */
@@ -39,6 +40,7 @@ export function ColorSwatch({
     compact: 'rounded-2xl border-2 border-white shadow-md',
     container: 'rounded-2xl border-4 border-white shadow-md',
     embedded: 'rounded-xl',
+    option: 'rounded-xl border border-white/70 shadow-inner',
   }[variant];
 
   const sizeStyles = {

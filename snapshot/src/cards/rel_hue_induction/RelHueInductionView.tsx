@@ -124,12 +124,11 @@ export function RelHueInductionView({
                 )}
               </div>
 
-              <div className="w-full aspect-[4/3] rounded-xl shadow-inner border border-border/60 p-1 flex items-center justify-center bg-card">
-                <div
-                  className="w-full h-full rounded-lg shadow-sm border border-border/50"
-                  style={{ backgroundColor: hexVal }}
-                />
-              </div>
+              <ColorSwatch
+                color={hexVal}
+                variant="option"
+                className="w-full aspect-[4/3]"
+              />
             </ChoiceCard>
           );
         })}

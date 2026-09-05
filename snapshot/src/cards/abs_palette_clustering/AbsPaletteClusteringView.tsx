@@ -5,6 +5,7 @@ import {
   Badge,
   CanvasView,
   ChoiceCard,
+  ColorSwatch,
   QuestionCardShell,
   getChoiceCardState,
   hsvToHex,
@@ -98,9 +99,10 @@ export function AbsPaletteClusteringView({
                   <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold" />
                 )}
               </div>
-              <div
-                className="w-full aspect-square rounded-xl shadow-inner border border-white/60"
-                style={{ backgroundColor: hex }}
+              <ColorSwatch
+                color={hex}
+                variant="option"
+                className="w-full aspect-square"
               />
             </ChoiceCard>
           );

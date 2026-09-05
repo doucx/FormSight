@@ -121,9 +121,10 @@ export function RelVectorShiftView({
                 )}
               </div>
 
-              <div
-                className="w-full aspect-[4/3] rounded-xl shadow-inner border border-white/60"
-                style={{ backgroundColor: hexVal }}
+              <ColorSwatch
+                color={hexVal}
+                variant="option"
+                className="w-full aspect-[4/3]"
               />
             </ChoiceCard>
           );

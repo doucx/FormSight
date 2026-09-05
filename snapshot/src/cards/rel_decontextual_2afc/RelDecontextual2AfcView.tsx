@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks';
 import {
   Badge,
   ChoiceCard,
+  ColorSwatch,
   PALETTE,
   QuestionCardShell,
   getChoiceCardState,
@@ -108,12 +109,13 @@ export function RelDecontextual2AfcView({
             )}
           </div>
 
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgA }}
+          <ColorSwatch
+            color={showAnswer ? PALETTE.slate[500] : hexBgA}
+            variant="container"
+            className="w-full h-44 shadow-inner"
           >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterA }} />
-          </div>
+            <ColorSwatch color={hexCenterA} variant="embedded" size="sm" />
+          </ColorSwatch>
         </ChoiceCard>
 
         <ChoiceCard
@@ -150,12 +152,13 @@ export function RelDecontextual2AfcView({
             )}
           </div>
 
-          <div
-            className="w-full h-44 rounded-2xl flex items-center justify-center border-2 border-white shadow-inner transition-colors duration-300"
-            style={{ backgroundColor: showAnswer ? PALETTE.slate[500] : hexBgB }}
+          <ColorSwatch
+            color={showAnswer ? PALETTE.slate[500] : hexBgB}
+            variant="container"
+            className="w-full h-44 shadow-inner"
           >
-            <div className="w-16 h-16 rounded-xl" style={{ backgroundColor: hexCenterB }} />
-          </div>
+            <ColorSwatch color={hexCenterB} variant="embedded" size="sm" />
+          </ColorSwatch>
         </ChoiceCard>
       </div>
     </QuestionCardShell>
