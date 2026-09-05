@@ -4,13 +4,17 @@ import { useState } from 'preact/hooks';
 import {
   CANVAS_THEME,
   CanvasView,
+  DualViewportContainer,
   QuestionCardShell,
   SliderTrack,
   useCardTranslation,
   useTrackPointer,
 } from '@formsight/card-sdk';
 import type { HitResult, QuestionData } from './types';
-import { CANVAS_SIZE, drawParticlesCanvas } from './utils/generator';
+import { CANVAS_SIZE, drawAxisCanvas, drawParticlesCanvas } from './utils/generator';
+
+const CANVAS_VIEWPORT_CLASS =
+  'w-full max-w-[220px] sm:max-w-[250px] aspect-square rounded-xl block';
 
 export interface AbsGestureAxisViewProps {
   question: QuestionData;
@@ -56,26 +60,46 @@ export function AbsGestureAxisView({
       hintText={t('hint')}
       hintIcon={Eye}
       showCanvasHints={showCanvasHints}
-      maxWidth="max-w-lg"
+      maxWidth="max-w-3xl"
     >
-      {/* 粒子流向预览画布 */}
-      <div className="bg-muted/60 p-3 rounded-2xl border border-border shadow-inner flex justify-center items-center w-full">
-        <CanvasView
-          width={CANVAS_SIZE}
-          height={CANVAS_SIZE}
-          className="w-full max-w-[320px] aspect-square rounded-xl border border-border shadow-sm bg-card"
-          draw={(canvas) => {
-            drawParticlesCanvas(
-              canvas,
-              question.particles,
-              CANVAS_SIZE,
-              showAnswer ? targetVal : activeSliderVal,
-              showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover,
-              showAnswer ? userVal : undefined,
-              isHit,
-            );
-          }}
-          deps={[question.particles, activeSliderVal, showAnswer, targetVal, userVal, isHit]}
+      {/* 散点流场与提炼势线双视口 */}
+      <div className="bg-muted/60 p-4 rounded-2xl border border-border shadow-inner w-full">
+        <DualViewportContainer
+          leftTitle={t('particleField')}
+          rightTitle={t('gestureAxis')}
+          leftContent={
+            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+              <CanvasView
+                width={CANVAS_SIZE}
+                height={CANVAS_SIZE}
+                className={CANVAS_VIEWPORT_CLASS}
+                draw={(canvas) => {
+                  drawParticlesCanvas(canvas, question.particles, CANVAS_SIZE);
+                }}
+                deps={[question.particles]}
+              />
+            </div>
+          }
+          rightContent={
+            <div className="w-full flex justify-center bg-card p-2 rounded-2xl border border-border shadow-inner">
+              <CanvasView
+                width={CANVAS_SIZE}
+                height={CANVAS_SIZE}
+                className={CANVAS_VIEWPORT_CLASS}
+                draw={(canvas) => {
+                  drawAxisCanvas(
+                    canvas,
+                    CANVAS_SIZE,
+                    showAnswer ? targetVal : activeSliderVal,
+                    showAnswer ? CANVAS_THEME.status.hit : CANVAS_THEME.status.accentHover,
+                    showAnswer ? userVal : undefined,
+                    isHit,
+                  );
+                }}
+                deps={[activeSliderVal, showAnswer, targetVal, userVal, isHit]}
+              />
+            </div>
+          }
         />
       </div>
 

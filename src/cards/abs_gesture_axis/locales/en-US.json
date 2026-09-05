@@ -4,6 +4,8 @@
   "badge": "Gesture Axis",
   "hint": "Rotate the primary axis to align with the particle flow (0°~180°)",
   "label": "Gesture Axis Angle:",
+  "particleField": "Particle Flow Field",
+  "gestureAxis": "Extracted Axis",
   "settings": {
     "showToleranceBandTitle": "Show Slider Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance interval around the hover cursor"
