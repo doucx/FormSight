@@ -64,10 +64,6 @@ export function drawParticlesCanvas(
   canvas: HTMLCanvasElement | null,
   particles?: Point[],
   size = CANVAS_SIZE,
-  axisAngle?: number,
-  axisColor: string = CANVAS_THEME.status.hit,
-  userAxisAngle?: number,
-  isHit?: boolean,
 ) {
   if (!particles) return;
   const ctx = setup2DCanvas(canvas, size);
@@ -79,12 +75,31 @@ export function drawParticlesCanvas(
     ctx.fillStyle = CANVAS_THEME.shape.fill;
     ctx.fill();
   }
+}
+
+export function drawAxisCanvas(
+  canvas: HTMLCanvasElement | null,
+  size = CANVAS_SIZE,
+  axisAngle?: number,
+  axisColor: string = CANVAS_THEME.status.hit,
+  userAxisAngle?: number,
+  isHit?: boolean,
+) {
+  const ctx = setup2DCanvas(canvas, size);
+  if (!ctx) return;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const L = size * 0.44;
+
+  // 绘制中心基准弱锚点
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = CANVAS_THEME.shape.border;
+  ctx.fill();
 
   if (userAxisAngle !== undefined && userAxisAngle !== axisAngle) {
     const radU = (userAxisAngle * Math.PI) / 180;
-    const cx = size / 2;
-    const cy = size / 2;
-    const L = size * 0.44;
 
     ctx.strokeStyle = isHit ? CANVAS_THEME.status.hit : CANVAS_THEME.status.miss;
     ctx.lineWidth = 2.5;
@@ -98,9 +113,6 @@ export function drawParticlesCanvas(
 
   if (axisAngle !== undefined) {
     const rad = (axisAngle * Math.PI) / 180;
-    const cx = size / 2;
-    const cy = size / 2;
-    const L = size * 0.44;
 
     ctx.strokeStyle = axisColor;
     ctx.lineWidth = 3;
