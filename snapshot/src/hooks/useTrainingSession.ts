@@ -20,6 +20,7 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   idleTimeoutSec?: number;
   targetLimitTrials?: number;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
+  onEarlyExit?: (history: SessionHistoryItem[]) => void;
   onIdleChange?: (isIdle: boolean) => void;
   onIdleResume?: (idleDurationMs: number) => void;
   generateQuestion: (level: number) => TQuestion;
@@ -58,6 +59,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   idleTimeoutSec: optionsIdleTimeout,
   targetLimitTrials,
   onTargetLimitReached,
+  onEarlyExit,
   onIdleChange,
   onIdleResume,
   generateQuestion,
@@ -241,6 +243,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       onTargetLimitReached(sessionHistory);
       return;
     }
+    if (onEarlyExit) {
+      await saveCurrentSession(totalTrials, hitTrials, true);
+      onEarlyExit(sessionHistory);
+      return;
+    }
     if (sessionHistory.length > 0 && !showSummaryModal) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       setShowSummaryModal(true);
@@ -253,6 +260,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     totalTrials,
     hitTrials,
     onTargetLimitReached,
+    onEarlyExit,
     sessionHistory,
     showSummaryModal,
     saveCurrentSession,
