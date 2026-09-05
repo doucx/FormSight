@@ -17,6 +17,7 @@ export interface FractalEdgeRoughnessViewProps {
   userAnswer: HitResult | null;
   onAnswer: (val: number) => void;
   disabled?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function FractalEdgeRoughnessView({
@@ -25,6 +26,7 @@ export function FractalEdgeRoughnessView({
   userAnswer,
   onAnswer,
   disabled = false,
+  showCanvasHints = true,
 }: FractalEdgeRoughnessViewProps) {
   const { t } = useCardTranslation('fractal_edge_roughness');
   const [currentH, setCurrentH] = useState<number>(0.5);
@@ -100,7 +102,11 @@ export function FractalEdgeRoughnessView({
   }, [activeH, question.userSeed, showAnswer, userAnswer]);
 
   return (
-    <QuestionCardShell hintText={t('instruction')} maxWidth="max-w-2xl">
+    <QuestionCardShell
+      hintText={t('instruction')}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-2xl"
+    >
       {/* 边缘对比视口 */}
       <div className="w-full space-y-3">
         <div className="relative rounded-2xl border border-border bg-card p-3 shadow-inner">

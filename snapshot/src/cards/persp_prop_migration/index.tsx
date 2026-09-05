@@ -42,7 +42,7 @@ export const perspPropMigrationCard: CardManifest<
   },
   ui: {
     icon: ArrowRightLeft,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <PerspPropMigrationView
         key={question.id}
         question={question}
@@ -50,6 +50,7 @@ export const perspPropMigrationCard: CardManifest<
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

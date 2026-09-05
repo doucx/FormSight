@@ -41,7 +41,7 @@ export const perspPropDivisionCard: CardManifest<
   },
   ui: {
     icon: Layers,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <PerspPropDivisionView
         key={question.id}
         question={question}
@@ -49,6 +49,7 @@ export const perspPropDivisionCard: CardManifest<
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },
