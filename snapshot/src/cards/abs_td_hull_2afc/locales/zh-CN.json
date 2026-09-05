@@ -4,5 +4,5 @@
   "instruction": "观察上方极简低模外壳，二选一辨识哪侧剪影符合该大形",
   "badge": "几何大模寻形",
   "hint": "判别哪一侧具象细节符合上方骨架",
-  "promptTitle": "概括基准 (Prompt)"
+  "promptTitle": "概括基准"
 }
