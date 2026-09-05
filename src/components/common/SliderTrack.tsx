@@ -62,7 +62,7 @@ export function SliderTrack({
           : undefined
       }
       className={`relative flex-1 flex items-center select-none touch-none ${
-        !showAnswer && !disabled ? 'cursor-pointer' : 'cursor-default'
+        !showAnswer && !disabled ? 'cursor-none' : 'cursor-default'
       } ${className}`}
     >
       <div
