@@ -1,3 +1,4 @@
+import { Palette } from 'lucide-preact';
 import { useCallback, useEffect, useState } from 'preact/hooks';
 
 import {
@@ -6,6 +7,7 @@ import {
   HUE_SPECTRUM_GRADIENT,
   HsvTrackSlider,
   PALETTE,
+  QuestionCardShell,
   hsvToHex,
   useCardTranslation,
 } from '@formsight/card-sdk';
@@ -36,6 +38,7 @@ export function ColorAllView({
   const hitMargin = settings.sliderHitMargin ?? 12;
   const showToleranceBand = settings.showToleranceBand ?? true;
   const enableHoverColorPreview = settings.enableHoverColorPreview ?? true;
+  const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
   const [userH, setUserH] = useState<number>(180);
   const [userS, setUserS] = useState<number>(50);
@@ -102,7 +105,13 @@ export function ColorAllView({
   const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(currentH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={Palette}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-md"
+      className="gap-6"
+    >
       <div className="flex flex-col items-center gap-2 w-full">
         <div className="flex items-center justify-center gap-4 w-full">
           <div
@@ -201,6 +210,6 @@ export function ColorAllView({
           {t('common.confirmSpace')}
         </Button>
       )}
-    </div>
+    </QuestionCardShell>
   );
 }

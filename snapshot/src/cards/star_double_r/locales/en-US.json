@@ -2,6 +2,7 @@
   "title": "Rotated Double Anchors",
   "desc": "Tilted dual anchors to master complex rotated coordinate mapping.",
   "instruction": "Observe the rotated dual anchors on the left, then locate the target on the right.",
+  "hint": "Observe the rotated dual anchors on the left, then locate the target on the right.",
   "settings": {
     "gridSizeTitle": "Distractor Grid Dimensions",
     "targetingTitle": "Targeted Weakness Reinforcement",

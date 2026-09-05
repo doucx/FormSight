@@ -1,3 +1,5 @@
+import { Sun } from 'lucide-preact';
+
 import {
   type ColorHitResult,
   type ColorQuestionData,
@@ -5,8 +7,11 @@ import {
   HUE_SPECTRUM_GRADIENT,
   HsvTrackSlider,
   PALETTE,
+  QuestionCardShell,
   hsvToHex,
+  useCardTranslation,
 } from '@formsight/card-sdk';
+
 export interface ColorValViewProps {
   question: ColorQuestionData;
   showAnswer: boolean;
@@ -24,18 +29,26 @@ export function ColorValView({
   disabled = false,
   settings,
 }: ColorValViewProps) {
+  const { t } = useCardTranslation('color_val');
   const { targetH, targetS, targetV, difficultyLevel } = question;
   const targetHex = hsvToHex(targetH, targetS, targetV);
   const targetHSV: [number, number, number] = [targetH, targetS, targetV];
 
   const hitMargin = settings.sliderHitMargin ?? 12;
   const showToleranceBand = settings.showToleranceBand ?? true;
+  const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
   const hueGradient = HUE_SPECTRUM_GRADIENT;
   const valGradient = `linear-gradient(to right, ${PALETTE.black}, ${hsvToHex(targetH, 100, 100)})`;
 
   return (
-    <div className="w-full max-w-md bg-card rounded-3xl border border-border p-6 shadow-sm flex flex-col items-center gap-6 mx-auto">
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={Sun}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-md"
+      className="gap-6"
+    >
       <div className="flex flex-col items-center gap-2 w-full">
         <div
           className="w-32 h-32 rounded-2xl shadow-inner border-4 border-card dark:border-border shadow-md ring-1 ring-border/60 transition-all duration-300"
@@ -80,6 +93,6 @@ export function ColorValView({
           showToleranceBand={showToleranceBand}
         />
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }

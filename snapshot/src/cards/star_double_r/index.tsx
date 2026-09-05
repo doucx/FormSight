@@ -144,13 +144,14 @@ export const starDoubleRCard: CardManifest<QuestionData, HitResult, Point, StarS
         </div>
       );
     },
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <StarDoubleRView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

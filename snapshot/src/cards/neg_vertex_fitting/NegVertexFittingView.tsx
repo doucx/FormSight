@@ -1,9 +1,11 @@
+import { Crosshair } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 
 import {
   CANVAS_THEME,
   LOUPE_DIAMETER,
   type Point,
+  QuestionCardShell,
   drawDot,
   drawPolygonCanvas,
   findNearestPointInGrid,
@@ -21,6 +23,7 @@ export interface NegVertexFittingViewProps {
   userAnswer: HitResult | null;
   onAnswer: (userPoint: Point) => void;
   disabled?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function NegVertexFittingView({
@@ -29,6 +32,7 @@ export function NegVertexFittingView({
   userAnswer,
   onAnswer,
   disabled = false,
+  showCanvasHints = true,
 }: NegVertexFittingViewProps) {
   const { t } = useCardTranslation('neg_vertex_fitting');
   const leftFittingRef = useRef<HTMLCanvasElement | null>(null);
@@ -225,65 +229,72 @@ export function NegVertexFittingView({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full max-w-5xl mx-auto">
-      <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
-        <canvas
-          ref={leftFittingRef}
-          width={FITTING_CANVAS_SIZE}
-          height={FITTING_CANVAS_SIZE}
-          className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
-        />
-      </div>
+    <QuestionCardShell
+      hintText={t('hint')}
+      hintIcon={Crosshair}
+      showCanvasHints={showCanvasHints}
+      maxWidth="max-w-5xl"
+    >
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full mx-auto">
+        <div className="flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center">
+          <canvas
+            ref={leftFittingRef}
+            width={FITTING_CANVAS_SIZE}
+            height={FITTING_CANVAS_SIZE}
+            className="w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner block"
+          />
+        </div>
 
-      <div
-        ref={containerRef}
-        className="relative flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center select-none"
-      >
-        <canvas
-          ref={canvasRef}
-          width={FITTING_CANVAS_SIZE}
-          height={FITTING_CANVAS_SIZE}
-          onClick={handleClick}
-          onMouseMove={handleMouseMove}
-          onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchCancel}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
-          }}
-          tabIndex={0}
-          role="button"
-          aria-label={t('hint')}
-          className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
-            disabled || showAnswer
-              ? 'cursor-default'
-              : hoverPoint
-                ? 'cursor-none hover:border-primary/60 hover:shadow-indigo-50/50'
-                : 'cursor-crosshair hover:border-primary/60 hover:shadow-indigo-50/50'
-          }`}
-        />
-
-        {isTouching && loupePos && (
-          <div
-            className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-card ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
-            style={{
-              left: `${loupePos.x}px`,
-              top: `${loupePos.y}px`,
-              width: `${LOUPE_DIAMETER}px`,
-              height: `${LOUPE_DIAMETER}px`,
+        <div
+          ref={containerRef}
+          className="relative flex-1 w-full max-w-[340px] sm:max-w-[380px] lg:max-w-[420px] aspect-square bg-card p-3 sm:p-3.5 rounded-2xl border border-border shadow-sm flex items-center justify-center select-none"
+        >
+          <canvas
+            ref={canvasRef}
+            width={FITTING_CANVAS_SIZE}
+            height={FITTING_CANVAS_SIZE}
+            onClick={handleClick}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') e.preventDefault();
             }}
-          >
-            <canvas
-              ref={loupeCanvasRef}
-              width={LOUPE_DIAMETER}
-              height={LOUPE_DIAMETER}
-              className="w-full h-full block"
-            />
-          </div>
-        )}
+            tabIndex={0}
+            role="button"
+            aria-label={t('hint')}
+            className={`w-full h-full aspect-square rounded-xl border border-border bg-card shadow-inner touch-none transition-all block ${
+              disabled || showAnswer
+                ? 'cursor-default'
+                : hoverPoint
+                  ? 'cursor-none hover:border-primary/60 hover:shadow-indigo-50/50'
+                  : 'cursor-crosshair hover:border-primary/60 hover:shadow-indigo-50/50'
+            }`}
+          />
+
+          {isTouching && loupePos && (
+            <div
+              className="absolute pointer-events-none z-30 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-indigo-600 dark:border-indigo-500 shadow-2xl bg-card ring-4 ring-indigo-500/25 overflow-hidden animate-in zoom-in-75 duration-75"
+              style={{
+                left: `${loupePos.x}px`,
+                top: `${loupePos.y}px`,
+                width: `${LOUPE_DIAMETER}px`,
+                height: `${LOUPE_DIAMETER}px`,
+              }}
+            >
+              <canvas
+                ref={loupeCanvasRef}
+                width={LOUPE_DIAMETER}
+                height={LOUPE_DIAMETER}
+                className="w-full h-full block"
+              />
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </QuestionCardShell>
   );
 }

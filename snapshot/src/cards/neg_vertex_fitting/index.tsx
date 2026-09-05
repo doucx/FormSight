@@ -40,13 +40,14 @@ export const negVertexFittingCard: CardManifest<
   },
   ui: {
     icon: Crosshair,
-    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled }) => (
+    renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
       <NegVertexFittingView
         question={question}
         showAnswer={showAnswer}
         userAnswer={userAnswer}
         onAnswer={onAnswer}
         disabled={disabled}
+        showCanvasHints={settings.showCanvasHints as boolean}
       />
     ),
   },

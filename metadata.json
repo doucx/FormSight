@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] test: 添加卡片私有词典 i18n Schema 校验测试", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788599577.453807, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为未接入 hint 的卡片补齐提示词典与 QuestionCardShell 封装", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788600231.5487928, "duration_ms": 0}}
