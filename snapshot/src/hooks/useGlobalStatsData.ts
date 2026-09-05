@@ -94,7 +94,10 @@ export function useGlobalStatsData() {
   const startOfYearStr = `${now.getFullYear()}-01-01`;
 
   const { stats, dailyData } = useMemo(() => {
-    const rawTiers: Record<'today' | 'week' | 'year' | 'allTime', { total: number; hits: number; levels: number[] }> = {
+    const rawTiers: Record<
+      'today' | 'week' | 'year' | 'allTime',
+      { total: number; hits: number; levels: number[] }
+    > = {
       today: { total: 0, hits: 0, levels: [] },
       week: { total: 0, hits: 0, levels: [] },
       year: { total: 0, hits: 0, levels: [] },
@@ -201,7 +204,9 @@ export function useGlobalStatsData() {
       const acc = pathTotal > 0 ? Math.round((pathHits / pathTotal) * 100) : 0;
       const peakLevel = levels.length > 0 ? Math.max(...levels) : 0;
       const avgLevel =
-        levels.length > 0 ? Math.round((levels.reduce((a, b) => a + b, 0) / levels.length) * 10) / 10 : 0;
+        levels.length > 0
+          ? Math.round((levels.reduce((a, b) => a + b, 0) / levels.length) * 10) / 10
+          : 0;
 
       return {
         label: t(PATH_TAGS[path].i18nKey),
@@ -248,7 +253,9 @@ export function useGlobalStatsData() {
       const acc = chTotal > 0 ? Math.round((chHits / chTotal) * 100) : 0;
       const peakLevel = levels.length > 0 ? Math.max(...levels) : 0;
       const avgLevel =
-        levels.length > 0 ? Math.round((levels.reduce((a, b) => a + b, 0) / levels.length) * 10) / 10 : 0;
+        levels.length > 0
+          ? Math.round((levels.reduce((a, b) => a + b, 0) / levels.length) * 10) / 10
+          : 0;
 
       return {
         label: t(CHALLENGE_TAGS[ch].i18nKey),

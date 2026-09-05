@@ -43,7 +43,6 @@ export function ModeCard({
   todayTimeMs = 0,
   currentLevel,
   bestLevel,
-  accuracy,
   totalTrials = 0,
   isExperimental = false,
   onStartTraining,
@@ -105,7 +104,11 @@ export function ModeCard({
           {/* 右上角：巅峰/基准层阶与快捷操作 */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
             {!isNeverPracticed && effectiveBestLevel > currentLevel ? (
-              <Badge variant="secondary" size="default" className="font-mono text-xs font-bold text-muted-foreground">
+              <Badge
+                variant="secondary"
+                size="default"
+                className="font-mono text-xs font-bold text-muted-foreground"
+              >
                 Peak L{effectiveBestLevel}
               </Badge>
             ) : null}

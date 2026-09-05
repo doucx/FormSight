@@ -17,8 +17,10 @@ export function CognitiveMasteryGrid({
   // 依据能力层阶深浅赋予视觉梯队色彩 (L1~10 浅水区, L11~20 进阶区, L21+ 专家区)
   const getLevelBadgeClass = (avgLevel: number) => {
     if (avgLevel === 0) return 'bg-muted text-muted-foreground';
-    if (avgLevel >= 21) return 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-black';
-    if (avgLevel >= 11) return 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black';
+    if (avgLevel >= 21)
+      return 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-black';
+    if (avgLevel >= 11)
+      return 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black';
     return 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-black';
   };
 
@@ -41,12 +43,18 @@ export function CognitiveMasteryGrid({
             <MetricCard key={pm.label} variant="subtle" padding="compact" className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{pm.label}</span>
-                <span className={`font-mono text-xs px-2 py-0.5 rounded-lg ${getLevelBadgeClass(pm.avgLevel)}`}>
+                <span
+                  className={`font-mono text-xs px-2 py-0.5 rounded-lg ${getLevelBadgeClass(pm.avgLevel)}`}
+                >
                   {pm.avgLevel > 0 ? `Avg L${pm.avgLevel}` : '--'}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground flex items-center justify-between">
-                <span>{pm.peakLevel > 0 ? `Peak L${pm.peakLevel}` : t('stats.practicedTrials', { count: pm.total })}</span>
+                <span>
+                  {pm.peakLevel > 0
+                    ? `Peak L${pm.peakLevel}`
+                    : t('stats.practicedTrials', { count: pm.total })}
+                </span>
                 <span>{t('stats.modulesCount', { count: pm.cardCount })}</span>
               </div>
             </MetricCard>
@@ -71,12 +79,18 @@ export function CognitiveMasteryGrid({
             <MetricCard key={cm.label} variant="subtle" padding="compact" className="space-y-1.5">
               <div className="flex items-center justify-between text-xs font-bold text-foreground">
                 <span className="truncate">{cm.label.split(' ')[0]}</span>
-                <span className={`font-mono text-xs px-2 py-0.5 rounded-lg ${getLevelBadgeClass(cm.avgLevel)}`}>
+                <span
+                  className={`font-mono text-xs px-2 py-0.5 rounded-lg ${getLevelBadgeClass(cm.avgLevel)}`}
+                >
                   {cm.avgLevel > 0 ? `Avg L${cm.avgLevel}` : '--'}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground flex items-center justify-between">
-                <span>{cm.peakLevel > 0 ? `Peak L${cm.peakLevel}` : t('stats.practicedTrials', { count: cm.total })}</span>
+                <span>
+                  {cm.peakLevel > 0
+                    ? `Peak L${cm.peakLevel}`
+                    : t('stats.practicedTrials', { count: cm.total })}
+                </span>
                 <span>{t('stats.modulesCount', { count: cm.cardCount })}</span>
               </div>
             </MetricCard>

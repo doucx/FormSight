@@ -36,7 +36,9 @@ export function HomeView({
   const todayTotalCount = Object.values(todayStats).reduce((acc, c) => acc + c.count, 0);
 
   // 统计今日活跃模块的挑战峰值与平均层阶
-  const activeTodayCardIds = Object.keys(todayStats).filter((id) => (todayStats[id]?.count || 0) > 0);
+  const activeTodayCardIds = Object.keys(todayStats).filter(
+    (id) => (todayStats[id]?.count || 0) > 0,
+  );
   const todayLevels = activeTodayCardIds.map((id) => profiles[id]?.currentLevel || 5);
   const todayPeakLevel = todayLevels.length > 0 ? Math.max(...todayLevels) : 0;
   const todayAvgLevel =

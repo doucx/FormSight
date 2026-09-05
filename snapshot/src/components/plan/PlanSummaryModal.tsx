@@ -73,7 +73,9 @@ export function PlanSummaryModal({
             </div>
             <div className="text-2xl font-black text-foreground font-mono">
               {totalTrials}{' '}
-              <span className="text-xs font-normal text-muted-foreground">{t('common.trialsUnit')}</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                {t('common.trialsUnit')}
+              </span>
             </div>
           </MetricCard>
 

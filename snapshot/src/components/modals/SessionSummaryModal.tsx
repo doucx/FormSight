@@ -109,7 +109,11 @@ export function SessionSummaryModal({
               Lvl {startLevel}
             </Badge>
             <ArrowRight className="w-4 h-4 text-primary" />
-            <Badge variant="default" size="default" className="font-mono text-sm px-3 py-1 bg-primary text-primary-foreground">
+            <Badge
+              variant="default"
+              size="default"
+              className="font-mono text-sm px-3 py-1 bg-primary text-primary-foreground"
+            >
               Lvl {endLevel}
             </Badge>
           </div>
