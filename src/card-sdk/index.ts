@@ -195,6 +195,15 @@ export {
   PointClickCanvas,
   type PointClickCanvasProps,
 } from '../components/common/PointClickCanvas';
+export {
+  InteractivePointCanvas,
+  type InteractivePointCanvasProps,
+  type CanvasDrawContext,
+} from '../components/common/InteractivePointCanvas';
+export {
+  LoupeOverlay,
+  type LoupeOverlayProps,
+} from '../components/common/LoupeOverlay';
 export { HsvTrackSlider, type HsvTrackSliderProps } from '../components/common/HsvTrackSlider';
 export { QuestionCardShell } from '../components/common/QuestionCardShell';
 export {

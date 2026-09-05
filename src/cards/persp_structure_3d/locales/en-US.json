@@ -1,5 +1,0 @@
-{
-  "title": "3D Structural Rotation",
-  "desc": "Translate orthographic tri-views into 3D isometric cube grid coordinates.",
-  "hint": "Observe the tri-view coordinates and select the corresponding 3D vertex inside the isometric grid"
-}
