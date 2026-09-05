@@ -1,36 +1,3 @@
-好的，我将编写针对所有卡片私有语言包的自动化测试守卫 `src/cards/__tests__/locales-schema.test.ts`，校验是否存在已废弃的别名键，并确保双语词典键结构的一致性。
-
-## [WIP] test: 添加卡片私有词典 i18n Schema 校验测试
-
-### 用户需求
-编写自动化测试用例 `src/cards/__tests__/locales-schema.test.ts`，遍历 `src/cards/*/locales/*.json` 文件，校验是否存在已被废弃的指引同义词或带有前缀的别名键（如 `areaHint`, `ratioHint`, `vertexHint`, `prompt`, `memoryStimulusHint`, `memoryRecallHint`），并断言 `zh-CN` 与 `en-US` 词典键的一致性。
-
-### 评论
-随着卡片数量不断增加，仅靠代码审查难以彻底避免开发者重新引入 `areaHint`、`prompt` 等历史随意命名的习惯。引入自动化测试守卫作为 CI 门禁，可以在构建与测试期直接拦截不符合 Card i18n Schema 的命名，从机制上杜绝风格劣化。
-
-### 目标
-1. 新建 `src/cards/__tests__/locales-schema.test.ts`。
-2. 动态遍历 `src/cards` 下所有卡片目录的 `locales/zh-CN.json` 和 `locales/en-US.json`。
-3. 对黑名单废弃键（`areaHint`, `ratioHint`, `vertexHint`, `prompt`, `memoryStimulusHint`, `memoryRecallHint` 等）做排他性断言。
-4. 校验中英文词典顶层与核心键的结构一致性。
-
-### 基本原理
-利用 Vitest 与 Node.js 的 `fs`/`path` 模块，在测试启动时动态扫描卡片目录树。递归提取 JSON 内的所有键名，与预设的 `FORBIDDEN_ALIAS_KEYS` 黑名单集合进行比对；若发现违规键即刻报错并指明卡片名与文件位置。
-
-### 标签
-#intent/tooling #flow/ready #priority/medium #comp/cards #comp/tests #concept/config #scope/dx #ai/instruct #task/domain/i18n #task/object/card-locales-schema #task/action/testing #task/state/continue
-
----
-
-### Script
-
-#### Acts 1: 新建卡片私有词典规范校验测试文件
-
-~~~~~act
-write_file
-src/cards/__tests__/locales-schema.test.ts
-~~~~~
-~~~~~typescript
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -133,11 +100,3 @@ describe('Card Locales Schema & Deprecated Aliases Guard', () => {
     });
   }
 });
-~~~~~
-
----
-
-### 下一步建议
-
-1. **运行 Vitest 测试套件**：执行 `pnpm vitest run src/cards/__tests__/locales-schema.test.ts`，验证所有现有卡片的语言包是否均已通过规范校验。
-2. **实施阶段三（SDK 层自动回退）**：在 `@formsight/card-sdk` 的 `QuestionCardShell` 中，可进一步支持无传参自动读取卡片局部作用域下 `hint` 键的特性，减少各视图组件编写样板代码。
