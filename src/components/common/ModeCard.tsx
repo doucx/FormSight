@@ -91,12 +91,12 @@ export function ModeCard({
               </div>
               <div className="text-xs text-muted-foreground font-medium truncate mt-0.5">
                 {todayCount > 0
-                  ? `${t('card.todayTrials')}: ${todayCount} ${t('common.trialsUnit')}${
+                  ? `${todayCount} ${t('common.trialsUnit')}${
                       todayTimeMs > 0 ? ` (${formatTodayTimeWithT(todayTimeMs, t)})` : ''
                     }`
                   : isNeverPracticed
                     ? t('common.empty')
-                    : `${t('card.todayTrials')}: 0 ${t('common.trialsUnit')}`}
+                    : `0 ${t('common.trialsUnit')}`}
               </div>
             </div>
           </div>

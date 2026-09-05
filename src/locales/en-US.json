@@ -112,7 +112,6 @@
     }
   },
   "card": {
-    "todayTrials": "Today",
     "analyticsTooltip": "{{title}} Stats",
     "statsTooltip": "{{title}} Stats & Analytics",
     "settingsTooltip": "{{title}} Preferences",
