@@ -10,11 +10,7 @@ import {
 import { AngleEstimationView } from './AngleEstimationView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
-import type {
-  AngleEstimationHitResult,
-  AngleEstimationQuestion,
-  AngleRangePreset,
-} from './types';
+import type { AngleEstimationHitResult, AngleEstimationQuestion, AngleRangePreset } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
 const ALL_ANGLE_RANGES: AngleRangePreset[] = ['0_45', '45_90', '90_135', '135_180'];
