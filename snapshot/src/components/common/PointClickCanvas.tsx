@@ -1,10 +1,7 @@
 import { useCallback } from 'preact/hooks';
 import { renderInteractivePointGrid } from '../../core/canvas/drawPointGrid';
 import type { Point } from '../../types';
-import {
-  type CanvasDrawContext,
-  InteractivePointCanvas,
-} from './InteractivePointCanvas';
+import { type CanvasDrawContext, InteractivePointCanvas } from './InteractivePointCanvas';
 
 export interface PointClickCanvasProps {
   canvasSize: number;
@@ -50,16 +47,7 @@ export function PointClickCanvas({
         disabled,
       });
     },
-    [
-      canvasSize,
-      gridPoints,
-      targetPoint,
-      userNearestPoint,
-      anchors,
-      showAnswer,
-      isHit,
-      disabled,
-    ],
+    [canvasSize, gridPoints, targetPoint, userNearestPoint, anchors, showAnswer, isHit, disabled],
   );
 
   return (

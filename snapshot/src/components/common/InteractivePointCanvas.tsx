@@ -174,11 +174,7 @@ export function InteractivePointCanvas({
         }`}
       />
 
-      <LoupeOverlay
-        visible={isTouching}
-        position={loupePos}
-        loupeCanvasRef={loupeCanvasRef}
-      />
+      <LoupeOverlay visible={isTouching} position={loupePos} loupeCanvasRef={loupeCanvasRef} />
     </div>
   );
 }
