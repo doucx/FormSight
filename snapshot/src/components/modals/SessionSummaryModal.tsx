@@ -54,6 +54,16 @@ export function SessionSummaryModal({
         )
       : '0.0';
 
+  const getConvergenceStatusText = () => {
+    if (accuracy >= 70 && accuracy <= 85) {
+      return t('card.statusOptimal');
+    }
+    if (accuracy > 85) {
+      return t('card.statusAscending');
+    }
+    return t('card.statusExploring');
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas && history.length > 0) {
@@ -130,7 +140,7 @@ export function SessionSummaryModal({
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl font-black text-foreground font-mono">{totalTrials}</span>
               <span className="text-xs font-semibold text-muted-foreground">
-                {t('common.trialsUnit')} ({accuracy}% 稳态)
+                {t('common.trialsUnit')} ({accuracy}% • {getConvergenceStatusText()})
               </span>
             </div>
           </MetricCard>
