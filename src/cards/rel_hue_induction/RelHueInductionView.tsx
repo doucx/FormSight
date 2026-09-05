@@ -131,16 +131,14 @@ export function RelHueInductionView({
       </div>
 
       {/* 空格/手动确认按钮 */}
-      {!showAnswer && (
-        <Button
-          variant="default"
-          onClick={handleSubmit}
-          disabled={disabled}
-          className="w-full py-3 h-auto rounded-2xl"
-        >
-          {t('common.confirmSpace')}
-        </Button>
-      )}
+      <Button
+        variant="default"
+        onClick={handleSubmit}
+        disabled={disabled || showAnswer}
+        className="w-full py-3 h-auto rounded-2xl"
+      >
+        {t('common.confirmSpace')}
+      </Button>
     </QuestionCardShell>
   );
 }
