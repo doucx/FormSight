@@ -112,7 +112,6 @@
     }
   },
   "card": {
-    "todayTrials": "今日刷题",
     "analyticsTooltip": "{{title}} 统计",
     "statsTooltip": "{{title}} 统计与认知分析",
     "settingsTooltip": "{{title}} 偏好设置",

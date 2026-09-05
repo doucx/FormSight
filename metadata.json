@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复计划训练中点击返回错误弹出单卡片总结的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788610544.9354997, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M ModeCard.tsx, M en-US.json, M zh-CN.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788611427.316033, "duration_ms": 0}}
