@@ -16,6 +16,7 @@ export interface SpatialFractalViewProps {
   userAnswer: HitResult | null;
   onAnswer: (userVal: number) => void;
   disabled?: boolean;
+  showCanvasHints?: boolean;
 }
 
 export function SpatialFractalView({
@@ -24,6 +25,7 @@ export function SpatialFractalView({
   userAnswer,
   onAnswer,
   disabled = false,
+  showCanvasHints = true,
 }: SpatialFractalViewProps) {
   const { t } = useCardTranslation('spatial_fractal');
 
@@ -38,7 +40,7 @@ export function SpatialFractalView({
     <QuestionCardShell
       hintText={t('hint')}
       hintIcon={Cuboid}
-      showCanvasHints={true}
+      showCanvasHints={showCanvasHints}
       maxWidth="max-w-4xl"
       className="gap-6"
     >
