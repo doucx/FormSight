@@ -1,4 +1,4 @@
-import { BookOpen, Check, Plus, Star, Trash2 } from 'lucide-preact';
+import { Check, Plus, Star, Trash2 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
@@ -10,7 +10,6 @@ interface PlanLibraryDrawerProps {
   currentPlan: TrainingPlan;
   onSelectPlan: (p: TrainingPlan) => void;
   onCreateNewBlankPlan: () => void;
-  onNavigateToOfficialPlans?: () => void;
   onClose: () => void;
   onToggleFavorite: (planId: string, e: MouseEvent) => void;
   onDeletePlan: (planId: string, e: MouseEvent) => void;
@@ -21,7 +20,6 @@ export function PlanLibraryDrawer({
   currentPlan,
   onSelectPlan,
   onCreateNewBlankPlan,
-  onNavigateToOfficialPlans,
   onClose,
   onToggleFavorite,
   onDeletePlan,
@@ -47,17 +45,6 @@ export function PlanLibraryDrawer({
           {t('plan.switchEditingPlan')}
         </span>
         <div className="flex items-center gap-2">
-          {onNavigateToOfficialPlans && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onNavigateToOfficialPlans}
-              className="text-primary hover:text-primary gap-1"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>{t('officialPlans.browseBtn')}</span>
-            </Button>
-          )}
           <Button
             variant="ghost"
             size="sm"

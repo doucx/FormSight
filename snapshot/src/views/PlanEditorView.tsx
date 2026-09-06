@@ -107,7 +107,6 @@ export function PlanEditorView({
               handleCreateNewBlankPlan();
               setMobileTab('picker');
             }}
-            onNavigateToOfficialPlans={onNavigateToOfficialPlans}
             onClose={() => setShowPlanManager(false)}
             onToggleFavorite={handleToggleFavoriteItem}
             onDeletePlan={handleDeletePlanItem}
