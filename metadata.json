@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 实现 3D 分形截面 (spatial_fractal) 实验性训练卡片", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788676050.1920497, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Fractal3DViewport 中由于解构缺失导致 SDF 参数为 NaN 的崩溃问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788676408.4972908, "duration_ms": 0}}

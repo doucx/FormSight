@@ -97,7 +97,7 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
     if (!libs || !sceneRef.current) return;
     const scene = sceneRef.current;
     const { THREE } = libs;
-    const { level, seed, planeCenter, uVec, vVec, normal } = question;
+    const { difficultyLevel: level, seed, planeCenter, uVec, vVec, normal } = question;
 
     const objectsToRemove: any[] = [];
     scene.traverse((child: any) => {
@@ -132,7 +132,14 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
         let testY = normY * curR;
         let testZ = normZ * curR;
         let sdfVal = evaluateSDF(testX, testY, testZ, level, seed);
+        if (Number.isNaN(sdfVal) || !Number.isFinite(sdfVal)) {
+          break;
+        }
         curR = curR - sdfVal * 0.75;
+      }
+
+      if (Number.isNaN(curR) || !Number.isFinite(curR)) {
+        curR = 1.15;
       }
 
       pos.setXYZ(i, normX * curR, normY * curR, normZ * curR);
