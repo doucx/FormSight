@@ -84,6 +84,8 @@
     "delete": "删除",
     "officialBadge": "官方预设",
     "newPlanBadge": "新计划",
+    "resetToDefault": "恢复默认配置",
+    "resetSuccessToast": "已恢复为默认配置",
     "confirmTitle": "操作确认",
     "deletePlan": "删除计划",
     "favoritedTooltip": "已收藏 (显示在主页快速切换)",

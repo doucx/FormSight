@@ -84,6 +84,8 @@
     "delete": "Delete",
     "officialBadge": "Official Preset",
     "newPlanBadge": "New Plan",
+    "resetToDefault": "Reset to Defaults",
+    "resetSuccessToast": "Restored to default settings",
     "confirmTitle": "Confirmation",
     "deletePlan": "Delete Plan",
     "favoritedTooltip": "Favorited (Quick switch on home)",
