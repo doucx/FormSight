@@ -500,7 +500,9 @@
     function updateCuttingPlaneVisual(q) {
       if (planeHelper) scene.remove(planeHelper);
 
-      const planeGeom = new THREE.PlaneGeometry(2.8, 2.8);
+      const planeSize = 2.8;
+      const halfSize = planeSize / 2;
+      const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
       const planeMat = new THREE.MeshBasicMaterial({
         color: 0x10b981,
         transparent: true,
@@ -513,26 +515,28 @@
       planeHelper.position.copy(q.planeCenter);
       planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal);
 
+      // 默认绿色外框
       const edges = new THREE.EdgesGeometry(planeGeom);
       const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
       planeHelper.add(line);
 
-      // 在截面平面上增加颜色编码的坐标轴指示线 (红色：U轴 / 蓝色：V轴)
-      // U 轴指示器 (红色细杆，沿正 u 方向)
-      const uDirGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(1.2, 0, 0)
+      // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
+      // 平面在本地坐标系中：u 对应 X 轴（从 -halfSize 到 +halfSize），v 对应 Y 轴（从 -halfSize 到 +halfSize）
+      // 顶边：y = +halfSize, x 从 -halfSize 到 +halfSize (红色, 对应 U 轴正向方位)
+      const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-halfSize, halfSize, 0.002),
+        new THREE.Vector3(halfSize, halfSize, 0.002)
       ]);
-      const uLine = new THREE.Line(uDirGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3 }));
-      planeHelper.add(uLine);
+      const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+      planeHelper.add(topEdgeLine);
 
-      // V 轴指示器 (蓝色细杆，沿正 v 方向)
-      const vDirGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 1.2, 0)
+      // 左边：x = -halfSize, y 从 -halfSize 到 +halfSize (蓝色, 对应 V 轴正向方位)
+      const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-halfSize, -halfSize, 0.002),
+        new THREE.Vector3(-halfSize, halfSize, 0.002)
       ]);
-      const vLine = new THREE.Line(vDirGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 3 }));
-      planeHelper.add(vLine);
+      const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+      planeHelper.add(leftEdgeLine);
 
       // 法向量指示箭头
       const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);

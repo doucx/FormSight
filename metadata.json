@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 为截面选项卡和 3D 切片平面增加颜色编码的定向提示线", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788672577.0796943, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 将 3D 切片平面上的定向提示线替换为了与 2D 选项完全一致的边界边框", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788672725.837947, "duration_ms": 0}}
