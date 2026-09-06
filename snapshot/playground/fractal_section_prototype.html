@@ -519,7 +519,8 @@
         const texCanvas = document.createElement('canvas');
         texCanvas.width = 256;
         texCanvas.height = 256;
-        renderSectionToCanvas(texCanvas, q, q.level);
+        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
+        renderSectionToCanvas(texCanvas, correctCfg, q.level);
 
         const texture = new THREE.CanvasTexture(texCanvas);
         texture.generateMipmaps = true;
