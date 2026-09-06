@@ -83,10 +83,12 @@ export function ModeCard({
                   {title}
                 </h3>
                 {isExperimental && (
-                  <Badge variant="warning" size="sm">
-                    <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                    {t('card.experimentalBadge')}
-                  </Badge>
+                  <div
+                    className="p-1 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 flex-shrink-0"
+                    title={t('card.experimentalBadge')}
+                  >
+                    <FlaskConical className="w-3.5 h-3.5" />
+                  </div>
                 )}
               </div>
               <div className="text-xs text-muted-foreground font-medium truncate mt-0.5">

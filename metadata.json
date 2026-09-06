@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788678627.602846, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] 将 `ModeCard.tsx` 中的“实验性”文字徽章简化为精致的琥珀色（黄色）纯图标形式，以释放空间并保持视觉整洁。", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788678628.0855727, "duration_ms": 0}}
