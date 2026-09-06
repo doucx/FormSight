@@ -50,7 +50,13 @@
       </div>
     </div>
     
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
+      <!-- 调试视图开关 -->
+      <label class="flex items-center gap-2 cursor-pointer bg-slate-800/80 hover:bg-slate-700/80 px-3 py-2 rounded-xl border border-slate-700/60 text-xs font-mono text-slate-300 hover:text-white transition shadow-sm">
+        <input type="checkbox" id="debug-texture-toggle" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+        <span class="font-semibold text-emerald-400">🔧 截面贴图调试视图</span>
+      </label>
+
       <button id="btn-regen" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-semibold text-white rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         生成下一题 (Space)
@@ -149,7 +155,11 @@
         <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center gap-2">
           <span>选择正确的 2D 剖截面 (Cross-Section Options)</span>
         </h3>
-        <span class="text-xs text-slate-500 font-mono">4-AFC (按 1, 2, 3, 4 快捷作答)</span>
+        <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> 顶边定向 (V轴+)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> 左边定向 (U轴-)</span>
+          <span class="text-slate-500">4-AFC (1-4)</span>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="options-grid"></div>
@@ -167,6 +177,7 @@
 
     let seed = Math.random() * 1000;
     let currentLevel = 1;
+    let debugTextureMode = false;
 
     function hash3D(x, y, z) {
       let n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed) * 43758.5453123;
@@ -218,17 +229,8 @@
 
       if (level <= 18) return dist;
 
-      let cavityWeight = Math.min(1.0, (level - 18) / 10);
-      let cavityNoise = smoothNoise3D(x * 2.4 + 5.5, y * 2.4 + 5.5, z * 2.4 + 5.5);
-      if (cavityNoise > 0.62) {
-        let holeDepth = (cavityNoise - 0.62) * 2.8 * cavityWeight;
-        dist = Math.max(dist, holeDepth);
-      }
-
-      if (level <= 28) return dist;
-
-      let chaosWeight = (level - 28) / 7;
-      let fineNoise = (fbm3D(x * 3.2, y * 3.2, z * 3.2, 3) - 0.5) * 0.6 * chaosWeight;
+      let chaosWeight = Math.min(1.0, (level - 18) / 17);
+      let fineNoise = (fbm3D(x * 3.0, y * 3.0, z * 3.0, 3) - 0.5) * 0.65 * chaosWeight;
       dist = dist - fineNoise;
 
       return dist;
@@ -256,17 +258,17 @@
         };
       } else if (level <= 28) {
         return {
-          tier: '挑战 (多孔空腔)',
-          stage: '形态: 负空间多孔拓扑',
-          topology: '环面多孔 / 局部孤岛',
-          octavesText: '3 Octaves + 穿透空腔',
-          desc: '高难度下激活负空间空腔雕刻，截面可能呈现内孔洞或分离的小岛屿。'
+          tier: '挑战 (复杂褶皱)',
+          stage: '形态: 多层复合分形褶皱',
+          topology: '高阶连续复杂曲面',
+          octavesText: '3 Octaves + 表面褶皱',
+          desc: '高难度下激活多层复合分形褶皱，截面呈现细腻的曲率起伏与非线性边界。'
         };
       } else {
         return {
           tier: '大师 (混沌分形)',
           stage: '形态: 混沌多重分形簇',
-          topology: '高阶复杂多岛群落',
+          topology: '高阶精细自相似体',
           octavesText: '5 Octaves + 混沌微刺',
           desc: '大师级拥有丰富的微观多层自相似分形突刺，必须精确校验局域曲率。'
         };
@@ -339,7 +341,8 @@
       const data = imgData.data;
 
       for (let py = 0; py < size; py++) {
-        let vFrac = (py / size - 0.5) * 2 * span;
+        // 画布从上到下(py增加)，对应 3D 局部坐标的 +V 到 -V，因此需要取负号
+        let vFrac = -(py / size - 0.5) * 2 * span;
         for (let px = 0; px < size; px++) {
           let uFrac = (px / size - 0.5) * 2 * span;
           
@@ -371,6 +374,7 @@
       }
       ctx.putImageData(imgData, 0, 0);
 
+      // 内部网格微光
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -378,8 +382,21 @@
       ctx.moveTo(0, size/2); ctx.lineTo(size, size/2);
       ctx.stroke();
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.strokeRect(1, 1, size - 2, size - 2);
+      // 绘制空间定向彩色提示边框 (红：u轴正向/顶部, 蓝：v轴正向/左侧)
+      const borderWidth = 4;
+      
+      // 顶部边框 (红色 - 对应 U 轴正向方位指示)
+      ctx.fillStyle = '#ef4444'; // red-500
+      ctx.fillRect(0, 0, size, borderWidth);
+
+      // 左侧边框 (蓝色 - 对应 V 轴正向方位指示)
+      ctx.fillStyle = '#3b82f6'; // blue-500
+      ctx.fillRect(0, 0, borderWidth, size);
+
+      // 整体外框微光
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, size, size);
     }
 
     let scene, camera, renderer, controls;
@@ -402,7 +419,7 @@
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
-      controls.autoRotate = true;
+      controls.autoRotate = false;
       controls.autoRotateSpeed = 0.8;
 
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
@@ -441,7 +458,8 @@
     function createFractal3DMesh(level) {
       if (fractalMesh) scene.remove(fractalMesh);
 
-      const detail = level <= 8 ? 4 : 5;
+      // 根据难度动态调整 icosahedron 网格细分级别，确保高难度下能够捕捉高频分形与孔洞突刺细节
+      const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
       const geom = new THREE.IcosahedronGeometry(1.2, detail);
       const pos = geom.attributes.position;
       
@@ -476,31 +494,75 @@
       });
 
       fractalMesh = new THREE.Mesh(geom, mat);
+      fractalMesh.visible = !debugTextureMode;
       scene.add(fractalMesh);
     }
 
     function updateCuttingPlaneVisual(q) {
       if (planeHelper) scene.remove(planeHelper);
 
-      const planeGeom = new THREE.PlaneGeometry(2.8, 2.8);
-      const planeMat = new THREE.MeshBasicMaterial({
-        color: 0x10b981,
-        transparent: true,
-        opacity: 0.28,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
+      const planeSize = 3.1;
+      const halfSize = planeSize / 2;
+      const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
+      
+      let planeMat;
+      if (debugTextureMode) {
+        // 创建离屏 Canvas 生成截面纹理
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 256;
+        texCanvas.height = 256;
+        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
+        renderSectionToCanvas(texCanvas, correctCfg, q.level);
+
+        const texture = new THREE.CanvasTexture(texCanvas);
+        // CanvasTexture 默认启用 flipY=true，无需再使用 repeat 进行垂直翻转
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+
+        planeMat = new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.95
+        });
+      } else {
+        planeMat = new THREE.MeshBasicMaterial({
+          color: 0x10b981,
+          transparent: true,
+          opacity: 0.25,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+      }
 
       planeHelper = new THREE.Mesh(planeGeom, planeMat);
       planeHelper.position.copy(q.planeCenter);
-      planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal);
+      
+      // 使用正交基底矩阵 (uVec, vVec, normal) 精确对齐平面的本地 X/Y/Z 轴，消除 90 度旋转错位
+      const orientMatrix = new THREE.Matrix4().makeBasis(q.uVec, q.vVec, q.normal);
+      planeHelper.quaternion.setFromRotationMatrix(orientMatrix);
 
+      // 默认绿色外框
       const edges = new THREE.EdgesGeometry(planeGeom);
       const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
       planeHelper.add(line);
 
-      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
-      planeHelper.add(arrow);
+      // 仅在非调试模式下渲染 3D 辅助红蓝定向边框（调试模式下贴图本身已包含红蓝边框）
+      if (!debugTextureMode) {
+        const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, halfSize, 0.002),
+          new THREE.Vector3(halfSize, halfSize, 0.002)
+        ]);
+        const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+        planeHelper.add(topEdgeLine);
+
+        const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, -halfSize, 0.002),
+          new THREE.Vector3(-halfSize, halfSize, 0.002)
+        ]);
+        const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+        planeHelper.add(leftEdgeLine);
+      }
 
       scene.add(planeHelper);
     }
@@ -601,6 +663,16 @@
       document.querySelectorAll('.level-preset-btn').forEach(btn => {
         btn.onclick = () => updateLevel(btn.getAttribute('data-level'));
       });
+
+      // 调试视图开关监听
+      const debugToggle = document.getElementById('debug-texture-toggle');
+      debugToggle.onchange = (e) => {
+        debugTextureMode = e.target.checked;
+        if (currentQuestion) {
+          createFractal3DMesh(currentQuestion.level);
+          updateCuttingPlaneVisual(currentQuestion);
+        }
+      };
 
       window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {
