@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 移除负责渲染 3D 视口中截面法向量指示箭头的代码段", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788674470.2825098, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "Capture: M package-lock.json, M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788676047.702402, "duration_ms": 0}}
