@@ -1,4 +1,4 @@
-import { Sliders, RotateCcw } from 'lucide-preact';
+import { RotateCcw, Sliders } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
 import {

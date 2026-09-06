@@ -1,4 +1,4 @@
-import { Download, Loader2, RotateCcw, Trash2, Upload, Sliders } from 'lucide-preact';
+import { Download, Loader2, RotateCcw, Sliders, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
@@ -190,7 +190,9 @@ export function DataGovernanceSection({
 
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs font-bold text-foreground">{t('settings.resetSettingsTitle')}</div>
+            <div className="text-xs font-bold text-foreground">
+              {t('settings.resetSettingsTitle')}
+            </div>
             <div className="text-xs text-muted-foreground">{t('settings.resetSettingsDesc')}</div>
           </div>
           <Button

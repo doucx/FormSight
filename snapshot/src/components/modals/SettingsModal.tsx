@@ -1,4 +1,4 @@
-import { Flame, Sliders, Target, RotateCcw } from 'lucide-preact';
+import { Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
@@ -7,7 +7,7 @@ import {
   type UserSettings,
   getCardSettings,
 } from '../../storage/settings';
-import { updateCardSettings, resetCardSettingsAction } from '../../stores/settingsStore';
+import { resetCardSettingsAction, updateCardSettings } from '../../stores/settingsStore';
 import { showToast } from '../../stores/toastStore';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
