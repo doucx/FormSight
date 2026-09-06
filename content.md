@@ -1,13 +1,9 @@
 # 📸 Snapshot Capture
 
-### 💬 备注:
-checkf
-
 检测到工作区发生变更。
 
 ### 📝 变更文件摘要:
 ```
-src/cards/spatial_fractal/locales/en-US.json | 2 +-
- src/cards/spatial_fractal/locales/zh-CN.json | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+package.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
