@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] fix: 修复 Fractal3DViewport 中由于解构缺失导致 SDF 参数为 NaN 的崩溃问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788676408.4972908, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 优化 vite.config.ts 配置，为 Three.js 引入独立 ManualChunk 懒加载缓存包", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788676600.783849, "duration_ms": 0}}
