@@ -508,7 +508,7 @@
     function updateCuttingPlaneVisual(q) {
       if (planeHelper) scene.remove(planeHelper);
 
-      const planeSize = 2.8;
+      const planeSize = 3.1; // 严格匹配 renderSectionToCanvas 中的 span = 1.55 (2 * 1.55 = 3.1) 几何尺寸
       const halfSize = planeSize / 2;
       const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
       
@@ -523,7 +523,8 @@
 
         const texture = new THREE.CanvasTexture(texCanvas);
         texture.center.set(0.5, 0.5);
-        texture.repeat.set(1, -1); // 修正 Canvas 2D 与 Three.js 纹理的 V 轴垂直翻转
+        texture.repeat.set(1, -1); 
+        texture.offset.set(0, 1); // 修正 Canvas 2D 顶底反向与 UV 映射偏移
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
