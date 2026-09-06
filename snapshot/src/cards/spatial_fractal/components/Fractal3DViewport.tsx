@@ -122,6 +122,9 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
       let vz = pos.getZ(i);
       
       let r = Math.sqrt(vx*vx + vy*vy + vz*vz);
+      if (r === 0 || Number.isNaN(r) || !Number.isFinite(r)) {
+        continue;
+      }
       let normX = vx / r;
       let normY = vy / r;
       let normZ = vz / r;
@@ -132,7 +135,14 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
         let testY = normY * curR;
         let testZ = normZ * curR;
         let sdfVal = evaluateSDF(testX, testY, testZ, level, seed);
+        if (Number.isNaN(sdfVal) || !Number.isFinite(sdfVal)) {
+          break;
+        }
         curR = curR - sdfVal * 0.75;
+      }
+
+      if (Number.isNaN(curR) || !Number.isFinite(curR)) {
+        curR = 1.15;
       }
 
       pos.setXYZ(i, normX * curR, normY * curR, normZ * curR);
