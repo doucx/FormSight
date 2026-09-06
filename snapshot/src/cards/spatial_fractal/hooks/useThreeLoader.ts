@@ -33,7 +33,7 @@ export function useThreeLoader() {
       })
       .catch((err) => {
         if (isMounted) setError(err);
-        threePromiseCache = null; 
+        threePromiseCache = null;
       });
 
     return () => {
@@ -41,9 +41,9 @@ export function useThreeLoader() {
     };
   }, []);
 
-  return { 
-    libs, 
-    isLoading: !libs && !error, 
-    error 
+  return {
+    libs,
+    isLoading: !libs && !error,
+    error,
   };
 }

@@ -1,11 +1,11 @@
-import { useEffect, useRef } from 'preact/hooks';
-import { Loader2 } from 'lucide-preact';
-import { useThreeLoader } from '../hooks/useThreeLoader';
-import { evaluateSDF } from '../utils/sdf';
 import { CANVAS_THEME } from '@formsight/card-sdk';
-import type { QuestionData } from '../types';
+import { Loader2 } from 'lucide-preact';
+import { useEffect, useRef } from 'preact/hooks';
 import type * as THREE from 'three';
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { useThreeLoader } from '../hooks/useThreeLoader';
+import type { QuestionData } from '../types';
+import { evaluateSDF } from '../utils/sdf';
 
 export interface Fractal3DViewportProps {
   question: QuestionData;
@@ -68,7 +68,7 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', handleResize);
       controls.dispose();
-      
+
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
@@ -81,7 +81,7 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
           }
         }
       });
-      
+
       renderer.dispose();
       if (renderer.domElement.parentElement) {
         renderer.domElement.parentElement.removeChild(renderer.domElement);
@@ -124,26 +124,26 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
       }
     }
 
-    const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
+    const detail = level <= 8 ? 4 : level <= 18 ? 5 : level <= 28 ? 6 : 7;
     const geom = new THREE.IcosahedronGeometry(1.2, detail);
     const pos = geom.attributes.position;
-    
+
     for (let i = 0; i < pos.count; i++) {
-      let vx = pos.getX(i);
-      let vy = pos.getY(i);
-      let vz = pos.getZ(i);
-      
-      let r = Math.sqrt(vx*vx + vy*vy + vz*vz);
-      let normX = vx / r;
-      let normY = vy / r;
-      let normZ = vz / r;
+      const vx = pos.getX(i);
+      const vy = pos.getY(i);
+      const vz = pos.getZ(i);
+
+      const r = Math.sqrt(vx * vx + vy * vy + vz * vz);
+      const normX = vx / r;
+      const normY = vy / r;
+      const normZ = vz / r;
 
       let curR = 1.15;
       for (let step = 0; step < 7; step++) {
-        let testX = normX * curR;
-        let testY = normY * curR;
-        let testZ = normZ * curR;
-        let sdfVal = evaluateSDF(testX, testY, testZ, level, seed);
+        const testX = normX * curR;
+        const testY = normY * curR;
+        const testZ = normZ * curR;
+        const sdfVal = evaluateSDF(testX, testY, testZ, level, seed);
         if (Number.isNaN(sdfVal) || !Number.isFinite(sdfVal)) {
           break;
         }
@@ -162,7 +162,7 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
       color: 0x4f46e5,
       roughness: 0.35,
       metalness: 0.15,
-      flatShading: level > 8
+      flatShading: level > 8,
     });
 
     const fractalMesh = new THREE.Mesh(geom, mat);
@@ -172,46 +172,54 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
     const planeSize = 3.1;
     const halfSize = planeSize / 2;
     const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
-    
+
     const planeMat = new THREE.MeshBasicMaterial({
       color: 0x10b981,
       transparent: true,
       opacity: 0.25,
       side: THREE.DoubleSide,
-      depthWrite: false
+      depthWrite: false,
     });
 
     const planeHelper = new THREE.Mesh(planeGeom, planeMat);
     planeHelper.userData.isDynamic = true;
     planeHelper.position.set(planeCenter.x, planeCenter.y, planeCenter.z);
-    
+
     const tvU = new THREE.Vector3(uVec.x, uVec.y, uVec.z);
     const tvV = new THREE.Vector3(vVec.x, vVec.y, vVec.z);
     const tvN = new THREE.Vector3(normal.x, normal.y, normal.z);
-    
+
     const orientMatrix = new THREE.Matrix4().makeBasis(tvU, tvV, tvN);
     planeHelper.quaternion.setFromRotationMatrix(orientMatrix);
 
     const edges = new THREE.EdgesGeometry(planeGeom);
-    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
+    const line = new THREE.LineSegments(
+      edges,
+      new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }),
+    );
     planeHelper.add(line);
 
     const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-halfSize, halfSize, 0.002),
-      new THREE.Vector3(halfSize, halfSize, 0.002)
+      new THREE.Vector3(halfSize, halfSize, 0.002),
     ]);
-    const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+    const topEdgeLine = new THREE.Line(
+      topEdgeGeom,
+      new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }),
+    );
     planeHelper.add(topEdgeLine);
 
     const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(-halfSize, -halfSize, 0.002),
-      new THREE.Vector3(-halfSize, halfSize, 0.002)
+      new THREE.Vector3(-halfSize, halfSize, 0.002),
     ]);
-    const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+    const leftEdgeLine = new THREE.Line(
+      leftEdgeGeom,
+      new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }),
+    );
     planeHelper.add(leftEdgeLine);
 
     scene.add(planeHelper);
-
   }, [libs, question]);
 
   if (error) {

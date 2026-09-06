@@ -1,11 +1,11 @@
-import { Cuboid } from 'lucide-preact';
 import {
-  QuestionCardShell,
-  useCardTranslation,
   ChoiceCard,
+  QuestionCardShell,
   getChoiceCardState,
-  useChoiceShortcuts
+  useCardTranslation,
+  useChoiceShortcuts,
 } from '@formsight/card-sdk';
+import { Cuboid } from 'lucide-preact';
 import { Fractal3DViewport } from './components/Fractal3DViewport';
 import { OptionCanvas } from './components/OptionCanvas';
 import type { HitResult, QuestionData } from './types';
@@ -53,8 +53,14 @@ export function SpatialFractalView({
           <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
             <span className="font-bold uppercase tracking-wider">{t('optionsLabel')}</span>
             <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> {t('topOrientation')}</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> {t('leftOrientation')}</span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block" />{' '}
+                {t('topOrientation')}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block" />{' '}
+                {t('leftOrientation')}
+              </span>
             </div>
           </div>
 
@@ -73,8 +79,14 @@ export function SpatialFractalView({
                   onClick={() => onAnswer(idx)}
                 >
                   <div className="flex flex-col gap-2 w-full">
-                    <span className="text-xs font-bold font-mono text-muted-foreground">[{idx + 1}]</span>
-                    <OptionCanvas config={config} level={question.difficultyLevel} seed={question.seed} />
+                    <span className="text-xs font-bold font-mono text-muted-foreground">
+                      [{idx + 1}]
+                    </span>
+                    <OptionCanvas
+                      config={config}
+                      level={question.difficultyLevel}
+                      seed={question.seed}
+                    />
                   </div>
                 </ChoiceCard>
               );

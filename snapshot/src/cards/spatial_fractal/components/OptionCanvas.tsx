@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'preact/hooks';
 import { setupHiDpiCanvas } from '@formsight/card-sdk';
-import { evaluateSDF } from '../utils/sdf';
+import { useEffect, useRef } from 'preact/hooks';
 import type { PlaneConfig } from '../types';
+import { evaluateSDF } from '../utils/sdf';
 
 interface OptionCanvasProps {
   config: PlaneConfig;
@@ -17,8 +17,8 @@ export function OptionCanvas({ config, level, seed }: OptionCanvasProps) {
     if (!canvas) return;
 
     // 使用固定的 140x140 分辨率进行离线绘制，保证主线程不会出现卡顿
-    const size = 140; 
-    
+    const size = 140;
+
     const rawCanvas = document.createElement('canvas');
     rawCanvas.width = size;
     rawCanvas.height = size;
@@ -30,19 +30,19 @@ export function OptionCanvas({ config, level, seed }: OptionCanvasProps) {
     const data = imgData.data;
 
     for (let py = 0; py < size; py++) {
-      let vFrac = -(py / size - 0.5) * 2 * span;
+      const vFrac = -(py / size - 0.5) * 2 * span;
       for (let px = 0; px < size; px++) {
-        let uFrac = (px / size - 0.5) * 2 * span;
-        
-        let worldX = config.center.x + config.u.x * uFrac + config.v.x * vFrac;
-        let worldY = config.center.y + config.u.y * uFrac + config.v.y * vFrac;
-        let worldZ = config.center.z + config.u.z * uFrac + config.v.z * vFrac;
-        
-        let val = evaluateSDF(worldX, worldY, worldZ, level, seed);
-        let pIdx = (py * size + px) * 4;
+        const uFrac = (px / size - 0.5) * 2 * span;
+
+        const worldX = config.center.x + config.u.x * uFrac + config.v.x * vFrac;
+        const worldY = config.center.y + config.u.y * uFrac + config.v.y * vFrac;
+        const worldZ = config.center.z + config.u.z * uFrac + config.v.z * vFrac;
+
+        const val = evaluateSDF(worldX, worldY, worldZ, level, seed);
+        const pIdx = (py * size + px) * 4;
 
         if (val <= 0) {
-          let edgeDist = Math.min(1.0, -val * 3.2);
+          const edgeDist = Math.min(1.0, -val * 3.2);
           data[pIdx] = Math.round(99 + edgeDist * 45);
           data[pIdx + 1] = Math.round(102 + edgeDist * 65);
           data[pIdx + 2] = Math.round(241 + edgeDist * 14);
@@ -66,8 +66,10 @@ export function OptionCanvas({ config, level, seed }: OptionCanvasProps) {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(size/2, 0); ctx.lineTo(size/2, size);
-    ctx.moveTo(0, size/2); ctx.lineTo(size, size/2);
+    ctx.moveTo(size / 2, 0);
+    ctx.lineTo(size / 2, size);
+    ctx.moveTo(0, size / 2);
+    ctx.lineTo(size, size / 2);
     ctx.stroke();
 
     ctx.fillStyle = '#ef4444';
@@ -88,8 +90,8 @@ export function OptionCanvas({ config, level, seed }: OptionCanvasProps) {
   }, [config, level, seed]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
+    <canvas
+      ref={canvasRef}
       className="w-full aspect-square rounded-lg border border-border shadow-inner"
       style={{ width: '100%', height: '100%' }}
     />
