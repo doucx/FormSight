@@ -149,7 +149,11 @@
         <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center gap-2">
           <span>选择正确的 2D 剖截面 (Cross-Section Options)</span>
         </h3>
-        <span class="text-xs text-slate-500 font-mono">4-AFC (按 1, 2, 3, 4 快捷作答)</span>
+        <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> U轴定向 (顶边)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> V轴定向 (左边)</span>
+          <span class="text-slate-500">4-AFC (1-4)</span>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="options-grid"></div>
@@ -371,6 +375,7 @@
       }
       ctx.putImageData(imgData, 0, 0);
 
+      // 内部网格微光
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -378,8 +383,21 @@
       ctx.moveTo(0, size/2); ctx.lineTo(size, size/2);
       ctx.stroke();
 
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-      ctx.strokeRect(1, 1, size - 2, size - 2);
+      // 绘制空间定向彩色提示边框 (红：u轴正向/顶部, 蓝：v轴正向/左侧)
+      const borderWidth = 4;
+      
+      // 顶部边框 (红色 - 对应 U 轴正向方位指示)
+      ctx.fillStyle = '#ef4444'; // red-500
+      ctx.fillRect(0, 0, size, borderWidth);
+
+      // 左侧边框 (蓝色 - 对应 V 轴正向方位指示)
+      ctx.fillStyle = '#3b82f6'; // blue-500
+      ctx.fillRect(0, 0, borderWidth, size);
+
+      // 整体外框微光
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, size, size);
     }
 
     let scene, camera, renderer, controls;
@@ -486,7 +504,7 @@
       const planeMat = new THREE.MeshBasicMaterial({
         color: 0x10b981,
         transparent: true,
-        opacity: 0.28,
+        opacity: 0.25,
         side: THREE.DoubleSide,
         depthWrite: false
       });
@@ -499,6 +517,24 @@
       const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
       planeHelper.add(line);
 
+      // 在截面平面上增加颜色编码的坐标轴指示线 (红色：U轴 / 蓝色：V轴)
+      // U 轴指示器 (红色细杆，沿正 u 方向)
+      const uDirGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(1.2, 0, 0)
+      ]);
+      const uLine = new THREE.Line(uDirGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3 }));
+      planeHelper.add(uLine);
+
+      // V 轴指示器 (蓝色细杆，沿正 v 方向)
+      const vDirGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 1.2, 0)
+      ]);
+      const vLine = new THREE.Line(vDirGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 3 }));
+      planeHelper.add(vLine);
+
+      // 法向量指示箭头
       const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
       planeHelper.add(arrow);
 
