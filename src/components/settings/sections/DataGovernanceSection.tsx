@@ -1,8 +1,9 @@
-import { Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-preact';
+import { Download, Loader2, RotateCcw, Sliders, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
 import { resetPlansToDefault } from '../../../storage/planStorage';
+import { resetAllSettingsAction } from '../../../stores/settingsStore';
 import { ConfirmModal } from '../../common/ConfirmModal';
 import type { ToastType } from '../../common/Toast';
 import { Button } from '../../ui/button';
@@ -24,6 +25,7 @@ export function DataGovernanceSection({
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [showResetSettingsConfirm, setShowResetSettingsConfirm] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -80,6 +82,13 @@ export function DataGovernanceSection({
     setShowResetPlansConfirm(false);
     await resetPlansToDefault();
     showToast(t('settings.resetPlansSuccessToast'), 'success');
+    await onDataChanged();
+  };
+
+  const handleResetSettingsConfirmed = async () => {
+    setShowResetSettingsConfirm(false);
+    await resetAllSettingsAction();
+    showToast(t('settings.resetSettingsSuccessToast'), 'success');
     await onDataChanged();
   };
 
@@ -179,6 +188,24 @@ export function DataGovernanceSection({
           </Button>
         </div>
 
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-foreground">
+              {t('settings.resetSettingsTitle')}
+            </div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetSettingsDesc')}</div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowResetSettingsConfirm(true)}
+            className="gap-1 border border-border"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            {t('settings.resetSettingsBtn')}
+          </Button>
+        </div>
+
         <div className="flex items-center justify-between pt-1">
           <div>
             <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
@@ -205,6 +232,16 @@ export function DataGovernanceSection({
         isDangerous={false}
         onConfirm={handleResetPlansConfirmed}
         onCancel={() => setShowResetPlansConfirm(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showResetSettingsConfirm}
+        title={t('settings.resetSettingsTitle')}
+        message={t('settings.resetSettingsConfirmMessage')}
+        confirmText={t('settings.resetSettingsBtn')}
+        isDangerous={false}
+        onConfirm={handleResetSettingsConfirmed}
+        onCancel={() => setShowResetSettingsConfirm(false)}
       />
 
       <ConfirmModal

@@ -7,11 +7,56 @@ import {
   DEFAULT_SETTINGS,
   type ThemeMode,
   type UserSettings,
+  buildDefaultCardSettings,
   loadSettings as loadSettingsFromDB,
   saveSettings as saveSettingsToDB,
 } from '../storage/settings';
 
 export const $settings = signal<UserSettings>(DEFAULT_SETTINGS);
+
+export async function resetCardSettingsAction(cardId: string): Promise<UserSettings> {
+  const defaultCards = buildDefaultCardSettings();
+  const targetDefault = defaultCards[cardId] || DEFAULT_BASE_SETTINGS;
+  const next: UserSettings = {
+    ...$settings.value,
+    cards: {
+      ...$settings.value.cards,
+      [cardId]: targetDefault,
+    },
+  };
+  $settings.value = next;
+  await saveSettingsToDB(next);
+  return next;
+}
+
+export async function resetGlobalSettingsAction(): Promise<UserSettings> {
+  const next: UserSettings = {
+    ...$settings.value,
+    global: { ...DEFAULT_SETTINGS.global },
+  };
+  $settings.value = next;
+  applyThemeToDocument(next.global.theme);
+  if (next.global.locale) {
+    i18n.setLocale(next.global.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
+
+export async function resetAllSettingsAction(): Promise<UserSettings> {
+  const defaultCards = buildDefaultCardSettings();
+  const next: UserSettings = {
+    global: { ...DEFAULT_SETTINGS.global },
+    cards: defaultCards,
+  };
+  $settings.value = next;
+  applyThemeToDocument(next.global.theme);
+  if (next.global.locale) {
+    i18n.setLocale(next.global.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
 
 export const $currentTheme = computed<ThemeMode>(() => $settings.value.global.theme || 'system');
 export const $currentLocale = computed<string>(() => $settings.value.global.locale || 'zh-CN');

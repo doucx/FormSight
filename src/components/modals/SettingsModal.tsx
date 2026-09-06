@@ -1,4 +1,4 @@
-import { Flame, Sliders, Target } from 'lucide-preact';
+import { Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
@@ -7,7 +7,8 @@ import {
   type UserSettings,
   getCardSettings,
 } from '../../storage/settings';
-import { updateCardSettings } from '../../stores/settingsStore';
+import { resetCardSettingsAction, updateCardSettings } from '../../stores/settingsStore';
+import { showToast } from '../../stores/toastStore';
 import type { CardDefinition } from '../../types/card';
 import { ModalShell } from '../common/ModalShell';
 import { Button } from '../ui/button';
@@ -34,12 +35,30 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
     onSave(next);
   };
 
+  const handleResetToDefault = async () => {
+    const next = await resetCardSettingsAction(card.id);
+    setCurrent(next);
+    onSave(next);
+    showToast(t('common.resetSuccessToast'), 'success');
+  };
+
   return (
     <ModalShell
       title={t('settingsModal.title', { title: cardTitle })}
       icon={Sliders}
       onClose={onClose}
       maxWidth="max-w-md"
+      headerAction={
+        <Button
+          variant="ghost"
+          size="iconSm"
+          onClick={handleResetToDefault}
+          title={t('common.resetToDefault')}
+          className="text-muted-foreground hover:text-primary transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
+      }
       footer={
         <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
           {t('common.complete')}

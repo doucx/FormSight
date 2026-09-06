@@ -1,4 +1,4 @@
-import { Sliders } from 'lucide-preact';
+import { RotateCcw, Sliders } from 'lucide-preact';
 import { useEffect, useState } from 'preact/hooks';
 import { useTranslation } from '../../core/i18n';
 import {
@@ -7,6 +7,7 @@ import {
   loadSettings,
   saveSettings,
 } from '../../storage/settings';
+import { resetGlobalSettingsAction } from '../../stores/settingsStore';
 import { ModalShell } from '../common/ModalShell';
 import type { ToastType } from '../common/Toast';
 import { DataGovernanceSection } from '../settings/sections/DataGovernanceSection';
@@ -65,12 +66,31 @@ export function GlobalSettingsModal({
     onDataChanged();
   };
 
+  const handleResetGlobal = async () => {
+    const next = await resetGlobalSettingsAction();
+    setSettings(next);
+    onSave?.(next);
+    onDataChanged();
+    showToast(t('common.resetSuccessToast'), 'success');
+  };
+
   return (
     <ModalShell
       title={t('settings.title')}
       icon={Sliders}
       onClose={onClose}
       maxWidth="max-w-md"
+      headerAction={
+        <Button
+          variant="ghost"
+          size="iconSm"
+          onClick={handleResetGlobal}
+          title={t('common.resetToDefault')}
+          className="text-muted-foreground hover:text-primary transition-colors"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </Button>
+      }
       footer={
         <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
           {t('common.complete')}
