@@ -29,6 +29,8 @@ export function useAppBootstrap(route: RouteLocation) {
       document.title = `${t('nav.discovery')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-editor') {
       document.title = `${t('plan.editPlan')} - ${t('common.appName')}`;
+    } else if (route.type === 'official-plans') {
+      document.title = `${t('officialPlans.title')} - ${t('common.appName')}`;
     } else if (route.type === 'plan-train') {
       document.title = `${activePlanName || t('plan.todayPlan')} - ${t('common.appName')}`;
     } else if (route.type === 'stats') {

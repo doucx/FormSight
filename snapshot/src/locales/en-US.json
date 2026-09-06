@@ -89,6 +89,20 @@
     "favoritedTooltip": "Favorited (Quick switch on home)",
     "unfavoritedTooltip": "Not favorited"
   },
+  "officialPlans": {
+    "title": "Official Routine Presets",
+    "subtitle": "Authoritative training sequences carefully crafted for perception, form, and color. Adopt them into your personal routine library for personalized customization.",
+    "browseBtn": "Official Library",
+    "myPlansBtn": "My Routines",
+    "adoptToLibrary": "Adopt into My Library",
+    "adoptAndStart": "Adopt & Start Now",
+    "adoptedBadge": "In Library",
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!",
+    "categoryWarmup": "Warmup",
+    "categoryForm": "Form & Proportion",
+    "categoryColor": "Color & Light",
+    "categoryAbstraction": "Abstraction & Rhythm"
+  },
   "templates": {
     "all_round_warmup": {
       "name": "Morning All-Round Warmup (50 trials)",

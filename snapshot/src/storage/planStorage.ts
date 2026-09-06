@@ -1,7 +1,7 @@
-import { DEFAULT_PLAN_TEMPLATES } from '../config/planTemplates';
+import { type OfficialPlanPreset, officialPlanRegistry } from '../config/plans';
 import { i18n } from '../core/i18n';
 import { registry } from '../core/registry';
-import type { PlanItem, PlanStorageState, PlanTemplate, TrainingPlan } from '../types/plan';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../types/plan';
 import { getDB } from './db/schema';
 
 export function createEmptyTrainingPlan(): TrainingPlan {
@@ -30,35 +30,44 @@ export const EMPTY_TRAINING_PLAN: TrainingPlan = {
   updatedAt: Date.now(),
 };
 
-function createPlanFromTemplateInternal(
-  template: PlanTemplate,
-  isBuiltin = false,
-  isFavorite = true,
+/**
+ * 以指定语言将官方预设模板实例化为用户的个人计划 (Fork 机制)
+ */
+export function forkOfficialPlan(
+  preset: OfficialPlanPreset,
+  locale: string = i18n.getLocale(),
 ): TrainingPlan {
-  const items: PlanItem[] = template.items
+  const dict =
+    preset.locales[locale as 'zh-CN' | 'en-US'] ||
+    preset.locales['zh-CN'] ||
+    preset.locales['en-US'];
+
+  const items: PlanItem[] = preset.items
     .filter((item) => Boolean(registry.getCardById(item.cardId)))
     .map((item, idx) => ({
-      id: `item_${template.id}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
+      id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
       cardId: item.cardId,
       targetTrials: item.targetTrials,
     }));
 
-  const templateName = i18n.t(`templates.${template.id}.name`) || template.name;
-  const templateDesc = i18n.t(`templates.${template.id}.desc`) || template.description;
-
   return {
-    id: `plan_${template.id}`,
-    name: templateName,
-    description: templateDesc,
+    id: `plan_forked_${preset.id}_${Date.now()}`,
+    name: dict?.name || preset.id,
+    description: dict?.description || '',
     items,
-    isFavorite,
-    isBuiltin,
+    isFavorite: true,
+    isBuiltin: false,
     updatedAt: Date.now(),
   };
 }
 
 export function getDefaultPlans(): TrainingPlan[] {
-  return DEFAULT_PLAN_TEMPLATES.map((tmpl) => createPlanFromTemplateInternal(tmpl, true, true));
+  const presets = officialPlanRegistry.getAllPresets();
+  const currentLocale = i18n.getLocale();
+  if (presets.length > 0) {
+    return presets.map((p) => forkOfficialPlan(p, currentLocale));
+  }
+  return [createEmptyTrainingPlan()];
 }
 
 let cachedPlanState: PlanStorageState = {

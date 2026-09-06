@@ -12,6 +12,7 @@ import type { TrainingPlan } from '../types/plan';
 interface PlanEditorViewProps {
   initialPlan: TrainingPlan;
   onExit: () => void;
+  onNavigateToOfficialPlans?: () => void;
   onSaveAndExit: (plan: TrainingPlan) => void;
   onStartPlanDirectly: (plan: TrainingPlan) => void;
   onPlanListChanged?: () => void;
@@ -21,6 +22,8 @@ const TRIAL_PRESETS = [10, 15, 20, 30, 50];
 
 export function PlanEditorView({
   initialPlan,
+  onExit: _onExit,
+  onNavigateToOfficialPlans,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -86,6 +89,7 @@ export function PlanEditorView({
         onPlanNameChange={setPlanNameInput}
         onNameSave={handleNameSave}
         onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onNavigateToOfficialPlans={onNavigateToOfficialPlans}
         onClonePlan={handleCloneCurrent}
         onExportPlan={handleExportPlan}
         onImportPlan={handleImportPlan}
@@ -110,6 +114,7 @@ export function PlanEditorView({
               handleCreateNewBlankPlan();
               setMobileTab('picker');
             }}
+            onNavigateToOfficialPlans={onNavigateToOfficialPlans}
             onClose={() => setShowPlanManager(false)}
             onToggleFavorite={handleToggleFavoriteItem}
             onDeletePlan={handleDeletePlanItem}

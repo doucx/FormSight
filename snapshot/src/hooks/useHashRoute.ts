@@ -14,6 +14,7 @@ export type RouteLocation =
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
   | { type: 'plan-train' }
   | { type: 'plan-editor' }
+  | { type: 'official-plans' }
   | { type: 'stats' }
   | { type: 'analytics'; cardId: string; tab?: string };
 
@@ -84,6 +85,10 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'plan-train' };
   }
 
+  if (segments[0] === 'official-plans' || (segments[0] === 'plans' && segments[1] === 'official')) {
+    return { type: 'official-plans' };
+  }
+
   if (segments[0] === 'plan-editor' || segments[0] === 'plans') {
     return { type: 'plan-editor' };
   }
@@ -147,6 +152,7 @@ function stringifyRoute(route: RouteLocation): string {
   }
   if (route.type === 'plan-train') return '#/plan-train';
   if (route.type === 'plan-editor') return '#/plan-editor';
+  if (route.type === 'official-plans') return '#/official-plans';
   if (route.type === 'stats') return '#/stats';
   if (route.type === 'analytics') {
     const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';

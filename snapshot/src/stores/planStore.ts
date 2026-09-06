@@ -1,8 +1,10 @@
 import { computed, signal } from '@preact/signals';
+import { type OfficialPlanPreset, officialPlanRegistry } from '../config/plans';
 import {
   EMPTY_TRAINING_PLAN,
   clonePlan as clonePlanFromStorage,
   deletePlan as deletePlanFromStorage,
+  forkOfficialPlan as forkOfficialPlanFromStorage,
   loadPlanStorageState,
   resetPlansToDefault as resetPlansFromStorage,
   savePlanStorageState,
@@ -93,4 +95,25 @@ export async function clonePlanAction(plan: TrainingPlan): Promise<TrainingPlan>
   $allPlans.value = nextState.plans;
   $activePlanId.value = cloned.id;
   return cloned;
+}
+
+export async function forkOfficialPlanAction(
+  preset: OfficialPlanPreset,
+  activateImmediately = true,
+): Promise<TrainingPlan> {
+  const newPlan = forkOfficialPlanFromStorage(preset);
+  const nextPlans = [newPlan, ...$allPlans.value];
+  const nextActiveId = activateImmediately ? newPlan.id : $activePlanId.value;
+
+  $allPlans.value = nextPlans;
+  if (activateImmediately) {
+    $activePlanId.value = newPlan.id;
+  }
+
+  await savePlanStorageState({
+    activePlanId: nextActiveId,
+    plans: nextPlans,
+  });
+
+  return newPlan;
 }

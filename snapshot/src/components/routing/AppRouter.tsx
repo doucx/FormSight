@@ -17,11 +17,13 @@ import {
 } from '../../stores/profileStore';
 import { $settings } from '../../stores/settingsStore';
 import { showToast } from '../../stores/toastStore';
+import { forkOfficialPlanAction } from '../../stores/planStore';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
 import { GlobalStatsView } from '../../views/GlobalStatsView';
 import { HomeView } from '../../views/HomeView';
+import { OfficialPlansView } from '../../views/OfficialPlansView';
 import { PlanEditorView } from '../../views/PlanEditorView';
 import { PlanTrainingView } from '../../views/PlanTrainingView';
 import { AppNavigation } from '../navigation/AppNavigation';
@@ -55,6 +57,7 @@ export function AppRouter({
     route.type === 'home' ||
     route.type === 'discovery' ||
     route.type === 'plan-editor' ||
+    route.type === 'official-plans' ||
     route.type === 'stats';
 
   const renderMainContent = () => {
@@ -100,6 +103,7 @@ export function AppRouter({
         <PlanEditorView
           initialPlan={currentPlan}
           onExit={() => navigate(lastHomeRoute)}
+          onNavigateToOfficialPlans={() => navigate({ type: 'official-plans' })}
           onPlanListChanged={refreshAppData}
           onSaveAndExit={async (newPlan) => {
             await savePlanAction(newPlan);
@@ -111,6 +115,26 @@ export function AppRouter({
             await savePlanAction(newPlan);
             await refreshAppData();
             navigate({ type: 'plan-train' });
+          }}
+        />
+      );
+    }
+
+    if (route.type === 'official-plans') {
+      return (
+        <OfficialPlansView
+          userPlans={allPlansList}
+          onExit={() => navigate(lastHomeRoute)}
+          onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
+          onAdoptPlan={async (preset, startImmediately) => {
+            const adopted = await forkOfficialPlanAction(preset, startImmediately);
+            await refreshAppData();
+            showToast(t('officialPlans.adoptedToast', { name: adopted.name }), 'success');
+            if (startImmediately) {
+              navigate({ type: 'plan-train' });
+            } else {
+              navigate({ type: 'plan-editor' });
+            }
           }}
         />
       );
