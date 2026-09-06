@@ -28,13 +28,15 @@ import {
 
 export interface UsePlanEditorStateOptions {
   initialPlan: TrainingPlan;
-  onSaveAndExit: (plan: TrainingPlan) => void;
+  onSave?: (plan: TrainingPlan) => void;
+  onSaveAndExit?: (plan: TrainingPlan) => void;
   onStartPlanDirectly: (plan: TrainingPlan) => void;
   onPlanListChanged?: () => void;
 }
 
 export function usePlanEditorState({
   initialPlan,
+  onSave,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -210,7 +212,14 @@ export function usePlanEditorState({
       showToast(t('plan.exportedJsonToast'), 'success');
     },
     handleImportPlan,
-    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveOnly: async () => {
+      const saved = await persist();
+      if (onSave) {
+        onSave(saved);
+      } else if (onSaveAndExit) {
+        onSaveAndExit(saved);
+      }
+    },
     handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
   };
 }

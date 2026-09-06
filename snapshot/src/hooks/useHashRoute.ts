@@ -8,11 +8,23 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 
+export type ReturnToLocation =
+  | 'home'
+  | 'discovery'
+  | 'plan-editor'
+  | 'official-plans'
+  | 'stats';
+
 export type RouteLocation =
   | { type: 'home' }
   | { type: 'discovery'; query?: CardQueryOptions }
-  | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
-  | { type: 'plan-train' }
+  | {
+      type: 'train';
+      cardId: string;
+      sessionType: 'training' | 'benchmark';
+      returnTo?: ReturnToLocation;
+    }
+  | { type: 'plan-train'; returnTo?: ReturnToLocation }
   | { type: 'plan-editor' }
   | { type: 'official-plans' }
   | { type: 'stats' }
@@ -82,7 +94,9 @@ function parseHash(hash: string): RouteLocation {
   const queryParams = new URLSearchParams(queryPart || '');
 
   if (segments[0] === 'plan-train') {
-    return { type: 'plan-train' };
+    const fromParam = queryParams.get('from') || queryParams.get('returnTo');
+    const returnTo = fromParam as ReturnToLocation | undefined;
+    return { type: 'plan-train', returnTo };
   }
 
   if (segments[0] === 'official-plans' || (segments[0] === 'plans' && segments[1] === 'official')) {
@@ -111,7 +125,9 @@ function parseHash(hash: string): RouteLocation {
   if (segments[0] === 'train' && segments[1]) {
     const cardId = segments[1];
     const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
-    return { type: 'train', cardId, sessionType };
+    const fromParam = queryParams.get('from') || queryParams.get('returnTo');
+    const returnTo = fromParam as ReturnToLocation | undefined;
+    return { type: 'train', cardId, sessionType, returnTo };
   }
 
   return { type: 'home' };
@@ -150,7 +166,9 @@ function stringifyRoute(route: RouteLocation): string {
     const qs = params.toString();
     return qs ? `#/discovery?${qs}` : '#/discovery';
   }
-  if (route.type === 'plan-train') return '#/plan-train';
+  if (route.type === 'plan-train') {
+    return route.returnTo ? `#/plan-train?from=${encodeURIComponent(route.returnTo)}` : '#/plan-train';
+  }
   if (route.type === 'plan-editor') return '#/plan-editor';
   if (route.type === 'official-plans') return '#/official-plans';
   if (route.type === 'stats') return '#/stats';
@@ -158,7 +176,14 @@ function stringifyRoute(route: RouteLocation): string {
     const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';
     return `#/analytics/${route.cardId}${qs}`;
   }
-  if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
+  if (route.type === 'train') {
+    const params = new URLSearchParams();
+    params.set('type', route.sessionType);
+    if (route.returnTo) {
+      params.set('from', route.returnTo);
+    }
+    return `#/train/${route.cardId}?${params.toString()}`;
+  }
   return '#/';
 }
 

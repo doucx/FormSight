@@ -1,191 +1,231 @@
-用户在计划库中点击收藏（或切换收藏）后，今日工作台无法即时同步更新，根本原因是计划编辑器组件内部的收藏切换操作（`handleToggleFavoriteItem`）以及删除、切换等操作直接调用了底层的 IndexedDB 存取函数，而没有同步更新 `@preact/signals` 的全局响应式状态 `$allPlans` 和 `$activePlanId`；同时 `AppRouter` 传入的 `onPlanListChanged` 仅刷新了答题与能力档案，未重新同步计划 Store。这导致今日工作台持有的始终是旧的计划列表引用，必须刷新页面重新执行 `main.tsx` 的 `initPlanStore` 才能获取最新数据。
+我们将为路由层引入结构化的 `returnTo` 上下文追踪机制，并彻底解耦计划编辑器的「原地存盘」与「保存退出」行为。
 
-我已制定修复方案，将操作链路全面接入 `planStore` 的响应式 Actions，并在计划变动时同步刷新全局信号状态，实现无需刷新页面的毫秒级即时联动。
-
-## [WIP] fix: 同步计划库收藏及选择状态到全局响应式 Store 以即时更新今日工作台
-
-### 错误分析
-
-1. **状态流脱节**：在 `src/components/plan/editor/usePlanEditorState.ts` 中，`handleToggleFavoriteItem` 直接调用了 `storage/planStorage.ts` 的 `togglePlanFavorite`，仅更新了 IndexedDB，而未触发 `src/stores/planStore.ts` 中的 `$allPlans` 和 `$activePlanId` 信号更新。
-2. **回调未覆盖计划 Store**：在 `src/components/routing/AppRouter.tsx` 中，传递给 `PlanEditorView` 的 `onPlanListChanged` 回调仅调用了 `refreshAppData`（更新 profiles 和 summaries），遗漏了对 `initPlanStore` 的调用。
-3. **主页被动滞后**：今日工作台（`HomeView`）依赖 `$allPlans` 和 `$activePlan` 计算今日展示的计划及多重收藏下拉选择菜单（`favoritePlans`），由于全局信号未发射变化通知，主页无法感知变更，必须手动刷新整个页面重新执行应用初始化逻辑。
+## [WIP] feat: 引入结构化 returnTo 路由溯源机制并解耦计划存盘与退出行为
 
 ### 用户需求
 
-在「计划中心 / 计划库 - 切换正在编辑的训练计划」抽屉中，点击计划卡片的「已收藏 / 收藏」图标或切换计划后，今日工作台（HomeView）应当无需手动刷新页面，立即实时感知并同步更新展示最新的已收藏训练计划与下拉切换菜单。
+1. 用户在计划编排界面（`#/plan-editor`）点击顶部工具栏的「保存」按钮时，仅在本地及数据库完成存盘并弹出成功提示，不再自动跳转回今日工作台（`#/`）。
+2. 用户在计划编排界面点击「开始今日训练」进入训练流后，在训练结束或中途点击返回退出时，能够准确返回 `#/plan-editor` 编排现场，而不是被强制归拢到 `#/`。
+3. 扩展路由状态系统，使 `RouteLocation` 具备结构化的来源上下文跟踪与 URL Query 参数双向序列化能力。
 
 ### 评论
 
-这是一个关键的响应式状态一致性体验问题。由于 FormSight 采用了轻量且高性能的 Preact Signals 状态架构，数据持久化层（IndexedDB）与响应式信号层（Signals）之间必须保持严格的单向或双向绑定同步，避免任何脱离 Store 独立修改存储导致“UI 幽灵滞后”的缺陷。
+这是一个十分标准的任务路由栈演进需求。此前的设计仅支持中心辐射型的硬编码退出模型，导致多级心流被强制打断。通过在 `RouteLocation` 中注入 `returnTo` 契约，并在序列化层与 URL 参数同步，能够以极低的代码成本赋予轻量 Hash 路由感知用户来路上下文的能力，同时使业务组件的持久化与导航动作彻底解耦。
 
 ### 目标
 
-1. 在 `src/stores/planStore.ts` 中，让 `togglePlanFavoriteAction` 与 `deletePlanAction` 返回最新的 `PlanStorageState`，便于调用方消费。
-2. 在 `src/components/plan/editor/usePlanEditorState.ts` 中，将 `handleToggleFavoriteItem`、`handleDeletePlanItem`、`handleCloneCurrent`、`handleSelectPlanFromList` 以及 `persist` 全面接入 `planStore` 的响应式动作或状态同步，确保用户操作时立即触发 `$allPlans` 与 `$activePlanId` 变更。
-3. 在 `src/components/routing/AppRouter.tsx` 中，将 `onPlanListChanged` 拓展为同时刷新计划 Store（`initPlanStore`）与用户档案（`refreshAppData`）。
+1. 在 `src/hooks/useHashRoute.ts` 中定义 `ReturnToLocation` 类型并扩展 `RouteLocation`，支持 `plan-train` 与 `train` 的 `returnTo` 字段；在 `parseHash` 与 `stringifyRoute` 中完成 `from` 参数的解析与拼接。
+2. 在 `src/components/plan/editor/usePlanEditorState.ts` 与 `src/views/PlanEditorView.tsx` 中新增并优先调用 `onSave`（原地保存）回调，保留 `onSaveAndExit` 作为备用。
+3. 在 `src/components/routing/AppRouter.tsx` 中，在 `plan-editor` 触发训练时传入 `returnTo: 'plan-editor'`，并为 `plan-train` 提供基于 `returnTo` 的智能回退路由解析。
 
 ### 基本原理
 
-通过将 `usePlanEditorState` 中的数据变更动作从直接调用底层持久层函数迁移至调用 `planStore` 导出的 Action（如 `togglePlanFavoriteAction`、`setActivePlanAction` 等），在更新 IndexedDB 的同时直接驱动 `$allPlans` 和 `$activePlanId` 信号赋值。依赖该信号的 `HomeView` 和 `PlanHeroCard` 将在同一事件循环帧内被自动触发重渲染，实现零刷新无缝更新。
+1. **路由栈溯源**：在哈希参数中通过 `#/plan-train?from=plan-editor` 显式记录前驱路径意图，即使用户直接复制链接或刷新页面，依然能无损重建回退目标。
+2. **动作语义清晰化**：将 `PlanEditorHeader` 的「保存」按钮行为与路由跳转完全分离，实现“保存即存盘、完成退出即跳转”的单一职责规范。
 
 ### 标签
 
-#intent/fix #flow/ready #priority/high #comp/runtime #concept/state #scope/ux #ai/instruct #task/domain/ui #task/object/plan-store-sync #task/action/fix #task/state/begin
+#intent/build #flow/ready #priority/high #comp/runtime #concept/navigation #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/navigation-stack #task/action/feature #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 优化 planStore 的 Action 返回值并支持外部同步
+#### Acts 1: 在 useHashRoute 中扩展 returnTo 契约与序列化
 
-修改 `src/stores/planStore.ts`，让 `togglePlanFavoriteAction` 和 `deletePlanAction` 返回更新后的 `PlanStorageState`。
-
-~~~~~act
-patch_file
-src/stores/planStore.ts
-~~~~~
-~~~~~typescript
-export async function togglePlanFavoriteAction(planId: string): Promise<void> {
-  const nextState = await toggleFavoriteFromStorage(planId);
-  $allPlans.value = nextState.plans;
-  $activePlanId.value = nextState.activePlanId;
-}
-
-export async function deletePlanAction(planId: string): Promise<void> {
-  const nextState = await deletePlanFromStorage(planId);
-  $allPlans.value = nextState.plans;
-  $activePlanId.value = nextState.activePlanId;
-}
-~~~~~
-~~~~~typescript
-export async function togglePlanFavoriteAction(planId: string): Promise<PlanStorageState> {
-  const nextState = await toggleFavoriteFromStorage(planId);
-  $allPlans.value = nextState.plans;
-  $activePlanId.value = nextState.activePlanId;
-  return nextState;
-}
-
-export async function deletePlanAction(planId: string): Promise<PlanStorageState> {
-  const nextState = await deletePlanFromStorage(planId);
-  $allPlans.value = nextState.plans;
-  $activePlanId.value = nextState.activePlanId;
-  return nextState;
-}
-~~~~~
-
-#### Acts 2: 修复 usePlanEditorState 中的响应式同步逻辑
-
-在 `src/components/plan/editor/usePlanEditorState.ts` 中接入 `planStore` 的响应式 Actions，确保收藏切换、选择计划、复制、删除与导入均能实时反映到全局 Store。
+在 `src/hooks/useHashRoute.ts` 中引入 `ReturnToLocation`，并在解析与生成 URL Hash 时处理 `from` 参数。
 
 ~~~~~act
 patch_file
-src/components/plan/editor/usePlanEditorState.ts
+src/hooks/useHashRoute.ts
 ~~~~~
 ~~~~~typescript
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { useTranslation } from '../../../core/i18n';
-import {
-  clonePlan,
-  deletePlan,
-  exportPlanToJson,
-  getPlanStorageStateSnapshot,
-  importPlanFromJson,
-  loadPlanStorageState,
-  savePlanStorageState,
-  togglePlanFavorite,
-} from '../../../storage/planStorage';
-import { showToast } from '../../../stores/toastStore';
-import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+export type RouteLocation =
+  | { type: 'home' }
+  | { type: 'discovery'; query?: CardQueryOptions }
+  | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
+  | { type: 'plan-train' }
+  | { type: 'plan-editor' }
+  | { type: 'official-plans' }
+  | { type: 'stats' }
+  | { type: 'analytics'; cardId: string; tab?: string };
 ~~~~~
 ~~~~~typescript
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { useTranslation } from '../../../core/i18n';
-import {
-  exportPlanToJson,
-  getPlanStorageStateSnapshot,
-  importPlanFromJson,
-  loadPlanStorageState,
-  savePlanStorageState,
-} from '../../../storage/planStorage';
-import {
-  clonePlanAction,
-  deletePlanAction,
-  initPlanStore,
-  setActivePlanAction,
-  togglePlanFavoriteAction,
-} from '../../../stores/planStore';
-import { showToast } from '../../../stores/toastStore';
-import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
-~~~~~
+export type ReturnToLocation =
+  | 'home'
+  | 'discovery'
+  | 'plan-editor'
+  | 'official-plans'
+  | 'stats';
 
-~~~~~act
-patch_file
-src/components/plan/editor/usePlanEditorState.ts
-~~~~~
-~~~~~typescript
-  const handleImportPlan = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      target.files[0].text().then(async (text) => {
-        const imported = await importPlanFromJson(text);
-        if (imported) {
-          const nextState = await loadPlanStorageState();
-          setStorageState(nextState);
-          setCurrentPlan(imported);
-          setPlanNameInput(imported.name);
-          setShowPlanManager(false);
-          onPlanListChanged?.();
-          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }), 'success');
-        } else {
-          showToast(t('plan.importedPlanFailToast'), 'error');
-        }
-      });
+export type RouteLocation =
+  | { type: 'home' }
+  | { type: 'discovery'; query?: CardQueryOptions }
+  | {
+      type: 'train';
+      cardId: string;
+      sessionType: 'training' | 'benchmark';
+      returnTo?: ReturnToLocation;
     }
-  };
+  | { type: 'plan-train'; returnTo?: ReturnToLocation }
+  | { type: 'plan-editor' }
+  | { type: 'official-plans' }
+  | { type: 'stats' }
+  | { type: 'analytics'; cardId: string; tab?: string };
+~~~~~
 
-  const persist = async (): Promise<TrainingPlan> => {
-    const sanitized = sanitizePlan(currentPlan, planNameInput);
-    const updatedPlans = storageState.plans.some((p) => p.id === sanitized.id)
-      ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
-      : [sanitized, ...storageState.plans];
-
-    await savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
-    onPlanListChanged?.();
-    return sanitized;
-  };
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
 ~~~~~
 ~~~~~typescript
-  const handleImportPlan = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    if (target.files?.[0]) {
-      target.files[0].text().then(async (text) => {
-        const imported = await importPlanFromJson(text);
-        if (imported) {
-          const nextState = await initPlanStore();
-          setStorageState(nextState);
-          setCurrentPlan(imported);
-          setPlanNameInput(imported.name);
-          setShowPlanManager(false);
-          onPlanListChanged?.();
-          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }), 'success');
-        } else {
-          showToast(t('plan.importedPlanFailToast'), 'error');
-        }
-      });
+  if (segments[0] === 'plan-train') {
+    return { type: 'plan-train' };
+  }
+
+  if (segments[0] === 'official-plans' || (segments[0] === 'plans' && segments[1] === 'official')) {
+    return { type: 'official-plans' };
+  }
+
+  if (segments[0] === 'plan-editor' || segments[0] === 'plans') {
+    return { type: 'plan-editor' };
+  }
+
+  if (segments[0] === 'stats') {
+    return { type: 'stats' };
+  }
+
+  if (segments[0] === 'discovery') {
+    const discoveryQuery = parseHomeQuery(queryParams);
+    return { type: 'discovery', query: discoveryQuery };
+  }
+
+  if (segments[0] === 'analytics' && segments[1]) {
+    const cardId = segments[1];
+    const tab = queryParams.get('tab') || undefined;
+    return { type: 'analytics', cardId, tab };
+  }
+
+  if (segments[0] === 'train' && segments[1]) {
+    const cardId = segments[1];
+    const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
+    return { type: 'train', cardId, sessionType };
+  }
+~~~~~
+~~~~~typescript
+  if (segments[0] === 'plan-train') {
+    const fromParam = queryParams.get('from') || queryParams.get('returnTo');
+    const returnTo = fromParam as ReturnToLocation | undefined;
+    return { type: 'plan-train', returnTo };
+  }
+
+  if (segments[0] === 'official-plans' || (segments[0] === 'plans' && segments[1] === 'official')) {
+    return { type: 'official-plans' };
+  }
+
+  if (segments[0] === 'plan-editor' || segments[0] === 'plans') {
+    return { type: 'plan-editor' };
+  }
+
+  if (segments[0] === 'stats') {
+    return { type: 'stats' };
+  }
+
+  if (segments[0] === 'discovery') {
+    const discoveryQuery = parseHomeQuery(queryParams);
+    return { type: 'discovery', query: discoveryQuery };
+  }
+
+  if (segments[0] === 'analytics' && segments[1]) {
+    const cardId = segments[1];
+    const tab = queryParams.get('tab') || undefined;
+    return { type: 'analytics', cardId, tab };
+  }
+
+  if (segments[0] === 'train' && segments[1]) {
+    const cardId = segments[1];
+    const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
+    const fromParam = queryParams.get('from') || queryParams.get('returnTo');
+    const returnTo = fromParam as ReturnToLocation | undefined;
+    return { type: 'train', cardId, sessionType, returnTo };
+  }
+~~~~~
+
+~~~~~act
+patch_file
+src/hooks/useHashRoute.ts
+~~~~~
+~~~~~typescript
+  if (route.type === 'plan-train') return '#/plan-train';
+  if (route.type === 'plan-editor') return '#/plan-editor';
+  if (route.type === 'official-plans') return '#/official-plans';
+  if (route.type === 'stats') return '#/stats';
+  if (route.type === 'analytics') {
+    const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';
+    return `#/analytics/${route.cardId}${qs}`;
+  }
+  if (route.type === 'train') return `#/train/${route.cardId}?type=${route.sessionType}`;
+~~~~~
+~~~~~typescript
+  if (route.type === 'plan-train') {
+    return route.returnTo ? `#/plan-train?from=${encodeURIComponent(route.returnTo)}` : '#/plan-train';
+  }
+  if (route.type === 'plan-editor') return '#/plan-editor';
+  if (route.type === 'official-plans') return '#/official-plans';
+  if (route.type === 'stats') return '#/stats';
+  if (route.type === 'analytics') {
+    const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';
+    return `#/analytics/${route.cardId}${qs}`;
+  }
+  if (route.type === 'train') {
+    const params = new URLSearchParams();
+    params.set('type', route.sessionType);
+    if (route.returnTo) {
+      params.set('from', route.returnTo);
     }
-  };
+    return `#/train/${route.cardId}?${params.toString()}`;
+  }
+~~~~~
 
-  const persist = async (): Promise<TrainingPlan> => {
-    const sanitized = sanitizePlan(currentPlan, planNameInput);
-    const updatedPlans = storageState.plans.some((p) => p.id === sanitized.id)
-      ? storageState.plans.map((p) => (p.id === sanitized.id ? sanitized : p))
-      : [sanitized, ...storageState.plans];
+#### Acts 2: 在计划编辑器状态机中解耦 onSave 与 onSaveAndExit
 
-    await savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
-    await initPlanStore();
-    onPlanListChanged?.();
-    return sanitized;
-  };
+修改 `src/components/plan/editor/usePlanEditorState.ts`，为配置项增加可选的 `onSave` 钩子，并在点击「保存」时优先执行原地保存。
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~typescript
+export interface UsePlanEditorStateOptions {
+  initialPlan: TrainingPlan;
+  onSaveAndExit: (plan: TrainingPlan) => void;
+  onStartPlanDirectly: (plan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+export function usePlanEditorState({
+  initialPlan,
+  onSaveAndExit,
+  onStartPlanDirectly,
+  onPlanListChanged,
+}: UsePlanEditorStateOptions) {
+~~~~~
+~~~~~typescript
+export interface UsePlanEditorStateOptions {
+  initialPlan: TrainingPlan;
+  onSave?: (plan: TrainingPlan) => void;
+  onSaveAndExit?: (plan: TrainingPlan) => void;
+  onStartPlanDirectly: (plan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+export function usePlanEditorState({
+  initialPlan,
+  onSave,
+  onSaveAndExit,
+  onStartPlanDirectly,
+  onPlanListChanged,
+}: UsePlanEditorStateOptions) {
 ~~~~~
 
 ~~~~~act
@@ -193,176 +233,208 @@ patch_file
 src/components/plan/editor/usePlanEditorState.ts
 ~~~~~
 ~~~~~typescript
-    fileInputRef,
-    handleSelectPlanFromList: (p: TrainingPlan) => {
-      setCurrentPlan({ ...p });
-      setPlanNameInput(p.name);
-      setIsEditingName(false);
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'), 'success');
     },
-    handleNameSave,
-    handleBatchUpdateTrials: (trials: number) => {
-      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
-      showToast(t('plan.batchSetTrialsToast', { trials }), 'info');
-    },
-    handleAddItem: (cardId: string) =>
-      updatePlanItems((items) => [...items, createPlanItem(cardId)]),
-    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
-    handleMoveItem: (idx: number, dir: 'up' | 'down') =>
-      updatePlanItems((items) => movePlanItem(items, idx, dir)),
-    handleUpdateTrials: (id: string, trials: number) =>
-      updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
-    handleClearAll: () => updatePlanItems(() => []),
-    handleCreateNewBlankPlan,
-    handleCloneCurrent: async () => {
-      const cloned = await clonePlan(currentPlan);
-      const nextState = await loadPlanStorageState();
-      setStorageState(nextState);
-      setCurrentPlan(cloned);
-      setPlanNameInput(cloned.name);
-      onPlanListChanged?.();
-      showToast(t('plan.clonedPlanToast', { name: cloned.name }), 'success');
-    },
-    handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
-      e.stopPropagation();
-      const nextState = await togglePlanFavorite(planId);
-      setStorageState(nextState);
-      if (currentPlan.id === planId) {
-        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
-      }
-      onPlanListChanged?.();
-    },
-    handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
-      e.stopPropagation();
-      if (storageState.plans.length <= 1) {
-        showToast(t('plan.minOnePlanToast'), 'error');
-        return;
-      }
-      const nextState = await deletePlan(planId);
-      setStorageState(nextState);
-      if (currentPlan.id === planId) {
-        const fallback = nextState.plans[0];
-        setCurrentPlan(fallback);
-        setPlanNameInput(fallback.name);
-      }
-      onPlanListChanged?.();
-      showToast(t('plan.planDeletedToast'), 'info');
-    },
+    handleImportPlan,
+    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
+  };
+}
 ~~~~~
 ~~~~~typescript
-    fileInputRef,
-    handleSelectPlanFromList: async (p: TrainingPlan) => {
-      setCurrentPlan({ ...p });
-      setPlanNameInput(p.name);
-      setIsEditingName(false);
-      await setActivePlanAction(p.id);
-      onPlanListChanged?.();
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'), 'success');
     },
-    handleNameSave,
-    handleBatchUpdateTrials: (trials: number) => {
-      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
-      showToast(t('plan.batchSetTrialsToast', { trials }), 'info');
-    },
-    handleAddItem: (cardId: string) =>
-      updatePlanItems((items) => [...items, createPlanItem(cardId)]),
-    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
-    handleMoveItem: (idx: number, dir: 'up' | 'down') =>
-      updatePlanItems((items) => movePlanItem(items, idx, dir)),
-    handleUpdateTrials: (id: string, trials: number) =>
-      updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
-    handleClearAll: () => updatePlanItems(() => []),
-    handleCreateNewBlankPlan,
-    handleCloneCurrent: async () => {
-      const cloned = await clonePlanAction(currentPlan);
-      const nextState = await loadPlanStorageState();
-      setStorageState(nextState);
-      setCurrentPlan(cloned);
-      setPlanNameInput(cloned.name);
-      onPlanListChanged?.();
-      showToast(t('plan.clonedPlanToast', { name: cloned.name }), 'success');
-    },
-    handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
-      e.stopPropagation();
-      const nextState = await togglePlanFavoriteAction(planId);
-      setStorageState(nextState);
-      if (currentPlan.id === planId) {
-        const updated = nextState.plans.find((p) => p.id === planId);
-        setCurrentPlan((prev) => ({
-          ...prev,
-          isFavorite: updated?.isFavorite ?? !(prev.isFavorite ?? true),
-        }));
+    handleImportPlan,
+    handleSaveOnly: async () => {
+      const saved = await persist();
+      if (onSave) {
+        onSave(saved);
+      } else if (onSaveAndExit) {
+        onSaveAndExit(saved);
       }
-      onPlanListChanged?.();
     },
-    handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
-      e.stopPropagation();
-      if (storageState.plans.length <= 1) {
-        showToast(t('plan.minOnePlanToast'), 'error');
-        return;
-      }
-      const nextState = await deletePlanAction(planId);
-      setStorageState(nextState);
-      if (currentPlan.id === planId) {
-        const fallback = nextState.plans[0];
-        setCurrentPlan(fallback);
-        setPlanNameInput(fallback.name);
-      }
-      onPlanListChanged?.();
-      showToast(t('plan.planDeletedToast'), 'info');
-    },
+    handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
+  };
+}
 ~~~~~
 
-#### Acts 3: 在 AppRouter 中连接全量计划重新加载
+#### Acts 3: 在 PlanEditorView 暴露 onSave 接口
 
-修改 `src/components/routing/AppRouter.tsx`，确保 `onPlanListChanged` 同时执行 `initPlanStore()` 和 `refreshAppData()`。
+修改 `src/views/PlanEditorView.tsx`，接收并向下传递 `onSave` 属性。
+
+~~~~~act
+patch_file
+src/views/PlanEditorView.tsx
+~~~~~
+~~~~~typescript
+interface PlanEditorViewProps {
+  initialPlan: TrainingPlan;
+  onExit: () => void;
+  onNavigateToOfficialPlans?: () => void;
+  onSaveAndExit: (plan: TrainingPlan) => void;
+  onStartPlanDirectly: (plan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+const TRIAL_PRESETS = [10, 15, 20, 30, 50];
+
+export function PlanEditorView({
+  initialPlan,
+  onExit: _onExit,
+  onNavigateToOfficialPlans,
+  onSaveAndExit,
+  onStartPlanDirectly,
+  onPlanListChanged,
+}: PlanEditorViewProps) {
+  const { t } = useTranslation();
+  const [mobileTab, setMobileTab] = useState<'stages' | 'picker'>(
+    initialPlan.items.length === 0 ? 'picker' : 'stages',
+  );
+
+  const {
+    storageState,
+    currentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    isNewPlan,
+    totalTrials,
+    estimatedMin,
+    fileInputRef,
+    handleSelectPlanFromList,
+    handleNameSave,
+    handleBatchUpdateTrials,
+    handleAddItem,
+    handleRemoveItem,
+    handleMoveItem,
+    handleUpdateTrials,
+    handleClearAll,
+    handleCreateNewBlankPlan,
+    handleCloneCurrent,
+    handleToggleFavoriteItem,
+    handleDeletePlanItem,
+    handleExportPlan,
+    handleImportPlan,
+    handleSaveOnly,
+    handleSaveAndStart,
+  } = usePlanEditorState({
+    initialPlan,
+    onSaveAndExit,
+    onStartPlanDirectly,
+    onPlanListChanged,
+  });
+~~~~~
+~~~~~typescript
+interface PlanEditorViewProps {
+  initialPlan: TrainingPlan;
+  onExit: () => void;
+  onNavigateToOfficialPlans?: () => void;
+  onSave?: (plan: TrainingPlan) => void;
+  onSaveAndExit?: (plan: TrainingPlan) => void;
+  onStartPlanDirectly: (plan: TrainingPlan) => void;
+  onPlanListChanged?: () => void;
+}
+
+const TRIAL_PRESETS = [10, 15, 20, 30, 50];
+
+export function PlanEditorView({
+  initialPlan,
+  onExit: _onExit,
+  onNavigateToOfficialPlans,
+  onSave,
+  onSaveAndExit,
+  onStartPlanDirectly,
+  onPlanListChanged,
+}: PlanEditorViewProps) {
+  const { t } = useTranslation();
+  const [mobileTab, setMobileTab] = useState<'stages' | 'picker'>(
+    initialPlan.items.length === 0 ? 'picker' : 'stages',
+  );
+
+  const {
+    storageState,
+    currentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    isNewPlan,
+    totalTrials,
+    estimatedMin,
+    fileInputRef,
+    handleSelectPlanFromList,
+    handleNameSave,
+    handleBatchUpdateTrials,
+    handleAddItem,
+    handleRemoveItem,
+    handleMoveItem,
+    handleUpdateTrials,
+    handleClearAll,
+    handleCreateNewBlankPlan,
+    handleCloneCurrent,
+    handleToggleFavoriteItem,
+    handleDeletePlanItem,
+    handleExportPlan,
+    handleImportPlan,
+    handleSaveOnly,
+    handleSaveAndStart,
+  } = usePlanEditorState({
+    initialPlan,
+    onSave,
+    onSaveAndExit,
+    onStartPlanDirectly,
+    onPlanListChanged,
+  });
+~~~~~
+
+#### Acts 4: 在 AppRouter 中配置原地存盘与上下文精准回跳
+
+修改 `src/components/routing/AppRouter.tsx`：
+1. `PlanEditorView` 接入 `onSave`：持久化并弹出 Toast，留在当前页面。
+2. `onStartPlanDirectly` 跳转时携带 `returnTo: 'plan-editor'`。
+3. `PlanTrainingView` 退出时，依据 `route.returnTo` 解析精准目标，支持平滑返回 `#/plan-editor`。
 
 ~~~~~act
 patch_file
 src/components/routing/AppRouter.tsx
 ~~~~~
 ~~~~~typescript
-import {
-  $activePlan,
-  $allPlans,
-  savePlanAction,
-  setActivePlanAction,
-} from '../../stores/planStore';
+import { useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { RouteLocation } from '../../hooks/useHashRoute';
 ~~~~~
 ~~~~~typescript
-import {
-  $activePlan,
-  $allPlans,
-  initPlanStore,
-  savePlanAction,
-  setActivePlanAction,
-} from '../../stores/planStore';
+import { useTranslation } from '../../core/i18n';
+import { registry } from '../../core/registry';
+import type { ReturnToLocation, RouteLocation } from '../../hooks/useHashRoute';
 ~~~~~
 
 ~~~~~act
 patch_file
 src/components/routing/AppRouter.tsx
-~~~~~
-~~~~~typescript
-    if (route.type === 'plan-editor') {
-      return (
-        <PlanEditorView
-          initialPlan={currentPlan}
-          onExit={() => navigate(lastHomeRoute)}
-          onNavigateToOfficialPlans={() => navigate({ type: 'official-plans' })}
-          onPlanListChanged={refreshAppData}
-          onSaveAndExit={async (newPlan) => {
-            await savePlanAction(newPlan);
-            await refreshAppData();
-            showToast(t('common.planUpdatedToast'), 'success');
-            navigate(lastHomeRoute);
-          }}
-          onStartPlanDirectly={async (newPlan) => {
-            await savePlanAction(newPlan);
-            await refreshAppData();
-            navigate({ type: 'plan-train' });
-          }}
-        />
-      );
-    }
 ~~~~~
 ~~~~~typescript
     if (route.type === 'plan-editor') {
@@ -389,8 +461,84 @@ src/components/routing/AppRouter.tsx
       );
     }
 ~~~~~
+~~~~~typescript
+    if (route.type === 'plan-editor') {
+      return (
+        <PlanEditorView
+          initialPlan={currentPlan}
+          onExit={() => navigate(lastHomeRoute)}
+          onNavigateToOfficialPlans={() => navigate({ type: 'official-plans' })}
+          onPlanListChanged={async () => {
+            await Promise.all([initPlanStore(), refreshAppData()]);
+          }}
+          onSave={async (newPlan) => {
+            await savePlanAction(newPlan);
+            await refreshAppData();
+            showToast(t('common.planUpdatedToast'), 'success');
+          }}
+          onSaveAndExit={async (newPlan) => {
+            await savePlanAction(newPlan);
+            await refreshAppData();
+            showToast(t('common.planUpdatedToast'), 'success');
+            navigate(lastHomeRoute);
+          }}
+          onStartPlanDirectly={async (newPlan) => {
+            await savePlanAction(newPlan);
+            await refreshAppData();
+            navigate({ type: 'plan-train', returnTo: 'plan-editor' });
+          }}
+        />
+      );
+    }
+~~~~~
+
+~~~~~act
+patch_file
+src/components/routing/AppRouter.tsx
+~~~~~
+~~~~~typescript
+  if (route.type === 'plan-train') {
+    return (
+      <PlanTrainingView
+        key={`plan-train-${currentPlan.id}`}
+        plan={currentPlan}
+        settings={currentSettings}
+        onExit={async () => {
+          await refreshAppData();
+          navigate(lastHomeRoute);
+        }}
+      />
+    );
+  }
+~~~~~
+~~~~~typescript
+  const resolveTargetRoute = (returnTo?: ReturnToLocation): RouteLocation => {
+    if (returnTo === 'plan-editor') return { type: 'plan-editor' };
+    if (returnTo === 'official-plans') return { type: 'official-plans' };
+    if (returnTo === 'discovery') return { type: 'discovery' };
+    if (returnTo === 'stats') return { type: 'stats' };
+    return lastHomeRoute;
+  };
+
+  if (route.type === 'plan-train') {
+    return (
+      <PlanTrainingView
+        key={`plan-train-${currentPlan.id}`}
+        plan={currentPlan}
+        settings={currentSettings}
+        onExit={async () => {
+          await refreshAppData();
+          navigate(resolveTargetRoute(route.returnTo));
+        }}
+      />
+    );
+  }
+~~~~~
 
 ### 下一步建议
 
-1. **测试与验证**：在应用中进入「计划中心」，展开「计划库」，针对任一计划点击收藏星星，然后切回「今日工作台」，验证工作台顶部的计划 Hero 卡片与快捷下拉切换菜单是否已无需刷新页面即可实时更新。
-2. **提交代码**：验证无误后，可以生成相应的 `[COMMIT]` 计划将此次状态响应式重构正式纳入版本控制。
+1. **功能验证**：
+   - 访问 `http://localhost:5173/#/plan-editor`，点击顶部「保存」按钮，验证是否仅弹出「训练计划已成功更新」Toast 且留在当前编辑界面。
+   - 点击「开始今日计划」，观察 URL 变为 `#/plan-train?from=plan-editor`；在训练界面点击返回，验证是否能直接跳回 `#/plan-editor`。
+   - 从今日工作台（`#/`）直接进入训练流，返回时验证是否正常归拢至 `#/`。
+2. **代码提交**：确认体验符合预期后，可生成 `[COMMIT]` 计划将此次路由溯源机制提交至版本库。

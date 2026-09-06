@@ -1,6 +1,6 @@
 import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
-import type { RouteLocation } from '../../hooks/useHashRoute';
+import type { ReturnToLocation, RouteLocation } from '../../hooks/useHashRoute';
 import { getCardSettings } from '../../storage/settings';
 import {
   $activePlan,
@@ -110,6 +110,11 @@ export function AppRouter({
           onPlanListChanged={async () => {
             await Promise.all([initPlanStore(), refreshAppData()]);
           }}
+          onSave={async (newPlan) => {
+            await savePlanAction(newPlan);
+            await refreshAppData();
+            showToast(t('common.planUpdatedToast'), 'success');
+          }}
           onSaveAndExit={async (newPlan) => {
             await savePlanAction(newPlan);
             await refreshAppData();
@@ -119,7 +124,7 @@ export function AppRouter({
           onStartPlanDirectly={async (newPlan) => {
             await savePlanAction(newPlan);
             await refreshAppData();
-            navigate({ type: 'plan-train' });
+            navigate({ type: 'plan-train', returnTo: 'plan-editor' });
           }}
         />
       );
@@ -178,6 +183,14 @@ export function AppRouter({
     );
   }
 
+  const resolveTargetRoute = (returnTo?: ReturnToLocation): RouteLocation => {
+    if (returnTo === 'plan-editor') return { type: 'plan-editor' };
+    if (returnTo === 'official-plans') return { type: 'official-plans' };
+    if (returnTo === 'discovery') return { type: 'discovery' };
+    if (returnTo === 'stats') return { type: 'stats' };
+    return lastHomeRoute;
+  };
+
   if (route.type === 'plan-train') {
     return (
       <PlanTrainingView
@@ -186,7 +199,7 @@ export function AppRouter({
         settings={currentSettings}
         onExit={async () => {
           await refreshAppData();
-          navigate(lastHomeRoute);
+          navigate(resolveTargetRoute(route.returnTo));
         }}
       />
     );
