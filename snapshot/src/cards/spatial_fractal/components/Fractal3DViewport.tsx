@@ -1,0 +1,220 @@
+import { useEffect, useRef } from 'preact/hooks';
+import { Loader2 } from 'lucide-preact';
+import { useThreeLoader } from '../hooks/useThreeLoader';
+import { evaluateSDF } from '../utils/sdf';
+import { CANVAS_THEME } from '@formsight/card-sdk';
+import type { QuestionData } from '../types';
+
+export interface Fractal3DViewportProps {
+  question: QuestionData;
+  disabled?: boolean;
+}
+
+export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const { libs, isLoading, error } = useThreeLoader();
+  const sceneRef = useRef<any>(null);
+  const controlsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!libs || !containerRef.current) return;
+
+    const { THREE, OrbitControls } = libs;
+    const container = containerRef.current;
+    const width = container.clientWidth;
+    const height = container.clientHeight || width;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(2.4, 1.8, 2.6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controlsRef.current = controls;
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+    const dirLight = new THREE.DirectionalLight(0x818cf8, 1.2);
+    dirLight.position.set(4, 5, 3);
+    scene.add(dirLight);
+
+    let animId: number;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      if (!container) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight || w;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', handleResize);
+      controls.dispose();
+      
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh) {
+          object.geometry.dispose();
+          if (Array.isArray(object.material)) {
+            object.material.forEach((m: any) => m.dispose());
+          } else {
+            object.material.dispose();
+          }
+        }
+      });
+      
+      renderer.dispose();
+      if (renderer.domElement.parentElement) {
+        renderer.domElement.parentElement.removeChild(renderer.domElement);
+      }
+    };
+  }, [libs]);
+
+  // Sync disabled state
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = !disabled;
+    }
+  }, [disabled]);
+
+  // Re-generate meshes on question change
+  useEffect(() => {
+    if (!libs || !sceneRef.current) return;
+    const scene = sceneRef.current;
+    const { THREE } = libs;
+    const { level, seed, planeCenter, uVec, vVec, normal } = question;
+
+    const objectsToRemove: any[] = [];
+    scene.traverse((child: any) => {
+      if (child.userData.isDynamic) objectsToRemove.push(child);
+    });
+    objectsToRemove.forEach((obj) => {
+      scene.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach((m: any) => m.dispose());
+        else obj.material.dispose();
+      }
+    });
+
+    const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
+    const geom = new THREE.IcosahedronGeometry(1.2, detail);
+    const pos = geom.attributes.position;
+    
+    for (let i = 0; i < pos.count; i++) {
+      let vx = pos.getX(i);
+      let vy = pos.getY(i);
+      let vz = pos.getZ(i);
+      
+      let r = Math.sqrt(vx*vx + vy*vy + vz*vz);
+      let normX = vx / r;
+      let normY = vy / r;
+      let normZ = vz / r;
+
+      let curR = 1.15;
+      for (let step = 0; step < 7; step++) {
+        let testX = normX * curR;
+        let testY = normY * curR;
+        let testZ = normZ * curR;
+        let sdfVal = evaluateSDF(testX, testY, testZ, level, seed);
+        curR = curR - sdfVal * 0.75;
+      }
+
+      pos.setXYZ(i, normX * curR, normY * curR, normZ * curR);
+    }
+    geom.computeVertexNormals();
+
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x4f46e5,
+      roughness: 0.35,
+      metalness: 0.15,
+      flatShading: level > 8
+    });
+
+    const fractalMesh = new THREE.Mesh(geom, mat);
+    fractalMesh.userData.isDynamic = true;
+    scene.add(fractalMesh);
+
+    const planeSize = 3.1;
+    const halfSize = planeSize / 2;
+    const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
+    
+    const planeMat = new THREE.MeshBasicMaterial({
+      color: 0x10b981,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.DoubleSide,
+      depthWrite: false
+    });
+
+    const planeHelper = new THREE.Mesh(planeGeom, planeMat);
+    planeHelper.userData.isDynamic = true;
+    planeHelper.position.set(planeCenter.x, planeCenter.y, planeCenter.z);
+    
+    const tvU = new THREE.Vector3(uVec.x, uVec.y, uVec.z);
+    const tvV = new THREE.Vector3(vVec.x, vVec.y, vVec.z);
+    const tvN = new THREE.Vector3(normal.x, normal.y, normal.z);
+    
+    const orientMatrix = new THREE.Matrix4().makeBasis(tvU, tvV, tvN);
+    planeHelper.quaternion.setFromRotationMatrix(orientMatrix);
+
+    const edges = new THREE.EdgesGeometry(planeGeom);
+    const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
+    planeHelper.add(line);
+
+    const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-halfSize, halfSize, 0.002),
+      new THREE.Vector3(halfSize, halfSize, 0.002)
+    ]);
+    const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+    planeHelper.add(topEdgeLine);
+
+    const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-halfSize, -halfSize, 0.002),
+      new THREE.Vector3(-halfSize, halfSize, 0.002)
+    ]);
+    const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+    planeHelper.add(leftEdgeLine);
+
+    scene.add(planeHelper);
+
+  }, [libs, question]);
+
+  if (error) {
+    return (
+      <div className="w-full aspect-square rounded-2xl bg-card border border-rose-500/30 flex items-center justify-center text-xs text-rose-500 shadow-inner">
+        3D 引擎加载失败
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full aspect-square rounded-2xl border border-border shadow-inner overflow-hidden flex items-center justify-center bg-card cursor-grab active:cursor-grabbing"
+      style={{ backgroundColor: CANVAS_THEME.bg.secondary }}
+    >
+      {isLoading && (
+        <div className="flex flex-col items-center gap-2 text-muted-foreground text-xs font-mono animate-in fade-in">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <span>初始化 3D 渲染内核...</span>
+        </div>
+      )}
+    </div>
+  );
+}
