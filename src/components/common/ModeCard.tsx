@@ -1,4 +1,4 @@
-import { BarChart2, FlaskConical, Play, Sliders, Target } from 'lucide-preact';
+import { BarChart2, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
 import { Badge } from '../ui/badge';
@@ -74,7 +74,14 @@ export function ModeCard({
         {/* 顶部标题、图标与右上角状态徽章 */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-3 rounded-2xl bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-105 transition-all shadow-xs flex-shrink-0">
+            <div
+              className={`p-3 rounded-2xl transition-all shadow-xs flex-shrink-0 ${
+                isExperimental
+                  ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white'
+                  : 'bg-accent text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-105'
+              }`}
+              title={isExperimental ? t('card.experimentalBadge') : undefined}
+            >
               <Icon className="w-5 h-5" />
             </div>
             <div className="min-w-0 flex-1">
@@ -82,12 +89,6 @@ export function ModeCard({
                 <h3 className="text-base font-black text-foreground group-hover:text-primary transition-colors truncate">
                   {title}
                 </h3>
-                {isExperimental && (
-                  <Badge variant="warning" size="sm">
-                    <FlaskConical className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                    {t('card.experimentalBadge')}
-                  </Badge>
-                )}
               </div>
               <div className="text-xs text-muted-foreground font-medium truncate mt-0.5">
                 {todayCount > 0
