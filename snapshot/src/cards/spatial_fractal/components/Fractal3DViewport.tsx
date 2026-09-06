@@ -4,6 +4,8 @@ import { useThreeLoader } from '../hooks/useThreeLoader';
 import { evaluateSDF } from '../utils/sdf';
 import { CANVAS_THEME } from '@formsight/card-sdk';
 import type { QuestionData } from '../types';
+import type * as THREE from 'three';
+import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export interface Fractal3DViewportProps {
   question: QuestionData;
@@ -13,8 +15,8 @@ export interface Fractal3DViewportProps {
 export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { libs, isLoading, error } = useThreeLoader();
-  const sceneRef = useRef<any>(null);
-  const controlsRef = useRef<any>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
 
   useEffect(() => {
     if (!libs || !containerRef.current) return;
@@ -71,7 +73,9 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
           if (Array.isArray(object.material)) {
-            object.material.forEach((m: any) => m.dispose());
+            for (const m of object.material) {
+              m.dispose();
+            }
           } else {
             object.material.dispose();
           }
@@ -99,18 +103,26 @@ export function Fractal3DViewport({ question, disabled }: Fractal3DViewportProps
     const { THREE } = libs;
     const { difficultyLevel: level, seed, planeCenter, uVec, vVec, normal } = question;
 
-    const objectsToRemove: any[] = [];
-    scene.traverse((child: any) => {
-      if (child.userData.isDynamic) objectsToRemove.push(child);
-    });
-    objectsToRemove.forEach((obj) => {
-      scene.remove(obj);
-      if (obj.geometry) obj.geometry.dispose();
-      if (obj.material) {
-        if (Array.isArray(obj.material)) obj.material.forEach((m: any) => m.dispose());
-        else obj.material.dispose();
+    const objectsToRemove: THREE.Object3D[] = [];
+    scene.traverse((child) => {
+      if (child.userData.isDynamic) {
+        objectsToRemove.push(child);
       }
     });
+
+    for (const obj of objectsToRemove) {
+      scene.remove(obj);
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry.dispose();
+        if (Array.isArray(obj.material)) {
+          for (const m of obj.material) {
+            m.dispose();
+          }
+        } else {
+          obj.material.dispose();
+        }
+      }
+    }
 
     const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
     const geom = new THREE.IcosahedronGeometry(1.2, detail);

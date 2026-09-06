@@ -1,12 +1,12 @@
 import { Cuboid } from 'lucide-preact';
-import { type CardManifest } from '@formsight/card-sdk';
+import { type CardManifest, type BaseModuleSettings } from '@formsight/card-sdk';
 import { SpatialFractalView } from './SpatialFractalView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const spatialFractalCard: CardManifest<QuestionData, HitResult, number, any> = {
+export const spatialFractalCard: CardManifest<QuestionData, HitResult, number, BaseModuleSettings> = {
   id: 'spatial_fractal',
   domain: 'spatial_structure',
   tags: {
