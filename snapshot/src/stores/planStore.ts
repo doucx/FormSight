@@ -71,16 +71,18 @@ export async function savePlanAction(plan: TrainingPlan): Promise<TrainingPlan> 
   return updatedPlan;
 }
 
-export async function togglePlanFavoriteAction(planId: string): Promise<void> {
+export async function togglePlanFavoriteAction(planId: string): Promise<PlanStorageState> {
   const nextState = await toggleFavoriteFromStorage(planId);
   $allPlans.value = nextState.plans;
   $activePlanId.value = nextState.activePlanId;
+  return nextState;
 }
 
-export async function deletePlanAction(planId: string): Promise<void> {
+export async function deletePlanAction(planId: string): Promise<PlanStorageState> {
   const nextState = await deletePlanFromStorage(planId);
   $allPlans.value = nextState.plans;
   $activePlanId.value = nextState.activePlanId;
+  return nextState;
 }
 
 export async function resetPlansAction(): Promise<void> {

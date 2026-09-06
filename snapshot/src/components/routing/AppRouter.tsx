@@ -5,6 +5,7 @@ import { getCardSettings } from '../../storage/settings';
 import {
   $activePlan,
   $allPlans,
+  initPlanStore,
   savePlanAction,
   setActivePlanAction,
 } from '../../stores/planStore';
@@ -106,7 +107,9 @@ export function AppRouter({
           initialPlan={currentPlan}
           onExit={() => navigate(lastHomeRoute)}
           onNavigateToOfficialPlans={() => navigate({ type: 'official-plans' })}
-          onPlanListChanged={refreshAppData}
+          onPlanListChanged={async () => {
+            await Promise.all([initPlanStore(), refreshAppData()]);
+          }}
           onSaveAndExit={async (newPlan) => {
             await savePlanAction(newPlan);
             await refreshAppData();

@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M zh-CN.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788666989.8650234, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix: 同步计划库收藏及选择状态到全局响应式 Store 以即时更新今日工作台", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788666991.9638898, "duration_ms": 0}}
