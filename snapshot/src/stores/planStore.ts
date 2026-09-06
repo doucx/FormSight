@@ -1,5 +1,5 @@
 import { computed, signal } from '@preact/signals';
-import { type OfficialPlanPreset, officialPlanRegistry } from '../config/plans';
+import type { OfficialPlanPreset } from '../config/plans';
 import {
   EMPTY_TRAINING_PLAN,
   clonePlan as clonePlanFromStorage,
