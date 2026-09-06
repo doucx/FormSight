@@ -1,4 +1,4 @@
-import { BarChart2, FlaskConical, Play, Sliders, Target } from 'lucide-preact';
+import { BarChart2, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
 import { Badge } from '../ui/badge';
