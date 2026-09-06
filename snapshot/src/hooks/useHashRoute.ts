@@ -8,12 +8,7 @@ import type {
   VisualDomainTag,
 } from '../types/card';
 
-export type ReturnToLocation =
-  | 'home'
-  | 'discovery'
-  | 'plan-editor'
-  | 'official-plans'
-  | 'stats';
+export type ReturnToLocation = 'home' | 'discovery' | 'plan-editor' | 'official-plans' | 'stats';
 
 export type RouteLocation =
   | { type: 'home' }
@@ -167,7 +162,9 @@ function stringifyRoute(route: RouteLocation): string {
     return qs ? `#/discovery?${qs}` : '#/discovery';
   }
   if (route.type === 'plan-train') {
-    return route.returnTo ? `#/plan-train?from=${encodeURIComponent(route.returnTo)}` : '#/plan-train';
+    return route.returnTo
+      ? `#/plan-train?from=${encodeURIComponent(route.returnTo)}`
+      : '#/plan-train';
   }
   if (route.type === 'plan-editor') return '#/plan-editor';
   if (route.type === 'official-plans') return '#/official-plans';

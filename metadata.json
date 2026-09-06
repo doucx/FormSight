@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat: 引入结构化 returnTo 路由溯源机制并解耦计划存盘与退出行为", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788667396.6365216, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M useHashRoute.ts", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788667562.0476487, "duration_ms": 0}}
