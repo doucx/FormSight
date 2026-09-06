@@ -1,8 +1,5 @@
 {
   "title": "Fractal Cross-Section",
   "desc": "Observe evolving 3D morphologies and identify their cross-sectional topology.",
-  "hint": "Observe the transparent cutting plane on the 3D model, and select the matching 2D cross-section.",
-  "optionsLabel": "Select Correct 2D Section (4-AFC)",
-  "topOrientation": "Top Orientation (V+)",
-  "leftOrientation": "Left Orientation (U-)"
+  "hint": "Observe the transparent cutting plane on the 3D model, and select the matching 2D cross-section."
 }

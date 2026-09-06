@@ -52,20 +52,6 @@ export function SpatialFractalView({
 
         {/* 右侧：4-AFC 截面选项区 */}
         <div className="w-full md:w-1/2 flex flex-col gap-4">
-          <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-            <span className="font-bold uppercase tracking-wider">{t('optionsLabel')}</span>
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block" />{' '}
-                {t('topOrientation')}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block" />{' '}
-                {t('leftOrientation')}
-              </span>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             {question.configs.map((config, idx) => {
               const isTarget = idx === question.correctIdx;
