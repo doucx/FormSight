@@ -1,32 +1,31 @@
-我将按要求对官方计划页面和卡片进行极简化重构，彻底移除“已在计划库”的状态跟踪、官方计划上的各类标签徽章以及顶部的分类筛选按钮栏，并清理中英文语言包中的多余词条。
+我将按照设计心理学原则简化官方计划卡片的动作形态，专注于纯粹的内容复制；同时将计划编辑模块中导致页面抖动的内联横幅替换为全局浮动 Toast，消除 Layout Shift。
 
-## [WIP] refactor(plan): 简化官方计划页面与卡片设计并移除分类与徽章
+## [WIP] refactor(plan): 移除官方计划直接开练动作并消除删除计划时的界面抖动
 
 ### 用户需求
-1. 完全移除官方计划卡片上的“已在计划库”状态及徽章逻辑。
-2. 清除所有官方计划卡片上的分类/推荐徽章（如“概括专项”、“推荐”等）。
-3. 清除官方计划页面顶部的分类切换按钮栏（“全部 / 晨间热身 / 造型构图 / 色彩光影 / 提炼概括”）。
-4. 清理 `zh-CN.json` 与 `en-US.json` 中对应的无用语言包条目。
+1. 在官方计划卡片中移除“复制并立即开练”按钮，仅保留“复制到我的计划”，避免上下文突变导致的位置迷失感。
+2. 修复计划删除和操作时由内联提示框引起的页面垂直挤压（Layout Shift），改用全局浮层 Toast 提示。
+3. 清理多语言词典中废弃的 `adoptAndStart` 字段。
 
 ### 评论
-官方计划目前总数精炼（4个核心流），去除分类过滤栏与状态徽章后，页面结构更为直接平铺，避免了跨状态判断（删除计划后状态未同步）带来的心智负担与冗余渲染，视觉也更聚焦于训练流内容本身。
+“浏览选课”与“高沉浸答题”属于两个差异极大的心智模式。直接开练强行跨越了心智边界，容易使用户丢失上下文；将其收敛为单一的“复制到我的计划”，能让官方库保持纯粹的内容源定位。同时，将计划编辑页面的本地内嵌提示框全面升级为全局浮层 Toast，从根本上杜绝了 DOM 树高度突变带来的布局抖动。
 
 ### 目标
-1. 重构 `OfficialPlanCard.tsx`：移除 `isAlreadyAdopted`、`badge` 及其渲染与引入的图标（`Check`, `Sparkles`）。
-2. 重构 `OfficialPlansView.tsx`：移除 `userPlans`、`adoptedMap`、分类切换状态与过滤栏 DOM，直接平铺展示所有官方预设。
-3. 更新 `AppRouter.tsx`，移除对 `userPlans` 的冗余传参。
-4. 清理 `src/config/plans/` 中预设文件的 `badge` 声明及类型定义。
-5. 清理 `zh-CN.json` 与 `en-US.json` 中的 `adoptedBadge` 和各分类翻译键。
+1. 重构 `OfficialPlanCard.tsx`：移除 `onAdoptAndStart` 回调及“复制并立即开练”按钮，将“复制到我的计划”提升为主操作按钮。
+2. 更新 `OfficialPlansView.tsx` 与 `AppRouter.tsx`：简化 `onAdoptPlan` 流程，复制完成后保留在当前浏览上下文。
+3. 重构 `usePlanEditorState.ts` 与 `PlanEditorView.tsx`：彻底废弃内联嵌入式 `toastNotice` 容器，全部切换至全局浮层 `showToast`。
+4. 清理 `zh-CN.json` 和 `en-US.json` 中的 `adoptAndStart` 词条。
 
 ### 基本原理
-精简不必要的派生状态，让官方计划模块回归为纯粹的“官方权威预设目录”。不再进行“是否已导入”的比对运算，移除分类过滤，直接平铺展示。
+1. **单一明确行动点 (Single Clear CTA)**：官方卡片操作区收敛为单一主色调按钮“复制到我的计划”，符合“发现 -> 收藏/引用 -> 集中编排使用”的标准信息架构路径。
+2. **零布局偏移 (Zero Cumulative Layout Shift)**：内联横幅的出现与定时消失会直接改变网格的起始 Y 坐标，导致下方元素产生突兀位移。接入固定在视口右上角、脱离常规文档流的全局 `ToastContainer`，可以彻底消除界面抖动。
 
 ### 标签
 #intent/refine #flow/ready #priority/medium
 #comp/cli #concept/ui #scope/ux
 #ai/refine
 #task/domain/plans
-#task/object/official-plans-view
+#task/object/plan-card-and-toast
 #task/action/refactor
 #task/state/continue #task/status/active
 
@@ -34,234 +33,16 @@
 
 ### Script
 
-#### Acts 1: 简化官方计划预设类型与预设配置
+#### Acts 1: 移除“复制并立即开练”按钮与废弃多语言
 
-移除 `badge` 字段定义与独立预设中的徽章内容。
-
-~~~~~act
-patch_file
-src/config/plans/types.ts
-~~~~~
-~~~~~typescript
-export type OfficialPlanCategory = 'warmup' | 'form' | 'color' | 'abstraction' | 'general';
-
-export interface OfficialPlanPreset {
-  id: string;
-  category: OfficialPlanCategory;
-  badgeI18nKey?: string;
-  locales: {
-    'zh-CN': {
-      name: string;
-      description: string;
-      badge?: string;
-    };
-    'en-US': {
-      name: string;
-      description: string;
-      badge?: string;
-    };
-  };
-  items: Array<{
-    cardId: string;
-    targetTrials: number;
-  }>;
-}
-~~~~~
-~~~~~typescript
-export type OfficialPlanCategory = 'warmup' | 'form' | 'color' | 'abstraction' | 'general';
-
-export interface OfficialPlanPreset {
-  id: string;
-  category: OfficialPlanCategory;
-  locales: {
-    'zh-CN': {
-      name: string;
-      description: string;
-    };
-    'en-US': {
-      name: string;
-      description: string;
-    };
-  };
-  items: Array<{
-    cardId: string;
-    targetTrials: number;
-  }>;
-}
-~~~~~
-
-~~~~~act
-patch_file
-src/config/plans/presets/allRoundWarmup.ts
-~~~~~
-~~~~~typescript
-export const allRoundWarmup: OfficialPlanPreset = {
-  id: 'all_round_warmup',
-  category: 'warmup',
-  locales: {
-    'zh-CN': {
-      name: '晨间感知全能热身 (50题)',
-      description: '快速激活空间几何、绝对色相与正负形快判直觉，适合每日开工前热身。',
-      badge: '推荐',
-    },
-    'en-US': {
-      name: 'Morning All-Round Warmup (50 trials)',
-      description: 'Quickly activate spatial geometry, absolute hue, and negative space intuition.',
-      badge: 'Recommended',
-    },
-  },
-  items: [
-~~~~~
-~~~~~typescript
-export const allRoundWarmup: OfficialPlanPreset = {
-  id: 'all_round_warmup',
-  category: 'warmup',
-  locales: {
-    'zh-CN': {
-      name: '晨间感知全能热身 (50题)',
-      description: '快速激活空间几何、绝对色相与正负形快判直觉，适合每日开工前热身。',
-    },
-    'en-US': {
-      name: 'Morning All-Round Warmup (50 trials)',
-      description: 'Quickly activate spatial geometry, absolute hue, and negative space intuition.',
-    },
-  },
-  items: [
-~~~~~
-
-~~~~~act
-patch_file
-src/config/plans/presets/geometrySculpting.ts
-~~~~~
-~~~~~typescript
-export const geometrySculpting: OfficialPlanPreset = {
-  id: 'geometry_sculpting',
-  category: 'form',
-  locales: {
-    'zh-CN': {
-      name: '造型起形与比例强化 (60题)',
-      description: '深入训练双锚点透视构图、负形反切定点与折线低模概括能力。',
-      badge: '造型专项',
-    },
-    'en-US': {
-      name: 'Structure & Proportion Reinforcement (60 trials)',
-      description:
-        'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
-      badge: 'Form Special',
-    },
-  },
-  items: [
-~~~~~
-~~~~~typescript
-export const geometrySculpting: OfficialPlanPreset = {
-  id: 'geometry_sculpting',
-  category: 'form',
-  locales: {
-    'zh-CN': {
-      name: '造型起形与比例强化 (60题)',
-      description: '深入训练双锚点透视构图、负形反切定点与折线低模概括能力。',
-    },
-    'en-US': {
-      name: 'Structure & Proportion Reinforcement (60 trials)',
-      description:
-        'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
-    },
-  },
-  items: [
-~~~~~
-
-~~~~~act
-patch_file
-src/config/plans/presets/colorLightMastery.ts
-~~~~~
-~~~~~typescript
-export const colorLightMastery: OfficialPlanPreset = {
-  id: 'color_light_mastery',
-  category: 'color',
-  locales: {
-    'zh-CN': {
-      name: '色彩光影与环境穿透 (65题)',
-      description: '从绝对色相识别进阶到阿尔伯斯环境色对抗、色彩矢量迁移与综合拾色。',
-      badge: '色彩进阶',
-    },
-    'en-US': {
-      name: 'Color & Light Environment Penetration (65 trials)',
-      description:
-        'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
-      badge: 'Color Mastery',
-    },
-  },
-  items: [
-~~~~~
-~~~~~typescript
-export const colorLightMastery: OfficialPlanPreset = {
-  id: 'color_light_mastery',
-  category: 'color',
-  locales: {
-    'zh-CN': {
-      name: '色彩光影与环境穿透 (65题)',
-      description: '从绝对色相识别进阶到阿尔伯斯环境色对抗、色彩矢量迁移与综合拾色。',
-    },
-    'en-US': {
-      name: 'Color & Light Environment Penetration (65 trials)',
-      description:
-        'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
-    },
-  },
-  items: [
-~~~~~
-
-~~~~~act
-patch_file
-src/config/plans/presets/abstractionEssence.ts
-~~~~~
-~~~~~typescript
-export const abstractionEssence: OfficialPlanPreset = {
-  id: 'abstraction_essence',
-  category: 'abstraction',
-  locales: {
-    'zh-CN': {
-      name: '视知觉概括提炼 (60题)',
-      description: '自底向上训练动态势线提取、黑白素描归组与主调色群提炼本质。',
-      badge: '概括专项',
-    },
-    'en-US': {
-      name: 'Perceptual Abstraction & Essence (60 trials)',
-      description:
-        'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
-      badge: 'Abstraction',
-    },
-  },
-  items: [
-~~~~~
-~~~~~typescript
-export const abstractionEssence: OfficialPlanPreset = {
-  id: 'abstraction_essence',
-  category: 'abstraction',
-  locales: {
-    'zh-CN': {
-      name: '视知觉概括提炼 (60题)',
-      description: '自底向上训练动态势线提取、黑白素描归组与主调色群提炼本质。',
-    },
-    'en-US': {
-      name: 'Perceptual Abstraction & Essence (60 trials)',
-      description:
-        'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
-    },
-  },
-  items: [
-~~~~~
-
-#### Acts 2: 简化 `OfficialPlanCard` 组件
-
-移除已在计划库徽章、官方标签徽章及多余图标。
+将 `OfficialPlanCard` 底部操作区简化为单一的“复制到我的计划”主按钮，并同步更新视图与语言包。
 
 ~~~~~act
 write_file
 src/components/plan/official/OfficialPlanCard.tsx
 ~~~~~
 ~~~~~typescript
-import { ArrowRight, ChevronRight, Clock, Copy, Play } from 'lucide-preact';
+import { ChevronRight, Clock, Copy } from 'lucide-preact';
 import type { OfficialPlanPreset } from '../../../config/plans';
 import { getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
@@ -271,13 +52,11 @@ import { Button } from '../../ui/button';
 interface OfficialPlanCardProps {
   preset: OfficialPlanPreset;
   onAdoptToLibrary: (preset: OfficialPlanPreset) => void;
-  onAdoptAndStart: (preset: OfficialPlanPreset) => void;
 }
 
 export function OfficialPlanCard({
   preset,
   onAdoptToLibrary,
-  onAdoptAndStart,
 }: OfficialPlanCardProps) {
   const { t, locale } = useTranslation();
 
@@ -352,38 +131,23 @@ export function OfficialPlanCard({
         </div>
       </div>
 
-      {/* 底部操作按钮组 */}
-      <div className="flex items-center justify-between gap-2.5 pt-4 border-t border-border/60 flex-wrap">
+      {/* 底部单一明确的 CTA 操作区 */}
+      <div className="flex items-center justify-end pt-4 border-t border-border/60">
         <Button
-          variant="secondary"
+          variant="default"
           size="sm"
           onClick={() => onAdoptToLibrary(preset)}
-          className="gap-1.5 border border-border"
+          className="gap-1.5"
           title={t('officialPlans.adoptToLibrary')}
         >
           <Copy className="w-3.5 h-3.5" />
           <span>{t('officialPlans.adoptToLibrary')}</span>
-        </Button>
-
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => onAdoptAndStart(preset)}
-          className="gap-1.5 ml-auto"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          <span>{t('officialPlans.adoptAndStart')}</span>
-          <ArrowRight className="w-3 h-3" />
         </Button>
       </div>
     </div>
   );
 }
 ~~~~~
-
-#### Acts 3: 简化 `OfficialPlansView` 页面与 `AppRouter`
-
-移除分类过滤栏及其状态，直接平铺展示全部官方计划。
 
 ~~~~~act
 write_file
@@ -400,7 +164,7 @@ import { useTranslation } from '../core/i18n';
 interface OfficialPlansViewProps {
   onExit: () => void;
   onNavigateToMyPlans: () => void;
-  onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset, startImmediately?: boolean) => Promise<void>;
+  onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset) => Promise<void>;
 }
 
 export function OfficialPlansView({
@@ -459,8 +223,7 @@ export function OfficialPlansView({
           <OfficialPlanCard
             key={preset.id}
             preset={preset}
-            onAdoptToLibrary={(p) => onAdoptPlan(p, false)}
-            onAdoptAndStart={(p) => onAdoptPlan(p, true)}
+            onAdoptToLibrary={(p) => onAdoptPlan(p)}
           />
         ))}
       </div>
@@ -482,10 +245,21 @@ src/components/routing/AppRouter.tsx
 
       return (
         <OfficialPlansView
-          userPlans={allPlansList}
           onExit={() => navigate(exitTargetRoute)}
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
           onAdoptPlan={async (preset, startImmediately) => {
+            const adopted = await forkOfficialPlanAction(preset, startImmediately);
+            await refreshAppData();
+            showToast(t('officialPlans.adoptedToast', { name: adopted.name }), 'success');
+            if (startImmediately) {
+              navigate({ type: 'plan-train' });
+            } else {
+              navigate({ type: 'plan-editor' });
+            }
+          }}
+        />
+      );
+    }
 ~~~~~
 ~~~~~new
     if (route.type === 'official-plans') {
@@ -498,12 +272,15 @@ src/components/routing/AppRouter.tsx
         <OfficialPlansView
           onExit={() => navigate(exitTargetRoute)}
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
-          onAdoptPlan={async (preset, startImmediately) => {
+          onAdoptPlan={async (preset) => {
+            const adopted = await forkOfficialPlanAction(preset, false);
+            await refreshAppData();
+            showToast(t('officialPlans.adoptedToast', { name: adopted.name }), 'success');
+          }}
+        />
+      );
+    }
 ~~~~~
-
-#### Acts 4: 清理多语言词典
-
-移除 `adoptedBadge` 以及各分类相关键值。
 
 ~~~~~act
 patch_file
@@ -517,12 +294,7 @@ src/locales/zh-CN.json
     "myPlansBtn": "我的计划库",
     "adoptToLibrary": "复制到我的计划",
     "adoptAndStart": "复制并立即开练",
-    "adoptedBadge": "已在计划库中",
-    "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！",
-    "categoryWarmup": "晨间热身",
-    "categoryForm": "造型构图",
-    "categoryColor": "色彩光影",
-    "categoryAbstraction": "提炼概括"
+    "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！"
   },
 ~~~~~
 ~~~~~new
@@ -532,7 +304,6 @@ src/locales/zh-CN.json
     "browseBtn": "官方计划库",
     "myPlansBtn": "我的计划库",
     "adoptToLibrary": "复制到我的计划",
-    "adoptAndStart": "复制并立即开练",
     "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！"
   },
 ~~~~~
@@ -549,12 +320,7 @@ src/locales/en-US.json
     "myPlansBtn": "My Routines",
     "adoptToLibrary": "Adopt into My Library",
     "adoptAndStart": "Adopt & Start Now",
-    "adoptedBadge": "In Library",
-    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!",
-    "categoryWarmup": "Warmup",
-    "categoryForm": "Form & Proportion",
-    "categoryColor": "Color & Light",
-    "categoryAbstraction": "Abstraction & Rhythm"
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
   },
 ~~~~~
 ~~~~~new
@@ -564,14 +330,513 @@ src/locales/en-US.json
     "browseBtn": "Official Library",
     "myPlansBtn": "My Routines",
     "adoptToLibrary": "Adopt into My Library",
-    "adoptAndStart": "Adopt & Start Now",
     "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
   },
 ~~~~~
 
+#### Acts 2: 消除删除计划与操作时的页面抖动 (Layout Shift)
+
+将计划编排状态管理中的内联消息框彻底移除，统一使用全局右上角浮动 `showToast`。
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~old
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import {
+  clonePlan,
+  deletePlan,
+  exportPlanToJson,
+  getPlanStorageStateSnapshot,
+  importPlanFromJson,
+  loadPlanStorageState,
+  savePlanStorageState,
+  togglePlanFavorite,
+} from '../../../storage/planStorage';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+import {
+  batchUpdateItemTrials,
+  createNewBlankPlan,
+  createPlanItem,
+  movePlanItem,
+  removePlanItem,
+  sanitizePlan,
+  updatePlanItemTrials,
+} from './planItemUtils';
+~~~~~
+~~~~~new
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import {
+  clonePlan,
+  deletePlan,
+  exportPlanToJson,
+  getPlanStorageStateSnapshot,
+  importPlanFromJson,
+  loadPlanStorageState,
+  savePlanStorageState,
+  togglePlanFavorite,
+} from '../../../storage/planStorage';
+import { showToast } from '../../../stores/toastStore';
+import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+import {
+  batchUpdateItemTrials,
+  createNewBlankPlan,
+  createPlanItem,
+  movePlanItem,
+  removePlanItem,
+  sanitizePlan,
+  updatePlanItemTrials,
+} from './planItemUtils';
+~~~~~
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~old
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
+  const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
+  const [toastNotice, setToastNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPlanStorageState().then((state) => {
+      setStorageState(state);
+      const synced = state.plans.find((p) => p.id === initialPlan.id);
+      if (synced) {
+        setCurrentPlan((prev) =>
+          prev.id === synced.id && prev.items.length !== synced.items.length ? synced : prev,
+        );
+      }
+    });
+  }, [initialPlan.id]);
+
+  const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
+
+  const showToast = (msg: string) => {
+    setToastNotice(msg);
+    setTimeout(() => setToastNotice(null), 2500);
+  };
+
+  const updatePlanItems = (updater: (items: PlanItem[]) => PlanItem[]) => {
+    setCurrentPlan((prev) => ({ ...prev, items: updater(prev.items) }));
+  };
+~~~~~
+~~~~~new
+  const [isEditingName, setIsEditingName] = useState<boolean>(false);
+  const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
+  const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
+
+  useEffect(() => {
+    loadPlanStorageState().then((state) => {
+      setStorageState(state);
+      const synced = state.plans.find((p) => p.id === initialPlan.id);
+      if (synced) {
+        setCurrentPlan((prev) =>
+          prev.id === synced.id && prev.items.length !== synced.items.length ? synced : prev,
+        );
+      }
+    });
+  }, [initialPlan.id]);
+
+  const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
+
+  const updatePlanItems = (updater: (items: PlanItem[]) => PlanItem[]) => {
+    setCurrentPlan((prev) => ({ ...prev, items: updater(prev.items) }));
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~old
+  const handleCreateNewBlankPlan = () => {
+    const newBlank = createNewBlankPlan(t('plan.newBlankPlan'), t('common.defaultCustomPlanDesc'));
+    setCurrentPlan(newBlank);
+    setPlanNameInput(newBlank.name);
+    setIsEditingName(true);
+    setShowPlanManager(false);
+    showToast(t('plan.newPlanModeToast'));
+  };
+
+  const handleImportPlan = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      target.files[0].text().then(async (text) => {
+        const imported = await importPlanFromJson(text);
+        if (imported) {
+          const nextState = await loadPlanStorageState();
+          setStorageState(nextState);
+          setCurrentPlan(imported);
+          setPlanNameInput(imported.name);
+          setShowPlanManager(false);
+          onPlanListChanged?.();
+          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }));
+        } else {
+          showToast(t('plan.importedPlanFailToast'));
+        }
+      });
+    }
+  };
+~~~~~
+~~~~~new
+  const handleCreateNewBlankPlan = () => {
+    const newBlank = createNewBlankPlan(t('plan.newBlankPlan'), t('common.defaultCustomPlanDesc'));
+    setCurrentPlan(newBlank);
+    setPlanNameInput(newBlank.name);
+    setIsEditingName(true);
+    setShowPlanManager(false);
+    showToast(t('plan.newPlanModeToast'), 'info');
+  };
+
+  const handleImportPlan = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files?.[0]) {
+      target.files[0].text().then(async (text) => {
+        const imported = await importPlanFromJson(text);
+        if (imported) {
+          const nextState = await loadPlanStorageState();
+          setStorageState(nextState);
+          setCurrentPlan(imported);
+          setPlanNameInput(imported.name);
+          setShowPlanManager(false);
+          onPlanListChanged?.();
+          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }), 'success');
+        } else {
+          showToast(t('plan.importedPlanFailToast'), 'error');
+        }
+      });
+    }
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/components/plan/editor/usePlanEditorState.ts
+~~~~~
+~~~~~old
+  return {
+    storageState,
+    setStorageState,
+    currentPlan,
+    setCurrentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    toastNotice,
+    isNewPlan,
+    totalTrials,
+    estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
+    fileInputRef,
+    handleSelectPlanFromList: (p: TrainingPlan) => {
+      setCurrentPlan({ ...p });
+      setPlanNameInput(p.name);
+      setIsEditingName(false);
+    },
+    handleNameSave,
+    handleBatchUpdateTrials: (trials: number) => {
+      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
+      showToast(t('plan.batchSetTrialsToast', { trials }));
+    },
+    handleAddItem: (cardId: string) =>
+      updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
+    handleMoveItem: (idx: number, dir: 'up' | 'down') =>
+      updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleUpdateTrials: (id: string, trials: number) =>
+      updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleClearAll: () => updatePlanItems(() => []),
+    handleCreateNewBlankPlan,
+    handleCloneCurrent: async () => {
+      const cloned = await clonePlan(currentPlan);
+      const nextState = await loadPlanStorageState();
+      setStorageState(nextState);
+      setCurrentPlan(cloned);
+      setPlanNameInput(cloned.name);
+      onPlanListChanged?.();
+      showToast(t('plan.clonedPlanToast', { name: cloned.name }));
+    },
+    handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      const nextState = await togglePlanFavorite(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+      }
+      onPlanListChanged?.();
+    },
+    handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      if (storageState.plans.length <= 1) {
+        showToast(t('plan.minOnePlanToast'));
+        return;
+      }
+      const nextState = await deletePlan(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        const fallback = nextState.plans[0];
+        setCurrentPlan(fallback);
+        setPlanNameInput(fallback.name);
+      }
+      onPlanListChanged?.();
+      showToast(t('plan.planDeletedToast'));
+    },
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'));
+    },
+    handleImportPlan,
+    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
+  };
+~~~~~
+~~~~~new
+  return {
+    storageState,
+    setStorageState,
+    currentPlan,
+    setCurrentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    isNewPlan,
+    totalTrials,
+    estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
+    fileInputRef,
+    handleSelectPlanFromList: (p: TrainingPlan) => {
+      setCurrentPlan({ ...p });
+      setPlanNameInput(p.name);
+      setIsEditingName(false);
+    },
+    handleNameSave,
+    handleBatchUpdateTrials: (trials: number) => {
+      updatePlanItems((items) => batchUpdateItemTrials(items, trials));
+      showToast(t('plan.batchSetTrialsToast', { trials }), 'info');
+    },
+    handleAddItem: (cardId: string) =>
+      updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
+    handleMoveItem: (idx: number, dir: 'up' | 'down') =>
+      updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleUpdateTrials: (id: string, trials: number) =>
+      updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleClearAll: () => updatePlanItems(() => []),
+    handleCreateNewBlankPlan,
+    handleCloneCurrent: async () => {
+      const cloned = await clonePlan(currentPlan);
+      const nextState = await loadPlanStorageState();
+      setStorageState(nextState);
+      setCurrentPlan(cloned);
+      setPlanNameInput(cloned.name);
+      onPlanListChanged?.();
+      showToast(t('plan.clonedPlanToast', { name: cloned.name }), 'success');
+    },
+    handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      const nextState = await togglePlanFavorite(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+      }
+      onPlanListChanged?.();
+    },
+    handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
+      e.stopPropagation();
+      if (storageState.plans.length <= 1) {
+        showToast(t('plan.minOnePlanToast'), 'error');
+        return;
+      }
+      const nextState = await deletePlan(planId);
+      setStorageState(nextState);
+      if (currentPlan.id === planId) {
+        const fallback = nextState.plans[0];
+        setCurrentPlan(fallback);
+        setPlanNameInput(fallback.name);
+      }
+      onPlanListChanged?.();
+      showToast(t('plan.planDeletedToast'), 'info');
+    },
+    handleExportPlan: () => {
+      const jsonStr = exportPlanToJson(currentPlan);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(t('plan.exportedJsonToast'), 'success');
+    },
+    handleImportPlan,
+    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
+  };
+~~~~~
+
+~~~~~act
+patch_file
+src/views/PlanEditorView.tsx
+~~~~~
+~~~~~old
+  const {
+    storageState,
+    currentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    toastNotice,
+    isNewPlan,
+    totalTrials,
+    estimatedMin,
+    fileInputRef,
+    handleSelectPlanFromList,
+    handleNameSave,
+    handleBatchUpdateTrials,
+    handleAddItem,
+    handleRemoveItem,
+    handleMoveItem,
+    handleUpdateTrials,
+    handleClearAll,
+    handleCreateNewBlankPlan,
+    handleCloneCurrent,
+    handleToggleFavoriteItem,
+    handleDeletePlanItem,
+    handleExportPlan,
+    handleImportPlan,
+    handleSaveOnly,
+    handleSaveAndStart,
+  } = usePlanEditorState({
+    initialPlan,
+    onSaveAndExit,
+    onStartPlanDirectly,
+    onPlanListChanged,
+  });
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100dvh-2rem)] sm:h-[calc(100vh-4rem)] gap-3 sm:gap-5 animate-in fade-in duration-200">
+      {/* 顶部单行主操作栏 */}
+      <PlanEditorHeader
+        currentPlan={currentPlan}
+        isNewPlan={isNewPlan}
+        isEditingName={isEditingName}
+        planNameInput={planNameInput}
+        showPlanManager={showPlanManager}
+        plansCount={storageState.plans.length}
+        fileInputRef={fileInputRef}
+        onStartEditingName={() => setIsEditingName(true)}
+        onCancelEditingName={() => {
+          setPlanNameInput(currentPlan.name);
+          setIsEditingName(false);
+        }}
+        onPlanNameChange={setPlanNameInput}
+        onNameSave={handleNameSave}
+        onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onNavigateToOfficialPlans={onNavigateToOfficialPlans}
+        onClonePlan={handleCloneCurrent}
+        onExportPlan={handleExportPlan}
+        onImportPlan={handleImportPlan}
+        onSaveOnly={handleSaveOnly}
+        onSaveAndStart={handleSaveAndStart}
+      />
+
+      {toastNotice && (
+        <div className="w-full text-xs font-bold text-primary bg-accent border border-border/60 dark:border-border px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
+          {toastNotice}
+        </div>
+      )}
+
+      {/* 展开的计划库总览抽屉 */}
+~~~~~
+~~~~~new
+  const {
+    storageState,
+    currentPlan,
+    isEditingName,
+    setIsEditingName,
+    planNameInput,
+    setPlanNameInput,
+    showPlanManager,
+    setShowPlanManager,
+    isNewPlan,
+    totalTrials,
+    estimatedMin,
+    fileInputRef,
+    handleSelectPlanFromList,
+    handleNameSave,
+    handleBatchUpdateTrials,
+    handleAddItem,
+    handleRemoveItem,
+    handleMoveItem,
+    handleUpdateTrials,
+    handleClearAll,
+    handleCreateNewBlankPlan,
+    handleCloneCurrent,
+    handleToggleFavoriteItem,
+    handleDeletePlanItem,
+    handleExportPlan,
+    handleImportPlan,
+    handleSaveOnly,
+    handleSaveAndStart,
+  } = usePlanEditorState({
+    initialPlan,
+    onSaveAndExit,
+    onStartPlanDirectly,
+    onPlanListChanged,
+  });
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100dvh-2rem)] sm:h-[calc(100vh-4rem)] gap-3 sm:gap-5 animate-in fade-in duration-200">
+      {/* 顶部单行主操作栏 */}
+      <PlanEditorHeader
+        currentPlan={currentPlan}
+        isNewPlan={isNewPlan}
+        isEditingName={isEditingName}
+        planNameInput={planNameInput}
+        showPlanManager={showPlanManager}
+        plansCount={storageState.plans.length}
+        fileInputRef={fileInputRef}
+        onStartEditingName={() => setIsEditingName(true)}
+        onCancelEditingName={() => {
+          setPlanNameInput(currentPlan.name);
+          setIsEditingName(false);
+        }}
+        onPlanNameChange={setPlanNameInput}
+        onNameSave={handleNameSave}
+        onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onNavigateToOfficialPlans={onNavigateToOfficialPlans}
+        onClonePlan={handleCloneCurrent}
+        onExportPlan={handleExportPlan}
+        onImportPlan={handleImportPlan}
+        onSaveOnly={handleSaveOnly}
+        onSaveAndStart={handleSaveAndStart}
+      />
+
+      {/* 展开的计划库总览抽屉 */}
+~~~~~
+
 ### 下一步建议
-1. **界面验证**：
-   - 访问 `http://localhost:5173/#/official-plans`，确认顶部分类按钮栏已完全移除。
-   - 确认卡片标题旁无任何额外徽章，卡片右上角无“已在计划库中”的绿色徽章。
-   - 测试点击“复制到我的计划”或“复制并立即开练”，确认导入并开练功能依然准确无误。
-2. **提交代码**：验证界面与交互无误后，创建 `[COMMIT]` 计划提交更改。
+1. **体验与防抖验证**：
+   - 进入 `http://localhost:5173/#/official-plans`，验证每张官方计划卡片仅呈现“复制到我的计划”按钮。
+   - 点击复制后，确认页面保持在当前位置，右上角浮现无布局偏移的 Toast 提示。
+   - 进入 `http://localhost:5173/#/plan-editor` 打开计划库抽屉，尝试删除计划或在只剩一个计划时尝试删除，确认页面不再发生任何纵向位移/跳动。
+2. **代码提交流程**：验证体验符合要求后，生成 `[COMMIT]` 计划将此项体验优化合入版本库。

@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, Clock, Copy, Play } from 'lucide-preact';
+import { ChevronRight, Clock, Copy } from 'lucide-preact';
 import type { OfficialPlanPreset } from '../../../config/plans';
 import { getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
@@ -8,13 +8,11 @@ import { Button } from '../../ui/button';
 interface OfficialPlanCardProps {
   preset: OfficialPlanPreset;
   onAdoptToLibrary: (preset: OfficialPlanPreset) => void;
-  onAdoptAndStart: (preset: OfficialPlanPreset) => void;
 }
 
 export function OfficialPlanCard({
   preset,
   onAdoptToLibrary,
-  onAdoptAndStart,
 }: OfficialPlanCardProps) {
   const { t, locale } = useTranslation();
 
@@ -89,28 +87,17 @@ export function OfficialPlanCard({
         </div>
       </div>
 
-      {/* 底部操作按钮组 */}
-      <div className="flex items-center justify-between gap-2.5 pt-4 border-t border-border/60 flex-wrap">
+      {/* 底部单一明确的 CTA 操作区 */}
+      <div className="flex items-center justify-end pt-4 border-t border-border/60">
         <Button
-          variant="secondary"
+          variant="default"
           size="sm"
           onClick={() => onAdoptToLibrary(preset)}
-          className="gap-1.5 border border-border"
+          className="gap-1.5"
           title={t('officialPlans.adoptToLibrary')}
         >
           <Copy className="w-3.5 h-3.5" />
           <span>{t('officialPlans.adoptToLibrary')}</span>
-        </Button>
-
-        <Button
-          variant="default"
-          size="sm"
-          onClick={() => onAdoptAndStart(preset)}
-          className="gap-1.5 ml-auto"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          <span>{t('officialPlans.adoptAndStart')}</span>
-          <ArrowRight className="w-3 h-3" />
         </Button>
       </div>
     </div>

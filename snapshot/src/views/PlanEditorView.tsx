@@ -42,7 +42,6 @@ export function PlanEditorView({
     setPlanNameInput,
     showPlanManager,
     setShowPlanManager,
-    toastNotice,
     isNewPlan,
     totalTrials,
     estimatedMin,
@@ -96,12 +95,6 @@ export function PlanEditorView({
         onSaveOnly={handleSaveOnly}
         onSaveAndStart={handleSaveAndStart}
       />
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-primary bg-accent border border-border/60 dark:border-border px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
-          {toastNotice}
-        </div>
-      )}
 
       {/* 展开的计划库总览抽屉 */}
       {showPlanManager && (

@@ -132,15 +132,10 @@ export function AppRouter({
         <OfficialPlansView
           onExit={() => navigate(exitTargetRoute)}
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
-          onAdoptPlan={async (preset, startImmediately) => {
-            const adopted = await forkOfficialPlanAction(preset, startImmediately);
+          onAdoptPlan={async (preset) => {
+            const adopted = await forkOfficialPlanAction(preset, false);
             await refreshAppData();
             showToast(t('officialPlans.adoptedToast', { name: adopted.name }), 'success');
-            if (startImmediately) {
-              navigate({ type: 'plan-train' });
-            } else {
-              navigate({ type: 'plan-editor' });
-            }
           }}
         />
       );

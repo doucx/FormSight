@@ -10,6 +10,7 @@ import {
   savePlanStorageState,
   togglePlanFavorite,
 } from '../../../storage/planStorage';
+import { showToast } from '../../../stores/toastStore';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
   batchUpdateItemTrials,
@@ -44,7 +45,6 @@ export function usePlanEditorState({
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
   const [planNameInput, setPlanNameInput] = useState<string>(initialPlan.name);
   const [showPlanManager, setShowPlanManager] = useState<boolean>(false);
-  const [toastNotice, setToastNotice] = useState<string | null>(null);
 
   useEffect(() => {
     loadPlanStorageState().then((state) => {
@@ -59,11 +59,6 @@ export function usePlanEditorState({
   }, [initialPlan.id]);
 
   const isNewPlan = !storageState.plans.some((p) => p.id === currentPlan.id);
-
-  const showToast = (msg: string) => {
-    setToastNotice(msg);
-    setTimeout(() => setToastNotice(null), 2500);
-  };
 
   const updatePlanItems = (updater: (items: PlanItem[]) => PlanItem[]) => {
     setCurrentPlan((prev) => ({ ...prev, items: updater(prev.items) }));
@@ -85,7 +80,7 @@ export function usePlanEditorState({
     setPlanNameInput(newBlank.name);
     setIsEditingName(true);
     setShowPlanManager(false);
-    showToast(t('plan.newPlanModeToast'));
+    showToast(t('plan.newPlanModeToast'), 'info');
   };
 
   const handleImportPlan = (e: Event) => {
@@ -100,9 +95,9 @@ export function usePlanEditorState({
           setPlanNameInput(imported.name);
           setShowPlanManager(false);
           onPlanListChanged?.();
-          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }));
+          showToast(t('plan.importedPlanSuccessToast', { name: imported.name }), 'success');
         } else {
-          showToast(t('plan.importedPlanFailToast'));
+          showToast(t('plan.importedPlanFailToast'), 'error');
         }
       });
     }
@@ -135,7 +130,6 @@ export function usePlanEditorState({
     setPlanNameInput,
     showPlanManager,
     setShowPlanManager,
-    toastNotice,
     isNewPlan,
     totalTrials,
     estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
@@ -148,7 +142,7 @@ export function usePlanEditorState({
     handleNameSave,
     handleBatchUpdateTrials: (trials: number) => {
       updatePlanItems((items) => batchUpdateItemTrials(items, trials));
-      showToast(t('plan.batchSetTrialsToast', { trials }));
+      showToast(t('plan.batchSetTrialsToast', { trials }), 'info');
     },
     handleAddItem: (cardId: string) =>
       updatePlanItems((items) => [...items, createPlanItem(cardId)]),
@@ -166,7 +160,7 @@ export function usePlanEditorState({
       setCurrentPlan(cloned);
       setPlanNameInput(cloned.name);
       onPlanListChanged?.();
-      showToast(t('plan.clonedPlanToast', { name: cloned.name }));
+      showToast(t('plan.clonedPlanToast', { name: cloned.name }), 'success');
     },
     handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
       e.stopPropagation();
@@ -180,7 +174,7 @@ export function usePlanEditorState({
     handleDeletePlanItem: async (planId: string, e: MouseEvent) => {
       e.stopPropagation();
       if (storageState.plans.length <= 1) {
-        showToast(t('plan.minOnePlanToast'));
+        showToast(t('plan.minOnePlanToast'), 'error');
         return;
       }
       const nextState = await deletePlan(planId);
@@ -191,7 +185,7 @@ export function usePlanEditorState({
         setPlanNameInput(fallback.name);
       }
       onPlanListChanged?.();
-      showToast(t('plan.planDeletedToast'));
+      showToast(t('plan.planDeletedToast'), 'info');
     },
     handleExportPlan: () => {
       const jsonStr = exportPlanToJson(currentPlan);
@@ -202,7 +196,7 @@ export function usePlanEditorState({
       a.download = `formsight_plan_${currentPlan.name.replace(/\s+/g, '_')}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast(t('plan.exportedJsonToast'));
+      showToast(t('plan.exportedJsonToast'), 'success');
     },
     handleImportPlan,
     handleSaveOnly: async () => onSaveAndExit(await persist()),

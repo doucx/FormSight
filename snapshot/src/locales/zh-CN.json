@@ -95,7 +95,6 @@
     "browseBtn": "官方计划库",
     "myPlansBtn": "我的计划库",
     "adoptToLibrary": "复制到我的计划",
-    "adoptAndStart": "复制并立即开练",
     "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！"
   },
   "templates": {

@@ -8,7 +8,7 @@ import { useTranslation } from '../core/i18n';
 interface OfficialPlansViewProps {
   onExit: () => void;
   onNavigateToMyPlans: () => void;
-  onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset, startImmediately?: boolean) => Promise<void>;
+  onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset) => Promise<void>;
 }
 
 export function OfficialPlansView({
@@ -67,8 +67,7 @@ export function OfficialPlansView({
           <OfficialPlanCard
             key={preset.id}
             preset={preset}
-            onAdoptToLibrary={(p) => onAdoptPlan(p, false)}
-            onAdoptAndStart={(p) => onAdoptPlan(p, true)}
+            onAdoptToLibrary={(p) => onAdoptPlan(p)}
           />
         ))}
       </div>

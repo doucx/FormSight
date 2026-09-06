@@ -95,7 +95,6 @@
     "browseBtn": "Official Library",
     "myPlansBtn": "My Routines",
     "adoptToLibrary": "Adopt into My Library",
-    "adoptAndStart": "Adopt & Start Now",
     "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
   },
   "templates": {
