@@ -193,13 +193,13 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
           {/* 即时响应且支持全向避让的悬浮浮窗 */}
           {hoveredDay && (
             <div
-              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-card/95 text-white text-xs font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-border/60 ${
+              className={`absolute pointer-events-none z-30 px-2.5 py-1 bg-card/95 text-foreground text-xs font-bold rounded-xl shadow-xl -translate-x-1/2 whitespace-nowrap animate-in fade-in zoom-in-95 duration-75 border border-border/60 ${
                 hoveredDay.isFlipped ? 'translate-y-0' : '-translate-y-full'
               }`}
               style={{ left: `${hoveredDay.x}px`, top: `${hoveredDay.y}px` }}
             >
               <span>{hoveredDay.dateStr}</span>
-              <span className="text-indigo-300 ml-1.5 font-mono">
+              <span className="text-primary ml-1.5 font-mono">
                 {hoveredDay.count} {t('common.trialsUnit')}
               </span>
             </div>
