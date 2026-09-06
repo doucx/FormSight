@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M en-US.json, M zh-CN.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788662812.3280437, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(i18n): 修正中文语言包中“真理值”等生硬表述", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788662819.0306296, "duration_ms": 0}}

@@ -11,7 +11,7 @@
       "avgSignedBias": "全局平均偏转 (ΔH):",
       "overestimateRoughness": "-{{val}} (感知偏粗糙/对毛刺过度敏感)",
       "underestimateRoughness": "+{{val}} (感知偏平滑/低估高频噪波)",
-      "neutral": "0 (精准中立)",
+      "neutral": "0 (精准无偏差)",
       "avgAbsError": "平均绝对误差 (ΔH):",
       "desc": "正偏置代表你倾向于将粗糙线条误判为更平滑；负偏置代表你对微小抖动极其敏感，容易过度估计粗糙度。"
     },

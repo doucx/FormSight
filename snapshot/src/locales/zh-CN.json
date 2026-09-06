@@ -44,7 +44,7 @@
     "candidateN": "候选 {{num}}",
     "screenN": "画面 {{num}}",
     "submitSpace": "确认提交 (Space)",
-    "trueValue": "真理值",
+    "trueValue": "真实值",
     "error": "误差",
     "tolerance": "容错",
     "start": "起点",
@@ -140,7 +140,7 @@
     "idlePausedDesc": "检测到闲置或窗口切换，已保护您的心流与统计数据",
     "clickToResume": "点击继续训练 (或按任意键)",
     "confirmSubmit": "确认提交 (Space)",
-    "trueValue": "绝对真理值",
+    "trueValue": "标准真实值",
     "error": "误差",
     "tolerance": "容错",
     "pointGridAria": "点阵做答画布"
