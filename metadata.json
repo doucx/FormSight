@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] refactor(spatial_fractal): 清理 en-US.json 与 zh-CN.json 中未使用的本地化键", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788680712.9511538, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "checkf Capture: M en-US.json, M zh-CN.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788680726.1768546, "duration_ms": 0}}
