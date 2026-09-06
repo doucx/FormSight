@@ -89,6 +89,14 @@
     "favoritedTooltip": "Favorited (Quick switch on home)",
     "unfavoritedTooltip": "Not favorited"
   },
+  "officialPlans": {
+    "title": "Official Routine Presets",
+    "subtitle": "Authoritative training sequences carefully crafted for perception, form, and color. Adopt them into your personal routine library for personalized customization.",
+    "browseBtn": "Official Library",
+    "myPlansBtn": "My Routines",
+    "adoptToLibrary": "Adopt into My Library",
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
+  },
   "templates": {
     "all_round_warmup": {
       "name": "Morning All-Round Warmup (50 trials)",

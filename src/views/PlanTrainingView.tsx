@@ -102,7 +102,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         setShowSummaryModal(true);
       }
     },
-    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length],
+    [
+      currentCard,
+      currentStep,
+      currentStepIndex,
+      stageResults,
+      validItems.length,
+      stageInitialLevel,
+    ],
   );
 
   const handleSkipCurrentStage = useCallback(
@@ -124,7 +131,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         setShowSummaryModal(true);
       }
     },
-    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length, stageInitialLevel],
+    [
+      currentCard,
+      currentStep,
+      currentStepIndex,
+      stageResults,
+      validItems.length,
+      stageInitialLevel,
+    ],
   );
 
   const handleEarlyExit = useCallback(
@@ -152,7 +166,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         onExit();
       }
     },
-    [currentCard, currentStep, stageResults, onExit],
+    [currentCard, currentStep, stageResults, stageInitialLevel, onExit],
   );
 
   const handleRequestExit = useCallback(() => {

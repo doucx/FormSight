@@ -8,6 +8,7 @@ import {
   savePlanAction,
   setActivePlanAction,
 } from '../../stores/planStore';
+import { forkOfficialPlanAction } from '../../stores/planStore';
 import {
   $isProfilesLoaded,
   $profiles,
@@ -22,6 +23,7 @@ import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';
 import { GlobalStatsView } from '../../views/GlobalStatsView';
 import { HomeView } from '../../views/HomeView';
+import { OfficialPlansView } from '../../views/OfficialPlansView';
 import { PlanEditorView } from '../../views/PlanEditorView';
 import { PlanTrainingView } from '../../views/PlanTrainingView';
 import { AppNavigation } from '../navigation/AppNavigation';
@@ -30,6 +32,7 @@ interface AppRouterProps {
   route: RouteLocation;
   navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
   lastHomeRoute: RouteLocation;
+  previousRoute?: RouteLocation | null;
   onOpenCardSettings: (cardId: string) => void;
   onOpenGlobalSettings: () => void;
 }
@@ -38,6 +41,7 @@ export function AppRouter({
   route,
   navigate,
   lastHomeRoute,
+  previousRoute,
   onOpenCardSettings,
   onOpenGlobalSettings,
 }: AppRouterProps) {
@@ -55,6 +59,7 @@ export function AppRouter({
     route.type === 'home' ||
     route.type === 'discovery' ||
     route.type === 'plan-editor' ||
+    route.type === 'official-plans' ||
     route.type === 'stats';
 
   const renderMainContent = () => {
@@ -100,6 +105,7 @@ export function AppRouter({
         <PlanEditorView
           initialPlan={currentPlan}
           onExit={() => navigate(lastHomeRoute)}
+          onNavigateToOfficialPlans={() => navigate({ type: 'official-plans' })}
           onPlanListChanged={refreshAppData}
           onSaveAndExit={async (newPlan) => {
             await savePlanAction(newPlan);
@@ -111,6 +117,25 @@ export function AppRouter({
             await savePlanAction(newPlan);
             await refreshAppData();
             navigate({ type: 'plan-train' });
+          }}
+        />
+      );
+    }
+
+    if (route.type === 'official-plans') {
+      const exitTargetRoute: RouteLocation =
+        previousRoute && previousRoute.type !== 'official-plans'
+          ? previousRoute
+          : { type: 'plan-editor' };
+
+      return (
+        <OfficialPlansView
+          onExit={() => navigate(exitTargetRoute)}
+          onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
+          onAdoptPlan={async (preset) => {
+            const adopted = await forkOfficialPlanAction(preset, false);
+            await refreshAppData();
+            showToast(t('officialPlans.adoptedToast', { name: adopted.name }), 'success');
           }}
         />
       );

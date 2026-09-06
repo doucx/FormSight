@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Check,
   Copy,
   Download,
@@ -31,6 +32,7 @@ export interface PlanEditorHeaderProps {
   onPlanNameChange: (name: string) => void;
   onNameSave: () => void;
   onTogglePlanManager: () => void;
+  onNavigateToOfficialPlans?: () => void;
   onClonePlan: () => void;
   onExportPlan: () => void;
   onImportPlan: (e: Event) => void;
@@ -51,6 +53,7 @@ export function PlanEditorHeader({
   onPlanNameChange,
   onNameSave,
   onTogglePlanManager,
+  onNavigateToOfficialPlans,
   onClonePlan,
   onExportPlan,
   onImportPlan,
@@ -144,6 +147,19 @@ export function PlanEditorHeader({
             <Layers className="w-3.5 h-3.5" />
             <span>{t('plan.planLibraryTitle', { count: plansCount })}</span>
           </Button>
+
+          {onNavigateToOfficialPlans && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onNavigateToOfficialPlans}
+              className="gap-1.5 border border-border text-primary hover:text-primary"
+              title={t('officialPlans.title')}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>{t('officialPlans.browseBtn')}</span>
+            </Button>
+          )}
 
           <Button
             variant="secondary"

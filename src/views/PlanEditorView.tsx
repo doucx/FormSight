@@ -12,6 +12,7 @@ import type { TrainingPlan } from '../types/plan';
 interface PlanEditorViewProps {
   initialPlan: TrainingPlan;
   onExit: () => void;
+  onNavigateToOfficialPlans?: () => void;
   onSaveAndExit: (plan: TrainingPlan) => void;
   onStartPlanDirectly: (plan: TrainingPlan) => void;
   onPlanListChanged?: () => void;
@@ -21,6 +22,8 @@ const TRIAL_PRESETS = [10, 15, 20, 30, 50];
 
 export function PlanEditorView({
   initialPlan,
+  onExit: _onExit,
+  onNavigateToOfficialPlans,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -39,7 +42,6 @@ export function PlanEditorView({
     setPlanNameInput,
     showPlanManager,
     setShowPlanManager,
-    toastNotice,
     isNewPlan,
     totalTrials,
     estimatedMin,
@@ -86,18 +88,13 @@ export function PlanEditorView({
         onPlanNameChange={setPlanNameInput}
         onNameSave={handleNameSave}
         onTogglePlanManager={() => setShowPlanManager(!showPlanManager)}
+        onNavigateToOfficialPlans={onNavigateToOfficialPlans}
         onClonePlan={handleCloneCurrent}
         onExportPlan={handleExportPlan}
         onImportPlan={handleImportPlan}
         onSaveOnly={handleSaveOnly}
         onSaveAndStart={handleSaveAndStart}
       />
-
-      {toastNotice && (
-        <div className="w-full text-xs font-bold text-primary bg-accent border border-border/60 dark:border-border px-4 py-2 rounded-2xl animate-in fade-in flex-shrink-0">
-          {toastNotice}
-        </div>
-      )}
 
       {/* 展开的计划库总览抽屉 */}
       {showPlanManager && (

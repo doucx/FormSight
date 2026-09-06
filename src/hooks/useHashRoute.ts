@@ -14,6 +14,7 @@ export type RouteLocation =
   | { type: 'train'; cardId: string; sessionType: 'training' | 'benchmark' }
   | { type: 'plan-train' }
   | { type: 'plan-editor' }
+  | { type: 'official-plans' }
   | { type: 'stats' }
   | { type: 'analytics'; cardId: string; tab?: string };
 
@@ -84,6 +85,10 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'plan-train' };
   }
 
+  if (segments[0] === 'official-plans' || (segments[0] === 'plans' && segments[1] === 'official')) {
+    return { type: 'official-plans' };
+  }
+
   if (segments[0] === 'plan-editor' || segments[0] === 'plans') {
     return { type: 'plan-editor' };
   }
@@ -147,6 +152,7 @@ function stringifyRoute(route: RouteLocation): string {
   }
   if (route.type === 'plan-train') return '#/plan-train';
   if (route.type === 'plan-editor') return '#/plan-editor';
+  if (route.type === 'official-plans') return '#/official-plans';
   if (route.type === 'stats') return '#/stats';
   if (route.type === 'analytics') {
     const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';
@@ -160,6 +166,7 @@ export function useHashRoute() {
   const [route, setRoute] = useState<RouteLocation>(() =>
     typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
   );
+  const previousRouteRef = useRef<RouteLocation | null>(null);
 
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const currentHashRef = useRef<string>(
@@ -175,6 +182,7 @@ export function useHashRoute() {
     const handleHashChange = () => {
       const prevHash = currentHashRef.current || '#/';
       scrollPositionsRef.current[prevHash] = window.scrollY;
+      previousRouteRef.current = parseHash(prevHash);
 
       const newHash = window.location.hash || '#/';
       currentHashRef.current = newHash;
@@ -202,6 +210,8 @@ export function useHashRoute() {
     if (window.location.hash !== newHash) {
       const prevHash = currentHashRef.current || '#/';
       scrollPositionsRef.current[prevHash] = window.scrollY;
+      previousRouteRef.current = parseHash(prevHash);
+
       if (options?.replace) {
         const url = new URL(window.location.href);
         url.hash = newHash;
@@ -214,5 +224,5 @@ export function useHashRoute() {
     }
   }, []);
 
-  return { route, navigate };
+  return { route, navigate, previousRoute: previousRouteRef.current };
 }

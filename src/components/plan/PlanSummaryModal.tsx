@@ -99,7 +99,8 @@ export function PlanSummaryModal({
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
               const fallbackLvl = stage.initialLevel ?? 5;
-              const startLvl = stage.history.length > 0 ? stage.history[0].levelBefore : fallbackLvl;
+              const startLvl =
+                stage.history.length > 0 ? stage.history[0].levelBefore : fallbackLvl;
               const endLvl =
                 stage.history.length > 0
                   ? stage.history[stage.history.length - 1].levelAfter
