@@ -229,17 +229,8 @@
 
       if (level <= 18) return dist;
 
-      let cavityWeight = Math.min(1.0, (level - 18) / 10);
-      let cavityNoise = smoothNoise3D(x * 2.4 + 5.5, y * 2.4 + 5.5, z * 2.4 + 5.5);
-      if (cavityNoise > 0.62) {
-        let holeDepth = (cavityNoise - 0.62) * 2.8 * cavityWeight;
-        dist = Math.max(dist, holeDepth);
-      }
-
-      if (level <= 28) return dist;
-
-      let chaosWeight = (level - 28) / 7;
-      let fineNoise = (fbm3D(x * 3.2, y * 3.2, z * 3.2, 3) - 0.5) * 0.6 * chaosWeight;
+      let chaosWeight = Math.min(1.0, (level - 18) / 17);
+      let fineNoise = (fbm3D(x * 3.0, y * 3.0, z * 3.0, 3) - 0.5) * 0.65 * chaosWeight;
       dist = dist - fineNoise;
 
       return dist;
@@ -267,17 +258,17 @@
         };
       } else if (level <= 28) {
         return {
-          tier: '挑战 (多孔空腔)',
-          stage: '形态: 负空间多孔拓扑',
-          topology: '环面多孔 / 局部孤岛',
-          octavesText: '3 Octaves + 穿透空腔',
-          desc: '高难度下激活负空间空腔雕刻，截面可能呈现内孔洞或分离的小岛屿。'
+          tier: '挑战 (复杂褶皱)',
+          stage: '形态: 多层复合分形褶皱',
+          topology: '高阶连续复杂曲面',
+          octavesText: '3 Octaves + 表面褶皱',
+          desc: '高难度下激活多层复合分形褶皱，截面呈现细腻的曲率起伏与非线性边界。'
         };
       } else {
         return {
           tier: '大师 (混沌分形)',
           stage: '形态: 混沌多重分形簇',
-          topology: '高阶复杂多岛群落',
+          topology: '高阶精细自相似体',
           octavesText: '5 Octaves + 混沌微刺',
           desc: '大师级拥有丰富的微观多层自相似分形突刺，必须精确校验局域曲率。'
         };

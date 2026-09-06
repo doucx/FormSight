@@ -1,59 +1,140 @@
-高难度下 3D 分形物体未能完全跟随算法演化的根本原因是网格几何精度（三角形密度）不足。通过引入动态细分策略，可以完美解决高频分形和孔洞的几何表达。
+## [WIP] 取消负空间雕刻
 
-## [WIP] fix(prototype): 动态提升分形 3D 网格细分精度以适配高难度算法
-
-### 错误分析
-
-在高难度（Lv.20-35）下，SDF 评估函数引入了高频 FBM 噪声、局部孔洞穿透与混沌突刺。然而原先的代码中，网格细分级别被静态限制在 `detail = 5`（顶点数约 10,242）。当局部几何特征的波长小于网格采样间距时，顶点采样将发生严重失真（Aliasing），使得孔洞和微观分形成为主观上的“平滑表面变形缺失”。
-
-### 用户需求
-用户希望在高难度下，3D 视口中的几何形态能够精确、细腻地跟随算法演化（展现出真实的负空间空腔、多棱角折叠与分形突刺）。
-
-### 评论
-该修复直接提升了 3D 空间形态感知原型的拟真度与视觉反馈质量，对高难度关卡的辨识度有决定性影响。
-
-### 目标
-1. 分析 `fractal_section_prototype.html` 中 `createFractal3DMesh` 函数的网格生成逻辑。
-2. 将固定的 `detail` 逻辑改造为随 `level` 动态调整的阶梯式细分策略（Lv.1-8: 4级; Lv.9-18: 5级; Lv.19-28: 6级; Lv.29-35: 7级）。
-3. 确保在极致难度下拥有足够的顶点密度（高达 ~16 万顶点），以完美呈现分形空腔与突刺。
-
-### 基本原理
-Three.js 的 `IcosahedronGeometry` 顶点数随细分级数呈 $4^{\text{detail}}$ 增长。通过根据 `level` 分段扩大切片细分度，我们既能在低难度下保持极高的帧率流畅度，又能在高难度下提供媲美真实光线步进（Raymarching）网格的丰富细节。
-
-### 标签
-#intent/fix #flow/ready #priority/high #comp/build #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/fractal-mesh #task/action/bug-fix #task/state/begin
-
----
-
-### Script
-
-#### Acts 1: 升级网格细分精度逻辑
-
-修改 `playground/fractal_section_prototype.html` 中的 `createFractal3DMesh` 函数，实现随难度动态递增的网格细分策略。
+我将修改 `playground/fractal_section_prototype.html`，完全**取消负空间雕刻**（移除通过 `Math.max(dist, holeDepth)` 在物体内部挖洞的逻辑），并把高难度阶段更新为“多层复合分形褶皱与高阶连续曲面”，确保所有难度下物体均保持饱满、坚实的连通外形。
 
 ~~~~~act
 patch_file
 playground/fractal_section_prototype.html
 ~~~~~
-~~~~~html.old
-    function createFractal3DMesh(level) {
-      if (fractalMesh) scene.remove(fractalMesh);
+~~~~~old
+    function evaluateSDF(x, y, z, level) {
+      let r = Math.sqrt(x*x + y*y + z*z);
 
-      const detail = level <= 8 ? 4 : 5;
-      const geom = new THREE.IcosahedronGeometry(1.2, detail);
-      const pos = geom.attributes.position;
+      let macroNoise = (smoothNoise3D(x * 0.85 + 1.2, y * 0.85 + 1.2, z * 0.85 + 1.2) - 0.5) * 0.65;
+      let dist = (r - 1.15) - macroNoise;
+
+      if (level <= 8) return dist;
+
+      let facetWeight = Math.min(1.0, (level - 8) / 10);
+      let facetNoise = Math.abs(smoothNoise3D(x * 1.6 + 3.0, y * 1.6 + 3.0, z * 1.6 + 3.0) - 0.5) * 0.85;
+      dist = dist - facetWeight * facetNoise;
+
+      if (level <= 18) return dist;
+
+      let cavityWeight = Math.min(1.0, (level - 18) / 10);
+      let cavityNoise = smoothNoise3D(x * 2.4 + 5.5, y * 2.4 + 5.5, z * 2.4 + 5.5);
+      if (cavityNoise > 0.62) {
+        let holeDepth = (cavityNoise - 0.62) * 2.8 * cavityWeight;
+        dist = Math.max(dist, holeDepth);
+      }
+
+      if (level <= 28) return dist;
+
+      let chaosWeight = (level - 28) / 7;
+      let fineNoise = (fbm3D(x * 3.2, y * 3.2, z * 3.2, 3) - 0.5) * 0.6 * chaosWeight;
+      dist = dist - fineNoise;
+
+      return dist;
+    }
 ~~~~~
-~~~~~html.new
-    function createFractal3DMesh(level) {
-      if (fractalMesh) scene.remove(fractalMesh);
+~~~~~new
+    function evaluateSDF(x, y, z, level) {
+      let r = Math.sqrt(x*x + y*y + z*z);
 
-      // 根据难度动态调整 icosahedron 网格细分级别，确保高难度下能够捕捉高频分形与孔洞突刺细节
-      const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
-      const geom = new THREE.IcosahedronGeometry(1.2, detail);
-      const pos = geom.attributes.position;
+      let macroNoise = (smoothNoise3D(x * 0.85 + 1.2, y * 0.85 + 1.2, z * 0.85 + 1.2) - 0.5) * 0.65;
+      let dist = (r - 1.15) - macroNoise;
+
+      if (level <= 8) return dist;
+
+      let facetWeight = Math.min(1.0, (level - 8) / 10);
+      let facetNoise = Math.abs(smoothNoise3D(x * 1.6 + 3.0, y * 1.6 + 3.0, z * 1.6 + 3.0) - 0.5) * 0.85;
+      dist = dist - facetWeight * facetNoise;
+
+      if (level <= 18) return dist;
+
+      let chaosWeight = Math.min(1.0, (level - 18) / 17);
+      let fineNoise = (fbm3D(x * 3.0, y * 3.0, z * 3.0, 3) - 0.5) * 0.65 * chaosWeight;
+      dist = dist - fineNoise;
+
+      return dist;
+    }
 ~~~~~
 
-### 下一步建议
-
-- **性能验证**: 建议在浏览器中拖动难度滑块至 Lv.35（混沌分形），观察帧率表现，确保细分到 7 级（~16w 顶点）时 Three.js 的顶点位移计算依然保持丝滑。
-- **视觉复核**: 确认多孔和负空间穿透在 3D 模型表面清晰可见。如果确认无误，后续可进行 Git 提交。
+~~~~~act
+patch_file
+playground/fractal_section_prototype.html
+~~~~~
+~~~~~old
+    function getMorphologyMeta(level) {
+      if (level <= 8) {
+        return {
+          tier: '入门 (平滑凸模)',
+          stage: '形态: 平滑圆润大模',
+          topology: '单连通平滑凸包',
+          octavesText: '1~2 Macro Waves',
+          desc: '低难度下物体呈平滑大模，截面具有规则单连通凸起，适合快速建立空间感知。'
+        };
+      } else if (level <= 18) {
+        return {
+          tier: '进阶 (棱角矿石)',
+          stage: '形态: 多面棱角折叠',
+          topology: '多凹陷单连通体',
+          octavesText: '2 Octaves + 折痕切割',
+          desc: '中等难度引入棱脊与多向非对称切面，截面出现折角和不对称特征。'
+        };
+      } else if (level <= 28) {
+        return {
+          tier: '挑战 (多孔空腔)',
+          stage: '形态: 负空间多孔拓扑',
+          topology: '环面多孔 / 局部孤岛',
+          octavesText: '3 Octaves + 穿透空腔',
+          desc: '高难度下激活负空间空腔雕刻，截面可能呈现内孔洞或分离的小岛屿。'
+        };
+      } else {
+        return {
+          tier: '大师 (混沌分形)',
+          stage: '形态: 混沌多重分形簇',
+          topology: '高阶复杂多岛群落',
+          octavesText: '5 Octaves + 混沌微刺',
+          desc: '大师级拥有丰富的微观多层自相似分形突刺，必须精确校验局域曲率。'
+        };
+      }
+    }
+~~~~~
+~~~~~new
+    function getMorphologyMeta(level) {
+      if (level <= 8) {
+        return {
+          tier: '入门 (平滑凸模)',
+          stage: '形态: 平滑圆润大模',
+          topology: '单连通平滑凸包',
+          octavesText: '1~2 Macro Waves',
+          desc: '低难度下物体呈平滑大模，截面具有规则单连通凸起，适合快速建立空间感知。'
+        };
+      } else if (level <= 18) {
+        return {
+          tier: '进阶 (棱角矿石)',
+          stage: '形态: 多面棱角折叠',
+          topology: '多凹陷单连通体',
+          octavesText: '2 Octaves + 折痕切割',
+          desc: '中等难度引入棱脊与多向非对称切面，截面出现折角和不对称特征。'
+        };
+      } else if (level <= 28) {
+        return {
+          tier: '挑战 (复杂褶皱)',
+          stage: '形态: 多层复合分形褶皱',
+          topology: '高阶连续复杂曲面',
+          octavesText: '3 Octaves + 表面褶皱',
+          desc: '高难度下激活多层复合分形褶皱，截面呈现细腻的曲率起伏与非线性边界。'
+        };
+      } else {
+        return {
+          tier: '大师 (混沌分形)',
+          stage: '形态: 混沌多重分形簇',
+          topology: '高阶精细自相似体',
+          octavesText: '5 Octaves + 混沌微刺',
+          desc: '大师级拥有丰富的微观多层自相似分形突刺，必须精确校验局域曲率。'
+        };
+      }
+    }
+~~~~~
