@@ -94,7 +94,7 @@
     "subtitle": "针对构图、起形与色彩深度推演调优的官方权威训练序列，可自由复制到个人计划库并进行自定义编排",
     "browseBtn": "官方计划库",
     "myPlansBtn": "我的计划库",
-    "adoptToLibrary": "复制到我的计划",
+    "adoptToLibrary": "复制到我的计划库",
     "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！"
   },
   "templates": {
