@@ -50,7 +50,13 @@
       </div>
     </div>
     
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3">
+      <!-- 调试视图开关 -->
+      <label class="flex items-center gap-2 cursor-pointer bg-slate-800/80 hover:bg-slate-700/80 px-3 py-2 rounded-xl border border-slate-700/60 text-xs font-mono text-slate-300 hover:text-white transition shadow-sm">
+        <input type="checkbox" id="debug-texture-toggle" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+        <span class="font-semibold text-emerald-400">🔧 截面贴图调试视图</span>
+      </label>
+
       <button id="btn-regen" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-semibold text-white rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         生成下一题 (Space)
@@ -171,6 +177,7 @@
 
     let seed = Math.random() * 1000;
     let currentLevel = 1;
+    let debugTextureMode = false;
 
     function hash3D(x, y, z) {
       let n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed) * 43758.5453123;
@@ -487,9 +494,11 @@
       geom.computeVertexNormals();
 
       const mat = new THREE.MeshStandardMaterial({
-        color: 0x4f46e5,
+        color: debugTextureMode ? 0x312e81 : 0x4f46e5,
         roughness: 0.35,
         metalness: 0.15,
+        transparent: true,
+        opacity: debugTextureMode ? 0.15 : 1.0,
         flatShading: level > 8
       });
 
@@ -503,13 +512,34 @@
       const planeSize = 2.8;
       const halfSize = planeSize / 2;
       const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
-      const planeMat = new THREE.MeshBasicMaterial({
-        color: 0x10b981,
-        transparent: true,
-        opacity: 0.25,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
+      
+      let planeMat;
+      if (debugTextureMode) {
+        // 创建离屏 Canvas 生成截面纹理
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 256;
+        texCanvas.height = 256;
+        renderSectionToCanvas(texCanvas, q, q.level);
+
+        const texture = new THREE.CanvasTexture(texCanvas);
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+
+        planeMat = new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.95
+        });
+      } else {
+        planeMat = new THREE.MeshBasicMaterial({
+          color: 0x10b981,
+          transparent: true,
+          opacity: 0.25,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+      }
 
       planeHelper = new THREE.Mesh(planeGeom, planeMat);
       planeHelper.position.copy(q.planeCenter);
@@ -521,8 +551,6 @@
       planeHelper.add(line);
 
       // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
-      // 平面在本地坐标系中：u 对应 X 轴（从 -halfSize 到 +halfSize），v 对应 Y 轴（从 -halfSize 到 +halfSize）
-      // 顶边：y = +halfSize, x 从 -halfSize 到 +halfSize (红色, 对应 U 轴正向方位)
       const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-halfSize, halfSize, 0.002),
         new THREE.Vector3(halfSize, halfSize, 0.002)
@@ -530,7 +558,6 @@
       const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
       planeHelper.add(topEdgeLine);
 
-      // 左边：x = -halfSize, y 从 -halfSize 到 +halfSize (蓝色, 对应 V 轴正向方位)
       const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-halfSize, -halfSize, 0.002),
         new THREE.Vector3(-halfSize, halfSize, 0.002)
@@ -641,6 +668,16 @@
       document.querySelectorAll('.level-preset-btn').forEach(btn => {
         btn.onclick = () => updateLevel(btn.getAttribute('data-level'));
       });
+
+      // 调试视图开关监听
+      const debugToggle = document.getElementById('debug-texture-toggle');
+      debugToggle.onchange = (e) => {
+        debugTextureMode = e.target.checked;
+        if (currentQuestion) {
+          createFractal3DMesh(currentQuestion.level);
+          updateCuttingPlaneVisual(currentQuestion);
+        }
+      };
 
       window.addEventListener('keydown', (e) => {
         if (e.code === 'Space') {

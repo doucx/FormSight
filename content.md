@@ -1,68 +1,583 @@
-## [WIP] 将 3D 切片平面上的定向提示线替换为了与 2D 选项完全一致的边界边框
+你的需求完全合理。在 3D 空间切面感知中，引入“截面纹理实时贴图到切片平面”与“母体半透明背景化（Ghost 参考）”的调试视图，能够瞬间消除空间想象的不确定性，并提供直观的红蓝坐标轴对齐校验手段。
+
+我将生成一个 `[WIP]` 计划，在 `playground/fractal_section_prototype.html` 中增加此项调试功能。
+
+---
+
+## [WIP] feat(prototype): 为 3D 分形截面原型添加切面纹理调试视图与母体半透明参考
+
+### 用户需求
+用户希望在 3D 分形截面原型页面中添加一个选项/开关，支持：
+1. **切面纹理直投**：在 3D 视口的切片平面上直接通过 `THREE.CanvasTexture` 贴图渲染准确的 2D 截面剖面图。
+2. **母体半透明隐形参考（Ghost Mode）**：将主 3D 分形母体转为低透明度背景参考，以便用户和开发者极其直观地验证 3D 视口中的剖切位置、红蓝边框方向与下方 4-AFC 选项之间的对齐准确性。
+
+### 评论
+这是一个极具价值的交互与开发体验（DX）增强。它不仅帮助用户在遇到困难时进行直观的比对，也为算法和空间投影的对齐提供了完美的白盒调试工具。
+
+### 目标
+1. 在顶部导航栏或控制区新增“🔧 截面纹理调试视图”复选框开关。
+2. 在 Three.js 逻辑中增加动态纹理生成器，将对应当前题目的正确 2D 截面离屏渲染并转换为 `THREE.CanvasTexture`。
+3. 实现调试模式切换逻辑：开启时平面加载纹理贴图、母体材质透明度降至低水位；关闭时恢复半透明绿色标准平面与常规母体渲染。
+
+### 基本原理
+通过利用 Three.js 的 `CanvasTexture` 与材质的 `transparent/opacity` 动态调整，我们可以在不破坏现有 4-AFC 答题逻辑的前提下，将 2D 离屏渲染的截面像素无缝投射到 3D 空间的 `PlaneGeometry` 上。同时将 3D 母体降为骨架网格或低透明度参考，从而在三维空间中形成清晰的“切片剖面 + 母体幽灵”对比视图。
+
+### 标签
+#intent/build #flow/ready #priority/high #comp/docs #concept/ui #scope/ux #scope/dx #ai/instruct #task/domain/ui #task/object/fractal-section-prototype #task/action/refactor #task/state/begin
+
+---
+
+### Script
+
+#### Acts 1: 更新 `playground/fractal_section_prototype.html` 引入截面纹理调试视图
 
 ~~~~~act
-patch_file
+write_file
 playground/fractal_section_prototype.html
 ~~~~~
-~~~~~html.old
-    function updateCuttingPlaneVisual(q) {
-      if (planeHelper) scene.remove(planeHelper);
+~~~~~html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3D 分形截面感知 (形态渐进演化) - FormSight Prototype</title>
 
-      const planeGeom = new THREE.PlaneGeometry(2.8, 2.8);
-      const planeMat = new THREE.MeshBasicMaterial({
-        color: 0x10b981,
+  <!-- FormSight Prototype Standard Metadata Contract -->
+  <meta name="prototype:id" content="fractal_section" />
+  <meta name="prototype:title" content="3D 分形截面感知 (SDF 渐进演化)" />
+  <meta name="prototype:category" content="3D 空间结构" />
+  <meta name="prototype:target-pack" content="spatial_3d" />
+  <meta name="prototype:status" content="evaluating" />
+  <meta name="prototype:desc" content="形态随难度从「平滑圆润大模」演化为「多孔负空间空腔与混沌分形」，训练空间截面感知与局域曲率解析。" />
+  <meta name="prototype:tags" content="Three.js,SDF,Fractal,CrossSection,3D,Raymarching" />
+  <meta name="prototype:author" content="Claude & FormSight" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js + OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    input[type=range] {
+      accent-color: #6366f1;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4 sm:p-8 select-none">
+
+  <!-- Header -->
+  <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition text-xs font-mono" title="返回沙盒大盘">
+        ← 中枢
+      </a>
+      <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+        3D
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-white tracking-wide">3D 分形截面感知 (Fractal Cross-Section)</h1>
+        <p class="text-xs text-slate-400">形态随难度从「平滑大模」演化为「多孔混沌分形」</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <!-- 调试视图开关 -->
+      <label class="flex items-center gap-2 cursor-pointer bg-slate-800/80 hover:bg-slate-700/80 px-3 py-2 rounded-xl border border-slate-700/60 text-xs font-mono text-slate-300 hover:text-white transition shadow-sm">
+        <input type="checkbox" id="debug-texture-toggle" class="rounded bg-slate-900 border-slate-700 text-emerald-500 focus:ring-emerald-500 w-4 h-4 cursor-pointer" />
+        <span class="font-semibold text-emerald-400">🔧 截面贴图调试视图</span>
+      </label>
+
+      <button id="btn-regen" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-semibold text-white rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        生成下一题 (Space)
+      </button>
+    </div>
+  </header>
+
+  <!-- 难度控制条 (Difficulty Toolbar) -->
+  <section class="w-full max-w-4xl mt-4 p-4 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <span class="text-xs font-bold font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+        难度:
+      </span>
+      <span id="level-display" class="text-base font-bold font-mono text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-lg border border-indigo-500/20">
+        Lv. 1
+      </span>
+      <span id="level-tier" class="text-xs font-semibold text-slate-400">入门 (平滑凸模)</span>
+    </div>
+
+    <!-- 难度调节滑块 -->
+    <div class="flex items-center gap-4 w-full sm:w-auto flex-1 max-w-md">
+      <input type="range" id="level-slider" min="1" max="35" value="1" step="1" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" />
+    </div>
+
+    <!-- 快捷档位预设 -->
+    <div class="flex items-center gap-1.5">
+      <button class="level-preset-btn px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition" data-level="1">Lv.1 凸模</button>
+      <button class="level-preset-btn px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition" data-level="12">Lv.12 棱矿</button>
+      <button class="level-preset-btn px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition" data-level="22">Lv.22 多孔</button>
+      <button class="level-preset-btn px-2.5 py-1 text-[11px] font-mono font-medium rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white transition" data-level="35">Lv.35 混沌</button>
+    </div>
+  </section>
+
+  <!-- Main Canvas Card -->
+  <main class="w-full max-w-4xl mt-4 flex flex-col gap-6">
+
+    <!-- 3D 视图与题目引导 -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+      
+      <!-- 3D Viewport (左/上半部分) -->
+      <div class="md:col-span-7 bg-slate-950 rounded-2xl border border-slate-800 p-3 flex flex-col relative overflow-hidden shadow-2xl">
+        <div class="absolute top-4 left-4 z-10 flex items-center gap-2 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-700/60 text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span class="text-slate-300 font-mono font-medium" id="stage-badge">形态: 平滑圆润大模</span>
+        </div>
+        <div class="absolute bottom-4 left-4 z-10 text-[11px] text-slate-400 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 rounded-md border border-slate-800 pointer-events-none">
+          🖱️ 拖拽旋转视角 / 滚轮缩放
+        </div>
+        
+        <div id="three-container" class="w-full aspect-square rounded-xl bg-gradient-to-b from-slate-900/50 to-slate-950 flex items-center justify-center cursor-grab active:cursor-grabbing"></div>
+      </div>
+
+      <!-- 操作面板与引导说明 (右/下半部分) -->
+      <div class="md:col-span-5 flex flex-col justify-between bg-slate-800/40 rounded-2xl border border-slate-800 p-6">
+        <div class="space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
+            <span>TASK OBJECTIVE</span>
+          </div>
+          <h2 class="text-base font-bold text-white leading-snug">
+            观察左侧 3D 物体中由<span class="text-emerald-400">半透明平面与绿色轮廓</span>标注的截面位置，判断下方哪一个是其真实的 2D 截面？
+          </h2>
+          <p class="text-xs text-slate-400 leading-relaxed" id="stage-description">
+            低难度下物体呈平滑大模，截面具有规则的单连通凸起；高难度下将引入棱角切削、负空间穿透空腔与多重岛屿拓扑。
+          </p>
+
+          <!-- 切片与形态参数看板 -->
+          <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 font-mono text-xs text-slate-400">
+            <div class="flex justify-between">
+              <span>几何拓扑类型:</span>
+              <span id="stat-topology" class="text-indigo-300 font-semibold">单连通凸包</span>
+            </div>
+            <div class="flex justify-between">
+              <span>分形形态阶数:</span>
+              <span id="stat-octaves" class="text-slate-200 font-semibold">1-2 Macro Waves</span>
+            </div>
+            <div class="flex justify-between">
+              <span>干扰项深度微差 (Δz):</span>
+              <span id="stat-deltaz" class="text-slate-200 font-semibold">±0.55</span>
+            </div>
+            <div class="flex justify-between">
+              <span>干扰项倾角微差 (Δθ):</span>
+              <span id="stat-deltatilt" class="text-slate-200 font-semibold">50.0°</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 判定结果状态条 -->
+        <div id="result-badge" class="mt-6 hidden p-4 rounded-xl text-center font-bold text-sm transition-all duration-300"></div>
+      </div>
+    </div>
+
+    <!-- 2D 截面 4-AFC 选项列表 -->
+    <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider font-mono flex items-center gap-2">
+          <span>选择正确的 2D 剖截面 (Cross-Section Options)</span>
+        </h3>
+        <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> U轴定向 (顶边)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> V轴定向 (左边)</span>
+          <span class="text-slate-500">4-AFC (1-4)</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="options-grid"></div>
+    </div>
+
+  </main>
+
+  <script>
+    function expDecayInterpolate(startVal, endVal, level, maxLevel = 35) {
+      const t = Math.max(0, Math.min(1, (level - 1) / (maxLevel - 1)));
+      const decayRate = 3.0;
+      const factor = (1 - Math.exp(-decayRate * (1 - t))) / (1 - Math.exp(-decayRate));
+      return endVal + (startVal - endVal) * factor;
+    }
+
+    let seed = Math.random() * 1000;
+    let currentLevel = 1;
+    let debugTextureMode = false;
+
+    function hash3D(x, y, z) {
+      let n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7 + seed) * 43758.5453123;
+      return n - Math.floor(n);
+    }
+
+    function smoothNoise3D(x, y, z) {
+      let i = Math.floor(x), j = Math.floor(y), k = Math.floor(z);
+      let fx = x - i, fy = y - j, fz = z - k;
+      
+      let u = fx * fx * fx * (fx * (fx * 6 - 15) + 10);
+      let v = fy * fy * fy * (fy * (fy * 6 - 15) + 10);
+      let w = fz * fz * fz * (fz * (fz * 6 - 15) + 10);
+
+      let x00 = (1-u)*hash3D(i, j, k) + u*hash3D(i+1, j, k);
+      let x01 = (1-u)*hash3D(i, j, k+1) + u*hash3D(i+1, j, k+1);
+      let x10 = (1-u)*hash3D(i, j+1, k) + u*hash3D(i+1, j+1, k);
+      let x11 = (1-u)*hash3D(i, j+1, k+1) + u*hash3D(i+1, j+1, k+1);
+
+      let y0 = (1-v)*x00 + v*x10;
+      let y1 = (1-v)*x01 + v*x11;
+
+      return (1-w)*y0 + w*y1;
+    }
+
+    function fbm3D(x, y, z, octaves) {
+      let val = 0;
+      let amp = 0.55;
+      let freq = 1.0;
+      for (let i = 0; i < octaves; i++) {
+        val += amp * smoothNoise3D(x * freq, y * freq, z * freq);
+        freq *= 2.05;
+        amp *= 0.48;
+      }
+      return val;
+    }
+
+    function evaluateSDF(x, y, z, level) {
+      let r = Math.sqrt(x*x + y*y + z*z);
+
+      let macroNoise = (smoothNoise3D(x * 0.85 + 1.2, y * 0.85 + 1.2, z * 0.85 + 1.2) - 0.5) * 0.65;
+      let dist = (r - 1.15) - macroNoise;
+
+      if (level <= 8) return dist;
+
+      let facetWeight = Math.min(1.0, (level - 8) / 10);
+      let facetNoise = Math.abs(smoothNoise3D(x * 1.6 + 3.0, y * 1.6 + 3.0, z * 1.6 + 3.0) - 0.5) * 0.85;
+      dist = dist - facetWeight * facetNoise;
+
+      if (level <= 18) return dist;
+
+      let cavityWeight = Math.min(1.0, (level - 18) / 10);
+      let cavityNoise = smoothNoise3D(x * 2.4 + 5.5, y * 2.4 + 5.5, z * 2.4 + 5.5);
+      if (cavityNoise > 0.62) {
+        let holeDepth = (cavityNoise - 0.62) * 2.8 * cavityWeight;
+        dist = Math.max(dist, holeDepth);
+      }
+
+      if (level <= 28) return dist;
+
+      let chaosWeight = (level - 28) / 7;
+      let fineNoise = (fbm3D(x * 3.2, y * 3.2, z * 3.2, 3) - 0.5) * 0.6 * chaosWeight;
+      dist = dist - fineNoise;
+
+      return dist;
+    }
+
+    let currentQuestion = null;
+    let answered = false;
+
+    function getMorphologyMeta(level) {
+      if (level <= 8) {
+        return {
+          tier: '入门 (平滑凸模)',
+          stage: '形态: 平滑圆润大模',
+          topology: '单连通平滑凸包',
+          octavesText: '1~2 Macro Waves',
+          desc: '低难度下物体呈平滑大模，截面具有规则单连通凸起，适合快速建立空间感知。'
+        };
+      } else if (level <= 18) {
+        return {
+          tier: '进阶 (棱角矿石)',
+          stage: '形态: 多面棱角折叠',
+          topology: '多凹陷单连通体',
+          octavesText: '2 Octaves + 折痕切割',
+          desc: '中等难度引入棱脊与多向非对称切面，截面出现折角和不对称特征。'
+        };
+      } else if (level <= 28) {
+        return {
+          tier: '挑战 (多孔空腔)',
+          stage: '形态: 负空间多孔拓扑',
+          topology: '环面多孔 / 局部孤岛',
+          octavesText: '3 Octaves + 穿透空腔',
+          desc: '高难度下激活负空间空腔雕刻，截面可能呈现内孔洞或分离的小岛屿。'
+        };
+      } else {
+        return {
+          tier: '大师 (混沌分形)',
+          stage: '形态: 混沌多重分形簇',
+          topology: '高阶复杂多岛群落',
+          octavesText: '5 Octaves + 混沌微刺',
+          desc: '大师级拥有丰富的微观多层自相似分形突刺，必须精确校验局域曲率。'
+        };
+      }
+    }
+
+    function generateQuestionForLevel(level) {
+      seed = Math.random() * 10000;
+      const t = (level - 1) / 34;
+      const meta = getMorphologyMeta(level);
+
+      const tiltMax = 0.15 + t * 0.8;
+      const theta = (Math.random() - 0.5) * tiltMax;
+      const phi = (Math.random() - 0.5) * tiltMax;
+      const normal = new THREE.Vector3(Math.sin(theta), Math.cos(theta), Math.sin(phi)).normalize();
+
+      const offset = (Math.random() - 0.5) * (0.35 + t * 0.45);
+
+      const tempUp = Math.abs(normal.y) > 0.9 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 1, 0);
+      const uVec = new THREE.Vector3().crossVectors(normal, tempUp).normalize();
+      const vVec = new THREE.Vector3().crossVectors(normal, uVec).normalize();
+      const planeCenter = normal.clone().multiplyScalar(offset);
+
+      const deltaZ = expDecayInterpolate(0.55, 0.12, level);
+      const deltaTiltDeg = expDecayInterpolate(50.0, 14.0, level);
+      const deltaTiltRad = (deltaTiltDeg * Math.PI) / 180;
+
+      const distOffset = offset + (offset >= 0 ? -deltaZ : deltaZ);
+      const centerDistA = normal.clone().multiplyScalar(distOffset);
+
+      const rotNormal = normal.clone().applyAxisAngle(uVec, deltaTiltRad).normalize();
+      const rotV = new THREE.Vector3().crossVectors(rotNormal, uVec).normalize();
+
+      const centerDistC = normal.clone().multiplyScalar(offset + deltaZ * 0.6);
+      const rotNormalC = normal.clone().applyAxisAngle(vVec, -deltaTiltRad * 0.8).normalize();
+      const rotVC = new THREE.Vector3().crossVectors(rotNormalC, uVec).normalize();
+
+      const configs = [
+        { type: 'CORRECT', center: planeCenter, u: uVec, v: vVec, norm: normal },
+        { type: 'DIST_DEPTH', center: centerDistA, u: uVec, v: vVec, norm: normal },
+        { type: 'DIST_TILT', center: planeCenter, u: uVec, v: rotV, norm: rotNormal },
+        { type: 'DIST_COMPLEX', center: centerDistC, u: uVec, v: rotVC, norm: rotNormalC }
+      ];
+
+      const indices = [0, 1, 2, 3].sort(() => Math.random() - 0.5);
+      const correctIdx = indices.indexOf(0);
+
+      return {
+        level,
+        meta,
+        deltaZ,
+        deltaTiltDeg,
+        normal,
+        offset,
+        planeCenter,
+        uVec,
+        vVec,
+        configs: indices.map(i => configs[i]),
+        correctIdx
+      };
+    }
+
+    function renderSectionToCanvas(canvas, config, level) {
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+      ctx.clearRect(0, 0, size, size);
+
+      const span = 1.55;
+      const imgData = ctx.createImageData(size, size);
+      const data = imgData.data;
+
+      for (let py = 0; py < size; py++) {
+        let vFrac = (py / size - 0.5) * 2 * span;
+        for (let px = 0; px < size; px++) {
+          let uFrac = (px / size - 0.5) * 2 * span;
+          
+          let worldP = config.center.clone()
+            .add(config.u.clone().multiplyScalar(uFrac))
+            .add(config.v.clone().multiplyScalar(vFrac));
+          
+          let val = evaluateSDF(worldP.x, worldP.y, worldP.z, level);
+          let pIdx = (py * size + px) * 4;
+
+          if (val <= 0) {
+            let edgeDist = Math.min(1.0, -val * 3.2);
+            data[pIdx] = Math.round(99 + edgeDist * 45);
+            data[pIdx + 1] = Math.round(102 + edgeDist * 65);
+            data[pIdx + 2] = Math.round(241 + edgeDist * 14);
+            data[pIdx + 3] = 255;
+          } else if (val < 0.035) {
+            data[pIdx] = 52;
+            data[pIdx + 1] = 211;
+            data[pIdx + 2] = 153;
+            data[pIdx + 3] = 255;
+          } else {
+            data[pIdx] = 15;
+            data[pIdx + 1] = 23;
+            data[pIdx + 2] = 42;
+            data[pIdx + 3] = 255;
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+
+      // 内部网格微光
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(size/2, 0); ctx.lineTo(size/2, size);
+      ctx.moveTo(0, size/2); ctx.lineTo(size, size/2);
+      ctx.stroke();
+
+      // 绘制空间定向彩色提示边框 (红：u轴正向/顶部, 蓝：v轴正向/左侧)
+      const borderWidth = 4;
+      
+      // 顶部边框 (红色 - 对应 U 轴正向方位指示)
+      ctx.fillStyle = '#ef4444'; // red-500
+      ctx.fillRect(0, 0, size, borderWidth);
+
+      // 左侧边框 (蓝色 - 对应 V 轴正向方位指示)
+      ctx.fillStyle = '#3b82f6'; // blue-500
+      ctx.fillRect(0, 0, borderWidth, size);
+
+      // 整体外框微光
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, size, size);
+    }
+
+    let scene, camera, renderer, controls;
+    let fractalMesh = null, planeHelper = null;
+
+    function initThree() {
+      const container = document.getElementById('three-container');
+      const width = container.clientWidth;
+      const height = container.clientHeight || width;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+      camera.position.set(2.4, 1.8, 2.6);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(window.devicePixelRatio || 1);
+      container.appendChild(renderer.domElement);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.8;
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      scene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0x818cf8, 1.3);
+      dirLight1.position.set(4, 5, 3);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0x34d399, 0.8);
+      dirLight2.position.set(-3, -2, -4);
+      scene.add(dirLight2);
+
+      const grid = new THREE.GridHelper(3.5, 14, 0x334155, 0x1e293b);
+      grid.position.y = -1.4;
+      scene.add(grid);
+
+      window.addEventListener('resize', onWindowResize);
+      animate();
+    }
+
+    function onWindowResize() {
+      const container = document.getElementById('three-container');
+      const w = container.clientWidth;
+      camera.aspect = 1;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, w);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    function createFractal3DMesh(level) {
+      if (fractalMesh) scene.remove(fractalMesh);
+
+      const detail = level <= 8 ? 4 : 5;
+      const geom = new THREE.IcosahedronGeometry(1.2, detail);
+      const pos = geom.attributes.position;
+      
+      for (let i = 0; i < pos.count; i++) {
+        let vx = pos.getX(i);
+        let vy = pos.getY(i);
+        let vz = pos.getZ(i);
+        
+        let r = Math.sqrt(vx*vx + vy*vy + vz*vz);
+        let normX = vx / r;
+        let normY = vy / r;
+        let normZ = vz / r;
+
+        let curR = 1.15;
+        for (let step = 0; step < 7; step++) {
+          let testX = normX * curR;
+          let testY = normY * curR;
+          let testZ = normZ * curR;
+          let sdfVal = evaluateSDF(testX, testY, testZ, level);
+          curR = curR - sdfVal * 0.75;
+        }
+
+        pos.setXYZ(i, normX * curR, normY * curR, normZ * curR);
+      }
+      geom.computeVertexNormals();
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: debugTextureMode ? 0x312e81 : 0x4f46e5,
+        roughness: 0.35,
+        metalness: 0.15,
         transparent: true,
-        opacity: 0.25,
-        side: THREE.DoubleSide,
-        depthWrite: false
+        opacity: debugTextureMode ? 0.15 : 1.0,
+        flatShading: level > 8
       });
 
-      planeHelper = new THREE.Mesh(planeGeom, planeMat);
-      planeHelper.position.copy(q.planeCenter);
-      planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal);
-
-      const edges = new THREE.EdgesGeometry(planeGeom);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
-      planeHelper.add(line);
-
-      // 在截面平面上增加颜色编码的坐标轴指示线 (红色：U轴 / 蓝色：V轴)
-      // U 轴指示器 (红色细杆，沿正 u 方向)
-      const uDirGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(1.2, 0, 0)
-      ]);
-      const uLine = new THREE.Line(uDirGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 3 }));
-      planeHelper.add(uLine);
-
-      // V 轴指示器 (蓝色细杆，沿正 v 方向)
-      const vDirGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 1.2, 0)
-      ]);
-      const vLine = new THREE.Line(vDirGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 3 }));
-      planeHelper.add(vLine);
-
-      // 法向量指示箭头
-      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
-      planeHelper.add(arrow);
-
-      scene.add(planeHelper);
+      fractalMesh = new THREE.Mesh(geom, mat);
+      scene.add(fractalMesh);
     }
-~~~~~
-~~~~~html.new
+
     function updateCuttingPlaneVisual(q) {
       if (planeHelper) scene.remove(planeHelper);
 
       const planeSize = 2.8;
       const halfSize = planeSize / 2;
       const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
-      const planeMat = new THREE.MeshBasicMaterial({
-        color: 0x10b981,
-        transparent: true,
-        opacity: 0.25,
-        side: THREE.DoubleSide,
-        depthWrite: false
-      });
+      
+      let planeMat;
+      if (debugTextureMode) {
+        // 创建离屏 Canvas 生成截面纹理
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 256;
+        texCanvas.height = 256;
+        renderSectionToCanvas(texCanvas, q, q.level);
+
+        const texture = new THREE.CanvasTexture(texCanvas);
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+
+        planeMat = new THREE.MeshBasicMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.95
+        });
+      } else {
+        planeMat = new THREE.MeshBasicMaterial({
+          color: 0x10b981,
+          transparent: true,
+          opacity: 0.25,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+      }
 
       planeHelper = new THREE.Mesh(planeGeom, planeMat);
       planeHelper.position.copy(q.planeCenter);
@@ -74,8 +589,6 @@ playground/fractal_section_prototype.html
       planeHelper.add(line);
 
       // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
-      // 平面在本地坐标系中：u 对应 X 轴（从 -halfSize 到 +halfSize），v 对应 Y 轴（从 -halfSize 到 +halfSize）
-      // 顶边：y = +halfSize, x 从 -halfSize 到 +halfSize (红色, 对应 U 轴正向方位)
       const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-halfSize, halfSize, 0.002),
         new THREE.Vector3(halfSize, halfSize, 0.002)
@@ -83,7 +596,6 @@ playground/fractal_section_prototype.html
       const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
       planeHelper.add(topEdgeLine);
 
-      // 左边：x = -halfSize, y 从 -halfSize 到 +halfSize (蓝色, 对应 V 轴正向方位)
       const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
         new THREE.Vector3(-halfSize, -halfSize, 0.002),
         new THREE.Vector3(-halfSize, halfSize, 0.002)
@@ -97,11 +609,131 @@ playground/fractal_section_prototype.html
 
       scene.add(planeHelper);
     }
+
+    function setupQuestion() {
+      currentQuestion = generateQuestionForLevel(currentLevel);
+      answered = false;
+
+      const meta = currentQuestion.meta;
+      document.getElementById('stage-badge').textContent = meta.stage;
+      document.getElementById('stage-description').textContent = meta.desc;
+      document.getElementById('stat-topology').textContent = meta.topology;
+      document.getElementById('stat-octaves').textContent = meta.octavesText;
+      document.getElementById('stat-deltaz').textContent = `±${currentQuestion.deltaZ.toFixed(2)}`;
+      document.getElementById('stat-deltatilt').textContent = `${currentQuestion.deltaTiltDeg.toFixed(1)}°`;
+      
+      const badge = document.getElementById('result-badge');
+      badge.className = 'mt-6 hidden p-4 rounded-xl text-center font-bold text-sm transition-all duration-300';
+      badge.textContent = '';
+
+      createFractal3DMesh(currentQuestion.level);
+      updateCuttingPlaneVisual(currentQuestion);
+
+      const grid = document.getElementById('options-grid');
+      grid.innerHTML = '';
+
+      currentQuestion.configs.forEach((cfg, idx) => {
+        const optCard = document.createElement('div');
+        optCard.className = 'group relative flex flex-col items-center gap-2 p-3 bg-slate-900 rounded-xl border-2 border-slate-800 hover:border-indigo-500 cursor-pointer transition-all duration-200 shadow-md hover:scale-[1.02]';
+        optCard.id = `opt-card-${idx}`;
+
+        const tag = document.createElement('span');
+        tag.className = 'text-[11px] font-bold font-mono text-slate-400 group-hover:text-indigo-400';
+        tag.textContent = `[${idx + 1}] 选项 ${String.fromCharCode(65 + idx)}`;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 140;
+        canvas.height = 140;
+        canvas.className = 'w-full aspect-square rounded-lg bg-slate-950 border border-slate-800 shadow-inner';
+        
+        renderSectionToCanvas(canvas, cfg, currentQuestion.level);
+
+        optCard.appendChild(tag);
+        optCard.appendChild(canvas);
+
+        optCard.onclick = () => handleSelectOption(idx);
+        grid.appendChild(optCard);
+      });
+    }
+
+    function handleSelectOption(chosenIdx) {
+      if (answered) return;
+      answered = true;
+
+      const isCorrect = chosenIdx === currentQuestion.correctIdx;
+      const badge = document.getElementById('result-badge');
+      badge.classList.remove('hidden');
+
+      if (isCorrect) {
+        badge.className = 'mt-6 p-4 rounded-xl text-center font-bold text-sm bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+        badge.innerHTML = '🎉 正确！你在该形态下准确识别出了截面的拓扑构型。';
+      } else {
+        badge.className = 'mt-6 p-4 rounded-xl text-center font-bold text-sm bg-rose-500/10 border border-rose-500/30 text-rose-400';
+        badge.innerHTML = `❌ 答错了！正确答案是选项 ${String.fromCharCode(65 + currentQuestion.correctIdx)}。请结合 3D 视口观察凹槽深度与空腔位置。`;
+      }
+
+      currentQuestion.configs.forEach((_, idx) => {
+        const card = document.getElementById(`opt-card-${idx}`);
+        card.classList.remove('hover:border-indigo-500', 'cursor-pointer');
+        
+        if (idx === currentQuestion.correctIdx) {
+          card.classList.add('border-emerald-500', 'bg-emerald-950/20', 'ring-2', 'ring-emerald-500/30');
+        } else if (idx === chosenIdx) {
+          card.classList.add('border-rose-500', 'bg-rose-950/20');
+        } else {
+          card.classList.add('opacity-40');
+        }
+      });
+    }
+
+    function updateLevel(newLevel) {
+      currentLevel = Math.max(1, Math.min(35, parseInt(newLevel, 10)));
+      document.getElementById('level-slider').value = currentLevel;
+      document.getElementById('level-display').textContent = `Lv. ${currentLevel}`;
+      document.getElementById('level-tier').textContent = getMorphologyMeta(currentLevel).tier;
+      setupQuestion();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initThree();
+      updateLevel(1);
+
+      document.getElementById('btn-regen').onclick = () => setupQuestion();
+
+      const slider = document.getElementById('level-slider');
+      slider.oninput = (e) => updateLevel(e.target.value);
+
+      document.querySelectorAll('.level-preset-btn').forEach(btn => {
+        btn.onclick = () => updateLevel(btn.getAttribute('data-level'));
+      });
+
+      // 调试视图开关监听
+      const debugToggle = document.getElementById('debug-texture-toggle');
+      debugToggle.onchange = (e) => {
+        debugTextureMode = e.target.checked;
+        if (currentQuestion) {
+          createFractal3DMesh(currentQuestion.level);
+          updateCuttingPlaneVisual(currentQuestion);
+        }
+      };
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          setupQuestion();
+        } else if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
+          const idx = parseInt(e.code.replace('Digit', ''), 10) - 1;
+          handleSelectOption(idx);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
 ~~~~~
 
-### 下一步建议
-我们已经将 3D 切片平面上的定向提示线替换为了与 2D 选项完全一致的边界边框：
-- **顶边**：渲染为醒目的**红色**（对应 U 轴定向）。
-- **左边**：渲染为醒目的**蓝色**（对应 V 轴定向）。
+---
 
-这样用户在 3D 视图中观察切片平面时，可以直接将绿色正方形的**红顶边**与**蓝左边**与四个 2D 选项卡进行点对点直观对齐，彻底消除了空间旋转带来的理解障碍。你可以刷新网页查看最新的直观视觉效果！
+### 下一步建议
+1. **浏览器验证**: 在浏览器中打开 `playground/fractal_section_prototype.html`，勾选顶部的 `🔧 截面贴图调试视图`，即可实时观察切片平面上直接渲染的 2D 截面纹理与母体半透明背景的对齐情况。
+2. **提交变更**: 当你确认调试视图运作良好且对齐精确后，可使用 `git add` 与 `git commit` 将该特性提交到仓库中。

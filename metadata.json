@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] 将 3D 切片平面上的定向提示线替换为了与 2D 选项完全一致的边界边框", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788672725.837947, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat(prototype): 为 3D 分形截面原型添加切面纹理调试视图与母体半透明参考", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788673041.6808898, "duration_ms": 0}}
