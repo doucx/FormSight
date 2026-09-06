@@ -130,7 +130,6 @@ export function AppRouter({
 
       return (
         <OfficialPlansView
-          userPlans={allPlansList}
           onExit={() => navigate(exitTargetRoute)}
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
           onAdoptPlan={async (preset, startImmediately) => {

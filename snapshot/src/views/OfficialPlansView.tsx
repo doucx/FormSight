@@ -1,53 +1,24 @@
-import { ArrowLeft, BookOpen, Layers, Sparkles } from 'lucide-preact';
-import { useMemo, useState } from 'preact/hooks';
+import { ArrowLeft, BookOpen, Layers } from 'lucide-preact';
+import { useMemo } from 'preact/hooks';
 import { OfficialPlanCard } from '../components/plan/official/OfficialPlanCard';
 import { Button } from '../components/ui/button';
-import { type OfficialPlanCategory, officialPlanRegistry } from '../config/plans';
+import { officialPlanRegistry } from '../config/plans';
 import { useTranslation } from '../core/i18n';
-import type { TrainingPlan } from '../types/plan';
 
 interface OfficialPlansViewProps {
-  userPlans: TrainingPlan[];
   onExit: () => void;
   onNavigateToMyPlans: () => void;
   onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset, startImmediately?: boolean) => Promise<void>;
 }
 
 export function OfficialPlansView({
-  userPlans,
   onExit,
   onNavigateToMyPlans,
   onAdoptPlan,
 }: OfficialPlansViewProps) {
   const { t } = useTranslation();
-  const [selectedCategory, setSelectedCategory] = useState<OfficialPlanCategory | 'all'>('all');
 
   const allPresets = useMemo(() => officialPlanRegistry.getAllPresets(), []);
-
-  const filteredPresets = useMemo(() => {
-    if (selectedCategory === 'all') return allPresets;
-    return allPresets.filter((p) => p.category === selectedCategory);
-  }, [allPresets, selectedCategory]);
-
-  const adoptedMap = useMemo(() => {
-    const map = new Set<string>();
-    for (const plan of userPlans) {
-      for (const preset of allPresets) {
-        if (plan.id.includes(preset.id)) {
-          map.add(preset.id);
-        }
-      }
-    }
-    return map;
-  }, [userPlans, allPresets]);
-
-  const categories: Array<{ id: OfficialPlanCategory | 'all'; labelKey: string }> = [
-    { id: 'all', labelKey: 'common.all' },
-    { id: 'warmup', labelKey: 'officialPlans.categoryWarmup' },
-    { id: 'form', labelKey: 'officialPlans.categoryForm' },
-    { id: 'color', labelKey: 'officialPlans.categoryColor' },
-    { id: 'abstraction', labelKey: 'officialPlans.categoryAbstraction' },
-  ];
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
@@ -69,7 +40,7 @@ export function OfficialPlansView({
                   {t('officialPlans.title')}
                 </h1>
                 <span className="text-xs font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-lg">
-                  {filteredPresets.length}
+                  {allPresets.length}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground font-medium mt-0.5">
@@ -90,28 +61,12 @@ export function OfficialPlansView({
         </Button>
       </header>
 
-      {/* 分类切换滤镜 */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-        {categories.map((cat) => (
-          <Button
-            key={cat.id}
-            variant={selectedCategory === cat.id ? 'default' : 'secondary'}
-            size="sm"
-            onClick={() => setSelectedCategory(cat.id)}
-            className="rounded-xl h-auto py-2 px-3.5 text-xs font-bold whitespace-nowrap"
-          >
-            {t(cat.labelKey)}
-          </Button>
-        ))}
-      </div>
-
-      {/* 官方计划卡片网格 */}
+      {/* 官方计划卡片平铺网格 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredPresets.map((preset) => (
+        {allPresets.map((preset) => (
           <OfficialPlanCard
             key={preset.id}
             preset={preset}
-            isAlreadyAdopted={adoptedMap.has(preset.id)}
             onAdoptToLibrary={(p) => onAdoptPlan(p, false)}
             onAdoptAndStart={(p) => onAdoptPlan(p, true)}
           />

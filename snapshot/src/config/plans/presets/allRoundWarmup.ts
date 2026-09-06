@@ -7,12 +7,10 @@ export const allRoundWarmup: OfficialPlanPreset = {
     'zh-CN': {
       name: '晨间感知全能热身 (50题)',
       description: '快速激活空间几何、绝对色相与正负形快判直觉，适合每日开工前热身。',
-      badge: '推荐',
     },
     'en-US': {
       name: 'Morning All-Round Warmup (50 trials)',
       description: 'Quickly activate spatial geometry, absolute hue, and negative space intuition.',
-      badge: 'Recommended',
     },
   },
   items: [

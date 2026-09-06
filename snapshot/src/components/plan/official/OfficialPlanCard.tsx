@@ -1,4 +1,4 @@
-import { ArrowRight, Check, ChevronRight, Clock, Copy, Play, Sparkles } from 'lucide-preact';
+import { ArrowRight, ChevronRight, Clock, Copy, Play } from 'lucide-preact';
 import type { OfficialPlanPreset } from '../../../config/plans';
 import { getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
@@ -7,14 +7,12 @@ import { Button } from '../../ui/button';
 
 interface OfficialPlanCardProps {
   preset: OfficialPlanPreset;
-  isAlreadyAdopted?: boolean;
   onAdoptToLibrary: (preset: OfficialPlanPreset) => void;
   onAdoptAndStart: (preset: OfficialPlanPreset) => void;
 }
 
 export function OfficialPlanCard({
   preset,
-  isAlreadyAdopted = false,
   onAdoptToLibrary,
   onAdoptAndStart,
 }: OfficialPlanCardProps) {
@@ -27,7 +25,6 @@ export function OfficialPlanCard({
 
   const name = dict?.name || preset.id;
   const description = dict?.description || '';
-  const badgeText = dict?.badge;
 
   const validItems = (preset.items || []).filter((item) =>
     Boolean(registry.getCardById(item.cardId)),
@@ -38,30 +35,14 @@ export function OfficialPlanCard({
   return (
     <div className="group bg-card border border-border hover:border-primary/60 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between gap-5 relative select-none">
       <div className="space-y-4">
-        {/* 顶栏：标题、徽章与阶段概览 */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1.5 min-w-0 flex-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-base sm:text-lg font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
-                {name}
-              </h3>
-              {badgeText && (
-                <Badge variant="accent" size="sm">
-                  <Sparkles className="w-3 h-3" />
-                  <span>{badgeText}</span>
-                </Badge>
-              )}
-              {isAlreadyAdopted && (
-                <Badge variant="success" size="sm" className="gap-1 font-semibold">
-                  <Check className="w-3 h-3" />
-                  <span>{t('officialPlans.adoptedBadge')}</span>
-                </Badge>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 min-h-[2.5rem]">
-              {description}
-            </p>
-          </div>
+        {/* 顶栏：纯粹标题与详细阐述 */}
+        <div className="space-y-1.5 min-w-0">
+          <h3 className="text-base sm:text-lg font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
+            {name}
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 min-h-[2.5rem]">
+            {description}
+          </p>
         </div>
 
         {/* 阶段管线可视化预览 */}

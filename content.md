@@ -1,235 +1,479 @@
-我已定位到该问题：在 `AppRouter.tsx` 中，`OfficialPlansView` 的 `onExit` 目前被固定连接到了主页路由缓存（`lastHomeRoute`，默认指向 `#/`），导致从计划编排页面（`#/plan-editor`）进入后点击退出被重定向到了首页。
+我将按要求对官方计划页面和卡片进行极简化重构，彻底移除“已在计划库”的状态跟踪、官方计划上的各类标签徽章以及顶部的分类筛选按钮栏，并清理中英文语言包中的多余词条。
 
-我将生成一个修复计划，在路由系统中引入前驱路由上下文跟踪，并在官方计划页面中实现智能回退，确保优先返回来源页面（如 `#/plan-editor`），在独立打开时默认回退到计划中心。
-
-## [WIP] fix(routing): 修复从计划编辑器进入官方计划库后点击退出错误跳至主页的问题
-
-### 错误分析
-1. **根本原因**：在 `AppRouter.tsx` 中，`OfficialPlansView` 的 `onExit` 回调绑定的是 `() => navigate(lastHomeRoute)`。而 `lastHomeRoute` 仅在用户访问 `home` 或 `discovery` 时才更新，当用户处于 `plan-editor` 时该变量仍保留为默认的 `{ type: 'home' }`。
-2. **行为冲突**：因此，用户在 `#/plan-editor` 中点击按钮进入 `#/official-plans` 时，触发“退出”会错误跳转到首页 `#/`，违反了计划流转的层级心智。
+## [WIP] refactor(plan): 简化官方计划页面与卡片设计并移除分类与徽章
 
 ### 用户需求
-从 `http://localhost:5173/#/plan-editor` 进入 `http://localhost:5173/#/official-plans` 后，点击“退出”应当返回 `http://localhost:5173/#/plan-editor`，而不是返回系统主页 `http://localhost:5173/#/`。
+1. 完全移除官方计划卡片上的“已在计划库”状态及徽章逻辑。
+2. 清除所有官方计划卡片上的分类/推荐徽章（如“概括专项”、“推荐”等）。
+3. 清除官方计划页面顶部的分类切换按钮栏（“全部 / 晨间热身 / 造型构图 / 色彩光影 / 提炼概括”）。
+4. 清理 `zh-CN.json` 与 `en-US.json` 中对应的无用语言包条目。
 
 ### 评论
-该问题直接影响计划模块各子视图之间的流转连贯性。官方计划库属于训练计划领域下的功能，退出时应当具有上下文感知能力，优先返回前驱页面；在无来源上下文时默认归位于计划编排中心，契合用户预期。
+官方计划目前总数精炼（4个核心流），去除分类过滤栏与状态徽章后，页面结构更为直接平铺，避免了跨状态判断（删除计划后状态未同步）带来的心智负担与冗余渲染，视觉也更聚焦于训练流内容本身。
 
 ### 目标
-1. 在 `useHashRoute.ts` 中增加前驱路由跟踪状态 `previousRoute`。
-2. 在 `AppRouter.tsx` 中更新 `OfficialPlansView` 的退出逻辑：优先导航回上一站内页面（如 `plan-editor`），在无历史记录时默认回退至 `{ type: 'plan-editor' }`。
+1. 重构 `OfficialPlanCard.tsx`：移除 `isAlreadyAdopted`、`badge` 及其渲染与引入的图标（`Check`, `Sparkles`）。
+2. 重构 `OfficialPlansView.tsx`：移除 `userPlans`、`adoptedMap`、分类切换状态与过滤栏 DOM，直接平铺展示所有官方预设。
+3. 更新 `AppRouter.tsx`，移除对 `userPlans` 的冗余传参。
+4. 清理 `src/config/plans/` 中预设文件的 `badge` 声明及类型定义。
+5. 清理 `zh-CN.json` 与 `en-US.json` 中的 `adoptedBadge` 和各分类翻译键。
 
 ### 基本原理
-通过在 `useHashRoute` 内部维护 `previousRouteRef`，在每次路由跳转（无论是通过 `navigate` 编程式调用还是用户前进后退触发 `hashchange`）前精准捕获上一站内路由对象。`OfficialPlansView` 在响应退出时，判定前驱路由如果有效且不是 `official-plans` 自身，则安全回退；若为空（如直接新标签页打开）则回退至计划中心主界面 `plan-editor`。
+精简不必要的派生状态，让官方计划模块回归为纯粹的“官方权威预设目录”。不再进行“是否已导入”的比对运算，移除分类过滤，直接平铺展示。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium
-#comp/cli #concept/navigation #scope/ux
+#intent/refine #flow/ready #priority/medium
+#comp/cli #concept/ui #scope/ux
 #ai/refine
 #task/domain/plans
-#task/object/route-back-navigation
-#task/action/bug-fix
+#task/object/official-plans-view
+#task/action/refactor
 #task/state/continue #task/status/active
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `useHashRoute` 中增加站内前驱路由跟踪
+#### Acts 1: 简化官方计划预设类型与预设配置
 
-记录上一个站内有效路由，使子页面能够感知来源并准确返回。
+移除 `badge` 字段定义与独立预设中的徽章内容。
 
 ~~~~~act
 patch_file
-src/hooks/useHashRoute.ts
+src/config/plans/types.ts
 ~~~~~
 ~~~~~typescript
-export function useHashRoute() {
-  const [route, setRoute] = useState<RouteLocation>(() =>
-    typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
-  );
+export type OfficialPlanCategory = 'warmup' | 'form' | 'color' | 'abstraction' | 'general';
 
-  const scrollPositionsRef = useRef<Record<string, number>>({});
-  const currentHashRef = useRef<string>(
-    typeof window !== 'undefined' ? window.location.hash || '#/' : '#/',
-  );
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentKey = currentHashRef.current || '#/';
-      scrollPositionsRef.current[currentKey] = window.scrollY;
+export interface OfficialPlanPreset {
+  id: string;
+  category: OfficialPlanCategory;
+  badgeI18nKey?: string;
+  locales: {
+    'zh-CN': {
+      name: string;
+      description: string;
+      badge?: string;
     };
-
-    const handleHashChange = () => {
-      const prevHash = currentHashRef.current || '#/';
-      scrollPositionsRef.current[prevHash] = window.scrollY;
-
-      const newHash = window.location.hash || '#/';
-      currentHashRef.current = newHash;
-      setRoute(parseHash(newHash));
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const targetY = scrollPositionsRef.current[newHash] ?? 0;
-          window.scrollTo(0, targetY);
-        });
-      });
+    'en-US': {
+      name: string;
+      description: string;
+      badge?: string;
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('hashchange', handleHashChange);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
-  const navigate = useCallback((target: RouteLocation, options?: { replace?: boolean }) => {
-    const newHash = stringifyRoute(target);
-    if (window.location.hash !== newHash) {
-      const prevHash = currentHashRef.current || '#/';
-      scrollPositionsRef.current[prevHash] = window.scrollY;
-      if (options?.replace) {
-        const url = new URL(window.location.href);
-        url.hash = newHash;
-        window.history.replaceState(null, '', url.toString());
-        currentHashRef.current = newHash;
-        setRoute(parseHash(newHash));
-      } else {
-        window.location.hash = newHash;
-      }
-    }
-  }, []);
-
-  return { route, navigate };
+  };
+  items: Array<{
+    cardId: string;
+    targetTrials: number;
+  }>;
 }
 ~~~~~
 ~~~~~typescript
-export function useHashRoute() {
-  const [route, setRoute] = useState<RouteLocation>(() =>
-    typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
-  );
-  const previousRouteRef = useRef<RouteLocation | null>(null);
+export type OfficialPlanCategory = 'warmup' | 'form' | 'color' | 'abstraction' | 'general';
 
-  const scrollPositionsRef = useRef<Record<string, number>>({});
-  const currentHashRef = useRef<string>(
-    typeof window !== 'undefined' ? window.location.hash || '#/' : '#/',
-  );
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentKey = currentHashRef.current || '#/';
-      scrollPositionsRef.current[currentKey] = window.scrollY;
+export interface OfficialPlanPreset {
+  id: string;
+  category: OfficialPlanCategory;
+  locales: {
+    'zh-CN': {
+      name: string;
+      description: string;
     };
-
-    const handleHashChange = () => {
-      const prevHash = currentHashRef.current || '#/';
-      scrollPositionsRef.current[prevHash] = window.scrollY;
-      previousRouteRef.current = parseHash(prevHash);
-
-      const newHash = window.location.hash || '#/';
-      currentHashRef.current = newHash;
-      setRoute(parseHash(newHash));
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const targetY = scrollPositionsRef.current[newHash] ?? 0;
-          window.scrollTo(0, targetY);
-        });
-      });
+    'en-US': {
+      name: string;
+      description: string;
     };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('hashchange', handleHashChange);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, []);
-
-  const navigate = useCallback((target: RouteLocation, options?: { replace?: boolean }) => {
-    const newHash = stringifyRoute(target);
-    if (window.location.hash !== newHash) {
-      const prevHash = currentHashRef.current || '#/';
-      scrollPositionsRef.current[prevHash] = window.scrollY;
-      previousRouteRef.current = parseHash(prevHash);
-
-      if (options?.replace) {
-        const url = new URL(window.location.href);
-        url.hash = newHash;
-        window.history.replaceState(null, '', url.toString());
-        currentHashRef.current = newHash;
-        setRoute(parseHash(newHash));
-      } else {
-        window.location.hash = newHash;
-      }
-    }
-  }, []);
-
-  return { route, navigate, previousRoute: previousRouteRef.current };
+  };
+  items: Array<{
+    cardId: string;
+    targetTrials: number;
+  }>;
 }
 ~~~~~
 
-#### Acts 2: 修正 `AppRouter.tsx` 中官方计划库的退出导航路径
+~~~~~act
+patch_file
+src/config/plans/presets/allRoundWarmup.ts
+~~~~~
+~~~~~typescript
+export const allRoundWarmup: OfficialPlanPreset = {
+  id: 'all_round_warmup',
+  category: 'warmup',
+  locales: {
+    'zh-CN': {
+      name: '晨间感知全能热身 (50题)',
+      description: '快速激活空间几何、绝对色相与正负形快判直觉，适合每日开工前热身。',
+      badge: '推荐',
+    },
+    'en-US': {
+      name: 'Morning All-Round Warmup (50 trials)',
+      description: 'Quickly activate spatial geometry, absolute hue, and negative space intuition.',
+      badge: 'Recommended',
+    },
+  },
+  items: [
+~~~~~
+~~~~~typescript
+export const allRoundWarmup: OfficialPlanPreset = {
+  id: 'all_round_warmup',
+  category: 'warmup',
+  locales: {
+    'zh-CN': {
+      name: '晨间感知全能热身 (50题)',
+      description: '快速激活空间几何、绝对色相与正负形快判直觉，适合每日开工前热身。',
+    },
+    'en-US': {
+      name: 'Morning All-Round Warmup (50 trials)',
+      description: 'Quickly activate spatial geometry, absolute hue, and negative space intuition.',
+    },
+  },
+  items: [
+~~~~~
 
-当用户在官方计划库中点击退出时，优先返回进入前的前驱路由（如 `plan-editor`），在无来源或来源为自身时默认回退到 `plan-editor`。
+~~~~~act
+patch_file
+src/config/plans/presets/geometrySculpting.ts
+~~~~~
+~~~~~typescript
+export const geometrySculpting: OfficialPlanPreset = {
+  id: 'geometry_sculpting',
+  category: 'form',
+  locales: {
+    'zh-CN': {
+      name: '造型起形与比例强化 (60题)',
+      description: '深入训练双锚点透视构图、负形反切定点与折线低模概括能力。',
+      badge: '造型专项',
+    },
+    'en-US': {
+      name: 'Structure & Proportion Reinforcement (60 trials)',
+      description:
+        'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
+      badge: 'Form Special',
+    },
+  },
+  items: [
+~~~~~
+~~~~~typescript
+export const geometrySculpting: OfficialPlanPreset = {
+  id: 'geometry_sculpting',
+  category: 'form',
+  locales: {
+    'zh-CN': {
+      name: '造型起形与比例强化 (60题)',
+      description: '深入训练双锚点透视构图、负形反切定点与折线低模概括能力。',
+    },
+    'en-US': {
+      name: 'Structure & Proportion Reinforcement (60 trials)',
+      description:
+        'Deeply train dual-anchor perspective, negative space vertex fitting, and low-poly decimation.',
+    },
+  },
+  items: [
+~~~~~
+
+~~~~~act
+patch_file
+src/config/plans/presets/colorLightMastery.ts
+~~~~~
+~~~~~typescript
+export const colorLightMastery: OfficialPlanPreset = {
+  id: 'color_light_mastery',
+  category: 'color',
+  locales: {
+    'zh-CN': {
+      name: '色彩光影与环境穿透 (65题)',
+      description: '从绝对色相识别进阶到阿尔伯斯环境色对抗、色彩矢量迁移与综合拾色。',
+      badge: '色彩进阶',
+    },
+    'en-US': {
+      name: 'Color & Light Environment Penetration (65 trials)',
+      description:
+        'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
+      badge: 'Color Mastery',
+    },
+  },
+  items: [
+~~~~~
+~~~~~typescript
+export const colorLightMastery: OfficialPlanPreset = {
+  id: 'color_light_mastery',
+  category: 'color',
+  locales: {
+    'zh-CN': {
+      name: '色彩光影与环境穿透 (65题)',
+      description: '从绝对色相识别进阶到阿尔伯斯环境色对抗、色彩矢量迁移与综合拾色。',
+    },
+    'en-US': {
+      name: 'Color & Light Environment Penetration (65 trials)',
+      description:
+        'Advance from absolute hue to Albers simultaneous contrast, vector shifts, and full color matching.',
+    },
+  },
+  items: [
+~~~~~
+
+~~~~~act
+patch_file
+src/config/plans/presets/abstractionEssence.ts
+~~~~~
+~~~~~typescript
+export const abstractionEssence: OfficialPlanPreset = {
+  id: 'abstraction_essence',
+  category: 'abstraction',
+  locales: {
+    'zh-CN': {
+      name: '视知觉概括提炼 (60题)',
+      description: '自底向上训练动态势线提取、黑白素描归组与主调色群提炼本质。',
+      badge: '概括专项',
+    },
+    'en-US': {
+      name: 'Perceptual Abstraction & Essence (60 trials)',
+      description:
+        'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
+      badge: 'Abstraction',
+    },
+  },
+  items: [
+~~~~~
+~~~~~typescript
+export const abstractionEssence: OfficialPlanPreset = {
+  id: 'abstraction_essence',
+  category: 'abstraction',
+  locales: {
+    'zh-CN': {
+      name: '视知觉概括提炼 (60题)',
+      description: '自底向上训练动态势线提取、黑白素描归组与主调色群提炼本质。',
+    },
+    'en-US': {
+      name: 'Perceptual Abstraction & Essence (60 trials)',
+      description:
+        'Bottom-up training for gesture axis extraction, Notan grouping, and dominant color clustering.',
+    },
+  },
+  items: [
+~~~~~
+
+#### Acts 2: 简化 `OfficialPlanCard` 组件
+
+移除已在计划库徽章、官方标签徽章及多余图标。
+
+~~~~~act
+write_file
+src/components/plan/official/OfficialPlanCard.tsx
+~~~~~
+~~~~~typescript
+import { ArrowRight, ChevronRight, Clock, Copy, Play } from 'lucide-preact';
+import type { OfficialPlanPreset } from '../../../config/plans';
+import { getCardTitle, useTranslation } from '../../../core/i18n';
+import { registry } from '../../../core/registry';
+import { Badge } from '../../ui/badge';
+import { Button } from '../../ui/button';
+
+interface OfficialPlanCardProps {
+  preset: OfficialPlanPreset;
+  onAdoptToLibrary: (preset: OfficialPlanPreset) => void;
+  onAdoptAndStart: (preset: OfficialPlanPreset) => void;
+}
+
+export function OfficialPlanCard({
+  preset,
+  onAdoptToLibrary,
+  onAdoptAndStart,
+}: OfficialPlanCardProps) {
+  const { t, locale } = useTranslation();
+
+  const dict =
+    preset.locales[locale as 'zh-CN' | 'en-US'] ||
+    preset.locales['zh-CN'] ||
+    preset.locales['en-US'];
+
+  const name = dict?.name || preset.id;
+  const description = dict?.description || '';
+
+  const validItems = (preset.items || []).filter((item) =>
+    Boolean(registry.getCardById(item.cardId)),
+  );
+  const totalTrials = validItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
+  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+
+  return (
+    <div className="group bg-card border border-border hover:border-primary/60 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between gap-5 relative select-none">
+      <div className="space-y-4">
+        {/* 顶栏：纯粹标题与详细阐述 */}
+        <div className="space-y-1.5 min-w-0">
+          <h3 className="text-base sm:text-lg font-black text-foreground group-hover:text-primary transition-colors tracking-tight">
+            {name}
+          </h3>
+          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 min-h-[2.5rem]">
+            {description}
+          </p>
+        </div>
+
+        {/* 阶段管线可视化预览 */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
+            <span>{t('plan.stageCount', { count: validItems.length })}</span>
+            <div className="flex items-center gap-2">
+              <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-muted-foreground" />
+                {t('plan.estimatedTime', { min: estimatedMin })}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {validItems.map((item, idx) => {
+              const card = registry.getCardById(item.cardId);
+              if (!card) return null;
+              const Icon = card.icon;
+              const cardTitle = getCardTitle(card, t);
+
+              return (
+                <div key={`${preset.id}_${item.cardId}_${idx}`} className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-1.5 rounded-2xl shadow-inner">
+                    <div className="w-4 h-4 rounded-md bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
+                      {idx + 1}
+                    </div>
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                    <Badge variant="secondary" size="sm" className="font-mono font-bold text-[10px]">
+                      {item.targetTrials}
+                      {t('common.trialsUnit')}
+                    </Badge>
+                  </div>
+                  {idx < validItems.length - 1 && (
+                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 底部操作按钮组 */}
+      <div className="flex items-center justify-between gap-2.5 pt-4 border-t border-border/60 flex-wrap">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => onAdoptToLibrary(preset)}
+          className="gap-1.5 border border-border"
+          title={t('officialPlans.adoptToLibrary')}
+        >
+          <Copy className="w-3.5 h-3.5" />
+          <span>{t('officialPlans.adoptToLibrary')}</span>
+        </Button>
+
+        <Button
+          variant="default"
+          size="sm"
+          onClick={() => onAdoptAndStart(preset)}
+          className="gap-1.5 ml-auto"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>{t('officialPlans.adoptAndStart')}</span>
+          <ArrowRight className="w-3 h-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+~~~~~
+
+#### Acts 3: 简化 `OfficialPlansView` 页面与 `AppRouter`
+
+移除分类过滤栏及其状态，直接平铺展示全部官方计划。
+
+~~~~~act
+write_file
+src/views/OfficialPlansView.tsx
+~~~~~
+~~~~~typescript
+import { ArrowLeft, BookOpen, Layers } from 'lucide-preact';
+import { useMemo } from 'preact/hooks';
+import { OfficialPlanCard } from '../components/plan/official/OfficialPlanCard';
+import { Button } from '../components/ui/button';
+import { officialPlanRegistry } from '../config/plans';
+import { useTranslation } from '../core/i18n';
+
+interface OfficialPlansViewProps {
+  onExit: () => void;
+  onNavigateToMyPlans: () => void;
+  onAdoptPlan: (preset: import('../config/plans').OfficialPlanPreset, startImmediately?: boolean) => Promise<void>;
+}
+
+export function OfficialPlansView({
+  onExit,
+  onNavigateToMyPlans,
+  onAdoptPlan,
+}: OfficialPlansViewProps) {
+  const { t } = useTranslation();
+
+  const allPresets = useMemo(() => officialPlanRegistry.getAllPresets(), []);
+
+  return (
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
+      {/* 顶部标题与导航栏 */}
+      <header className="w-full bg-card border border-border rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" size="sm" onClick={onExit} className="gap-1.5 flex-shrink-0">
+            <ArrowLeft className="w-4 h-4" />
+            <span>{t('common.exit')}</span>
+          </Button>
+          <div className="h-5 w-px bg-border hidden sm:block" />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 bg-accent text-primary rounded-2xl shadow-xs flex-shrink-0">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
+                  {t('officialPlans.title')}
+                </h1>
+                <span className="text-xs font-mono font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-lg">
+                  {allPresets.length}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
+                {t('officialPlans.subtitle')}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={onNavigateToMyPlans}
+          className="gap-1.5 border border-border self-end sm:self-auto"
+        >
+          <Layers className="w-3.5 h-3.5 text-primary" />
+          <span>{t('officialPlans.myPlansBtn')}</span>
+        </Button>
+      </header>
+
+      {/* 官方计划卡片平铺网格 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {allPresets.map((preset) => (
+          <OfficialPlanCard
+            key={preset.id}
+            preset={preset}
+            onAdoptToLibrary={(p) => onAdoptPlan(p, false)}
+            onAdoptAndStart={(p) => onAdoptPlan(p, true)}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+~~~~~
 
 ~~~~~act
 patch_file
 src/components/routing/AppRouter.tsx
 ~~~~~
 ~~~~~old
-interface AppRouterProps {
-  route: RouteLocation;
-  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
-  lastHomeRoute: RouteLocation;
-  onOpenCardSettings: (cardId: string) => void;
-  onOpenGlobalSettings: () => void;
-}
-
-export function AppRouter({
-  route,
-  navigate,
-  lastHomeRoute,
-  onOpenCardSettings,
-  onOpenGlobalSettings,
-}: AppRouterProps) {
-~~~~~
-~~~~~new
-interface AppRouterProps {
-  route: RouteLocation;
-  navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
-  lastHomeRoute: RouteLocation;
-  previousRoute?: RouteLocation | null;
-  onOpenCardSettings: (cardId: string) => void;
-  onOpenGlobalSettings: () => void;
-}
-
-export function AppRouter({
-  route,
-  navigate,
-  lastHomeRoute,
-  previousRoute,
-  onOpenCardSettings,
-  onOpenGlobalSettings,
-}: AppRouterProps) {
-~~~~~
-
-~~~~~act
-patch_file
-src/components/routing/AppRouter.tsx
-~~~~~
-~~~~~old
-    if (route.type === 'official-plans') {
-      return (
-        <OfficialPlansView
-          userPlans={allPlansList}
-          onExit={() => navigate(lastHomeRoute)}
-          onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
-          onAdoptPlan={async (preset, startImmediately) => {
-~~~~~
-~~~~~new
     if (route.type === 'official-plans') {
       const exitTargetRoute: RouteLocation =
         previousRoute && previousRoute.type !== 'official-plans'
@@ -243,70 +487,91 @@ src/components/routing/AppRouter.tsx
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
           onAdoptPlan={async (preset, startImmediately) => {
 ~~~~~
+~~~~~new
+    if (route.type === 'official-plans') {
+      const exitTargetRoute: RouteLocation =
+        previousRoute && previousRoute.type !== 'official-plans'
+          ? previousRoute
+          : { type: 'plan-editor' };
 
-#### Acts 3: 在 `App.tsx` 中透传 `previousRoute`
+      return (
+        <OfficialPlansView
+          onExit={() => navigate(exitTargetRoute)}
+          onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
+          onAdoptPlan={async (preset, startImmediately) => {
+~~~~~
 
-确保 `AppRouter` 能够接收到 `useHashRoute` 提供的 `previousRoute`。
+#### Acts 4: 清理多语言词典
+
+移除 `adoptedBadge` 以及各分类相关键值。
 
 ~~~~~act
 patch_file
-src/app.tsx
+src/locales/zh-CN.json
 ~~~~~
 ~~~~~old
-export function App() {
-  const { route, navigate } = useHashRoute();
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
-
-  const { lastHomeRoute } = useAppBootstrap(route);
-
-  // 挂载夜间模式全局响应与监听
-  useTheme($settings.value);
-
-  const activeSettingsCard = activeSettingsCardId
-    ? registry.getCardById(activeSettingsCardId)
-    : null;
-
-  return (
-    <div className="min-h-screen bg-background dark:bg-background text-foreground antialiased">
-      <AppRouter
-        route={route}
-        navigate={navigate}
-        lastHomeRoute={lastHomeRoute}
-        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-      />
+  "officialPlans": {
+    "title": "官方推荐训练流",
+    "subtitle": "针对构图、起形与色彩深度推演调优的官方权威训练序列，可自由复制到个人计划库并进行自定义编排",
+    "browseBtn": "官方计划库",
+    "myPlansBtn": "我的计划库",
+    "adoptToLibrary": "复制到我的计划",
+    "adoptAndStart": "复制并立即开练",
+    "adoptedBadge": "已在计划库中",
+    "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！",
+    "categoryWarmup": "晨间热身",
+    "categoryForm": "造型构图",
+    "categoryColor": "色彩光影",
+    "categoryAbstraction": "提炼概括"
+  },
 ~~~~~
 ~~~~~new
-export function App() {
-  const { route, navigate, previousRoute } = useHashRoute();
-  const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
-  const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
+  "officialPlans": {
+    "title": "官方推荐训练流",
+    "subtitle": "针对构图、起形与色彩深度推演调优的官方权威训练序列，可自由复制到个人计划库并进行自定义编排",
+    "browseBtn": "官方计划库",
+    "myPlansBtn": "我的计划库",
+    "adoptToLibrary": "复制到我的计划",
+    "adoptAndStart": "复制并立即开练",
+    "adoptedToast": "已成功将【{{name}}】导入到您的个人计划库！"
+  },
+~~~~~
 
-  const { lastHomeRoute } = useAppBootstrap(route);
-
-  // 挂载夜间模式全局响应与监听
-  useTheme($settings.value);
-
-  const activeSettingsCard = activeSettingsCardId
-    ? registry.getCardById(activeSettingsCardId)
-    : null;
-
-  return (
-    <div className="min-h-screen bg-background dark:bg-background text-foreground antialiased">
-      <AppRouter
-        route={route}
-        navigate={navigate}
-        lastHomeRoute={lastHomeRoute}
-        previousRoute={previousRoute}
-        onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
-        onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
-      />
+~~~~~act
+patch_file
+src/locales/en-US.json
+~~~~~
+~~~~~old
+  "officialPlans": {
+    "title": "Official Routine Presets",
+    "subtitle": "Authoritative training sequences carefully crafted for perception, form, and color. Adopt them into your personal routine library for personalized customization.",
+    "browseBtn": "Official Library",
+    "myPlansBtn": "My Routines",
+    "adoptToLibrary": "Adopt into My Library",
+    "adoptAndStart": "Adopt & Start Now",
+    "adoptedBadge": "In Library",
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!",
+    "categoryWarmup": "Warmup",
+    "categoryForm": "Form & Proportion",
+    "categoryColor": "Color & Light",
+    "categoryAbstraction": "Abstraction & Rhythm"
+  },
+~~~~~
+~~~~~new
+  "officialPlans": {
+    "title": "Official Routine Presets",
+    "subtitle": "Authoritative training sequences carefully crafted for perception, form, and color. Adopt them into your personal routine library for personalized customization.",
+    "browseBtn": "Official Library",
+    "myPlansBtn": "My Routines",
+    "adoptToLibrary": "Adopt into My Library",
+    "adoptAndStart": "Adopt & Start Now",
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
+  },
 ~~~~~
 
 ### 下一步建议
-1. **行为验证**：
-   - 打开 `http://localhost:5173/#/plan-editor`，点击“官方计划库”进入 `#/official-plans`。
-   - 点击左上角“退出”按钮，确认页面精确返回至 `http://localhost:5173/#/plan-editor`。
-   - 在新标签页直接打开 `http://localhost:5173/#/official-plans`，点击“退出”，确认默认回退至计划中心 `#/plan-editor` 而不是主页。
-2. **提交代码**：确认符合预期后，创建 `[COMMIT]` 计划将此次修复提交到代码仓库。
+1. **界面验证**：
+   - 访问 `http://localhost:5173/#/official-plans`，确认顶部分类按钮栏已完全移除。
+   - 确认卡片标题旁无任何额外徽章，卡片右上角无“已在计划库中”的绿色徽章。
+   - 测试点击“复制到我的计划”或“复制并立即开练”，确认导入并开练功能依然准确无误。
+2. **提交代码**：验证界面与交互无误后，创建 `[COMMIT]` 计划提交更改。

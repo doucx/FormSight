@@ -96,12 +96,7 @@
     "myPlansBtn": "My Routines",
     "adoptToLibrary": "Adopt into My Library",
     "adoptAndStart": "Adopt & Start Now",
-    "adoptedBadge": "In Library",
-    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!",
-    "categoryWarmup": "Warmup",
-    "categoryForm": "Form & Proportion",
-    "categoryColor": "Color & Light",
-    "categoryAbstraction": "Abstraction & Rhythm"
+    "adoptedToast": "Successfully adopted [{{name}}] into your personal library!"
   },
   "templates": {
     "all_round_warmup": {
