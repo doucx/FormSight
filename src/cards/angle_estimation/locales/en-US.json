@@ -16,7 +16,7 @@
       "135_180": "135° ~ 180°"
     }
   },
-  "hint": "Observe the angle formed by rays and modulate the slider to match (0°~180°)",
+  "hint": "Observe the angle formed by rays and modulate the slider to match",
   "label": "Angle Estimation Value:",
   "trueAngle": "Ground Truth Value:",
   "errorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"

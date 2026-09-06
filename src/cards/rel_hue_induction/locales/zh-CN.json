@@ -4,5 +4,5 @@
   "hint": "观察左侧基准，在下方切换选项预览并确认提交 (键 1-4 切换，Space 提交)",
   "leftBase": "左侧固定基准",
   "rightPreview": "右侧环境补偿区 (实时预览)",
-  "splitComparisonTooltip": "上半部为您的选择，下半部为理论真理色"
+  "splitComparisonTooltip": "上半部为您的选择，下半部为理论标准色"
 }
