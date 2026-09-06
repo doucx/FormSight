@@ -522,6 +522,8 @@
         renderSectionToCanvas(texCanvas, correctCfg, q.level);
 
         const texture = new THREE.CanvasTexture(texCanvas);
+        texture.center.set(0.5, 0.5);
+        texture.repeat.set(1, -1); // 修正 Canvas 2D 与 Three.js 纹理的 V 轴垂直翻转
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
@@ -543,7 +545,10 @@
 
       planeHelper = new THREE.Mesh(planeGeom, planeMat);
       planeHelper.position.copy(q.planeCenter);
-      planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal);
+      
+      // 使用正交基底矩阵 (uVec, vVec, normal) 精确对齐平面的本地 X/Y/Z 轴，消除 90 度旋转错位
+      const orientMatrix = new THREE.Matrix4().makeBasis(q.uVec, q.vVec, q.normal);
+      planeHelper.quaternion.setFromRotationMatrix(orientMatrix);
 
       // 默认绿色外框
       const edges = new THREE.EdgesGeometry(planeGeom);
