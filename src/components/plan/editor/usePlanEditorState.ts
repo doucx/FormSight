@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import {
-  clonePlan,
-  deletePlan,
   exportPlanToJson,
   getPlanStorageStateSnapshot,
   importPlanFromJson,
   loadPlanStorageState,
   savePlanStorageState,
-  togglePlanFavorite,
 } from '../../../storage/planStorage';
+import {
+  clonePlanAction,
+  deletePlanAction,
+  initPlanStore,
+  setActivePlanAction,
+  togglePlanFavoriteAction,
+} from '../../../stores/planStore';
 import { showToast } from '../../../stores/toastStore';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
 import {
@@ -24,13 +28,15 @@ import {
 
 export interface UsePlanEditorStateOptions {
   initialPlan: TrainingPlan;
-  onSaveAndExit: (plan: TrainingPlan) => void;
+  onSave?: (plan: TrainingPlan) => void;
+  onSaveAndExit?: (plan: TrainingPlan) => void;
   onStartPlanDirectly: (plan: TrainingPlan) => void;
   onPlanListChanged?: () => void;
 }
 
 export function usePlanEditorState({
   initialPlan,
+  onSave,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -89,7 +95,7 @@ export function usePlanEditorState({
       target.files[0].text().then(async (text) => {
         const imported = await importPlanFromJson(text);
         if (imported) {
-          const nextState = await loadPlanStorageState();
+          const nextState = await initPlanStore();
           setStorageState(nextState);
           setCurrentPlan(imported);
           setPlanNameInput(imported.name);
@@ -110,6 +116,7 @@ export function usePlanEditorState({
       : [sanitized, ...storageState.plans];
 
     await savePlanStorageState({ activePlanId: sanitized.id, plans: updatedPlans });
+    await initPlanStore();
     onPlanListChanged?.();
     return sanitized;
   };
@@ -134,10 +141,12 @@ export function usePlanEditorState({
     totalTrials,
     estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
     fileInputRef,
-    handleSelectPlanFromList: (p: TrainingPlan) => {
+    handleSelectPlanFromList: async (p: TrainingPlan) => {
       setCurrentPlan({ ...p });
       setPlanNameInput(p.name);
       setIsEditingName(false);
+      await setActivePlanAction(p.id);
+      onPlanListChanged?.();
     },
     handleNameSave,
     handleBatchUpdateTrials: (trials: number) => {
@@ -154,7 +163,7 @@ export function usePlanEditorState({
     handleClearAll: () => updatePlanItems(() => []),
     handleCreateNewBlankPlan,
     handleCloneCurrent: async () => {
-      const cloned = await clonePlan(currentPlan);
+      const cloned = await clonePlanAction(currentPlan);
       const nextState = await loadPlanStorageState();
       setStorageState(nextState);
       setCurrentPlan(cloned);
@@ -164,10 +173,14 @@ export function usePlanEditorState({
     },
     handleToggleFavoriteItem: async (planId: string, e: MouseEvent) => {
       e.stopPropagation();
-      const nextState = await togglePlanFavorite(planId);
+      const nextState = await togglePlanFavoriteAction(planId);
       setStorageState(nextState);
       if (currentPlan.id === planId) {
-        setCurrentPlan((prev) => ({ ...prev, isFavorite: !(prev.isFavorite ?? true) }));
+        const updated = nextState.plans.find((p) => p.id === planId);
+        setCurrentPlan((prev) => ({
+          ...prev,
+          isFavorite: updated?.isFavorite ?? !(prev.isFavorite ?? true),
+        }));
       }
       onPlanListChanged?.();
     },
@@ -177,7 +190,7 @@ export function usePlanEditorState({
         showToast(t('plan.minOnePlanToast'), 'error');
         return;
       }
-      const nextState = await deletePlan(planId);
+      const nextState = await deletePlanAction(planId);
       setStorageState(nextState);
       if (currentPlan.id === planId) {
         const fallback = nextState.plans[0];
@@ -199,7 +212,14 @@ export function usePlanEditorState({
       showToast(t('plan.exportedJsonToast'), 'success');
     },
     handleImportPlan,
-    handleSaveOnly: async () => onSaveAndExit(await persist()),
+    handleSaveOnly: async () => {
+      const saved = await persist();
+      if (onSave) {
+        onSave(saved);
+      } else if (onSaveAndExit) {
+        onSaveAndExit(saved);
+      }
+    },
     handleSaveAndStart: async () => onStartPlanDirectly(await persist()),
   };
 }

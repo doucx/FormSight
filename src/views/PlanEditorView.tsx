@@ -13,7 +13,8 @@ interface PlanEditorViewProps {
   initialPlan: TrainingPlan;
   onExit: () => void;
   onNavigateToOfficialPlans?: () => void;
-  onSaveAndExit: (plan: TrainingPlan) => void;
+  onSave?: (plan: TrainingPlan) => void;
+  onSaveAndExit?: (plan: TrainingPlan) => void;
   onStartPlanDirectly: (plan: TrainingPlan) => void;
   onPlanListChanged?: () => void;
 }
@@ -24,6 +25,7 @@ export function PlanEditorView({
   initialPlan,
   onExit: _onExit,
   onNavigateToOfficialPlans,
+  onSave,
   onSaveAndExit,
   onStartPlanDirectly,
   onPlanListChanged,
@@ -64,6 +66,7 @@ export function PlanEditorView({
     handleSaveAndStart,
   } = usePlanEditorState({
     initialPlan,
+    onSave,
     onSaveAndExit,
     onStartPlanDirectly,
     onPlanListChanged,
