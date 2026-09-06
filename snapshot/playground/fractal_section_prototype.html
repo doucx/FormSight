@@ -555,20 +555,22 @@
       const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
       planeHelper.add(line);
 
-      // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
-      const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-halfSize, halfSize, 0.002),
-        new THREE.Vector3(halfSize, halfSize, 0.002)
-      ]);
-      const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
-      planeHelper.add(topEdgeLine);
+      // 仅在非调试模式下渲染 3D 辅助红蓝定向边框（调试模式下贴图本身已包含红蓝边框）
+      if (!debugTextureMode) {
+        const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, halfSize, 0.002),
+          new THREE.Vector3(halfSize, halfSize, 0.002)
+        ]);
+        const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+        planeHelper.add(topEdgeLine);
 
-      const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-halfSize, -halfSize, 0.002),
-        new THREE.Vector3(-halfSize, halfSize, 0.002)
-      ]);
-      const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
-      planeHelper.add(leftEdgeLine);
+        const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, -halfSize, 0.002),
+          new THREE.Vector3(-halfSize, halfSize, 0.002)
+        ]);
+        const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+        planeHelper.add(leftEdgeLine);
+      }
 
       // 法向量指示箭头
       const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);

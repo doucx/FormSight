@@ -1,30 +1,29 @@
-分析得非常准确。在 Three.js 中，之前使用的 `planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal)` 仅约束了法向量（Z轴），但没有约束平面在局部的旋转角（Roll），导致平面在空间中产生了约 90 度的旋转错位；同时，Canvas 2D 坐标系的上下方向与 Three.js 纹理坐标系（V轴）存在垂直镜像翻转。
+我找到了原因：当开启“截面贴图调试视图”时，`renderSectionToCanvas` 生成的 2D 贴图本身已经在 Canvas 上绘制了红色的顶边框和蓝色的左边框；而 `updateCuttingPlaneVisual` 又在 3D 空间中额外添加了 `topEdgeLine` (红) 和 `leftEdgeLine` (蓝) 这两条 3D 几何线条，导致线条与贴图边框重叠渲染（多出了一条红线）。
 
-我将使用 `patch_file` 显式构建正交基底矩阵（Basis Matrix）并修正纹理映射方向，彻底解决对齐问题。
+我将使用 `patch_file` 修复此重复渲染问题，使红蓝定向边框仅在非调试模式下作为 3D 辅助线渲染。
 
 ---
 
-## [WIP] fix(prototype): 修复 3D 截面平面的 90 度旋转错位与上下颠倒问题
+## [WIP] fix(prototype): 修复调试视图下红蓝定向边框重复渲染问题
 
 ### 错误分析
-1. **旋转错位根因**：`setFromUnitVectors` 只保证了平面法向量对齐到 `q.normal`，但绕法向量的旋转角度（Roll）是不确定的，这导致切片平面的局部 U/V 轴与算法生成的 `uVec`/`vVec` 产生了角度偏差（表现为 90 度旋转）。
-2. **上下翻转根因**：Canvas 2D 的 `py=0` 位于画布顶部，而 Three.js 纹理映射的 V 轴由下往上，导致贴图上下颠倒。
-3. **解决方案**：
-   - 使用 `THREE.Matrix4().makeBasis(q.uVec, q.vVec, q.normal)` 显式构建切片平面的局部坐标系矩阵，将平面的 X 轴精准绑定到 `uVec`、Y 轴绑定到 `vVec`、Z 轴绑定到 `normal`。
-   - 为调试视图的 `CanvasTexture` 设置 `texture.repeat.set(1, -1)` 修正垂直镜像翻转。
+1. **重复渲染根因**：
+   - 在标准模式下（`debugTextureMode === false`），切片平面是纯绿色的，因此需要通过 3D 几何线条 `topEdgeLine` (红) 和 `leftEdgeLine` (蓝) 来标注 U 轴和 V 轴的定向。
+   - 在调试模式下（`debugTextureMode === true`），切片平面加载了 2D 贴图，而该贴图本身就在 Canvas 像素级绘制了红色的顶边和蓝色的左边。
+   - 代码中无条件地将 `topEdgeLine` 和 `leftEdgeLine` 添加到了 `planeHelper` 中，导致贴图自带的边框与 3D 几何线条重叠，产生视觉上的“多了一条红线”现象。
+2. **解决方案**：将 3D 红蓝边框线的创建包裹在 `if (!debugTextureMode)` 条件判断中。
 
 ### 用户需求
-消除 3D 视口中截面贴图与实际 3D 空间结构之间的 90 度旋转偏差与上下颠倒，使 3D 视口切面与下方 4-AFC 选项完全精准对齐。
+消除勾选“截面贴图调试视图”时多渲染出来的一条红色/蓝色辅助边框线。
 
 ### 评论
-使用正交基底矩阵（Basis Matrix）是解决 3D 空间平面定向与纹理对齐的标准工业级方案，能从根本上杜绝不确定的旋转角。
+通过条件控制，确保 3D 辅助线条与 2D 贴图自带边框互斥，保持画面干净整洁。
 
 ### 目标
-1. 在 `updateCuttingPlaneVisual` 中用 `makeBasis(q.uVec, q.vVec, q.normal)` 替代 `setFromUnitVectors`。
-2. 在 `CanvasTexture` 初始化时加入 `repeat.set(1, -1)` 修正 V 轴方向。
+修改 `updateCuttingPlaneVisual`，使 `topEdgeLine` 和 `leftEdgeLine` 仅在关闭调试模式时渲染。
 
 ### 基本原理
-`Matrix4.makeBasis(x, y, z)` 能够精确指定对象在世界坐标系中的正交三个基底向量，从而将数学空间中的 `uVec`/`vVec` 直接映射为 Three.js 对象的本地局部坐标轴。
+2D 贴图与 3D 几何辅助物件在不同视图模式下各司其职，避免重复绘制带来的 Z-fighting 或线条加粗。
 
 ### 标签
 #intent/fix #flow/ready #priority/high #comp/docs #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/fractal-section-prototype #task/action/bug-fix #task/state/continue
@@ -33,86 +32,65 @@
 
 ### Script
 
-#### Acts 1: 使用 patch_file 修复切片平面的矩阵基底与纹理翻转
+#### Acts 1: 使用 patch_file 限制 3D 红蓝边框线仅在非调试模式下渲染
 
 ~~~~~act
 patch_file
 playground/fractal_section_prototype.html
 ~~~~~
 ~~~~~html.old
-      let planeMat;
-      if (debugTextureMode) {
-        // 创建离屏 Canvas 生成截面纹理
-        const texCanvas = document.createElement('canvas');
-        texCanvas.width = 256;
-        texCanvas.height = 256;
-        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
-        renderSectionToCanvas(texCanvas, correctCfg, q.level);
+      // 默认绿色外框
+      const edges = new THREE.EdgesGeometry(planeGeom);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
+      planeHelper.add(line);
 
-        const texture = new THREE.CanvasTexture(texCanvas);
-        texture.generateMipmaps = true;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
+      // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
+      const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-halfSize, halfSize, 0.002),
+        new THREE.Vector3(halfSize, halfSize, 0.002)
+      ]);
+      const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+      planeHelper.add(topEdgeLine);
 
-        planeMat = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.95
-        });
-      } else {
-        planeMat = new THREE.MeshBasicMaterial({
-          color: 0x10b981,
-          transparent: true,
-          opacity: 0.25,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
-      }
+      const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-halfSize, -halfSize, 0.002),
+        new THREE.Vector3(-halfSize, halfSize, 0.002)
+      ]);
+      const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+      planeHelper.add(leftEdgeLine);
 
-      planeHelper = new THREE.Mesh(planeGeom, planeMat);
-      planeHelper.position.copy(q.planeCenter);
-      planeHelper.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), q.normal);
+      // 法向量指示箭头
+      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
+      planeHelper.add(arrow);
 ~~~~~
 ~~~~~html.new
-      let planeMat;
-      if (debugTextureMode) {
-        // 创建离屏 Canvas 生成截面纹理
-        const texCanvas = document.createElement('canvas');
-        texCanvas.width = 256;
-        texCanvas.height = 256;
-        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
-        renderSectionToCanvas(texCanvas, correctCfg, q.level);
+      // 默认绿色外框
+      const edges = new THREE.EdgesGeometry(planeGeom);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
+      planeHelper.add(line);
 
-        const texture = new THREE.CanvasTexture(texCanvas);
-        texture.center.set(0.5, 0.5);
-        texture.repeat.set(1, -1); // 修正 Canvas 2D 与 Three.js 纹理的 V 轴垂直翻转
-        texture.generateMipmaps = true;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
+      // 仅在非调试模式下渲染 3D 辅助红蓝定向边框（调试模式下贴图本身已包含红蓝边框）
+      if (!debugTextureMode) {
+        const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, halfSize, 0.002),
+          new THREE.Vector3(halfSize, halfSize, 0.002)
+        ]);
+        const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
+        planeHelper.add(topEdgeLine);
 
-        planeMat = new THREE.MeshBasicMaterial({
-          map: texture,
-          side: THREE.DoubleSide,
-          transparent: true,
-          opacity: 0.95
-        });
-      } else {
-        planeMat = new THREE.MeshBasicMaterial({
-          color: 0x10b981,
-          transparent: true,
-          opacity: 0.25,
-          side: THREE.DoubleSide,
-          depthWrite: false
-        });
+        const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(-halfSize, -halfSize, 0.002),
+          new THREE.Vector3(-halfSize, halfSize, 0.002)
+        ]);
+        const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
+        planeHelper.add(leftEdgeLine);
       }
 
-      planeHelper = new THREE.Mesh(planeGeom, planeMat);
-      planeHelper.position.copy(q.planeCenter);
-      
-      // 使用正交基底矩阵 (uVec, vVec, normal) 精确对齐平面的本地 X/Y/Z 轴，消除 90 度旋转错位
-      const orientMatrix = new THREE.Matrix4().makeBasis(q.uVec, q.vVec, q.normal);
-      planeHelper.quaternion.setFromRotationMatrix(orientMatrix);
+      // 法向量指示箭头
+      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
+      planeHelper.add(arrow);
 ~~~~~
 
 ### 下一步建议
-1. 刷新浏览器并重新勾选 `🔧 截面贴图调试视图`。
-2. 观察切片平面上的 2D 贴图与红蓝方位边框是否已经与 3D 空间、下方 4-AFC 选项完全 100% 精准对齐。
+1. 刷新浏览器并再次切换 `🔧 截面贴图调试视图`。
+2. 确认多余的重复红线已消失，切片平面的贴图与边框显示干净利落。
