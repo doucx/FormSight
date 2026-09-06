@@ -467,7 +467,8 @@
     function createFractal3DMesh(level) {
       if (fractalMesh) scene.remove(fractalMesh);
 
-      const detail = level <= 8 ? 4 : 5;
+      // 根据难度动态调整 icosahedron 网格细分级别，确保高难度下能够捕捉高频分形与孔洞突刺细节
+      const detail = level <= 8 ? 4 : (level <= 18 ? 5 : (level <= 28 ? 6 : 7));
       const geom = new THREE.IcosahedronGeometry(1.2, detail);
       const pos = geom.attributes.position;
       
