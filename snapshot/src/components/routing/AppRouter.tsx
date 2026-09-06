@@ -8,6 +8,7 @@ import {
   savePlanAction,
   setActivePlanAction,
 } from '../../stores/planStore';
+import { forkOfficialPlanAction } from '../../stores/planStore';
 import {
   $isProfilesLoaded,
   $profiles,
@@ -17,7 +18,6 @@ import {
 } from '../../stores/profileStore';
 import { $settings } from '../../stores/settingsStore';
 import { showToast } from '../../stores/toastStore';
-import { forkOfficialPlanAction } from '../../stores/planStore';
 import { CardAnalyticsView } from '../../views/CardAnalyticsView';
 import { DiscoveryView } from '../../views/DiscoveryView';
 import { GenericTrainingView } from '../../views/GenericTrainingView';

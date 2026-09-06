@@ -10,10 +10,7 @@ interface OfficialPlanCardProps {
   onAdoptToLibrary: (preset: OfficialPlanPreset) => void;
 }
 
-export function OfficialPlanCard({
-  preset,
-  onAdoptToLibrary,
-}: OfficialPlanCardProps) {
+export function OfficialPlanCard({ preset, onAdoptToLibrary }: OfficialPlanCardProps) {
   const { t, locale } = useTranslation();
 
   const dict =
@@ -65,14 +62,21 @@ export function OfficialPlanCard({
               const cardTitle = getCardTitle(card, t);
 
               return (
-                <div key={`${preset.id}_${item.cardId}_${idx}`} className="flex items-center gap-1.5 flex-shrink-0">
+                <div
+                  key={`${preset.id}_${item.cardId}_${idx}`}
+                  className="flex items-center gap-1.5 flex-shrink-0"
+                >
                   <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-1.5 rounded-2xl shadow-inner">
                     <div className="w-4 h-4 rounded-md bg-accent text-primary flex items-center justify-center font-mono text-[10px] font-black">
                       {idx + 1}
                     </div>
                     <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="text-xs font-bold text-foreground">{cardTitle}</span>
-                    <Badge variant="secondary" size="sm" className="font-mono font-bold text-[10px]">
+                    <Badge
+                      variant="secondary"
+                      size="sm"
+                      className="font-mono font-bold text-[10px]"
+                    >
                       {item.targetTrials}
                       {t('common.trialsUnit')}
                     </Badge>

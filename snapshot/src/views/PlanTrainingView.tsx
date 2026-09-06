@@ -124,7 +124,14 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
         setShowSummaryModal(true);
       }
     },
-    [currentCard, currentStep, currentStepIndex, stageResults, validItems.length, stageInitialLevel],
+    [
+      currentCard,
+      currentStep,
+      currentStepIndex,
+      stageResults,
+      validItems.length,
+      stageInitialLevel,
+    ],
   );
 
   const handleEarlyExit = useCallback(

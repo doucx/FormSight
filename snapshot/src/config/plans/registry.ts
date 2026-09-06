@@ -18,7 +18,7 @@ class OfficialPlanRegistry {
 
     for (const path in modules) {
       const preset = modules[path]?.default;
-      if (preset && preset.id) {
+      if (preset?.id) {
         this.registerPreset(preset);
       }
     }
