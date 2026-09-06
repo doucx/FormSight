@@ -494,15 +494,14 @@
       geom.computeVertexNormals();
 
       const mat = new THREE.MeshStandardMaterial({
-        color: debugTextureMode ? 0x312e81 : 0x4f46e5,
+        color: 0x4f46e5,
         roughness: 0.35,
         metalness: 0.15,
-        transparent: true,
-        opacity: debugTextureMode ? 0.15 : 1.0,
         flatShading: level > 8
       });
 
       fractalMesh = new THREE.Mesh(geom, mat);
+      fractalMesh.visible = !debugTextureMode;
       scene.add(fractalMesh);
     }
 
