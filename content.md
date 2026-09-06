@@ -1,96 +1,116 @@
-我找到了原因：当开启“截面贴图调试视图”时，`renderSectionToCanvas` 生成的 2D 贴图本身已经在 Canvas 上绘制了红色的顶边框和蓝色的左边框；而 `updateCuttingPlaneVisual` 又在 3D 空间中额外添加了 `topEdgeLine` (红) 和 `leftEdgeLine` (蓝) 这两条 3D 几何线条，导致线条与贴图边框重叠渲染（多出了一条红线）。
+没问题。我将生成一个计划，修正 `fractal_section_prototype.html` 中的 Y 轴映射方向、纹理二次翻转问题、3D 辅助平面物理尺寸以匹配采样范围，并修正界面上的定向边框说明文案。
 
-我将使用 `patch_file` 修复此重复渲染问题，使红蓝定向边框仅在非调试模式下作为 3D 辅助线渲染。
-
----
-
-## [WIP] fix(prototype): 修复调试视图下红蓝定向边框重复渲染问题
-
-### 错误分析
-1. **重复渲染根因**：
-   - 在标准模式下（`debugTextureMode === false`），切片平面是纯绿色的，因此需要通过 3D 几何线条 `topEdgeLine` (红) 和 `leftEdgeLine` (蓝) 来标注 U 轴和 V 轴的定向。
-   - 在调试模式下（`debugTextureMode === true`），切片平面加载了 2D 贴图，而该贴图本身就在 Canvas 像素级绘制了红色的顶边和蓝色的左边。
-   - 代码中无条件地将 `topEdgeLine` 和 `leftEdgeLine` 添加到了 `planeHelper` 中，导致贴图自带的边框与 3D 几何线条重叠，产生视觉上的“多了一条红线”现象。
-2. **解决方案**：将 3D 红蓝边框线的创建包裹在 `if (!debugTextureMode)` 条件判断中。
+## [WIP] fix(prototype): 修正 3D 分形截面感知原型的坐标映射、尺寸偏差与纹理翻转
 
 ### 用户需求
-消除勾选“截面贴图调试视图”时多渲染出来的一条红色/蓝色辅助边框线。
+用户指出截面调试视图的红蓝定向边框和不勾选时是反的，3D 物体与截面存在微小的缩放偏差，且需要从下往上看才能对齐。需要修复 2D 采样坐标系与 3D 局部坐标系的映射关系，统一渲染网格尺寸，去除多余的纹理翻转，并修正 UI 标签文案。
 
 ### 评论
-通过条件控制，确保 3D 辅助线条与 2D 贴图自带边框互斥，保持画面干净整洁。
+这是一个精准定位到 Three.js 坐标系与 Canvas 2D 坐标系差异的修复，能够极大地提升用户的交互体验和直觉。
 
 ### 目标
-修改 `updateCuttingPlaneVisual`，使 `topEdgeLine` 和 `leftEdgeLine` 仅在关闭调试模式时渲染。
+1. 修改 `renderSectionToCanvas` 中的 `vFrac` 计算，引入负号以对齐 Canvas 顶部与 3D 的 +V 方向。
+2. 将 `updateCuttingPlaneVisual` 中的 `planeSize` 从 2.8 调整为 3.1，与采样范围 `span * 2` 完全对齐。
+3. 移除 `updateCuttingPlaneVisual` 中不必要的 `texture.repeat.set(1, -1)`，防止二次翻转。
+4. 修正 HTML 中的定向边框图例说明文案。
 
 ### 基本原理
-2D 贴图与 3D 几何辅助物件在不同视图模式下各司其职，避免重复绘制带来的 Z-fighting 或线条加粗。
+通过对齐坐标系（Canvas Top = +V = 3D Plane Local Top）并保持物理尺寸一致（3.1 对应 3.1），消除缩放偏差和方向反转，使调试视图贴图与实时渲染的 3D 辅助框完美重合。
 
 ### 标签
-#intent/fix #flow/ready #priority/high #comp/docs #concept/ui #scope/dx #ai/instruct #task/domain/ui #task/object/fractal-section-prototype #task/action/bug-fix #task/state/continue
+#intent/fix #flow/ready #priority/high #comp/docs #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/fractal-section-prototype #task/action/fix #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 使用 patch_file 限制 3D 红蓝边框线仅在非调试模式下渲染
+#### Acts 1: 修复 fractal_section_prototype.html 中的坐标映射与缩放偏差
 
 ~~~~~act
 patch_file
 playground/fractal_section_prototype.html
 ~~~~~
-~~~~~html.old
-      // 默认绿色外框
-      const edges = new THREE.EdgesGeometry(planeGeom);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
-      planeHelper.add(line);
-
-      // 在绿色截面正方形的顶边 and 左边渲染对应的红、蓝定向边框提示
-      const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-halfSize, halfSize, 0.002),
-        new THREE.Vector3(halfSize, halfSize, 0.002)
-      ]);
-      const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
-      planeHelper.add(topEdgeLine);
-
-      const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(-halfSize, -halfSize, 0.002),
-        new THREE.Vector3(-halfSize, halfSize, 0.002)
-      ]);
-      const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
-      planeHelper.add(leftEdgeLine);
-
-      // 法向量指示箭头
-      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
-      planeHelper.add(arrow);
+~~~~~old
+        <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> U轴定向 (顶边)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> V轴定向 (左边)</span>
+          <span class="text-slate-500">4-AFC (1-4)</span>
+        </div>
 ~~~~~
-~~~~~html.new
-      // 默认绿色外框
-      const edges = new THREE.EdgesGeometry(planeGeom);
-      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 2 }));
-      planeHelper.add(line);
+~~~~~new
+        <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> 顶边定向 (V轴+)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> 左边定向 (U轴-)</span>
+          <span class="text-slate-500">4-AFC (1-4)</span>
+        </div>
+~~~~~
 
-      // 仅在非调试模式下渲染 3D 辅助红蓝定向边框（调试模式下贴图本身已包含红蓝边框）
-      if (!debugTextureMode) {
-        const topEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-halfSize, halfSize, 0.002),
-          new THREE.Vector3(halfSize, halfSize, 0.002)
-        ]);
-        const topEdgeLine = new THREE.Line(topEdgeGeom, new THREE.LineBasicMaterial({ color: 0xef4444, linewidth: 4 }));
-        planeHelper.add(topEdgeLine);
+~~~~~act
+patch_file
+playground/fractal_section_prototype.html
+~~~~~
+~~~~~old
+      for (let py = 0; py < size; py++) {
+        let vFrac = (py / size - 0.5) * 2 * span;
+        for (let px = 0; px < size; px++) {
+~~~~~
+~~~~~new
+      for (let py = 0; py < size; py++) {
+        // 画布从上到下(py增加)，对应 3D 局部坐标的 +V 到 -V，因此需要取负号
+        let vFrac = -(py / size - 0.5) * 2 * span;
+        for (let px = 0; px < size; px++) {
+~~~~~
 
-        const leftEdgeGeom = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(-halfSize, -halfSize, 0.002),
-          new THREE.Vector3(-halfSize, halfSize, 0.002)
-        ]);
-        const leftEdgeLine = new THREE.Line(leftEdgeGeom, new THREE.LineBasicMaterial({ color: 0x3b82f6, linewidth: 4 }));
-        planeHelper.add(leftEdgeLine);
-      }
+~~~~~act
+patch_file
+playground/fractal_section_prototype.html
+~~~~~
+~~~~~old
+    function updateCuttingPlaneVisual(q) {
+      if (planeHelper) scene.remove(planeHelper);
 
-      // 法向量指示箭头
-      const arrow = new THREE.ArrowHelper(q.normal, new THREE.Vector3(0,0,0), 0.65, 0x10b981, 0.15, 0.1);
-      planeHelper.add(arrow);
+      const planeSize = 2.8;
+      const halfSize = planeSize / 2;
+      const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
+      
+      let planeMat;
+      if (debugTextureMode) {
+        // 创建离屏 Canvas 生成截面纹理
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 256;
+        texCanvas.height = 256;
+        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
+        renderSectionToCanvas(texCanvas, correctCfg, q.level);
+
+        const texture = new THREE.CanvasTexture(texCanvas);
+        texture.center.set(0.5, 0.5);
+        texture.repeat.set(1, -1); // 修正 Canvas 2D 与 Three.js 纹理的 V 轴垂直翻转
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+~~~~~
+~~~~~new
+    function updateCuttingPlaneVisual(q) {
+      if (planeHelper) scene.remove(planeHelper);
+
+      const planeSize = 3.1;
+      const halfSize = planeSize / 2;
+      const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
+      
+      let planeMat;
+      if (debugTextureMode) {
+        // 创建离屏 Canvas 生成截面纹理
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 256;
+        texCanvas.height = 256;
+        const correctCfg = q.configs.find(c => c.type === 'CORRECT') || q.configs[0];
+        renderSectionToCanvas(texCanvas, correctCfg, q.level);
+
+        const texture = new THREE.CanvasTexture(texCanvas);
+        // CanvasTexture 默认启用 flipY=true，无需再使用 repeat 进行垂直翻转
+        texture.generateMipmaps = true;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
 ~~~~~
 
 ### 下一步建议
-1. 刷新浏览器并再次切换 `🔧 截面贴图调试视图`。
-2. 确认多余的重复红线已消失，切片平面的贴图与边框显示干净利落。
+
+- 建议在浏览器中重新加载 `fractal_section_prototype.html`，验证勾选与不勾选“🔧 截面贴图调试视图”时，红蓝边框是否完全一致，且 3D 物体与截面贴图是否完全无缩放偏差。

@@ -156,8 +156,8 @@
           <span>选择正确的 2D 剖截面 (Cross-Section Options)</span>
         </h3>
         <div class="flex items-center gap-3 text-xs text-slate-400 font-mono">
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> U轴定向 (顶边)</span>
-          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> V轴定向 (左边)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span> 顶边定向 (V轴+)</span>
+          <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500 inline-block"></span> 左边定向 (U轴-)</span>
           <span class="text-slate-500">4-AFC (1-4)</span>
         </div>
       </div>
@@ -350,7 +350,8 @@
       const data = imgData.data;
 
       for (let py = 0; py < size; py++) {
-        let vFrac = (py / size - 0.5) * 2 * span;
+        // 画布从上到下(py增加)，对应 3D 局部坐标的 +V 到 -V，因此需要取负号
+        let vFrac = -(py / size - 0.5) * 2 * span;
         for (let px = 0; px < size; px++) {
           let uFrac = (px / size - 0.5) * 2 * span;
           
@@ -508,7 +509,7 @@
     function updateCuttingPlaneVisual(q) {
       if (planeHelper) scene.remove(planeHelper);
 
-      const planeSize = 2.8;
+      const planeSize = 3.1;
       const halfSize = planeSize / 2;
       const planeGeom = new THREE.PlaneGeometry(planeSize, planeSize);
       
@@ -522,8 +523,7 @@
         renderSectionToCanvas(texCanvas, correctCfg, q.level);
 
         const texture = new THREE.CanvasTexture(texCanvas);
-        texture.center.set(0.5, 0.5);
-        texture.repeat.set(1, -1); // 修正 Canvas 2D 与 Three.js 纹理的 V 轴垂直翻转
+        // CanvasTexture 默认启用 flipY=true，无需再使用 repeat 进行垂直翻转
         texture.generateMipmaps = true;
         texture.minFilter = THREE.LinearMipmapLinearFilter;
 
