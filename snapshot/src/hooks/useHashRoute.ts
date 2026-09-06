@@ -166,6 +166,7 @@ export function useHashRoute() {
   const [route, setRoute] = useState<RouteLocation>(() =>
     typeof window !== 'undefined' ? parseHash(window.location.hash) : { type: 'home' },
   );
+  const previousRouteRef = useRef<RouteLocation | null>(null);
 
   const scrollPositionsRef = useRef<Record<string, number>>({});
   const currentHashRef = useRef<string>(
@@ -181,6 +182,7 @@ export function useHashRoute() {
     const handleHashChange = () => {
       const prevHash = currentHashRef.current || '#/';
       scrollPositionsRef.current[prevHash] = window.scrollY;
+      previousRouteRef.current = parseHash(prevHash);
 
       const newHash = window.location.hash || '#/';
       currentHashRef.current = newHash;
@@ -208,6 +210,8 @@ export function useHashRoute() {
     if (window.location.hash !== newHash) {
       const prevHash = currentHashRef.current || '#/';
       scrollPositionsRef.current[prevHash] = window.scrollY;
+      previousRouteRef.current = parseHash(prevHash);
+
       if (options?.replace) {
         const url = new URL(window.location.href);
         url.hash = newHash;
@@ -220,5 +224,5 @@ export function useHashRoute() {
     }
   }, []);
 
-  return { route, navigate };
+  return { route, navigate, previousRoute: previousRouteRef.current };
 }

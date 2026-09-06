@@ -13,7 +13,7 @@ import { $settings } from './stores/settingsStore';
 import { $toasts, dismissToast, showToast } from './stores/toastStore';
 
 export function App() {
-  const { route, navigate } = useHashRoute();
+  const { route, navigate, previousRoute } = useHashRoute();
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState<boolean>(false);
   const [activeSettingsCardId, setActiveSettingsCardId] = useState<string | null>(null);
 
@@ -32,6 +32,7 @@ export function App() {
         route={route}
         navigate={navigate}
         lastHomeRoute={lastHomeRoute}
+        previousRoute={previousRoute}
         onOpenCardSettings={(cardId) => setActiveSettingsCardId(cardId)}
         onOpenGlobalSettings={() => setIsGlobalSettingsOpen(true)}
       />

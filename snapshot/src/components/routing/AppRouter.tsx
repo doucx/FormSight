@@ -32,6 +32,7 @@ interface AppRouterProps {
   route: RouteLocation;
   navigate: (target: RouteLocation, options?: { replace?: boolean }) => void;
   lastHomeRoute: RouteLocation;
+  previousRoute?: RouteLocation | null;
   onOpenCardSettings: (cardId: string) => void;
   onOpenGlobalSettings: () => void;
 }
@@ -40,6 +41,7 @@ export function AppRouter({
   route,
   navigate,
   lastHomeRoute,
+  previousRoute,
   onOpenCardSettings,
   onOpenGlobalSettings,
 }: AppRouterProps) {
@@ -121,10 +123,15 @@ export function AppRouter({
     }
 
     if (route.type === 'official-plans') {
+      const exitTargetRoute: RouteLocation =
+        previousRoute && previousRoute.type !== 'official-plans'
+          ? previousRoute
+          : { type: 'plan-editor' };
+
       return (
         <OfficialPlansView
           userPlans={allPlansList}
-          onExit={() => navigate(lastHomeRoute)}
+          onExit={() => navigate(exitTargetRoute)}
           onNavigateToMyPlans={() => navigate({ type: 'plan-editor' })}
           onAdoptPlan={async (preset, startImmediately) => {
             const adopted = await forkOfficialPlanAction(preset, startImmediately);

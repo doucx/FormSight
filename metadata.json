@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "[WIP] feat(plan): 重构官方训练计划为 OCP 架构并增加官方计划库页面", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788665123.4263275, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] fix(routing): 修复从计划编辑器进入官方计划库后点击退出错误跳至主页的问题", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788665299.6934187, "duration_ms": 0}}
