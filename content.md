@@ -1,31 +1,29 @@
-好的，我将严格遵循 ACA 协议与 Quipu 运行时规范，为您生成包含完整架构设计、元数据标签以及具体文件修改脚本（Acts）的自包含执行计划。
+好的，我们将在数据治理区域（`DataGovernanceSection.tsx`）的“删除所有数据”上方，新增一个“重置所有设置”的功能按钮，用于一键将全局偏好及所有卡片的自定义配置恢复为系统出厂默认值。
 
----
+以下是本次的 Quipu 计划。
 
-好的，我们已经明确了为单卡偏好设置和全局偏好设置添加“恢复默认”重置能力的技术方案。我将通过 Quipu 运行时生成本次实现的 `[WIP]` 计划，并在脚本中精确执行多语言补充、Store 动作扩展以及弹窗 UI 改造。
-
-## [WIP] feat(settings): 为单卡与全局设置添加一键恢复默认配置功能
+## [WIP] feat(settings): 在数据治理区添加重置所有设置按钮
 
 ### 用户需求
-用户反馈单卡偏好设置无法便捷地回退到默认参数，需要提供一种规范且易用的“恢复默认”重置能力，同时保持 UI 界面整洁不拥挤。
+用户希望在数据备份与稳态治理面板（`DataGovernanceSection`）中，除了恢复官方计划和删除所有数据外，还能有一个显式的“重置所有设置”按钮，能够一键将所有偏好设置与卡片参数恢复出厂默认值。
 
 ### 评论
-通过在 `ModalShell` 的顶部标题栏（`headerAction` 插槽）集成幽灵图标按钮，既实现了单卡与全局设置的“恢复默认”重置，又完全不占用表单内容区域的垂直空间。底层则复用了已有的 `buildDefaultCardSettings()` 逻辑，完美还原通用及卡片专属的默认参数。
+当前系统已经具备了恢复全局设置及各卡片默认值的底层能力。我们只需要在 `settingsStore` 中封装一个 `resetAllSettingsAction()`，并在 `DataGovernanceSection` 中增加对应的按钮与二次确认弹窗（复用 `ConfirmModal`），便能与现有的“恢复官方训练计划”和“删除所有数据”形成完美的治理闭环。
 
 ### 目标
-1. 在中英文多语言字典中补全重置相关的提示文案。
-2. 在 `settingsStore.ts` 中实现单卡与全局配置的重置 Action。
-3. 在 `SettingsModal.tsx` 与 `GlobalSettingsModal.tsx` 的 Header 右上角集成一键重置按钮。
+1. 在 `settingsStore.ts` 中实现全量设置重置逻辑 (`resetAllSettingsAction`)。
+2. 在 `DataGovernanceSection.tsx` 中添加“重置所有设置”的交互按钮及二次确认弹窗。
+3. 在中英文多语言词典中补全对应的文案。
 
 ### 基本原理
-利用现有 `ModalShell` 的 `headerAction` 扩展能力，在不破坏现有 UI 结构的前提下引入 `RotateCcw` 重置图标。状态管理层直接重置内存与 IndexedDB 中的对应配额，并通过 Toast 提供即时视觉反馈。
+复用现有的默认配置生成器 `DEFAULT_SETTINGS` 与 `buildDefaultCardSettings()`，一键重写 `app_settings` 表中的 `global_settings` 键，并同步刷新内存缓存。
 
 ### 标签
 #intent/build #flow/ready #priority/medium 
 #comp/cli #concept/config #scope/dx 
 #ai/instruct
 #task/domain/settings
-#task/object/preference-reset
+#task/object/settings-reset
 #task/action/implementation
 #task/state/begin
 
@@ -33,23 +31,30 @@
 
 ### Script
 
-#### Acts 1: 更新中英文多语言词典
-
-我们首先在 `zh-CN.json` 和 `en-US.json` 的 `common` 空间中注入“恢复默认配置”和“已恢复为默认配置”的文案。
+#### Acts 1: 在多语言词典中添加重置所有设置文案
 
 ~~~~~act
 patch_file
 src/locales/zh-CN.json
 ~~~~~
 ~~~~~json.old
-    "officialBadge": "官方预设",
-    "newPlanBadge": "新计划",
+    "resetPlansTitle": "恢复官方训练计划",
+    "resetPlansDesc": "清空自定义计划，恢复官方预设",
+    "resetPlansBtn": "重置计划",
+    "resetPlansSuccessToast": "所有训练计划已恢复为官方预设推荐",
+    "resetPlansConfirmMessage": "确定要清除所有自定义计划并恢复官方默认推荐训练流吗？此操作不会影响您的历史答题数据与能力层阶。",
 ~~~~~
 ~~~~~json.new
-    "officialBadge": "官方预设",
-    "newPlanBadge": "新计划",
-    "resetToDefault": "恢复默认配置",
-    "resetSuccessToast": "已恢复为默认配置",
+    "resetPlansTitle": "恢复官方训练计划",
+    "resetPlansDesc": "清空自定义计划，恢复官方预设",
+    "resetPlansBtn": "重置计划",
+    "resetPlansSuccessToast": "所有训练计划已恢复为官方预设推荐",
+    "resetPlansConfirmMessage": "确定要清除所有自定义计划并恢复官方默认推荐训练流吗？此操作不会影响您的历史答题数据与能力层阶。",
+    "resetSettingsTitle": "重置所有设置",
+    "resetSettingsDesc": "将全局偏好与所有卡片参数恢复为出厂默认值",
+    "resetSettingsBtn": "重置设置",
+    "resetSettingsSuccessToast": "所有设置已成功恢复为默认值",
+    "resetSettingsConfirmMessage": "确定要将所有全局偏好设置以及各卡片的自定义参数恢复为出厂默认值吗？此操作无法撤销！",
 ~~~~~
 
 ~~~~~act
@@ -57,72 +62,32 @@ patch_file
 src/locales/en-US.json
 ~~~~~
 ~~~~~json.old
-    "officialBadge": "Official Preset",
-    "newPlanBadge": "New Plan",
+    "resetPlansTitle": "Reset Official Plans",
+    "resetPlansDesc": "Clear custom plans and restore official presets",
+    "resetPlansBtn": "Reset Plans",
+    "resetPlansSuccessToast": "All plans restored to official presets",
+    "resetPlansConfirmMessage": "Are you sure you want to clear all custom plans and restore official presets? This will not affect your trial history or skill levels.",
 ~~~~~
 ~~~~~json.new
-    "officialBadge": "Official Preset",
-    "newPlanBadge": "New Plan",
-    "resetToDefault": "Reset to Defaults",
-    "resetSuccessToast": "Restored to default settings",
+    "resetPlansTitle": "Reset Official Plans",
+    "resetPlansDesc": "Clear custom plans and restore official presets",
+    "resetPlansBtn": "Reset Plans",
+    "resetPlansSuccessToast": "All plans restored to official presets",
+    "resetPlansConfirmMessage": "Are you sure you want to clear all custom plans and restore official presets? This will not affect your trial history or skill levels.",
+    "resetSettingsTitle": "Reset All Settings",
+    "resetSettingsDesc": "Restore global preferences and all card settings to defaults",
+    "resetSettingsBtn": "Reset Settings",
+    "resetSettingsSuccessToast": "All settings restored to defaults",
+    "resetSettingsConfirmMessage": "Are you sure you want to reset all global preferences and card parameters to their factory defaults? This action cannot be undone!",
 ~~~~~
 
-#### Acts 2: 在 settingsStore 中实现重置动作
-
-我们在 `src/stores/settingsStore.ts` 中新增 `resetCardSettingsAction` 与 `resetGlobalSettingsAction`。
+#### Acts 2: 在 settingsStore 中实现全量重置 Action
 
 ~~~~~act
 patch_file
 src/stores/settingsStore.ts
 ~~~~~
 ~~~~~typescript.old
-import { computed, signal } from '@preact/signals';
-import { i18n } from '../core/i18n';
-import { applyThemeToDocument } from '../hooks/useTheme';
-import {
-  type BaseModuleSettings,
-  DEFAULT_BASE_SETTINGS,
-  DEFAULT_SETTINGS,
-  type ThemeMode,
-  type UserSettings,
-  loadSettings as loadSettingsFromDB,
-  saveSettings as saveSettingsToDB,
-} from '../storage/settings';
-
-export const $settings = signal<UserSettings>(DEFAULT_SETTINGS);
-~~~~~
-~~~~~typescript.new
-import { computed, signal } from '@preact/signals';
-import { i18n } from '../core/i18n';
-import { applyThemeToDocument } from '../hooks/useTheme';
-import {
-  type BaseModuleSettings,
-  DEFAULT_BASE_SETTINGS,
-  DEFAULT_SETTINGS,
-  type ThemeMode,
-  type UserSettings,
-  buildDefaultCardSettings,
-  loadSettings as loadSettingsFromDB,
-  saveSettings as saveSettingsToDB,
-} from '../storage/settings';
-
-export const $settings = signal<UserSettings>(DEFAULT_SETTINGS);
-
-export async function resetCardSettingsAction(cardId: string): Promise<UserSettings> {
-  const defaultCards = buildDefaultCardSettings();
-  const targetDefault = defaultCards[cardId] || DEFAULT_BASE_SETTINGS;
-  const next: UserSettings = {
-    ...$settings.value,
-    cards: {
-      ...$settings.value.cards,
-      [cardId]: targetDefault,
-    },
-  };
-  $settings.value = next;
-  await saveSettingsToDB(next);
-  return next;
-}
-
 export async function resetGlobalSettingsAction(): Promise<UserSettings> {
   const next: UserSettings = {
     ...$settings.value,
@@ -137,194 +102,263 @@ export async function resetGlobalSettingsAction(): Promise<UserSettings> {
   return next;
 }
 ~~~~~
+~~~~~typescript.new
+export async function resetGlobalSettingsAction(): Promise<UserSettings> {
+  const next: UserSettings = {
+    ...$settings.value,
+    global: { ...DEFAULT_SETTINGS.global },
+  };
+  $settings.value = next;
+  applyThemeToDocument(next.global.theme);
+  if (next.global.locale) {
+    i18n.setLocale(next.global.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
 
-#### Acts 3: 在 SettingsModal 与 GlobalSettingsModal 中集成重置按钮
+export async function resetAllSettingsAction(): Promise<UserSettings> {
+  const defaultCards = buildDefaultCardSettings();
+  const next: UserSettings = {
+    global: { ...DEFAULT_SETTINGS.global },
+    cards: defaultCards,
+  };
+  $settings.value = next;
+  applyThemeToDocument(next.global.theme);
+  if (next.global.locale) {
+    i18n.setLocale(next.global.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
+~~~~~
 
-我们将 `RotateCcw` 重置按钮注入到两个设置弹窗的 `headerAction` 插槽中。
+#### Acts 3: 在 DataGovernanceSection 中集成重置所有设置按钮与确认弹窗
 
 ~~~~~act
 patch_file
-src/components/modals/SettingsModal.tsx
+src/components/settings/sections/DataGovernanceSection.tsx
 ~~~~~
 ~~~~~typescript.old
-import { Flame, Sliders, Target } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-} from '../../storage/settings';
-import { updateCardSettings } from '../../stores/settingsStore';
-import type { CardDefinition } from '../../types/card';
-import { ModalShell } from '../common/ModalShell';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Switch } from '../ui/switch';
+import { Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-preact';
+import { useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
+import { resetPlansToDefault } from '../../../storage/planStorage';
+import { ConfirmModal } from '../../common/ConfirmModal';
+import type { ToastType } from '../../common/Toast';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+
+interface DataGovernanceSectionProps {
+  onDataChanged: () => Promise<void> | void;
+  onCloseModal: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
+
+export function DataGovernanceSection({
+  onDataChanged,
+  onCloseModal,
+  showToast,
+}: DataGovernanceSectionProps) {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 ~~~~~
 ~~~~~typescript.new
-import { Flame, Sliders, Target, RotateCcw } from 'lucide-preact';
-import { useState } from 'preact/hooks';
-import { getCardTitle, useTranslation } from '../../core/i18n';
-import { registry } from '../../core/registry';
-import {
-  type BaseModuleSettings,
-  type UserSettings,
-  getCardSettings,
-} from '../../storage/settings';
-import { updateCardSettings, resetCardSettingsAction } from '../../stores/settingsStore';
-import { showToast } from '../../stores/toastStore';
-import type { CardDefinition } from '../../types/card';
-import { ModalShell } from '../common/ModalShell';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Switch } from '../ui/switch';
+import { Download, Loader2, RotateCcw, Trash2, Upload, Sliders } from 'lucide-preact';
+import { useRef, useState } from 'preact/hooks';
+import { useTranslation } from '../../../core/i18n';
+import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
+import { resetPlansToDefault } from '../../../storage/planStorage';
+import { resetAllSettingsAction } from '../../../stores/settingsStore';
+import { ConfirmModal } from '../../common/ConfirmModal';
+import type { ToastType } from '../../common/Toast';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
+
+interface DataGovernanceSectionProps {
+  onDataChanged: () => Promise<void> | void;
+  onCloseModal: () => void;
+  showToast: (msg: string, type?: ToastType) => void;
+}
+
+export function DataGovernanceSection({
+  onDataChanged,
+  onCloseModal,
+  showToast,
+}: DataGovernanceSectionProps) {
+  const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showResetPlansConfirm, setShowResetPlansConfirm] = useState(false);
+  const [showResetSettingsConfirm, setShowResetSettingsConfirm] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 ~~~~~
 
 ~~~~~act
 patch_file
-src/components/modals/SettingsModal.tsx
+src/components/settings/sections/DataGovernanceSection.tsx
 ~~~~~
 ~~~~~typescript.old
-  return (
-    <ModalShell
-      title={t('settingsModal.title', { title: cardTitle })}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
-        </Button>
-      }
-    >
+  const handleResetPlansConfirmed = async () => {
+    setShowResetPlansConfirm(false);
+    await resetPlansToDefault();
+    showToast(t('settings.resetPlansSuccessToast'), 'success');
+    await onDataChanged();
+  };
 ~~~~~
 ~~~~~typescript.new
-  const handleResetToDefault = async () => {
-    const next = await resetCardSettingsAction(card.id);
-    setCurrent(next);
-    onSave(next);
-    showToast(t('common.resetSuccessToast'), 'success');
+  const handleResetPlansConfirmed = async () => {
+    setShowResetPlansConfirm(false);
+    await resetPlansToDefault();
+    showToast(t('settings.resetPlansSuccessToast'), 'success');
+    await onDataChanged();
   };
 
-  return (
-    <ModalShell
-      title={t('settingsModal.title', { title: cardTitle })}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      headerAction={
-        <Button
-          variant="ghost"
-          size="iconSm"
-          onClick={handleResetToDefault}
-          title={t('common.resetToDefault')}
-          className="text-muted-foreground hover:text-primary transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </Button>
-      }
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
-        </Button>
-      }
-    >
-~~~~~
-
-~~~~~act
-patch_file
-src/components/modals/GlobalSettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-import { Sliders } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
-import {
-  type GlobalSettings,
-  type UserSettings,
-  loadSettings,
-  saveSettings,
-} from '../../storage/settings';
-import { ModalShell } from '../common/ModalShell';
-import type { ToastType } from '../common/Toast';
-import { DataGovernanceSection } from '../settings/sections/DataGovernanceSection';
-import { GeneralPreferencesSection } from '../settings/sections/GeneralPreferencesSection';
-import { Button } from '../ui/button';
-~~~~~
-~~~~~typescript.new
-import { Sliders, RotateCcw } from 'lucide-preact';
-import { useEffect, useState } from 'preact/hooks';
-import { useTranslation } from '../../core/i18n';
-import {
-  type GlobalSettings,
-  type UserSettings,
-  loadSettings,
-  saveSettings,
-} from '../../storage/settings';
-import { resetGlobalSettingsAction } from '../../stores/settingsStore';
-import { ModalShell } from '../common/ModalShell';
-import type { ToastType } from '../common/Toast';
-import { DataGovernanceSection } from '../settings/sections/DataGovernanceSection';
-import { GeneralPreferencesSection } from '../settings/sections/GeneralPreferencesSection';
-import { Button } from '../ui/button';
-~~~~~
-
-~~~~~act
-patch_file
-src/components/modals/GlobalSettingsModal.tsx
-~~~~~
-~~~~~typescript.old
-  return (
-    <ModalShell
-      title={t('settings.title')}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
-        </Button>
-      }
-    >
-~~~~~
-~~~~~typescript.new
-  const handleResetGlobal = async () => {
-    const next = await resetGlobalSettingsAction();
-    setSettings(next);
-    onSave?.(next);
-    onDataChanged();
-    showToast(t('common.resetSuccessToast'), 'success');
+  const handleResetSettingsConfirmed = async () => {
+    setShowResetSettingsConfirm(false);
+    await resetAllSettingsAction();
+    showToast(t('settings.resetSettingsSuccessToast'), 'success');
+    await onDataChanged();
   };
+~~~~~
 
-  return (
-    <ModalShell
-      title={t('settings.title')}
-      icon={Sliders}
-      onClose={onClose}
-      maxWidth="max-w-md"
-      headerAction={
-        <Button
-          variant="ghost"
-          size="iconSm"
-          onClick={handleResetGlobal}
-          title={t('common.resetToDefault')}
-          className="text-muted-foreground hover:text-primary transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </Button>
-      }
-      footer={
-        <Button variant="default" onClick={onClose} className="w-full py-2.5 h-auto rounded-2xl">
-          {t('common.complete')}
-        </Button>
-      }
-    >
+~~~~~act
+patch_file
+src/components/settings/sections/DataGovernanceSection.tsx
+~~~~~
+~~~~~typescript.old
+      {/* 计划库重置与危险操作 */}
+      <div className="pt-2 border-t border-border/60 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-foreground">{t('settings.resetPlansTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetPlansDesc')}</div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowResetPlansConfirm(true)}
+            className="gap-1 border border-border"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            {t('settings.resetPlansBtn')}
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.clearDataDesc')}</div>
+          </div>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setShowClearConfirm(true)}
+            className="gap-1"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {t('settings.clearDataBtn')}
+          </Button>
+        </div>
+      </div>
+
+      {/* 二次确认弹窗群 */}
+      <ConfirmModal
+        isOpen={showResetPlansConfirm}
+        title={t('settings.resetPlansTitle')}
+        message={t('settings.resetPlansConfirmMessage')}
+        confirmText={t('settings.resetPlansBtn')}
+        isDangerous={false}
+        onConfirm={handleResetPlansConfirmed}
+        onCancel={() => setShowResetPlansConfirm(false)}
+      />
+~~~~~
+~~~~~typescript.new
+      {/* 计划库重置与危险操作 */}
+      <div className="pt-2 border-t border-border/60 space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-foreground">{t('settings.resetPlansTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetPlansDesc')}</div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowResetPlansConfirm(true)}
+            className="gap-1 border border-border"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            {t('settings.resetPlansBtn')}
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs font-bold text-foreground">{t('settings.resetSettingsTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.resetSettingsDesc')}</div>
+          </div>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setShowResetSettingsConfirm(true)}
+            className="gap-1 border border-border"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            {t('settings.resetSettingsBtn')}
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <div className="text-xs font-bold text-rose-600">{t('settings.clearDataTitle')}</div>
+            <div className="text-xs text-muted-foreground">{t('settings.clearDataDesc')}</div>
+          </div>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => setShowClearConfirm(true)}
+            className="gap-1"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            {t('settings.clearDataBtn')}
+          </Button>
+        </div>
+      </div>
+
+      {/* 二次确认弹窗群 */}
+      <ConfirmModal
+        isOpen={showResetPlansConfirm}
+        title={t('settings.resetPlansTitle')}
+        message={t('settings.resetPlansConfirmMessage')}
+        confirmText={t('settings.resetPlansBtn')}
+        isDangerous={false}
+        onConfirm={handleResetPlansConfirmed}
+        onCancel={() => setShowResetPlansConfirm(false)}
+      />
+
+      <ConfirmModal
+        isOpen={showResetSettingsConfirm}
+        title={t('settings.resetSettingsTitle')}
+        message={t('settings.resetSettingsConfirmMessage')}
+        confirmText={t('settings.resetSettingsBtn')}
+        isDangerous={false}
+        onConfirm={handleResetSettingsConfirmed}
+        onCancel={() => setShowResetSettingsConfirm(false)}
+      />
 ~~~~~
 
 ---
 
 ### 下一步建议
 
-我们已经成功为单卡和全局偏好设置添加了规范的“恢复默认”重置能力。建议在执行完上述 `act` 块后，运行项目测试套件（如 `npm test`）或进行本地预览，确保重置按钮在弹窗 Header 右上角正确渲染，且点击后能够即时恢复参数并触发成功 Toast。
+我们已成功在“删除所有数据”上方加入了“重置所有设置”功能及相应的二次确认交互。建议在应用中打开全局设置弹窗，滑到底部的数据治理区测试该按钮，确认其能够正确弹出确认框并成功将所有全局与卡片偏好恢复出厂默认值。

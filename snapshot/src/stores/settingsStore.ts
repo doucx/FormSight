@@ -43,6 +43,21 @@ export async function resetGlobalSettingsAction(): Promise<UserSettings> {
   return next;
 }
 
+export async function resetAllSettingsAction(): Promise<UserSettings> {
+  const defaultCards = buildDefaultCardSettings();
+  const next: UserSettings = {
+    global: { ...DEFAULT_SETTINGS.global },
+    cards: defaultCards,
+  };
+  $settings.value = next;
+  applyThemeToDocument(next.global.theme);
+  if (next.global.locale) {
+    i18n.setLocale(next.global.locale);
+  }
+  await saveSettingsToDB(next);
+  return next;
+}
+
 export const $currentTheme = computed<ThemeMode>(() => $settings.value.global.theme || 'system');
 export const $currentLocale = computed<string>(() => $settings.value.global.locale || 'zh-CN');
 
