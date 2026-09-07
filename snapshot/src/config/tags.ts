@@ -113,7 +113,7 @@ export const STATUS_TAGS: Record<CardStatusTag, TagMeta<CardStatusTag>> = {
   experimental: {
     id: 'experimental',
     i18nKey: 'tags.statuses.experimental',
-    themeColor: 'purple',
+    themeColor: 'amber',
   },
   deprecated: {
     id: 'deprecated',
