@@ -72,6 +72,7 @@ export function TrainingShell({
   currentLevel,
   autoNext,
   session,
+  currentQuestion,
   planContext,
   showExitButton = true,
   showTimer = true,
