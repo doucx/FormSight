@@ -1,7 +1,9 @@
 import {
   ArrowLeft,
+  Check,
   Clock,
   Code,
+  Copy,
   Eye,
   FastForward,
   HelpCircle,
@@ -12,7 +14,7 @@ import {
   X,
 } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
@@ -84,8 +86,23 @@ export function TrainingShell({
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   const isSandbox = sessionType === 'sandbox';
+
+  const handleCopyQuestion = useCallback(() => {
+    if (!currentQuestion) return;
+    const text = JSON.stringify(currentQuestion, null, 2);
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.error('Failed to copy question json:', err);
+      });
+  }, [currentQuestion]);
 
   const {
     totalTrials,
@@ -308,14 +325,38 @@ export function TrainingShell({
               <Code className="w-3.5 h-3.5 text-primary" />
               {t('shell.inspector')} ({card.id})
             </span>
-            <Button
-              variant="ghost"
-              size="iconSm"
-              onClick={() => setShowInspector?.(false)}
-              className="h-5 w-5 text-muted-foreground hover:text-foreground"
-            >
-              <X className="w-3 h-3" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopyQuestion}
+                className="h-6 px-2 text-[11px] font-bold gap-1 text-muted-foreground hover:text-foreground"
+                title="Copy JSON to clipboard"
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">
+                      Copied
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span className="text-[10px]">Copy</span>
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={() => setShowInspector?.(false)}
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                title="Close"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
           </div>
           <pre className="text-foreground/90 p-2 bg-muted/60 rounded-xl overflow-x-auto text-[11px] leading-relaxed select-text">
             {JSON.stringify(currentQuestion ?? null, null, 2)}
