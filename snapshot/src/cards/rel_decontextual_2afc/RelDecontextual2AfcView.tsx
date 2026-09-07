@@ -95,23 +95,8 @@ export function RelDecontextual2AfcView({
               {t('common.areaA')}
             </span>
 
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 truncate ${
-                  isAHit
-                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {isAHit && (
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                )}
-                <span className="truncate">
-                  {isAHit
-                    ? t('physicallyBrighter', { v: question.centerColorA[2] })
-                    : t('physicallyDarker', { v: question.centerColorA[2] })}
-                </span>
-              </span>
+            {showAnswer && isAHit && (
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             )}
           </div>
 
@@ -142,23 +127,8 @@ export function RelDecontextual2AfcView({
               {t('common.areaB')}
             </span>
 
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 truncate ${
-                  isBHit
-                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {isBHit && (
-                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                )}
-                <span className="truncate">
-                  {isBHit
-                    ? t('physicallyBrighter', { v: question.centerColorB[2] })
-                    : t('physicallyDarker', { v: question.centerColorB[2] })}
-                </span>
-              </span>
+            {showAnswer && isBHit && (
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
             )}
           </div>
 

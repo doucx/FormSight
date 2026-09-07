@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M piconfig.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788778329.0876145, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] refactor(cards): 清除揭晓时的冗余文本报告并统一 2AFC 选项打勾反馈", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788778387.4474604, "duration_ms": 0}}

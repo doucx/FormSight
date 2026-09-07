@@ -4,7 +4,5 @@
   "hint": "Observe the prompt line and select the parallel one below (Keys 1 / 2)",
   "promptTitle": "Parallel Alignment Reference (Prompt)",
   "optionA": "Line A",
-  "optionB": "Line B",
-  "absoluteParallel": "Strictly Parallel",
-  "deviationBadge": "Deviation {{deg}}°"
+  "optionB": "Line B"
 }

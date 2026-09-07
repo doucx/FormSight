@@ -88,13 +88,7 @@ export function AngleComparison2AfcView({
             </span>
 
             {showAnswer && isAHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {`${question.angleA}°`}
-              </span>
-            )}
-            {showAnswer && !isAHit && (
-              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">{`${question.angleA}°`}</span>
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
@@ -128,13 +122,7 @@ export function AngleComparison2AfcView({
             </span>
 
             {showAnswer && isBHit && (
-              <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 flex-shrink-0">
-                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                {`${question.angleB}°`}
-              </span>
-            )}
-            {showAnswer && !isBHit && (
-              <span className="text-xs font-semibold text-muted-foreground flex-shrink-0">{`${question.angleB}°`}</span>
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 

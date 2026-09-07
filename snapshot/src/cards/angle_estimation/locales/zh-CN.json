@@ -17,7 +17,5 @@
     }
   },
   "hint": "观察两射线夹角，调制滑块逼近精准度数",
-  "label": "夹角估算值:",
-  "trueAngle": "真实角度:",
-  "errorInfo": "误差: {{error}}° (容错: ±{{tolerance}}°)"
+  "label": "夹角估算值:"
 }

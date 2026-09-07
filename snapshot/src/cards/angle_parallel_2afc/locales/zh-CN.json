@@ -4,7 +4,5 @@
   "hint": "观察上方基准线，选出下方与它平行的线 (键 1 / 2)",
   "promptTitle": "平行基准线",
   "optionA": "选项 A",
-  "optionB": "选项 B",
-  "absoluteParallel": "平行",
-  "deviationBadge": "偏转 {{deg}}°"
+  "optionB": "选项 B"
 }
