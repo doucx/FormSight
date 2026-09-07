@@ -17,7 +17,6 @@ export interface PerspPropDivisionViewProps {
 export function PerspPropDivisionView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,

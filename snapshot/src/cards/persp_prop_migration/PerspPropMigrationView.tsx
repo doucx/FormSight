@@ -27,7 +27,6 @@ export interface PerspPropMigrationViewProps {
 export function PerspPropMigrationView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
