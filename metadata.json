@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M PerspPropDivisionView.tsx, M PerspPropMigrationView.tsx", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788778484.7400174, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[COMMIT] refactor(cards): 清理揭晓冗余报告并统一 2AFC 反馈图标", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788778489.8265839, "duration_ms": 0}}
