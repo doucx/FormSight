@@ -145,6 +145,7 @@
     "regenerate": "New Question",
     "revealAnswer": "Reveal",
     "inspector": "Question Inspector",
+    "copied": "Copied",
     "experimental": "Experimental",
     "trialsCount": "Trials Done",
     "currentLevel": "Current Level",
