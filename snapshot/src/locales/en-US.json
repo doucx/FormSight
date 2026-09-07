@@ -141,6 +141,10 @@
     "benchmark": "Benchmark",
     "training": "Adaptive Training",
     "targeting": "Targeted Training",
+    "sandbox": "Sandbox",
+    "regenerate": "New Question",
+    "revealAnswer": "Reveal",
+    "inspector": "Question Inspector",
     "experimental": "Experimental",
     "trialsCount": "Trials Done",
     "currentLevel": "Current Level",
@@ -216,7 +220,10 @@
     "targetingSubTitle": "Select sectors for targeted practice:",
     "targetingOff": "Off (Fully Random)",
     "targetingManual": "Manual Selection",
-    "marginOff": "Off (0px)"
+    "marginOff": "Off (0px)",
+    "sandboxSectionTitle": "Sandbox Mode",
+    "sandboxSectionDesc": "Freely adjust difficulty level, inspect parameters, and test algorithms without logging trials",
+    "enterSandbox": "Enter Sandbox Mode"
   },
   "tags": {
     "domains": {

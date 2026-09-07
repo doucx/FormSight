@@ -55,6 +55,10 @@ export function App() {
           settings={$settings.value}
           onClose={() => setActiveSettingsCardId(null)}
           onSave={() => refreshAppData()}
+          onEnterSandbox={() => {
+            setActiveSettingsCardId(null);
+            navigate({ type: 'train', cardId: activeSettingsCard.id, sessionType: 'sandbox' });
+          }}
         />
       )}
     </div>

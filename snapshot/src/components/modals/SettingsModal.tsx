@@ -1,4 +1,4 @@
-import { Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
+import { FlaskConical, Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
@@ -20,9 +20,16 @@ interface SettingsModalProps {
   settings: UserSettings;
   onClose: () => void;
   onSave: (newSettings: UserSettings) => void;
+  onEnterSandbox?: () => void;
 }
 
-export function SettingsModal({ card, settings, onClose, onSave }: SettingsModalProps) {
+export function SettingsModal({
+  card,
+  settings,
+  onClose,
+  onSave,
+  onEnterSandbox,
+}: SettingsModalProps) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
   const cardConfig = getCardSettings(current, card.id);
@@ -218,6 +225,27 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           }
           return null;
         })()}
+
+        {/* 进入沙盒调试模式入口 */}
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3 bg-purple-50/60 dark:bg-purple-950/30 p-3.5 rounded-2xl border border-purple-200/60 dark:border-purple-800/40">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
+              <FlaskConical className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+              <span>{t('settingsModal.sandboxSectionTitle')}</span>
+            </div>
+            <div className="text-xs text-purple-700/80 dark:text-purple-300/70 mt-0.5 leading-relaxed">
+              {t('settingsModal.sandboxSectionDesc')}
+            </div>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onEnterSandbox}
+            className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 text-white shadow-none h-auto py-2 px-3 text-xs font-bold"
+          >
+            {t('settingsModal.enterSandbox')}
+          </Button>
+        </div>
       </div>
     </ModalShell>
   );

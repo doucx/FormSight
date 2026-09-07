@@ -42,7 +42,8 @@ export function useAppBootstrap(route: RouteLocation) {
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
       const cardTitle = card ? getCardTitle(card, t) : t('shell.training');
-      document.title = `${cardTitle} - ${t('common.appName')}`;
+      const prefix = route.sessionType === 'sandbox' ? `[${t('shell.sandbox')}] ` : '';
+      document.title = `${prefix}${cardTitle} - ${t('common.appName')}`;
     }
   }, [route, activePlanName, t]);
 

@@ -141,6 +141,10 @@
     "benchmark": "基准测试",
     "training": "自适应训练",
     "targeting": "靶向强化训练",
+    "sandbox": "沙盒演练",
+    "regenerate": "换一题",
+    "revealAnswer": "直接揭晓",
+    "inspector": "题目检查器",
     "experimental": "实验性模块",
     "trialsCount": "已练题数",
     "currentLevel": "当前难度",
@@ -216,7 +220,10 @@
     "targetingSubTitle": "选择需要靶向强化的扇区：",
     "targetingOff": "关闭 (全随机)",
     "targetingManual": "手动指定",
-    "marginOff": "关闭 (0px)"
+    "marginOff": "关闭 (0px)",
+    "sandboxSectionTitle": "沙盒调试模式",
+    "sandboxSectionDesc": "在免计分沙盒中自由调节难度、查看题目参数并验证算法",
+    "enterSandbox": "进入沙盒模式"
   },
   "tags": {
     "domains": {

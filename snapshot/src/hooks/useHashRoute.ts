@@ -16,7 +16,7 @@ export type RouteLocation =
   | {
       type: 'train';
       cardId: string;
-      sessionType: 'training' | 'benchmark';
+      sessionType: 'training' | 'benchmark' | 'sandbox';
       returnTo?: ReturnToLocation;
     }
   | { type: 'plan-train'; returnTo?: ReturnToLocation }
@@ -119,7 +119,9 @@ function parseHash(hash: string): RouteLocation {
 
   if (segments[0] === 'train' && segments[1]) {
     const cardId = segments[1];
-    const sessionType = queryParams.get('type') === 'benchmark' ? 'benchmark' : 'training';
+    const rawType = queryParams.get('type');
+    const sessionType =
+      rawType === 'benchmark' ? 'benchmark' : rawType === 'sandbox' ? 'sandbox' : 'training';
     const fromParam = queryParams.get('from') || queryParams.get('returnTo');
     const returnTo = fromParam as ReturnToLocation | undefined;
     return { type: 'train', cardId, sessionType, returnTo };
