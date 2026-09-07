@@ -87,6 +87,7 @@ export function TrainingShell({
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [isCardIdCopied, setIsCardIdCopied] = useState(false);
 
   const isSandbox = sessionType === 'sandbox';
 
@@ -103,6 +104,18 @@ export function TrainingShell({
         console.error('Failed to copy question json:', err);
       });
   }, [currentQuestion]);
+
+  const handleCopyCardId = useCallback(() => {
+    navigator.clipboard
+      .writeText(card.id)
+      .then(() => {
+        setIsCardIdCopied(true);
+        setTimeout(() => setIsCardIdCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.error('Failed to copy card id:', err);
+      });
+  }, [card.id]);
 
   const {
     totalTrials,
@@ -157,12 +170,21 @@ export function TrainingShell({
             <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{cardTitle}</span>
               {isSandbox && (
-                <code
-                  className="font-mono text-[11px] bg-muted/80 hover:bg-accent text-foreground px-1.5 py-0.5 rounded border border-border select-all cursor-text tracking-tight flex-shrink-0"
-                  title="Card ID (Selectable)"
+                <button
+                  type="button"
+                  onClick={handleCopyCardId}
+                  className="font-mono text-[11px] bg-muted/80 hover:bg-accent text-foreground px-1.5 py-0.5 rounded border border-border cursor-pointer tracking-tight flex-shrink-0 inline-flex items-center gap-1 transition-colors"
+                  title="Click to copy Card ID"
                 >
-                  {card.id}
-                </code>
+                  {isCardIdCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
+                    </>
+                  ) : (
+                    <span>{card.id}</span>
+                  )}
+                </button>
               )}
               {sessionType === 'benchmark' && (
                 <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
@@ -323,28 +345,20 @@ export function TrainingShell({
           <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border/60 text-muted-foreground font-bold">
             <span className="flex items-center gap-1.5">
               <Code className="w-3.5 h-3.5 text-primary" />
-              {t('shell.inspector')} ({card.id})
+              <span>Inspector</span>
             </span>
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
-                size="sm"
+                size="iconSm"
                 onClick={handleCopyQuestion}
-                className="h-6 px-2 text-[11px] font-bold gap-1 text-muted-foreground hover:text-foreground"
+                className="h-6 w-6 text-muted-foreground hover:text-primary"
                 title="Copy JSON to clipboard"
               >
                 {isCopied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-500" />
-                    <span className="text-emerald-600 dark:text-emerald-400 text-[10px]">
-                      Copied
-                    </span>
-                  </>
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
                 ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span className="text-[10px]">Copy</span>
-                  </>
+                  <Copy className="w-3.5 h-3.5" />
                 )}
               </Button>
               <Button
