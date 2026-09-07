@@ -1,82 +1,85 @@
-我注意到确实存在重复展示的问题——左侧原本应当展示通过多语言解析出来的**卡片本地化名称**（例如“黑白素描归组”或 “Notan Threshold”），而被我误写成了直接展示 `card.id`，导致和紧随其后的 Card ID 复制按钮重复。
+我将弱化 `SettingsModal.tsx` 中沙盒调试入口的视觉层级。
 
-我将立即修复此问题，让左侧正确调用 `cardTitle`（卡片人类可读名称），而右侧保留支持点击复制的 `card.id` 徽章。
+去除抢眼的紫色大背景（`bg-purple-50`）与亮紫色高突按钮，转而采用与上方其他通用配置项（如“自动翻页开关”、“自适应算子模式”）完全一致的**标准排版结构**：
+- 左侧：标准字阶的标题（`text-sm font-semibold text-foreground`）与辅助说明（`text-xs text-muted-foreground`）
+- 右侧：标准次级按钮（`variant="outline"` 或 `variant="secondary"`）
+- 保持整体素雅内敛，不再喧宾夺主。
 
-## [WIP] feat(training): 恢复 TrainingShell 左侧标题为多语言卡片名称
+## [WIP] style(settings): 弱化 SettingsModal 沙盒调试入口的视觉层级
 
 ### 用户需求
-在沙盒模式的顶栏中，左侧恢复显示多语言翻译后的卡片名称（如“单锚点模式” / “Single Anchor”），而紧随其后的卡片 ID 徽章保持不变，避免重复显示两个 ID。
+弱化卡片设置弹窗（`SettingsModal`）中沙盒入口的视觉强度（去除紫色强调背景和亮色按钮），使其样式与弹窗内其他通用配置项协调统一。
 
 ### 评论
-卡片名称负责直观辨识，而 Card ID 负责开发者精确调试，二者分工明确且并存。恢复左侧的多语言名称后，UI 层次将恢复清晰。
+原有的全宽亮紫色容器在偏好设置弹窗中过于抢眼。采用统一的行级排版后，沙盒模式既可随时访问，又不会干扰用户的常规训练参数配置心智。
 
 ### 目标
-将 `TrainingShell.tsx` 左侧标题渲染的变量从 `cardTitle` / `card.id` 梳理规整，确保左侧为主标题（名称），中间为 Card ID 可点击复制徽章。
+1. 移除紫色背景边框（`bg-purple-50`、`border-purple-200` 等）。
+2. 将文字样式统一为 `text-sm font-semibold text-foreground` 与 `text-xs text-muted-foreground`。
+3. 将主按钮调整为系统标准的次级轮廓按钮（`variant="outline"`，尺寸紧凑），与周围 UI 保持视觉对齐。
 
 ### 基本原理
-直接引用外层传入或通过 `getCardTitle(card, t)` 计算得到的 `cardTitle` 作为左侧主标题文本。
+对齐全局设置项的标准栅格与排版规范，恢复常规层级对比。
 
 ### 标签
-#intent/fix #flow/ready #priority/medium #comp/runtime #concept/ui #scope/ux #ai/instruct #task/domain/runtime #task/object/training-shell-title #task/action/bug-fix #task/state/continue
+#intent/tune #flow/ready #priority/low #comp/ui #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/settings-modal #task/action/style-tune #task/state/continue
 
 ---
 
 ### Script
 
-#### Acts 1: 在 `TrainingShell.tsx` 中恢复左侧标题为 `cardTitle`
+#### Acts 1: 重构 `SettingsModal.tsx` 中沙盒调试入口样式
 
 ~~~~~act
 patch_file
-src/components/training/TrainingShell.tsx
+src/components/modals/SettingsModal.tsx
 ~~~~~
 ~~~~~typescript
-          <div className="relative flex items-center min-w-0">
-            <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
-              <span className="truncate">{cardTitle}</span>
-              {isSandbox && (
-                <button
-                  type="button"
-                  onClick={handleCopyCardId}
-                  className="font-mono text-[11px] bg-muted/80 hover:bg-accent text-foreground px-1.5 py-0.5 rounded border border-border cursor-pointer tracking-tight flex-shrink-0 inline-flex items-center gap-1 transition-colors"
-                  title="Click to copy Card ID"
-                >
-                  {isCardIdCopied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">{t('shell.copied')}</span>
-                    </>
-                  ) : (
-                    <span>{card.id}</span>
-                  )}
-                </button>
-              )}
+        {/* 进入沙盒调试模式入口 */}
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3 bg-purple-50/60 dark:bg-purple-950/30 p-3.5 rounded-2xl border border-purple-200/60 dark:border-purple-800/40">
+          <div className="min-w-0 flex-1">
+            <div className="text-xs font-bold text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
+              <FlaskConical className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" />
+              <span>{t('settingsModal.sandboxSectionTitle')}</span>
+            </div>
+            <div className="text-xs text-purple-700/80 dark:text-purple-300/70 mt-0.5 leading-relaxed">
+              {t('settingsModal.sandboxSectionDesc')}
+            </div>
+          </div>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={onEnterSandbox}
+            className="flex-shrink-0 bg-purple-600 hover:bg-purple-700 text-white shadow-none h-auto py-2 px-3 text-xs font-bold"
+          >
+            {t('settingsModal.enterSandbox')}
+          </Button>
+        </div>
 ~~~~~
 ~~~~~typescript
-          <div className="relative flex items-center min-w-0">
-            <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
-              <span className="truncate">{cardTitle}</span>
-              {isSandbox && (
-                <button
-                  type="button"
-                  onClick={handleCopyCardId}
-                  className="font-mono text-[11px] bg-muted/80 hover:bg-accent text-foreground px-1.5 py-0.5 rounded border border-border cursor-pointer tracking-tight flex-shrink-0 inline-flex items-center gap-1 transition-colors"
-                  title="Click to copy Card ID"
-                >
-                  {isCardIdCopied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">{t('shell.copied')}</span>
-                    </>
-                  ) : (
-                    <span>{card.id}</span>
-                  )}
-                </button>
-              )}
+        {/* 进入沙盒调试模式入口 */}
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>{t('settingsModal.sandboxSectionTitle')}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              {t('settingsModal.sandboxSectionDesc')}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEnterSandbox}
+            className="flex-shrink-0 border-border text-foreground hover:bg-accent hover:text-primary h-auto py-2 px-3 text-xs font-semibold"
+          >
+            {t('settingsModal.enterSandbox')}
+          </Button>
+        </div>
 ~~~~~
-
-> 注：左侧的 `{cardTitle}` 本身就是由上层传进来的多语言标题（在 `TrainingShell` 中通过 `getCardTitle(card, t)` 解析得到）。原本误写为硬编码或覆盖成了 `card.id`，现已确保左侧展示翻译名称，右侧为点击复制的 `card.id` 徽章。
 
 ---
 
 ### 下一步建议
-重新刷新沙盒页面（如 `#/train/abs_notan_threshold?type=sandbox`），确认左侧展示的是“黑白素描归组 / Notan Threshold”等中文/英文名称，而右侧紧邻的是可点击复制的 `abs_notan_threshold` 代码徽章。
+重新打开卡片偏好设置弹窗，查看沙盒模式入口是否已经与上方“自动翻页开关”、“自适应算子模式”等通用项风格融为一体、层次分明。
