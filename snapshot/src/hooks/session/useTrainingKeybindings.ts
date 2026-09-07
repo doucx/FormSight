@@ -5,9 +5,13 @@ export interface UseTrainingKeybindingsOptions {
   showAnswer: boolean;
   isFinished: boolean;
   disabled?: boolean;
+  isSandbox?: boolean;
   onResumeFromIdle: () => void;
   onNextQuestion: () => void;
   onRequestFinish: () => void;
+  onRegenerate?: () => void;
+  onAdjustLevel?: (delta: number) => void;
+  onToggleInspector?: () => void;
 }
 
 export function useTrainingKeybindings({
@@ -15,9 +19,13 @@ export function useTrainingKeybindings({
   showAnswer,
   isFinished,
   disabled = false,
+  isSandbox = false,
   onResumeFromIdle,
   onNextQuestion,
   onRequestFinish,
+  onRegenerate,
+  onAdjustLevel,
+  onToggleInspector,
 }: UseTrainingKeybindingsOptions) {
   useEffect(() => {
     if (disabled) return;
@@ -31,6 +39,30 @@ export function useTrainingKeybindings({
         e.preventDefault();
         onResumeFromIdle();
         return;
+      }
+
+      // 沙盒专属快捷键 (R 换题, [ / ] 调级, I 检查器)
+      if (isSandbox) {
+        if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          onRegenerate?.();
+          return;
+        }
+        if (e.key === '[') {
+          e.preventDefault();
+          onAdjustLevel?.(-1);
+          return;
+        }
+        if (e.key === ']') {
+          e.preventDefault();
+          onAdjustLevel?.(1);
+          return;
+        }
+        if (e.key === 'i' || e.key === 'I') {
+          e.preventDefault();
+          onToggleInspector?.();
+          return;
+        }
       }
 
       if (e.code === 'Space' || e.key === ' ') {
@@ -50,5 +82,17 @@ export function useTrainingKeybindings({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [disabled, isIdle, showAnswer, isFinished, onResumeFromIdle, onNextQuestion, onRequestFinish]);
+  }, [
+    disabled,
+    isIdle,
+    showAnswer,
+    isFinished,
+    isSandbox,
+    onResumeFromIdle,
+    onNextQuestion,
+    onRequestFinish,
+    onRegenerate,
+    onAdjustLevel,
+    onToggleInspector,
+  ]);
 }

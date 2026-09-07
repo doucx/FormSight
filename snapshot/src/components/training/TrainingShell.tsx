@@ -43,6 +43,9 @@ export interface TrainingSessionHandle {
   setCurrentLevel?: (level: number) => void;
   regenerateQuestion?: () => void;
   revealAnswer?: () => void;
+  showInspector?: boolean;
+  toggleInspector?: () => void;
+  setShowInspector?: (val: boolean) => void;
   handleRequestFinish: () => void;
   handleFinishSession: () => void;
   handleRestartSession: () => void;
@@ -80,7 +83,6 @@ export function TrainingShell({
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
-  const [showInspector, setShowInspector] = useState(false);
 
   const isSandbox = sessionType === 'sandbox';
 
@@ -97,6 +99,9 @@ export function TrainingShell({
     setCurrentLevel,
     regenerateQuestion,
     revealAnswer,
+    showInspector = false,
+    toggleInspector,
+    setShowInspector,
     handleRequestFinish,
     handleFinishSession,
     handleRestartSession,
@@ -273,9 +278,9 @@ export function TrainingShell({
               <Button
                 variant={showInspector ? 'default' : 'ghost'}
                 size="iconSm"
-                onClick={() => setShowInspector(!showInspector)}
+                onClick={() => toggleInspector?.()}
                 className="h-7 w-7 text-muted-foreground hover:text-foreground border border-border/40"
-                title={t('shell.inspector')}
+                title={`${t('shell.inspector')} (I)`}
               >
                 <Code className="w-3.5 h-3.5" />
               </Button>
@@ -305,14 +310,14 @@ export function TrainingShell({
             <Button
               variant="ghost"
               size="iconSm"
-              onClick={() => setShowInspector(false)}
+              onClick={() => setShowInspector?.(false)}
               className="h-5 w-5 text-muted-foreground hover:text-foreground"
             >
               <X className="w-3 h-3" />
             </Button>
           </div>
           <pre className="text-foreground/90 p-2 bg-muted/60 rounded-xl overflow-x-auto text-[11px] leading-relaxed select-text">
-            {JSON.stringify(session ? (session as unknown as { question?: unknown }).question : null, null, 2)}
+            {JSON.stringify(currentQuestion ?? null, null, 2)}
           </pre>
         </div>
       )}
@@ -354,12 +359,14 @@ export function TrainingShell({
         )}
 
         <div className="text-[10px] text-muted-foreground/40 font-mono tracking-wider">
-          Space 提交/下一题 · Esc 退出
+          {isSandbox
+            ? 'Space 提交/下一题 · R 换题 · [ / ] 调级 · I 检查器 · Esc 退出'
+            : 'Space 提交/下一题 · Esc 退出'}
         </div>
       </footer>
 
-      {/* 统一结课总结弹窗 (在训练计划流中禁用单卡片弹窗，由外层 PlanSummaryModal 统一承接) */}
-      {showSummaryModal && !planContext && (
+      {/* 统一结课总结弹窗 (在训练计划流或沙盒演练模式中禁用单卡片弹窗) */}
+      {showSummaryModal && !planContext && !isSandbox && (
         <SessionSummaryModal
           card={card}
           sessionType={sessionType}

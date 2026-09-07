@@ -93,6 +93,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const [isFinished, setIsFinished] = useState<boolean>(false);
   const [sessionHistory, setSessionHistory] = useState<SessionHistoryItem[]>([]);
   const [showSummaryModal, setShowSummaryModal] = useState<boolean>(false);
+  const [showInspector, setShowInspector] = useState<boolean>(false);
   const streakRef = useRef<number>(0);
 
   const effectiveIdleTimeout =
@@ -174,6 +175,21 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   const revealAnswer = useCallback(() => {
     setShowAnswer(true);
   }, []);
+
+  const toggleInspector = useCallback(() => {
+    setShowInspector((prev) => !prev);
+  }, []);
+
+  const adjustLevel = useCallback(
+    (delta: number) => {
+      const cur = adaptiveEngineRef.current.getCurrentLevel();
+      const next = Math.max(1, Math.min(35, cur + delta));
+      if (next !== cur) {
+        setCurrentLevel(next);
+      }
+    },
+    [setCurrentLevel],
+  );
 
   const handleAnswer = useCallback(
     async (userVal: TAnswerVal) => {
@@ -272,6 +288,10 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   );
 
   const handleRequestFinish = useCallback(async () => {
+    if (sessionType === 'sandbox') {
+      onExit();
+      return;
+    }
     if (targetLimitTrials && totalTrials >= targetLimitTrials && onTargetLimitReached) {
       await saveCurrentSession(totalTrials, hitTrials, true);
       onTargetLimitReached(sessionHistory);
@@ -290,6 +310,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       onExit();
     }
   }, [
+    sessionType,
     targetLimitTrials,
     totalTrials,
     hitTrials,
@@ -330,9 +351,13 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     showAnswer,
     isFinished,
     disabled: showSummaryModal,
+    isSandbox: sessionType === 'sandbox',
     onResumeFromIdle: resumeFromIdle,
     onNextQuestion: handleNextQuestion,
     onRequestFinish: handleRequestFinish,
+    onRegenerate: regenerateQuestion,
+    onAdjustLevel: adjustLevel,
+    onToggleInspector: toggleInspector,
   });
 
   // === 3. 活跃计时器 ===
@@ -362,6 +387,9 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     setCurrentLevel,
     regenerateQuestion,
     revealAnswer,
+    showInspector,
+    toggleInspector,
+    setShowInspector,
     handleRequestFinish,
     handleFinishSession,
     handleRestartSession,
