@@ -17,7 +17,5 @@
     }
   },
   "hint": "Observe the angle formed by rays and modulate the slider to match",
-  "label": "Angle Estimation Value:",
-  "trueAngle": "Ground Truth Value:",
-  "errorInfo": "Error: {{error}}° (Tolerance: ±{{tolerance}}°)"
+  "label": "Angle Estimation Value:"
 }

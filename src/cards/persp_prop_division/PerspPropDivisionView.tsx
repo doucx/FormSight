@@ -17,7 +17,6 @@ export interface PerspPropDivisionViewProps {
 export function PerspPropDivisionView({
   question,
   showAnswer,
-  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
@@ -108,8 +107,6 @@ export function PerspPropDivisionView({
     }
   };
 
-  const isHit = Boolean(userAnswer?.isHit);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -137,29 +134,6 @@ export function PerspPropDivisionView({
       hintIcon={Disc}
       showCanvasHints={showCanvasHints}
       maxWidth="max-w-lg"
-      footer={
-        <div
-          className={`w-full pt-2 border-t border-border/80 flex items-center justify-between text-xs font-semibold min-h-[2rem] transition-opacity duration-150 ${
-            showAnswer ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          aria-hidden={!showAnswer}
-        >
-          <span className="text-muted-foreground">
-            {t('targetRatio')}{' '}
-            <span className="font-bold text-foreground font-mono">
-              {((question.targetRatio ?? 0) * 100).toFixed(1)}%
-            </span>
-          </span>
-          <span className={isHit ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'}>
-            {showAnswer
-              ? t('userPosition', {
-                  pos: ((userAnswer?.ratioProgress ?? 0) * 100).toFixed(1),
-                  error: ((userAnswer?.errorValue ?? 0) * 100).toFixed(1),
-                })
-              : ''}
-          </span>
-        </div>
-      }
     >
       <div className="w-full bg-accent/80 border border-border/60 dark:border-border rounded-2xl py-2 px-4 flex items-center justify-center shadow-xs">
         <span className="text-2xl font-black text-primary font-black dark:text-indigo-200 font-mono tracking-widest">

@@ -107,19 +107,8 @@ export function AngleParallel2AfcView({
               1
             </Badge>
 
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 flex-shrink-0 ${
-                  isAHit
-                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {isAHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isAHit
-                  ? t('absoluteParallel')
-                  : t('deviationBadge', { deg: question.angularDeviation ?? 0 })}
-              </span>
+            {showAnswer && isAHit && (
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
@@ -155,19 +144,8 @@ export function AngleParallel2AfcView({
               2
             </Badge>
 
-            {showAnswer && (
-              <span
-                className={`text-xs font-semibold flex items-center gap-1 flex-shrink-0 ${
-                  isBHit
-                    ? 'text-emerald-600 dark:text-emerald-400 font-extrabold'
-                    : 'text-muted-foreground'
-                }`}
-              >
-                {isBHit && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
-                {isBHit
-                  ? t('absoluteParallel')
-                  : t('deviationBadge', { deg: question.angularDeviation ?? 0 })}
-              </span>
+            {showAnswer && isBHit && (
+              <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 font-extrabold flex-shrink-0" />
             )}
           </div>
 
