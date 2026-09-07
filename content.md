@@ -4,7 +4,6 @@
 
 ### 📝 变更文件摘要:
 ```
-package.json                                     | 2 +-
- src/cards/angle_parallel_2afc/locales/zh-CN.json | 6 +++---
- 2 files changed, 4 insertions(+), 4 deletions(-)
+piconfig.json | 6 ++++++
+ 1 file changed, 6 insertions(+)
 ```
