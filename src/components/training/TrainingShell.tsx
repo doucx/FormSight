@@ -1,6 +1,20 @@
-import { ArrowLeft, Clock, FastForward, HelpCircle } from 'lucide-preact';
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  Code,
+  Copy,
+  Eye,
+  FastForward,
+  HelpCircle,
+  Minus,
+  Plus,
+  RotateCcw,
+  Sparkles,
+  X,
+} from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
-import { useState } from 'preact/hooks';
+import { useCallback, useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../core/i18n';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
@@ -28,6 +42,12 @@ export interface TrainingSessionHandle {
   sessionHistory: SessionHistoryItem[];
   resumeFromIdle: () => void;
   handleNextQuestion: () => void;
+  setCurrentLevel?: (level: number) => void;
+  regenerateQuestion?: () => void;
+  revealAnswer?: () => void;
+  showInspector?: boolean;
+  toggleInspector?: () => void;
+  setShowInspector?: (val: boolean) => void;
   handleRequestFinish: () => void;
   handleFinishSession: () => void;
   handleRestartSession: () => void;
@@ -35,11 +55,12 @@ export interface TrainingSessionHandle {
 
 interface TrainingShellProps {
   card: CardDefinition;
-  sessionType: 'training' | 'benchmark';
+  sessionType: 'training' | 'benchmark' | 'sandbox';
   currentLevel: number;
   isTargeting?: boolean;
   autoNext: boolean;
   session: TrainingSessionHandle;
+  currentQuestion?: unknown;
   planContext?: PlanTrainingContext;
   showExitButton?: boolean;
   showTimer?: boolean;
@@ -53,6 +74,7 @@ export function TrainingShell({
   currentLevel,
   autoNext,
   session,
+  currentQuestion,
   planContext,
   showExitButton = true,
   showTimer = true,
@@ -64,6 +86,36 @@ export function TrainingShell({
   const desc = getCardDesc(card, t);
 
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isCardIdCopied, setIsCardIdCopied] = useState(false);
+
+  const isSandbox = sessionType === 'sandbox';
+
+  const handleCopyQuestion = useCallback(() => {
+    if (!currentQuestion) return;
+    const text = JSON.stringify(currentQuestion, null, 2);
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.error('Failed to copy question json:', err);
+      });
+  }, [currentQuestion]);
+
+  const handleCopyCardId = useCallback(() => {
+    navigator.clipboard
+      .writeText(card.id)
+      .then(() => {
+        setIsCardIdCopied(true);
+        setTimeout(() => setIsCardIdCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.error('Failed to copy card id:', err);
+      });
+  }, [card.id]);
 
   const {
     totalTrials,
@@ -75,6 +127,12 @@ export function TrainingShell({
     sessionHistory,
     resumeFromIdle,
     handleNextQuestion,
+    setCurrentLevel,
+    regenerateQuestion,
+    revealAnswer,
+    showInspector = false,
+    toggleInspector,
+    setShowInspector,
     handleRequestFinish,
     handleFinishSession,
     handleRestartSession,
@@ -111,9 +169,34 @@ export function TrainingShell({
           <div className="relative flex items-center min-w-0">
             <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{cardTitle}</span>
+              {isSandbox && (
+                <button
+                  type="button"
+                  onClick={handleCopyCardId}
+                  className="font-mono text-[11px] bg-muted/80 hover:bg-accent text-foreground px-1.5 py-0.5 rounded border border-border cursor-pointer tracking-tight flex-shrink-0 inline-flex items-center gap-1 transition-colors"
+                  title="Click to copy Card ID"
+                >
+                  {isCardIdCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {t('shell.copied')}
+                      </span>
+                    </>
+                  ) : (
+                    <span>{card.id}</span>
+                  )}
+                </button>
+              )}
               {sessionType === 'benchmark' && (
                 <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 rounded-md flex-shrink-0">
                   {t('shell.benchmark')}
+                </span>
+              )}
+              {isSandbox && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 rounded-md flex-shrink-0 flex items-center gap-0.5">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  {t('shell.sandbox')}
                 </span>
               )}
               {(hint || desc) && (
@@ -158,21 +241,95 @@ export function TrainingShell({
             </Button>
           )}
 
-          <div className="flex items-center gap-1">
-            <span className="font-bold text-foreground">{totalTrials}</span>
-            <span className="text-muted-foreground">
-              {sessionType === 'benchmark'
-                ? '/20'
-                : planContext
-                  ? `/${planContext.targetTrials}`
-                  : ` ${t('common.trialsUnit')}`}
-            </span>
-          </div>
+          {!isSandbox ? (
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-foreground">{totalTrials}</span>
+              <span className="text-muted-foreground">
+                {sessionType === 'benchmark'
+                  ? '/20'
+                  : planContext
+                    ? `/${planContext.targetTrials}`
+                    : ` ${t('common.trialsUnit')}`}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 font-mono text-xs">
+              <span className="text-muted-foreground">Trials:</span>
+              <span className="font-bold text-foreground">{totalTrials}</span>
+            </div>
+          )}
 
           <span className="text-border/80">|</span>
-          <span className="font-bold text-primary">Lvl {currentLevel}</span>
 
-          {showTimer && (
+          {isSandbox ? (
+            <div className="flex items-center bg-muted/80 rounded-xl border border-border/60 p-0.5">
+              <Button
+                variant="ghost"
+                size="iconSm"
+                disabled={currentLevel <= 1}
+                onClick={() => setCurrentLevel?.(currentLevel - 1)}
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                title="Decrease Level"
+              >
+                <Minus className="w-3 h-3" />
+              </Button>
+              <span className="font-bold text-primary font-mono text-xs px-1.5 select-none">
+                Lvl {currentLevel}
+              </span>
+              <Button
+                variant="ghost"
+                size="iconSm"
+                disabled={currentLevel >= 35}
+                onClick={() => setCurrentLevel?.(currentLevel + 1)}
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                title="Increase Level"
+              >
+                <Plus className="w-3 h-3" />
+              </Button>
+            </div>
+          ) : (
+            <span className="font-bold text-primary">Lvl {currentLevel}</span>
+          )}
+
+          {isSandbox && (
+            <>
+              <span className="text-border/80">|</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => regenerateQuestion?.()}
+                className="h-7 px-2 text-xs font-bold gap-1 text-muted-foreground hover:text-primary border border-border/40"
+                title={t('shell.regenerate')}
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span className="hidden sm:inline">{t('shell.regenerate')}</span>
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={showAnswer}
+                onClick={() => revealAnswer?.()}
+                className="h-7 px-2 text-xs font-bold gap-1 text-muted-foreground hover:text-emerald-600 border border-border/40 disabled:opacity-40"
+                title={t('shell.revealAnswer')}
+              >
+                <Eye className="w-3 h-3" />
+                <span className="hidden sm:inline">{t('shell.revealAnswer')}</span>
+              </Button>
+
+              <Button
+                variant={showInspector ? 'default' : 'ghost'}
+                size="iconSm"
+                onClick={() => toggleInspector?.()}
+                className="h-7 w-7 text-muted-foreground hover:text-foreground border border-border/40"
+                title={`${t('shell.inspector')} (I)`}
+              >
+                <Code className="w-3.5 h-3.5" />
+              </Button>
+            </>
+          )}
+
+          {showTimer && !isSandbox && (
             <>
               <span className="text-border/80">|</span>
               <span className="flex items-center gap-1 text-muted-foreground">
@@ -183,6 +340,45 @@ export function TrainingShell({
           )}
         </div>
       </header>
+
+      {/* 沙盒模式折叠题目参数检查器 (Inspector) */}
+      {isSandbox && showInspector && (
+        <div className="w-full bg-card/95 backdrop-blur-md border border-border rounded-2xl p-3 shadow-xl my-2 max-h-52 overflow-y-auto font-mono text-xs z-20 animate-in fade-in zoom-in-95 duration-100">
+          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-border/60 text-muted-foreground font-bold">
+            <span className="flex items-center gap-1.5">
+              <Code className="w-3.5 h-3.5 text-primary" />
+              <span>Inspector</span>
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={handleCopyQuestion}
+                className="h-6 w-6 text-muted-foreground hover:text-primary"
+                title="Copy JSON to clipboard"
+              >
+                {isCopied ? (
+                  <Check className="w-3.5 h-3.5 text-emerald-500" />
+                ) : (
+                  <Copy className="w-3.5 h-3.5" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="iconSm"
+                onClick={() => setShowInspector?.(false)}
+                className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                title="Close"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          </div>
+          <pre className="text-foreground/90 p-2 bg-muted/60 rounded-xl overflow-x-auto text-[11px] leading-relaxed select-text">
+            {JSON.stringify(currentQuestion ?? null, null, 2)}
+          </pre>
+        </div>
+      )}
 
       {/* 2. 视觉绝对居中的 Canvas 舞台 */}
       <main className="flex-1 flex flex-col items-center justify-center w-full py-4 min-h-0 relative">
@@ -221,12 +417,14 @@ export function TrainingShell({
         )}
 
         <div className="text-[10px] text-muted-foreground/40 font-mono tracking-wider">
-          Space 提交/下一题 · Esc 退出
+          {isSandbox
+            ? 'Space 提交/下一题 · R 换题 · [ / ] 调级 · I 检查器 · Esc 退出'
+            : 'Space 提交/下一题 · Esc 退出'}
         </div>
       </footer>
 
-      {/* 统一结课总结弹窗 (在训练计划流中禁用单卡片弹窗，由外层 PlanSummaryModal 统一承接) */}
-      {showSummaryModal && !planContext && (
+      {/* 统一结课总结弹窗 (在训练计划流或沙盒演练模式中禁用单卡片弹窗) */}
+      {showSummaryModal && !planContext && !isSandbox && (
         <SessionSummaryModal
           card={card}
           sessionType={sessionType}

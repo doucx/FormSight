@@ -14,7 +14,7 @@ export interface GenericTrainingViewProps<
 > {
   card: CardDefinition;
   manifest: CardManifest<TQuestion, THitResult, TAnswerVal, TSettings>;
-  sessionType: 'training' | 'benchmark';
+  sessionType: 'training' | 'benchmark' | 'sandbox';
   initialLevel: number;
   settings: TSettings;
   globalSettings?: GlobalSettings;
@@ -82,6 +82,7 @@ export function GenericTrainingView<
       userVal,
       currentProfileLevel,
     }) => {
+      if (sessionType === 'sandbox') return;
       const qLevel =
         engine.getQuestionLevel?.(q) ??
         (q as { difficultyLevel?: number })?.difficultyLevel ??
@@ -110,6 +111,7 @@ export function GenericTrainingView<
       startTimestamp,
       endLevel,
     }) => {
+      if (sessionType === 'sandbox') return;
       await saveSession({
         id: sessionId,
         cardId: card.id,
@@ -142,6 +144,7 @@ export function GenericTrainingView<
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}
+      currentQuestion={session.question}
       planContext={planContext}
       showExitButton={showExitButton}
       showTimer={showTimer}

@@ -1,4 +1,4 @@
-import { Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
+import { Flame, FlaskConical, RotateCcw, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
@@ -20,9 +20,16 @@ interface SettingsModalProps {
   settings: UserSettings;
   onClose: () => void;
   onSave: (newSettings: UserSettings) => void;
+  onEnterSandbox?: () => void;
 }
 
-export function SettingsModal({ card, settings, onClose, onSave }: SettingsModalProps) {
+export function SettingsModal({
+  card,
+  settings,
+  onClose,
+  onSave,
+  onEnterSandbox,
+}: SettingsModalProps) {
   const { t } = useTranslation();
   const [current, setCurrent] = useState<UserSettings>({ ...settings });
   const cardConfig = getCardSettings(current, card.id);
@@ -218,6 +225,27 @@ export function SettingsModal({ card, settings, onClose, onSave }: SettingsModal
           }
           return null;
         })()}
+
+        {/* 进入沙盒调试模式入口 */}
+        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>{t('settingsModal.sandboxSectionTitle')}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+              {t('settingsModal.sandboxSectionDesc')}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onEnterSandbox}
+            className="flex-shrink-0 border-border text-foreground hover:bg-accent hover:text-primary h-auto py-2 px-3 text-xs font-semibold"
+          >
+            {t('settingsModal.enterSandbox')}
+          </Button>
+        </div>
       </div>
     </ModalShell>
   );
