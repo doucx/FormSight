@@ -179,7 +179,9 @@ export function TrainingShell({
                   {isCardIdCopied ? (
                     <>
                       <Check className="w-3 h-3 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">{t('shell.copied')}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400">
+                        {t('shell.copied')}
+                      </span>
                     </>
                   ) : (
                     <span>{card.id}</span>

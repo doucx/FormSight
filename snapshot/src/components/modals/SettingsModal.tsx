@@ -1,4 +1,4 @@
-import { FlaskConical, Flame, RotateCcw, Sliders, Target } from 'lucide-preact';
+import { Flame, FlaskConical, RotateCcw, Sliders, Target } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
