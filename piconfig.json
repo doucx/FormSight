@@ -114,6 +114,12 @@
       "extension": ["ts", "tsx", "json", "css", "html"],
       "paths": ["src/", "./index.html"],
       "ignore": ["*.test.ts", "*.test.tsx"]
+    },
+    "full_cards": {
+      "format": "xml",
+      "extension": ["ts", "tsx", "json", "css", "html"],
+      "paths": ["src/card-sdk/index.ts", "src/cards"],
+      "ignore": ["*.test.ts", "*.test.tsx"]
     }
   }
 }
