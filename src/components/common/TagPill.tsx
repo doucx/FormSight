@@ -30,7 +30,7 @@ export const tagPillVariants = cva(
       { themeColor: 'emerald', selected: true, className: 'bg-emerald-600' },
       { themeColor: 'rose', selected: true, className: 'bg-rose-600' },
       { themeColor: 'amber', selected: true, className: 'bg-amber-600' },
-      { themeColor: 'purple', selected: true, className: 'bg-purple-600' },
+      { themeColor: 'purple', selected: true, className: 'bg-amber-600' },
     ],
     defaultVariants: {
       themeColor: 'indigo',
@@ -59,7 +59,7 @@ export const tagPillBadgeVariants = cva('text-xs font-mono px-1 rounded', {
     { themeColor: 'emerald', selected: true, className: 'bg-emerald-700 text-emerald-100' },
     { themeColor: 'rose', selected: true, className: 'bg-rose-700 text-rose-100' },
     { themeColor: 'amber', selected: true, className: 'bg-amber-700 text-amber-100' },
-    { themeColor: 'purple', selected: true, className: 'bg-purple-700 text-purple-100' },
+    { themeColor: 'purple', selected: true, className: 'bg-amber-700 text-amber-100' },
   ],
   defaultVariants: {
     themeColor: 'indigo',

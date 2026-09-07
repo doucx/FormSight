@@ -149,7 +149,7 @@ export function AdvancedTagMatrix({
         <FilterSectionHeader
           icon={FlaskConical}
           title={t('home.statusSection')}
-          iconColorClass="text-purple-500"
+          iconColorClass="text-amber-500"
         />
         <div className="flex flex-wrap gap-1">
           {(['stable', 'experimental'] as CardStatusTag[]).map((st) => (
@@ -157,7 +157,7 @@ export function AdvancedTagMatrix({
               key={st}
               size={tagSize}
               label={t(STATUS_TAGS[st].i18nKey)}
-              themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'purple')}
+              themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'amber')}
               selected={query.statuses?.includes(st) ?? false}
               onClick={() => onToggleStatus(st)}
             />
