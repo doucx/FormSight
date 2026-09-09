@@ -38,6 +38,9 @@ export function ColorHueView({
   const showToleranceBand = settings.showToleranceBand ?? true;
   const showCanvasHints = (settings.showCanvasHints as boolean) ?? true;
 
+  const userHex =
+    userAnswer !== null ? hsvToHex(userAnswer.userValue, targetS, targetV) : undefined;
+
   return (
     <QuestionCardShell
       hintText={t('hint')}
@@ -47,7 +50,11 @@ export function ColorHueView({
       className="gap-6"
     >
       <div className="flex flex-col items-center gap-2 w-full">
-        <ColorSwatch color={targetHex} size="lg" />
+        <ColorSwatch
+          color={targetHex}
+          compareColor={showAnswer ? userHex : undefined}
+          size="lg"
+        />
       </div>
 
       <div className="w-full space-y-4 bg-muted/60 p-4 rounded-2xl border border-border/60">
