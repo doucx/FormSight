@@ -1,19 +1,19 @@
 import { Sparkles } from 'lucide-preact';
 
 import type { BaseModuleSettings, CardManifest } from '@formsight/card-sdk';
-import { AbsTdPalette2afcView } from './AbsTdPalette2afcView';
+import { AbsTdPalette4afcView } from './AbsTdPalette4afcView';
 import enUS from './locales/en-US.json';
 import zhCN from './locales/zh-CN.json';
 import type { HitResult, QuestionData } from './types';
 import { checkHit, generateQuestion } from './utils/generator';
 
-export const absTdPalette2afcCard: CardManifest<
+export const absTdPalette4afcCard: CardManifest<
   QuestionData,
   HitResult,
   number,
   BaseModuleSettings
 > = {
-  id: 'abs_td_palette_2afc',
+  id: 'abs_td_palette_4afc',
   domain: 'color_and_value',
   tags: {
     domain: ['color_and_value'],
@@ -39,7 +39,7 @@ export const absTdPalette2afcCard: CardManifest<
   ui: {
     icon: Sparkles,
     renderCanvas: ({ question, showAnswer, userAnswer, onAnswer, disabled, settings }) => (
-      <AbsTdPalette2afcView
+      <AbsTdPalette4afcView
         key={question.id}
         question={question}
         showAnswer={showAnswer}
@@ -52,4 +52,4 @@ export const absTdPalette2afcCard: CardManifest<
   },
 };
 
-export default absTdPalette2afcCard;
+export default absTdPalette4afcCard;

@@ -16,7 +16,7 @@ import {
 import type { HitResult, QuestionData } from './types';
 import { OPTION_SIZE, drawPaletteTilesCanvas } from './utils/generator';
 
-export interface AbsTdPalette2afcViewProps {
+export interface AbsTdPalette4afcViewProps {
   question: QuestionData;
   showAnswer: boolean;
   userAnswer: HitResult | null;
@@ -25,15 +25,15 @@ export interface AbsTdPalette2afcViewProps {
   showCanvasHints?: boolean;
 }
 
-export function AbsTdPalette2afcView({
+export function AbsTdPalette4afcView({
   question,
   showAnswer,
   userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
-}: AbsTdPalette2afcViewProps) {
-  const { t } = useCardTranslation('abs_td_palette_2afc');
+}: AbsTdPalette4afcViewProps) {
+  const { t } = useCardTranslation('abs_td_palette_4afc');
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   const handleSelect = (idx: number) => {
