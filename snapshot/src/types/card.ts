@@ -38,11 +38,7 @@ export type InteractionTag =
 
 export type CardStatusTag = 'stable' | 'experimental' | 'deprecated';
 
-export type CardFeatureTag =
-  | 'has_settings'
-  | 'no_settings'
-  | 'has_analytics'
-  | 'no_analytics';
+export type CardFeatureTag = 'has_settings' | 'no_settings' | 'has_analytics' | 'no_analytics';
 
 export interface CardTags {
   domain: VisualDomainTag[];
