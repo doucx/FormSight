@@ -1,7 +1,6 @@
 import { BarChart2, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
 export function formatTodayTimeWithT(ms: number, t: (key: string) => string): string {
