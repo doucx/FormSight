@@ -1,7 +1,6 @@
 import { BarChart2, Play, Sliders, Target } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import { useTranslation } from '../../core/i18n';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
 export function formatTodayTimeWithT(ms: number, t: (key: string) => string): string {
@@ -24,7 +23,6 @@ interface ModeCardProps {
   todayCount: number;
   todayTimeMs?: number;
   currentLevel: number;
-  bestLevel?: number;
   accuracy: number;
   totalTrials?: number;
   hasAnalytics?: boolean;
@@ -42,7 +40,6 @@ export function ModeCard({
   todayCount,
   todayTimeMs = 0,
   currentLevel,
-  bestLevel,
   totalTrials = 0,
   isExperimental = false,
   onStartTraining,
@@ -55,8 +52,6 @@ export function ModeCard({
 
   // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
   const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
-
-  const effectiveBestLevel = Math.max(currentLevel, bestLevel || currentLevel);
 
   return (
     <div
@@ -102,18 +97,8 @@ export function ModeCard({
             </div>
           </div>
 
-          {/* 右上角：巅峰/基准层阶与快捷操作 */}
+          {/* 右上角：快捷操作 */}
           <div className="flex items-center gap-1.5 flex-shrink-0">
-            {!isNeverPracticed && effectiveBestLevel > currentLevel ? (
-              <Badge
-                variant="secondary"
-                size="default"
-                className="font-mono text-xs font-bold text-muted-foreground"
-              >
-                Peak L{effectiveBestLevel}
-              </Badge>
-            ) : null}
-
             <div
               className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
               onClick={(e) => e.stopPropagation()}
