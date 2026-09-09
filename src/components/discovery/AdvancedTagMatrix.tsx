@@ -1,14 +1,16 @@
-import { Brain, Compass, Eye, FlaskConical, MousePointer } from 'lucide-preact';
+import { Brain, Compass, Eye, FlaskConical, MousePointer, Sliders } from 'lucide-preact';
 import type { ComponentChildren } from 'preact';
 import {
   CHALLENGE_TAGS,
   DOMAIN_TAGS,
+  FEATURE_TAGS,
   INTERACTION_TAGS,
   PATH_TAGS,
   STATUS_TAGS,
 } from '../../config/tags';
 import { useTranslation } from '../../core/i18n';
 import type {
+  CardFeatureTag,
   CardQueryOptions,
   CardStatusTag,
   CognitivePathTag,
@@ -44,6 +46,7 @@ interface AdvancedTagMatrixProps {
   onToggleChallenge: (c: MentalChallengeTag) => void;
   onToggleInteraction: (i: InteractionTag) => void;
   onToggleStatus: (st: CardStatusTag) => void;
+  onToggleFeature: (f: CardFeatureTag) => void;
 }
 
 export function AdvancedTagMatrix({
@@ -55,6 +58,7 @@ export function AdvancedTagMatrix({
   onToggleChallenge,
   onToggleInteraction,
   onToggleStatus,
+  onToggleFeature,
 }: AdvancedTagMatrixProps) {
   const { t } = useTranslation();
 
@@ -160,6 +164,27 @@ export function AdvancedTagMatrix({
               themeColor={STATUS_TAGS[st].themeColor || (st === 'stable' ? 'indigo' : 'amber')}
               selected={query.statuses?.includes(st) ?? false}
               onClick={() => onToggleStatus(st)}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* 6. 功能完备度 */}
+      <div className="space-y-1">
+        <FilterSectionHeader
+          icon={Sliders}
+          title={t('home.featureSection')}
+          iconColorClass="text-purple-500"
+        />
+        <div className="flex flex-wrap gap-1">
+          {(Object.keys(FEATURE_TAGS) as CardFeatureTag[]).map((f) => (
+            <TagPill
+              key={f}
+              size={tagSize}
+              label={t(FEATURE_TAGS[f].i18nKey)}
+              themeColor={FEATURE_TAGS[f].themeColor || 'purple'}
+              selected={query.features?.includes(f) ?? false}
+              onClick={() => onToggleFeature(f)}
             />
           ))}
         </div>

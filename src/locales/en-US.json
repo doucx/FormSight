@@ -255,6 +255,12 @@
       "stable": "Stable Module",
       "experimental": "Experimental",
       "deprecated": "Deprecated"
+    },
+    "features": {
+      "has_settings": "Dedicated Settings",
+      "no_settings": "Default Settings",
+      "has_analytics": "Dedicated Analytics",
+      "no_analytics": "Basic Analytics"
     }
   },
   "home": {
@@ -272,7 +278,8 @@
     "pathSection": "2. Cognitive Path",
     "challengeSection": "3. Mental Challenge",
     "interactionSection": "4. Interaction Mode",
-    "statusSection": "5. Feature & Status"
+    "statusSection": "5. Feature & Status",
+    "featureSection": "6. Capabilities"
   },
   "plan": {
     "todayPlan": "Daily Training Plan",

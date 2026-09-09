@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type {
+  CardFeatureTag,
   CardQueryOptions,
   CardStatusTag,
   CognitivePathTag,
@@ -48,6 +49,9 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
         : legacyExpParam === 'false'
           ? (['stable'] as CardStatusTag[])
           : undefined;
+  const features = params.get('features')?.split(',').filter(Boolean) as
+    | CardFeatureTag[]
+    | undefined;
   const searchKeyword = params.get('q') || params.get('search') || undefined;
   const showAdvancedParam = params.get('adv');
   const showAdvanced =
@@ -63,6 +67,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     (!challenges || challenges.length === 0) &&
     (!interactions || interactions.length === 0) &&
     (!statuses || statuses.length === 0) &&
+    (!features || features.length === 0) &&
     !searchKeyword &&
     showAdvanced === undefined
   ) {
@@ -75,6 +80,7 @@ function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
     challenges: challenges && challenges.length > 0 ? challenges : undefined,
     interactions: interactions && interactions.length > 0 ? interactions : undefined,
     statuses,
+    features: features && features.length > 0 ? features : undefined,
     searchKeyword,
     showAdvanced,
   };
@@ -151,6 +157,9 @@ function stringifyRoute(route: RouteLocation): string {
     }
     if (route.query.statuses && route.query.statuses.length > 0) {
       params.set('statuses', route.query.statuses.join(','));
+    }
+    if (route.query.features && route.query.features.length > 0) {
+      params.set('features', route.query.features.join(','));
     }
     if (route.query.searchKeyword?.trim()) {
       params.set('q', route.query.searchKeyword.trim());

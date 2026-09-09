@@ -255,6 +255,12 @@
       "stable": "稳定模块",
       "experimental": "实验性模块",
       "deprecated": "已废弃"
+    },
+    "features": {
+      "has_settings": "独特设置",
+      "no_settings": "通用设置",
+      "has_analytics": "独特分析",
+      "no_analytics": "通用分析"
     }
   },
   "home": {
@@ -272,7 +278,8 @@
     "pathSection": "2. 认知推演路径 (Cognitive Path)",
     "challengeSection": "3. 核心心智抗性 (Mental Challenge)",
     "interactionSection": "4. 交互评估形态 (Interaction Mode)",
-    "statusSection": "5. 特性与发布状态 (Status)"
+    "statusSection": "5. 特性与发布状态 (Status)",
+    "featureSection": "6. 模块完备度 (Capabilities)"
   },
   "plan": {
     "todayPlan": "今日训练计划",

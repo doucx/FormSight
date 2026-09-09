@@ -1,4 +1,5 @@
 import type {
+  CardFeatureTag,
   CardStatusTag,
   CognitivePathTag,
   InteractionTag,
@@ -118,6 +119,29 @@ export const STATUS_TAGS: Record<CardStatusTag, TagMeta<CardStatusTag>> = {
   deprecated: {
     id: 'deprecated',
     i18nKey: 'tags.statuses.deprecated',
+    themeColor: 'rose',
+  },
+};
+
+export const FEATURE_TAGS: Record<CardFeatureTag, TagMeta<CardFeatureTag>> = {
+  has_settings: {
+    id: 'has_settings',
+    i18nKey: 'tags.features.has_settings',
+    themeColor: 'indigo',
+  },
+  no_settings: {
+    id: 'no_settings',
+    i18nKey: 'tags.features.no_settings',
+    themeColor: 'amber',
+  },
+  has_analytics: {
+    id: 'has_analytics',
+    i18nKey: 'tags.features.has_analytics',
+    themeColor: 'emerald',
+  },
+  no_analytics: {
+    id: 'no_analytics',
+    i18nKey: 'tags.features.no_analytics',
     themeColor: 'rose',
   },
 };

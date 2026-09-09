@@ -176,6 +176,7 @@ export type {
   MentalChallengeTag,
   InteractionTag,
   CardStatusTag,
+  CardFeatureTag,
 } from '../types/card';
 export type {
   UnifiedTrialRecord,
