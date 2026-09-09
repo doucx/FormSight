@@ -32,6 +32,7 @@ export function drawPaletteTilesCanvas(
 export function generateQuestion(level: number): QuestionData {
   const id = `abs_pc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1 归一化难度
 
   const baseH = Math.floor(Math.random() * 360);
   const baseS = Math.floor(Math.random() * 40) + 40;
@@ -42,11 +43,23 @@ export function generateQuestion(level: number): QuestionData {
   const gridSize = 4;
   const tileSize = CANVAS_SIZE / gridSize;
 
+  // 动态计算色相、饱和度、明度的随机抖动幅度：低难度收敛于同类色，高难度大幅发散
+  const hJitterMax = Math.round(4 + t * 20); // Level 1: ±4°, Level 35: ±24°
+  const sJitterMax = Math.round(3 + t * 15); // Level 1: ±3%, Level 35: ±18%
+  const vJitterMax = Math.round(3 + t * 15); // Level 1: ±3%, Level 35: ±18%
+
   for (let r = 0; r < gridSize; r++) {
     for (let c = 0; c < gridSize; c++) {
-      const jitterH = (baseH + (Math.floor(Math.random() * 40) - 20) + 360) % 360;
-      const jitterS = Math.max(10, Math.min(100, baseS + (Math.floor(Math.random() * 30) - 15)));
-      const jitterV = Math.max(15, Math.min(100, baseV + (Math.floor(Math.random() * 30) - 15)));
+      const jitterH =
+        (baseH + (Math.floor(Math.random() * (hJitterMax * 2 + 1)) - hJitterMax) + 360) % 360;
+      const jitterS = Math.max(
+        10,
+        Math.min(100, baseS + (Math.floor(Math.random() * (sJitterMax * 2 + 1)) - sJitterMax)),
+      );
+      const jitterV = Math.max(
+        15,
+        Math.min(100, baseV + (Math.floor(Math.random() * (vJitterMax * 2 + 1)) - vJitterMax)),
+      );
       paletteTiles.push({
         x: c * tileSize,
         y: r * tileSize,

@@ -30,13 +30,19 @@ export function drawPaletteTilesCanvas(
 }
 
 export function generateQuestion(level: number): QuestionData {
-  const id = `abs_tdp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const id = `abs_tdp4_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const clampedLevel = Math.max(1, Math.min(35, level));
+  const t = (clampedLevel - 1) / 34; // 0..1 归一化难度
 
   const baseH = Math.floor(Math.random() * 360);
   const baseS = Math.floor(Math.random() * 40) + 40;
   const baseV = Math.floor(Math.random() * 40) + 40;
   const promptDominantColor: [number, number, number] = [baseH, baseS, baseV];
+
+  // 3x3 色块在低难度压缩在极窄区间，高难度放大扰动
+  const hJitterMax = Math.round(3 + t * 19); // Level 1: ±3°, Level 35: ±22°
+  const sJitterMax = Math.round(2 + t * 14); // Level 1: ±2%, Level 35: ±16%
+  const vJitterMax = Math.round(2 + t * 14); // Level 1: ±2%, Level 35: ±16%
 
   const makePatternTiles = (domH: number, domS: number, domV: number) => {
     const tiles: PaletteTile[] = [];
@@ -44,9 +50,16 @@ export function generateQuestion(level: number): QuestionData {
     const tileDim = OPTION_SIZE / gridSize;
     for (let r = 0; r < gridSize; r++) {
       for (let c = 0; c < gridSize; c++) {
-        const jitterH = (domH + (Math.floor(Math.random() * 36) - 18) + 360) % 360;
-        const jitterS = Math.max(10, Math.min(100, domS + (Math.floor(Math.random() * 26) - 13)));
-        const jitterV = Math.max(15, Math.min(100, domV + (Math.floor(Math.random() * 26) - 13)));
+        const jitterH =
+          (domH + (Math.floor(Math.random() * (hJitterMax * 2 + 1)) - hJitterMax) + 360) % 360;
+        const jitterS = Math.max(
+          10,
+          Math.min(100, domS + (Math.floor(Math.random() * (sJitterMax * 2 + 1)) - sJitterMax)),
+        );
+        const jitterV = Math.max(
+          15,
+          Math.min(100, domV + (Math.floor(Math.random() * (vJitterMax * 2 + 1)) - vJitterMax)),
+        );
         tiles.push({
           x: c * tileDim,
           y: r * tileDim,
