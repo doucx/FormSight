@@ -1,46 +1,222 @@
-## [COMMIT] feat(discovery): add automatic card capability and feature tags to filter engine
+收到。我们将移除 `ModeCard` 卡片右上角的 Peak 巅峰层阶徽章（如 Peak L26）及相关属性，使卡片视觉更加精简和专注于当前层阶。我将生成一个自适应计划并执行此修改。
+
+## [WIP] refactor(ui): 移除 ModeCard 卡片上的 Peak 巅峰层阶徽章与相关逻辑
 
 ### 用户需求
-用户确认修改已完成，要求提交当前的变更。
+去除卡片上的 Peak L26 与相关内容。
 
 ### 评论
-所有涉及卡片完备度（独特设置、专属分析）的自动推导、倒排索引、筛选矩阵 UI 以及路由持久化已全部编码完毕，并且在独立计划中准备进行 Git 提交。
+精简卡片右上角的元信息显示，提升界面视觉的一致性与清爽感。
 
 ### 目标
-1. 将当前的工作区变更暂存至 Git 暂存区。
-2. 创建内容详尽的 Conventional Commit 提交。
+1. 移除 `ModeCardProps` 和 `ModeCard` 组件中的 `bestLevel` 属性及 `effectiveBestLevel` 计算逻辑。
+2. 移除 `ModeCard` 渲染中条件显示的 `Peak L{...}` 徽章。
+3. 在 `DiscoveryView` 中清理对应的 `bestLevel` 获取与传递。
 
 ### 基本原理
-按照 Quipu 协议的要求，文件修改操作与 Git 提交操作必须严格隔离在不同的计划中执行。当前计划为 `[COMMIT]` 纯提交计划，不包含任何文件修改指令。
+通过移除不再展示的冗余巅峰层阶数据流与徽章渲染，降低视觉噪点，聚焦于当前核心层阶 `Lvl X`。
 
 ### 标签
-#intent/tooling #flow/ready #priority/high
-#comp/cli #concept/config #scope/dx
-#ai/instruct
-#task/domain/ui #task/object/filter-capability-tags #task/action/commit #task/state/end
+#intent/refine #flow/ready #priority/medium #comp/cli #concept/ui #scope/ux #ai/instruct #task/domain/ui #task/object/mode-card #task/action/refactor #task/state/begin
 
 ---
 
 ### Script
 
-#### Acts 1: 暂存并提交所有代码修改
+#### Acts 1: 移除 ModeCard 组件中的 bestLevel 与 Peak 徽章渲染
 
 ~~~~~act
-git_add
+patch_file
+src/components/common/ModeCard.tsx
+~~~~~
+~~~~~tsx.old
+interface ModeCardProps {
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+  todayCount: number;
+  todayTimeMs?: number;
+  currentLevel: number;
+  bestLevel?: number;
+  accuracy: number;
+  totalTrials?: number;
+  hasAnalytics?: boolean;
+  isExperimental?: boolean;
+  onStartTraining: () => void;
+  onStartBenchmark: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics?: () => void;
+}
+
+export function ModeCard({
+  title,
+  desc,
+  icon: Icon,
+  todayCount,
+  todayTimeMs = 0,
+  currentLevel,
+  bestLevel,
+  totalTrials = 0,
+  isExperimental = false,
+  onStartTraining,
+  onStartBenchmark,
+  onOpenSettings,
+  onOpenAnalytics,
+}: ModeCardProps) {
+  const { t } = useTranslation();
+  const isNeverPracticed = totalTrials === 0;
+
+  // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
+  const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
+
+  const effectiveBestLevel = Math.max(currentLevel, bestLevel || currentLevel);
+
+  return (
+~~~~~
+~~~~~tsx.new
+interface ModeCardProps {
+  title: string;
+  desc: string;
+  icon: (props: { className?: string }) => ComponentChildren;
+  todayCount: number;
+  todayTimeMs?: number;
+  currentLevel: number;
+  accuracy: number;
+  totalTrials?: number;
+  hasAnalytics?: boolean;
+  isExperimental?: boolean;
+  onStartTraining: () => void;
+  onStartBenchmark: () => void;
+  onOpenSettings: () => void;
+  onOpenAnalytics?: () => void;
+}
+
+export function ModeCard({
+  title,
+  desc,
+  icon: Icon,
+  todayCount,
+  todayTimeMs = 0,
+  currentLevel,
+  totalTrials = 0,
+  isExperimental = false,
+  onStartTraining,
+  onStartBenchmark,
+  onOpenSettings,
+  onOpenAnalytics,
+}: ModeCardProps) {
+  const { t } = useTranslation();
+  const isNeverPracticed = totalTrials === 0;
+
+  // 未练习过的卡片默认进入基准测试，已有做答记录的默认进入自适应强化
+  const handleCardClick = isNeverPracticed ? onStartBenchmark : onStartTraining;
+
+  return (
 ~~~~~
 
 ~~~~~act
-git_commit
+patch_file
+src/components/common/ModeCard.tsx
 ~~~~~
-~~~~~text
-feat(discovery): add automatic card capability and feature tags to filter engine
+~~~~~tsx.old
+          {/* 右上角：巅峰/基准层阶与快捷操作 */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {!isNeverPracticed && effectiveBestLevel > currentLevel ? (
+              <Badge
+                variant="secondary"
+                size="default"
+                className="font-mono text-xs font-bold text-muted-foreground"
+              >
+                Peak L{effectiveBestLevel}
+              </Badge>
+            ) : null}
 
-- Automatically detect 'hasCustomSettings' and 'hasDedicatedAnalytics' from card manifests during registry initialization.
-- Introduce CardFeatureTag ('has_settings', 'no_settings', 'has_analytics', 'no_analytics') and corresponding inverted index support.
-- Add 'Capabilities' (功能完备度) section to AdvancedTagMatrix and FilterEngine to enable dual-direction filtering for developers and users.
-- Support URL query serialization for the 'features' filter parameter in hash routing.
-- bump version
+            <div
+              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
+            >
+~~~~~
+~~~~~tsx.new
+          {/* 右上角：快捷操作 */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div
+              className="flex items-center opacity-70 group-hover:opacity-100 transition-opacity ml-1 gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              role="presentation"
+            >
+~~~~~
+
+#### Acts 2: 在 DiscoveryView 中移除传给 ModeCard 的 bestLevel 属性
+
+~~~~~act
+patch_file
+src/views/DiscoveryView.tsx
+~~~~~
+~~~~~tsx.old
+            const profile = profiles[card.id];
+            const totalTrials = profile?.totalTrials || 0;
+            const accuracy =
+              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
+            const currentLevel = profile?.currentLevel || 5;
+            const bestLevel = profile?.bestLevel || currentLevel;
+            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
+
+            return (
+              <ModeCard
+                key={card.id}
+                title={cardTitle}
+                desc={cardDesc}
+                icon={card.icon}
+                todayCount={stat.count}
+                todayTimeMs={stat.timeMs}
+                currentLevel={currentLevel}
+                bestLevel={bestLevel}
+                accuracy={accuracy}
+                totalTrials={totalTrials}
+                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
+                isExperimental={card.tags.status === 'experimental'}
+                onStartTraining={() => onStartCard(card.id, 'training')}
+                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
+                onOpenSettings={() => onOpenCardSettings(card.id)}
+                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
+              />
+            );
+~~~~~
+~~~~~tsx.new
+            const profile = profiles[card.id];
+            const totalTrials = profile?.totalTrials || 0;
+            const accuracy =
+              totalTrials > 0 && profile ? Math.round((profile.totalHits / totalTrials) * 100) : 0;
+            const currentLevel = profile?.currentLevel || 5;
+            const stat = todayStats[card.id] || { count: 0, timeMs: 0 };
+            const cardTitle = getCardTitle(card, t);
+            const cardDesc = getCardDesc(card, t);
+
+            return (
+              <ModeCard
+                key={card.id}
+                title={cardTitle}
+                desc={cardDesc}
+                icon={card.icon}
+                todayCount={stat.count}
+                todayTimeMs={stat.timeMs}
+                currentLevel={currentLevel}
+                accuracy={accuracy}
+                totalTrials={totalTrials}
+                hasAnalytics={Boolean(card.hasWeaknessAnalytics)}
+                isExperimental={card.tags.status === 'experimental'}
+                onStartTraining={() => onStartCard(card.id, 'training')}
+                onStartBenchmark={() => onStartCard(card.id, 'benchmark')}
+                onOpenSettings={() => onOpenCardSettings(card.id)}
+                onOpenAnalytics={() => onOpenCardAnalytics(card.id)}
+              />
+            );
 ~~~~~
 
 ### 下一步建议
-- 启动应用进行本地验证，点击高级筛选中的完备度标签，检查卡片过滤结果是否准确。
+- 建议运行应用编译或测试，验证 `ModeCard` 渲染正常，且无 TypeScript 属性缺失报错。
