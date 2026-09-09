@@ -38,7 +38,8 @@ export function FilterEngine({
       (query.paths && query.paths.length > 0) ||
       (query.challenges && query.challenges.length > 0) ||
       (query.interactions && query.interactions.length > 0) ||
-      (query.statuses && query.statuses.length > 0),
+      (query.statuses && query.statuses.length > 0) ||
+      (query.features && query.features.length > 0),
   );
 
   const containerClasses = isCompact
@@ -117,7 +118,7 @@ export function FilterEngine({
         </div>
       </div>
 
-      {/* 高级五维标签矩阵折叠区 */}
+      {/* 高级标签矩阵折叠区 */}
       {isAdvancedOpen && (
         <AdvancedTagMatrix
           query={query}
@@ -128,6 +129,7 @@ export function FilterEngine({
           onToggleChallenge={(c) => toggleDimension('challenges', c)}
           onToggleInteraction={(i) => toggleDimension('interactions', i)}
           onToggleStatus={(st) => toggleDimension('statuses', st)}
+          onToggleFeature={(f) => toggleDimension('features', f)}
         />
       )}
     </div>

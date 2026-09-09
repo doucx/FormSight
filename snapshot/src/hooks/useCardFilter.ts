@@ -2,6 +2,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { registry } from '../core/registry';
 import type {
   CardDefinition,
+  CardFeatureTag,
   CardQueryOptions,
   CardStatusTag,
   CognitivePathTag,
@@ -68,6 +69,14 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
     updateQuery({ ...query, statuses: next.length > 0 ? next : undefined });
   };
 
+  const toggleFeature = (feature: CardFeatureTag) => {
+    const current = query.features || [];
+    const next = current.includes(feature)
+      ? current.filter((f) => f !== feature)
+      : [...current, feature];
+    updateQuery({ ...query, features: next.length > 0 ? next : undefined });
+  };
+
   const toggleAdvancedOpen = () => {
     updateQuery({
       ...query,
@@ -85,7 +94,8 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
       (query.paths && query.paths.length > 0) ||
       (query.challenges && query.challenges.length > 0) ||
       (query.interactions && query.interactions.length > 0) ||
-      (query.statuses && query.statuses.length > 0),
+      (query.statuses && query.statuses.length > 0) ||
+      (query.features && query.features.length > 0),
   );
 
   const matchedCards: CardDefinition[] = useMemo(() => {
@@ -105,6 +115,7 @@ export function useCardFilter(options: UseCardFilterOptions = {}) {
     toggleChallenge,
     toggleInteraction,
     toggleStatus,
+    toggleFeature,
     toggleAdvancedOpen,
     handleResetFilters,
   };

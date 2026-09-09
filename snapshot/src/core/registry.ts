@@ -1,6 +1,7 @@
 import { getTrialRecordsByCard } from '../storage/db/queries';
 import type {
   CardDefinition,
+  CardFeatureTag,
   CardQueryOptions,
   CardStatusTag,
   CognitivePathTag,
@@ -43,6 +44,7 @@ class InvertedCardIndex {
   private challengeMap = new Map<MentalChallengeTag, Set<string>>();
   private interactionMap = new Map<InteractionTag, Set<string>>();
   private statusMap = new Map<CardStatusTag, Set<string>>();
+  private featureMap = new Map<CardFeatureTag, Set<string>>();
 
   public clear(): void {
     this.domainMap.clear();
@@ -50,6 +52,7 @@ class InvertedCardIndex {
     this.challengeMap.clear();
     this.interactionMap.clear();
     this.statusMap.clear();
+    this.featureMap.clear();
   }
 
   public indexCard(card: CardDefinition): void {
@@ -100,6 +103,22 @@ class InvertedCardIndex {
       }
       stSet.add(id);
     }
+
+    const addFeature = (feat: CardFeatureTag) => {
+      let set = this.featureMap.get(feat);
+      if (!set) {
+        set = new Set();
+        this.featureMap.set(feat, set);
+      }
+      set.add(id);
+    };
+
+    addFeature(card.hasCustomSettings ? 'has_settings' : 'no_settings');
+    addFeature(card.hasDedicatedAnalytics ? 'has_analytics' : 'no_analytics');
+  }
+
+  public getCardIdsByFeature(feat: CardFeatureTag): Set<string> {
+    return this.featureMap.get(feat) || new Set();
   }
 
   public getCardIdsByDomain(domain: VisualDomainTag): Set<string> {
@@ -156,14 +175,19 @@ class SystemDomainRegistry {
       i18n.registerCardLocales(card.id, card.locales);
     }
 
-    // 2. 构建标准 CardDefinition
+    // 2. 构建标准 CardDefinition (自动探查专属设置与专属分析完备度)
     const icon = card.ui.icon;
+    const hasCustomSettings = Boolean(card.ui?.renderSettings);
+    const hasDedicatedAnalytics = Boolean(card.analytics?.views && card.analytics.views.length > 0);
+
     const cardDef: CardDefinition = {
       id: card.id,
       domain: card.domain,
       icon,
       tags: card.tags,
-      hasWeaknessAnalytics: Boolean(card.analytics?.views?.length),
+      hasWeaknessAnalytics: hasDedicatedAnalytics,
+      hasCustomSettings,
+      hasDedicatedAnalytics,
       defaultSettings: card.defaultSettings,
     };
 
@@ -246,6 +270,16 @@ class SystemDomainRegistry {
         }
       }
       intersect(statusUnion);
+    }
+
+    if (options.features && options.features.length > 0) {
+      const featureUnion = new Set<string>();
+      for (const f of options.features) {
+        for (const id of this.invertedIndex.getCardIdsByFeature(f)) {
+          featureUnion.add(id);
+        }
+      }
+      intersect(featureUnion);
     }
 
     const idsToFilter: string[] =

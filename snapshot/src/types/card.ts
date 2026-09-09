@@ -38,6 +38,12 @@ export type InteractionTag =
 
 export type CardStatusTag = 'stable' | 'experimental' | 'deprecated';
 
+export type CardFeatureTag =
+  | 'has_settings'
+  | 'no_settings'
+  | 'has_analytics'
+  | 'no_analytics';
+
 export interface CardTags {
   domain: VisualDomainTag[];
   path: CognitivePathTag[];
@@ -54,6 +60,8 @@ export interface CardDefinition {
   icon: (props: { className?: string }) => ComponentChildren;
   tags: CardTags;
   hasWeaknessAnalytics?: boolean;
+  hasCustomSettings?: boolean;
+  hasDedicatedAnalytics?: boolean;
   defaultSettings?: Record<string, unknown>;
 }
 
@@ -63,6 +71,7 @@ export interface CardQueryOptions {
   challenges?: MentalChallengeTag[];
   interactions?: InteractionTag[];
   statuses?: CardStatusTag[];
+  features?: CardFeatureTag[];
   searchKeyword?: string;
   showAdvanced?: boolean;
 }

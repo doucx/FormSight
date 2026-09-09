@@ -1,1 +1,1 @@
-{"meta_version": "1.0", "summary": "Capture: M package.json", "type": "capture", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788947002.2207425, "duration_ms": 0}}
+{"meta_version": "1.0", "summary": "[WIP] feat: 为筛选器引入卡片独特设置与专属分析的自动感知与过滤支持", "type": "plan", "generator": {"id": "manual", "tool": "quipu-cli"}, "env": {"quipu": "unknown", "python": "3.13.5", "os": "linux"}, "exec": {"start": 1788947021.031444, "duration_ms": 0}}
