@@ -130,17 +130,17 @@ git clone https://github.com/doucx/FormSight
 cd FormSight
 
 # 2. 安装依赖
-npm install
+pnpm install
 
 # 3. 启动本地开发服务
-npm run dev
+pnpm run dev
 
 # 4. 代码检查与测试
-npm run check
-npm run test
+pnpm run check
+pnpm run test
 
 # 5. 构建生产产物
-npm run build
+pnpm run build
 ```
 
 ---
