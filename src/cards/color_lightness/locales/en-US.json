@@ -1,0 +1,47 @@
+{
+  "title": "Lightness",
+  "desc": "Isolate perceptual lightness from hue and saturation, mapping colors onto a 0%~100% monochrome scale.",
+  "hint": "Squint to filter out color and locate the true perceptual grayscale value on the slider.",
+  "settings": {
+    "showToleranceBandTitle": "Show Tolerance Indicator Band",
+    "showToleranceBandDesc": "Display live dynamic tolerance bands on either side of the slider thumb"
+  },
+  "sectors": {
+    "red": "Red (0°-30°)",
+    "orange": "Orange (30°-60°)",
+    "yellow": "Yellow (60°-90°)",
+    "yellowGreen": "Yellow-Green (90°-120°)",
+    "green": "Green (120°-150°)",
+    "cyanGreen": "Cyan-Green (150°-180°)",
+    "cyan": "Cyan (180°-210°)",
+    "blue": "Blue (210°-240°)",
+    "blueViolet": "Blue-Violet (240°-270°)",
+    "violet": "Violet (270°-300°)",
+    "magenta": "Magenta (300°-330°)",
+    "rose": "Rose (330°-360°)"
+  },
+  "analytics": {
+    "lightnessBias": {
+      "tabLabel": "Hue-Lightness Bias",
+      "title": "{{title}} · Hue-Lightness Bias Analysis",
+      "subTitle": "Signed lightness offset across 12 hue sectors, exposing systematic intrinsic color illusions",
+      "cardTitle": "Intrinsic Color Illusion Diagnostics",
+      "avgSignedBias": "Global Lightness Bias:",
+      "overestimated": "+{{val}}% (Overestimated / Brighter)",
+      "underestimated": "{{val}}% (Underestimated / Darker)",
+      "maxBiasSector": "Greatest Bias Sector:",
+      "avgBias": "Avg Bias:",
+      "needMoreTrials": "Complete at least 3 trials in each hue sector to generate precise bias diagnostics.",
+      "avgAbsError": "Mean Absolute Percentage Error:"
+    },
+    "lightnessRing": {
+      "tabLabel": "12-Hue Sensitivity",
+      "title": "{{title}} · 12-Hue Lightness Sensitivity",
+      "subTitle": "Perceptual accuracy across 12 OKLab hue sectors in grayscale estimation",
+      "cardTitle": "Lightness Blindspot Diagnostics",
+      "weakestHint": "Lowest accuracy found in sector {{sector}}:",
+      "accuracyRate": "{{accuracy}}% accuracy",
+      "needMoreTrials": "Complete at least 3 trials in each hue sector to generate blindspot diagnostics."
+    }
+  }
+}

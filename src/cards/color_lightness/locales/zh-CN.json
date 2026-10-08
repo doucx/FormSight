@@ -1,0 +1,47 @@
+{
+  "title": "感知明度 (Lightness)",
+  "desc": "剥离色相与纯度干扰，将任意色彩精准映射到黑白素描灰阶标尺 (0%~100%)",
+  "hint": "眯眼观察色彩的素描灰阶深度，在下方黑白滑轨上定位对应的灰度比例",
+  "settings": {
+    "showToleranceBandTitle": "显示滑块容错感应区",
+    "showToleranceBandDesc": "在悬停光标两侧实时显示动态容错区间"
+  },
+  "sectors": {
+    "red": "红 (0°-30°)",
+    "orange": "橙 (30°-60°)",
+    "yellow": "黄 (60°-90°)",
+    "yellowGreen": "黄绿 (90°-120°)",
+    "green": "绿 (120°-150°)",
+    "cyanGreen": "青绿 (150°-180°)",
+    "cyan": "青 (180°-210°)",
+    "blue": "蓝 (210°-240°)",
+    "blueViolet": "蓝紫 (240°-270°)",
+    "violet": "紫 (270°-300°)",
+    "magenta": "品红 (300°-330°)",
+    "rose": "紫红 (330°-360°)"
+  },
+  "analytics": {
+    "lightnessBias": {
+      "tabLabel": "色相明度偏差",
+      "title": "{{title}} · 色相明度偏差分析",
+      "subTitle": "横轴 12 色相与纵轴明度估测偏置，揭示固有色对明暗判断的系统性错觉",
+      "cardTitle": "固有色明暗错觉诊断",
+      "avgSignedBias": "全局平均偏向:",
+      "overestimated": "+{{val}}% (系统性高估/偏亮)",
+      "underestimated": "{{val}}% (系统性低估/偏暗)",
+      "maxBiasSector": "最大偏置色相：",
+      "avgBias": "平均偏向:",
+      "needMoreTrials": "样本量达到每个色相扇区至少 3 题后可生成精准偏向诊断。",
+      "avgAbsError": "平均绝对百分比误差:"
+    },
+    "lightnessRing": {
+      "tabLabel": "12 色相明度敏感度",
+      "title": "{{title}} · 12 色相明度敏感度",
+      "subTitle": "洞察你在 12 个色相扇区上的素描明度估测命中率与抗干扰能力",
+      "cardTitle": "明度感知盲区诊断",
+      "weakestHint": "你在 {{sector}} 色相上明度估测正确率最低：",
+      "accuracyRate": "{{accuracy}}% 正确率",
+      "needMoreTrials": "需每个色相扇区完成至少 3 题才能生成弱点盲区诊断。"
+    }
+  }
+}

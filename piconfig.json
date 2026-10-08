@@ -52,6 +52,7 @@
         "src/core/cardContract.ts",
         "src/core/contracts.ts",
         "src/core/i18n.ts",
+        "src/core/registry.ts",
         "src/storage/settings.ts",
         "src/components/common/",
         "src/components/ui/",
