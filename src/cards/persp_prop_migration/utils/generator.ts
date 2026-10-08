@@ -20,6 +20,7 @@ export function drawProportionCanvas(
   userPoint: Point | null | undefined,
   hoverPoint?: Point | null,
   showAnswer = false,
+  isHit = false,
   size = PERSPECTIVE_CANVAS_SIZE,
 ): void {
   if (!line) return;
@@ -75,7 +76,7 @@ export function drawProportionCanvas(
       ctx.fill();
     }
     if (userPoint) {
-      ctx.fillStyle = CANVAS_THEME.status.miss;
+      ctx.fillStyle = isHit ? CANVAS_THEME.status.hit : CANVAS_THEME.status.miss;
       ctx.beginPath();
       ctx.arc(userPoint.x, userPoint.y, 4, 0, Math.PI * 2);
       ctx.fill();

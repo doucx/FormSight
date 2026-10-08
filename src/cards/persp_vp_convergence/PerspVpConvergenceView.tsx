@@ -33,10 +33,10 @@ export function PerspVpConvergenceView({
   showCanvasHints = true,
 }: PerspVpConvergenceViewProps) {
   const { t } = useCardTranslation('persp_vp_convergence');
-  const [currentVal, setCurrentVal] = useState<number>(180);
+  const [currentVal, setCurrentVal] = useState<number>(90);
 
   const { trackRef, hoverVal, pointerProps } = useTrackPointer({
-    max: 360,
+    max: 180,
     step: 0.5,
     disabled: disabled || showAnswer,
     onValChange: (val) => setCurrentVal(val),
@@ -75,6 +75,7 @@ export function PerspVpConvergenceView({
               PERSPECTIVE_CANVAS_SIZE,
               showAnswer,
               targetVal,
+              isHit,
             );
           }}
           deps={[
@@ -84,11 +85,12 @@ export function PerspVpConvergenceView({
             currentActiveAngle,
             showAnswer,
             targetVal,
+            isHit,
           ]}
         />
       </div>
 
-      {/* 射线倾角滑块与误差反馈 */}
+      {/* 直线倾角滑块与误差反馈 */}
       <div className="w-full space-y-3 bg-muted/60 p-4 rounded-2xl border border-border/60">
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>{t('rayAngle')}</span>
@@ -103,7 +105,7 @@ export function PerspVpConvergenceView({
             trackRef={trackRef}
             pointerProps={pointerProps}
             activeVal={activeVal}
-            max={360}
+            max={180}
             min={0}
             hitMargin={hitMargin}
             disabled={disabled}
@@ -114,7 +116,7 @@ export function PerspVpConvergenceView({
             showToleranceBand={showToleranceBand}
             isHit={isHit}
           />
-          <span className="font-bold font-mono text-muted-foreground text-xs">360°</span>
+          <span className="font-bold font-mono text-muted-foreground text-xs">180°</span>
         </div>
       </div>
     </QuestionCardShell>

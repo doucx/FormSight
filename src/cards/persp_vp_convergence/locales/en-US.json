@@ -1,10 +1,10 @@
 {
   "title": "VP Convergence",
-  "desc": "Modulate the ray angle to make it converge at the exact same vanishing point.",
+  "desc": "Modulate the perspective line angle to make it converge at the exact same vanishing point.",
   "settings": {
     "showToleranceBandTitle": "Show Tolerance Band",
     "showToleranceBandDesc": "Display dynamic tolerance band around current slider position"
   },
-  "hint": "Observe the existing perspective lines and adjust the slider to converge rays at the vanishing point (0°~360°)",
-  "rayAngle": "Ray Angle:"
+  "hint": "Observe the existing perspective lines and adjust the slider to converge the line at the vanishing point (0°~180°)",
+  "rayAngle": "Line Angle:"
 }

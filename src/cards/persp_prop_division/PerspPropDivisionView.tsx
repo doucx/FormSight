@@ -17,6 +17,7 @@ export interface PerspPropDivisionViewProps {
 export function PerspPropDivisionView({
   question,
   showAnswer,
+  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
@@ -107,6 +108,9 @@ export function PerspPropDivisionView({
     }
   };
 
+  const effectiveUserPoint = userClickedPoint || userAnswer?.userValue;
+  const isHit = userAnswer?.isHit ?? false;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -114,18 +118,20 @@ export function PerspPropDivisionView({
         canvas,
         question.divisionLine,
         question.targetDivisionPoint,
-        userClickedPoint,
+        effectiveUserPoint,
         hoverPoint,
         showAnswer,
+        isHit,
         PERSPECTIVE_CANVAS_SIZE,
       );
     }
   }, [
     question.divisionLine,
     question.targetDivisionPoint,
-    userClickedPoint,
+    effectiveUserPoint,
     hoverPoint,
     showAnswer,
+    isHit,
   ]);
 
   return (

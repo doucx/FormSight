@@ -27,6 +27,7 @@ export interface PerspPropMigrationViewProps {
 export function PerspPropMigrationView({
   question,
   showAnswer,
+  userAnswer,
   onAnswer,
   disabled = false,
   showCanvasHints = true,
@@ -117,6 +118,9 @@ export function PerspPropMigrationView({
     }
   };
 
+  const effectiveUserPoint = userClickedPoint || userAnswer?.userValue;
+  const isHit = userAnswer?.isHit ?? false;
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -124,18 +128,20 @@ export function PerspPropMigrationView({
         canvas,
         question.divisionLine,
         question.targetDivisionPoint,
-        userClickedPoint,
+        effectiveUserPoint,
         hoverPoint,
         showAnswer,
+        isHit,
         PERSPECTIVE_CANVAS_SIZE,
       );
     }
   }, [
     question.divisionLine,
     question.targetDivisionPoint,
-    userClickedPoint,
+    effectiveUserPoint,
     hoverPoint,
     showAnswer,
+    isHit,
   ]);
 
   return (
