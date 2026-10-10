@@ -22,6 +22,7 @@ import {
   createPlanItem,
   movePlanItem,
   removePlanItem,
+  reorderPlanItem,
   sanitizePlan,
   updatePlanItemTrials,
 } from './planItemUtils';
@@ -158,6 +159,8 @@ export function usePlanEditorState({
     handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
     handleMoveItem: (idx: number, dir: 'up' | 'down') =>
       updatePlanItems((items) => movePlanItem(items, idx, dir)),
+    handleReorderItem: (fromIdx: number, toIdx: number) =>
+      updatePlanItems((items) => reorderPlanItem(items, fromIdx, toIdx)),
     handleUpdateTrials: (id: string, trials: number) =>
       updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
     handleClearAll: () => updatePlanItems(() => []),

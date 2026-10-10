@@ -27,6 +27,23 @@ export function movePlanItem(
   return newItems;
 }
 
+export function reorderPlanItem(items: PlanItem[], fromIndex: number, toIndex: number): PlanItem[] {
+  if (
+    fromIndex === toIndex ||
+    fromIndex < 0 ||
+    fromIndex >= items.length ||
+    toIndex < 0 ||
+    toIndex >= items.length
+  ) {
+    return items;
+  }
+
+  const newItems = [...items];
+  const [moved] = newItems.splice(fromIndex, 1);
+  newItems.splice(toIndex, 0, moved);
+  return newItems;
+}
+
 export function updatePlanItemTrials(items: PlanItem[], id: string, trials: number): PlanItem[] {
   return items.map((item) =>
     item.id === id ? { ...item, targetTrials: Math.max(5, trials) } : item,

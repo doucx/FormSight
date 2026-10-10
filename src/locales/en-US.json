@@ -343,7 +343,8 @@
     "stageAndTrialsSummary": "{{stages}} Stages • {{trials}} Trials",
     "moveUpTitle": "Move Up",
     "moveDownTitle": "Move Down",
-    "removeTitle": "Remove"
+    "removeTitle": "Remove",
+    "dragHandleTitle": "Drag to reorder stage"
   },
   "settings": {
     "title": "Global Preferences",

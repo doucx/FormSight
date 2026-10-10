@@ -343,7 +343,8 @@
     "stageAndTrialsSummary": "{{stages}} 个阶段 • {{trials}} 题",
     "moveUpTitle": "上移",
     "moveDownTitle": "下移",
-    "removeTitle": "移除"
+    "removeTitle": "移除",
+    "dragHandleTitle": "按住拖动调整阶段顺序"
   },
   "settings": {
     "title": "全局偏好设置",

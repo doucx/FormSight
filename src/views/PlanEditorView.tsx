@@ -53,7 +53,7 @@ export function PlanEditorView({
     handleBatchUpdateTrials,
     handleAddItem,
     handleRemoveItem,
-    handleMoveItem,
+    handleReorderItem,
     handleUpdateTrials,
     handleClearAll,
     handleCreateNewBlankPlan,
@@ -155,7 +155,7 @@ export function PlanEditorView({
             onBatchUpdateTrials={handleBatchUpdateTrials}
             onClearAll={handleClearAll}
             onUpdateTrials={handleUpdateTrials}
-            onMoveItem={handleMoveItem}
+            onReorderItem={handleReorderItem}
             onRemoveItem={handleRemoveItem}
           />
         </div>
