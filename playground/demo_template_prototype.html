@@ -1,3 +1,13 @@
+<!--@curio
+{
+  "name": "demo_template_prototype",
+  "tags": [
+    "形态:原生html",
+    "状态:未分类"
+  ],
+  "revision": 1
+}
+-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -5,17 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>标准原型模版 (Demo Template) - FormSight Prototype</title>
 
-  <!-- ================================================================= -->
-  <!-- FormSight 原型标准元数据契约 (会被 playground/index.html 自动抓取) -->
-  <!-- ================================================================= -->
-  <meta name="prototype:id" content="demo_template" />
-  <meta name="prototype:title" content="标准训练模版 (2D 角度估测实验)" />
-  <meta name="prototype:category" content="形体与比例" />
-  <meta name="prototype:target-pack" content="angle" />
-  <meta name="prototype:status" content="draft" /> <!-- 可选值: draft | evaluating | ready | deprecated -->
-  <meta name="prototype:desc" content="示范标准原型的元数据格式、Canvas 交互框架与多级难度曲线演化逻辑。" />
-  <meta name="prototype:tags" content="2D,Angle,Estimation,Canvas,2AFC" />
-  <meta name="prototype:author" content="FormSight Prototype Engine" />
+
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -37,9 +37,6 @@
   <!-- Header -->
   <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
     <div class="flex items-center gap-3">
-      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition text-xs font-mono" title="返回沙盒大盘">
-        ← 中枢
-      </a>
       <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
         📐
       </div>

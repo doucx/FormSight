@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>标准原型模版 (Demo Template) - FormSight Prototype</title>
+
+  <!-- ================================================================= -->
+  <!-- FormSight 原型标准元数据契约 (会被 playground/index.html 自动抓取) -->
+  <!-- ================================================================= -->
+  <meta name="prototype:id" content="demo_template" />
+  <meta name="prototype:title" content="标准训练模版 (2D 角度估测实验)" />
+  <meta name="prototype:category" content="形体与比例" />
+  <meta name="prototype:target-pack" content="angle" />
+  <meta name="prototype:status" content="draft" /> <!-- 可选值: draft | evaluating | ready | deprecated -->
+  <meta name="prototype:desc" content="示范标准原型的元数据格式、Canvas 交互框架与多级难度曲线演化逻辑。" />
+  <meta name="prototype:tags" content="2D,Angle,Estimation,Canvas,2AFC" />
+  <meta name="prototype:author" content="FormSight Prototype Engine" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    input[type=range] {
+      accent-color: #6366f1;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4 sm:p-8 select-none">
+
+  <!-- Header -->
+  <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition text-xs font-mono" title="返回沙盒大盘">
+        ← 中枢
+      </a>
+      <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
+        📐
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-white tracking-wide">标准原型模版 (Demo Template)</h1>
+        <p class="text-xs text-slate-400">可作为任何新卡片或实验性原型的标准起手骨架</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button id="btn-regen" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-xs font-semibold text-white rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center gap-1.5 cursor-pointer">
+        生成下一题 (Space)
+      </button>
+    </div>
+  </header>
+
+  <!-- 难度控制条 -->
+  <section class="w-full max-w-4xl mt-4 p-4 bg-slate-950/80 rounded-2xl border border-slate-800 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <span class="text-xs font-bold font-mono text-slate-400 uppercase tracking-wider">难度:</span>
+      <span id="level-display" class="text-base font-bold font-mono text-indigo-400 bg-indigo-500/10 px-2.5 py-0.5 rounded-lg border border-indigo-500/20">
+        Lv. 1
+      </span>
+      <span id="level-tier" class="text-xs font-semibold text-slate-400">初始阶梯</span>
+    </div>
+
+    <div class="flex items-center gap-4 w-full sm:w-auto flex-1 max-w-md">
+      <input type="range" id="level-slider" min="1" max="35" value="1" step="1" class="w-full h-2 bg-slate-800 rounded-lg cursor-pointer" />
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <button class="preset-btn px-2.5 py-1 text-[11px] font-mono rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-level="1">Lv.1</button>
+      <button class="preset-btn px-2.5 py-1 text-[11px] font-mono rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-level="15">Lv.15</button>
+      <button class="preset-btn px-2.5 py-1 text-[11px] font-mono rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700" data-level="35">Lv.35</button>
+    </div>
+  </section>
+
+  <!-- Main Canvas & Task Panel -->
+  <main class="w-full max-w-4xl mt-4 flex flex-col gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+      
+      <!-- 主画布视口 (2D Canvas) -->
+      <div class="md:col-span-7 bg-slate-950 rounded-2xl border border-slate-800 p-4 flex flex-col items-center justify-center relative shadow-2xl">
+        <canvas id="main-canvas" width="400" height="400" class="w-full aspect-square rounded-xl bg-slate-900/60 border border-slate-800/80"></canvas>
+      </div>
+
+      <!-- 操作与引导说明 -->
+      <div class="md:col-span-5 flex flex-col justify-between bg-slate-800/40 rounded-2xl border border-slate-800 p-6">
+        <div class="space-y-4">
+          <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold">
+            <span>TASK INSTRUCTION</span>
+          </div>
+          <h2 class="text-base font-bold text-white leading-snug">
+            观察左侧图形的夹角大小，判断它是否大于 45° ？
+          </h2>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            随着等级提升，夹角与 45° 的微差将按指数收敛，逼近感知极限。
+          </p>
+
+          <div class="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-2 font-mono text-xs text-slate-400">
+            <div class="flex justify-between">
+              <span>基准角度:</span>
+              <span class="text-slate-200 font-semibold">45.0°</span>
+            </div>
+            <div class="flex justify-between">
+              <span>当前差值 (Δθ):</span>
+              <span id="stat-delta" class="text-indigo-400 font-semibold">±15.0°</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2AFC 作答按钮组 -->
+        <div class="grid grid-cols-2 gap-3 mt-6">
+          <button id="btn-choice-a" class="py-3 px-4 bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold text-xs rounded-xl border border-slate-700 hover:border-indigo-400 transition cursor-pointer">
+            [1] 小于 45°
+          </button>
+          <button id="btn-choice-b" class="py-3 px-4 bg-slate-800 hover:bg-indigo-600 active:scale-95 text-white font-bold text-xs rounded-xl border border-slate-700 hover:border-indigo-400 transition cursor-pointer">
+            [2] 大于 45°
+          </button>
+        </div>
+
+        <!-- 反馈看板 -->
+        <div id="result-badge" class="mt-4 hidden p-3 rounded-xl text-center font-bold text-xs transition-all"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let currentLevel = 1;
+    let targetAngle = 45;
+    let currentAngle = 45;
+    let answered = false;
+
+    function drawAngleCanvas(angle) {
+      const canvas = document.getElementById('main-canvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width, h = canvas.height;
+      const cx = w / 2, cy = h / 2 + 50;
+      const length = 130;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 网格辅助
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+      ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+      ctx.stroke();
+
+      const rad = (angle * Math.PI) / 180;
+      const rotOffset = -Math.PI / 4; // 整体旋转
+
+      // 边 1
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(rotOffset) * length, cy + Math.sin(rotOffset) * length);
+      ctx.stroke();
+
+      // 边 2
+      ctx.strokeStyle = '#34d399';
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(rotOffset - rad) * length, cy + Math.sin(rotOffset - rad) * length);
+      ctx.stroke();
+
+      // 顶点圆点
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function setupQuestion() {
+      answered = false;
+      const deltaMax = 15.0;
+      const deltaMin = 1.0;
+      const t = (currentLevel - 1) / 34;
+      const delta = deltaMax * Math.pow(deltaMin / deltaMax, t);
+
+      const isGreater = Math.random() > 0.5;
+      currentAngle = isGreater ? targetAngle + delta : targetAngle - delta;
+
+      document.getElementById('stat-delta').textContent = `±${delta.toFixed(1)}°`;
+      const badge = document.getElementById('result-badge');
+      badge.classList.add('hidden');
+
+      drawAngleCanvas(currentAngle);
+    }
+
+    function handleAnswer(chosenGreater) {
+      if (answered) return;
+      answered = true;
+
+      const isCorrect = (currentAngle > targetAngle) === chosenGreater;
+      const badge = document.getElementById('result-badge');
+      badge.classList.remove('hidden');
+
+      if (isCorrect) {
+        badge.className = 'mt-4 p-3 rounded-xl text-center font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+        badge.textContent = `🎉 正确！当前角度为 ${currentAngle.toFixed(1)}°`;
+      } else {
+        badge.className = 'mt-4 p-3 rounded-xl text-center font-bold text-xs bg-rose-500/10 border border-rose-500/30 text-rose-400';
+        badge.textContent = `❌ 错误！当前真实角度为 ${currentAngle.toFixed(1)}° (基准为 45.0°)`;
+      }
+    }
+
+    function updateLevel(lvl) {
+      currentLevel = Math.max(1, Math.min(35, parseInt(lvl, 10)));
+      document.getElementById('level-slider').value = currentLevel;
+      document.getElementById('level-display').textContent = `Lv. ${currentLevel}`;
+      setupQuestion();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updateLevel(1);
+      document.getElementById('btn-regen').onclick = () => setupQuestion();
+      document.getElementById('level-slider').oninput = (e) => updateLevel(e.target.value);
+      document.querySelectorAll('.preset-btn').forEach(b => {
+        b.onclick = () => updateLevel(b.getAttribute('data-level'));
+      });
+      document.getElementById('btn-choice-a').onclick = () => handleAnswer(false);
+      document.getElementById('btn-choice-b').onclick = () => handleAnswer(true);
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          setupQuestion();
+        } else if (e.code === 'Digit1') {
+          handleAnswer(false);
+        } else if (e.code === 'Digit2') {
+          handleAnswer(true);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

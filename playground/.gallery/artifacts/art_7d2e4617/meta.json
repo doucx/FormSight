@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "art_7d2e4617",
+  "name": "fractal_section_prototype",
+  "filename": "fractal_section_prototype.html",
+  "tags": [
+    "形态:原生html",
+    "状态:未分类"
+  ],
+  "currentRevision": 1,
+  "createdAt": "2026-10-20T03:10:20.210Z",
+  "updatedAt": "2026-10-20T03:10:20.210Z",
+  "history": [
+    {
+      "revision": 1,
+      "timestamp": "2026-10-20T03:10:20.210Z",
+      "action": "genesis",
+      "message": "初始版本"
+    }
+  ]
+}

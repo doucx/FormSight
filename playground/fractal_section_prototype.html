@@ -1,3 +1,13 @@
+<!--@curio
+{
+  "name": "fractal_section_prototype",
+  "tags": [
+    "形态:原生html",
+    "状态:未分类"
+  ],
+  "revision": 1
+}
+-->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -5,15 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>3D 分形截面感知 (形态渐进演化) - FormSight Prototype</title>
 
-  <!-- FormSight Prototype Standard Metadata Contract -->
-  <meta name="prototype:id" content="fractal_section" />
-  <meta name="prototype:title" content="3D 分形截面感知 (SDF 渐进演化)" />
-  <meta name="prototype:category" content="3D 空间结构" />
-  <meta name="prototype:target-pack" content="spatial_3d" />
-  <meta name="prototype:status" content="evaluating" />
-  <meta name="prototype:desc" content="形态随难度从「平滑圆润大模」演化为「多孔负空间空腔与混沌分形」，训练空间截面感知与局域曲率解析。" />
-  <meta name="prototype:tags" content="Three.js,SDF,Fractal,CrossSection,3D,Raymarching" />
-  <meta name="prototype:author" content="Claude & FormSight" />
+
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -38,9 +40,6 @@
   <!-- Header -->
   <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
     <div class="flex items-center gap-3">
-      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl transition text-xs font-mono" title="返回沙盒大盘">
-        ← 中枢
-      </a>
       <div class="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/30">
         3D
       </div>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>分形域扭曲主势线感知 - FormSight Prototype</title>
+  
+  <meta name="prototype:id" content="fractal_domain_warping" />
+  <meta name="prototype:title" content="分形域扭曲势线 (Domain Warping)" />
+  <meta name="prototype:category" content="细化感知" />
+  <meta name="prototype:target-pack" content="concretization" />
+  <meta name="prototype:status" content="evaluating" />
+  <meta name="prototype:desc" content="通过拖拽旋转标尺，找出流动褶皱中被拉伸挤压的“主张力脊线走向”。" />
+  <meta name="prototype:tags" content="WebGL,Shader,DomainWarping,Flow" />
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-4 sm:p-8 select-none">
+  <header class="w-full max-w-4xl flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-slate-800">
+    <div class="flex items-center gap-3">
+      <a href="./index.html" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition text-xs font-mono">← 中枢</a>
+      <div class="w-9 h-9 rounded-xl bg-purple-600 flex items-center justify-center font-bold text-white shadow-lg">🌊</div>
+      <div>
+        <h1 class="text-lg font-bold text-white">分形域扭曲主势线提取</h1>
+        <p class="text-xs text-slate-400">穿透细碎褶皱，直击流体或布料的主受力方向</p>
+      </div>
+    </div>
+    <button id="btn-regen" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-xs font-semibold text-white rounded-xl shadow-lg transition">
+      生成新流场 (Space)
+    </button>
+  </header>
+
+  <main class="w-full max-w-4xl mt-6 flex flex-col gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
+      <div class="md:col-span-8 bg-slate-950 rounded-2xl border border-slate-800 p-2 relative shadow-2xl overflow-hidden aspect-video flex items-center justify-center">
+        <!-- Three.js Canvas Container -->
+        <div id="gl-container" class="w-full h-full rounded-xl overflow-hidden absolute inset-2"></div>
+        
+        <!-- UI Overlay Guide Line -->
+        <div id="guide-line-container" class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+          <div id="guide-line" class="w-[80%] h-1 bg-rose-500/80 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.8)] relative transition-transform duration-75">
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[10px] px-2 py-0.5 rounded font-mono font-bold">YOUR GUESS</div>
+          </div>
+        </div>
+
+        <div id="correct-line" class="absolute inset-0 pointer-events-none flex items-center justify-center z-0 hidden">
+           <div class="w-[80%] h-1 bg-emerald-400/90 rounded-full shadow-[0_0_15px_rgba(52,211,153,1)]"></div>
+        </div>
+      </div>
+
+      <div class="md:col-span-4 flex flex-col justify-between bg-slate-800/40 rounded-2xl border border-slate-800 p-6">
+        <div class="space-y-4">
+          <h2 class="text-sm font-bold text-white">旋转标尺，对齐主张力线</h2>
+          <p class="text-xs text-slate-400">
+            底层生成的分形噪波在某个特定角度被强烈拉伸，形成了类似布料折痕或大理石纹理的主流向。请旋转红色标尺对齐它。
+          </p>
+          
+          <div class="pt-4">
+            <input type="range" id="angle-slider" min="0" max="180" value="90" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" />
+            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-2">
+              <span>0°</span><span id="current-angle">90°</span><span>180°</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-submit" class="w-full py-3 mt-6 bg-slate-700 hover:bg-purple-600 text-white font-bold text-xs rounded-xl transition">
+          锁定并验证判定
+        </button>
+        <div id="result-badge" class="mt-4 hidden p-3 rounded-xl text-center font-bold text-xs transition-all"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const shaderSrc = {
+      vert: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      frag: `
+        uniform float uTime;
+        uniform float uAngle; // Stretch direction
+        varying vec2 vUv;
+
+        float random (in vec2 st) {
+            return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+        }
+
+        float noise (in vec2 st) {
+            vec2 i = floor(st);
+            vec2 f = fract(st);
+            float a = random(i);
+            float b = random(i + vec2(1.0, 0.0));
+            float c = random(i + vec2(0.0, 1.0));
+            float d = random(i + vec2(1.0, 1.0));
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+
+        float fbm (in vec2 st) {
+            float v = 0.0;
+            float a = 0.5;
+            for (int i = 0; i < 5; ++i) {
+                v += a * noise(st);
+                st = st * 2.0;
+                a *= 0.5;
+            }
+            return v;
+        }
+
+        void main() {
+            vec2 p = vUv * 6.0;
+            
+            // Apply stretch rotation
+            float c = cos(uAngle);
+            float s = sin(uAngle);
+            mat2 rot = mat2(c, -s, s, c);
+            
+            p = rot * p;
+            p.y *= 0.15; // Strong stretch to create creases
+            p = mat2(c, s, -s, c) * p;
+
+            vec2 q = vec2(0.);
+            q.x = fbm( p + 0.00*uTime);
+            q.y = fbm( p + vec2(1.0));
+
+            vec2 r = vec2(0.);
+            r.x = fbm( p + 4.0*q + vec2(1.7,9.2)+ 0.15*uTime );
+            r.y = fbm( p + 4.0*q + vec2(8.3,2.8)+ 0.126*uTime);
+
+            float f = fbm(p+4.0*r);
+            
+            // Dramatic color mapping
+            vec3 col = mix(vec3(0.05, 0.05, 0.1), vec3(0.4, 0.2, 0.6), f);
+            col = mix(col, vec3(0.8, 0.7, 0.9), dot(q, r) * 0.5 + 0.5);
+            col = mix(col, vec3(1.0), f*f*f*f);
+
+            gl_FragColor = vec4(col, 1.0);
+        }
+      `
+    };
+
+    let scene, camera, renderer, material;
+    let targetAngle = 0;
+    let answered = false;
+
+    function initGL() {
+      const container = document.getElementById('gl-container');
+      scene = new THREE.Scene();
+      camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      renderer = new THREE.WebGLRenderer({ antialias: false });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      material = new THREE.ShaderMaterial({
+        vertexShader: shaderSrc.vert,
+        fragmentShader: shaderSrc.frag,
+        uniforms: {
+          uTime: { value: 0.0 },
+          uAngle: { value: 0.0 }
+        }
+      });
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+      scene.add(plane);
+
+      function animate(time) {
+        requestAnimationFrame(animate);
+        material.uniforms.uTime.value = time * 0.0005;
+        renderer.render(scene, camera);
+      }
+      animate(0);
+      
+      window.addEventListener('resize', () => {
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+    }
+
+    function setupQuestion() {
+      answered = false;
+      targetAngle = Math.random() * 180;
+      // Convert to radians for shader (stretch aligns along rotated X axis, so creases form along X)
+      material.uniforms.uAngle.value = (targetAngle * Math.PI) / 180;
+      
+      document.getElementById('angle-slider').value = 90;
+      updateUI();
+      
+      document.getElementById('correct-line').classList.add('hidden');
+      document.getElementById('result-badge').classList.add('hidden');
+      document.getElementById('btn-submit').classList.remove('hidden');
+    }
+
+    function updateUI() {
+      const val = document.getElementById('angle-slider').value;
+      document.getElementById('current-angle').textContent = `${val}°`;
+      // UI angle maps directly
+      document.getElementById('guide-line').style.transform = `rotate(${-val}deg)`;
+    }
+
+    function submitAnswer() {
+      if(answered) return;
+      answered = true;
+      
+      const guess = parseInt(document.getElementById('angle-slider').value);
+      // Angle distance modulo 180 (since lines are symmetric)
+      let diff = Math.abs(guess - targetAngle) % 180;
+      if (diff > 90) diff = 180 - diff;
+      
+      const badge = document.getElementById('result-badge');
+      badge.classList.remove('hidden');
+      document.getElementById('btn-submit').classList.add('hidden');
+      
+      // Show correct line
+      const correctLineNode = document.getElementById('correct-line');
+      correctLineNode.classList.remove('hidden');
+      correctLineNode.firstElementChild.style.transform = `rotate(${-targetAngle}deg)`;
+
+      if (diff <= 10) {
+        badge.className = 'mt-4 p-3 rounded-xl text-center font-bold text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400';
+        badge.textContent = `🎯 精确！误差仅 ${diff.toFixed(1)}°`;
+      } else {
+        badge.className = 'mt-4 p-3 rounded-xl text-center font-bold text-xs bg-amber-500/10 border border-amber-500/30 text-amber-400';
+        badge.textContent = `误差 ${diff.toFixed(1)}°。绿色为真实受力脊线。`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initGL();
+      setupQuestion();
+      document.getElementById('angle-slider').oninput = updateUI;
+      document.getElementById('btn-regen').onclick = setupQuestion;
+      document.getElementById('btn-submit').onclick = submitAnswer;
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') { e.preventDefault(); setupQuestion(); }
+      });
+    });
+  </script>
+</body>
+</html>

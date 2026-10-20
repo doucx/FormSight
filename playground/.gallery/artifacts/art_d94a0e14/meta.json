@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "id": "art_d94a0e14",
+  "name": "fractal_lsystem_spine_prototype",
+  "filename": "fractal_lsystem_spine_prototype.html",
+  "tags": [
+    "形态:原生html",
+    "状态:未分类"
+  ],
+  "currentRevision": 1,
+  "createdAt": "2026-10-20T03:10:15.140Z",
+  "updatedAt": "2026-10-20T03:10:15.140Z",
+  "history": [
+    {
+      "revision": 1,
+      "timestamp": "2026-10-20T03:10:15.140Z",
+      "action": "genesis",
+      "message": "初始版本"
+    }
+  ]
+}
