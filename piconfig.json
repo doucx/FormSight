@@ -1,8 +1,9 @@
 {
   "presets": {
     "core": {
+      "description": "核心架构、引擎与状态管理模块",
       "format": "xml",
-      "extension": ["ts", "tsx"],
+      "read": ["*.ts", "*.tsx"],
       "paths": [
         "src/types/plan.ts",
         "src/types/card.ts",
@@ -42,8 +43,9 @@
       ]
     },
     "cards": {
+      "description": "卡片 SDK、数学渲染与卡片实现逻辑",
       "format": "xml",
-      "extension": ["ts", "tsx", "json"],
+      "read": ["*.ts", "*.tsx", "*.json"],
       "paths": [
         "src/card-sdk/index.ts",
         "src/types/card.ts",
@@ -72,8 +74,9 @@
       ]
     },
     "ui": {
+      "description": "UI 视图、模态框与路由组件",
       "format": "xml",
-      "extension": ["ts", "tsx", "json"],
+      "read": ["*.ts", "*.tsx", "*.json"],
       "paths": [
         "src/app.tsx",
         "src/locales/",
@@ -97,8 +100,9 @@
       "ignore": ["*.test.ts", "*.test.tsx"]
     },
     "plan": {
+      "description": "训练计划与计划编辑器模块",
       "format": "xml",
-      "extension": ["ts", "tsx"],
+      "read": ["*.ts", "*.tsx"],
       "paths": [
         "src/types/plan.ts",
         "src/config/planTemplates.ts",
@@ -117,8 +121,9 @@
       ]
     },
     "stats": {
+      "description": "认知统计、Worker 计算与分析视图",
       "format": "xml",
-      "extension": ["ts", "tsx"],
+      "read": ["*.ts", "*.tsx"],
       "paths": [
         "src/core/analytics/",
         "src/core/canvas/charts/",
@@ -136,14 +141,16 @@
       ]
     },
     "full": {
+      "description": "全量应用前端源码",
       "format": "xml",
-      "extension": ["ts", "tsx", "json", "css", "html"],
+      "read": ["*.ts", "*.tsx", "*.json", "*.css", "*.html"],
       "paths": ["src/", "./index.html"],
       "ignore": ["*.test.ts", "*.test.tsx"]
     },
     "full_cards": {
+      "description": "所有卡片及 SDK 完整实现",
       "format": "xml",
-      "extension": ["ts", "tsx", "json", "css", "html"],
+      "read": ["*.ts", "*.tsx", "*.json", "*.css", "*.html"],
       "paths": ["src/card-sdk/index.ts", "src/cards"],
       "ignore": ["*.test.ts", "*.test.tsx"]
     }
