@@ -109,7 +109,7 @@ AssertionError: expected [ 'star_single', …(2) ] to deeply equal [ 'star_singl
 
 ## 6. 待办（进入 W2 前）
 
-- [ ] 推送 W1 / W1.1 提交，并在远端确认 `Verify` workflow 首次运行结果。
+- [x] 推送 W1 / W1.1 提交，并在远端确认 `Verify` workflow 首次运行结果。
 - [ ] W2：从近 90 天 `fix:` 提交中提取 8 个故障场景，按“父提交报红 → 修复提交变绿”补齐回归。
 - [ ] 累计测试数达到 Gate 1 准出要求（新增 ≥ 13 条：8 回归 + 5 契约）。
 - [ ] 真实开发中至少 1 次 Agent 改动被 `pnpm verify` 或 CI 拦截（G1-00 / G1-01 转 `closed`）。
