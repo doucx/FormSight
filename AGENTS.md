@@ -8,7 +8,8 @@
 - 技术栈：TypeScript + Preact + Vite + Vitest，包管理器为 **pnpm**。
 - 校验入口：`pnpm verify`（= `biome check .` + `tsc --noEmit` + `vitest run`）。
 - 测试位置：与源码同级的 `__tests__/` 目录，文件名 `*.test.ts(x)`。
-- 门账：根目录 `ledger.md` 记录“真实失败 → 守护检查 → 当前状态”。
+- 验证资产：`viska/`（入口说明见 `viska/README.md`）。
+- 门账：`viska/ledger.md` 记录“真实失败 → 守护检查 → 当前状态”。
 - CI：`.github/workflows/ci.yml` 在 Push / PR 时调用 `pnpm verify`，失败即阻断合并。
 
 ## 验证与测试执行军规
@@ -42,9 +43,14 @@
    一条测试断言或前置静态检查，禁止只写自然语言笔记。
 
 7. **门账同步**：
-   新增或修复一条守护检查时，同步更新 `ledger.md` 的对应条目
+   新增或修复一条守护检查时，同步更新 `viska/ledger.md` 的对应条目
    （ID、真实失败根因、关联检查、状态、最近运行/拦截日期）。
    连续 90 天未报红且不守护公开数据契约的检查应登记退役，而非静默保留。
+
+8. **公开仓库隐私**：
+   禁止向跟踪文件写入绝对路径、邮箱、Token、API Key、私钥、SSH 别名或 IP。
+   机器相关事实（真实主机名、绝对路径、精确耗时、工具链版本）只写
+   `viska/local/baseline.md`（gitignore）；公开门账使用假名 `n1`。
 
 ## 常用命令
 

@@ -7,6 +7,12 @@ coverage
 *.local
 .DS_Store
 
+# Verification local state (viska)
+.quipu/
+o.md
+viska/local/
+viska/packets/
+
 # data
 ai_analysis_prompt.md
 formsight_data_*.json
