@@ -1,0 +1,6 @@
+# 本目录的本地/原始内容；tracked 文档不受影响
+raw/
+private/
+data/
+*.local.*
+*.local

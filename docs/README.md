@@ -11,6 +11,15 @@
 | [`card-design-spec.md`](./card-design-spec.md) | 新卡检查表：五段 manifest、i18n 契约、确定性真值、干扰项、难度参数、反馈规范 | 新卡作者、编码代理 |
 | [`data-engine.md`](./data-engine.md) | 存储拓扑、写时物化、单跨表事务、details 不可变契约、分页缺口、v0.x 归一化窗口 | 存储与统计维护者 |
 
+## 项目计划
+
+计划是跨会话的项目记忆，tracked；原始 trial 与个人内容放 `viska/local/`（gitignored）。
+
+| 计划 | 内容 | 状态 |
+|---|---|---|
+| [`plan/README.md`](./plan/README.md) | 计划目录、阅读顺序、生命周期 | active |
+| [`plan/calibration-v1/00_README.md`](./plan/calibration-v1/00_README.md) | Level 改为 80% JND；单用户自校准；1 全局 + 4 物理族；20 题锚点 | active |
+
 ## 决策记录（ADR）
 
 | ADR | 决策 |
