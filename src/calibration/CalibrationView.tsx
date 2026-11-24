@@ -106,6 +106,7 @@ export function CalibrationView({
   if (runId) {
     return (
       <CalibrationRunner
+        key={runId}
         runId={runId}
         settings={settings}
         globalSettings={globalSettings}
