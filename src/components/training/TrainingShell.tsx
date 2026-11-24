@@ -29,6 +29,8 @@ export interface PlanTrainingContext {
   currentStage: number;
   totalStages: number;
   targetTrials: number;
+  /** 计划级累计用时（跨阶段不回零）；HUD 计时器优先展示此值。 */
+  totalElapsedSeconds: number;
   onSkipStage: (history?: SessionHistoryItem[]) => void;
 }
 
@@ -334,7 +336,9 @@ export function TrainingShell({
               <span className="text-border/80">|</span>
               <span className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="w-3 h-3 text-muted-foreground/70" />
-                <span>{formatSecondsToTimer(elapsedSeconds)}</span>
+                <span>
+                  {formatSecondsToTimer(planContext?.totalElapsedSeconds ?? elapsedSeconds)}
+                </span>
               </span>
             </>
           )}

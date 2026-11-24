@@ -206,6 +206,7 @@ export function PlanTrainingView({ plan, settings, onExit }: PlanTrainingViewPro
     currentStage: currentStepIndex + 1,
     totalStages: validItems.length,
     targetTrials: currentStep.targetTrials,
+    totalElapsedSeconds,
     onSkipStage: handleSkipCurrentStage,
   };
 
