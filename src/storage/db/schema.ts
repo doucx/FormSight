@@ -127,55 +127,83 @@ export function getLocalDateString(timestamp: number): string {
 export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<FormSightDBSchema>(DB_NAME, DB_VERSION, {
-      upgrade(database) {
-        // 1. sessions 表
-        if (!database.objectStoreNames.contains('sessions')) {
-          const sessionsStore = database.createObjectStore('sessions', { keyPath: 'id' });
+      upgrade(database, _oldVersion, _newVersion, transaction) {
+        type StoreName =
+          | 'sessions'
+          | 'records'
+          | 'daily_summaries'
+          | 'user_profiles'
+          | 'app_settings'
+          | 'training_plans'
+          | 'app_metadata';
+
+        const ensureStore = (name: StoreName, options?: IDBObjectStoreParameters): void => {
+          if (!database.objectStoreNames.contains(name)) {
+            database.createObjectStore(name, options);
+          }
+        };
+
+        // 表已存在时也必须补齐新增索引，否则旧库升级后按索引查询会抛 NotFoundError
+        ensureStore('sessions', { keyPath: 'id' });
+        const sessionsStore = transaction.objectStore('sessions');
+        if (!sessionsStore.indexNames.contains('by-card')) {
           sessionsStore.createIndex('by-card', 'cardId');
+        }
+        if (!sessionsStore.indexNames.contains('by-domain')) {
           sessionsStore.createIndex('by-domain', 'domain');
         }
 
-        // 2. records 表
-        if (!database.objectStoreNames.contains('records')) {
-          const recordsStore = database.createObjectStore('records', { keyPath: 'id' });
+        ensureStore('records', { keyPath: 'id' });
+        const recordsStore = transaction.objectStore('records');
+        if (!recordsStore.indexNames.contains('by-card')) {
           recordsStore.createIndex('by-card', 'cardId');
+        }
+        if (!recordsStore.indexNames.contains('by-session')) {
           recordsStore.createIndex('by-session', 'sessionId');
+        }
+        if (!recordsStore.indexNames.contains('by-domain')) {
           recordsStore.createIndex('by-domain', 'domain');
+        }
+        if (!recordsStore.indexNames.contains('by-card-timestamp')) {
           recordsStore.createIndex('by-card-timestamp', ['cardId', 'timestamp']);
+        }
+        if (!recordsStore.indexNames.contains('by-timestamp')) {
           recordsStore.createIndex('by-timestamp', 'timestamp');
         }
 
-        // 3. user_profiles 表
-        if (!database.objectStoreNames.contains('user_profiles')) {
-          const profilesStore = database.createObjectStore('user_profiles', { keyPath: 'cardId' });
+        ensureStore('user_profiles', { keyPath: 'cardId' });
+        const profilesStore = transaction.objectStore('user_profiles');
+        if (!profilesStore.indexNames.contains('by-domain')) {
           profilesStore.createIndex('by-domain', 'domain');
         }
 
-        // 4. daily_summaries 表
-        if (!database.objectStoreNames.contains('daily_summaries')) {
-          const dailyStore = database.createObjectStore('daily_summaries', { keyPath: 'id' });
+        ensureStore('daily_summaries', { keyPath: 'id' });
+        const dailyStore = transaction.objectStore('daily_summaries');
+        if (!dailyStore.indexNames.contains('by-date')) {
           dailyStore.createIndex('by-date', 'date');
+        }
+        if (!dailyStore.indexNames.contains('by-card')) {
           dailyStore.createIndex('by-card', 'cardId');
+        }
+        if (!dailyStore.indexNames.contains('by-domain')) {
           dailyStore.createIndex('by-domain', 'domain');
+        }
+        if (!dailyStore.indexNames.contains('by-date-card')) {
           dailyStore.createIndex('by-date-card', ['date', 'cardId']);
+        }
+        if (!dailyStore.indexNames.contains('by-date-domain')) {
           dailyStore.createIndex('by-date-domain', ['date', 'domain']);
         }
 
-        // 5. app_settings 表
-        if (!database.objectStoreNames.contains('app_settings')) {
-          database.createObjectStore('app_settings');
-        }
+        ensureStore('app_settings');
 
-        // 6. training_plans 表
-        if (!database.objectStoreNames.contains('training_plans')) {
-          const planStore = database.createObjectStore('training_plans', { keyPath: 'id' });
+        ensureStore('training_plans', { keyPath: 'id' });
+        const planStore = transaction.objectStore('training_plans');
+        if (!planStore.indexNames.contains('by-updated')) {
           planStore.createIndex('by-updated', 'updatedAt');
         }
 
-        // 7. app_metadata 表
-        if (!database.objectStoreNames.contains('app_metadata')) {
-          database.createObjectStore('app_metadata');
-        }
+        ensureStore('app_metadata');
       },
     });
   }

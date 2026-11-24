@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	10	6	0	-	RUN R8: details key collision contract, backup top-level shape golden, DB upgrade path test	-	-
+root	11	6	0	-	RUN R9: LTTB properties, worker fallback equivalence for three actions, pending rejection on worker error	STALE-ANCHOR	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	2	5	0	-	-	STALE-ANCHOR	-

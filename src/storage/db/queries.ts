@@ -202,9 +202,10 @@ export async function getTrialRecordsByCard(
 ): Promise<UnifiedTrialRecord[]> {
   const db = await getDB();
   const rawRecords = await db.getAllFromIndex('records', 'by-card', cardId);
+  // details 先展开、根字段后展开：卡片私有字段不得覆盖 id/isHit/timestamp 等契约字段
   const mapped = rawRecords.map((r) => ({
-    ...r,
     ...(r.details || {}),
+    ...r,
   }));
   return limit && mapped.length > limit ? mapped.slice(-limit) : mapped;
 }
