@@ -9,8 +9,8 @@
 | 项 | 值 |
 |---|---|
 | 计划状态 | active |
-| 当前 gate | **G0 已通过（S00 合入 `develop`）** |
-| 当前会话 | S01（协议/数据字典/试点先验） |
+| 当前 gate | **G1 待做（S01 完成，等待试点补测/重测）** |
+| 当前会话 | S02（试点补测）→ S02b（重测） |
 | 数据快照 | 2026-11-24 导出，`sha256:ab2fb088…6554f9` |
 | 代码基线 | `develop` @ `6c4e179` |
 
@@ -33,14 +33,14 @@
 | `03_roadmap.md` | G0–G6、依赖、失败退路 |
 | `04_schedule.md` | 会话单元、关键路径、工作量 |
 | `05_acceptance.md` | 指标、gate 通过线、方向判断 |
-| `06_calibration_protocol.md` | 补测/校准/重测的操作规程（S01） |
-| `07_validation_report.md` | 验证结果与证据（S01） |
-| `08_data_dictionary.md` | 数据字段、单位、版本分界（S01） |
-| `09_risk_register.md` | 风险与缓解（S01） |
+| `06_calibration_protocol.md` | 补测/校准/重测的操作规程 |
+| `07_validation_report.md` | 验证结果与证据 |
+| `08_data_dictionary.md` | 数据字段、单位、版本分界 |
+| `09_risk_register.md` | 风险与缓解 |
 | `10_handoff.md` | 每次会话结束更新；下一次从这里接 |
-| `11_experiment_log.md` | 每次补测/重测的记录（S01） |
-| `12_glossary.md` | 术语（S01） |
-| `13_artifact_manifest.md` | artifact 版本、hash、codeVersion（S01） |
+| `11_experiment_log.md` | 每次补测/重测的记录 |
+| `12_glossary.md` | 术语 |
+| `13_artifact_manifest.md` | artifact 版本、hash、codeVersion |
 | `PRIVACY.md` | 脱敏规范与提交前检查 |
 
 ## 状态图例

@@ -7,33 +7,34 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-11-24 |
-| Gate | **G0 已通过（S00 合入 `develop`）** |
-| 上次会话 | S00 |
-| 下一步 | **S01**：写 `06`/`08`/`09`/`12`/`13`，跑 8 张试点先验 |
-| Blocker | 无；S02 需要你补测 `star_single` / `star_double_r` 各 30 题 |
+| Gate | **G1 待做（S01 完成，等待试点补测/重测）** |
+| 上次会话 | S01 |
+| 下一步 | **S02**：`star_single` 30、`star_double_r` 30；**S02b**：`color_val` / `angle_parallel_2afc` / `persp_prop_division` 各 20 |
+| Blocker | 需要约 120 题补测/重测；工具起始 level 可能不在窗口（R-04） |
 
-## S00 产出
+## S01 产出
 
-- `docs/plan/README.md`
-- `docs/plan/calibration-v1/00_README.md`
-- `01_decisions.md`（D-001..D-015）
-- `02_card_status.md`（33 张卡分组）
-- `03_roadmap.md`（G0–G6 + 降级树）
-- `04_schedule.md`（S00–S17）
-- `05_acceptance.md`（指标 + gate + 四道验证）
-- `10_handoff.md`（本文件）
-- `PRIVACY.md`
-- `.gitignore`（只忽略 `raw/`、`private/`、`*.local.*`）
+- `06_calibration_protocol.md`：先验、补测、记录、失败处理
+- `07_validation_report.md`：§pilot-priors 已填；holdout/LOCO/retest 待 S03
+- `08_data_dictionary.md`：字段、单位、版本分界、33 卡 details 键
+- `09_risk_register.md`：R-01..R-15
+- `11_experiment_log.md`：S02/S02b 模板
+- `12_glossary.md`
+- `13_artifact_manifest.md`
+- 更新 `02` 的试点窗口、`03` 的 G1 题量、`04` 的 S02b
+- 本地产物：`viska/local/calibration/pilot-priors.json`、`pilot_priors.py`
 
 ## 下一步（只做这一件）
 
-S01：
+S02 + S02b：
 
-1. 写 `06_calibration_protocol.md`：补测怎么选题、怎么记录、失败怎么重来；
-2. 写 `08_data_dictionary.md`：每卡 `details` 字段、单位、版本分界；
-3. 写 `09_risk_register.md`、`12_glossary.md`、`13_artifact_manifest.md`；
-4. 跑 8 张试点先验（只读历史，不写原始数据进仓库）；
-5. 更新本文件与 `13`。
+1. `star_single` 30 题：窗口 10–18；
+2. `star_double_r` 30 题：窗口 20–26；
+3. 重测 `color_val` 20 题：窗口 3–9；
+4. 重测 `angle_parallel_2afc` 20 题：窗口 6–14；
+5. 重测 `persp_prop_division` 20 题：窗口 9–17；
+6. 每次填 `11_experiment_log.md`；逐题明细放 `viska/local/calibration/`；
+7. 若 10 题后仍在窗口外，标 `window-missed`，停止并重排。
 
 ## 读取顺序
 
@@ -50,9 +51,9 @@ S01：
 - 不修改已记录的 D-001..D-015；要改就追加 D-xxx。
 - 不在 tracked 文件写绝对路径、Token、个人日程。
 
-## 待确认（不阻塞 S01）
+## 待确认（不阻塞 S02）
 
-1. 试点 8 张（D-005）是否最终确认；若坚持 6 张，追加 D-016。
+1. 试点 8 张（D-005）是否最终确认。
 2. `rel_lightness_induction` / `neg_ratio_estimation` 边界卡：等 CI 还是直接排除。
 3. `docs/plan` 的备份方式（私有仓库/加密同步/手动）。
 
@@ -61,13 +62,13 @@ S01：
 | 名称 | 版本 | 说明 |
 |---|---|---|
 | 数据快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
-| 代码基线 | `develop` @ `6c4e179` | S00 已合并；tag `calib-plan-v1` |
+| pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
+| pilot 脚本 | 2026-11-24 | `pilot_priors.py`，`sha256:1a43065…7ac` |
+| 代码基线 | `develop` @ `0695afe` + S01 commit | S00 tag `calib-plan-v1` |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
-| 验证报告 | 未生成 | G1/G2/G5 更新 |
 
 ## 本次会话的验证
 
-- `pnpm verify` 通过：42 个测试文件 / 454 个用例 / 3.85s（总耗时约 8.8s）。
-- 文档-only，无代码改动。
-- `docs/plan` 未被 biome/tsc 误扫，暂不需要加 ignore。
-- `plan/calibration-v1` 已合并进 `develop`，可删除分支；保留 tag 即可。
+- 文档-only + 本地分析脚本；提交后跑 `pnpm verify`。
+- 确认 `docs/plan` 未被 biome/tsc 误扫。
+- 原始数据未进入 git。

@@ -36,17 +36,17 @@
 
 | 卡 | 族 | 标签 | n / details | ≤15 | cross80 | 补测 |
 |---|---|---|---:|---:|---:|---|
-| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | 30 题，L8–14 |
-| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | 30 题，L20–25 |
+| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | 30 题，L10–18 |
+| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | 30 题，L20–26 |
 | star_double_h | spatial | S+F / abs+rel | 463 / 37 | 0 | 24 | 先查版本，再 30 题 |
 | neg_area_comparison_2afc | ratio | F / rel+fg | 1362 / 1362 | 54 | 23 | 25 题，L20–25 |
 | abs_gesture_axis | rhythm | R / ext | 1144 / 1144 | 85 | 17 | 25 题，L14–20 |
 | abs_td_gesture_2afc | rhythm | R / con | 978 / 978 | 67 | 14 | 25 题，L10–16 |
 | abs_td_notan_2afc | rhythm | R / con+fg | 902 / 902 | 44 | 26 | 30 题，L22–30 |
-| angle_parallel_2afc | angle | F+S / rel | 531 / 531 | 64 | 11 | 25 题，L8–14 |
-| angle_comparison_2afc | angle | F+S / rel | 498 / 498 | 60 | 14 | 25 题，L10–18 |
+| angle_parallel_2afc | angle | F+S / rel | 531 / 531 | 64 | 11 | 25 题，L6–14 |
+| angle_comparison_2afc | angle | F+S / rel | 498 / 498 | 60 | 14 | 25 题，L8–17 |
 | persp_vp_convergence | form | S / rel | 327 / 327 | 40 | 23 | 30 题，L20–26 |
-| persp_prop_division | ratio | F / abs | 289 / 289 | 70 | 17 | 25 题，L14–20 |
+| persp_prop_division | ratio | F / abs | 289 / 289 | 70 | 17 | 25 题，L9–17 |
 | persp_gestalt_continuation | form | S / rel+ill | 286 / 286 | 40 | 26 | 30 题，L22–30 |
 | abs_td_palette_4afc | color | C / con | 240 / 240 | 73 | 14 | 25 题，L10–18 |
 

@@ -36,7 +36,7 @@ G6 清理（清 IDB，保留 JSON 与 artifact）
   - 角度：`angle_parallel_2afc`、`angle_comparison_2afc`
   - 比例：`persp_prop_division`、`persp_prop_migration`
   - 控制：`color_lightness`（应被正确排除）
-- 输入：历史先验 + 试点补测（约 60 题）。
+- 输入：历史先验 + 试点补测（约 120 题：60 补测 + 60 重测）。
 - 产出：pilot 先验、pilot 补测记录、`07_validation_report` §pilot。
 - 验收：8 张中 ≥6 张通过 holdout；≥3/4 族 LOCO 中位 ≤5 级；4 张重测 ≥3 张通过；控制卡被正确排除。
 - 依赖：G0。
