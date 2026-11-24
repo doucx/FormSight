@@ -6,7 +6,8 @@
 ## 项目速览
 
 - 技术栈：TypeScript + Preact + Vite + Vitest，包管理器为 **pnpm**。
-- 校验入口：`pnpm verify`（= `biome check .` + `tsc --noEmit` + `vitest run`）。
+- 校验入口：`pnpm verify`（= `biome check .` + `tsc --noEmit` + `node scripts/check-ts-smells.mjs` + `vitest run`）。
+  其中架构坏味道脚本只对生产代码的阻断子集（双重断言）返回非 0；咨询子集仅报告。
 - 测试位置：与源码同级的 `__tests__/` 目录，文件名 `*.test.ts(x)`。
 - 验证资产：`viska/`（入口说明见 `viska/README.md`）。
 - 门账：`viska/ledger.md` 记录“真实失败 → 守护检查 → 当前状态”。
@@ -83,7 +84,8 @@
 ```bash
 pnpm install          # 安装依赖
 pnpm dev              # 本地开发
-pnpm verify           # 提交前必跑：lint + 类型检查 + 全量单测
+pnpm verify           # 提交前必跑：lint + 类型检查 + 架构坏味道阻断子集 + 全量单测
+pnpm check:arch       # 单独查看架构坏味道阻断 / 咨询子集
 pnpm exec vitest run src/path/to/file.test.ts   # 单文件快速回归
 pnpm build            # 产物构建
 ```

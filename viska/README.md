@@ -22,7 +22,7 @@ viska 每天处理的对象是**改动**，不是模型。它回答一个问题�
 |---|---|
 | 靶场 | FormSight（单线程，同一时期只挂载一个仓库） |
 | 当前门 | Gate 1：改动可判定（W1 已完成，W2 进行中） |
-| 校验入口 | `pnpm verify` |
+| 校验入口 | `pnpm verify`（含 `scripts/check-ts-smells.mjs` 阻断子集） |
 | CI | `.github/workflows/ci.yml`，Push / PR 阻断 |
 | 门账 | [`ledger.md`](./ledger.md) |
 | 观测点 | `n1 / 2026-11-21 / 本地`（`n1` 是公开假名，真实机器映射只在本地基线中） |
@@ -31,7 +31,8 @@ viska 每天处理的对象是**改动**，不是模型。它回答一个问题�
 
 ```bash
 pnpm install          # 安装依赖
-pnpm verify           # 提交前必跑：biome + tsc + vitest
+pnpm verify           # 提交前必跑：biome + tsc + 架构阻断子集 + vitest
+pnpm check:arch       # 单独查看架构坏味道阻断 / 咨询子集
 pnpm exec vitest run src/storage/__tests__/planStorage.test.ts   # 单文件快速回归
 ```
 

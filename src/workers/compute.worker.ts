@@ -11,6 +11,16 @@ export interface WorkerResponse<T = unknown> {
   error?: string;
 }
 
+/**
+ * DOM lib 将 `self` 推断为 Window，但本文件运行在 DedicatedWorkerGlobalScope：
+ * postMessage 的第二参数是 transfer 列表，而不是 Window 的 options 对象。
+ */
+interface WorkerScope {
+  postMessage(message: WorkerResponse, transfer: unknown): void;
+}
+
+const workerScope = self as WorkerScope;
+
 // 1. LTTB 算法实现
 export interface LttbPoint {
   x: number;
@@ -194,7 +204,7 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       self.postMessage({ id, success: true, data: res } as WorkerResponse);
     } else if (action === 'heatmapBinning') {
       const res = heatmapBinningCompute(payload as HeatmapBinningInput);
-      (self as unknown as Worker).postMessage({ id, success: true, data: res } as WorkerResponse, [
+      workerScope.postMessage({ id, success: true, data: res } as WorkerResponse, [
         res.bins.buffer,
       ]);
     } else if (action === 'hueBiasAnalysis') {

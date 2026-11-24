@@ -61,7 +61,8 @@ class ComputeWorkerClient {
     payload: unknown,
   ): Promise<TResult> {
     if (!this.worker) {
-      return this.fallbackCompute<TResult>(action, payload);
+      // 降级路径与 Worker 响应同属一个未类型化的 action 边界，仅在此处收敛为 TResult
+      return this.fallbackCompute(action, payload) as Promise<TResult>;
     }
 
     const id = ++this.reqIdCounter;
@@ -78,13 +79,13 @@ class ComputeWorkerClient {
   /**
    * 当 Worker 不可用时的同构主线程降级运算
    */
-  private async fallbackCompute<TResult>(
+  private async fallbackCompute(
     action: WorkerRequest['action'],
     payload: unknown,
-  ): Promise<TResult> {
+  ): Promise<unknown> {
     if (action === 'lttb') {
       const { data, threshold } = payload as { data: LttbPoint[]; threshold: number };
-      return lttbDownsample(data, threshold) as unknown as TResult;
+      return lttbDownsample(data, threshold);
     }
 
     if (action === 'heatmapBinning') {
@@ -119,7 +120,7 @@ class ComputeWorkerClient {
         maxBinCount,
         avgDx: points.length > 0 ? totalDx / points.length : 0,
         avgDy: points.length > 0 ? totalDy / points.length : 0,
-      } as unknown as TResult;
+      };
     }
 
     if (action === 'hueBiasAnalysis') {
@@ -151,7 +152,7 @@ class ComputeWorkerClient {
         }
       }
 
-      return { pointData, maxBiasRange, sectorAverages } as unknown as TResult;
+      return { pointData, maxBiasRange, sectorAverages };
     }
 
     throw new Error(`Unsupported action: ${action}`);

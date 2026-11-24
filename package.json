@@ -7,10 +7,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "check": "biome check . && tsc --noEmit",
-    "verify": "biome check . && tsc --noEmit && vitest run",
+    "verify": "biome check . && tsc --noEmit && node scripts/check-ts-smells.mjs && vitest run",
     "checkf": "biome check --fix --unsafe . && tsc --noEmit",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "check:arch": "node scripts/check-ts-smells.mjs"
   },
   "dependencies": {
     "@preact/signals": "^2.11.1",

@@ -117,7 +117,7 @@ export interface CardManifest<TQuestion, THitResult, TAnswerVal, TSettings> {
 | 债务 | 现状 | 关闭条件 |
 |---|---|---|
 | `UnifiedTrialRecord.details` 类型黑洞 | `details?: Record<string, unknown>` + `[key: string]: unknown`，下游靠 `as` 断言 | 判别联合或每卡 `RecordDetails` 校验器落地；`rg "as \[" src/core/canvas/charts` 无输出 |
-| 架构检查脚本未入门禁 | `check-ts-smells` 报 42 处（12 error）不具备阻断条件；`audit-card-i18n` 当前崩溃；`check_imports` 只查可解析性 | 脚本先分流为"阻断子集 + 咨询子集"，再接入 `pnpm verify` |
+| 架构检查脚本未全部门禁 | `check-ts-smells` 已接入 `pnpm verify`：阻断子集（生产代码双重断言）为 0，31 处咨询（类型黑洞 / 巨型联合 / 测试代码中的 ERROR）仅报告；`audit-card-i18n` 当前崩溃；`check_imports` 只查可解析性 | `audit-card-i18n` 与 `check_imports` 完成分流并接入 `pnpm verify` |
 | 斜线投影逻辑重复 | `persp_prop_division` / `persp_prop_migration` 各写一份 | 抽共享纯函数且有测试 |
 | 颜色生成仍是拒绝采样 | 触顶时可能输出越界或低彩度题 | 改为参数区间解析采样，附种子化断言 |
 | 画布图表文案残留硬编码 | 多数已改参数注入 | 绘制函数不再读取词典单例 |
@@ -125,7 +125,8 @@ export interface CardManifest<TQuestion, THitResult, TAnswerVal, TSettings> {
 ## 9. 检查方式
 
 ```bash
-pnpm verify     # biome check . && tsc --noEmit && vitest run（当前唯一门禁）
+pnpm verify      # biome check . && tsc --noEmit && node scripts/check-ts-smells.mjs && vitest run
+pnpm check:arch  # 单独查看架构坏味道阻断 / 咨询子集
 ```
 
-`pnpm verify` **不**运行 `scripts/` 下的架构脚本。在它们被分流并接入之前，本文的边界约束属于"约定"，不是"门禁"。评审时按本文人工检查；写入 HAP 的约束记录用 anchor 指向本文与对应代码面。
+`pnpm verify` 运行 `scripts/check-ts-smells.mjs`，但只有生产代码中的双重断言（阻断子集）会让它返回非 0；类型黑洞、巨型联合与测试代码中的断言属于咨询子集，只报告不阻断。`scripts/` 下的其余架构脚本（`audit-card-i18n`、`check_imports`）尚未接入，本文对应的边界约束仍属于"约定"，评审时按本文人工检查；写入 HAP 的约束记录用 anchor 指向本文与对应代码面。

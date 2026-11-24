@@ -3,6 +3,12 @@ import enUSGlobal from '../locales/en-US.json';
 import zhCNGlobal from '../locales/zh-CN.json';
 
 export type LocaleDictionary = Record<string, unknown>;
+type TemplateParams = Record<string, string | number>;
+
+function interpolate(text: string, params?: TemplateParams): string {
+  if (!params) return text;
+  return text.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`));
+}
 
 function getSavedLocale(): string {
   return 'zh-CN';
@@ -72,32 +78,28 @@ class I18nManager {
     }
   }
 
-  /** 核心翻译查表方法，支持深层路径解析、数组透传与模板插值 */
-  public t = <T = string>(key: string, params?: Record<string, string | number>): T => {
-    const activeDict =
-      this.dictionaries[this.currentLocale] || this.dictionaries[this.fallbackLocale] || {};
-    const result =
-      this.resolvePath(activeDict, key) ??
-      this.resolvePath(this.dictionaries[this.fallbackLocale], key);
-
-    if (Array.isArray(result)) {
-      if (!params) return result as unknown as T;
-      return result.map((item) =>
-        typeof item === 'string'
-          ? item.replace(/\{\{(\w+)\}\}/g, (_, match) => String(params[match] ?? `{{${match}}}`))
-          : item,
-      ) as unknown as T;
-    }
-
-    if (typeof result !== 'string') {
-      return key as unknown as T;
-    }
-
-    if (!params) return result as unknown as T;
-    return result.replace(/\{\{(\w+)\}\}/g, (_, match) =>
-      String(params[match] ?? `{{${match}}}`),
-    ) as unknown as T;
+  /** 核心翻译查表方法，支持深层路径解析与模板插值 */
+  public t = (key: string, params?: TemplateParams): string => {
+    const result = this.lookup(key);
+    if (typeof result !== 'string') return key;
+    return interpolate(result, params);
   };
+
+  /** 数组型词典（如月份名称）查表；未命中或非数组时返回 undefined，由调用方兜底 */
+  public tArray = (key: string, params?: TemplateParams): string[] | undefined => {
+    const result = this.lookup(key);
+    if (!Array.isArray(result)) return undefined;
+    return result.map((item) =>
+      typeof item === 'string' ? interpolate(item, params) : String(item),
+    );
+  };
+
+  private lookup(key: string): unknown {
+    return (
+      this.resolvePath(this.dictionaries[this.currentLocale], key) ??
+      this.resolvePath(this.dictionaries[this.fallbackLocale], key)
+    );
+  }
 
   private resolvePath(obj: unknown, path: string): unknown {
     if (!obj || typeof obj !== 'object') return undefined;
@@ -123,6 +125,7 @@ export function useTranslation() {
 
   return {
     t: i18n.t,
+    tArray: i18n.tArray,
     locale: currentLocale,
     setLocale: (locale: string) => i18n.setLocale(locale),
   };
@@ -149,16 +152,13 @@ export function getCardDesc(card: { id: string; desc?: string }, t = i18n.t): st
 /**
  * 卡片局部翻译 Hook，优先查找 `cards.<cardId>.<key>`，未命中时自动回退到全局词典
  */
-export type ScopedTranslator = <T = string>(
-  key: string,
-  params?: Record<string, string | number>,
-) => T;
+export type ScopedTranslator = (key: string, params?: TemplateParams) => string;
 
 /**
  * 为非 React 组件（纯函数、Canvas 渲染、计算模块）提供带卡片作用域的翻译器
  */
 export function createScopedTranslator(cardId: string): ScopedTranslator {
-  return <T = string>(key: string, params?: Record<string, string | number>): T => {
+  return (key, params) => {
     const isExplicitGlobal =
       key.startsWith('cards.') ||
       key.startsWith('common.') ||
@@ -170,14 +170,14 @@ export function createScopedTranslator(cardId: string): ScopedTranslator {
       key.startsWith('home.');
 
     if (isExplicitGlobal) {
-      return i18n.t<T>(key, params);
+      return i18n.t(key, params);
     }
 
     const cardKey = `cards.${cardId}.${key.replace(/^\./, '')}`;
-    const result = i18n.t<T>(cardKey, params);
+    const result = i18n.t(cardKey, params);
 
-    if (typeof result === 'string' && result === cardKey) {
-      return i18n.t<T>(key, params);
+    if (result === cardKey) {
+      return i18n.t(key, params);
     }
 
     return result;

@@ -104,7 +104,7 @@ export function PlanLibraryDrawer({
                 <Button
                   variant="ghost"
                   size="iconSm"
-                  onClick={(e) => onToggleFavorite(p.id, e as unknown as MouseEvent)}
+                  onClick={(e) => onToggleFavorite(p.id, e)}
                   className={`rounded-xl ${
                     isFav ? 'text-amber-500' : 'text-muted-foreground hover:text-foreground'
                   }`}
@@ -116,7 +116,7 @@ export function PlanLibraryDrawer({
                 <Button
                   variant={isPendingDelete ? 'danger' : 'ghost'}
                   size="iconSm"
-                  onClick={(e) => handleDeleteClick(p.id, e as unknown as MouseEvent)}
+                  onClick={(e) => handleDeleteClick(p.id, e)}
                   className={`rounded-xl ${
                     isPendingDelete
                       ? 'animate-pulse'

@@ -21,7 +21,7 @@ const TOTAL_WEEKS = 53;
 const TOOLTIP_HALF_WIDTH = 85; // 浮窗安全半宽估算值 (px)
 
 export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
-  const { t } = useTranslation();
+  const { t, tArray } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const matrixContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -44,7 +44,7 @@ export function ActivityHeatmapCard({ heatmapData }: ActivityHeatmapCardProps) {
   }, [heatmapData]);
 
   // 2. 解析多语言月份数组
-  const rawMonths = t<string[]>('stats.heatmapMonths');
+  const rawMonths = tArray('stats.heatmapMonths');
   const monthNames = useMemo(() => {
     if (Array.isArray(rawMonths)) return rawMonths;
     return ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
