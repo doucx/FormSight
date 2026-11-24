@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	13	6	0	-	RUN R11: extract finish/level/key decisions to pure functions and add three hook regressions	STALE-ANCHOR	-
+root	14	6	0	-	RUN R12: adaptiveEngine/i18n pure units, three clean verify runs, ledger summary refresh and hap_check	STALE-ANCHOR	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	2	5	0	-	-	STALE-ANCHOR	-

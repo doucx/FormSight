@@ -6,6 +6,7 @@ import { isDuplicateTrialRecordError } from '../storage/db/queries';
 import { type AdaptiveMode, type StepGranularity, getSettingsSnapshot } from '../storage/settings';
 import { showToast } from '../stores/toastStore';
 import { playHitSound, playMissSound } from '../utils/sound';
+import { decideFinishBranch } from './session/sessionDecisions';
 import { useIdleProtection } from './session/useIdleProtection';
 import { useTrainingKeybindings } from './session/useTrainingKeybindings';
 
@@ -297,26 +298,32 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   );
 
   const handleRequestFinish = useCallback(async () => {
-    if (sessionType === 'sandbox') {
+    const branch = decideFinishBranch({
+      sessionType,
+      targetLimitTrials,
+      totalTrials,
+      hasTargetLimitHandler: Boolean(onTargetLimitReached),
+      hasEarlyExitHandler: Boolean(onEarlyExit),
+      hasHistory: sessionHistory.length > 0,
+      showSummaryModal,
+    });
+
+    if (branch === 'exit') {
+      if (sessionType !== 'sandbox') {
+        await saveCurrentSession(totalTrials, hitTrials, true);
+      }
       onExit();
       return;
     }
-    if (targetLimitTrials && totalTrials >= targetLimitTrials && onTargetLimitReached) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onTargetLimitReached(sessionHistory);
-      return;
-    }
-    if (onEarlyExit) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onEarlyExit(sessionHistory);
-      return;
-    }
-    if (sessionHistory.length > 0 && !showSummaryModal) {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      setShowSummaryModal(true);
+
+    await saveCurrentSession(totalTrials, hitTrials, true);
+
+    if (branch === 'target-limit') {
+      onTargetLimitReached?.(sessionHistory);
+    } else if (branch === 'early-exit') {
+      onEarlyExit?.(sessionHistory);
     } else {
-      await saveCurrentSession(totalTrials, hitTrials, true);
-      onExit();
+      setShowSummaryModal(true);
     }
   }, [
     sessionType,

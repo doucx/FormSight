@@ -38,6 +38,9 @@
 | G1-14 | FormSight | 语言选择只写 IndexedDB，启动后 i18n 仍为默认 locale（修复 `2a438a5`） | `src/storage/__tests__/localePersistence.test.ts`（存取 + 启动同步 + 卡片级不覆盖） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-15 | FormSight | 揭晓答案后用户点无论命中与否都画 miss 色，视觉上永远答错（修复 `68fcfbf`） | `src/cards/__tests__/hitFeedback.test.ts`（hit/miss/未揭晓三态） | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 | G1-16 | FormSight | 按钮变体缺透明边框占位与 `transition-all` 插值导致暗色切换闪烁（修复 `b614c7c`） | `src/components/__tests__/buttonVariants.test.ts` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-17 | FormSight | 计划训练点击返回误走单卡总结分支（修复 `0d2d6d0`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::decideFinishBranch` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-18 | FormSight | 跳过阶段后总结层阶写死为 Lvl 5，忽略阶段初始层阶（修复 `a909848`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::computeStageLevels` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-19 | FormSight | Esc 与退出按钮行为不一致，Esc 直接结束当前阶段（修复 `751b186`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::mapKeyToAction` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。

@@ -1,5 +1,6 @@
 import { ArrowRight, Award, Clock, Home, Layers, RotateCcw, Zap } from 'lucide-preact';
 import { getCardTitle, useTranslation } from '../../core/i18n';
+import { computePeakLevel, computeStageLevels } from '../../hooks/session/sessionDecisions';
 import type { CardDefinition } from '../../types/card';
 import { formatSecondsToTimer } from '../../utils/time';
 import { ModalShell } from '../common/ModalShell';
@@ -34,12 +35,8 @@ export function PlanSummaryModal({
   const allHistory = stageResults.flatMap((s) => s.history);
   const totalTrials = allHistory.length;
 
-  // 统计各阶段的最终层阶与峰值
-  const endLevels = stageResults.map((s) => {
-    if (s.history.length === 0) return s.initialLevel ?? 5;
-    return s.history[s.history.length - 1].levelAfter;
-  });
-  const peakLevelAchieved = endLevels.length > 0 ? Math.max(...endLevels) : 5;
+  // 统计各阶段的最终层阶与峰值（跳过阶段回落 initialLevel）
+  const peakLevelAchieved = computePeakLevel(stageResults);
 
   const subTitle = t('common.planSummaryCompleted', {
     name: planName,
@@ -98,13 +95,7 @@ export function PlanSummaryModal({
           </div>
           <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
             {stageResults.map((stage, idx) => {
-              const fallbackLvl = stage.initialLevel ?? 5;
-              const startLvl =
-                stage.history.length > 0 ? stage.history[0].levelBefore : fallbackLvl;
-              const endLvl =
-                stage.history.length > 0
-                  ? stage.history[stage.history.length - 1].levelAfter
-                  : fallbackLvl;
+              const { startLevel: startLvl, endLevel: endLvl } = computeStageLevels(stage);
               const Icon = stage.card.icon;
               const cardTitle = getCardTitle(stage.card, t);
 

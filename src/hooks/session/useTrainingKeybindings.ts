@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { mapKeyToAction } from './sessionDecisions';
 
 export interface UseTrainingKeybindingsOptions {
   isIdle: boolean;
@@ -41,42 +42,46 @@ export function useTrainingKeybindings({
         return;
       }
 
-      // 沙盒专属快捷键 (R 换题, [ / ] 调级, I 检查器)
-      if (isSandbox) {
-        if (e.key === 'r' || e.key === 'R') {
+      const action = mapKeyToAction({
+        key: e.key,
+        code: e.code,
+        isIdle,
+        showAnswer,
+        isFinished,
+        isSandbox,
+      });
+
+      switch (action) {
+        case 'resume':
+          e.preventDefault();
+          onResumeFromIdle();
+          break;
+        case 'regenerate':
           e.preventDefault();
           onRegenerate?.();
-          return;
-        }
-        if (e.key === '[') {
+          break;
+        case 'adjust-down':
           e.preventDefault();
           onAdjustLevel?.(-1);
-          return;
-        }
-        if (e.key === ']') {
+          break;
+        case 'adjust-up':
           e.preventDefault();
           onAdjustLevel?.(1);
-          return;
-        }
-        if (e.key === 'i' || e.key === 'I') {
+          break;
+        case 'inspector':
           e.preventDefault();
           onToggleInspector?.();
-          return;
-        }
-      }
-
-      if (e.code === 'Space' || e.key === ' ') {
-        if (showAnswer) {
+          break;
+        case 'next':
           e.preventDefault();
-          if (!isFinished) {
-            onNextQuestion();
-          } else {
-            onRequestFinish();
-          }
-        }
-      } else if (e.code === 'Escape' || e.key === 'Escape') {
-        e.preventDefault();
-        onRequestFinish();
+          onNextQuestion();
+          break;
+        case 'finish':
+          e.preventDefault();
+          onRequestFinish();
+          break;
+        default:
+          break;
       }
     };
 
