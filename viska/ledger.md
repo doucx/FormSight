@@ -31,6 +31,7 @@
 | G1-07 | FormSight | `audit-card-i18n.mjs` 在卡片缺少 `locales/` 时返回数组却被解构，确定性抛 `localeIssues is not iterable`，i18n 架构契约完全无法进门禁 | `scripts/__tests__/audit-card-i18n.test.ts` + `pnpm verify`（`node scripts/audit-card-i18n.mjs` 阻断） | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 | G1-08 | FormSight | `check_imports.py` 只查可解析性且未接入 verify；`check-i18n.mjs` 可运行但无人执行，卡片越界与缺失 key 均静默 | `scripts/__tests__/check-imports.test.ts`、`scripts/__tests__/check-i18n.test.ts` + `pnpm verify`（`--resolve-only` 阻断解析，越界告警） | L3 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-09 | FormSight | 卡片 manifest 五段契约无自动守卫：id/目录漂移、标签越出封闭联合、engine/ui 缺函数、分析 key 未 qualify 都只能靠评审发现 | `src/cards/__tests__/manifest-contract.test.ts`、`src/core/__tests__/registry.test.ts` | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-10 | FormSight | 既有 locale 测试只比较顶层 key；嵌套层级缺失时静默回退原文，标签 i18nKey 无解析守卫 | `src/cards/__tests__/locales-symmetry.test.ts`（全局/每卡递归对称 + 标签双语解析） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。

@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	9	6	0	-	RUN R7: recursive zh/en locale symmetry for global and every card, plus tag i18nKey resolution	-	-
+root	10	6	0	-	RUN R8: details key collision contract, backup top-level shape golden, DB upgrade path test	-	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	2	5	0	-	-	STALE-ANCHOR	-

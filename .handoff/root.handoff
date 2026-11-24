@@ -1,4 +1,4 @@
-# HAP 0.3 scope:root rev:9 session:s_32TJZ07EM93D4WTTFN4GZK6EM6 base:98e58d9a26a5cd53eec92757bd889b567d808032 updated:2026-11-24T06:56:37Z
+# HAP 0.3 scope:root rev:10 session:s_32TJZ07EM93D4WTTFN4GZK6EM6 base:5b6555d9f775a56aa04c7a1a777925819f6e6d74 updated:2026-11-24T06:57:42Z
 
 [KERNEL]
 DECISION	D9CATZQCZ	ARCH	-	cards live flat at src/cards/<id>; no pack, domain-group, or _shared layer	adr=docs/decisions/0001-flat-cards.md	anchor=src/cards/star_single/index.tsx@d7846fd6	revisit_when=event:card_grouping_dir_added	why=two grouping attempts turned shared dirs back into pack ownership; cards are added one at a time
@@ -6,6 +6,6 @@ DECISION	DEY58D6PV	COMPAT	-	v0.x is the only cheap window for destructive field 
 DECISION	D0CQ19BJZ	ARCH	-	cards reach host code only through @formsight/card-sdk; no relative import escapes src/cards	anchor=src/card-sdk/index.ts@f01a9f03	revisit_when=event:deep_import_in_cards	why=the SDK facade keeps card directories movable and generatable; deep imports recreate the central coupling packs had
 DECISION	DRAAJJHRK	ARCH	-	tag vocabulary is closed in four facets plus status and derived feature; new values edit types, registry, and locales	anchor=src/types/card.ts@8b646ae4	revisit_when=event:free_form_tag_added	why=old target/skill axes overlapped so filters could not be exclusive; a closed union lets filter UI and i18n enumerate
 DECISION	D6SPCQ8Z5	ARCH	-	session finish/level/key decisions are pure functions in src/hooks/session/sessionDecisions.ts; no jsdom or testing-library dependency	adr=docs/decisions/0007-session-pure-decisions.md	anchor=docs/decisions/0007-session-pure-decisions.md@d2086a91	revisit_when=event:hook_test_runtime_adopted	why=three real regressions live only in the hook, and the node test environment cannot reach them without changing public test config
-NEXT	N9WB830GV	-	-	RUN R7: recursive zh/en locale symmetry for global and every card, plus tag i18nKey resolution	anchor=src/cards/__tests__/locales-schema.test.ts@630d5f06
+NEXT	N14A13AC6	-	-	RUN R8: details key collision contract, backup top-level shape golden, DB upgrade path test	anchor=src/storage/db/queries.ts@1c4047b7
 
 [SANDBOX]
