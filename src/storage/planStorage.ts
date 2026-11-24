@@ -283,6 +283,14 @@ export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan 
       return null;
     }
 
+    // 与 loadPlanStorageState 的自愈路径保持一致：导入即过滤未注册卡片
+    const validItems = (planData.items as Array<{ cardId: string; targetTrials?: number }>).filter(
+      (item) => Boolean(registry.getCardById(item.cardId)),
+    );
+    if (validItems.length === 0) {
+      return null;
+    }
+
     const newId = `plan_imported_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const importedPlan: TrainingPlan = {
       id: newId,
@@ -292,7 +300,7 @@ export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan 
       description: planData.description || i18n.t('common.importedPlanDesc'),
       isFavorite: true,
       isBuiltin: false,
-      items: planData.items.map((item: { cardId: string; targetTrials?: number }) => ({
+      items: validItems.map((item) => ({
         id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         cardId: item.cardId,
         targetTrials: item.targetTrials || 20,

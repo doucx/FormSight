@@ -27,6 +27,7 @@
 | G1-03 | FormSight | 备份导入只校验 `appName` 与数组形状：非法元素的同步 `DataError` 不会中止已排队的 `clear()`，导入返回失败但 7 张表已被清空（ADR 0005） | `src/storage/__tests__/importExport.test.ts`（校验器 + 失败零副作用） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-04 | FormSight | `saveTrialRecord` 对 records 幂等、对日聚合与档案累加；同一 `record.id` 重放会静默双计 | `src/storage/__tests__/trialRecord.idempotency.test.ts`（显式拒绝 + 聚合零写入） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-05 | FormSight | 导入重建 `daily_summaries` 用「12 小时内沿用上一条日期」启发式且假设时间有序，跨本地午夜记录被合并到前一天 | `src/storage/__tests__/dailySummaryRegeneration.test.ts`（午夜/乱序/多卡/自带聚合优先） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-06 | FormSight | `importPlanFromJson` 不过滤未注册卡片，与 `loadPlanStorageState` 自愈路径不对称，返回内存对象带悬空阶段 | `src/storage/__tests__/planLifecycle.test.ts`（导入过滤 + 激活 id/删除/克隆不变） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。
