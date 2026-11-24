@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearAllData, exportAllData, importAllData } from '../../storage/db';
 import { getTrialRecordsByCard, saveTrialRecord } from '../../storage/db/queries';
 import { DB_VERSION, getDB } from '../../storage/db/schema';
@@ -63,8 +63,15 @@ async function snapshot() {
 }
 
 describe('importExport 备份导入契约 (G1-03)', () => {
+  // 失败路径用例会主动触发 importAllData 的错误日志；此处收口 stderr，
+  // 断言本身不变。生产代码仍保留 console.error 供真实导入排查。
   beforeEach(async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await clearAllData();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('接受结构完整的备份并原样恢复记录', async () => {

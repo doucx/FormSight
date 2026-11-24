@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { clearAllData, importAllData } from '../../storage/db';
 import { getDailySummaries } from '../../storage/db/queries';
 import { DB_VERSION } from '../../storage/db/schema';
@@ -42,8 +42,15 @@ function makeBundle(records: unknown[]) {
 }
 
 describe('导入时重建 daily_summaries (G1-05)', () => {
+  // 失败路径用例会主动触发 importAllData 的错误日志；此处收口 stderr，
+  // 断言本身不变。生产代码仍保留 console.error 供真实导入排查。
   beforeEach(async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
     await clearAllData();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('跨本地午夜的两条记录分别落到各自日期', async () => {
