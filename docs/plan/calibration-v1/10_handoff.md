@@ -7,7 +7,7 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-11-24 |
-| Gate | **G0（文档已建，待合并验证）** |
+| Gate | **G0 已通过（S00 合入 `develop`）** |
 | 上次会话 | S00 |
 | 下一步 | **S01**：写 `06`/`08`/`09`/`12`/`13`，跑 8 张试点先验 |
 | Blocker | 无；S02 需要你补测 `star_single` / `star_double_r` 各 30 题 |
@@ -61,11 +61,13 @@ S01：
 | 名称 | 版本 | 说明 |
 |---|---|---|
 | 数据快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
-| 代码基线 | `develop` @ `4374acd` | S00 分支 `plan/calibration-v1` |
+| 代码基线 | `develop` @ `6c4e179` | S00 已合并；tag `calib-plan-v1` |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 | 验证报告 | 未生成 | G1/G2/G5 更新 |
 
 ## 本次会话的验证
 
-- 文档-only；提交后跑 `pnpm verify`。
-- 确认 `docs/plan` 未被 biome/tsc 误扫；若被扫到，加 ignore（记录在 `13`）。
+- `pnpm verify` 通过：42 个测试文件 / 454 个用例 / 3.85s（总耗时约 8.8s）。
+- 文档-only，无代码改动。
+- `docs/plan` 未被 biome/tsc 误扫，暂不需要加 ignore。
+- `plan/calibration-v1` 已合并进 `develop`，可删除分支；保留 tag 即可。
