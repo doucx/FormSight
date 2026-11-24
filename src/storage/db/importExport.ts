@@ -30,20 +30,145 @@ export interface FormSightExportBundle {
   planStorageState?: PlanStorageState;
 }
 
-/**
- * 校验备份数据是否符合规范结构
- */
-function validateImportBundle(data: unknown): data is FormSightExportBundle {
-  if (!data || typeof data !== 'object') return false;
-  const bundle = data as Record<string, unknown>;
+type UnknownRecord = Record<string, unknown>;
 
-  if (bundle.appName !== 'FormSight') {
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || isString(value);
+}
+
+function isOptionalRecord(value: unknown): boolean {
+  return value === undefined || isRecord(value);
+}
+
+function isSessionElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.cardId) &&
+    isOptionalString(value.domain) &&
+    (value.type === 'training' || value.type === 'benchmark') &&
+    isFiniteNumber(value.startTimestamp) &&
+    isFiniteNumber(value.endTimestamp) &&
+    isFiniteNumber(value.totalTrials) &&
+    isFiniteNumber(value.hitTrials) &&
+    isFiniteNumber(value.startLevel) &&
+    isFiniteNumber(value.endLevel)
+  );
+}
+
+function isRecordElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.sessionId) &&
+    isString(value.cardId) &&
+    isOptionalString(value.domain) &&
+    isFiniteNumber(value.timestamp) &&
+    isFiniteNumber(value.difficultyLevel) &&
+    typeof value.isHit === 'boolean' &&
+    isFiniteNumber(value.responseTimeMs) &&
+    isOptionalRecord(value.details)
+  );
+}
+
+function isProfileElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.cardId) &&
+    isOptionalString(value.domain) &&
+    isFiniteNumber(value.currentLevel) &&
+    isFiniteNumber(value.bestLevel) &&
+    isFiniteNumber(value.totalTrials) &&
+    isFiniteNumber(value.totalHits) &&
+    isFiniteNumber(value.updatedAt)
+  );
+}
+
+function isDailySummaryElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.date) &&
+    isString(value.cardId) &&
+    isOptionalString(value.domain) &&
+    isFiniteNumber(value.totalCount) &&
+    isFiniteNumber(value.hitCount) &&
+    isFiniteNumber(value.totalTimeMs) &&
+    isFiniteNumber(value.maxLevel) &&
+    isFiniteNumber(value.minLevel) &&
+    isFiniteNumber(value.lastLevel) &&
+    isFiniteNumber(value.updatedAt)
+  );
+}
+
+function isPlanItemElement(value: unknown): boolean {
+  return isRecord(value) && isString(value.cardId) && isFiniteNumber(value.targetTrials);
+}
+
+function isPlanStorageState(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.activePlanId) &&
+    Array.isArray(value.plans) &&
+    value.plans.every((plan) => isRecord(plan) && isString(plan.id) && Array.isArray(plan.items))
+  );
+}
+
+function isTrainingPlan(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    Array.isArray(value.items) &&
+    value.items.every(isPlanItemElement) &&
+    isFiniteNumber(value.updatedAt)
+  );
+}
+
+/**
+ * 校验备份数据是否符合规范结构（ADR 0005）
+ *
+ * 必须在清空事务之前完成全量校验：put() 的同步 DataError 不会中止已排队的 clear()。
+ */
+export function validateImportBundle(data: unknown): data is FormSightExportBundle {
+  if (!isRecord(data)) return false;
+
+  if (data.appName !== 'FormSight') return false;
+  const version = data.version;
+  if (typeof version !== 'number' || !Number.isInteger(version)) return false;
+  if (version < 0 || version > DB_VERSION) return false;
+
+  if (data.sessions !== undefined && !Array.isArray(data.sessions)) return false;
+  if (data.records !== undefined && !Array.isArray(data.records)) return false;
+  if (data.profiles !== undefined && !Array.isArray(data.profiles)) return false;
+  if (data.dailySummaries !== undefined && !Array.isArray(data.dailySummaries)) return false;
+
+  const sessions = data.sessions as unknown[] | undefined;
+  const records = data.records as unknown[] | undefined;
+  const profiles = data.profiles as unknown[] | undefined;
+  const dailySummaries = data.dailySummaries as unknown[] | undefined;
+
+  if (sessions && !sessions.every(isSessionElement)) return false;
+  if (records && !records.every(isRecordElement)) return false;
+  if (profiles && !profiles.every(isProfileElement)) return false;
+  if (dailySummaries && !dailySummaries.every(isDailySummaryElement)) return false;
+
+  if (data.settings !== undefined && !isRecord(data.settings)) return false;
+  if (data.trainingPlan !== undefined && !isTrainingPlan(data.trainingPlan)) return false;
+  if (data.planStorageState !== undefined && !isPlanStorageState(data.planStorageState)) {
     return false;
   }
-
-  if (bundle.sessions && !Array.isArray(bundle.sessions)) return false;
-  if (bundle.records && !Array.isArray(bundle.records)) return false;
-  if (bundle.profiles && !Array.isArray(bundle.profiles)) return false;
 
   return true;
 }
@@ -163,150 +288,155 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       'readwrite',
     );
 
-    // 0. 清空现有所有表
-    await tx.objectStore('sessions').clear();
-    await tx.objectStore('records').clear();
-    await tx.objectStore('user_profiles').clear();
-    await tx.objectStore('daily_summaries').clear();
-    await tx.objectStore('app_settings').clear();
-    await tx.objectStore('training_plans').clear();
-    await tx.objectStore('app_metadata').clear();
+    try {
+      // 0. 清空现有所有表
+      await tx.objectStore('sessions').clear();
+      await tx.objectStore('records').clear();
+      await tx.objectStore('user_profiles').clear();
+      await tx.objectStore('daily_summaries').clear();
+      await tx.objectStore('app_settings').clear();
+      await tx.objectStore('training_plans').clear();
+      await tx.objectStore('app_metadata').clear();
 
-    const cardDomainCache = new Map<string, string>();
-    const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
-      const cached = cardDomainCache.get(cardId);
-      if (cached !== undefined) return cached;
-      const card = registry.getCardById(cardId);
-      const domain = card ? card.domain : fallbackDomain || 'core';
-      cardDomainCache.set(cardId, domain);
-      return domain;
-    };
+      const cardDomainCache = new Map<string, string>();
+      const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
+        const cached = cardDomainCache.get(cardId);
+        if (cached !== undefined) return cached;
+        const card = registry.getCardById(cardId);
+        const domain = card ? card.domain : fallbackDomain || 'core';
+        cardDomainCache.set(cardId, domain);
+        return domain;
+      };
 
-    // 1. 恢复 sessions
-    if (parsed.sessions && parsed.sessions.length > 0) {
-      const sessionStore = tx.objectStore('sessions');
-      for (const s of parsed.sessions) {
-        s.domain = getCachedDomain(s.cardId, s.domain);
-        await sessionStore.put(s);
-      }
-    }
-
-    // 2. 恢复 profiles
-    if (parsed.profiles && parsed.profiles.length > 0) {
-      const profileStore = tx.objectStore('user_profiles');
-      for (const p of parsed.profiles) {
-        p.domain = getCachedDomain(p.cardId, p.domain);
-        p.totalTrials = p.totalTrials ?? 0;
-        await profileStore.put(p);
-      }
-    }
-
-    // 3. 恢复 records
-    if (parsed.records && parsed.records.length > 0) {
-      const recordStore = tx.objectStore('records');
-      for (let i = 0; i < parsed.records.length; i++) {
-        const r = parsed.records[i];
-        r.domain = getCachedDomain(r.cardId, r.domain);
-        await recordStore.put(r);
-      }
-    }
-
-    // 4. 恢复 daily_summaries
-    if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
-      const dailyStore = tx.objectStore('daily_summaries');
-      for (const d of parsed.dailySummaries) {
-        d.domain = getCachedDomain(d.cardId, d.domain);
-        await dailyStore.put(d);
-      }
-    } else if (parsed.records && parsed.records.length > 0) {
-      const summaryMap = new Map<string, DailySummaryData>();
-      let lastTimestamp = -1;
-      let lastDateStr = '';
-
-      for (const r of parsed.records) {
-        const domain = getCachedDomain(r.cardId, r.domain);
-
-        let dateStr = lastDateStr;
-        if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
-          dateStr = getLocalDateString(r.timestamp);
-          lastTimestamp = r.timestamp;
-          lastDateStr = dateStr;
+      // 1. 恢复 sessions
+      if (parsed.sessions && parsed.sessions.length > 0) {
+        const sessionStore = tx.objectStore('sessions');
+        for (const s of parsed.sessions) {
+          s.domain = getCachedDomain(s.cardId, s.domain);
+          await sessionStore.put(s);
         }
+      }
 
-        const summaryId = `${dateStr}_${r.cardId}`;
-        const respMs = Number(r.responseTimeMs) || 0;
-        const level = Number(r.difficultyLevel) || 1;
+      // 2. 恢复 profiles
+      if (parsed.profiles && parsed.profiles.length > 0) {
+        const profileStore = tx.objectStore('user_profiles');
+        for (const p of parsed.profiles) {
+          p.domain = getCachedDomain(p.cardId, p.domain);
+          p.totalTrials = p.totalTrials ?? 0;
+          await profileStore.put(p);
+        }
+      }
 
-        const existing = summaryMap.get(summaryId);
-        if (!existing) {
-          summaryMap.set(summaryId, {
-            id: summaryId,
-            date: dateStr,
-            cardId: r.cardId,
-            domain,
-            totalCount: 1,
-            hitCount: r.isHit ? 1 : 0,
-            totalTimeMs: respMs,
-            maxLevel: level,
-            minLevel: level,
-            lastLevel: level,
-            updatedAt: r.timestamp,
-          });
-        } else {
-          existing.domain = domain;
-          existing.totalCount += 1;
-          if (r.isHit) existing.hitCount += 1;
-          existing.totalTimeMs += respMs;
-          existing.maxLevel = Math.max(existing.maxLevel, level);
-          existing.minLevel = Math.min(existing.minLevel, level);
-          if (r.timestamp >= existing.updatedAt) {
-            existing.lastLevel = level;
-            existing.updatedAt = r.timestamp;
+      // 3. 恢复 records
+      if (parsed.records && parsed.records.length > 0) {
+        const recordStore = tx.objectStore('records');
+        for (let i = 0; i < parsed.records.length; i++) {
+          const r = parsed.records[i];
+          r.domain = getCachedDomain(r.cardId, r.domain);
+          await recordStore.put(r);
+        }
+      }
+
+      // 4. 恢复 daily_summaries
+      if (parsed.dailySummaries && parsed.dailySummaries.length > 0) {
+        const dailyStore = tx.objectStore('daily_summaries');
+        for (const d of parsed.dailySummaries) {
+          d.domain = getCachedDomain(d.cardId, d.domain);
+          await dailyStore.put(d);
+        }
+      } else if (parsed.records && parsed.records.length > 0) {
+        const summaryMap = new Map<string, DailySummaryData>();
+        let lastTimestamp = -1;
+        let lastDateStr = '';
+
+        for (const r of parsed.records) {
+          const domain = getCachedDomain(r.cardId, r.domain);
+
+          let dateStr = lastDateStr;
+          if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
+            dateStr = getLocalDateString(r.timestamp);
+            lastTimestamp = r.timestamp;
+            lastDateStr = dateStr;
+          }
+
+          const summaryId = `${dateStr}_${r.cardId}`;
+          const respMs = Number(r.responseTimeMs) || 0;
+          const level = Number(r.difficultyLevel) || 1;
+
+          const existing = summaryMap.get(summaryId);
+          if (!existing) {
+            summaryMap.set(summaryId, {
+              id: summaryId,
+              date: dateStr,
+              cardId: r.cardId,
+              domain,
+              totalCount: 1,
+              hitCount: r.isHit ? 1 : 0,
+              totalTimeMs: respMs,
+              maxLevel: level,
+              minLevel: level,
+              lastLevel: level,
+              updatedAt: r.timestamp,
+            });
+          } else {
+            existing.domain = domain;
+            existing.totalCount += 1;
+            if (r.isHit) existing.hitCount += 1;
+            existing.totalTimeMs += respMs;
+            existing.maxLevel = Math.max(existing.maxLevel, level);
+            existing.minLevel = Math.min(existing.minLevel, level);
+            if (r.timestamp >= existing.updatedAt) {
+              existing.lastLevel = level;
+              existing.updatedAt = r.timestamp;
+            }
           }
         }
-      }
 
-      const dailyStore = tx.objectStore('daily_summaries');
-      for (const summary of summaryMap.values()) {
-        await dailyStore.put(summary);
-      }
-    }
-
-    // 5. 恢复 app_settings
-    const settingsStore = tx.objectStore('app_settings');
-    const defaultCards = buildDefaultCardSettings();
-    const restoredSettings: UserSettings = parsed.settings
-      ? {
-          global: { ...DEFAULT_SETTINGS.global, ...(parsed.settings.global || {}) },
-          cards: { ...defaultCards, ...(parsed.settings.cards || {}) },
+        const dailyStore = tx.objectStore('daily_summaries');
+        for (const summary of summaryMap.values()) {
+          await dailyStore.put(summary);
         }
-      : {
-          global: { ...DEFAULT_SETTINGS.global },
-          cards: defaultCards,
-        };
-    await settingsStore.put(restoredSettings, 'global_settings');
-
-    // 6. 恢复 training_plans 与 activePlanId
-    const planStore = tx.objectStore('training_plans');
-    const metaStore = tx.objectStore('app_metadata');
-
-    if (parsed.planStorageState && Array.isArray(parsed.planStorageState.plans)) {
-      for (const p of parsed.planStorageState.plans) {
-        await planStore.put(p);
       }
-      await metaStore.put(parsed.planStorageState.activePlanId, 'active_plan_id');
-    } else if (parsed.trainingPlan) {
-      await planStore.put(parsed.trainingPlan);
-      await metaStore.put(parsed.trainingPlan.id, 'active_plan_id');
-    } else {
-      const defaultPlans = getDefaultPlans();
-      for (const p of defaultPlans) {
-        await planStore.put(p);
+
+      // 5. 恢复 app_settings
+      const settingsStore = tx.objectStore('app_settings');
+      const defaultCards = buildDefaultCardSettings();
+      const restoredSettings: UserSettings = parsed.settings
+        ? {
+            global: { ...DEFAULT_SETTINGS.global, ...(parsed.settings.global || {}) },
+            cards: { ...defaultCards, ...(parsed.settings.cards || {}) },
+          }
+        : {
+            global: { ...DEFAULT_SETTINGS.global },
+            cards: defaultCards,
+          };
+      await settingsStore.put(restoredSettings, 'global_settings');
+
+      // 6. 恢复 training_plans 与 activePlanId
+      const planStore = tx.objectStore('training_plans');
+      const metaStore = tx.objectStore('app_metadata');
+
+      if (parsed.planStorageState && Array.isArray(parsed.planStorageState.plans)) {
+        for (const p of parsed.planStorageState.plans) {
+          await planStore.put(p);
+        }
+        await metaStore.put(parsed.planStorageState.activePlanId, 'active_plan_id');
+      } else if (parsed.trainingPlan) {
+        await planStore.put(parsed.trainingPlan);
+        await metaStore.put(parsed.trainingPlan.id, 'active_plan_id');
+      } else {
+        const defaultPlans = getDefaultPlans();
+        for (const p of defaultPlans) {
+          await planStore.put(p);
+        }
+        await metaStore.put(defaultPlans[0]?.id, 'active_plan_id');
       }
-      await metaStore.put(defaultPlans[0]?.id, 'active_plan_id');
+
+      await tx.done;
+    } catch (err) {
+      tx.abort();
+      throw err;
     }
-
-    await tx.done;
     return true;
   } catch (err) {
     console.error('Failed to import data transactionally:', err);

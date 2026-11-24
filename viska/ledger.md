@@ -24,6 +24,7 @@
 | G1-00 | FormSight | 无统一入口，lint / 类型 / 测试分散执行，格式漂移与类型错误可在未跑测试时漏过 | `pnpm verify`（CI: `.github/workflows/ci.yml`） | L3 | open | 2026-11-21 | - | agent | 核心入口（永驻） |
 | G1-01 | FormSight | 训练计划加载时残留已删除卡片的 `cardId`，悬空阶段导致训练页崩溃（修复提交 `fb1931b`） | `src/storage/__tests__/planStorage.test.ts::#plan_storage_sanitize` | L2 | open | 2026-11-21 | - | agent | 核心契约（永驻） |
 | G1-02 | FormSight | 架构坏味道脚本对任意告警硬编码 `hasError = true`，30 处咨询级告警与真实类型欺骗同为退出码 1，无法接门禁；测试代码中的断言还会逼迫改既有用例 | `pnpm verify`（`scripts/check-ts-smells.mjs` 阻断子集，生产代码双重断言已清零）+ `scripts/__tests__/check-ts-smells.test.ts` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-03 | FormSight | 备份导入只校验 `appName` 与数组形状：非法元素的同步 `DataError` 不会中止已排队的 `clear()`，导入返回失败但 7 张表已被清空（ADR 0005） | `src/storage/__tests__/importExport.test.ts`（校验器 + 失败零副作用） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。
