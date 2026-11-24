@@ -64,7 +64,7 @@ S02 + S02b：
 | 数据快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
 | pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
 | pilot 脚本 | 2026-11-24 | `pilot_priors.py`，`sha256:1a43065…7ac` |
-| 代码基线 | `develop` @ `0695afe` + S01 commit | S00 tag `calib-plan-v1` |
+| 代码基线 | `develop` @ `fb6256d` | S00 tag `calib-plan-v1` |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证

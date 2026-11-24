@@ -8,7 +8,7 @@
 |---|---|
 | 数据快照 | 2026-11-24 导出，`sha256:ab2fb088…6554f9` |
 | 过滤 | 当前 cardId + `details` 存在 + `timestamp ≥ 2026-08-16` |
-| 代码基线 | `develop` @ `0695afe` |
+| 代码基线 | `develop` @ `0695afe`（先验生成时） |
 | 先验 artifact | `viska/local/calibration/pilot-priors.json`，`sha256:6c5bb30…64cd` |
 | 先验脚本 | `viska/local/calibration/pilot_priors.py`，`sha256:1a43065…7ac` |
 

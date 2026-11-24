@@ -10,6 +10,7 @@
 | pilot 先验 | `viska/local/calibration/pilot-priors.json` | 2026-11-24 | `6c5bb3040d3eb0277eb049d00617489b2a738ff15b5a49078c2d153dd77464cd` | 8 张试点 + 1 控制；本地 gitignored |
 | pilot 脚本 | `viska/local/calibration/pilot_priors.py` | 2026-11-24 | `1a430653d18fd6b21775076d1c775b33c8ec41fba9fc0f6f2d999a20512d07ac` | 等渗先验；本地 gitignored |
 | 计划 tag | git tag `calib-plan-v1` | 2026-11-24 | — | S00 合并点 |
+| 代码基线 | `develop` @ `fb6256d` | 2026-11-24 | — | S01 文档提交 |
 | 校准 artifact | 未生成 | G2 | — | `calib-v1` |
 | 全量验证报告 | 未生成 | G2 | — | 见 `07_validation_report.md` |
 
