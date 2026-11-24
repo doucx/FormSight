@@ -1,0 +1,7 @@
+# HAP 0.3 scope:src/cards rev:1 session:s_KQ7D5VSFF0WQZJXB5HYHT5PX5S base:fa3dd68286f6a151f362ec94130968f696c3d6ed updated:2026-11-24T06:06:36Z
+
+[KERNEL]
+DECISION	DRKJSA0B4	ARCH	-	cards duplicate helpers and locale strings on purpose; shared abstraction across cards is rejected	anchor=src/cards/color_hue/locales/zh-CN.json@79a96e09	revisit_when=event:shared_card_helper_extracted	why=one card one directory keeps deletion and copy-paste creation cheap; a shared dir reintroduced pack ownership
+FAIL	X41P8KZ4H	LOGIC	-	spherical and axis-aligned distractor sampling were gameable, so equidistant tetrahedron vertices plus gamut margin are required	anchor=src/cards/rel_vector_shift/utils/generator.ts#generateQuestion@b669356b	err=spherical sampling made the target the centroid, and axis-aligned L offsets left a darker same-hue shortcut	why=both schemes leak a geometric shortcut that bypasses perceptual comparison
+
+[SANDBOX]

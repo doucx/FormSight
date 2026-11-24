@@ -1,0 +1,5 @@
+scope	rev	kernel	sandbox	goal	next	flags	affects_in
+root	4	5	0	-	RUN scripts/check-ts-smells.mjs and split findings into blocking and advisory subsets before any verify wiring	-	-
+src/cards	1	2	0	-	-	-	-
+src/core	1	5	0	-	-	-	-
+src/storage	1	3	0	-	-	-	-

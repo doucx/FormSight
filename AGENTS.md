@@ -52,6 +52,32 @@
    机器相关事实（真实主机名、绝对路径、精确耗时、工具链版本）只写
    `viska/local/baseline.md`（gitignore）；公开门账使用假名 `n1`。
 
+## 决策与状态落盘（HAP）
+
+本仓库使用 HAP 0.3 管理"代码里看不见、但下一个会话必须知道"的状态。
+`.handoff/` 是给下一个会话的，不是给人看的文档；不要用手写文件工具改它。
+
+**四类去处，先选对再写：**
+
+| 信息 | 去处 |
+|---|---|
+| 能被命令判定的规则 | 测试或 `pnpm verify` 中的检查 |
+| 不能被判定、但一旦被违反或"优化"就会回退的取舍 | `.handoff/` 的 `DECISION`（`why` + `revisit_when` + `adr=`） |
+| 试过并失败、后来者可能重试的方案 | `.handoff/` 的 `FAIL`（`err` + 具体 anchor） |
+| 人需要读懂、评审、教学的论证 | `docs/` 与 `docs/decisions/` |
+
+**会话规则：**
+
+1. 开始工作时读 `.handoff/INDEX.tsv`，只读与任务相关的 1–2 个 scope，不读 `.journal.jsonl`。
+2. 写记录前先问：代码、测试、Git 历史能不能回答？能，就不写。
+3. 一棵决策树：撤销代价高 → 写 ADR + 一条 `DECISION`，二者在同一个提交；只是一次性打磨 → 不写。
+4. 每条 `DECISION` 的 `adr=` 指向 `docs/decisions/`，论证只存在那里，记录里不复述。
+5. 结束前运行 `hap_check`，必须 exit 0 且无 error；允许的 warning 需在提交说明里点名原因。
+6. 一次任务最多留下一个 `NEXT`，以 `EDIT` / `RUN` / `CHECK` 开头。
+
+**边界：** Obsidian 仓库是思考与提案空间，不是本仓库的真相源；只有蒸馏后的结论进入 `docs/` 与 `.handoff/`。
+`.handoff/` 与 `docs/` 同样是公开跟踪文件，规则 8 的隐私约束一并适用。
+
 ## 常用命令
 
 ```bash

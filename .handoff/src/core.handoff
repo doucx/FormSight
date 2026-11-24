@@ -1,0 +1,10 @@
+# HAP 0.3 scope:src/core rev:1 session:s_KQ7D5VSFF0WQZJXB5HYHT5PX5S base:fa3dd68286f6a151f362ec94130968f696c3d6ed updated:2026-11-24T06:06:36Z
+
+[KERNEL]
+DECISION	DW5230RQY	ARCH	-	CardManifest keeps four generics; trial detail shapes are narrowed inside each card, never a fifth generic	adr=docs/decisions/0002-four-generics.md	anchor=src/core/cardContract.ts@80614709	revisit_when=event:cross_card_detail_aggregation	why=the kernel never consumes details, so a fifth generic buys nothing and forces empty declarations on cards without analytics
+DECISION	D1TAG296H	ARCH	-	settings panels are hand-written per card; no schema-driven form renderer	anchor=src/core/cardContract.ts#CardUIContract@80614709	revisit_when=event:shared_settings_widget_need	why=card-only fields polluted the shared schema and dynamic keys bypassed static i18n scanning
+DECISION	DMFM2ZJ4S	ARCH	-	difficulty is a perceptual quantity (DeltaE_OK, inverse-distance scaling); never fixed pixels or raw HSV deltas	anchor=src/core/color/oklchUtils.ts#getTargetDeltaEForLevel@85e9322f	revisit_when=event:fixed_pixel_difficulty	why=HSV is perceptually non-uniform, so raw tolerances made far and near items unequal at the same level
+DECISION	D47WDRSJM	ARCH	-	accuracy is only a convergence indicator; Level is the progress metric shown to users	anchor=src/core/engine/adaptiveEngine.ts#recordBlock@aa2c7231	revisit_when=event:accuracy_as_primary_metric	why=adaptive targeting pins accuracy near 0.8, so accuracy cannot express growth and misleads users
+FAIL	X7AYSSGE6	LOGIC	-	clamping out-of-gamut OKLab distractors to sRGB collapsed the tetrahedron into a thin shell	anchor=src/core/color/oklchUtils.ts#hasGamutMargin@85e9322f	err=clamped vertices collapsed to S≈100% with spacing near zero, and axis-aligned L offsets left a darker same-hue choice as a shortcut	why=the gamut boundary is an irregular shell in OKLab, so outward vertices get projected back onto it
+
+[SANDBOX]
