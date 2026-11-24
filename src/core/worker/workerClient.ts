@@ -49,6 +49,13 @@ class ComputeWorkerClient {
 
       this.worker.onerror = (err) => {
         console.warn('Compute Worker error event encountered:', err);
+        // 错误事件后 worker 不再可用：拒绝全部 pending，避免调用方永久挂起
+        const error = new Error('Compute worker error');
+        for (const cb of this.pendingCallbacks.values()) {
+          cb.reject(error);
+        }
+        this.pendingCallbacks.clear();
+        this.worker = null;
       };
     } catch (e) {
       console.warn('Failed to initialize dedicated compute worker, fallback to main thread:', e);

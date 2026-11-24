@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	11	6	0	-	RUN R9: LTTB properties, worker fallback equivalence for three actions, pending rejection on worker error	STALE-ANCHOR	-
+root	12	6	0	-	RUN R10: four regression files from real fix commits (clearAllData, locale persistence, showCanvasHints, hit feedback)	STALE-ANCHOR	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	2	5	0	-	-	STALE-ANCHOR	-
