@@ -70,7 +70,7 @@ S02 + S02b：
 | pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
 | pilot 脚本 | 2026-11-24 | `pilot_priors.py`，`sha256:1a43065…7ac` |
 | 校准导出 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
-| 代码基线 | `develop` @ S01c commit | S00 tag `calib-plan-v1` |
+| 代码基线 | `develop` @ `b274d9a` | S00 tag `calib-plan-v1` |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证
