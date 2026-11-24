@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	12	6	0	-	RUN R10: four regression files from real fix commits (clearAllData, locale persistence, showCanvasHints, hit feedback)	STALE-ANCHOR	-
+root	13	6	0	-	RUN R11: extract finish/level/key decisions to pure functions and add three hook regressions	STALE-ANCHOR	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	2	5	0	-	-	STALE-ANCHOR	-

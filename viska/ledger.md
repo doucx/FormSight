@@ -34,6 +34,10 @@
 | G1-10 | FormSight | 既有 locale 测试只比较顶层 key；嵌套层级缺失时静默回退原文，标签 i18nKey 无解析守卫 | `src/cards/__tests__/locales-symmetry.test.ts`（全局/每卡递归对称 + 标签双语解析） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-11 | FormSight | `details` 平铺会覆盖 `id/isHit/timestamp` 等根字段；旧库升级只建缺失表、不补索引，`getAllFromIndex` 会抛 `NotFoundError`；导出顶层形状无守卫 | `src/core/__tests__/trialRecordDetails.test.ts`、`src/storage/__tests__/backupShape.test.ts`、`src/storage/__tests__/schemaUpgrade.test.ts` | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-12 | FormSight | `workerClient` 的 worker 错误事件只 `console.warn`，所有 pending 请求永久挂起；降级路径与三动作结果无等价守卫 | `src/core/worker/__tests__/workerClient.test.ts`、`src/core/math/__tests__/downsample.test.ts` | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-13 | FormSight | 清空数据只清答题表，训练计划与全局设置残留（修复 `1bf8448`） | `src/storage/__tests__/clearAllData.test.ts`（清空当刻写入默认计划/设置/激活 id） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-14 | FormSight | 语言选择只写 IndexedDB，启动后 i18n 仍为默认 locale（修复 `2a438a5`） | `src/storage/__tests__/localePersistence.test.ts`（存取 + 启动同步 + 卡片级不覆盖） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-15 | FormSight | 揭晓答案后用户点无论命中与否都画 miss 色，视觉上永远答错（修复 `68fcfbf`） | `src/cards/__tests__/hitFeedback.test.ts`（hit/miss/未揭晓三态） | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-16 | FormSight | 按钮变体缺透明边框占位与 `transition-all` 插值导致暗色切换闪烁（修复 `b614c7c`） | `src/components/__tests__/buttonVariants.test.ts` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。
