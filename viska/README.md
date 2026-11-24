@@ -21,7 +21,7 @@ viska 每天处理的对象是**改动**，不是模型。它回答一个问题�
 | 项目 | 状态 |
 |---|---|
 | 靶场 | FormSight（单线程，同一时期只挂载一个仓库） |
-| 当前门 | Gate 1：改动可判定（W1 已完成，W2 进行中） |
+| 当前门 | Gate 1：改动可判定（W1–W3 交付完成，W4 拦截观察期；尚未闭门） |
 | 校验入口 | `pnpm verify`（含 `check-ts-smells`、`check-i18n`、`audit-card-i18n`、`check_imports --resolve-only`） |
 | CI | `.github/workflows/ci.yml`，Push / PR 阻断 |
 | 门账 | [`ledger.md`](./ledger.md) |

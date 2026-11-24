@@ -10,9 +10,9 @@
 |---|---|
 | 靶场 | FormSight（单线程，本周期只挂载此仓库） |
 | 观测点 | `n1 / 2026-11-21 / 本地` |
-| 测试文件 / 用例数 | 14 / 149（W1 新增 3 条回归断言） |
+| 测试文件 / 用例数 | 38 / 431（W2/W3 结束时；含 8 条历史回归与 5 组边界契约） |
 | 校验入口 | `pnpm verify` = `biome check .` + `tsc --noEmit` + `vitest run` |
-| 本地耗时 | 连续 3 次 `exit 0`，p50 < 5 s，无 Flake |
+| 本地耗时 | 连续 3 次 `exit 0`，p50 < 10 s，无 Flake（机器细节见本地基线） |
 | 时延上限 | 60 s（硬红线 90 s） |
 
 > 本机绝对路径、精确耗时与工具链版本见 `viska/local/baseline.md`（gitignore，不进入公开仓库）。
@@ -41,6 +41,9 @@
 | G1-17 | FormSight | 计划训练点击返回误走单卡总结分支（修复 `0d2d6d0`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::decideFinishBranch` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 | G1-18 | FormSight | 跳过阶段后总结层阶写死为 Lvl 5，忽略阶段初始层阶（修复 `a909848`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::computeStageLevels` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 | G1-19 | FormSight | Esc 与退出按钮行为不一致，Esc 直接结束当前阶段（修复 `751b186`） | `src/hooks/session/__tests__/sessionDecisions.test.ts::mapKeyToAction` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-20 | FormSight | 自适应引擎层阶上限、Block 正确率区间与 setLevel 重置无边界守卫，重构时易静默漂移 | `src/core/engine/__tests__/adaptiveEngine.boundary.test.ts` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-21 | FormSight | i18n 缺失 key 回落、插值、数组查询、卡片作用域与 locale 订阅无契约测试，文案漂移会静默显示 key | `src/core/__tests__/i18n.test.ts`（另 `check-i18n` 排除测试夹具） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-22 | FormSight | 设置局部合并与「已删除卡片偏好保留」策略无守卫，导入/加载可能静默删用户偏好 | `src/storage/__tests__/settingsMerge.test.ts` | L2 | open | 2026-11-24 | - | agent | 90天无红 |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。
@@ -128,6 +131,6 @@ AssertionError: expected [ 'star_single', …(2) ] to deeply equal [ 'star_singl
 ## 6. 待办（进入 W2 前）
 
 - [x] 推送 W1 / W1.1 提交，并在远端确认 `Verify` workflow 首次运行结果。
-- [ ] W2：从近 90 天 `fix:` 提交中提取 8 个故障场景，按“父提交报红 → 修复提交变绿”补齐回归。
-- [ ] 累计测试数达到 Gate 1 准出要求（新增 ≥ 13 条：8 回归 + 5 契约）。
-- [ ] 真实开发中至少 1 次 Agent 改动被 `pnpm verify` 或 CI 拦截（G1-00 / G1-01 转 `closed`）。
+- [x] W2：8 条历史回归（`fb1931b` + `1bf8448` + `2a438a5` + `68fcfbf` + `b614c7c` + `0d2d6d0` + `a909848` + `751b186`），均在变异/父版本确认红灯。
+- [x] 累计测试数达到 Gate 1 准出要求（38 文件 / 431 用例：8 回归 + 5 组契约 + 不变量/纯逻辑）。
+- [ ] W4 观察期：至少 1 次真实 Agent 改动被 `pnpm verify` 或 CI 拦截，届时把 G1-00 起的条目转 `closed`；未捕获则按 §8 四周围停规则输出失败复盘。

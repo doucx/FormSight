@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	14	6	0	-	RUN R12: adaptiveEngine/i18n pure units, three clean verify runs, ledger summary refresh and hap_check	STALE-ANCHOR	-
+root	16	6	0	-	CHECK Gate 1 closing: record first real intercept in W4 then close G1-00..G1-22, or write failure review if none by week 4	-	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
-src/storage	2	5	0	-	-	STALE-ANCHOR	-
+src/storage	4	6	0	-	-	-	-

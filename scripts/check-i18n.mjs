@@ -123,6 +123,8 @@ function scanSourceFile(filepath) {
   }
 }
 
+const TEST_PATH_RE = /(^|[/\\])__tests__([/\\]|$)|\.(?:test|spec)\.[cm]?[jt]sx?$/;
+
 function walkDir(dir) {
   if (!fs.existsSync(dir)) return;
   const files = fs.readdirSync(dir);
@@ -131,7 +133,7 @@ function walkDir(dir) {
     const stat = fs.statSync(filepath);
     if (stat.isDirectory()) {
       walkDir(filepath);
-    } else if (stat.isFile() && /\.(ts|tsx)$/.test(filepath)) {
+    } else if (stat.isFile() && /\.(ts|tsx)$/.test(filepath) && !TEST_PATH_RE.test(filepath)) {
       scanSourceFile(filepath);
     }
   }

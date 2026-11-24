@@ -83,6 +83,16 @@ describe('check-i18n 静态键扫描', () => {
     expect(result.stdout).toContain('missingKey');
   });
 
+  it('测试文件中的夹具 key 不参与生产词典校验', () => {
+    const result = scan({
+      ...GLOBAL_LOCALES,
+      'src/__tests__/fixture.test.ts': "export const a = t('missing.fixture.key');",
+      'src/cards/sample/__tests__/fixture.test.ts': "export const b = t('missing.card.key');",
+    });
+
+    expect(result.status).toBe(0);
+  });
+
   it('模板插值 key 与动态 key 不误报', () => {
     const result = scan({
       ...GLOBAL_LOCALES,
