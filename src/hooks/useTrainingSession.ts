@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
 import { AdaptiveEngine } from '../core/engine/adaptiveEngine';
+import { i18n } from '../core/i18n';
+import { isDuplicateTrialRecordError } from '../storage/db/queries';
 import { type AdaptiveMode, type StepGranularity, getSettingsSnapshot } from '../storage/settings';
+import { showToast } from '../stores/toastStore';
 import { playHitSound, playMissSound } from '../utils/sound';
 import { useIdleProtection } from './session/useIdleProtection';
 import { useTrainingKeybindings } from './session/useTrainingKeybindings';
@@ -219,14 +222,20 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       }
       const levelAfter = adaptiveEngineRef.current.getCurrentLevel();
 
-      await saveTrialRecord({
-        sessionId: sessionIdRef.current,
-        question,
-        hitResult,
-        responseTimeMs,
-        userVal,
-        currentProfileLevel: levelAfter,
-      });
+      try {
+        await saveTrialRecord({
+          sessionId: sessionIdRef.current,
+          question,
+          hitResult,
+          responseTimeMs,
+          userVal,
+          currentProfileLevel: levelAfter,
+        });
+      } catch (err) {
+        // 幂等拒绝是预期路径：保持会话继续，不重复计数（ADR 0006）
+        if (!isDuplicateTrialRecordError(err)) throw err;
+        showToast(i18n.t('common.trialAlreadySaved'), 'info');
+      }
 
       const nextHistoryItem: SessionHistoryItem = {
         trialIndex: newTotal,

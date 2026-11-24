@@ -435,6 +435,7 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       await tx.done;
     } catch (err) {
       tx.abort();
+      tx.done.catch(() => undefined);
       throw err;
     }
     return true;

@@ -74,6 +74,7 @@
     "minutesUnit": "min",
     "zeroTime": "0d 0h 0min",
     "switchedPlanToast": "Switched to [{{name}}]",
+    "trialAlreadySaved": "This trial is already saved; statistics were not double-counted",
     "planUpdatedToast": "Training plan updated successfully",
     "defaultCustomPlanName": "My Custom Routine",
     "defaultCustomPlanDesc": "Custom orchestrated multi-stage routine",

@@ -10,6 +10,23 @@ import {
 } from './schema';
 
 /**
+ * 同一 record.id 重放时抛出（ADR 0006）
+ */
+export class DuplicateTrialRecordError extends Error {
+  public readonly recordId: string;
+
+  constructor(recordId: string) {
+    super(`Trial record already exists: ${recordId}`);
+    this.name = 'DuplicateTrialRecordError';
+    this.recordId = recordId;
+  }
+}
+
+export function isDuplicateTrialRecordError(err: unknown): err is DuplicateTrialRecordError {
+  return err instanceof DuplicateTrialRecordError;
+}
+
+/**
  * 原子化保存单次做答记录并写时累加物化日聚合与能力档案
  */
 export async function saveTrialRecord(
@@ -35,68 +52,85 @@ export async function saveTrialRecord(
   // 使用单一读写事务保证原子性
   const tx = db.transaction(['records', 'daily_summaries', 'user_profiles'], 'readwrite');
 
-  // 1. 写入原始答题记录
-  await tx.objectStore('records').put(normalizedRecord);
-
-  // 2. 写时物化更新日聚合表 (daily_summaries)
-  const dailyStore = tx.objectStore('daily_summaries');
-  const existingDaily = await dailyStore.get(summaryId);
-
-  if (!existingDaily) {
-    const newSummary: DailySummaryData = {
-      id: summaryId,
-      date: dateStr,
-      cardId,
-      domain: packId,
-      totalCount: 1,
-      hitCount: record.isHit ? 1 : 0,
-      totalTimeMs: respMs,
-      maxLevel: targetProfileLevel,
-      minLevel: targetProfileLevel,
-      lastLevel: targetProfileLevel,
-      updatedAt: record.timestamp,
-    };
-    await dailyStore.put(newSummary);
-  } else {
-    existingDaily.domain = packId;
-    existingDaily.totalCount += 1;
-    if (record.isHit) existingDaily.hitCount += 1;
-    existingDaily.totalTimeMs += respMs;
-    existingDaily.maxLevel = Math.max(existingDaily.maxLevel, targetProfileLevel);
-    existingDaily.minLevel = Math.min(existingDaily.minLevel, targetProfileLevel);
-    existingDaily.lastLevel = targetProfileLevel;
-    existingDaily.updatedAt = record.timestamp;
-    await dailyStore.put(existingDaily);
-  }
-
-  // 3. 更新用户能力档案 (user_profiles)
-  const profileStore = tx.objectStore('user_profiles');
-  const existingProfile = await profileStore.get(cardId);
-
-  if (!existingProfile) {
-    const newProfile: UnifiedProfileData = {
-      cardId,
-      domain: packId,
-      currentLevel: targetProfileLevel,
-      bestLevel: targetProfileLevel,
-      totalTrials: 1,
-      totalHits: record.isHit ? 1 : 0,
-      updatedAt: Date.now(),
-    };
-    await profileStore.put(newProfile);
-  } else {
-    existingProfile.domain = packId;
-    existingProfile.totalTrials += 1;
-    if (record.isHit) existingProfile.totalHits += 1;
-    existingProfile.currentLevel = targetProfileLevel;
-    if (targetProfileLevel > existingProfile.bestLevel) {
-      existingProfile.bestLevel = targetProfileLevel;
+  try {
+    // 0. 幂等闸门：写任何表之前按 record.id 判定重放（ADR 0006）
+    const existingRecord = await tx.objectStore('records').get(record.id);
+    if (existingRecord) {
+      throw new DuplicateTrialRecordError(record.id);
     }
-    existingProfile.updatedAt = Date.now();
-    await profileStore.put(existingProfile);
-  }
 
-  await tx.done;
+    // 1. 写入原始答题记录
+    await tx.objectStore('records').put(normalizedRecord);
+
+    // 2. 写时物化更新日聚合表 (daily_summaries)
+    const dailyStore = tx.objectStore('daily_summaries');
+    const existingDaily = await dailyStore.get(summaryId);
+
+    if (!existingDaily) {
+      const newSummary: DailySummaryData = {
+        id: summaryId,
+        date: dateStr,
+        cardId,
+        domain: packId,
+        totalCount: 1,
+        hitCount: record.isHit ? 1 : 0,
+        totalTimeMs: respMs,
+        maxLevel: targetProfileLevel,
+        minLevel: targetProfileLevel,
+        lastLevel: targetProfileLevel,
+        updatedAt: record.timestamp,
+      };
+      await dailyStore.put(newSummary);
+    } else {
+      existingDaily.domain = packId;
+      existingDaily.totalCount += 1;
+      if (record.isHit) existingDaily.hitCount += 1;
+      existingDaily.totalTimeMs += respMs;
+      existingDaily.maxLevel = Math.max(existingDaily.maxLevel, targetProfileLevel);
+      existingDaily.minLevel = Math.min(existingDaily.minLevel, targetProfileLevel);
+      existingDaily.lastLevel = targetProfileLevel;
+      existingDaily.updatedAt = record.timestamp;
+      await dailyStore.put(existingDaily);
+    }
+
+    // 3. 更新用户能力档案 (user_profiles)
+    const profileStore = tx.objectStore('user_profiles');
+    const existingProfile = await profileStore.get(cardId);
+
+    if (!existingProfile) {
+      const newProfile: UnifiedProfileData = {
+        cardId,
+        domain: packId,
+        currentLevel: targetProfileLevel,
+        bestLevel: targetProfileLevel,
+        totalTrials: 1,
+        totalHits: record.isHit ? 1 : 0,
+        updatedAt: Date.now(),
+      };
+      await profileStore.put(newProfile);
+    } else {
+      existingProfile.domain = packId;
+      existingProfile.totalTrials += 1;
+      if (record.isHit) existingProfile.totalHits += 1;
+      existingProfile.currentLevel = targetProfileLevel;
+      if (targetProfileLevel > existingProfile.bestLevel) {
+        existingProfile.bestLevel = targetProfileLevel;
+      }
+      existingProfile.updatedAt = Date.now();
+      await profileStore.put(existingProfile);
+    }
+
+    await tx.done;
+  } catch (err) {
+    try {
+      tx.abort();
+    } catch {
+      // 事务已结束或已中止，无需二次处理
+    }
+    // abort 会让 tx.done 以 AbortError 拒绝；此处吞掉，避免未处理拒绝（原始错误优先）
+    tx.done.catch(() => undefined);
+    throw err;
+  }
 }
 
 export async function saveSession(session: UnifiedSessionData): Promise<void> {

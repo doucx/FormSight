@@ -74,6 +74,7 @@
     "minutesUnit": "分钟",
     "zeroTime": "0天0小时0分钟",
     "switchedPlanToast": "已切换至【{{name}}】",
+    "trialAlreadySaved": "该题已保存，未重复计入统计",
     "planUpdatedToast": "训练计划已成功更新",
     "defaultCustomPlanName": "我的自选训练流",
     "defaultCustomPlanDesc": "自定义编排的日常多模块训练序列",
