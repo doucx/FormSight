@@ -346,19 +346,11 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         }
       } else if (parsed.records && parsed.records.length > 0) {
         const summaryMap = new Map<string, DailySummaryData>();
-        let lastTimestamp = -1;
-        let lastDateStr = '';
 
+        // 直接按每条记录的时间戳归日：导出按主键 id 排序，不能假设时间有序
         for (const r of parsed.records) {
           const domain = getCachedDomain(r.cardId, r.domain);
-
-          let dateStr = lastDateStr;
-          if (Math.abs(r.timestamp - lastTimestamp) > 1000 * 60 * 60 * 12 || lastDateStr === '') {
-            dateStr = getLocalDateString(r.timestamp);
-            lastTimestamp = r.timestamp;
-            lastDateStr = dateStr;
-          }
-
+          const dateStr = getLocalDateString(r.timestamp);
           const summaryId = `${dateStr}_${r.cardId}`;
           const respMs = Number(r.responseTimeMs) || 0;
           const level = Number(r.difficultyLevel) || 1;
