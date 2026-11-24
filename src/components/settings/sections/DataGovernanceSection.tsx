@@ -1,4 +1,4 @@
-import { Download, Loader2, RotateCcw, Sliders, Trash2, Upload } from 'lucide-preact';
+import { Download, FlaskConical, Loader2, RotateCcw, Sliders, Trash2, Upload } from 'lucide-preact';
 import { useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
 import { clearAllData, exportAllDataStream, importAllData } from '../../../storage/index';
@@ -111,6 +111,29 @@ export function DataGovernanceSection({
     <div className="space-y-4">
       <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
         {t('settings.dataGovernance')}
+      </div>
+
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-3 py-2">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+            <FlaskConical className="w-3.5 h-3.5 text-muted-foreground" />
+            Calibration runs
+          </div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            固定水平序列；只做题，自动记录与导出。
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            window.location.hash = '#/calibrate';
+            onCloseModal();
+          }}
+          className="flex-shrink-0"
+        >
+          Open
+        </Button>
       </div>
 
       {/* 备份导出与导入 */}

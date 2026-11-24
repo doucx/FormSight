@@ -1,3 +1,4 @@
+import { CalibrationView } from '../../calibration/CalibrationView';
 import { useTranslation } from '../../core/i18n';
 import { registry } from '../../core/registry';
 import type { ReturnToLocation, RouteLocation } from '../../hooks/useHashRoute';
@@ -151,6 +152,18 @@ export function AppRouter({
 
     return null;
   };
+
+  if (route.type === 'calibrate') {
+    return (
+      <CalibrationView
+        runId={route.runId}
+        settings={currentSettings}
+        globalSettings={currentSettings.global}
+        onNavigate={(runId) => navigate({ type: 'calibrate', runId })}
+        onExit={() => navigate(lastHomeRoute)}
+      />
+    );
+  }
 
   if (isMainShellPage) {
     return (

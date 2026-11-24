@@ -28,6 +28,35 @@ export interface UnifiedTrialRecord {
   [key: string]: unknown;
 }
 
+export type CalibrationRunStatus = 'in-progress' | 'completed' | 'aborted';
+
+/** Calibration run metadata. Deliberately separate from training sessions. */
+export interface CalibrationRunData {
+  id: string;
+  protocolId: string;
+  cardId: string;
+  sequence: number[];
+  seed: number;
+  index: number;
+  status: CalibrationRunStatus;
+  startedAt: number;
+  finishedAt?: number;
+  trialCount: number;
+  hitCount: number;
+}
+
+/** One calibration trial. `level` is the scheduled level, not an adaptive one. */
+export interface CalibrationTrialData {
+  id: string;
+  runId: string;
+  index: number;
+  level: number;
+  isHit: boolean;
+  responseTimeMs: number;
+  timestamp: number;
+  details?: Record<string, unknown>;
+}
+
 export interface UnifiedProfileData {
   cardId: string;
   domain?: string;
@@ -111,10 +140,26 @@ export interface FormSightDBSchema extends DBSchema {
     key: string;
     value: unknown;
   };
+  calibration_runs: {
+    key: string;
+    value: CalibrationRunData;
+    indexes: {
+      'by-card': string;
+      'by-status': string;
+    };
+  };
+  calibration_trials: {
+    key: string;
+    value: CalibrationTrialData;
+    indexes: {
+      'by-run': string;
+      'by-run-index': [string, number];
+    };
+  };
 }
 
 export const DB_NAME = 'FormSightDB';
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 let dbPromise: Promise<IDBPDatabase<FormSightDBSchema>> | null = null;
 
@@ -135,7 +180,9 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
           | 'user_profiles'
           | 'app_settings'
           | 'training_plans'
-          | 'app_metadata';
+          | 'app_metadata'
+          | 'calibration_runs'
+          | 'calibration_trials';
 
         const ensureStore = (name: StoreName, options?: IDBObjectStoreParameters): void => {
           if (!database.objectStoreNames.contains(name)) {
@@ -204,6 +251,24 @@ export function getDB(): Promise<IDBPDatabase<FormSightDBSchema>> {
         }
 
         ensureStore('app_metadata');
+
+        ensureStore('calibration_runs', { keyPath: 'id' });
+        const calibrationRuns = transaction.objectStore('calibration_runs');
+        if (!calibrationRuns.indexNames.contains('by-card')) {
+          calibrationRuns.createIndex('by-card', 'cardId');
+        }
+        if (!calibrationRuns.indexNames.contains('by-status')) {
+          calibrationRuns.createIndex('by-status', 'status');
+        }
+
+        ensureStore('calibration_trials', { keyPath: 'id' });
+        const calibrationTrials = transaction.objectStore('calibration_trials');
+        if (!calibrationTrials.indexNames.contains('by-run')) {
+          calibrationTrials.createIndex('by-run', 'runId');
+        }
+        if (!calibrationTrials.indexNames.contains('by-run-index')) {
+          calibrationTrials.createIndex('by-run-index', ['runId', 'index']);
+        }
       },
     });
   }

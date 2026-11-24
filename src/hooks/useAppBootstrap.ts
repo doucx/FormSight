@@ -39,6 +39,8 @@ export function useAppBootstrap(route: RouteLocation) {
       const card = registry.getCardById(route.cardId);
       const cardTitle = card ? getCardTitle(card, t) : t('common.stats');
       document.title = `${cardTitle} - ${t('common.stats')} - ${t('common.appName')}`;
+    } else if (route.type === 'calibrate') {
+      document.title = `[Calibration] ${t('common.appName')}`;
     } else if (route.type === 'train') {
       const card = registry.getCardById(route.cardId);
       const cardTitle = card ? getCardTitle(card, t) : t('shell.training');

@@ -9,6 +9,7 @@
 |---|---|---|---|---|---|
 | S00 | AI | 建计划骨架、决策、卡片现状、路线图、验收、脱敏规范 | `00`–`05`、`10`、`PRIVACY` | G0 | done |
 | S01 | AI | 写校准协议、数据字典、风险、术语、artifact manifest；跑试点先验 | `06`、`08`、`09`、`12`、`13`；pilot-priors | — | 90 min |
+| S01c | AI | 校准视口：固定序列 + 自动落库 + 导出 | `src/calibration/`；S02 可跑 | — | done |
 | S02 | 人 | 试点补测：`star_single` 30、`star_double_r` 30 | `11_experiment_log` S02 | — | 50 min |
 | S02b | 人 | 试点重测：`color_val` / `angle_parallel_2afc` / `persp_prop_division` 各 20 | `11` S02b | — | 60 min |
 | S03 | AI | 试点校准 + holdout/LOCO/重测 + family transfer 判定 | `07` §pilot；G1 结论 | **G1** | 120 min |
@@ -44,7 +45,7 @@ Blocker:
 
 ## 关键路径
 
-`S00 → S01 → S02 → S02b → S03(G1) → S04 → S05–S07 → S08(G2) → S09(G3) → S10–S13(G4) → S14–S16(G5) → S17(G6)`
+`S00 → S01 → S01c → S02 → S02b → S03(G1) → S04 → S05–S07 → S08(G2) → S09(G3) → S10–S13(G4) → S14–S16(G5) → S17(G6)`
 
 - G3 的重设计规格可与 S10–S13 并行；但生成器代码落地要等 G2 冻结。
 - 补测不要和生成器修改混在同一批。

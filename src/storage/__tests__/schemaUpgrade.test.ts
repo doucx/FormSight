@@ -18,6 +18,8 @@ const ALL_STORES = [
   'app_settings',
   'training_plans',
   'app_metadata',
+  'calibration_runs',
+  'calibration_trials',
 ];
 
 describe('IndexedDB 版本升级路径 (G1-11)', () => {

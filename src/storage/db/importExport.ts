@@ -8,6 +8,8 @@ import {
   loadSettings,
 } from '../settings';
 import {
+  type CalibrationRunData,
+  type CalibrationTrialData,
   DB_VERSION,
   type DailySummaryData,
   type UnifiedProfileData,
@@ -28,6 +30,8 @@ export interface FormSightExportBundle {
   settings: UserSettings;
   trainingPlan?: TrainingPlan;
   planStorageState?: PlanStorageState;
+  calibrationRuns?: CalibrationRunData[];
+  calibrationTrials?: CalibrationTrialData[];
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -42,6 +46,10 @@ function isString(value: unknown): value is string {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+function isOptionalNumber(value: unknown): boolean {
+  return value === undefined || isFiniteNumber(value);
 }
 
 function isOptionalString(value: unknown): boolean {
@@ -79,6 +87,40 @@ function isRecordElement(value: unknown): boolean {
     isFiniteNumber(value.difficultyLevel) &&
     typeof value.isHit === 'boolean' &&
     isFiniteNumber(value.responseTimeMs) &&
+    isOptionalRecord(value.details)
+  );
+}
+
+function isCalibrationRunElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.protocolId) &&
+    isString(value.cardId) &&
+    Array.isArray(value.sequence) &&
+    value.sequence.every((level) => isFiniteNumber(level)) &&
+    isFiniteNumber(value.seed) &&
+    isFiniteNumber(value.index) &&
+    (value.status === 'in-progress' ||
+      value.status === 'completed' ||
+      value.status === 'aborted') &&
+    isFiniteNumber(value.startedAt) &&
+    isOptionalNumber(value.finishedAt) &&
+    isFiniteNumber(value.trialCount) &&
+    isFiniteNumber(value.hitCount)
+  );
+}
+
+function isCalibrationTrialElement(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    isString(value.id) &&
+    isString(value.runId) &&
+    isFiniteNumber(value.index) &&
+    isFiniteNumber(value.level) &&
+    typeof value.isHit === 'boolean' &&
+    isFiniteNumber(value.responseTimeMs) &&
+    isFiniteNumber(value.timestamp) &&
     isOptionalRecord(value.details)
   );
 }
@@ -153,16 +195,22 @@ export function validateImportBundle(data: unknown): data is FormSightExportBund
   if (data.records !== undefined && !Array.isArray(data.records)) return false;
   if (data.profiles !== undefined && !Array.isArray(data.profiles)) return false;
   if (data.dailySummaries !== undefined && !Array.isArray(data.dailySummaries)) return false;
+  if (data.calibrationRuns !== undefined && !Array.isArray(data.calibrationRuns)) return false;
+  if (data.calibrationTrials !== undefined && !Array.isArray(data.calibrationTrials)) return false;
 
   const sessions = data.sessions as unknown[] | undefined;
   const records = data.records as unknown[] | undefined;
   const profiles = data.profiles as unknown[] | undefined;
   const dailySummaries = data.dailySummaries as unknown[] | undefined;
+  const calibrationRuns = data.calibrationRuns as unknown[] | undefined;
+  const calibrationTrials = data.calibrationTrials as unknown[] | undefined;
 
   if (sessions && !sessions.every(isSessionElement)) return false;
   if (records && !records.every(isRecordElement)) return false;
   if (profiles && !profiles.every(isProfileElement)) return false;
   if (dailySummaries && !dailySummaries.every(isDailySummaryElement)) return false;
+  if (calibrationRuns && !calibrationRuns.every(isCalibrationRunElement)) return false;
+  if (calibrationTrials && !calibrationTrials.every(isCalibrationTrialElement)) return false;
 
   if (data.settings !== undefined && !isRecord(data.settings)) return false;
   if (data.trainingPlan !== undefined && !isTrainingPlan(data.trainingPlan)) return false;
@@ -244,6 +292,26 @@ export async function exportAllDataStream(): Promise<Blob> {
     cursor = await cursor.continue();
   }
 
+  blobParts.push('\n  ],\n');
+
+  // 6. 分块输出校准 runs
+  blobParts.push('  "calibrationRuns": [\n');
+  const calibrationRuns = await db.getAll('calibration_runs');
+  for (let i = 0; i < calibrationRuns.length; i++) {
+    blobParts.push(
+      `    ${JSON.stringify(calibrationRuns[i])}${i < calibrationRuns.length - 1 ? ',' : ''}\n`,
+    );
+  }
+  blobParts.push('  ],\n');
+
+  // 7. 分块输出校准 trials
+  blobParts.push('  "calibrationTrials": [\n');
+  const calibrationTrials = await db.getAll('calibration_trials');
+  for (let i = 0; i < calibrationTrials.length; i++) {
+    blobParts.push(
+      `    ${JSON.stringify(calibrationTrials[i])}${i < calibrationTrials.length - 1 ? ',' : ''}\n`,
+    );
+  }
   blobParts.push('\n  ]\n}');
 
   return new Blob(blobParts, { type: 'application/json' });
@@ -284,6 +352,8 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         'app_settings',
         'training_plans',
         'app_metadata',
+        'calibration_runs',
+        'calibration_trials',
       ],
       'readwrite',
     );
@@ -297,6 +367,8 @@ export async function importAllData(jsonString: string): Promise<boolean> {
       await tx.objectStore('app_settings').clear();
       await tx.objectStore('training_plans').clear();
       await tx.objectStore('app_metadata').clear();
+      await tx.objectStore('calibration_runs').clear();
+      await tx.objectStore('calibration_trials').clear();
 
       const cardDomainCache = new Map<string, string>();
       const getCachedDomain = (cardId: string, fallbackDomain?: string): string => {
@@ -390,6 +462,20 @@ export async function importAllData(jsonString: string): Promise<boolean> {
         }
       }
 
+      // 4b. 恢复 calibration runs / trials（旧导出没有这两个字段，跳过）
+      if (parsed.calibrationRuns && parsed.calibrationRuns.length > 0) {
+        const runStore = tx.objectStore('calibration_runs');
+        for (const run of parsed.calibrationRuns) {
+          await runStore.put(run);
+        }
+      }
+      if (parsed.calibrationTrials && parsed.calibrationTrials.length > 0) {
+        const trialStore = tx.objectStore('calibration_trials');
+        for (const trial of parsed.calibrationTrials) {
+          await trialStore.put(trial);
+        }
+      }
+
       // 5. 恢复 app_settings
       const settingsStore = tx.objectStore('app_settings');
       const defaultCards = buildDefaultCardSettings();
@@ -451,6 +537,8 @@ export async function clearAllData(): Promise<void> {
       'app_settings',
       'training_plans',
       'app_metadata',
+      'calibration_runs',
+      'calibration_trials',
     ],
     'readwrite',
   );
@@ -461,6 +549,8 @@ export async function clearAllData(): Promise<void> {
   await tx.objectStore('app_settings').clear();
   await tx.objectStore('training_plans').clear();
   await tx.objectStore('app_metadata').clear();
+  await tx.objectStore('calibration_runs').clear();
+  await tx.objectStore('calibration_trials').clear();
 
   const defaultPlans = getDefaultPlans();
   const planStore = tx.objectStore('training_plans');

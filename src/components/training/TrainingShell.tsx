@@ -34,6 +34,13 @@ export interface PlanTrainingContext {
   onSkipStage: (history?: SessionHistoryItem[]) => void;
 }
 
+export interface TrainingProtocolInfo {
+  label: string;
+  current: number;
+  total: number;
+  locked?: boolean;
+}
+
 export interface TrainingSessionHandle {
   totalTrials: number;
   elapsedSeconds: number;
@@ -59,6 +66,7 @@ interface TrainingShellProps {
   card: CardDefinition;
   sessionType: 'training' | 'benchmark' | 'sandbox';
   currentLevel: number;
+  protocol?: TrainingProtocolInfo;
   isTargeting?: boolean;
   autoNext: boolean;
   session: TrainingSessionHandle;
@@ -74,6 +82,7 @@ export function TrainingShell({
   card,
   sessionType,
   currentLevel,
+  protocol,
   autoNext,
   session,
   currentQuestion,
@@ -171,7 +180,7 @@ export function TrainingShell({
           <div className="relative flex items-center min-w-0">
             <div className="text-xs font-bold text-foreground truncate flex items-center gap-1.5">
               <span className="truncate">{cardTitle}</span>
-              {isSandbox && (
+              {isSandbox && !protocol && (
                 <button
                   type="button"
                   onClick={handleCopyCardId}
@@ -195,7 +204,12 @@ export function TrainingShell({
                   {t('shell.benchmark')}
                 </span>
               )}
-              {isSandbox && (
+              {protocol && (
+                <span className="text-[10px] font-bold px-1.5 py-0.2 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 rounded-md flex-shrink-0">
+                  {protocol.label} · {protocol.current}/{protocol.total}
+                </span>
+              )}
+              {isSandbox && !protocol && (
                 <span className="text-[10px] font-bold px-1.5 py-0.2 bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200/60 dark:border-purple-800/60 rounded-md flex-shrink-0 flex items-center gap-0.5">
                   <Sparkles className="w-2.5 h-2.5" />
                   {t('shell.sandbox')}
@@ -263,7 +277,7 @@ export function TrainingShell({
 
           <span className="text-border/80">|</span>
 
-          {isSandbox ? (
+          {isSandbox && !protocol?.locked ? (
             <div className="flex items-center bg-muted/80 rounded-xl border border-border/60 p-0.5">
               <Button
                 variant="ghost"
@@ -293,7 +307,7 @@ export function TrainingShell({
             <span className="font-bold text-primary">Lvl {currentLevel}</span>
           )}
 
-          {isSandbox && (
+          {isSandbox && !protocol?.locked && (
             <>
               <span className="text-border/80">|</span>
               <Button
@@ -421,9 +435,11 @@ export function TrainingShell({
         )}
 
         <div className="text-[10px] text-muted-foreground/40 font-mono tracking-wider">
-          {isSandbox
-            ? 'Space 提交/下一题 · R 换题 · [ / ] 调级 · I 检查器 · Esc 退出'
-            : 'Space 提交/下一题 · Esc 退出'}
+          {protocol
+            ? 'Space 提交/下一题 · I 检查器 · Esc 暂停'
+            : isSandbox
+              ? 'Space 提交/下一题 · R 换题 · [ / ] 调级 · I 检查器 · Esc 退出'
+              : 'Space 提交/下一题 · Esc 退出'}
         </div>
       </footer>
 

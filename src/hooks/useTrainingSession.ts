@@ -23,6 +23,8 @@ export interface UseTrainingSessionOptions<TQuestion, THitResult, TAnswerVal> {
   blockSize?: number;
   idleTimeoutSec?: number;
   targetLimitTrials?: number;
+  /** Fixed scheduled levels. When set, manual level controls are locked. */
+  scheduledLevels?: number[];
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   onEarlyExit?: (history: SessionHistoryItem[]) => void;
   onIdleChange?: (isIdle: boolean) => void;
@@ -62,6 +64,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
   blockSize = 10,
   idleTimeoutSec: optionsIdleTimeout,
   targetLimitTrials,
+  scheduledLevels,
   onTargetLimitReached,
   onEarlyExit,
   onIdleChange,
@@ -85,6 +88,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     ),
   );
   const autoNextTimerRef = useRef<number | null>(null);
+  const isLevelLocked = Boolean(scheduledLevels && scheduledLevels.length > 0);
 
   const [question, setQuestion] = useState<TQuestion>(() => generateQuestion(initialLevel));
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
@@ -222,6 +226,10 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
         adaptiveEngineRef.current.recordResult(hit);
       }
       const levelAfter = adaptiveEngineRef.current.getCurrentLevel();
+      const nextScheduledLevel = scheduledLevels?.[newTotal];
+      if (nextScheduledLevel !== undefined) {
+        adaptiveEngineRef.current.setLevel(nextScheduledLevel);
+      }
 
       try {
         await saveTrialRecord({
@@ -290,6 +298,7 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
       targetLimitTrials,
       onTargetLimitReached,
       sessionType,
+      scheduledLevels,
       saveCurrentSession,
       autoNextDelay,
       autoNext,
@@ -355,11 +364,11 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     sessionIdRef.current = `${domain}_${cardId}_session_${Date.now()}`;
     startTimeRef.current = Date.now();
     setElapsedSeconds(0);
-    adaptiveEngineRef.current.setLevel(initialLevel);
+    adaptiveEngineRef.current.setLevel(scheduledLevels?.[0] ?? initialLevel);
     const nextLevel = adaptiveEngineRef.current.getCurrentLevel();
     setQuestion(generateQuestion(nextLevel));
     setQuestionStartTime(Date.now());
-  }, [domain, cardId, initialLevel, generateQuestion]);
+  }, [domain, cardId, initialLevel, scheduledLevels, generateQuestion]);
 
   // === 2. 键盘快捷键微 Hook ===
   useTrainingKeybindings({
@@ -371,8 +380,8 @@ export function useTrainingSession<TQuestion, THitResult, TAnswerVal>({
     onResumeFromIdle: resumeFromIdle,
     onNextQuestion: handleNextQuestion,
     onRequestFinish: handleRequestFinish,
-    onRegenerate: regenerateQuestion,
-    onAdjustLevel: adjustLevel,
+    onRegenerate: isLevelLocked ? undefined : regenerateQuestion,
+    onAdjustLevel: isLevelLocked ? undefined : adjustLevel,
     onToggleInspector: toggleInspector,
   });
 

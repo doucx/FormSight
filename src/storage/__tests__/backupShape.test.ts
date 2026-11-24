@@ -13,6 +13,8 @@ import { DB_VERSION, getLocalDateString } from '../../storage/db/schema';
 
 const EXPECTED_TOP_LEVEL_KEYS = [
   'appName',
+  'calibrationRuns',
+  'calibrationTrials',
   'dailySummaries',
   'exportAt',
   'planStorageState',

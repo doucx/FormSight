@@ -7,7 +7,7 @@
 | R-01 | family transfer 不成立 | 中 | 高 | G1 先测 LOCO；按降级树回退 | G1；open |
 | R-02 | 试点/全量校准过拟合 | 中 | 高 | 时间留出 + 新鲜重测 + 敏感性 | G1/G2；open |
 | R-03 | 补测疲劳导致数据质量下降 | 高 | 中 | 每次 ≤30 题；分多次；异常记录 | 持续；open |
-| R-04 | 现有 benchmark 起始 level 不在先验窗口 | 高 | 中 | 记录实际轨迹；窗口未命中重排；必要时加 `startLevel` | S02；open |
+| R-04 | 现有 benchmark 起始 level 不在先验窗口 | 高 | 中 | 固定序列 + Calibration Runner，起始 level 由协议决定 | S01c；closed |
 | R-05 | out-of-range 重设计拖长 | 中 | 中 | 先排除，不阻塞主线；单独 backlog | G3；open |
 | R-06 | 跨会话交接漂移 | 中 | 高 | 4 文件协议 + D-xxx + gate tag | 持续；open |
 | R-07 | tracked 文档泄露个人信息 | 低 | 高 | `PRIVACY.md` + grep + raw 区 | 每次提交；open |
@@ -19,6 +19,9 @@
 | R-13 | 生成器重设计作废旧数据 | 中 | 中 | 重设计排在 G2 后；重设计卡单独重标 | G3；open |
 | R-14 | 本地 `plan/` 目录被工具误扫 | 低 | 低 | G0 已验证；如变化再加 ignore | 已缓解 |
 | R-15 | 单人项目缺少外部评审 | 高 | 中 | gate 自检 + 未来 retrospective | 持续；accepted |
+| R-16 | DB v5 迁移失败 | 低 | 高 | 旧库升级测试；只加表/索引 | S01c；mitigated |
+| R-17 | 校准数据被 `clearAllData` 清掉 | 中 | 中 | 完成页提示先导出；单独 Clear calibration | 持续；open |
+| R-18 | 固定序列顺序/学习效应 | 中 | 中 | block 内随机；记录 trialIndex；S03 检查漂移 | S03；open |
 
 ## 重点说明
 

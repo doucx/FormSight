@@ -139,3 +139,41 @@
 - 理由：20 题下 0.8 的点估计噪声很大，按点估计会误杀/误放。
 - 影响：`05_acceptance` 的通过线按 CI 写。
 - 重审触发：`event:retest_protocol_change`
+
+---
+
+## D-016 — 校准采用固定平衡序列，不用 staircase
+
+- 日期：2026-11-24
+- 状态：accepted
+- 决定：每个 run 使用固定 levels × trialsPerLevel 的平衡序列；每个 block 内随机打乱 level；记录 seed 与完整 sequence。不使用自适应升降级。
+- 理由：固定序列保证窗口覆盖、题数确定、无起始 level 不可控问题，也避免自适应选点偏差。
+- 影响：S02/S02b 变成“只做题”；`06` 的 staircase 段落作废。
+- 重审触发：`event:calibration_design_change`
+
+## D-017 — 校准数据写主 DB 的独立 stores
+
+- 日期：2026-11-24
+- 状态：accepted
+- 决定：在主 DB 增加 `calibration_runs` / `calibration_trials`，参与导入/导出/清空；不写 `records` / `sessions` / `profiles` / `daily_summaries`。
+- 理由：遵守 ADR 0003 的单 IDB 与全量备份语义；同时把校准数据与训练统计隔离。
+- 影响：DB_VERSION 5；旧导出仍可导入；`clearAllData` 会清校准数据。
+- 重审触发：`event:calibration_storage_split`
+
+## D-018 — 校准视口复用 sandbox 语义
+
+- 日期：2026-11-24
+- 状态：accepted
+- 决定：新增 `#/calibrate` 调试视口；内部用 `sessionType='sandbox'` + `GenericTrainingView`，不新增 `sessionType='calibration'`。
+- 理由：sandbox 已经“不写训练统计、不跑自适应”；只需加固定序列、落库、导出、续做。
+- 影响：`sessionDecisions`/`SessionSummaryModal`/session type 校验不改；完成页由校准模块自绘。
+- 重审触发：`event:calibration_becomes_product_mode`
+
+## D-019 — 校准导出只走 JSON，不手填表
+
+- 日期：2026-11-24
+- 状态：accepted
+- 决定：每个 run 自动落库；导出 `formsight-calibration-runs` JSON（含 sequence、byLevel summary、逐题 details）；`11_experiment_log` 由导出摘要生成，不手填。
+- 理由：减少人工错误；S03 直接消费 JSON。
+- 影响：导出格式变更需升 `version`。
+- 重审触发：`event:calibration_export_format_change`

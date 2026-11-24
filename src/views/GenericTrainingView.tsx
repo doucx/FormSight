@@ -1,5 +1,9 @@
 import type { SessionHistoryItem } from '../components/modals/SessionSummaryModal';
-import { type PlanTrainingContext, TrainingShell } from '../components/training/TrainingShell';
+import {
+  type PlanTrainingContext,
+  type TrainingProtocolInfo,
+  TrainingShell,
+} from '../components/training/TrainingShell';
 import type { CardManifest } from '../core/cardContract';
 import { useTrainingSession } from '../hooks/useTrainingSession';
 import { saveSession, saveTrialRecord } from '../storage/index';
@@ -20,6 +24,16 @@ export interface GenericTrainingViewProps<
   globalSettings?: GlobalSettings;
   planContext?: PlanTrainingContext;
   targetLimitTrials?: number;
+  scheduledLevels?: number[];
+  protocol?: TrainingProtocolInfo;
+  onTrialCompleted?: (params: {
+    sessionId: string;
+    question: TQuestion;
+    hitResult: THitResult;
+    responseTimeMs: number;
+    userVal: TAnswerVal;
+    level: number;
+  }) => Promise<void> | void;
   onTargetLimitReached?: (history: SessionHistoryItem[]) => void;
   onEarlyExit?: (history: SessionHistoryItem[]) => void;
   onIdleChange?: (isIdle: boolean) => void;
@@ -43,6 +57,9 @@ export function GenericTrainingView<
   globalSettings,
   planContext,
   targetLimitTrials,
+  scheduledLevels,
+  protocol,
+  onTrialCompleted,
   onTargetLimitReached,
   onEarlyExit,
   onIdleChange,
@@ -67,6 +84,7 @@ export function GenericTrainingView<
     targetAccuracy: settings.targetAccuracy,
     blockSize: settings.blockSize,
     targetLimitTrials,
+    scheduledLevels,
     onTargetLimitReached,
     onEarlyExit,
     onIdleChange,
@@ -82,11 +100,21 @@ export function GenericTrainingView<
       userVal,
       currentProfileLevel,
     }) => {
-      if (sessionType === 'sandbox') return;
       const qLevel =
         engine.getQuestionLevel?.(q) ??
         (q as { difficultyLevel?: number })?.difficultyLevel ??
         initialLevel;
+
+      await onTrialCompleted?.({
+        sessionId,
+        question: q,
+        hitResult,
+        responseTimeMs,
+        userVal,
+        level: qLevel,
+      });
+
+      if (sessionType === 'sandbox') return;
 
       await saveTrialRecord(
         {
@@ -141,6 +169,7 @@ export function GenericTrainingView<
       card={card}
       sessionType={sessionType}
       currentLevel={currentLevel}
+      protocol={protocol}
       isTargeting={isTargeting}
       autoNext={settings.autoNext}
       session={session}

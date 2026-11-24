@@ -24,7 +24,8 @@ export type RouteLocation =
   | { type: 'plan-editor' }
   | { type: 'official-plans' }
   | { type: 'stats' }
-  | { type: 'analytics'; cardId: string; tab?: string };
+  | { type: 'analytics'; cardId: string; tab?: string }
+  | { type: 'calibrate'; runId?: string };
 
 function parseHomeQuery(params: URLSearchParams): CardQueryOptions | undefined {
   const domains = params.get('domains')?.split(',').filter(Boolean) as
@@ -117,6 +118,10 @@ function parseHash(hash: string): RouteLocation {
     return { type: 'discovery', query: discoveryQuery };
   }
 
+  if (segments[0] === 'calibrate') {
+    return { type: 'calibrate', runId: segments[1] };
+  }
+
   if (segments[0] === 'analytics' && segments[1]) {
     const cardId = segments[1];
     const tab = queryParams.get('tab') || undefined;
@@ -180,6 +185,9 @@ function stringifyRoute(route: RouteLocation): string {
   if (route.type === 'plan-editor') return '#/plan-editor';
   if (route.type === 'official-plans') return '#/official-plans';
   if (route.type === 'stats') return '#/stats';
+  if (route.type === 'calibrate') {
+    return route.runId ? `#/calibrate/${route.runId}` : '#/calibrate';
+  }
   if (route.type === 'analytics') {
     const qs = route.tab ? `?tab=${encodeURIComponent(route.tab)}` : '';
     return `#/analytics/${route.cardId}${qs}`;

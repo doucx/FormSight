@@ -22,42 +22,55 @@
 
 先验不是 JND，只是**补测选题的起点**。最终 JND 由补测 + 全量拟合给出。
 
-## 3. 补测设计
+## 3. 补测执行（Calibration Runner）
 
-### 3.1 工具
+### 3.1 入口
 
-- 优先用 app 的 benchmark 模式（staircase）+ 细步（fine）；
-- 若当前 profile 的起始 level 远离先验窗口，先记录实际轨迹，不强行改 profile；
-- 现有 benchmark 上限 20 题；需要 30 题时，跑 20 + 10 两段，中间不换卡。
+- 设置 → Data Governance → **Calibration runs**，或直接打开 `#/calibrate`；
+- 列表里 5 个试点 run；点 Start / Resume；
+- 每题自动落库，自动下一题（700ms）；
+- 完成后进入 summary，点 Export run / Export all 下载 JSON。
 
-### 3.2 选题
+数据写 `calibration_runs` / `calibration_trials`，不写 `records` / `sessions` / `profiles` / `daily_summaries`。
 
-- 以先验窗口为中心，覆盖窗口上下各 2–3 级；
-- 不要在单一 level 上刷满 20 题；
-- 每段结束后检查：是否覆盖了窗口？若 10 题后仍在窗口外，标 `window-missed`，停止并重排。
+### 3.2 固定序列
+
+| protocolId | 卡 | levels | 每级题数 | 总数 |
+|---|---|---|---:|---:|
+| `pilot-star-single` | star_single | 10 / 12 / 14 / 16 / 18 | 6 | 30 |
+| `pilot-star-double-r` | star_double_r | 20 / 21 / 23 / 25 / 26 | 6 | 30 |
+| `pilot-color-val` | color_val | 3 / 5 / 7 / 9 | 5 | 20 |
+| `pilot-angle-parallel` | angle_parallel_2afc | 6 / 8 / 10 / 12 / 14 | 4 | 20 |
+| `pilot-persp-prop-division` | persp_prop_division | 9 / 11 / 13 / 15 / 17 | 4 | 20 |
+
+- 每个 block 内每级各一次，block 内用 seed 打乱；
+- 记录 `seed` 与完整 `sequence`；中途停下也大致均衡；
+- 不做自适应，不需要手动调 level；
+- 不需要手填 `11_experiment_log`：导出文件里的 `summary.byLevel` 就是记录来源。
 
 ### 3.3 单次规模
 
-- 每张卡 20–30 题；
+- 每个 run 20–30 题；
 - 单次不超过 30 题，避免疲劳；
-- 同一张卡的两段之间至少间隔 10 分钟。
+- 中途可以 Esc 暂停；已答题目已落库，回来点 Resume。
 
 ### 3.4 记录
 
-每次补测写入 `11_experiment_log.md`（tracked，聚合）与本地明细（`viska/local/calibration/`）：
+每次 run 写入主 DB 的 `calibration_runs` / `calibration_trials`；导出 JSON 包含：
 
-- 日期、卡、段号、题数；
-- 起始 level、结束 level、level 序列；
-- 每题 hit/miss、responseTimeMs；
-- app 版本、显示设备/缩放（只写“同设备”，不写主机名）；
-- 异常（中断、误触、窗口未命中）。
+- protocol 快照、seed、完整 sequence；
+- 每题 index / level / isHit / responseTimeMs / timestamp / details；
+- `summary`（n、hits、accuracy、byLevel）。
+
+导出的 JSON 放 `viska/local/calibration/`，不要提交。
 
 ### 3.5 停止与重试
 
-- 20 题后若窗口覆盖良好，停止；
-- 若 20 题全部落在窗口一侧，标 `window-missed`，重排；
-- 同一张卡最多重试 1 次；两次失败标 `low-confidence`，不再消耗；
-- 疲劳、分心、环境变化：停止，记录，不硬做。
+- 中途退出：run 保持 `in-progress`，可 Resume；
+- 想放弃：在列表里不继续即可；不要手改 level；
+- 写入失败：停止，导出已有数据，检查 IDB；
+- 疲劳/分心：Esc 暂停，改天继续；
+- 同一 run 不要重复答同一题；重复写入按 `runId:index` 幂等。
 
 ## 4. 全量校准
 
