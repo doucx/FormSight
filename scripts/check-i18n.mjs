@@ -4,7 +4,10 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..');
+const rootArg = process.argv.slice(2).find((arg) => arg.startsWith('--root='));
+const ROOT_DIR = rootArg
+  ? path.resolve(rootArg.slice('--root='.length))
+  : path.resolve(__dirname, '..');
 const SRC_DIR = path.join(ROOT_DIR, 'src');
 
 function flattenObject(obj, prefix = '') {

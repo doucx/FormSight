@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	7	6	0	-	RUN R1: write red importExport tests (invalid element, version gate, non-array) then validate-then-clear	-	-
+root	8	6	0	-	RUN R6: CardManifest and registry contract tests (id/dir, engine/ui, tag closure, analytics key qualification)	-	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
-src/storage	2	5	0	-	-	-	-
+src/storage	2	5	0	-	-	STALE-ANCHOR	-

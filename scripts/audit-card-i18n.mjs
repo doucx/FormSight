@@ -7,12 +7,15 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, '..');
-const CARDS_DIR = path.join(ROOT_DIR, 'src', 'cards');
-const COMPONENTS_DIR = path.join(ROOT_DIR, 'src', 'components');
 
 const args = process.argv.slice(2);
 const isFixMode = args.includes('--fix');
+const rootArg = args.find((arg) => arg.startsWith('--root='));
+const ROOT_DIR = rootArg
+  ? path.resolve(rootArg.slice('--root='.length))
+  : path.resolve(__dirname, '..');
+const CARDS_DIR = path.join(ROOT_DIR, 'src', 'cards');
+const COMPONENTS_DIR = path.join(ROOT_DIR, 'src', 'components');
 
 const colors = {
   reset: '\x1b[0m',
@@ -68,7 +71,7 @@ function getAllFiles(dir, exts = ['.ts', '.tsx', '.json']) {
 // ==========================================
 function auditCardLocales(cardId) {
   const localesDir = path.join(CARDS_DIR, cardId, 'locales');
-  if (!fs.existsSync(localesDir)) return [];
+  if (!fs.existsSync(localesDir)) return { issues: [], flattenedKeys: [] };
 
   const localeFiles = fs
     .readdirSync(localesDir)

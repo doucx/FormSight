@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "check": "biome check . && tsc --noEmit",
-    "verify": "biome check . && tsc --noEmit && node scripts/check-ts-smells.mjs && vitest run",
+    "verify": "biome check . && tsc --noEmit && node scripts/check-ts-smells.mjs && node scripts/check-i18n.mjs && node scripts/audit-card-i18n.mjs && python3 scripts/check_imports.py --resolve-only && vitest run",
     "checkf": "biome check --fix --unsafe . && tsc --noEmit",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",

@@ -28,6 +28,8 @@
 | G1-04 | FormSight | `saveTrialRecord` 对 records 幂等、对日聚合与档案累加；同一 `record.id` 重放会静默双计 | `src/storage/__tests__/trialRecord.idempotency.test.ts`（显式拒绝 + 聚合零写入） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-05 | FormSight | 导入重建 `daily_summaries` 用「12 小时内沿用上一条日期」启发式且假设时间有序，跨本地午夜记录被合并到前一天 | `src/storage/__tests__/dailySummaryRegeneration.test.ts`（午夜/乱序/多卡/自带聚合优先） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 | G1-06 | FormSight | `importPlanFromJson` 不过滤未注册卡片，与 `loadPlanStorageState` 自愈路径不对称，返回内存对象带悬空阶段 | `src/storage/__tests__/planLifecycle.test.ts`（导入过滤 + 激活 id/删除/克隆不变） | L2 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
+| G1-07 | FormSight | `audit-card-i18n.mjs` 在卡片缺少 `locales/` 时返回数组却被解构，确定性抛 `localeIssues is not iterable`，i18n 架构契约完全无法进门禁 | `scripts/__tests__/audit-card-i18n.test.ts` + `pnpm verify`（`node scripts/audit-card-i18n.mjs` 阻断） | L2 | open | 2026-11-24 | - | agent | 90天无红 |
+| G1-08 | FormSight | `check_imports.py` 只查可解析性且未接入 verify；`check-i18n.mjs` 可运行但无人执行，卡片越界与缺失 key 均静默 | `scripts/__tests__/check-imports.test.ts`、`scripts/__tests__/check-i18n.test.ts` + `pnpm verify`（`--resolve-only` 阻断解析，越界告警） | L3 | open | 2026-11-24 | - | agent | 核心契约（永驻） |
 
 > 状态定义：`open` = 检查已就绪、尚未在真实开发中拦截过违规改动；
 > `closed` = 已至少成功拦截一次；`retired` = 已安全移除并记录原因。
