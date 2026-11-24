@@ -1,6 +1,7 @@
 import { Check, Plus, Star, Trash2 } from 'lucide-preact';
 import { useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
+import { countPlanTrials } from '../../../core/plan/stages';
 import type { PlanStorageState, TrainingPlan } from '../../../types/plan';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
@@ -70,7 +71,7 @@ export function PlanLibraryDrawer({
           const isActive = currentPlan.id === p.id;
           const isFav = p.isFavorite ?? true;
           const stageCount = (p.items || []).length;
-          const totalTrials = (p.items || []).reduce((acc, c) => acc + c.targetTrials, 0);
+          const totalTrials = countPlanTrials(p.items || []);
           const isPendingDelete = confirmDeleteId === p.id;
 
           return (

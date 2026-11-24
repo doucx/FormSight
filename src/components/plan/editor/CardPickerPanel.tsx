@@ -1,4 +1,4 @@
-import { Check, Plus, Sparkles } from 'lucide-preact';
+import { BookOpen, Check, Coffee, Plus, Sparkles } from 'lucide-preact';
 import { useMemo, useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
@@ -9,9 +9,16 @@ import { Button } from '../../ui/button';
 interface CardPickerPanelProps {
   addedCardIds?: string[];
   onAddItem: (cardId: string) => void;
+  onAddMessageStage?: () => void;
+  onAddRestStage?: () => void;
 }
 
-export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPanelProps) {
+export function CardPickerPanel({
+  addedCardIds = [],
+  onAddItem,
+  onAddMessageStage,
+  onAddRestStage,
+}: CardPickerPanelProps) {
   const { t } = useTranslation();
   const [filterQuery, setFilterQuery] = useState<CardQueryOptions>({});
 
@@ -39,6 +46,38 @@ export function CardPickerPanel({ addedCardIds = [], onAddItem }: CardPickerPane
           {t('home.matchedModules', { count: availableCards.length })}
         </span>
       </div>
+
+      {(onAddMessageStage || onAddRestStage) && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs font-bold text-muted-foreground flex-shrink-0">
+            {t('plan.insertStageNode')}
+          </span>
+          {onAddMessageStage && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onAddMessageStage}
+              className="h-7 gap-1 border border-border/60"
+              title={t('plan.insertMessageHint')}
+            >
+              <BookOpen className="w-3.5 h-3.5 text-primary" />
+              <span>{t('plan.insertMessageStage')}</span>
+            </Button>
+          )}
+          {onAddRestStage && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onAddRestStage}
+              className="h-7 gap-1 border border-border/60"
+              title={t('plan.insertRestHint')}
+            >
+              <Coffee className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>{t('plan.insertRestStage')}</span>
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* 嵌入紧凑变体的完整五维筛选引擎 */}
       <FilterEngine

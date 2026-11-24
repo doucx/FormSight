@@ -1,8 +1,12 @@
-import { GripVertical, RotateCcw, Trash2, Zap } from 'lucide-preact';
+import { BookOpen, Coffee, GripVertical, Pencil, RotateCcw, Trash2, Zap } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { getCardDesc, getCardTitle, useTranslation } from '../../../core/i18n';
+import { isCardStage, isMessageStage } from '../../../core/plan/stages';
 import { registry } from '../../../core/registry';
-import type { TrainingPlan } from '../../../types/plan';
+import type { PlanItem, TrainingPlan } from '../../../types/plan';
+import { formatSecondsToTimer } from '../../../utils/time';
+import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 
 interface PlanStageListProps {
@@ -15,6 +19,7 @@ interface PlanStageListProps {
   onUpdateTrials: (id: string, trials: number) => void;
   onReorderItem?: (fromIndex: number, toIndex: number) => void;
   onRemoveItem: (id: string) => void;
+  onEditItem?: (item: PlanItem) => void;
 }
 
 interface DragSnapshot {
@@ -34,6 +39,7 @@ export function PlanStageList({
   onUpdateTrials,
   onReorderItem,
   onRemoveItem,
+  onEditItem,
 }: PlanStageListProps) {
   const { t } = useTranslation();
   const listContainerRef = useRef<HTMLDivElement | null>(null);
@@ -332,11 +338,31 @@ export function PlanStageList({
           className="flex-1 space-y-2.5 overflow-y-auto pr-1 min-h-0 relative select-none scrollbar-thin"
         >
           {currentPlan.items.map((item, idx) => {
-            const card = registry.getCardById(item.cardId);
-            if (!card) return null;
-            const Icon = card.icon;
-            const cardTitle = getCardTitle(card, t);
-            const cardDesc = getCardDesc(card, t);
+            const isCard = isCardStage(item);
+            const card = isCard ? registry.getCardById(item.cardId) : null;
+            if (isCard && !card) return null;
+
+            let Icon: (props: { className?: string }) => ComponentChildren = Coffee;
+            let stageTitle = '';
+            let stageDesc = '';
+            let stageBadge = '';
+
+            if (isCardStage(item)) {
+              if (!card) return null;
+              Icon = card.icon;
+              stageTitle = getCardTitle(card, t);
+              stageDesc = getCardDesc(card, t);
+              stageBadge = `${item.targetTrials} ${t('common.trialsUnit')}`;
+            } else if (isMessageStage(item)) {
+              Icon = BookOpen;
+              stageTitle = item.title?.trim() || t('plan.messageUntitled');
+              stageDesc = item.content.replace(/\s+/g, ' ').trim().slice(0, 80);
+              stageBadge = t('plan.stageTypeMessageShort');
+            } else {
+              stageTitle = t('plan.stageTypeRest');
+              stageDesc = t('plan.restStageSummary', { seconds: item.durationSeconds });
+              stageBadge = formatSecondsToTimer(item.durationSeconds);
+            }
 
             const isDragging = draggedIndex === idx;
             const isRecentlyDropped = recentlyDroppedId === item.id;
@@ -409,30 +435,49 @@ export function PlanStageList({
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                    <div className="text-xs text-muted-foreground truncate">{cardDesc}</div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-foreground truncate">
+                        {stageTitle}
+                      </span>
+                      <Badge variant="secondary" size="sm" className="font-mono flex-shrink-0">
+                        {stageBadge}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">{stageDesc}</div>
                   </div>
                 </div>
 
-                {/* 题量选择与移除控制区 */}
+                {/* 题量选择 / 编辑与移除控制区 */}
                 <div className="flex items-center justify-between sm:justify-end gap-1.5 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-border/60">
-                  <div className="flex items-center bg-muted p-0.5 rounded-xl border border-border/40">
-                    {trialPresets.map((preset) => (
-                      <Button
-                        key={preset}
-                        variant={item.targetTrials === preset ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => onUpdateTrials(item.id, preset)}
-                        className={`h-6 px-2 py-0 text-xs font-bold rounded-lg ${
-                          item.targetTrials === preset
-                            ? 'shadow-xs'
-                            : 'text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {preset}
-                      </Button>
-                    ))}
-                  </div>
+                  {isCardStage(item) ? (
+                    <div className="flex items-center bg-muted p-0.5 rounded-xl border border-border/40">
+                      {trialPresets.map((preset) => (
+                        <Button
+                          key={preset}
+                          variant={item.targetTrials === preset ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => onUpdateTrials(item.id, preset)}
+                          className={`h-6 px-2 py-0 text-xs font-bold rounded-lg ${
+                            item.targetTrials === preset
+                              ? 'shadow-xs'
+                              : 'text-muted-foreground hover:text-foreground'
+                          }`}
+                        >
+                          {preset}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEditItem?.(item)}
+                      className="h-7 px-2 gap-1 text-xs font-bold text-muted-foreground hover:text-primary border border-border/40"
+                    >
+                      <Pencil className="w-3 h-3" />
+                      <span>{t('plan.editStage')}</span>
+                    </Button>
+                  )}
 
                   <div className="flex items-center pl-1.5 ml-1 border-l border-border/60">
                     <Button

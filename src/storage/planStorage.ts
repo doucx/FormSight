@@ -1,5 +1,6 @@
 import { type OfficialPlanPreset, officialPlanRegistry } from '../config/plans';
 import { i18n } from '../core/i18n';
+import { isCardStage, normalizePlanItems } from '../core/plan/stages';
 import { registry } from '../core/registry';
 import type { PlanItem, PlanStorageState, TrainingPlan } from '../types/plan';
 import { getDB } from './db/schema';
@@ -42,13 +43,36 @@ export function forkOfficialPlan(
     preset.locales['zh-CN'] ||
     preset.locales['en-US'];
 
-  const items: PlanItem[] = preset.items
-    .filter((item) => Boolean(registry.getCardById(item.cardId)))
-    .map((item, idx) => ({
-      id: `item_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`,
-      cardId: item.cardId,
-      targetTrials: item.targetTrials,
-    }));
+  const items: PlanItem[] = [];
+  for (const [idx, item] of preset.items.entries()) {
+    const id = `item_${Date.now()}_${idx}_${Math.random().toString(36).substring(2, 7)}`;
+
+    if (item.type === 'message') {
+      items.push({
+        id,
+        type: 'message',
+        title: i18n.t(item.titleKey),
+        content: i18n.t(item.contentKey),
+        actionLabel: item.actionLabelKey ? i18n.t(item.actionLabelKey) : undefined,
+      });
+      continue;
+    }
+
+    if (item.type === 'rest') {
+      items.push({
+        id,
+        type: 'rest',
+        durationSeconds: item.durationSeconds,
+        allowSkip: item.allowSkip ?? true,
+        tips: item.tipsKey ? i18n.t(item.tipsKey) : undefined,
+      });
+      continue;
+    }
+
+    if (registry.getCardById(item.cardId)) {
+      items.push({ id, cardId: item.cardId, targetTrials: item.targetTrials });
+    }
+  }
 
   return {
     id: `plan_forked_${preset.id}_${Date.now()}`,
@@ -102,16 +126,14 @@ export async function loadPlanStorageState(): Promise<PlanStorageState> {
       return cachedPlanState;
     }
 
-    let hasDanglingItem = false;
+    let hasNormalizedItems = false;
     const sanitizedPlans = plans.map((p) => {
-      const validItems = (p.items || []).filter((item) =>
-        Boolean(registry.getCardById(item.cardId)),
-      );
-      if (validItems.length !== (p.items || []).length) {
-        hasDanglingItem = true;
+      const normalization = normalizePlanItems(p.items);
+      if (normalization.changed) {
+        hasNormalizedItems = true;
         return {
           ...p,
-          items: validItems,
+          items: normalization.items,
           updatedAt: Date.now(),
         };
       }
@@ -128,7 +150,7 @@ export async function loadPlanStorageState(): Promise<PlanStorageState> {
       plans: sanitizedPlans,
     };
 
-    if (hasDanglingItem) {
+    if (hasNormalizedItems) {
       savePlanStorageState(cachedPlanState).catch((err) => {
         console.error('Failed to auto-heal sanitized plans to IndexedDB:', err);
       });
@@ -244,10 +266,7 @@ export async function clonePlan(plan: TrainingPlan): Promise<TrainingPlan> {
     name: `${plan.name} (${i18n.t('common.copySuffix')})`,
     isBuiltin: false,
     isFavorite: true,
-    items: plan.items.map((item) => ({
-      ...item,
-      id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-    })),
+    items: plan.items.map(clonePlanItemWithNewId),
     updatedAt: Date.now(),
   };
   await saveTrainingPlan(cloned);
@@ -259,20 +278,45 @@ export function exportPlanToJson(plan: TrainingPlan): string {
     {
       appName: 'FormSight',
       type: 'training_plan',
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       plan: {
         name: plan.name,
         description: plan.description,
-        items: plan.items.map((item) => ({
-          cardId: item.cardId,
-          targetTrials: item.targetTrials,
-        })),
+        items: plan.items.map(serializePlanItem),
       },
     },
     null,
     2,
   );
+}
+
+function serializePlanItem(item: PlanItem): Record<string, unknown> {
+  if (isCardStage(item)) {
+    return { cardId: item.cardId, targetTrials: item.targetTrials };
+  }
+  if (item.type === 'message') {
+    return {
+      type: 'message',
+      title: item.title,
+      content: item.content,
+      actionLabel: item.actionLabel,
+    };
+  }
+  return {
+    type: 'rest',
+    durationSeconds: item.durationSeconds,
+    allowSkip: item.allowSkip,
+    tips: item.tips,
+  };
+}
+
+function clonePlanItemWithNewId(item: PlanItem): PlanItem {
+  const id = `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  if (isCardStage(item)) {
+    return { id, cardId: item.cardId, targetTrials: item.targetTrials };
+  }
+  return { ...item, id };
 }
 
 export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan | null> {
@@ -283,11 +327,9 @@ export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan 
       return null;
     }
 
-    // 与 loadPlanStorageState 的自愈路径保持一致：导入即过滤未注册卡片
-    const validItems = (planData.items as Array<{ cardId: string; targetTrials?: number }>).filter(
-      (item) => Boolean(registry.getCardById(item.cardId)),
-    );
-    if (validItems.length === 0) {
+    // 与 loadPlanStorageState 的自愈路径保持一致：导入即丢弃无法识别的阶段
+    const { items: normalizedItems } = normalizePlanItems(planData.items);
+    if (normalizedItems.length === 0) {
       return null;
     }
 
@@ -300,11 +342,7 @@ export async function importPlanFromJson(jsonStr: string): Promise<TrainingPlan 
       description: planData.description || i18n.t('common.importedPlanDesc'),
       isFavorite: true,
       isBuiltin: false,
-      items: validItems.map((item) => ({
-        id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        cardId: item.cardId,
-        targetTrials: item.targetTrials || 20,
-      })),
+      items: normalizedItems.map(clonePlanItemWithNewId),
       updatedAt: Date.now(),
     };
 

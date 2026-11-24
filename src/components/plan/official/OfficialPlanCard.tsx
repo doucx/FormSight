@@ -1,7 +1,9 @@
-import { ChevronRight, Clock, Copy } from 'lucide-preact';
+import { BookOpen, ChevronRight, Clock, Coffee, Copy } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
 import type { OfficialPlanPreset } from '../../../config/plans';
 import { getCardTitle, useTranslation } from '../../../core/i18n';
 import { registry } from '../../../core/registry';
+import { formatSecondsToTimer } from '../../../utils/time';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 
@@ -21,11 +23,16 @@ export function OfficialPlanCard({ preset, onAdoptToLibrary }: OfficialPlanCardP
   const name = dict?.name || preset.id;
   const description = dict?.description || '';
 
-  const validItems = (preset.items || []).filter((item) =>
-    Boolean(registry.getCardById(item.cardId)),
-  );
-  const totalTrials = validItems.reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+  const estimatedSeconds = (preset.items || []).reduce((acc, item) => {
+    if (item.type === 'message') return acc + 20;
+    if (item.type === 'rest') return acc + item.durationSeconds;
+    return registry.getCardById(item.cardId) ? acc + item.targetTrials * 3.5 : acc;
+  }, 0);
+  const totalTrials = (preset.items || []).reduce((acc, item) => {
+    if (item.type === 'message' || item.type === 'rest') return acc;
+    return registry.getCardById(item.cardId) ? acc + item.targetTrials : acc;
+  }, 0);
+  const estimatedMin = Math.max(1, Math.round(estimatedSeconds / 60));
 
   return (
     <div className="group bg-card border border-border hover:border-primary/60 rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between gap-5 relative select-none">
@@ -43,7 +50,7 @@ export function OfficialPlanCard({ preset, onAdoptToLibrary }: OfficialPlanCardP
         {/* 阶段管线可视化预览 */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-            <span>{t('plan.stageCount', { count: validItems.length })}</span>
+            <span>{t('plan.stageCount', { count: preset.items.length })}</span>
             <div className="flex items-center gap-2">
               <span>{t('plan.totalTrialsSummary', { trials: totalTrials })}</span>
               <span>•</span>
@@ -55,15 +62,29 @@ export function OfficialPlanCard({ preset, onAdoptToLibrary }: OfficialPlanCardP
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {validItems.map((item, idx) => {
-              const card = registry.getCardById(item.cardId);
-              if (!card) return null;
-              const Icon = card.icon;
-              const cardTitle = getCardTitle(card, t);
+            {preset.items.map((item, idx) => {
+              let Icon: (props: { className?: string }) => ComponentChildren = BookOpen;
+              let title = '';
+              let badge = '';
+
+              if (item.type === 'message') {
+                title = t(item.titleKey);
+                badge = t('plan.stageTypeMessageShort');
+              } else if (item.type === 'rest') {
+                Icon = Coffee;
+                title = t('plan.stageTypeRest');
+                badge = formatSecondsToTimer(item.durationSeconds);
+              } else {
+                const card = registry.getCardById(item.cardId);
+                if (!card) return null;
+                Icon = card.icon;
+                title = getCardTitle(card, t);
+                badge = `${item.targetTrials} ${t('common.trialsUnit')}`;
+              }
 
               return (
                 <div
-                  key={`${preset.id}_${item.cardId}_${idx}`}
+                  key={`${preset.id}_${idx}`}
                   className="flex items-center gap-1.5 flex-shrink-0"
                 >
                   <div className="flex items-center gap-2 bg-muted/60 border border-border px-3 py-1.5 rounded-2xl shadow-inner">
@@ -71,17 +92,18 @@ export function OfficialPlanCard({ preset, onAdoptToLibrary }: OfficialPlanCardP
                       {idx + 1}
                     </div>
                     <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                    <span className="text-xs font-bold text-foreground max-w-36 truncate">
+                      {title}
+                    </span>
                     <Badge
                       variant="secondary"
                       size="sm"
                       className="font-mono font-bold text-[10px]"
                     >
-                      {item.targetTrials}
-                      {t('common.trialsUnit')}
+                      {badge}
                     </Badge>
                   </div>
-                  {idx < validItems.length - 1 && (
+                  {idx < preset.items.length - 1 && (
                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 flex-shrink-0" />
                   )}
                 </div>

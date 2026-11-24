@@ -80,3 +80,39 @@ export function playMissSound(): void {
   osc.start(now);
   osc.stop(now + 0.16);
 }
+
+/**
+ * 播放休息结束的轻柔双音提示 (C5 -> E5)
+ */
+export function playRestChime(): void {
+  const settings = getSettingsSnapshot();
+  if (!settings.global?.soundEnabled) return;
+
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const notes = [
+    { freq: 523.25, start: 0 },
+    { freq: 659.25, start: 0.18 },
+  ];
+
+  for (const note of notes) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const startAt = now + note.start;
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(note.freq, startAt);
+
+    gain.gain.setValueAtTime(0.001, startAt);
+    gain.gain.linearRampToValueAtTime(0.12, startAt + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startAt + 0.55);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(startAt);
+    osc.stop(startAt + 0.6);
+  }
+}

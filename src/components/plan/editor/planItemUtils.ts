@@ -1,12 +1,54 @@
-import { registry } from '../../../core/registry';
-import type { PlanItem, TrainingPlan } from '../../../types/plan';
+import { isCardStage, normalizePlanItems } from '../../../core/plan/stages';
+import type { MessageStageItem, PlanItem, RestStageItem, TrainingPlan } from '../../../types/plan';
+
+function createStageId(): string {
+  return `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
 
 export function createPlanItem(cardId: string): PlanItem {
   return {
-    id: `item_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    id: createStageId(),
     cardId,
     targetTrials: 20,
   };
+}
+
+export function createMessageStage(title: string, content: string): MessageStageItem {
+  return {
+    id: createStageId(),
+    type: 'message',
+    title,
+    content,
+  };
+}
+
+export function createRestStage(durationSeconds = 60): RestStageItem {
+  return {
+    id: createStageId(),
+    type: 'rest',
+    durationSeconds,
+    allowSkip: true,
+  };
+}
+
+export function updateMessageStage(
+  items: PlanItem[],
+  id: string,
+  patch: Partial<Pick<MessageStageItem, 'title' | 'content' | 'actionLabel'>>,
+): PlanItem[] {
+  return items.map((item) =>
+    item.id === id && item.type === 'message' ? { ...item, ...patch } : item,
+  );
+}
+
+export function updateRestStage(
+  items: PlanItem[],
+  id: string,
+  patch: Partial<Pick<RestStageItem, 'durationSeconds' | 'allowSkip' | 'tips'>>,
+): PlanItem[] {
+  return items.map((item) =>
+    item.id === id && item.type === 'rest' ? { ...item, ...patch } : item,
+  );
 }
 
 export function removePlanItem(items: PlanItem[], id: string): PlanItem[] {
@@ -46,12 +88,12 @@ export function reorderPlanItem(items: PlanItem[], fromIndex: number, toIndex: n
 
 export function updatePlanItemTrials(items: PlanItem[], id: string, trials: number): PlanItem[] {
   return items.map((item) =>
-    item.id === id ? { ...item, targetTrials: Math.max(5, trials) } : item,
+    item.id === id && isCardStage(item) ? { ...item, targetTrials: Math.max(5, trials) } : item,
   );
 }
 
 export function batchUpdateItemTrials(items: PlanItem[], trials: number): PlanItem[] {
-  return items.map((item) => ({ ...item, targetTrials: trials }));
+  return items.map((item) => (isCardStage(item) ? { ...item, targetTrials: trials } : item));
 }
 
 export function createNewBlankPlan(name: string, desc: string): TrainingPlan {
@@ -70,7 +112,7 @@ export function sanitizePlan(plan: TrainingPlan, nameInput: string): TrainingPla
   return {
     ...plan,
     name: nameInput.trim() || plan.name,
-    items: plan.items.filter((item) => Boolean(registry.getCardById(item.cardId))),
+    items: normalizePlanItems(plan.items).items,
     updatedAt: Date.now(),
   };
 }

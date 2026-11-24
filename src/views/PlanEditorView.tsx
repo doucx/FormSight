@@ -4,9 +4,11 @@ import { CardPickerPanel } from '../components/plan/editor/CardPickerPanel';
 import { PlanEditorHeader } from '../components/plan/editor/PlanEditorHeader';
 import { PlanLibraryDrawer } from '../components/plan/editor/PlanLibraryDrawer';
 import { PlanStageList } from '../components/plan/editor/PlanStageList';
+import { type StageEditPatch, StageEditorModal } from '../components/plan/editor/StageEditorModal';
 import { usePlanEditorState } from '../components/plan/editor/usePlanEditorState';
 import { Button } from '../components/ui/button';
 import { useTranslation } from '../core/i18n';
+import { isCardStage } from '../core/plan/stages';
 import type { TrainingPlan } from '../types/plan';
 
 interface PlanEditorViewProps {
@@ -34,6 +36,7 @@ export function PlanEditorView({
   const [mobileTab, setMobileTab] = useState<'stages' | 'picker'>(
     initialPlan.items.length === 0 ? 'picker' : 'stages',
   );
+  const [editingStageId, setEditingStageId] = useState<string | null>(null);
 
   const {
     storageState,
@@ -52,9 +55,13 @@ export function PlanEditorView({
     handleNameSave,
     handleBatchUpdateTrials,
     handleAddItem,
+    handleAddMessageStage,
+    handleAddRestStage,
     handleRemoveItem,
     handleReorderItem,
     handleUpdateTrials,
+    handleUpdateMessageStage,
+    handleUpdateRestStage,
     handleClearAll,
     handleCreateNewBlankPlan,
     handleCloneCurrent,
@@ -71,6 +78,26 @@ export function PlanEditorView({
     onStartPlanDirectly,
     onPlanListChanged,
   });
+
+  const editingStage = currentPlan.items.find((item) => item.id === editingStageId);
+
+  const handleSaveStage = (patch: StageEditPatch) => {
+    if (!editingStageId) return;
+    if (patch.kind === 'message') {
+      handleUpdateMessageStage(editingStageId, {
+        title: patch.title,
+        content: patch.content,
+        actionLabel: patch.actionLabel,
+      });
+    } else {
+      handleUpdateRestStage(editingStageId, {
+        durationSeconds: patch.durationSeconds,
+        allowSkip: patch.allowSkip,
+        tips: patch.tips,
+      });
+    }
+    setEditingStageId(null);
+  };
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col h-[calc(100dvh-2rem)] sm:h-[calc(100vh-4rem)] gap-3 sm:gap-5 animate-in fade-in duration-200">
@@ -157,6 +184,7 @@ export function PlanEditorView({
             onUpdateTrials={handleUpdateTrials}
             onReorderItem={handleReorderItem}
             onRemoveItem={handleRemoveItem}
+            onEditItem={(item) => setEditingStageId(item.id)}
           />
         </div>
 
@@ -167,11 +195,21 @@ export function PlanEditorView({
           }`}
         >
           <CardPickerPanel
-            addedCardIds={currentPlan.items.map((it) => it.cardId)}
+            addedCardIds={currentPlan.items.filter(isCardStage).map((it) => it.cardId)}
             onAddItem={handleAddItem}
+            onAddMessageStage={handleAddMessageStage}
+            onAddRestStage={handleAddRestStage}
           />
         </div>
       </div>
+
+      {editingStage && !isCardStage(editingStage) && (
+        <StageEditorModal
+          item={editingStage}
+          onSave={handleSaveStage}
+          onClose={() => setEditingStageId(null)}
+        />
+      )}
     </div>
   );
 }

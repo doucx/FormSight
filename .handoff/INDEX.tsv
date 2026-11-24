@@ -1,5 +1,5 @@
 scope	rev	kernel	sandbox	goal	next	flags	affects_in
-root	17	7	0	-	CHECK W4: keep G1-02 open until an independent change is blocked with a CI log, otherwise write the week-4 failure review	-	-
+root	18	8	0	-	CHECK W4: keep G1-02 open until an independent change is blocked with a CI log, otherwise write the week-4 failure review	-	-
 src/cards	1	2	0	-	-	-	-
 src/core	1	5	0	-	-	-	-
 src/storage	4	6	0	-	-	-	-

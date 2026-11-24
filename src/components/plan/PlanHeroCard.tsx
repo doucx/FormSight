@@ -1,9 +1,11 @@
 import {
   ArrowRight,
+  BookOpen,
   Check,
   ChevronDown,
   ChevronRight,
   Clock,
+  Coffee,
   Play,
   Plus,
   Sliders,
@@ -12,10 +14,41 @@ import {
 } from 'lucide-preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { getCardTitle, useTranslation } from '../../core/i18n';
+import {
+  countPlanTrials,
+  estimatePlanMinutes,
+  isCardStage,
+  isMessageStage,
+} from '../../core/plan/stages';
 import { registry } from '../../core/registry';
-import type { TrainingPlan } from '../../types/plan';
+import type { PlanItem, TrainingPlan } from '../../types/plan';
+import { formatSecondsToTimer } from '../../utils/time';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+
+function getStageChipMeta(item: PlanItem, t: (key: string) => string) {
+  if (isCardStage(item)) {
+    const card = registry.getCardById(item.cardId);
+    if (!card) return null;
+    return {
+      Icon: card.icon,
+      title: getCardTitle(card, t),
+      badge: `${item.targetTrials} ${t('common.trialsUnit')}`,
+    };
+  }
+  if (isMessageStage(item)) {
+    return {
+      Icon: BookOpen,
+      title: item.title?.trim() || t('plan.messageUntitled'),
+      badge: t('plan.stageTypeMessageShort'),
+    };
+  }
+  return {
+    Icon: Coffee,
+    title: t('plan.stageTypeRest'),
+    badge: formatSecondsToTimer(item.durationSeconds),
+  };
+}
 
 interface PlanHeroCardProps {
   plan: TrainingPlan;
@@ -37,8 +70,8 @@ export function PlanHeroCard({
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const hasItems = plan.items && plan.items.length > 0;
-  const totalTrials = (plan.items || []).reduce((acc, curr) => acc + curr.targetTrials, 0);
-  const estimatedMin = Math.max(1, Math.round((totalTrials * 3.5) / 60));
+  const totalTrials = countPlanTrials(plan.items || []);
+  const estimatedMin = estimatePlanMinutes(plan.items || []);
 
   const favoritePlans = allPlans.filter((p) => p.isFavorite ?? true);
 
@@ -136,10 +169,7 @@ export function PlanHeroCard({
                         {favoritePlans.map((p) => {
                           const isSelected = p.id === plan.id;
                           const stageCount = (p.items || []).length;
-                          const pTrials = (p.items || []).reduce(
-                            (acc, c) => acc + c.targetTrials,
-                            0,
-                          );
+                          const pTrials = countPlanTrials(p.items || []);
 
                           return (
                             <Button
@@ -216,10 +246,9 @@ export function PlanHeroCard({
 
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {plan.items.map((item, idx) => {
-          const card = registry.getCardById(item.cardId);
-          if (!card) return null;
-          const Icon = card.icon;
-          const cardTitle = getCardTitle(card, t);
+          const meta = getStageChipMeta(item, t);
+          if (!meta) return null;
+          const Icon = meta.Icon;
 
           return (
             <div key={item.id} className="flex items-center gap-2 flex-shrink-0">
@@ -228,10 +257,11 @@ export function PlanHeroCard({
                   {idx + 1}
                 </div>
                 <Icon className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs font-bold text-foreground">{cardTitle}</span>
+                <span className="text-xs font-bold text-foreground max-w-40 truncate">
+                  {meta.title}
+                </span>
                 <Badge variant="accent" size="sm" className="font-mono font-bold">
-                  {item.targetTrials}
-                  {t('common.trialsUnit')}
+                  {meta.badge}
                 </Badge>
               </div>
               {idx < plan.items.length - 1 && (

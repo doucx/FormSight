@@ -1,5 +1,6 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { isCardStage } from '../../core/plan/stages';
 import { registry } from '../../core/registry';
 import type { TrainingPlan } from '../../types/plan';
 import { getDB } from '../db/schema';
@@ -61,7 +62,10 @@ describe('planStorage 失效卡片自愈清洗 (fb1931b)', () => {
     const plan = state.plans.find((p) => p.id === 'plan_regression_1');
 
     expect(plan).toBeDefined();
-    expect(plan?.items.map((item) => item.cardId)).toEqual([VALID_CARD_ID, SECOND_VALID_CARD_ID]);
+    expect(plan?.items.filter(isCardStage).map((item) => item.cardId)).toEqual([
+      VALID_CARD_ID,
+      SECOND_VALID_CARD_ID,
+    ]);
   });
 
   it('清洗结果必须回写 IndexedDB，避免每次加载重复清洗', async () => {
@@ -75,7 +79,9 @@ describe('planStorage 失效卡片自愈清洗 (fb1931b)', () => {
     await vi.waitFor(async () => {
       const db = await getDB();
       const persisted = await db.get('training_plans', 'plan_regression_1');
-      expect(persisted?.items.map((item) => item.cardId)).toEqual([VALID_CARD_ID]);
+      expect(persisted?.items.filter(isCardStage).map((item) => item.cardId)).toEqual([
+        VALID_CARD_ID,
+      ]);
     });
   });
 
@@ -86,7 +92,10 @@ describe('planStorage 失效卡片自愈清洗 (fb1931b)', () => {
     const state = await loadPlanStorageState();
     const loaded = state.plans.find((p) => p.id === 'plan_regression_1');
 
-    expect(loaded?.items.map((item) => item.cardId)).toEqual([VALID_CARD_ID, SECOND_VALID_CARD_ID]);
+    expect(loaded?.items.filter(isCardStage).map((item) => item.cardId)).toEqual([
+      VALID_CARD_ID,
+      SECOND_VALID_CARD_ID,
+    ]);
     expect(loaded?.updatedAt).toBe(plan.updatedAt);
     expect(state.activePlanId).toBe(plan.id);
   });

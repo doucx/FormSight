@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { officialPlanRegistry } from '../../config/plans';
+import { isCardStage } from '../../core/plan/stages';
 import { registry } from '../../core/registry';
 import { clearAllData } from '../../storage/db';
 import {
@@ -59,7 +60,7 @@ describe('训练计划导入与状态机 (G1-06)', () => {
     );
 
     expect(imported).not.toBeNull();
-    expect(imported?.items.map((item) => item.cardId)).toEqual(['star_single']);
+    expect(imported?.items.filter(isCardStage).map((item) => item.cardId)).toEqual(['star_single']);
   });
 
   it('全部阶段都失效时拒绝导入且不落库', async () => {
@@ -137,13 +138,19 @@ describe('训练计划导入与状态机 (G1-06)', () => {
       ],
     };
 
-    expect(forkOfficialPlan(preset).items.map((item) => item.cardId)).toEqual(['star_single']);
+    expect(
+      forkOfficialPlan(preset)
+        .items.filter(isCardStage)
+        .map((item) => item.cardId),
+    ).toEqual(['star_single']);
   });
 
   it('官方预置中的卡片全部已注册（防止新增卡漏注册）', () => {
     const dangling = officialPlanRegistry
       .getAllPresets()
-      .flatMap((preset) => preset.items.filter((item) => !registry.getCardById(item.cardId)));
+      .flatMap((preset) => preset.items)
+      .filter((item) => item.type !== 'message' && item.type !== 'rest')
+      .filter((item) => !registry.getCardById(item.cardId));
 
     expect(dangling).toEqual([]);
   });

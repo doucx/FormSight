@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { useTranslation } from '../../../core/i18n';
+import { countPlanTrials, estimatePlanMinutes } from '../../../core/plan/stages';
 import {
   exportPlanToJson,
   getPlanStorageStateSnapshot,
@@ -15,16 +16,26 @@ import {
   togglePlanFavoriteAction,
 } from '../../../stores/planStore';
 import { showToast } from '../../../stores/toastStore';
-import type { PlanItem, PlanStorageState, TrainingPlan } from '../../../types/plan';
+import type {
+  MessageStageItem,
+  PlanItem,
+  PlanStorageState,
+  RestStageItem,
+  TrainingPlan,
+} from '../../../types/plan';
 import {
   batchUpdateItemTrials,
+  createMessageStage,
   createNewBlankPlan,
   createPlanItem,
+  createRestStage,
   movePlanItem,
   removePlanItem,
   reorderPlanItem,
   sanitizePlan,
+  updateMessageStage,
   updatePlanItemTrials,
+  updateRestStage,
 } from './planItemUtils';
 
 export interface UsePlanEditorStateOptions {
@@ -122,10 +133,7 @@ export function usePlanEditorState({
     return sanitized;
   };
 
-  const totalTrials = useMemo(
-    () => currentPlan.items.reduce((acc, curr) => acc + curr.targetTrials, 0),
-    [currentPlan.items],
-  );
+  const totalTrials = useMemo(() => countPlanTrials(currentPlan.items), [currentPlan.items]);
 
   return {
     storageState,
@@ -140,7 +148,7 @@ export function usePlanEditorState({
     setShowPlanManager,
     isNewPlan,
     totalTrials,
-    estimatedMin: Math.max(1, Math.round((totalTrials * 3.5) / 60)),
+    estimatedMin: estimatePlanMinutes(currentPlan.items),
     fileInputRef,
     handleSelectPlanFromList: async (p: TrainingPlan) => {
       setCurrentPlan({ ...p });
@@ -156,6 +164,12 @@ export function usePlanEditorState({
     },
     handleAddItem: (cardId: string) =>
       updatePlanItems((items) => [...items, createPlanItem(cardId)]),
+    handleAddMessageStage: () =>
+      updatePlanItems((items) => [
+        ...items,
+        createMessageStage(t('plan.defaultMessageTitle'), t('plan.defaultMessageContent')),
+      ]),
+    handleAddRestStage: () => updatePlanItems((items) => [...items, createRestStage(60)]),
     handleRemoveItem: (id: string) => updatePlanItems((items) => removePlanItem(items, id)),
     handleMoveItem: (idx: number, dir: 'up' | 'down') =>
       updatePlanItems((items) => movePlanItem(items, idx, dir)),
@@ -163,6 +177,17 @@ export function usePlanEditorState({
       updatePlanItems((items) => reorderPlanItem(items, fromIdx, toIdx)),
     handleUpdateTrials: (id: string, trials: number) =>
       updatePlanItems((items) => updatePlanItemTrials(items, id, trials)),
+    handleUpdateMessageStage: (
+      id: string,
+      patch: Pick<MessageStageItem, 'title' | 'content'> & { actionLabel?: string },
+    ) => updatePlanItems((items) => updateMessageStage(items, id, patch)),
+    handleUpdateRestStage: (
+      id: string,
+      patch: Pick<RestStageItem, 'durationSeconds'> & {
+        allowSkip?: boolean;
+        tips?: string;
+      },
+    ) => updatePlanItems((items) => updateRestStage(items, id, patch)),
     handleClearAll: () => updatePlanItems(() => []),
     handleCreateNewBlankPlan,
     handleCloneCurrent: async () => {

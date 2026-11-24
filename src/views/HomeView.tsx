@@ -1,9 +1,17 @@
-import { ArrowRight, Clock, Compass, Layers, Target } from 'lucide-preact';
+import { ArrowRight, BookOpen, Clock, Coffee, Compass, Layers, Target } from 'lucide-preact';
+import type { ComponentChildren } from 'preact';
 import { PlanHeroCard } from '../components/plan/PlanHeroCard';
 import { getCardTitle, useTranslation } from '../core/i18n';
+import {
+  countPlanTrials,
+  isCardStage,
+  isMessageStage,
+  normalizePlanItems,
+} from '../core/plan/stages';
 import { registry } from '../core/registry';
 import { type UnifiedProfileData, formatTotalTime } from '../storage/index';
 import type { TrainingPlan } from '../types/plan';
+import { formatSecondsToTimer } from '../utils/time';
 
 interface HomeProps {
   totalTimeMs: number;
@@ -46,10 +54,8 @@ export function HomeView({
       ? (todayLevels.reduce((a, b) => a + b, 0) / todayLevels.length).toFixed(1)
       : null;
 
-  // 获取当前计划的所有有效阶段卡片
-  const validPlanItems = (trainingPlan.items || []).filter((item) =>
-    Boolean(registry.getCardById(item.cardId)),
-  );
+  // 获取当前计划的全部有效阶段（卡片 / 文字提示 / 休息段）
+  const validPlanItems = normalizePlanItems(trainingPlan.items || []).items;
 
   return (
     <div className="w-full max-w-6xl mx-auto flex flex-col gap-6 animate-in fade-in duration-150">
@@ -96,12 +102,28 @@ export function HomeView({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {validPlanItems.map((item, idx) => {
-              const card = registry.getCardById(item.cardId);
-              if (!card) return null;
-              const Icon = card.icon;
-              const cardTitle = getCardTitle(card, t);
-              const cardProfile = profiles[card.id];
-              const currentLvl = cardProfile?.currentLevel || 5;
+              let Icon: (props: { className?: string }) => ComponentChildren = BookOpen;
+              let title = '';
+              let subtitle = '';
+              let badge = '';
+
+              if (isCardStage(item)) {
+                const card = registry.getCardById(item.cardId);
+                if (!card) return null;
+                Icon = card.icon;
+                title = getCardTitle(card, t);
+                subtitle = `Lvl ${profiles[card.id]?.currentLevel || 5}`;
+                badge = `${item.targetTrials} ${t('common.trialsUnit')}`;
+              } else if (isMessageStage(item)) {
+                title = item.title?.trim() || t('plan.messageUntitled');
+                subtitle = t('plan.stageTypeMessageShort');
+                badge = t('plan.stageTypeMessageShort');
+              } else {
+                Icon = Coffee;
+                title = t('plan.stageTypeRest');
+                subtitle = formatSecondsToTimer(item.durationSeconds);
+                badge = formatSecondsToTimer(item.durationSeconds);
+              }
 
               return (
                 <div
@@ -116,15 +138,13 @@ export function HomeView({
                       <Icon className="w-3.5 h-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-xs font-bold text-foreground truncate">{cardTitle}</div>
-                      <div className="text-xs text-muted-foreground font-mono">
-                        Lvl {currentLvl}
-                      </div>
+                      <div className="text-xs font-bold text-foreground truncate">{title}</div>
+                      <div className="text-xs text-muted-foreground font-mono">{subtitle}</div>
                     </div>
                   </div>
 
                   <span className="text-xs font-mono font-bold text-primary bg-card border border-border px-2 py-0.5 rounded-lg shadow-xs flex-shrink-0">
-                    {item.targetTrials} {t('common.trialsUnit')}
+                    {badge}
                   </span>
                 </div>
               );
@@ -224,7 +244,7 @@ export function HomeView({
             <p className="text-xs text-muted-foreground mt-0.5">
               {t('plan.stageAndTrialsSummary', {
                 stages: validPlanItems.length,
-                trials: validPlanItems.reduce((acc, c) => acc + c.targetTrials, 0),
+                trials: countPlanTrials(validPlanItems),
               })}
             </p>
           </div>
