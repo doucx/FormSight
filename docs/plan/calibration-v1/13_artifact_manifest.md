@@ -12,6 +12,7 @@
 | 计划 tag | git tag `calib-plan-v1` | 2026-11-24 | — | S00 合并点 |
 | 代码基线 | `develop` @ `b274d9a` | 2026-11-24 | — | Calibration Runner + DB v5 |
 | 校准导出 | `formsight-calibration-runs` v1 | 2026-11-24 | — | 每 run 自动生成；本地 |
+| pilot v1 导出 | `formsight_calibration_all_2026-11-25_22-24.json` | 2026-11-25 | `ce053c710fe5dfdfcfa44f53fd421adc9be785e0a4ad75c03606dc88f822f99e` | 5 runs / 120 trials |
 | 校准 artifact | 未生成 | G2 | — | `calib-v1` |
 | 全量验证报告 | 未生成 | G2 | — | 见 `07_validation_report.md` |
 

@@ -21,7 +21,10 @@
 | R-15 | 单人项目缺少外部评审 | 高 | 中 | gate 自检 + 未来 retrospective | 持续；accepted |
 | R-16 | DB v5 迁移失败 | 低 | 高 | 旧库升级测试；只加表/索引 | S01c；mitigated |
 | R-17 | 校准数据被 `clearAllData` 清掉 | 中 | 中 | 完成页提示先导出；单独 Clear calibration | 持续；open |
-| R-18 | 固定序列顺序/学习效应 | 中 | 中 | block 内随机；记录 trialIndex；S03 检查漂移 | S03；open |
+| R-18 | 固定序列顺序/学习效应 | 中 | 中 | block 内随机；记录 trialIndex；S03 检查漂移 | S03；**observed**（star_double 8/10→3/10） |
+| R-19 | star 的 R 混淆 | 高 | 高 | 修生成器（角度/R 比例间距）；标 confounded | S03a；open |
+| R-20 | 窗口太窄/偏移 | 高 | 高 | pilot v2 用更宽 8 卡窗口；先 bracket 再精测 | S03b；open |
+| R-21 | run 跨天/中断 | 中 | 中 | 单 run 一次完成；>2h 标 split 重做 | D-023；open |
 
 ## 重点说明
 

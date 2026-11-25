@@ -23,22 +23,22 @@
 - 生成 8 张试点 + 1 控制的历史先验；见 `07_validation_report.md` §pilot-priors。
 - 本地 artifact：`viska/local/calibration/pilot-priors.json`。
 
-## S02（待填）
+## S02（已填）
 
 由 Calibration Runner 自动记录；导出 `formsight-calibration-runs` 后，用 `summary.byLevel` 生成下表。
 
 | session | 日期 | 卡 | 题数 | 命中 | 覆盖 | 异常 |
 |---|---|---|---:|---:|---|---|
-| S02 | | star_single | 30 | | 10–18 | |
-| S02 | | star_double_r | 30 | | 20–26 | |
+| S02 | 2026-11-25 | star_single | 30 | 26 | 10–18 | 跨 11-24/11-25，split |
+| S02 | 2026-11-25 | star_double_r | 30 | 17 | 20–26 | 后段正确率下滑 |
 
-## S02b（待填）
+## S02b（已填）
 
 | session | 日期 | 卡 | 题数 | 命中 | 覆盖 | 异常 |
 |---|---|---|---:|---:|---|---|
-| S02b | | color_val | 20 | | 3–9 | |
-| S02b | | angle_parallel_2afc | 20 | | 6–14 | |
-| S02b | | persp_prop_division | 20 | | 9–17 | |
+| S02b | 2026-11-25 | color_val | 20 | 17 | 3–9 | 仅 L9 低于 0.8 |
+| S02b | 2026-11-25 | angle_parallel_2afc | 20 | 19 | 6–14 | 天花板 |
+| S02b | 2026-11-25 | persp_prop_division | 20 | 15 | 9–17 | 每级 3/4，平坦 |
 
 ## 规则
 

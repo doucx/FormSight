@@ -177,3 +177,41 @@
 - 理由：减少人工错误；S03 直接消费 JSON。
 - 影响：导出格式变更需升 `version`。
 - 重审触发：`event:calibration_export_format_change`
+
+---
+
+## D-020 — pilot v1 判 G1 未通过，不进入全量校准
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：5/8 run、4/5 无有效 80% 穿越、0 族强 family transfer；G1 不通过，S04 暂停。
+- 理由：窗口失效时做全量校准只会把错误放大到 300–400 题。
+- 影响：新增 S03b（生成器/协议）与 S02c（pilot v2）。
+- 重审触发：`event:pilot_v2_complete`
+
+## D-021 — star_single / star_double_r 标 confounded
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：两张 star 卡先修生成器，使间距按角度或 R 比例缩放；修好前不参与 JND/Level 校准。
+- 理由：`S(level)` 是像素间距，角间距 `S/R` 随随机 R 变 3–4 倍；Level 与真实难度脱钩。
+- 影响：两张卡标 `confounded/experimental`；旧 Level 作废；pilot v2 用新窗口。
+- 重审触发：`event:star_spacing_fixed`
+
+## D-022 — pilot v2 用更宽的 8 卡窗口
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：pilot v2 覆盖 8 张卡、约 184 题；angle 上移到 16–32，persp 扩到 5–25，star 修后 1–21，color 5–17。
+- 理由：v1 的 5 级窗口对指数难度映射太窄，只覆盖 1.3–1.5 倍容差变化。
+- 影响：`src/calibration/protocols.ts` 更新；S02c 重跑。
+- 重审触发：`event:pilot_v2_protocol_change`
+
+## D-023 — 校准 run 必须在一次坐下完成
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：单 run 中断超过 2 小时，标 `split` 并重做；不把跨天数据当同一阈值。
+- 理由：star_single v1 跨 24 小时；顺序/状态会污染阈值。
+- 影响：`06` 增加 split 规则；`07` 记录异常。
+- 重审触发：`event:calibration_run_duration_rule`

@@ -6,41 +6,36 @@
 
 | 项 | 值 |
 |---|---|
-| 日期 | 2026-11-24 |
-| Gate | **G1 待做（S01c 工具就绪，等待 S02/S02b）** |
-| 上次会话 | S01c（Calibration Runner） |
-| 下一步 | **S02**：`star_single` 30、`star_double_r` 30；**S02b**：`color_val` / `angle_parallel_2afc` / `persp_prop_division` 各 20 |
-| Blocker | 需要约 120 题；工具已就绪，不再需要手动调级 |
+| 日期 | 2026-11-25 |
+| Gate | **G1 未通过（pilot v1 窗口失效；等待 S03b + S02c）** |
+| 上次会话 | S03a（pilot v1 分析） |
+| 下一步 | **S03b**：修 star 生成器 R 混淆；改 pilot v2 协议（8 张，~184 题） |
+| Blocker | star_single / star_double_r 的 Level 被 R 混淆；angle/persp 窗口太窄 |
 
-## S01c 产出
+## S03a 结论
 
-- 设置 → Data Governance → **Calibration runs**，或 `#/calibrate`；
-- 5 个固定序列 run；Start / Resume / Export / Export all / Clear；
-- 每题自动写 `calibration_runs` / `calibration_trials`，**不写训练统计**；
-- 完成后自动生成 byLevel summary，导出 `formsight-calibration-runs` JSON；
-- 中断可 Resume；导出前不需要手填 `11_experiment_log`。
+导出：`formsight_calibration_all_2026-11-25_22-24.json`，5 runs / 120 trials / completed。
 
-代码：
+| run | acc | 结论 |
+|---|---:|---|
+| color_val | 0.85 | 唯一近似跨 0.8（~8；7–9） |
+| star_single | 0.87 | 非单调；Level 被 R 混淆 |
+| star_double_r | 0.57 | 全部 <0.8；窗口太高；R 混淆 |
+| angle_parallel_2afc | 0.95 | 天花板；窗口太低 |
+| persp_prop_division | 0.75 | 每级 3/4，平坦；窗口太窄 |
 
-- `src/calibration/`：protocols、sequence、repository、export、view、runner、summary；
-- `schema.ts`：DB_VERSION 5，新增两个 store；
-- `importExport.ts` / `clearAllData`：包含校准数据；
-- `useTrainingSession`：`scheduledLevels`；`GenericTrainingView` / `TrainingShell`：protocol 锁与 trial 回调；
-- `useHashRoute` / `AppRouter`：`#/calibrate`。
+- G1 未通过：5/8 run，0 个族有强 family transfer 证据。
+- 详见 `07_validation_report.md` §3b/§7/§8。
+- 不要进入 S04 全量校准。
 
 ## 下一步（只做这一件）
 
-S02 + S02b：
+S03b：
 
-1. 打开 `#/calibrate`；
-2. 依次完成 5 个 run（顺序不限）：
-   - `star_single` 30 题
-   - `star_double_r` 30 题
-   - `color_val` 20 题
-   - `angle_parallel_2afc` 20 题
-   - `persp_prop_division` 20 题
-3. 每个 run 完成页点 **Export run**；全部完成后点 **Export all**；
-4. 把导出的 JSON 放 `viska/local/calibration/`，告诉 S03 文件名。
+1. 修 `star_single` / `star_double_r` 生成器：让间距按角度/R 比例缩放，消除 R 混淆；
+2. 按 `07` §8.2 更新 `src/calibration/protocols.ts`（pilot v2，8 张，~184 题）；
+3. 跑 `pnpm verify`；在 `07` 记录改动；
+4. 更新本文件，等 S02c。
 
 ## 读取顺序
 
@@ -51,31 +46,26 @@ S02 + S02b：
 
 ## 不要做
 
+- 不进入全量校准（S04）直到 G1 通过。
 - 不迁移旧数据；不清 IDB；不提交原始 JSON。
 - 不加新 card 类型。
 - 不用 block 做测量。
-- 不修改已记录的 D-001..D-019；要改就追加 D-xxx。
+- 不修改已记录的 D-001..D-023；要改就追加 D-xxx。
 - 不在 tracked 文件写绝对路径、Token、个人日程。
-
-## 待确认（不阻塞 S02）
-
-1. `rel_lightness_induction` / `neg_ratio_estimation` 边界卡：等 CI 还是直接排除。
-2. `docs/plan` 的备份方式（私有仓库/加密同步/手动）。
 
 ## Artifact 版本
 
 | 名称 | 版本 | 说明 |
 |---|---|---|
-| 数据快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
+| 历史快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
 | pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
-| pilot 脚本 | 2026-11-24 | `pilot_priors.py`，`sha256:1a43065…7ac` |
-| 校准导出 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
-| 代码基线 | `develop` @ `b274d9a` | S00 tag `calib-plan-v1` |
+| pilot v1 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
+| 校准导出格式 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
+| 代码基线 | `develop` @ `b274d9a` | Calibration Runner + DB v5 |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证
 
-- `pnpm verify`：46 个测试文件 / 464 个用例全部通过。
-- 新增校准 sequence/repository/export/backup 测试。
-- 文档-only 改动随后一并提交。
-- 原始数据未进入 git。
+- 只读分析 + 文档更新；未改代码。
+- `11_experiment_log` 已由导出回填。
+- 原始数据未进入 git；本地副本在 `viska/local/calibration/`。
