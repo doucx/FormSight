@@ -7,10 +7,10 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-11-25 |
-| Gate | **G1 未通过（pilot v2 待跑）** |
-| 上次会话 | S03b（star 生成器 + pilot v2 协议） |
-| 下一步 | **S02c**：跑 pilot v2（8 个 run，~184 题） |
-| Blocker | 无；需要约 184 题 |
+| Gate | **G1 未通过（pilot v3 待做）** |
+| 上次会话 | S03c（pilot v2 分析） |
+| 下一步 | **S03d**：pilot v3 协议 + 无效 run 规则 |
+| Blocker | star_single L1 仍 .60；color/spatial 窗口未定 |
 
 ## S03a 结论
 
@@ -30,16 +30,11 @@
 
 ## 下一步（只做这一件）
 
-S02c：
+S03d：
 
-1. 打开 `#/calibrate`；
-2. 按列表完成 8 个 run（顺序不限），共约 184 题：
-   - `color_hue` 20、`color_val` 20
-   - `angle_parallel_2afc` 20、`angle_comparison_2afc` 20
-   - `persp_prop_division` 24、`persp_prop_migration` 20
-   - `star_single` 30、`star_double_r` 30（生成器已修）
-3. 每个 run 一次坐下完成；中断超过 2 小时标 `split` 重做；
-4. 完成后 Export all，放 `viska/local/calibration/`，告诉 S03c 文件名。
+1. 更新 `src/calibration/protocols.ts` 为 pilot v3（5 张，约 156 题，见 `07` §8.2）；
+2. 在 `06` 写无效 run 规则（中位 RT <300ms 丢弃、每次最多 2–3 run、star 先跑）；
+3. 跑 `pnpm verify`；更新本文件，等 S02d。
 
 ## 读取顺序
 
@@ -64,6 +59,7 @@ S02c：
 | 历史快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
 | pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
 | pilot v1 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
+| pilot v2 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_23-00.json`，`sha256:e08ade3a…d3586` |
 | 校准导出格式 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
 | 代码基线 | `develop` @ `4eeb53e` | Calibration Runner + star 修复 |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |

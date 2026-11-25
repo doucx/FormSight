@@ -14,8 +14,11 @@
 | S02b | 人 | 试点重测：`color_val` / `angle_parallel_2afc` / `persp_prop_division` 各 20 | `11` S02b | — | done |
 | S03a | AI | 试点 v1 分析 | `07` §fresh；G1 未通过 | — | done |
 | S03b | AI | 修 star 生成器 R 混淆 + 协议 v2（8 张，~184 题） | 代码 + `protocols.ts` + `07` §8 | — | done |
-| S02c | 人 | pilot v2：8 个 run，~184 题 | `13` 新导出 | — | 2–3 h |
-| S03c | AI | 重跑 holdout/LOCO/retest + family transfer 判定 | `07` 更新；G1 结论 | **G1** | 120 min |
+| S02c | 人 | pilot v2：8 个 run，~184 题 | `13` 新导出 | — | done |
+| S03c | AI | pilot v2 分析 | `07` §fresh2；G1 仍未通过 | — | done |
+| S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | 60 min |
+| S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | 2 h |
+| S03e | AI | pilot v3 分析 + G1 判定 | `07` 更新 | **G1** | 120 min |
 | S04 | AI | 全量先验拟合；标记 A/B/C/D；输出 `calib-v0.9` | `13` 更新；v0.9 | — | 120 min |
 | S05 | 人 | 全量补测第 1 批（约 100 题） | `11` S05 | — | 2–3 h |
 | S06 | 人 | 全量补测第 2 批（约 100 题） | `11` S06 | — | 2–3 h |
@@ -48,7 +51,7 @@ Blocker:
 
 ## 关键路径
 
-`S00 → S01 → S01c → S02 → S02b → S03a → S03b → S02c → S03c(G1) → S04 → S05–S07 → S08(G2) → S09(G3) → S10–S13(G4) → S14–S16(G5) → S17(G6)`
+`S00 → S01 → S01c → S02 → S02b → S03a → S03b → S02c → S03c → S03d → S02d → S03e(G1) → S04 → S05–S07 → S08(G2) → S09(G3) → S10–S13(G4) → S14–S16(G5) → S17(G6)`
 
 - G3 的重设计规格可与 S10–S13 并行；但生成器代码落地要等 G2 冻结。
 - 补测不要和生成器修改混在同一批。

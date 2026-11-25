@@ -1,6 +1,6 @@
 # 验证报告
 
-状态：draft。§pilot-priors 已填（S01）；§fresh 已填（S03）；§holdout/§LOCO/§retest 因窗口失效无法完成。
+状态：draft。§pilot-priors 已填（S01）；§fresh 已填（S03a）；§fresh2 已填（S03c）；holdout/retest 待 pilot v3。
 
 ## 1. 数据与版本
 
@@ -68,6 +68,40 @@
 | angle_parallel_2afc | 6:1.00, 8:1.00, 10:0.75, 12:1.00, 14:1.00 |
 | persp_prop_division | 9/11/13/15/17 全部 0.75 |
 
+## 3c. §fresh2（S02c，pilot v2）
+
+导出：`formsight_calibration_all_2026-11-25_23-00.json`，`sha256:e08ade3a…d3586`；11 runs / 8 protocols / 254 trials。
+11 runs 中有重复：`star_single` 2 次、`angle_comparison` 3 次；其中一次 `angle_comparison` 中位 RT 133ms，判无效并丢弃。下表取**每协议最新且 RT≥300ms** 的 run。
+
+| protocol | n | acc | 95% CI | levels → accuracy | 分类 | 说明 |
+|---|---:|---:|---|---|---|---|
+| color_hue | 20 | 0.75 | 0.54–0.90 | 9:.50 11:1.00 13:.75 15:.50 17:1.00 | non-monotone | 4/level 太少；交替 |
+| color_val | 20 | 0.60 | 0.38–0.79 | 5:.75 7:.50 9:.50 11:.75 13:.50 | below-range | 阈值可能在 5 以下 |
+| angle_parallel_2afc | 20 | 0.70 | 0.48–0.86 | 16:1.00 20:1.00 24:.75 28:.50 32:.25 | crossing ~23 | 干净、单调；可用 |
+| angle_comparison_2afc | 20 | 0.75 | 0.54–0.90 | 14:.75 18:1.00 22:1.00 26:.25 30:.75 | non-monotone | 三次尝试 .60/.50/.75；不稳定 |
+| persp_prop_division | 24 | 0.83 | 0.65–0.94 | 5:1.00 9:.75 13:1.00 17:.75 21:1.00 25:.50 | non-monotone | 末次穿越 ~23；噪声大 |
+| persp_prop_migration | 20 | 0.90 | 0.72–0.98 | 8:1.00 12:1.00 16:1.00 20:.75 24:.75 | crossing ~19 | 可用但 4/level |
+| star_double_r | 30 | 0.90 | 0.76–0.97 | 1:1.00 5:1.00 9:1.00 13:.60 17:1.00 21:.80 | non-monotone / ceiling | 需更高 levels 21–35 |
+| star_single | 30 | 0.70 | 0.52–0.84 | 1:.60 4:.40 7:.60 10:.80 13:.80 16:1.00 | non-monotone / below | L1 仍 .60；两次 run 一致；疑似任务理解或几何问题 |
+
+### 数据质量
+
+- 11 runs / 8 protocols；`star_single` 两次（.63 / .70），`angle_comparison` 三次（.60 / .50 / .75）。
+- `angle_comparison` 第二次中位 RT 133ms，明显无效；已丢弃。
+- 22:41–23:00 约 19 分钟完成 254 题；后半段（star）可能疲劳。
+- `star_single` 两次都在 L1 只有 .60，且 L4=.40；不是单调难度，先做 5 题人工检查再决定是否 out-of-range。
+- `star_double_r` 1–21 已天花板；需要更高 levels。
+- `color_val` v2 窗口 5–13 整体太难；阈值可能在 5 以下。
+- `color_hue` / `angle_comparison` 4/level 的噪声主导，需要每级 6 题。
+
+### 初步阈值（仅作规划）
+
+- `angle_parallel_2afc`：~23（20→24 插值）。
+- `persp_prop_migration`：~19（16→20 插值）。
+- `persp_prop_division`：末次 ~23（21→25 插值），但非单调。
+- ratio 族两卡差 ~4 级 → **弱 family transfer**。
+- color / spatial / angle 仍无强证据。
+
 ## 4. §holdout（无法完成）
 
 原计划：历史训练、2026-10-01 之后测试。实际问题是 4/5 个 fresh run **没有有效的 80% 穿越点**：
@@ -87,59 +121,69 @@
 | angle | angle_parallel fresh >14 vs angle_comparison 历史 12 | 无法估计；窗口太易，判定失败 |
 | ratio | persp_prop_division flat vs persp_prop_migration 历史 6 | 无法估计；判定失败 |
 
-结论：**没有一族给出强证据**；family transfer 未被验证。
+pilot v2 后：
 
-## 6. §retest（无意义）
+- ratio：`persp_prop_migration` ~19、`persp_prop_division` ~23，差 ~4 → **弱证据**；
+- angle：`angle_parallel_2afc` ~23，但 `angle_comparison` 不稳定 → 不能算通过；
+- color / spatial：无有效阈值 → 失败。
 
-原计划 4 张重测。由于 4/5 的阈值未建立，重测只会重复“测不到阈值”。重测应在 pilot v2 的窗口修正后做。
+结论：**1/4 族弱证据，0 族强证据**；family transfer 仍未验证。
+
+## 6. §retest（推迟到 v3）
+
+原计划 4 张重测。pilot v2 后只有 angle/ratio 有初步阈值，color/spatial 没有；重测推迟到 pilot v3 的窗口修正后。
 
 ## 7. G1 结论
 
-**G1 未通过（incomplete + invalid ranges）。**
+**G1 仍未通过（pilot v2）。**
 
-- [ ] 8 张中 ≥6 张通过 holdout — 只完成 5/8，且 4/5 窗口无效
-- [ ] ≥3/4 族 LOCO 中位 ≤5 级 — 0 族强证据
-- [ ] 4 张重测 ≥3 张通过 — 未做（无有效阈值）
-- [ ] `color_lightness` 被正确排除 — 本次未跑控制
-- [ ] family transfer — 未验证
+- [x] 8/8 卡至少跑过一次（有重复）
+- [ ] 8 张中 ≥6 张有有效 80% 穿越 — 只有 `angle_parallel_2afc` 干净；`persp_prop_migration` 可用；`persp_prop_division` 噪声大；其余 5 张无有效穿越
+- [ ] ≥3/4 族 LOCO — 仅 ratio 弱证据（~19 vs ~23，Δ~4）；color/spatial/angle 失败
+- [ ] 4 张重测 — 未做
+- [ ] 控制卡 — 本次未跑
 
-这不是“校准失败”，而是**试点帮我们在投入 300–400 题之前发现了三个问题**：
+原因：
 
-1. 历史先验来自 block 数据，窗口系统性偏窄/偏移；
-2. `star_single` / `star_double_r` 的 Level 被随机距离 R 混淆，不是单调难度；
-3. 固定 5 级窗口对指数难度映射太窄（angle 只覆盖 10.6°→5.5°，persp 只覆盖 0.054→0.036）。
+1. 每级 4 题太少，20–24 题的 CI 太宽（±0.2），非单调多半是噪声。
+2. 一轮 254 题只用 19 分钟，后半段 star 可能疲劳；`angle_comparison` 有一次 133ms/题，明显无效。
+3. `star_single` 两次 L1 都只有 .60，且 L4=.40：不是单调难度，可能是任务理解/几何问题，先人工检查再决定 out-of-range。
+4. `star_double_r` 在 1–21 已天花板，需要 21–35。
+5. `color_val` v2 窗口整体偏难，阈值可能在 5 以下。
+6. `color_hue` / `angle_comparison` 需要每级 6 题，否则交替模式无法判定。
 
-## 8. 下一步：pilot v2
+## 8. 下一步：pilot v3（聚焦 5 张）
 
-### 8.1 先修 star 生成器（S03b 已实施）
+### 8.1 规则
 
-`star_single` / `star_double_r` 目前 `S(level)` 是像素间距，角间距是 `S/R`；R 随机导致同一 Level 难度差 3–4 倍。建议：
+- 每个 run 一次坐下完成；
+- 每次会话最多 2–3 个 run，中间休息；
+- 中位 RT <300ms 的 run 直接判无效；
+- star 卡安排在会话开始、精神好的时候；
+- 每级 6 题；先跑 5 题人工检查 star_single。
 
-- 把间距改成**角度/比例**：`step = f(level)`（度），径向和角向都用 `R * step`；
-- 或把 `R` 纳入强度量，Level 由角度精度唯一决定；
-- 修完后旧 Level 作废，三张 star 卡标 `experimental`，重新标定。
-- 已实施：`star_single` 用固定角间距，径向按 R 比例；`star_double_r/h` 用固定双极角间距；新增 `getPolarAngularStep` / `getBipolarAngularStep` 与不随 R 变化的测试。
+### 8.2 窗口（约 156 题）
 
-### 8.2 pilot v2 窗口（8 张，约 184 题）
+| 卡 | levels | 每级 | 总数 | 目的 |
+|---|---|---:|---:|---|
+| color_val | 1 / 3 / 5 / 7 / 9 | 6 | 30 | 找 5 以下的阈值 |
+| color_hue | 9 / 11 / 13 / 15 / 17 | 6 | 30 | 降噪，确认单调性 |
+| angle_comparison_2afc | 14 / 18 / 22 / 26 / 30 | 6 | 30 | 重跑，丢弃无效 run |
+| star_single | 1 / 4 / 7 / 10 / 13 / 16 | 6 | 36 | L1 仍 <.8 则 out-of-range/redesign |
+| star_double_r | 17 / 21 / 25 / 29 / 33 / 35 | 5 | 30 | 找 21 以上的阈值 |
+
+可选确认（如果体力允许，+60 题）：
 
 | 卡 | levels | 每级 | 总数 |
 |---|---|---:|---:|
-| color_hue | 9 / 11 / 13 / 15 / 17 | 4 | 20 |
-| color_val | 5 / 7 / 9 / 11 / 13 | 4 | 20 |
-| angle_parallel_2afc | 16 / 20 / 24 / 28 / 32 | 4 | 20 |
-| angle_comparison_2afc | 14 / 18 / 22 / 26 / 30 | 4 | 20 |
-| persp_prop_division | 5 / 9 / 13 / 17 / 21 / 25 | 4 | 24 |
-| persp_prop_migration | 8 / 12 / 16 / 20 / 24 | 4 | 20 |
-| star_single | 1 / 4 / 7 / 10 / 13 / 16 | 5 | 30 |
-| star_double_r | 1 / 5 / 9 / 13 / 17 / 21 | 5 | 30 |
-
-- 先修 star 生成器，再跑 star；
-- 所有 run 必须在一次坐下完成；中断超过 2 小时标 `split` 并重做；
-- 完成后重跑 §4–§7。
+| angle_parallel_2afc | 22 / 24 / 26 / 28 | 5 | 20 |
+| persp_prop_migration | 18 / 20 / 22 / 24 | 5 | 20 |
+| persp_prop_division | 21 / 23 / 25 / 27 | 5 | 20 |
 
 ### 8.3 判定
 
-- 8 张中 ≥6 张有有效 80% 穿越；
-- ≥3/4 族 LOCO 中位 ≤5 级；
-- 4 张重测 ≥3 张通过；
-- 否则仍不进入全量校准。
+- color：至少一张有干净穿越；
+- spatial：star_single 不是 out-of-range，且 star_double 有穿越；
+- angle：angle_parallel 确认 + angle_comparison 干净；
+- ratio：division/migration 差 ≤5；
+- 满足 ≥3/4 族后才进 G2。

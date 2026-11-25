@@ -39,7 +39,8 @@ G6 清理（清 IDB，保留 JSON 与 artifact）
 - 输入：历史先验 + 试点固定序列（Calibration Runner；约 120 题：60 补测 + 60 重测）。
 - 产出：pilot 先验、pilot 补测记录、`07_validation_report` §pilot。
 - 验收：8 张中 ≥6 张通过 holdout；≥3/4 族 LOCO 中位 ≤5 级；4 张重测 ≥3 张通过；控制卡被正确排除。
-- v1 结果：5/8 run；4/5 无有效 80% 穿越；star R 混淆；判 G1 未通过。v2 先修 star 生成器、换宽窗口。
+- v1 结果：5/8 run；4/5 无有效 80% 穿越；star R 混淆；判 G1 未通过。
+- v2 结果：8/8 卡；1/4 族弱证据；仍判未通过；v3 聚焦 5 张、每级 6 题。
 - 依赖：G0。
 - 失败退路：见下方“family transfer 降级树”。
 

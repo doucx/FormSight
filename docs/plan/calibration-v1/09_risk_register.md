@@ -25,6 +25,9 @@
 | R-19 | star 的 R 混淆 | 高 | 高 | 修生成器（角度/R 比例间距）；标 confounded | S03b；mitigated（待 v2 验证） |
 | R-20 | 窗口太窄/偏移 | 高 | 高 | pilot v2 用更宽 8 卡窗口；先 bracket 再精测 | S03b；open |
 | R-21 | run 跨天/中断 | 中 | 中 | 单 run 一次完成；>2h 标 split 重做 | D-023；open |
+| R-22 | 节奏过快/疲劳 | 高 | 高 | 每次最多 2–3 run；中间休息；star 先跑 | v2 observed；D-026 |
+| R-23 | 重复/无效 run | 高 | 中 | 中位 RT <300ms 丢弃；只取每协议有效最新 | v2 observed（133ms run） |
+| R-24 | star_single L1 floor | 高 | 高 | 5 题人工检查；仍 <.8 → out-of-range/redesign | v2 observed；D-027 |
 
 ## 重点说明
 

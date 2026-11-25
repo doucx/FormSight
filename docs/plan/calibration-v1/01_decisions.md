@@ -226,3 +226,41 @@
 - 理由：H 与 R 的双极网格实现相同，只修 R 会留下同一 R 混淆。
 - 影响：三张 star 卡旧 Level 作废；pilot v2 只跑单/双 R，H 待后续排期。
 - 重审触发：`event:star_family_calibrated`
+
+---
+
+## D-025 — pilot v2 仍未过 G1，进入 pilot v3
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：8/8 卡已跑，但只有 angle_parallel 干净、persp_migration 可用、persp_division 噪声大；1/4 族弱证据；G1 不通过，S04 继续暂停。
+- 理由：4 题/级太吵，20–24 题 CI ±0.2；非单调无法判定。
+- 影响：pilot v3 聚焦 5 张、每级 6 题、约 156 题。
+- 重审触发：`event:pilot_v3_complete`
+
+## D-026 — 无效 run 与节奏规则
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：中位 RT <300ms 的 run 直接判无效；每次会话最多 2–3 个 run，中间休息；star 卡安排在会话开始。
+- 理由：v2 有一次 angle_comparison 133ms/题；19 分钟 254 题，后半段可能疲劳。
+- 影响：`06` 增加规则；S03e 先过滤无效 run 再分析。
+- 重审触发：`event:valid_run_rule_change`
+
+## D-027 — star_single L1 仍 .60，先人工检查
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：两次 v2 run 的 L1 都 .60、L4 .40；先做 5 题人工检查（是否看懂任务/几何是否可点）。仍 <0.8 则标 out-of-range/redesign。
+- 理由：不是单调难度，可能是任务理解或新几何问题；不能直接归因于能力。
+- 影响：pilot v3 先跑 5 题检查，再决定是否跑 36 题。
+- 重审触发：`event:star_single_manual_check`
+
+## D-028 — pilot v3 窗口
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：color_val 1–9、color_hue 9–17、angle_comparison 14–30、star_single 1–16、star_double 17–35；每级 6 题（star_double 5 题/级）。
+- 理由：v2 显示 color_val 偏难、star_double 天花板、angle_comparison 噪声大。
+- 影响：`protocols.ts` v3；可选确认 angle/ratio +60 题。
+- 重审触发：`event:pilot_v3_protocol_change`

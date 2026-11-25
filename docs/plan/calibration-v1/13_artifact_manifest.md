@@ -13,6 +13,7 @@
 | 代码基线 | `develop` @ `4eeb53e` | 2026-11-25 | — | Calibration Runner + star 修复 + pilot v2 |
 | 校准导出 | `formsight-calibration-runs` v1 | 2026-11-24 | — | 每 run 自动生成；本地 |
 | pilot v1 导出 | `formsight_calibration_all_2026-11-25_22-24.json` | 2026-11-25 | `ce053c710fe5dfdfcfa44f53fd421adc9be785e0a4ad75c03606dc88f822f99e` | 5 runs / 120 trials |
+| pilot v2 导出 | `formsight_calibration_all_2026-11-25_23-00.json` | 2026-11-25 | `e08ade3af6fb546aaf8dc99bde755cee05836a5fbbd96bc0b9527380134d3586` | 11 runs / 8 protocols / 254 trials |
 | 校准 artifact | 未生成 | G2 | — | `calib-v1` |
 | 全量验证报告 | 未生成 | G2 | — | 见 `07_validation_report.md` |
 

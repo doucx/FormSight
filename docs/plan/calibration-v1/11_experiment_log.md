@@ -40,6 +40,25 @@
 | S02b | 2026-11-25 | angle_parallel_2afc | 20 | 19 | 6–14 | 天花板 |
 | S02b | 2026-11-25 | persp_prop_division | 20 | 15 | 9–17 | 每级 3/4，平坦 |
 
+## S02c（2026-11-25，pilot v2）
+
+导出：`formsight_calibration_all_2026-11-25_23-00.json`；11 runs / 254 trials；22:41–23:00。
+
+| protocol | runs | 选取 | n | acc | 异常 |
+|---|---|---:|---:|---:|---|
+| color_hue | 1 | 1 | 20 | .75 | 非单调 |
+| color_val | 1 | 1 | 20 | .60 | below-range |
+| angle_parallel_2afc | 1 | 1 | 20 | .70 | 干净 crossing ~23 |
+| angle_comparison_2afc | 3 | 第 3 次 | 20 | .75 | 前两次 .60/.50；一次 133ms 无效 |
+| persp_prop_division | 1 | 1 | 24 | .83 | 非单调，~23 |
+| persp_prop_migration | 1 | 1 | 20 | .90 | crossing ~19 |
+| star_single | 2 | 第 2 次 | 30 | .70 | L1 .60；两次一致 |
+| star_double_r | 1 | 1 | 30 | .90 | 天花板；需 21–35 |
+
+- 无效 run：`angle_comparison` 22:48:22，中位 RT 133ms，丢弃。
+- 节奏：19 分钟 254 题；后半段 star 可能疲劳。
+- 详细结论见 `07_validation_report.md` §3c/§7/§8。
+
 ## 规则
 
 - 每次 run 完成即可导出；不要等全部做完。
