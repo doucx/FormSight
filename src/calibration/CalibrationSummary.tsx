@@ -61,7 +61,7 @@ export function CalibrationSummary({
           </div>
         )}
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           <div className="rounded-xl border border-border bg-card/60 p-3">
             <div className="text-[10px] uppercase font-bold text-muted-foreground">Trials</div>
             <div className="text-2xl font-black font-mono">{summary.n}</div>
@@ -76,7 +76,19 @@ export function CalibrationSummary({
               {(summary.accuracy * 100).toFixed(0)}%
             </div>
           </div>
+          <div className="rounded-xl border border-border bg-card/60 p-3">
+            <div className="text-[10px] uppercase font-bold text-muted-foreground">Median RT</div>
+            <div className="text-2xl font-black font-mono">
+              {summary.medianResponseTimeMs.toFixed(0)}ms
+            </div>
+          </div>
         </div>
+
+        {summary.invalid && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 dark:bg-rose-950/30 dark:border-rose-800 p-3 text-xs text-rose-800 dark:text-rose-200">
+            中位 RT &lt; 300ms；按 D-026 该 run 判无效，S03 会丢弃。请重跑，并放慢到正常作答节奏。
+          </div>
+        )}
 
         <div className="rounded-2xl border border-border overflow-hidden">
           <table className="w-full text-sm">

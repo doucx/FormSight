@@ -8,9 +8,9 @@
 |---|---|
 | 日期 | 2026-11-25 |
 | Gate | **G1 未通过（pilot v3 待做）** |
-| 上次会话 | S03c（pilot v2 分析） |
-| 下一步 | **S03d**：pilot v3 协议 + 无效 run 规则 |
-| Blocker | star_single L1 仍 .60；color/spatial 窗口未定 |
+| 上次会话 | S03d（pilot v3 协议） |
+| 下一步 | **S02d**：跑 pilot v3（5 个 run，~156 题） |
+| Blocker | 无；需要约 156 题 |
 
 ## S03a 结论
 
@@ -30,11 +30,13 @@
 
 ## 下一步（只做这一件）
 
-S03d：
+S02d：
 
-1. 更新 `src/calibration/protocols.ts` 为 pilot v3（5 张，约 156 题，见 `07` §8.2）；
-2. 在 `06` 写无效 run 规则（中位 RT <300ms 丢弃、每次最多 2–3 run、star 先跑）；
-3. 跑 `pnpm verify`；更新本文件，等 S02d。
+1. 打开 `#/calibrate`，先跑 `star_single`（前 5 题人工检查；明显不可做就 Esc 退出并报告）；
+2. 再跑 `star_double_r`；然后 `color_val`、`color_hue`、`angle_comparison_2afc`；
+3. 每个 run 一次坐下完成；每次会话最多 2–3 个 run，中间休息；
+4. 中位 RT <300ms 的 run 会被 summary 标 invalid，S03 丢弃；
+5. 完成后 Export all，放 `viska/local/calibration/`，告诉 S03e 文件名。
 
 ## 读取顺序
 

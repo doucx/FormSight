@@ -44,6 +44,19 @@ describe('calibration export', () => {
     ]);
   });
 
+  it('flags button-mashing runs via median RT', () => {
+    const fast = summarizeTrials([
+      { ...trial(0, 10, true), responseTimeMs: 100 },
+      { ...trial(1, 10, true), responseTimeMs: 200 },
+      { ...trial(2, 10, true), responseTimeMs: 900 },
+    ]);
+    expect(fast.invalid).toBe(true);
+    expect(fast.medianResponseTimeMs).toBe(200);
+
+    const normal = summarizeTrials([trial(0, 10, true), trial(1, 10, false)]);
+    expect(normal.invalid).toBe(false);
+  });
+
   it('builds a self-describing bundle with sequence and trials', () => {
     const payload = buildExportBundle([
       buildRunExport(run, [trial(0, 10, true)], {

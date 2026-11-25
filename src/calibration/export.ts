@@ -20,6 +20,9 @@ export interface CalibrationRunExport {
     n: number;
     hits: number;
     accuracy: number;
+    medianResponseTimeMs: number;
+    /** Median RT < 300ms is treated as button-mashing and excluded by S03. */
+    invalid: boolean;
     byLevel: CalibrationLevelSummary[];
   };
   trials: CalibrationTrialData[];
@@ -45,10 +48,20 @@ export function summarizeTrials(trials: CalibrationTrialData[]): CalibrationRunE
     byLevel.set(trial.level, bucket);
   }
 
+  const sortedRts = trials.map((trial) => trial.responseTimeMs).sort((a, b) => a - b);
+  const medianResponseTimeMs =
+    sortedRts.length === 0
+      ? 0
+      : sortedRts.length % 2 === 1
+        ? sortedRts[(sortedRts.length - 1) / 2]
+        : (sortedRts[sortedRts.length / 2 - 1] + sortedRts[sortedRts.length / 2]) / 2;
+
   return {
     n: trials.length,
     hits,
     accuracy: trials.length > 0 ? hits / trials.length : 0,
+    medianResponseTimeMs,
+    invalid: trials.length > 0 && medianResponseTimeMs < 300,
     byLevel: [...byLevel.entries()]
       .sort(([a], [b]) => a - b)
       .map(([level, bucket]) => ({

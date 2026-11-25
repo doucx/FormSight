@@ -16,7 +16,7 @@
 | S03b | AI | 修 star 生成器 R 混淆 + 协议 v2（8 张，~184 题） | 代码 + `protocols.ts` + `07` §8 | — | done |
 | S02c | 人 | pilot v2：8 个 run，~184 题 | `13` 新导出 | — | done |
 | S03c | AI | pilot v2 分析 | `07` §fresh2；G1 仍未通过 | — | done |
-| S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | 60 min |
+| S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | done |
 | S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | 2 h |
 | S03e | AI | pilot v3 分析 + G1 判定 | `07` 更新 | **G1** | 120 min |
 | S04 | AI | 全量先验拟合；标记 A/B/C/D；输出 `calib-v0.9` | `13` 更新；v0.9 | — | 120 min |

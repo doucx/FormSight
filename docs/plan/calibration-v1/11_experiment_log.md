@@ -59,6 +59,16 @@
 - 节奏：19 分钟 254 题；后半段 star 可能疲劳。
 - 详细结论见 `07_validation_report.md` §3c/§7/§8。
 
+## S02d（待填，pilot v3）
+
+| session | 日期 | 卡 | 题数 | 命中 | 覆盖 | 异常 |
+|---|---|---|---:|---:|---|---|
+| S02d | | star_single | 36 | | 1–16 | 先 5 题检查 |
+| S02d | | star_double_r | 30 | | 17–35 | |
+| S02d | | color_val | 30 | | 1–9 | |
+| S02d | | color_hue | 30 | | 9–17 | |
+| S02d | | angle_comparison_2afc | 30 | | 14–30 | |
+
 ## 规则
 
 - 每次 run 完成即可导出；不要等全部做完。

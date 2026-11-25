@@ -37,11 +37,11 @@
 
 | protocolId | 卡 | levels | 每级题数 | 总数 |
 |---|---|---|---:|---:|
-| `pilot-star-single` | star_single | 10 / 12 / 14 / 16 / 18 | 6 | 30 |
-| `pilot-star-double-r` | star_double_r | 20 / 21 / 23 / 25 / 26 | 6 | 30 |
-| `pilot-color-val` | color_val | 3 / 5 / 7 / 9 | 5 | 20 |
-| `pilot-angle-parallel` | angle_parallel_2afc | 6 / 8 / 10 / 12 / 14 | 4 | 20 |
-| `pilot-persp-prop-division` | persp_prop_division | 9 / 11 / 13 / 15 / 17 | 4 | 20 |
+| `pilot-star-single` | star_single | 1 / 4 / 7 / 10 / 13 / 16 | 6 | 36 |
+| `pilot-star-double-r` | star_double_r | 17 / 21 / 25 / 29 / 33 / 35 | 5 | 30 |
+| `pilot-color-val` | color_val | 1 / 3 / 5 / 7 / 9 | 6 | 30 |
+| `pilot-color-hue` | color_hue | 9 / 11 / 13 / 15 / 17 | 6 | 30 |
+| `pilot-angle-comparison` | angle_comparison_2afc | 14 / 18 / 22 / 26 / 30 | 6 | 30 |
 
 - 每个 block 内每级各一次，block 内用 seed 打乱；
 - 记录 `seed` 与完整 `sequence`；中途停下也大致均衡；
@@ -72,14 +72,12 @@
 - 疲劳/分心：Esc 暂停，改天继续；
 - 同一 run 不要重复答同一题；重复写入按 `runId:index` 幂等。
 
-### 3.6 pilot v2（待跑）
+### 3.6 pilot v3 规则（S02d）
 
-v1 的 5 级窗口对指数难度映射太窄：angle 只覆盖 10.6°→5.5°，persp 只覆盖 0.054→0.036；star 的 Level 还被随机 R 混淆。v2 规则：
-
-- 先修 `star_single` / `star_double_r` 生成器（间距按角度/R 比例缩放）；
-- 8 张卡、约 184 题；窗口见 `07_validation_report.md` §8.2；
-- 单 run 一次完成；中断 >2 小时标 `split` 重做（D-023）；
-- v2 通过前不进入全量校准。
+- star 卡排在最前；先做 5 题人工检查 `star_single`，明显不可做就 Esc 退出并报告。
+- 每次会话最多 2–3 个 run，中间休息；不要 20 分钟刷 250 题。
+- 中位 RT <300ms 的 run 在 summary 会标 invalid；S03 直接丢弃。
+- 每级 6 题；单 run 一次完成；中断 >2h 标 `split` 重做。
 
 ## 4. 全量校准
 
