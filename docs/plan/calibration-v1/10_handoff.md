@@ -65,7 +65,7 @@ S02c：
 | pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
 | pilot v1 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
 | 校准导出格式 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
-| 代码基线 | `develop` @ `b274d9a` | Calibration Runner + DB v5 |
+| 代码基线 | `develop` @ `4eeb53e` | Calibration Runner + star 修复 |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证

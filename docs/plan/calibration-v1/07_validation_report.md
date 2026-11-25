@@ -10,7 +10,7 @@
 | 过滤 | 当前 cardId + `details` 存在 + `timestamp ≥ 2026-08-16` |
 | 校准导出 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
 | 导出内容 | 5 runs / 120 trials / 全部 completed |
-| 代码基线 | `develop` @ `b274d9a`（Calibration Runner） |
+| 代码基线 | `develop` @ `4eeb53e`（S03b） |
 | 先验 artifact | `viska/local/calibration/pilot-priors.json`，`sha256:6c5bb30…64cd` |
 
 原始数据与本地 artifact 不进仓库。
