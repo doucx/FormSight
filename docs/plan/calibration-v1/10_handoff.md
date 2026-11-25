@@ -63,7 +63,7 @@ S02d：
 | pilot v1 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
 | pilot v2 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_23-00.json`，`sha256:e08ade3a…d3586` |
 | 校准导出格式 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
-| 代码基线 | `develop` @ `4eeb53e` | Calibration Runner + star 修复 |
+| 代码基线 | `develop` @ `cdd2b3d` | pilot v3 + invalid flag |
 | 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证
