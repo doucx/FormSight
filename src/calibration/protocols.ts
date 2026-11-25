@@ -1,52 +1,76 @@
 import type { CalibrationProtocol } from './types';
 
 /**
- * S02 / S02b pilot protocols.
+ * Pilot v2 protocols (S02c), after pilot v1 showed the windows were too narrow:
+ * angle 6–14 was a ceiling, persp 9–17 was flat, star 10–26 was confounded by R.
  *
- * Levels come from the pilot prior windows in
- * `docs/plan/calibration-v1/07_validation_report.md`. Keep this list small:
- * every run is 20–30 trials and is meant to be finished in one sitting.
+ * Star cards must be recalibrated only after the angular-spacing fix; their
+ * levels now refer to angular precision, not pixel spacing.
  */
 export const PILOT_PROTOCOLS: CalibrationProtocol[] = [
   {
-    id: 'pilot-star-single',
-    cardId: 'star_single',
-    label: 'star_single · 10–18',
-    levels: [10, 12, 14, 16, 18],
-    trialsPerLevel: 6,
-    seed: 101,
-  },
-  {
-    id: 'pilot-star-double-r',
-    cardId: 'star_double_r',
-    label: 'star_double_r · 20–26',
-    levels: [20, 21, 23, 25, 26],
-    trialsPerLevel: 6,
-    seed: 102,
+    id: 'pilot-color-hue',
+    cardId: 'color_hue',
+    label: 'color_hue · 9–17',
+    levels: [9, 11, 13, 15, 17],
+    trialsPerLevel: 4,
+    seed: 201,
   },
   {
     id: 'pilot-color-val',
     cardId: 'color_val',
-    label: 'color_val · 3–9',
-    levels: [3, 5, 7, 9],
-    trialsPerLevel: 5,
-    seed: 103,
+    label: 'color_val · 5–13',
+    levels: [5, 7, 9, 11, 13],
+    trialsPerLevel: 4,
+    seed: 202,
   },
   {
     id: 'pilot-angle-parallel',
     cardId: 'angle_parallel_2afc',
-    label: 'angle_parallel_2afc · 6–14',
-    levels: [6, 8, 10, 12, 14],
+    label: 'angle_parallel_2afc · 16–32',
+    levels: [16, 20, 24, 28, 32],
     trialsPerLevel: 4,
-    seed: 104,
+    seed: 203,
+  },
+  {
+    id: 'pilot-angle-comparison',
+    cardId: 'angle_comparison_2afc',
+    label: 'angle_comparison_2afc · 14–30',
+    levels: [14, 18, 22, 26, 30],
+    trialsPerLevel: 4,
+    seed: 204,
   },
   {
     id: 'pilot-persp-prop-division',
     cardId: 'persp_prop_division',
-    label: 'persp_prop_division · 9–17',
-    levels: [9, 11, 13, 15, 17],
+    label: 'persp_prop_division · 5–25',
+    levels: [5, 9, 13, 17, 21, 25],
     trialsPerLevel: 4,
-    seed: 105,
+    seed: 205,
+  },
+  {
+    id: 'pilot-persp-prop-migration',
+    cardId: 'persp_prop_migration',
+    label: 'persp_prop_migration · 8–24',
+    levels: [8, 12, 16, 20, 24],
+    trialsPerLevel: 4,
+    seed: 206,
+  },
+  {
+    id: 'pilot-star-single',
+    cardId: 'star_single',
+    label: 'star_single · 1–16',
+    levels: [1, 4, 7, 10, 13, 16],
+    trialsPerLevel: 5,
+    seed: 207,
+  },
+  {
+    id: 'pilot-star-double-r',
+    cardId: 'star_double_r',
+    label: 'star_double_r · 1–21',
+    levels: [1, 5, 9, 13, 17, 21],
+    trialsPerLevel: 5,
+    seed: 208,
   },
 ];
 

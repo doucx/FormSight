@@ -32,7 +32,7 @@ export const starSingleCard: CardManifest<QuestionData, HitResult, Point, StarSe
     domain: ['spatial_structure'],
     path: ['absolute_estimation'],
     interaction: ['spatial_locate'],
-    status: 'stable',
+    status: 'experimental',
   },
   locales: {
     'zh-CN': zhCN,

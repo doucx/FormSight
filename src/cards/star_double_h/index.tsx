@@ -32,7 +32,7 @@ export const starDoubleHCard: CardManifest<QuestionData, HitResult, Point, StarS
     domain: ['spatial_structure', 'form_and_proportion'],
     path: ['absolute_estimation', 'relational_mapping'],
     interaction: ['spatial_locate'],
-    status: 'stable',
+    status: 'experimental',
   },
   locales: {
     'zh-CN': zhCN,

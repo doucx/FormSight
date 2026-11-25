@@ -7,10 +7,10 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-11-25 |
-| Gate | **G1 未通过（pilot v1 窗口失效；等待 S03b + S02c）** |
-| 上次会话 | S03a（pilot v1 分析） |
-| 下一步 | **S03b**：修 star 生成器 R 混淆；改 pilot v2 协议（8 张，~184 题） |
-| Blocker | star_single / star_double_r 的 Level 被 R 混淆；angle/persp 窗口太窄 |
+| Gate | **G1 未通过（pilot v2 待跑）** |
+| 上次会话 | S03b（star 生成器 + pilot v2 协议） |
+| 下一步 | **S02c**：跑 pilot v2（8 个 run，~184 题） |
+| Blocker | 无；需要约 184 题 |
 
 ## S03a 结论
 
@@ -30,12 +30,16 @@
 
 ## 下一步（只做这一件）
 
-S03b：
+S02c：
 
-1. 修 `star_single` / `star_double_r` 生成器：让间距按角度/R 比例缩放，消除 R 混淆；
-2. 按 `07` §8.2 更新 `src/calibration/protocols.ts`（pilot v2，8 张，~184 题）；
-3. 跑 `pnpm verify`；在 `07` 记录改动；
-4. 更新本文件，等 S02c。
+1. 打开 `#/calibrate`；
+2. 按列表完成 8 个 run（顺序不限），共约 184 题：
+   - `color_hue` 20、`color_val` 20
+   - `angle_parallel_2afc` 20、`angle_comparison_2afc` 20
+   - `persp_prop_division` 24、`persp_prop_migration` 20
+   - `star_single` 30、`star_double_r` 30（生成器已修）
+3. 每个 run 一次坐下完成；中断超过 2 小时标 `split` 重做；
+4. 完成后 Export all，放 `viska/local/calibration/`，告诉 S03c 文件名。
 
 ## 读取顺序
 

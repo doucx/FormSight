@@ -6,6 +6,19 @@ export const CX = CANVAS_SIZE / 2;
 export const CY = CANVAS_SIZE / 2;
 export const DEFAULT_GRID_DIM = 3;
 
+/**
+ * Angular spacing is the difficulty axis. It must not depend on Ra/Rc, or the
+ * same level becomes harder when the target is farther from an anchor.
+ */
+const REFERENCE_DISTANCE = 90;
+const MAX_ANGLE_STEP_RAD = Math.PI / 12;
+
+export function getBipolarAngularStep(level: number): number {
+  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
+  const referenceStepPx = 20 - t * (20 - 3.5);
+  return Math.min(referenceStepPx / REFERENCE_DISTANCE, MAX_ANGLE_STEP_RAD);
+}
+
 export interface QuestionGenerateOptions {
   targetingMode?: 'off' | 'manual';
   targetSectors?: number[];
@@ -46,15 +59,10 @@ export function generateBipolarGridPoints(
   const Ra = calcDistance(anchorA, targetB);
   const Rc = calcDistance(anchorC, targetB);
 
-  const S_MAX = 20;
-  const S_MIN = 3.5;
-
-  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
-  const S = S_MAX - t * (S_MAX - S_MIN);
-
-  const maxAngleStepRad = (15 * Math.PI) / 180;
-  const alphaStepRad = Math.min(S / Ra, maxAngleStepRad);
-  const betaStepRad = Math.min(S / Rc, maxAngleStepRad);
+  const angularStepRad = getBipolarAngularStep(level);
+  const alphaStepRad = angularStepRad;
+  const betaStepRad = angularStepRad;
+  const fallbackStepPx = Math.min(Ra, Rc) * angularStepRad;
 
   const points: Point[] = [];
 
@@ -74,8 +82,8 @@ export function generateBipolarGridPoints(
 
       if (Math.abs(det) < 1e-5) {
         points.push({
-          x: Math.round((targetB.x + (aIdx - targetRow) * S) * 100) / 100,
-          y: Math.round((targetB.y + (cIdx - targetCol) * S) * 100) / 100,
+          x: Math.round((targetB.x + (aIdx - targetRow) * fallbackStepPx) * 100) / 100,
+          y: Math.round((targetB.y + (cIdx - targetCol) * fallbackStepPx) * 100) / 100,
         });
       } else {
         const t1 = (dx * v2y - dy * v2x) / det;

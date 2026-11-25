@@ -11,8 +11,8 @@
 | 组 | 卡数 | 含义 |
 |---|---:|---|
 | calibratable | 13 | 历史基本够，可直接拟合 |
-| targeted | 11 | 80% 阈值附近缺数据，需补测 20–30 题 |
-| confounded | 2 | Level 与物理难度脱钩（star 的 R 混淆），先改生成器 |
+| targeted | 13 | 80% 阈值附近缺数据，需补测 20–30 题（3 张 star 标 experimental） |
+| confounded | 0 | v1 的 star R 混淆已在 S03b 修复；待 v2 校准 |
 | redesign | 7 | 最简单等级仍到不了 80%，先排除并排队改生成器 |
 
 ## A. calibratable（13）
@@ -33,13 +33,13 @@
 | fractal_edge_roughness | rhythm | R / ext+abs+ill | 360 / 360 | 120 | 8 | 分形粗糙度 |
 | persp_prop_migration | form | F+S / rel+wm+dt | 306 / 306 | 116 | 14 | v2 8–24 |
 
-## B. targeted（11；另 2 张见 confounded 备注）
+## B. targeted（13；3 张 star 标 experimental）
 
 | 卡 | 族 | 标签 | n / details | ≤15 | cross80 | 补测 |
 |---|---|---|---:|---:|---:|---|
-| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | **confounded**：先修 R 混淆，再 v2 1–16 |
-| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | **confounded**：先修 R 混淆，再 v2 1–21 |
-| star_double_h | spatial | S+F / abs+rel | 463 / 37 | 0 | 24 | 先查版本，再 30 题 |
+| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | v1 confounded；生成器已修；v2 1–16；experimental |
+| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | v1 confounded；生成器已修；v2 1–21；experimental |
+| star_double_h | spatial | S+F / abs+rel | 463 / 37 | 0 | 24 | 生成器已修；v2 未排；experimental |
 | neg_area_comparison_2afc | ratio | F / rel+fg | 1362 / 1362 | 54 | 23 | 25 题，L20–25 |
 | abs_gesture_axis | rhythm | R / ext | 1144 / 1144 | 85 | 17 | 25 题，L14–20 |
 | abs_td_gesture_2afc | rhythm | R / con | 978 / 978 | 67 | 14 | 25 题，L10–16 |
@@ -66,8 +66,8 @@
 ## S03 fresh 结果（2026-11-25）
 
 - `color_val`：唯一近似跨 0.8（~8；7–9 插值）；20 题，区间宽。
-- `star_single`：非单调；Level 与 R 混淆，不能作为 JND 轴。
-- `star_double_r`：全部 <0.8；阈值在 20 以下；同样有 R 混淆。
+- `star_single`：非单调；Level 与 R 混淆；S03b 已改为角间距常量。
+- `star_double_r`：全部 <0.8；阈值在 20 以下；S03b 同样修复。
 - `angle_parallel_2afc`：19/20，天花板；窗口整体偏易。
 - `persp_prop_division`：每级 3/4，平坦；窗口太窄。
 - 结论：G1 未通过；pilot v2 需要先修 star 生成器，再换更宽窗口。详见 `07_validation_report.md` §3b/§7/§8。

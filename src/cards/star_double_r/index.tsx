@@ -33,7 +33,7 @@ export const starDoubleRCard: CardManifest<QuestionData, HitResult, Point, StarS
     path: ['absolute_estimation', 'relational_mapping'],
     challenge: ['dimensional_translation'],
     interaction: ['spatial_locate'],
-    status: 'stable',
+    status: 'experimental',
   },
   locales: {
     'zh-CN': zhCN,

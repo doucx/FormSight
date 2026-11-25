@@ -215,3 +215,14 @@
 - 理由：star_single v1 跨 24 小时；顺序/状态会污染阈值。
 - 影响：`06` 增加 split 规则；`07` 记录异常。
 - 重审触发：`event:calibration_run_duration_rule`
+
+---
+
+## D-024 — star_double_h 一并修复并标 experimental
+
+- 日期：2026-11-25
+- 状态：accepted
+- 决定：`star_double_h` 与 `star_single` / `star_double_r` 共用角间距修复；三张 star 卡统一标 `experimental`。
+- 理由：H 与 R 的双极网格实现相同，只修 R 会留下同一 R 混淆。
+- 影响：三张 star 卡旧 Level 作废；pilot v2 只跑单/双 R，H 待后续排期。
+- 重审触发：`event:star_family_calibrated`

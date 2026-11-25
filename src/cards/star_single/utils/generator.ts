@@ -6,6 +6,20 @@ export const CX = CANVAS_SIZE / 2;
 export const CY = CANVAS_SIZE / 2;
 export const DEFAULT_GRID_DIM = 3;
 
+/**
+ * Angular spacing is the difficulty axis. Keeping it independent of the random
+ * target distance R removes the old R confound (same level was 3–4× harder at
+ * large R). Radial spacing scales with R so the grid stays geometrically similar.
+ */
+const REFERENCE_DISTANCE = 120;
+const MAX_ANGLE_STEP_RAD = Math.PI / 12;
+
+export function getPolarAngularStep(level: number): number {
+  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
+  const referenceStepPx = 25 - t * (25 - 3.5);
+  return Math.min(referenceStepPx / REFERENCE_DISTANCE, MAX_ANGLE_STEP_RAD);
+}
+
 export interface QuestionGenerateOptions {
   targetingMode?: 'off' | 'manual';
   targetSectors?: number[];
@@ -25,15 +39,8 @@ export function generatePolarGridPoints(
   const R = Math.sqrt(dx * dx + dy * dy);
   const theta = Math.atan2(dy, dx);
 
-  const S_MAX = 25;
-  const S_MIN = 3.5;
-
-  const t = (Math.max(1, Math.min(level, 35)) - 1) / 34;
-  const S = S_MAX - t * (S_MAX - S_MIN);
-
-  const maxAngleStepRad = (15 * Math.PI) / 180;
-  const angleStepRad = Math.min(S / R, maxAngleStepRad);
-  const rStep = S;
+  const angleStepRad = getPolarAngularStep(level);
+  const rStep = R * angleStepRad;
 
   const points: Point[] = [];
   for (let rIdx = 0; rIdx < gridDim; rIdx++) {

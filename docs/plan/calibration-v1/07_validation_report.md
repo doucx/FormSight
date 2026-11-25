@@ -111,13 +111,14 @@
 
 ## 8. 下一步：pilot v2
 
-### 8.1 先修 star 生成器
+### 8.1 先修 star 生成器（S03b 已实施）
 
 `star_single` / `star_double_r` 目前 `S(level)` 是像素间距，角间距是 `S/R`；R 随机导致同一 Level 难度差 3–4 倍。建议：
 
 - 把间距改成**角度/比例**：`step = f(level)`（度），径向和角向都用 `R * step`；
 - 或把 `R` 纳入强度量，Level 由角度精度唯一决定；
-- 修完后旧 Level 作废，两张卡标 `confounded/experimental`，重新标定。
+- 修完后旧 Level 作废，三张 star 卡标 `experimental`，重新标定。
+- 已实施：`star_single` 用固定角间距，径向按 R 比例；`star_double_r/h` 用固定双极角间距；新增 `getPolarAngularStep` / `getBipolarAngularStep` 与不随 R 变化的测试。
 
 ### 8.2 pilot v2 窗口（8 张，约 184 题）
 
