@@ -59,15 +59,23 @@
 - 节奏：19 分钟 254 题；后半段 star 可能疲劳。
 - 详细结论见 `07_validation_report.md` §3c/§7/§8。
 
-## S02d（待填，pilot v3）
+## S02d（已填，pilot v3）
 
 | session | 日期 | 卡 | 题数 | 命中 | 覆盖 | 异常 |
 |---|---|---|---:|---:|---|---|
-| S02d | | star_single | 36 | | 1–16 | 先 5 题检查 |
-| S02d | | star_double_r | 30 | | 17–35 | |
-| S02d | | color_val | 30 | | 1–9 | |
-| S02d | | color_hue | 30 | | 9–17 | |
-| S02d | | angle_comparison_2afc | 30 | | 14–30 | |
+| S02d | 2026-11-26 | star_single | 36 | 34 | 1–16 | 天花板 |
+| S02d | 2026-11-26 | star_double_r | 30 | 16 | 17–35 | 尾部非单调 |
+| S02d | 2026-11-26 | color_val | 30 | 19 | 1–9 | L7=1/6 |
+| S02d | 2026-11-26 | color_hue | 30 | 24 | 9–17 | 干净 |
+| S02d | 2026-11-26 | angle_comparison_2afc | 30 | 26 | 14–30 | 干净 |
+
+## S02e（待填，pilot v4）
+
+| session | 日期 | 卡 | 题数 | 命中 | 覆盖 | 异常 |
+|---|---|---|---:|---:|---|---|
+| S02e | | star_single | 30 | | 16–35 | |
+| S02e | | star_double_r | 25 | | 19–27 | |
+| S02e | | color_val | 36 | | 1–7 | L7 仍异常则检查 V |
 
 ## 规则
 

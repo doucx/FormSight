@@ -27,7 +27,9 @@
 | R-21 | run 跨天/中断 | 中 | 中 | 单 run 一次完成；>2h 标 split 重做 | D-023；open |
 | R-22 | 节奏过快/疲劳 | 高 | 高 | 每次最多 2–3 run；中间休息；star 先跑 | D-026；open |
 | R-23 | 重复/无效 run | 高 | 中 | 中位 RT <300ms 丢弃；summary 标 invalid；只取有效最新 | S03d mitigated |
-| R-24 | star_single L1 floor | 高 | 高 | 5 题人工检查；仍 <.8 → out-of-range/redesign | v2 observed；D-027 |
+| R-24 | star_single 难度轴偏移 | 高 | 高 | v3 显示 1–16 天花板；改测 16–35 | v3 resolved direction；D-031 |
+| R-25 | color_val 低 V 混淆 | 高 | 高 | L7 异常；v4 补数据；必要时约束 targetV/ΔE | v3 observed；D-030 |
+| R-26 | star_double 尾部非单调 | 中 | 中 | v4 19–27 确认；必要时增加每级题数 | v3 observed；D-031 |
 
 ## 重点说明
 

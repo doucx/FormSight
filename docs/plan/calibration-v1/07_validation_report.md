@@ -102,6 +102,36 @@
 - ratio 族两卡差 ~4 级 → **弱 family transfer**。
 - color / spatial / angle 仍无强证据。
 
+## 3d. §fresh3（S02d，pilot v3）
+
+导出：`formsight_calibration_all_2026-11-26_11-03.json`，`sha256:d1ea3a3b…a33c`；5 runs / 156 trials。
+RT 正常（1.1–5.8s），无重复、无 invalid；运行间隔合理（10:18–11:03）。
+
+| protocol | n | acc | 95% CI | levels → accuracy | 分类 / 估计 |
+|---|---:|---:|---|---|---|
+| color_hue | 30 | .80 | .63–.90 | 9:.833 11:1.00 13:1.00 15:.667 17:.500 | crossing ~14.2 |
+| color_val | 30 | .63 | .46–.78 | 1:1.00 3:.667 5:.667 7:.167 9:.667 | non-monotone；L7 异常 |
+| angle_comparison_2afc | 30 | .87 | .70–.95 | 14:1.00 18:1.00 22:.833 26:.833 30:.667 | crossing ~26.8 |
+| star_single | 36 | .94 | .82–.99 | 1:1.00 4:1.00 7:.833 10:.833 13:1.00 16:1.00 | 天花板；阈值 >16 |
+| star_double_r | 30 | .53 | .36–.70 | 17:1.00 21:.800 25:.600 29:.200 33:.600 35:.000 | 首次穿越 ~21；尾部噪声 |
+
+### 关键观察
+
+- `star_single` 在 1–16 全部 ≥.833，v2 的 .60 是疲劳/顺序，不是卡片下限；现在需要 16–35。
+- `color_val` 的 L7 只有 1/6。L7 的目标 V 偏低（15/53/18/67），且误差 8–23；疑似低明度刺激混淆，不只是随机噪声。
+- `angle_comparison` 干净；与 v2 的 `angle_parallel` ~23 配对，Δ~3.8 → angle 族弱通过。
+- `star_double` 首次穿越 21，但 29/33/35 非单调；需要 19–27 确认。
+- `color_hue` 干净，T~14.2；color 族只差 `color_val`。
+
+### 初步 family transfer
+
+| 族 | 状态 |
+|---|---|
+| color | color_hue 有；color_val 无 → 失败/待补 |
+| spatial | star_double ~21；star_single 天花板 → 待补 |
+| angle | angle_parallel ~23 vs angle_comparison ~27 → **弱通过**（Δ~4） |
+| ratio | v2: division ~23 vs migration ~19 → **弱通过**（Δ~4） |
+
 ## 4. §holdout（无法完成）
 
 原计划：历史训练、2026-10-01 之后测试。实际问题是 4/5 个 fresh run **没有有效的 80% 穿越点**：
@@ -127,63 +157,51 @@ pilot v2 后：
 - angle：`angle_parallel_2afc` ~23，但 `angle_comparison` 不稳定 → 不能算通过；
 - color / spatial：无有效阈值 → 失败。
 
-结论：**1/4 族弱证据，0 族强证据**；family transfer 仍未验证。
+pilot v3 后：angle 与 ratio 各为弱通过（Δ~4）；color/spatial 仍失败。
 
-## 6. §retest（推迟到 v3）
+结论：**2/4 族弱证据，0 族强证据**；G1 仍未通过。
 
-原计划 4 张重测。pilot v2 后只有 angle/ratio 有初步阈值，color/spatial 没有；重测推迟到 pilot v3 的窗口修正后。
+## 6. §retest（推迟到 v4）
+
+原计划 4 张重测。pilot v2 后只有 angle/ratio 有初步阈值，color/spatial 没有；重测推迟到 pilot v4 的窗口修正后。
 
 ## 7. G1 结论
 
-**G1 仍未通过（pilot v2）。**
+**G1 仍未通过（pilot v3）。**
 
-- [x] 8/8 卡至少跑过一次（有重复）
-- [ ] 8 张中 ≥6 张有有效 80% 穿越 — 只有 `angle_parallel_2afc` 干净；`persp_prop_migration` 可用；`persp_prop_division` 噪声大；其余 5 张无有效穿越
-- [ ] ≥3/4 族 LOCO — 仅 ratio 弱证据（~19 vs ~23，Δ~4）；color/spatial/angle 失败
+- [x] 8 张卡都有过有效 run（跨 v2/v3）
+- [ ] 8 张中 ≥6 张有有效 80% 穿越 — 目前 color_hue、angle_parallel、angle_comparison、star_double 有；color_val、star_single 缺；persp_division 噪声大
+- [ ] ≥3/4 族 — angle/ratio 弱通过；color/spatial 失败
 - [ ] 4 张重测 — 未做
-- [ ] 控制卡 — 本次未跑
+- [ ] 控制卡 — 未跑
 
 原因：
 
-1. 每级 4 题太少，20–24 题的 CI 太宽（±0.2），非单调多半是噪声。
-2. 一轮 254 题只用 19 分钟，后半段 star 可能疲劳；`angle_comparison` 有一次 133ms/题，明显无效。
-3. `star_single` 两次 L1 都只有 .60，且 L4=.40：不是单调难度，可能是任务理解/几何问题，先人工检查再决定 out-of-range。
-4. `star_double_r` 在 1–21 已天花板，需要 21–35。
-5. `color_val` v2 窗口整体偏难，阈值可能在 5 以下。
-6. `color_hue` / `angle_comparison` 需要每级 6 题，否则交替模式无法判定。
+1. `color_val` L7 只有 1/6，低 V 刺激疑似混淆；需要更多数据/生成器约束。
+2. `star_single` 1–16 天花板；需要 16–35。
+3. `star_double` 首次穿越 21，但尾部 29–35 非单调；需要 19–27 确认。
+4. angle/ratio 只是弱证据（Δ~4，4–5 题/级）。
 
-## 8. 下一步：pilot v3（聚焦 5 张）
+## 8. 下一步：pilot v4（3 张，约 91 题）
 
-### 8.1 规则
-
-- 每个 run 一次坐下完成；
-- 每次会话最多 2–3 个 run，中间休息；
-- 中位 RT <300ms 的 run 直接判无效；
-- star 卡安排在会话开始、精神好的时候；
-- 每级 6 题；先跑 5 题人工检查 star_single。
-
-### 8.2 窗口（约 156 题）
+### 8.1 窗口
 
 | 卡 | levels | 每级 | 总数 | 目的 |
 |---|---|---:|---:|---|
-| color_val | 1 / 3 / 5 / 7 / 9 | 6 | 30 | 找 5 以下的阈值 |
-| color_hue | 9 / 11 / 13 / 15 / 17 | 6 | 30 | 降噪，确认单调性 |
-| angle_comparison_2afc | 14 / 18 / 22 / 26 / 30 | 6 | 30 | 重跑，丢弃无效 run |
-| star_single | 1 / 4 / 7 / 10 / 13 / 16 | 6 | 36 | L1 仍 <.8 则 out-of-range/redesign |
-| star_double_r | 17 / 21 / 25 / 29 / 33 / 35 | 5 | 30 | 找 21 以上的阈值 |
+| star_single | 16 / 20 / 24 / 28 / 32 / 35 | 5 | 30 | 找 16 以上的阈值 |
+| star_double_r | 19 / 21 / 23 / 25 / 27 | 5 | 25 | 确认 ~21 |
+| color_val | 1 / 2 / 3 / 4 / 5 / 7 | 6 | 36 | 低端；确认 L7 异常 |
 
-可选确认（如果体力允许，+60 题）：
+### 8.2 规则
 
-| 卡 | levels | 每级 | 总数 |
-|---|---|---:|---:|
-| angle_parallel_2afc | 22 / 24 / 26 / 28 | 5 | 20 |
-| persp_prop_migration | 18 / 20 / 22 / 24 | 5 | 20 |
-| persp_prop_division | 21 / 23 / 25 / 27 | 5 | 20 |
+- 每个 run 一次坐下完成；每次最多 2–3 个 run；star 先跑；
+- 中位 RT <300ms 判无效；
+- color_val 若 L7 仍异常，检查生成器的低 V 过滤，必要时约束 targetV 或按 ΔE 校准；
+- star_single 若 16–35 仍不穿越，检查新几何是否整体偏易，再调整角度映射。
 
 ### 8.3 判定
 
-- color：至少一张有干净穿越；
-- spatial：star_single 不是 out-of-range，且 star_double 有穿越；
-- angle：angle_parallel 确认 + angle_comparison 干净；
-- ratio：division/migration 差 ≤5；
-- 满足 ≥3/4 族后才进 G2。
+- color：color_hue + color_val 都需有阈值；
+- spatial：star_single 与 star_double 都需有阈值，且差 ≤5；
+- angle/ratio 维持弱通过；
+- 满足 ≥3/4 族后进 G2。

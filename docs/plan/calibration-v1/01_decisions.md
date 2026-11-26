@@ -264,3 +264,32 @@
 - 理由：v2 显示 color_val 偏难、star_double 天花板、angle_comparison 噪声大。
 - 影响：`protocols.ts` v3；可选确认 angle/ratio +60 题。
 - 重审触发：`event:pilot_v3_protocol_change`
+
+---
+
+## D-029 — pilot v3 仍不过 G1，进入 pilot v4
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：angle/ratio 弱通过（各 Δ~4）；color/spatial 失败；G1 继续暂停，pilot v4 聚焦 3 张。
+- 理由：只剩 color_val、star_single 缺阈值；star_double 需确认。
+- 影响：pilot v4 约 91 题；通过后可判 G1。
+- 重审触发：`event:pilot_v4_complete`
+
+## D-030 — color_val L7 低 V 异常，先补数据
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：v3 L7 只 1/6，目标 V 偏低；v4 用 1/2/3/4/5/7 各 6 题。若仍异常，检查生成器低 V 过滤或改按 ΔE 校准。
+- 理由：不是单调难度，可能是刺激明度混淆。
+- 影响：color 族通过前必须解决。
+- 重审触发：`event:color_val_low_v_fixed`
+
+## D-031 — star_single 天花板，star_double 需确认
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：star_single 测 16–35；star_double 测 19–27 确认 ~21。
+- 理由：v3 star_single 1–16 全 ≥.833；star_double 尾部 29–35 非单调。
+- 影响：pilot v4 两个 star run 共 55 题。
+- 重审触发：`event:star_v4_complete`
