@@ -13,7 +13,7 @@
 | 计划状态 | active（QA-only） |
 | 当前 gate | **P0 完成；P1 审计待执行** |
 | 工具入口 | `#/calibrate`（设置 → Data Governance → Calibration runs） |
-| 代码基线 | `develop` @ 本次 QA 工具提交 |
+| 代码基线 | `develop` @ `d42f86a` |
 
 ## 新会话只读这 4 份
 
