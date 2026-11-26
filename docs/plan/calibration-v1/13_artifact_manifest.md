@@ -10,7 +10,7 @@
 | pilot 先验 | `viska/local/calibration/pilot-priors.json` | 2026-11-24 | `6c5bb3040d3eb0277eb049d00617489b2a738ff15b5a49078c2d153dd77464cd` | 8 张试点 + 1 控制；本地 gitignored |
 | pilot 脚本 | `viska/local/calibration/pilot_priors.py` | 2026-11-24 | `1a430653d18fd6b21775076d1c775b33c8ec41fba9fc0f6f2d999a20512d07ac` | 等渗先验；本地 gitignored |
 | 计划 tag | git tag `calib-plan-v1` | 2026-11-24 | — | S00 合并点 |
-| 代码基线 | `develop` @ `d42f86a` | 2026-11-26 | — | QA tools |
+| 代码基线 | `develop` @ `e47ba49` | 2026-11-26 | — | QA tools + health export |
 | 校准导出 | `formsight-calibration-runs` v1 | 2026-11-24 | — | 每 run 自动生成；本地 |
 | pilot v1 导出 | `formsight_calibration_all_2026-11-25_22-24.json` | 2026-11-25 | `ce053c710fe5dfdfcfa44f53fd421adc9be785e0a4ad75c03606dc88f822f99e` | 5 runs / 120 trials |
 | pilot v2 导出 | `formsight_calibration_all_2026-11-25_23-00.json` | 2026-11-25 | `e08ade3af6fb546aaf8dc99bde755cee05836a5fbbd96bc0b9527380134d3586` | 11 runs / 8 protocols / 254 trials |
