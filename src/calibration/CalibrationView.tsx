@@ -14,6 +14,7 @@ import {
   calibrationExportFilename,
   downloadJson,
 } from './export';
+import { analyzeCalibrationRun } from './health';
 import { buildCustomProtocol, resolveProtocol } from './protocols';
 import {
   clearCalibrationData,
@@ -116,7 +117,9 @@ export function CalibrationView({
   const handleExport = async (run: CalibrationRunData) => {
     const protocol = resolveProtocol(run) ?? null;
     const trials = await getCalibrationTrials(run.id);
-    const payload = buildExportBundle([buildRunExport(run, trials, protocol)]);
+    const payload = buildExportBundle([
+      buildRunExport(run, trials, protocol, analyzeCalibrationRun(run, trials)),
+    ]);
     downloadJson(calibrationExportFilename(`formsight_calibration_${run.cardId}`), payload);
   };
 
@@ -126,7 +129,7 @@ export function CalibrationView({
     for (const run of runs) {
       const protocol = resolveProtocol(run) ?? null;
       const trials = await getCalibrationTrials(run.id);
-      payload.push(buildRunExport(run, trials, protocol));
+      payload.push(buildRunExport(run, trials, protocol, analyzeCalibrationRun(run, trials)));
     }
     downloadJson(
       calibrationExportFilename('formsight_calibration_all'),

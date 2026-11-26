@@ -49,7 +49,7 @@
 
 ## 6. 记录
 
-- 导出 JSON 放 `viska/local/calibration/`；
+- 导出 JSON（含 `health`）放 `viska/local/calibration/`；
 - `11_experiment_log` 记一行（卡、levels、n、hits、health）；
 - `02_card_status` 记审计结论与下一步；
 - 问题卡进 P2。

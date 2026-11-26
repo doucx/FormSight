@@ -1,4 +1,5 @@
 import type { CalibrationRunData, CalibrationTrialData } from '../storage/db/schema';
+import type { CalibrationHealth } from './health';
 import type { CalibrationProtocol } from './types';
 
 export const CALIBRATION_EXPORT_FORMAT = 'formsight-calibration-runs';
@@ -16,6 +17,7 @@ export interface CalibrationRunExport {
   protocolId: string;
   protocol: CalibrationProtocol | null;
   sequence: number[];
+  health?: CalibrationHealth;
   summary: {
     n: number;
     hits: number;
@@ -77,12 +79,14 @@ export function buildRunExport(
   run: CalibrationRunData,
   trials: CalibrationTrialData[],
   protocol: CalibrationProtocol | null,
+  health?: CalibrationHealth,
 ): CalibrationRunExport {
   return {
     run,
     protocolId: run.protocolId,
     protocol,
     sequence: run.sequence,
+    health,
     summary: summarizeTrials(trials),
     trials,
   };

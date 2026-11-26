@@ -14,6 +14,7 @@ import {
   copyJson,
   downloadJson,
 } from './export';
+import { analyzeCalibrationRun } from './health';
 import { resolveProtocol } from './protocols';
 import {
   completeCalibrationRun,
@@ -125,14 +126,20 @@ export function CalibrationRunner({
   const handleExport = async () => {
     if (!run) return;
     const freshTrials = await getCalibrationTrials(run.id);
-    const payload = buildExportBundle([buildRunExport(run, freshTrials, protocol ?? null)]);
+    const payload = buildExportBundle([
+      buildRunExport(run, freshTrials, protocol ?? null, analyzeCalibrationRun(run, freshTrials)),
+    ]);
     downloadJson(calibrationExportFilename(`formsight_calibration_${run.protocolId}`), payload);
   };
 
   const handleCopy = async () => {
     if (!run) return;
     const freshTrials = await getCalibrationTrials(run.id);
-    await copyJson(buildExportBundle([buildRunExport(run, freshTrials, protocol ?? null)]));
+    await copyJson(
+      buildExportBundle([
+        buildRunExport(run, freshTrials, protocol ?? null, analyzeCalibrationRun(run, freshTrials)),
+      ]),
+    );
   };
 
   if (loading) {
