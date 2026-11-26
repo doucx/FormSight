@@ -31,6 +31,8 @@
 | R-25 | color_val 低 V 混淆 | 高 | 高 | L7 异常；v4 补数据；必要时约束 targetV/ΔE | v3 observed；D-030 |
 | R-26 | star_double 尾部非单调 | 中 | 中 | v4 19–27 确认；必要时增加每级题数 | v4 observed；D-031 |
 | R-27 | run-to-run 方差 >5 级 | 高 | 高 | 同卡重复测量；提高每级题数；或接受 per-card on-demand | v3/v4 observed（L16 6/6 vs 2/5；L7 1/6 vs 5/6） |
+| R-28 | per-card 成本累积 | 中 | 中 | 按需触发；TTL 90 天；只对常用卡先做 | B；open |
+| R-29 | readiness 被误读为能力 | 中 | 高 | UI 只显示 normal/drift；不写 Level | B4；open |
 
 ## 重点说明
 

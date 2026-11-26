@@ -304,3 +304,32 @@
 - 理由：同族两卡阈值差 7–8 级；20–30 题/卡压不住 run-to-run 方差；继续 pilot 只会重复确认。
 - 影响：原 S05–S17 全量校准草案作废；S04 拍板降级方案后再重排。
 - 重审触发：`event:fallback_choice`
+
+---
+
+## D-033 — 选择方案 B：纯 per-card
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：放弃 family transfer；每张卡独立 JND/Level；全局基准只做 readiness/drift，不给 per-card 基线。
+- 理由：四轮试点后仅 ratio 族通过；同族阈值差 7–8 级；B 更对称、更少未经验证的假设。
+- 影响：G1 关闭；原全量校准 S05–S17 作废；新增 per-card 校准流程。
+- 重审触发：`event:per_card_scope_change`
+
+## D-034 — per-card 校准按需触发
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：一张卡没有 JND、JND 过期（默认 90 天）、或用户手动要求时，跑一次 20–40 题的 per-card 校准；不预先全量。
+- 理由：避免 33 张卡全量；按需成本低，且每张卡的结果可独立验证。
+- 影响：Calibration 入口需要“新建 run”而不仅是固定协议。
+- 重审触发：`event:per_card_ttl_change`
+
+## D-035 — 全局 20 题只做 readiness
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：20 题混合检查只输出“今天是否偏离基线/是否适合训练”，不映射到任何卡的 Level。
+- 理由：family/维度映射未通过；readiness 是唯一有数据支持的用途。
+- 影响：G5 从“全局基线”改为“readiness 检查”。
+- 重审触发：`event:readiness_model_change`

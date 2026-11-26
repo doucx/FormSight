@@ -1,46 +1,30 @@
 # 排期
 
-以“会话单元”为单位，不以日历为单位。每个会话必须能独立开始、独立结束、有产出。
-预计 18–22 个 AI 会话 + 500–700 题补测；总周期 2–4 个月，取决于补测节奏。
+方案 B（纯 per-card）。G1 已关闭；不再做全量/family。
 
-## 会话表
+## 已完成（历史）
+
+- S00–S03g：计划、协议、Calibration Runner、四轮 pilot、G1 判定。
+- 结论：G1 不通过；仅 ratio 族有 family 证据；转 B。
+- 详情见 `07_validation_report.md`。
+
+## 现行
 
 | ID | 类型 | 目标 | 产出 | Gate | 预计 |
 |---|---|---|---|---|---|
-| S00 | AI | 建计划骨架、决策、卡片现状、路线图、验收、脱敏规范 | `00`–`05`、`10`、`PRIVACY` | G0 | done |
-| S01 | AI | 写校准协议、数据字典、风险、术语、artifact manifest；跑试点先验 | `06`、`08`、`09`、`12`、`13`；pilot-priors | — | 90 min |
-| S01c | AI | 校准视口：固定序列 + 自动落库 + 导出 | `src/calibration/`；S02 可跑 | — | done |
-| S02 | 人 | 试点补测：`star_single` 30、`star_double_r` 30 | `11_experiment_log` S02 | — | done |
-| S02b | 人 | 试点重测：`color_val` / `angle_parallel_2afc` / `persp_prop_division` 各 20 | `11` S02b | — | done |
-| S03a | AI | 试点 v1 分析 | `07` §fresh；G1 未通过 | — | done |
-| S03b | AI | 修 star 生成器 R 混淆 + 协议 v2（8 张，~184 题） | 代码 + `protocols.ts` + `07` §8 | — | done |
-| S02c | 人 | pilot v2：8 个 run，~184 题 | `13` 新导出 | — | done |
-| S03c | AI | pilot v2 分析 | `07` §fresh2；G1 仍未通过 | — | done |
-| S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | done |
-| S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | done |
-| S03e | AI | pilot v3 分析 | `07` §fresh3；G1 仍未通过 | — | done |
-| S03f | AI | pilot v4 协议（3 张，~91 题） | `protocols.ts` | — | done |
-| S02e | 人 | pilot v4：star_single / star_double_r / color_val | `13` 新导出 | — | done |
-| S03g | AI | pilot v4 分析 + G1 判定 | `07` §fresh4/§7；G1 不通过 | **G1** | done |
-| S04 | 决策 | 选降级方案 A/B（全局+ratio+按需单卡 / 纯 per-card） | `01` 新决策；`03` 改写 | — | 30 min |
+| B0 | AI | 写 B 决策/路线图/验收/协议 | `01`、`03`、`05`、`06` | — | done |
+| B1a | AI | per-card run 创建：任意卡 + levels + 题数 | `src/calibration/` | — | 1–2 sessions |
+| B1b | AI | Calibration 列表加入“新建 run”表单 | UI | **B1** | 1 session |
+| B2a | 人 | 3 张代表卡各 30 题：color_hue / star_single / persp_prop_division | `11` B2a | — | 1.5 h |
+| B2b | 人 | 3 张卡各 20 题重测 | `11` B2b | — | 1 h |
+| B2c | AI | per-card JND + CI + 重测判定 | `07` §B2 | **B2** | 1 session |
+| B3 | AI | calibratedLevel 接入训练/分析 | 代码 + 测试 | **B3** | 2 sessions |
+| B4a | AI | readiness 20 题设计 | spec | — | 1 session |
+| B4b | 人 | 跑 2–3 次 readiness | `11` B4b | — | 40 min × 2–3 |
+| B4c | AI | readiness 验证 | `07` §B4 | **B4** | 1 session |
+| B5 | AI | artifact、清 IDB、归档 | `13`、`10` | — | 1 session |
 
-> G1 未通过：以下 S05–S17 是原全量校准草案，已作废；方案 A/B 确定后重排，不要按此执行。
-
-| S05 | 人 | 全量补测第 1 批（约 100 题） | `11` S05 | — | 2–3 h |
-| S06 | 人 | 全量补测第 2 批（约 100 题） | `11` S06 | — | 2–3 h |
-| S07 | 人 | 全量补测第 3 批（约 100–200 题） | `11` S07 | — | 2–4 h |
-| S08 | AI | 全量校准 + 验证 + 冻结 `calib-v1` | `07` §full；`13` | **G2** | 120 min |
-| S09 | AI | out-of-range 确认 + 重设计规格 + experimental 计划 | redesign backlog；`02` 更新 | **G3** | 90 min |
-| S10 | AI | 算子设计 + 骨架（feature flag） | 代码分支 | — | 120 min |
-| S11 | AI | 算子实现 + 单测 | 代码 + 测试 | — | 120 min |
-| S12 | AI | replay 对比 3U1D/block + 调参 | replay 报告 | — | 120 min |
-| S13 | AI | 算子验收 + 回归 + `pnpm verify` | 验收记录 | **G4** | 90 min |
-| S14 | AI | 20 题锚点设计 + 选题规则 + 锚卡清单 | anchor spec | — | 90 min |
-| S15 | 人 | 跑锚点 20 题（2–3 次，取稳定） | `11` S15 | — | 40 min × 2–3 |
-| S16 | AI | 锚点验证 + 全局基线报告 | `07` §anchor | **G5** | 120 min |
-| S17 | AI | 清 IDB 旧记录、保留 JSON/artifact、最终交接、retrospective | 清理记录；`10` 最终版 | **G6** | 90 min |
-
-## 每个会话的模板
+## 会话模板
 
 ```
 Session ID:
@@ -55,35 +39,9 @@ Next（一个动作）:
 Blocker:
 ```
 
-## 关键路径
-
-`S00 → S01 → S01c → S02 → S02b → S03a → S03b → S02c → S03c → S03d → S02d → S03e → S03f → S02e → S03g(G1 fail) → S04(降级决策) → 后续按新方案`
-
-- G3 的重设计规格可与 S10–S13 并行；但生成器代码落地要等 G2 冻结。
-- 补测不要和生成器修改混在同一批。
-- S15 的锚点测试必须在 G4 验收后做，否则测的是未稳定的算子。
-
-## 工作量与缓冲
-
-| 项 | 估计 |
-|---|---|
-| 试点补测 | 约 120 题（60 补测 + 60 重测） |
-| 全量补测 | 300–400 题 |
-| 锚点/重测 | 120–200 题 |
-| 生成器重设计 | 4–7 张卡，每张 1–2 个会话 |
-| 总 AI 会话 | 18–22 |
-| 缓冲 | +20% |
-
 ## 停止规则
 
-- **G1 失败**：停止全量，先改模型或缩减族；不要把 300 题投进去。
-- **同一张卡连续两次补测仍不过**：标 `low-confidence`，不无限重试。
-- **补测疲劳**：暂停，更新 `10_handoff`，下次继续；不要一次做完。
-- **family transfer 失败**：按 `03_roadmap` 降级，不强行保留 4 族。
-- **任何 gate 未过**：不清 IDB，不进入下一 gate。
-
-## 会话节奏建议
-
-- AI 会话 60–120 min；补测 20–30 min/次。
-- 每个 gate 后做一次 30 min 评审：更新 `02`、`10`、`13`，打 tag。
-- 每两周检查一次 `09_risk_register`，把“已经发生的风险”转成决策或停止规则。
+- 单卡连续两次重测 Δ>5：标 `low-confidence`，不再消耗。
+- 最低 level 仍 <0.8：标 `out-of-range`，进 redesign。
+- readiness 无法区分 normal/drift：退回“只记录，不判定”。
+- 不再开 pilot v5；不再做 family/LOCO。

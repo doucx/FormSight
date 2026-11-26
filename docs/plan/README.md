@@ -15,7 +15,7 @@
 
 | 计划 | 状态 | 目标 | 入口 |
 |---|---|---|---|
-| `calibration-v1` | active | Level 语义改为 80% JND；单用户自校准；1 全局 + 4 物理族；20 题锚点漂移检查 | [`calibration-v1/00_README.md`](./calibration-v1/00_README.md) |
+| `calibration-v1` | active（2026-11-26 转方案 B） | 纯 per-card：按需 20–40 题/卡估 80% JND；不做 family/全量；20 题只做 readiness | [`calibration-v1/00_README.md`](./calibration-v1/00_README.md) |
 
 ## 生命周期
 

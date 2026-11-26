@@ -1,139 +1,70 @@
 # 验收标准与方向
 
-## 1. 指标定义
+## 1. 口径
+
+方案 B：**纯 per-card**。每张卡独立 JND/Level；不做 family transfer；20 题检查只做 readiness。
+
+## 2. 指标
 
 | 指标 | 定义 | 用途 |
 |---|---|---|
-| Brier | `mean((p_pred - y)^2)`，按卡/族聚合 | 预测校准 |
-| Log-loss | `-mean(y log p + (1-y) log(1-p))` | 预测校准（惩罚自信错误） |
-| LOCO MAE | 留一卡预测的 JND 与实测 JND 的绝对差（level） | 未测卡基线 |
-| 重测 ΔLevel | 新鲜 20–30 题估计的 JND 与预测 JND 的差 | 外部效度 |
-| 重测命中率 | 在预测阈值处观察到的正确率 | 是否真的在 80% 附近 |
-| 校准斜率/截距 | 预测 JND vs 实测 JND 的回归 | 系统性偏差 |
-| CI 宽度 | JND 的 90%/95% 区间宽度（level） | 可信度分级 |
-| out-of-range 率 | 被排除卡 / 总卡 | 难度范围质量 |
+| JND | 该卡 `p(success)=0.8` 处的 level | 单卡基线 |
+| CI 宽度 | JND 的 90% 区间宽度（level） | 可信度 |
+| 重测 Δ | 两次独立 run 的 JND 差 | 可靠性 |
+| invalid | 中位 RT <300ms 或未 completed | 丢弃 |
+| readiness | 20 题混合检查的结果 | 只判 normal/drift |
 
-## 2. 验证方法（四道关）
+不再使用：LOCO、family Δ、per-card 20 题映射。
 
-### 2.1 时间留出
+## 3. per-card run 通过线
 
-- 训练：`timestamp < 2026-10-01`
-- 测试：`timestamp ≥ 2026-10-01`
-- 对比 baseline：常数 0.6；当前 block 的 level→正确率映射。
-- 目的：防止“用未来数据拟合过去”。
+一张卡的校准算 `calibrated` 需同时满足：
 
-### 2.2 留一卡（LOCO）
+1. 20–40 题，4–6 个 levels，每级 ≥5 题；
+2. 有 JND 与 CI；CI 宽度 ≤8 级；
+3. 隔天/换时段重测 20 题，Δ≤5 级；
+4. 两次 run 都不是 invalid；
+5. 不是 out-of-range（最低 level 仍 <0.8）。
 
-- 对每个族，藏起一张卡，用其余卡 + 族先验预测它的 JND。
-- 目的：直接模拟“未测卡给基线”的场景。
-- 这是 family transfer 的唯一硬证据。
+否则标 `low-confidence` 或 `out-of-range`，不进入 Level 集成。
 
-### 2.3 新鲜重测
+## 4. B gate
 
-- 在预测的 80% 阈值附近做 20–30 题。
-- 判定：
-  - 观察命中率的 95% 二项 CI 覆盖 0.8；
-  - |新 JND − 预测 JND| ≤ 5 级，或差值落在预测 CI 内。
-- 目的：发现“模型自洽但系统性偏差”。
+### B1
 
-### 2.4 敏感性分析
+- 任意已注册卡能创建 20–40 题 run；
+- 序列可复现、可续做；
+- 导出含 cardId/levels/sequence/summary；
+- `pnpm verify` 通过。
 
-- 含/不含旧版本、含/不含 legacy、不同斜率/lapse 先验。
-- 若某卡 JND 漂移 >5 级，标 `low-confidence`。
-- 目的：防止结论依赖某一个建模选择。
+### B2
 
-## 3. 每卡“通过”的定义
+- 3 张代表卡（color_hue / star_single / persp_prop_division）；
+- ≥2/3 通过 per-card 通过线；
+- 失败卡有明确状态。
 
-一张卡算 `calibrated` 需要同时满足：
+### B3
 
-1. 有 JND、slope、guess、lapse、n；
-2. 时间留出 Brier 优于 baseline；
-3. 重测命中率 CI 覆盖 0.8（若做了重测）；
-4. 敏感性漂移 ≤5 级；
-5. 不是 out-of-range / no-details。
+- 已校准卡显示 `calibratedLevel` / JND / 日期 / CI；
+- 未校准卡显示“未校准”；
+- 训练起始 level 用 calibratedLevel（没有则回退 profile）；
+- 不改变既有统计口径。
 
-否则标 `low-confidence` 或 `out-of-range`，不进入基线表。
+### B4
 
-## 4. Gate 通过线
+- 20 题 readiness 只输出 normal/drift/low-confidence；
+- 不写 per-card Level；
+- 与用户自己的滚动基线比较。
 
-### G0
+## 5. 失效与回退
 
-- `00`–`05`、`10`、`PRIVACY` 合并到 `develop`；
-- D-001..D-015 记录；
-- 数据集 hash、过滤规则；
-- 无代码改动、无原始数据进入 git。
+- 单卡失败：标 `low-confidence`，可重测一次；仍失败则保持“未校准”。
+- 重测 Δ>5：检查疲劳/窗口；标 `low-confidence`。
+- 某卡最低 level 仍 <0.8：标 `out-of-range`，进 redesign backlog。
+- readiness 漂移：只提示，不改 Level。
 
-### G1（试点；v1/v2/v3 未通过，v4 重试）
+## 6. 不再承诺
 
-- v1：5/8 run，4/5 无有效 80% 穿越，0 族强 family transfer；判未通过。
-- v2：8/8 卡，但仅 angle_parallel 干净、persp_migration 可用、persp_division 噪声大；1/4 族弱证据；判未通过。
-- v3：5 张 156 题；color_hue/angle_comparison 干净，star_single 天花板，color_val L7 异常，star_double ~21；2/4 族弱证据；判未通过。
-- v4：3 张约 91 题；star_single 地板、color_val 天花板、star_double ~25.5；pooled 后仅 ratio 通过。
-- 结论：G1 不通过；按 `07` §8 选降级方案 A/B，不再做 pilot v5。
-- 8 张试点中 ≥6 张通过时间留出；
-- ≥3/4 族 LOCO 中位 ≤5 级；
-- 4 张重测中 ≥3 张通过；
-- `color_lightness` 被正确排除；
-- 若 ≥2 族 LOCO 失败，触发降级树，不进入 G2。
-
-### G2（全量）
-
-- ≥26 张可校准；
-- 已校准卡中 ≥70% 通过时间留出；
-- 7 张 out-of-range 有明确结论；
-- `calib-v1` 冻结，含 artifact manifest；
-- 未通过卡标 `low-confidence`，不强行赋值。
-
-### G3（out-of-range）
-
-- 7 张候选全部有结论（确认排除 / CI 后保留）；
-- 每张有重设计规格或“保留 experimental”的决定；
-- 不进入基线表。
-
-### G4（算子）
-
-- 冷启动 20 题 RMSE 比 3U1D 细步改善 ≥30%；
-- 稳态不劣化 >1 级；
-- `pnpm verify` 通过；
-- 无新增 skip/only/todo；
-- 失败则保留 3U1D 细步，不强行上线。
-
-### G5（锚点）
-
-- ≥70% 已校准卡预测误差 ≤5 级；
-- θ/family 偏移有 CI；
-- 未校准卡只显示族先验；
-- 锚点重测通过。
-
-### G6（清理）
-
-- IDB 无旧记录；
-- JSON 保留、artifact + 验证报告可追溯；
-- `10_handoff` 最终版；
-- retrospective 完成。
-
-## 5. 方向判断（G1 后必须写死）
-
-按 `03_roadmap` 的降级树：
-
-1. **1 全局 + 4 族**：≥3/4 族 LOCO 通过；
-2. **1 全局 + 颜色族 + 按需单卡**：只有颜色族通过；
-3. **1 全局 + 按需单卡**：全部族不通过；
-4. **只做 drift 检查**：连 θ 都不稳定。
-
-一旦选定，写入 `01_decisions`，后续 gate 不再反复。
-
-## 6. 已知噪声与注意事项
-
-- 20 题重测的二项 CI 很宽（p=0.8 时约 0.56–0.94），所以用 CI 判定，不用点估计（D-015）。
-- 旧数据是 block 选点，80% 阈值附近样本少；不要用“全量历史”直接外推。
-- 自适应选点会衰减斜率估计；slope 只作先验，不作强结论。
-- 跨版本（8/16 前无 details）不混用。
-- n=1：所有结论只对本用户有效，不写人群外推。
-
-## 7. 失败时的处理
-
-- 某卡失败：标 `low-confidence`，记录原因；不删除数据。
-- 某族失败：从 4 族方案降级；更新 `03` 与 `01`。
-- 全量失败：停止 G4，回到 G1 重新设计试点；不进入 UI。
-- 任何 gate 未过：不清 IDB。
+- 不承诺“一张卡校准后推出其他卡”；
+- 不承诺“20 题给所有卡基线”；
+- 不承诺跨用户/人群比较。

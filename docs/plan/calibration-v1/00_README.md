@@ -2,15 +2,15 @@
 
 ## 目标（一句话）
 
-把 FormSight 的 Level 从「自适应算子的平衡点」改成「该卡 80% 正确率处的 JND」；用一次试点 + 一次全量校准，得到单用户、可解释、带不确定度的每卡基线，再用 20 题锚点做漂移检查。
+方案 B：每张卡按需校准出 80% JND；不做 family transfer，不做全量 33 卡；20 题混合检查只做 readiness。
 
 ## 当前状态
 
 | 项 | 值 |
 |---|---|
 | 计划状态 | active |
-| 当前 gate | **G1 不通过（family transfer 仅 ratio）** |
-| 当前会话 | S04（降级方案 A/B 决策） |
+| 当前 gate | **B0 完成；B1 per-card 校准入口待做** |
+| 当前会话 | B1（任意卡创建 per-card run） |
 | 数据快照 | 2026-11-24 导出，`sha256:ab2fb088…6554f9` |
 | 代码基线 | `develop` @ `619131d` |
 
@@ -68,10 +68,10 @@
 
 ## 本计划的硬约束（不要重提）
 
-- 不迁移旧数据；旧 JSON 保留为冻结校准语料；只清 IDB。
-- 测量层完成前不加新题型。
-- block 不作为测量算子；3U1D 细步只作临时对照。
-- 未校准卡不承诺 per-card 基线；20 题锚点只更新 θ / family 偏移。
+- 纯 per-card；不做 family transfer / LOCO / 4 族。
+- 不做全量 33 卡；按需 20–40 题/卡。
+- 20 题检查只做 readiness，不写 per-card Level。
+- 不迁移旧数据；旧 JSON 保留；只清 IDB。
 - tracked 文件不写绝对路径、Token、个人日程；原始 trial 放 `viska/local/calibration/`。
 
 ## 会话协议

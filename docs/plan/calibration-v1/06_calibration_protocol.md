@@ -1,117 +1,63 @@
-# 校准协议
+# 校准协议（方案 B：per-card）
 
-本文件规定：怎么从历史数据得到先验、怎么补测、怎么记录、怎么判定失败。
-适用于 G1 试点与 G2 全量；不适用于日常训练。
+## 1. 目标
 
-## 1. 输入与过滤
+为**单张卡**估一个 80% JND；不做 family transfer，不做全量 33 卡，不做 20 题映射。
 
-- 数据：2026-11-24 导出，`sha256:ab2fb088…6554f9`；仓库外保存。
-- 只保留：当前 cardId、`details` 存在、`timestamp ≥ 2026-08-16`。
-- 排除：10 个旧 cardId（860 条）、旧 domain 词表、无 `details` 的记录。
-- 不把原始 JSON 复制进仓库；中间产物放 `viska/local/calibration/`。
+## 2. 触发
 
-## 2. 先验方法
+- 该卡没有 JND；
+- JND 过期（默认 90 天）；
+- 用户手动要求；
+- 训练中明显异常，需要重测。
 
-1. 按 level 分箱，计算 `n` 与 `hit rate`；
-2. 对 ±2 级窗口做平滑，要求窗口内 `n ≥ 20`；
-3. 用加权等渗回归（PAVA，单调下降）拟合 `p(level)`；
-4. 找拟合曲线穿过 0.8 的位置：相邻两点线性插值；
-5. 若第一个有支撑的 level 已经 ≤0.8，记为 `below-range`，先验只作下界占位；
-6. bootstrap 300 次，取 5–95% 作为粗略区间；
-7. 参数 logistic 只作诊断：数据范围不跨 0.8 时外推极不稳定，不用于先验。
+## 3. 选 levels
 
-先验不是 JND，只是**补测选题的起点**。最终 JND 由补测 + 全量拟合给出。
+### 3.1 有历史/先验
 
-## 3. 补测执行（Calibration Runner）
+- 用历史 PAVA 穿越点 ±5 级；
+- 4–6 个 levels，每级 5–8 题，总 20–40 题。
 
-### 3.1 入口
+### 3.2 没有先验
 
-- 设置 → Data Governance → **Calibration runs**，或直接打开 `#/calibrate`；
-- 列表里 5 个试点 run；点 Start / Resume；
-- 每题自动落库，自动下一题（700ms）；
-- 完成后进入 summary，点 Export run / Export all 下载 JSON。
+先做 10 题 bracket：
 
-数据写 `calibration_runs` / `calibration_trials`，不写 `records` / `sessions` / `profiles` / `daily_summaries`。
+```
+1 / 9 / 17 / 25 / 35，各 2 题
+```
 
-### 3.2 固定序列
+看哪一段跨过 0.8，再在跨点 ±5 级做 4–5 个 levels ×5–6 题。bracket 的 10 题可计入总数，也可不计；记录清楚。
 
-| protocolId | 卡 | levels | 每级题数 | 总数 |
-|---|---|---|---:|---:|
-| `pilot-star-single` | star_single | 16 / 20 / 24 / 28 / 32 / 35 | 5 | 30 |
-| `pilot-star-double-r` | star_double_r | 19 / 21 / 23 / 25 / 27 | 5 | 25 |
-| `pilot-color-val` | color_val | 1 / 2 / 3 / 4 / 5 / 7 | 6 | 36 |
+## 4. 序列
 
-- 每个 block 内每级各一次，block 内用 seed 打乱；
-- 记录 `seed` 与完整 `sequence`；中途停下也大致均衡；
-- 不做自适应，不需要手动调 level；
-- 不需要手填 `11_experiment_log`：导出文件里的 `summary.byLevel` 就是记录来源。
+- 每级等量；block 内 seed 打乱；
+- 记录 seed 与完整 sequence；
+- 不做自适应；level 由协议决定；
+- 一次坐下完成；中断 >2h 标 `split` 重做；
+- 中位 RT <300ms 判 invalid。
 
-### 3.3 单次规模
+## 5. 记录与导出
 
-- 每个 run 20–30 题；
-- 单次不超过 30 题，避免疲劳；
-- 中途可以 Esc 暂停；已答题目已落库，回来点 Resume。
+- 写 `calibration_runs` / `calibration_trials`；
+- 导出 `formsight-calibration-runs` JSON；
+- 包含 cardId、levels、sequence、summary、逐题 details；
+- 不写训练统计。
 
-### 3.4 记录
+## 6. 估计
 
-每次 run 写入主 DB 的 `calibration_runs` / `calibration_trials`；导出 JSON 包含：
+- 对 `p(success | level)` 做单调拟合/PAVA；
+- 取 0.8 穿越点；给 bootstrap CI；
+- 无穿越：`below-range` / `above-range` / `flat`，标 `low-confidence` 或 `out-of-range`。
 
-- protocol 快照、seed、完整 sequence；
-- 每题 index / level / isHit / responseTimeMs / timestamp / details；
-- `summary`（n、hits、accuracy、byLevel）。
+## 7. 验证
 
-导出的 JSON 放 `viska/local/calibration/`，不要提交。
+- 隔天或换时段重测 20 题，levels 围绕预测阈值；
+- 判定：Δ≤5 级，且不是 invalid；
+- 通过：`calibrated`；
+- 失败：`low-confidence`；最低 level 仍 <0.8：`out-of-range`。
 
-### 3.5 停止与重试
+## 8. 数据卫生
 
-- 中途退出：run 保持 `in-progress`，可 Resume；
-- 想放弃：在列表里不继续即可；不要手改 level；
-- 写入失败：停止，导出已有数据，检查 IDB；
-- 疲劳/分心：Esc 暂停，改天继续；
-- 同一 run 不要重复答同一题；重复写入按 `runId:index` 幂等。
-
-### 3.6 pilot v4 规则（S02e）
-
-- star 卡排在最前；一次坐下完成。
-- 每次会话最多 2–3 个 run；这次只有 3 个，建议一次做完但中间休息。
-- 中位 RT <300ms 的 run 在 summary 会标 invalid；S03 直接丢弃。
-- `color_val` 若 L7 仍异常，S03 会检查低 V 过滤；不要手动改 level。
-- 通过后进入 G1 判定；否则按降级树处理。
-
-## 4. 全量校准
-
-1. 对每张卡：历史先验 + 补测数据合并；
-2. 拟合 `p(success | intensity)`，输出 JND、slope、guess、lapse、n、CI；
-3. 无 `details` 的卡：只能按 level 拟合，标 `no-details`；
-4. 简单等级仍 <0.8 的卡：标 `out-of-range`，不赋值；
-5. 每卡状态：`calibrated / low-confidence / out-of-range / no-details`。
-
-## 5. 验证（四道关）
-
-- 时间留出：训练 `< 2026-10-01`，测试 `≥ 2026-10-01`；
-- 留一卡（LOCO）：每族藏一张，预测其 JND；
-- 新鲜重测：在预测阈值处 20 题，观察命中率 95% CI 覆盖 0.8；
-- 敏感性：含/不含旧版本、不同斜率先验；漂移 >5 级标 `low-confidence`。
-
-通过线见 `05_acceptance.md`。
-
-## 6. 失败处理
-
-| 现象 | 处理 |
-|---|---|
-| 窗口未命中 | 停止，重排；不把窗口外数据计入阈值 |
-| 20 题 CI 太宽 | 加 10 题；仍宽则标 `low-confidence` |
-| 重测偏离 >5 级 | 检查版本/窗口/疲劳；仍偏离则标 `low-confidence` |
-| 某族 LOCO 失败 | 按 `03_roadmap` 降级，不强留 4 族 |
-| 卡在最低级仍 <0.8 | 标 `out-of-range`，进 redesign 队列 |
-
-## 7. 数据卫生
-
-- 原始数据只放 `viska/local/calibration/`；
-- tracked 只写聚合结果、状态、窗口、通过/失败；
-- 不写绝对路径、主机名、Token、个人日程；
-- 每次补测后计算本地文件 hash，写入 `13_artifact_manifest.md`。
-
-## 8. 提交前检查
-
-按 `PRIVACY.md` §4 的检查清单执行；不要在本文重复命令（避免扫描器匹配到自身）。
+- 原始数据/本地副本在 `viska/local/calibration/`；
+- tracked 只写聚合/状态；
+- 不写绝对路径、Token、个人日程。

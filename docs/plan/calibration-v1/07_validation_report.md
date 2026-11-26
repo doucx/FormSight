@@ -1,5 +1,7 @@
 # 验证报告
 
+> 2026-11-26：方案 B（纯 per-card）已选定（D-033）。本报告作为 G1 失败的历史证据保留；现行路线见 `03_roadmap.md`。
+
 状态：G1 已判不通过（2026-11-26）。§pilot-priors / §fresh / §fresh2 / §fresh3 / §fresh4 均已填；G1 fail，转降级方案 A/B。
 
 ## 1. 数据与版本

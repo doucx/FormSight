@@ -1,111 +1,104 @@
 # 路线图
 
-按 gate 推进，不按日历。每个 gate 必须有可检查的产出；没有产出就不算过。
+## 已结束：calibration-v1（G0–G1）
+
+- G0：计划、语义、数据冻结、Calibration Runner、DB v5——完成。
+- G1：四轮试点（~620 题）后**不通过**；仅 ratio 族有 family transfer 证据，color/spatial/angle 失败或不稳定。
+- 结论：停止 family/global baseline 路线，转方案 B（D-033）。
+
+历史细节见 `07_validation_report.md`；不再重跑 G1。
+
+## 现行：方案 B（纯 per-card）
 
 ```
-G0 语义与冻结
+B0 决策与文档
   ↓
-G1 试点（8 张 + 1 张 out-of-range 控制）
+B1 per-card 校准入口（任意卡、任意 levels、20–40 题）
   ↓
-G2 全量校准（33 → 26 可校准 + 7 排除）
+B2 3 张代表卡的 per-card 校准 + 重测
   ↓
-G3 out-of-range 处理（规格 + experimental）
+B3 把校准 JND 接进 Level/分析
   ↓
-G4 算子（per-card JND 滤波 + replay）
+B4 20 题 readiness 检查（不映射 per-card）
   ↓
-G5 锚点（20 题 → θ + family 偏移）
-  ↓
-G6 清理（清 IDB，保留 JSON 与 artifact）
+B5 清理/归档
 ```
 
-## G0 — 语义与冻结
+### B0 — 决策与文档
 
-- 目标：把“Level 到底测什么”定死；冻结校准语料与过滤规则。
-- 输入：2026-11-24 导出；当前代码基线。
-- 产出：`00`–`05` 文档；`01` 决策 D-001..D-015；数据集 hash；过滤规则；`PRIVACY.md`。
-- 验收：文档合并到 `develop`；无代码改动；无原始数据进入 git。
-- 依赖：无。
-- 失败退路：如果文档评审否决 D-001/D-002，回到 `01` 追加新决策，不进入 G1。
+- 目标：把“纯 per-card、按需校准、readiness only”写死。
+- 产出：D-033..D-035；本路线图；`05_acceptance` 改写；`06` per-card 协议。
+- 验收：文档合并；不再引用 family/LOCO 作为 gate。
+- 依赖：S03g。
 
-## G1 — 试点（v1 未通过；v2 重试）
+### B1 — per-card 校准入口
 
-- 目标：验证校准流程与 **family transfer**，不是“把 8 张卡做完”。
-- 试点：4 族 × 2 张 + 1 张 out-of-range 控制。
-  - 颜色：`color_hue`、`color_val`
-  - 空间：`star_single`、`star_double_r`
-  - 角度：`angle_parallel_2afc`、`angle_comparison_2afc`
-  - 比例：`persp_prop_division`、`persp_prop_migration`
-  - 控制：`color_lightness`（应被正确排除）
-- 输入：历史先验 + 试点固定序列（Calibration Runner；约 120 题：60 补测 + 60 重测）。
-- 产出：pilot 先验、pilot 补测记录、`07_validation_report` §pilot。
-- 验收：8 张中 ≥6 张通过 holdout；≥3/4 族 LOCO 中位 ≤5 级；4 张重测 ≥3 张通过；控制卡被正确排除。
-- v1 结果：5/8 run；4/5 无有效 80% 穿越；star R 混淆；判 G1 未通过。
-- v2 结果：8/8 卡；1/4 族弱证据；仍判未通过。
-- v3 结果：2/4 族弱证据（angle/ratio）；color/spatial 失败。
-- v4 结果：star_single 地板、color_val 天花板、star_double ~25.5；pooled 后仅 ratio 通过；**G1 不通过，转降级方案 A/B**。
-- 依赖：G0。
-- 失败退路：见下方“family transfer 降级树”。
+- 目标：不再只跑固定 3 个协议；能为**任意一张卡**创建 run。
+- 功能：
+  - 选卡；
+  - 选择 levels（手填或从历史/先验生成）；
+  - 每级题数、总题数上限；
+  - 生成固定平衡序列，复用现有 Calibration Runner；
+  - 导出同一 `formsight-calibration-runs` 格式。
+- 验收：
+  - 任意已注册卡能创建并完成 20–40 题 run；
+  - 序列可复现、可续做；
+  - 导出含 `cardId`、levels、sequence、summary；
+  - `pnpm verify` 通过。
+- 依赖：B0。
 
-## G2 — 全量校准
+### B2 — per-card 校准 + 重测
 
-- 目标：对 33 张卡给出 `calibrated / targeted / redesign / no-details` 状态。
-- 输入：历史 + 全量补测（300–400 题，分 3–4 次）。
-- 产出：`calib-v1` artifact（含每卡 JND、CI、slope、guess、lapse、n、status）、`07_validation_report` §full。
-- 验收：≥26 张可校准；≥70% 通过 holdout；7 张排除并标记；artifact 冻结。
-- 依赖：G1。
-- 失败退路：如果通过率 <70%，不进入 G4；先分析失败集中在哪些族，再决定是否缩减到“颜色族 + 按需单卡”。
+- 目标：在 3 张代表卡上验证 per-card 流程，不做 family。
+- 建议代表卡：
+  - `color_hue`（绝对色相，已有较稳数据）
+  - `star_single`（空间定位，噪声最大）
+  - `persp_prop_division`（比例，ratio 族代表）
+- 每卡：
+  1. 20–40 题，levels 围绕历史/先验；
+  2. 估 JND + CI；
+  3. 隔天或换时段重测 20 题；
+  4. 判定：CI 可接受、重测 Δ≤5、无 invalid。
+- 验收：≥2/3 卡通过；失败卡标 `low-confidence` 或 `out-of-range`。
+- 依赖：B1。
 
-## G3 — out-of-range 处理
+### B3 — 接进 Level/分析
 
-- 目标：把“测不了”的卡变成“明确要改什么”的卡。
-- 输入：`02_card_status` C 组；边界卡的 95% CI。
-- 产出：每张卡的重设计规格（level 1 要更简单、参数映射怎么改、如何验证）；`experimental` 标记计划；`redesign backlog`。
-- 验收：7 张候选全部有结论（确认排除或 CI 后保留）；不进入基线表；生成器修订另行排期。
-- 依赖：G2。
-- 失败退路：如果某张卡无法在不破坏训练价值的前提下扩展难度，保留 `experimental` 并排除出测量体系。
+- 目标：校准结果可用，不要求重写自适应算子。
+- 最小实现：
+  - 每张已校准卡存 `calibratedLevel` / `jnd` / `calibratedAt`；
+  - 训练起始 level 用 `calibratedLevel`（没有则回退 profile）；
+  - 卡片分析页显示“校准 Level / JND / 日期 / CI”；
+  - 训练中的 block/3U1D 继续负责日常自适应，但不再冒充 80% 阈值。
+- 验收：已校准卡显示校准值；未校准卡显示“未校准”；不改变既有统计口径。
+- 依赖：B2。
 
-## G4 — 算子
+### B4 — readiness 检查
 
-- 目标：用 `calib-v1` 做先验，实现 per-card JND 滤波；离线 replay 对比 3U1D 细步 / block。
-- 输入：artifact；历史 trial（只读）。
-- 产出：算子实现（feature flag）、replay 报告、回归测试。
-- 验收：冷启动 RMSE 比 3U1D 细步改善 ≥30%；稳态不劣化 >1 级；`pnpm verify` 通过。
-- 依赖：G2。
-- 失败退路：如果 replay 不达标，保留 3U1D 细步作为测量算子，JND 只做离线校准值；不强行上线。
+- 目标：20 题混合检查只回答“今天是否适合训练/是否偏离基线”。
+- 不做：映射到卡 Level、估维度能力、family 偏移。
+- 最小实现：
+  - 从已校准卡里抽 5–8 张锚卡；
+  - 20 题，记录 hit/RT；
+  - 与用户自己的滚动基线比较（例如近 30 天同卡同 level）；
+  - 输出 `normal / drift / low-confidence`，不写 per-card Level。
+- 验收：能区分明显异常；不产出 per-card 基线。
+- 依赖：B3。
 
-## G5 — 锚点
+### B5 — 清理/归档
 
-- 目标：20 题锚点测试 → θ + family 偏移；给已校准卡更新基线。
-- 输入：G2 artifact；6–8 张锚卡；20 题选题规则。
-- 产出：锚点协议、锚点结果、`07_validation_report` §anchor、全局基线报告。
-- 验收：≥70% 已校准卡预测误差 ≤5 级；θ/family 有 CI；未校准卡只显示族先验。
-- 依赖：G4。
-- 失败退路：如果 family transfer 在 G1 已失败，G5 降级为“单卡按需校准”，锚点只做 readiness 检查。
+- 目标：导出校准 artifact，清 IDB 旧记录，归档计划。
+- 验收：artifact + 报告 + handoff；原始 JSON 保留本地。
 
-## G6 — 清理
+## 明确不再做
 
-- 目标：清 IDB 旧记录；保留 JSON、artifact、验证报告；完成交接。
-- 输入：G2/G5 通过记录。
-- 产出：清理记录、最终 `10_handoff`、`13_artifact_manifest`、retrospective。
-- 验收：IDB 无旧记录；JSON 保留；artifact + 报告可追溯；计划归档或标 archived。
-- 依赖：G5。
-- 失败退路：任何 gate 未过，不清 IDB；计划转 paused。
+- family transfer / LOCO / 4 族模型；
+- 20 题给所有卡基线；
+- 全量 33 卡校准；
+- pilot v5。
 
-## family transfer 降级树（G1 判定）
+## 关键判断
 
-1. **1 全局 + 4 族**（原方案）：≥3/4 族 LOCO 中位 ≤5 级。
-2. **1 全局 + 颜色族 + 按需单卡**：只有颜色族成立；其他族放弃跨卡迁移。
-3. **1 全局 + 按需单卡**：全部族都不成立；放弃“不测全量给所有卡基线”，改为“用时再测 20–30 题”。
-4. **只做 drift 检查**：连全局 θ 都不稳定；锚点仅用于检测“今天是否异常”，不赋值。
-
-## 关键路径与并行
-
-- 关键路径：G0 → G1 → G2 → G3 → G4 → G5 → G6。
-- 可并行：G3 的重设计规格可与 G4 的算子开发并行；但重设计代码落地要等 G2 冻结，避免边改边校准。
-- 不可并行：G2 的补测与校准必须按批完成；不要在同一批里改生成器。
-
-## 范围冻结
-
-- G4 之前不新增 card 类型（D-008）。
-- G2 之前不改 out-of-range 卡的生成器（否则数据作废）。
-- 任何 UI 改动不阻塞 gate；gate 只认 artifact 与验证报告。
+- per-card 的成本是“每张卡 20–40 题”；只在对某张卡有需求时付。
+- readiness 是唯一被数据支持的全局用途；不要重新包装成能力评估。
+- 已校准卡的 Level 与训练 Level 要明确区分，避免再次混淆 80% 阈值与 block 平衡点。
