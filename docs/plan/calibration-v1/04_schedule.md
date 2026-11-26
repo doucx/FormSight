@@ -19,7 +19,7 @@
 | S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | done |
 | S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | 2 h |
 | S03e | AI | pilot v3 分析 | `07` §fresh3；G1 仍未通过 | — | done |
-| S03f | AI | pilot v4 协议（3 张，~91 题） | `protocols.ts` | — | 45 min |
+| S03f | AI | pilot v4 协议（3 张，~91 题） | `protocols.ts` | — | done |
 | S02e | 人 | pilot v4：star_single / star_double_r / color_val | `13` 新导出 | — | 1.5 h |
 | S03g | AI | pilot v4 分析 + G1 判定 | `07` 更新 | **G1** | 120 min |
 | S04 | AI | 全量先验拟合；标记 A/B/C/D；输出 `calib-v0.9` | `13` 更新；v0.9 | — | 120 min |

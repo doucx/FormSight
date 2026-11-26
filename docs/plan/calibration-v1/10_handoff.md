@@ -8,9 +8,9 @@
 |---|---|
 | 日期 | 2026-11-26 |
 | Gate | **G1 未通过（pilot v4 待做）** |
-| 上次会话 | S03e（pilot v3 分析） |
-| 下一步 | **S03f**：pilot v4 协议（3 张，~91 题） |
-| Blocker | color_val L7 异常；star_single 需 16–35 |
+| 上次会话 | S03f（pilot v4 协议） |
+| 下一步 | **S02e**：跑 pilot v4（3 个 run，~91 题） |
+| Blocker | 无；需要约 91 题 |
 
 ## S03a 结论
 
@@ -30,11 +30,12 @@
 
 ## 下一步（只做这一件）
 
-S03f：
+S02e：
 
-1. 更新 `src/calibration/protocols.ts` 为 pilot v4（3 张，约 91 题，见 `07` §8.1）；
-2. star_single / star_double_r 排前；color_val 后；
-3. 跑 `pnpm verify`；更新本文件，等 S02e。
+1. 打开 `#/calibrate`，刷新后应看到 3 个 run：star_single（30）、star_double_r（25）、color_val（36）。
+2. 先做 star_single，再 star_double_r，中间休息后做 color_val。
+3. 每个 run 一次坐下完成；中位 RT <300ms 会被标 invalid。
+4. 全部完成后 Export all，放 `viska/local/calibration/`，告诉 S03g 文件名。
 
 ## 读取顺序
 

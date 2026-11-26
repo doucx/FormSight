@@ -37,11 +37,9 @@
 
 | protocolId | 卡 | levels | 每级题数 | 总数 |
 |---|---|---|---:|---:|
-| `pilot-star-single` | star_single | 1 / 4 / 7 / 10 / 13 / 16 | 6 | 36 |
-| `pilot-star-double-r` | star_double_r | 17 / 21 / 25 / 29 / 33 / 35 | 5 | 30 |
-| `pilot-color-val` | color_val | 1 / 3 / 5 / 7 / 9 | 6 | 30 |
-| `pilot-color-hue` | color_hue | 9 / 11 / 13 / 15 / 17 | 6 | 30 |
-| `pilot-angle-comparison` | angle_comparison_2afc | 14 / 18 / 22 / 26 / 30 | 6 | 30 |
+| `pilot-star-single` | star_single | 16 / 20 / 24 / 28 / 32 / 35 | 5 | 30 |
+| `pilot-star-double-r` | star_double_r | 19 / 21 / 23 / 25 / 27 | 5 | 25 |
+| `pilot-color-val` | color_val | 1 / 2 / 3 / 4 / 5 / 7 | 6 | 36 |
 
 - 每个 block 内每级各一次，block 内用 seed 打乱；
 - 记录 `seed` 与完整 `sequence`；中途停下也大致均衡；
@@ -72,12 +70,13 @@
 - 疲劳/分心：Esc 暂停，改天继续；
 - 同一 run 不要重复答同一题；重复写入按 `runId:index` 幂等。
 
-### 3.6 pilot v3 规则（S02d）
+### 3.6 pilot v4 规则（S02e）
 
-- star 卡排在最前；先做 5 题人工检查 `star_single`，明显不可做就 Esc 退出并报告。
-- 每次会话最多 2–3 个 run，中间休息；不要 20 分钟刷 250 题。
+- star 卡排在最前；一次坐下完成。
+- 每次会话最多 2–3 个 run；这次只有 3 个，建议一次做完但中间休息。
 - 中位 RT <300ms 的 run 在 summary 会标 invalid；S03 直接丢弃。
-- 每级 6 题；单 run 一次完成；中断 >2h 标 `split` 重做。
+- `color_val` 若 L7 仍异常，S03 会检查低 V 过滤；不要手动改 level。
+- 通过后进入 G1 判定；否则按降级树处理。
 
 ## 4. 全量校准
 
