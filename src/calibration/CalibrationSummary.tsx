@@ -1,7 +1,9 @@
 import { CheckCircle2, ChevronLeft, Copy, Download } from 'lucide-preact';
+import { useMemo } from 'preact/hooks';
 import { Button } from '../components/ui/button';
 import type { CalibrationRunData, CalibrationTrialData } from '../storage/db/schema';
 import { summarizeTrials } from './export';
+import { analyzeCalibrationRun } from './health';
 import type { CalibrationProtocol } from './types';
 
 interface CalibrationSummaryProps {
@@ -21,7 +23,8 @@ export function CalibrationSummary({
   onExport,
   onCopy,
 }: CalibrationSummaryProps) {
-  const summary = summarizeTrials(trials);
+  const summary = useMemo(() => summarizeTrials(trials), [trials]);
+  const health = useMemo(() => analyzeCalibrationRun(run, trials), [run, trials]);
   const completed = run.status === 'completed';
 
   return (
@@ -89,6 +92,53 @@ export function CalibrationSummary({
             中位 RT &lt; 300ms；按 D-026 该 run 判无效，S03 会丢弃。请重跑，并放慢到正常作答节奏。
           </div>
         )}
+
+        <div className="rounded-2xl border border-border bg-card/60 p-4 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-sm font-black">Card health</div>
+            <span
+              className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+                health.status === 'healthy'
+                  ? 'text-emerald-700 border-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300'
+                  : health.status === 'invalid'
+                    ? 'text-rose-700 border-rose-300 bg-rose-50 dark:bg-rose-950/40 dark:text-rose-300'
+                    : 'text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300'
+              }`}
+            >
+              {health.status}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div>
+              <div className="text-muted-foreground">T80</div>
+              <div className="font-mono font-bold">
+                {health.t80 === null ? '—' : health.t80.toFixed(1)}
+              </div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">90% CI</div>
+              <div className="font-mono font-bold">
+                {health.ci === null ? '—' : `${health.ci[0].toFixed(1)}–${health.ci[1].toFixed(1)}`}
+              </div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">L1 / last</div>
+              <div className="font-mono font-bold">
+                {(health.firstAccuracy * 100).toFixed(0)}% /{' '}
+                {(health.lastAccuracy * 100).toFixed(0)}%
+              </div>
+            </div>
+            <div>
+              <div className="text-muted-foreground">violations / noise</div>
+              <div className="font-mono font-bold">
+                {health.monotonicViolations} / {health.noiseRms.toFixed(2)}
+              </div>
+            </div>
+          </div>
+          {health.notes.length > 0 && (
+            <div className="text-xs text-muted-foreground">{health.notes.join('；')}</div>
+          )}
+        </div>
 
         <div className="rounded-2xl border border-border overflow-hidden">
           <table className="w-full text-sm">

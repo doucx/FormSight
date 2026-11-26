@@ -101,6 +101,22 @@
 - `persp_prop_division`：每级 3/4，平坦；窗口太窄。
 - 结论：G1 未通过；pilot v2 需要先修 star 生成器，再换更宽窗口。详见 `07_validation_report.md` §3b/§7/§8。
 
+## P1 审计优先级（QA-only，2026-11-26）
+
+| 优先级 | 卡 | 建议 levels | 每级 | 已知问题 |
+|---:|---|---|---:|---|
+| 1 | star_single | 12/14/16/18/20 | 6 | T~16；v3/v4 边界噪声 |
+| 1 | star_double_r | 19/21/23/25/27 | 6 | T~23.6；尾部非单调 |
+| 2 | color_val | 1/3/5/7/9 | 6 | T~5.1；低 V 不稳 |
+| 2 | color_hue | 11/13/15/17 | 6 | T~13.6；确认单调 |
+| 3 | angle_parallel_2afc | 20/22/24/26/28 | 6 | T~23 |
+| 3 | angle_comparison_2afc | 22/24/26/28/30 | 6 | 历史不稳定 |
+| 3 | persp_prop_division | 17/19/21/23/25 | 6 | T~21 |
+| 3 | persp_prop_migration | 15/17/19/21/23 | 6 | T~19 |
+| 4 | Level≈1/35 的卡 | 1/9/17/25/35 ×2 | 2 | 找 floor/ceiling |
+
+审计结果写本表上方“S03g 最终判定”之后的备注；问题卡进 P2。
+
 ## 标签缩写
 
 - 域：F = form_and_proportion，S = spatial_structure，C = color_and_value，R = rhythm_and_notan

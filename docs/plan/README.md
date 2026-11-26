@@ -15,7 +15,7 @@
 
 | 计划 | 状态 | 目标 | 入口 |
 |---|---|---|---|
-| `calibration-v1` | active（2026-11-26 转方案 B） | 纯 per-card：按需 20–40 题/卡估 80% JND；不做 family/全量；20 题只做 readiness | [`calibration-v1/00_README.md`](./calibration-v1/00_README.md) |
+| `calibration-v1` | active（QA-only） | 校准 = 卡片难度轴诊断工具；任意卡固定 levels + health 报告；不产出训练 Level | [`calibration-v1/00_README.md`](./calibration-v1/00_README.md) |
 
 ## 生命周期
 

@@ -1,70 +1,49 @@
-# 验收标准与方向
+# 验收标准（QA-only）
 
-## 1. 口径
+## 1. QA run 有效性
 
-方案 B：**纯 per-card**。每张卡独立 JND/Level；不做 family transfer；20 题检查只做 readiness。
+- 任意已注册卡；
+- 2–8 个 levels，1–12 题/级，总 20–48；
+- 固定平衡序列，可复现/续做；
+- 完成且中位 RT ≥300ms；
+- 导出 `formsight-calibration-runs`。
 
-## 2. 指标
+## 2. Health 输出
 
-| 指标 | 定义 | 用途 |
-|---|---|---|
-| JND | 该卡 `p(success)=0.8` 处的 level | 单卡基线 |
-| CI 宽度 | JND 的 90% 区间宽度（level） | 可信度 |
-| 重测 Δ | 两次独立 run 的 JND 差 | 可靠性 |
-| invalid | 中位 RT <300ms 或未 completed | 丢弃 |
-| readiness | 20 题混合检查的结果 | 只判 normal/drift |
+`CalibrationSummary` 必须显示：
 
-不再使用：LOCO、family Δ、per-card 20 题映射。
+- T80 与 90% CI（可空）；
+- 每级 n / hits / accuracy；
+- L1 / last accuracy；
+- 单调性 violations；
+- noise RMS；
+- invalid；
+- 状态：`healthy / too-easy / too-hard / flat / noisy / review / invalid / insufficient`。
 
-## 3. per-card run 通过线
+## 3. 审计通过线
 
-一张卡的校准算 `calibrated` 需同时满足：
+一张卡算“健康”：
 
-1. 20–40 题，4–6 个 levels，每级 ≥5 题；
-2. 有 JND 与 CI；CI 宽度 ≤8 级；
-3. 隔天/换时段重测 20 题，Δ≤5 级；
-4. 两次 run 都不是 invalid；
-5. 不是 out-of-range（最低 level 仍 <0.8）。
+1. L1 ≥0.9，最高 level ≤0.2；
+2. T80 在 8–28；
+3. 正确率随 level 单调（允许 1 个小反转）；
+4. 同 level 内不同刺激的正确率差 ≤0.15（如可测）；
+5. 隔天重测 20 题，Δ≤5；
+6. 不是 invalid / too-easy / too-hard / flat / noisy。
 
-否则标 `low-confidence` 或 `out-of-range`，不进入 Level 集成。
+否则记录问题类型，进 P2。
 
-## 4. B gate
+## 4. P2 修复验收
 
-### B1
+- 同一 QA 窗口复验；
+- health 从 too-easy/too-hard/flat/noisy 变为 healthy；
+- 旧 Level/记录不追溯；只影响新题；
+- `pnpm verify` 通过；
+- 若改生成器，新增/更新对应测试。
 
-- 任意已注册卡能创建 20–40 题 run；
-- 序列可复现、可续做；
-- 导出含 cardId/levels/sequence/summary；
-- `pnpm verify` 通过。
+## 5. 不做
 
-### B2
-
-- 3 张代表卡（color_hue / star_single / persp_prop_division）；
-- ≥2/3 通过 per-card 通过线；
-- 失败卡有明确状态。
-
-### B3
-
-- 已校准卡显示 `calibratedLevel` / JND / 日期 / CI；
-- 未校准卡显示“未校准”；
-- 训练起始 level 用 calibratedLevel（没有则回退 profile）；
-- 不改变既有统计口径。
-
-### B4
-
-- 20 题 readiness 只输出 normal/drift/low-confidence；
-- 不写 per-card Level；
-- 与用户自己的滚动基线比较。
-
-## 5. 失效与回退
-
-- 单卡失败：标 `low-confidence`，可重测一次；仍失败则保持“未校准”。
-- 重测 Δ>5：检查疲劳/窗口；标 `low-confidence`。
-- 某卡最低 level 仍 <0.8：标 `out-of-range`，进 redesign backlog。
-- readiness 漂移：只提示，不改 Level。
-
-## 6. 不再承诺
-
-- 不承诺“一张卡校准后推出其他卡”；
-- 不承诺“20 题给所有卡基线”；
-- 不承诺跨用户/人群比较。
+- 不产出 per-card 训练 Level；
+- 不做 family/LOCO/全量；
+- 不做 20 题全局映射；
+- 不把 QA 结果写进 `records` / `profiles` / `daily_summaries`。

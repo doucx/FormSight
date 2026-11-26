@@ -14,7 +14,7 @@ import {
   copyJson,
   downloadJson,
 } from './export';
-import { getPilotProtocol } from './protocols';
+import { resolveProtocol } from './protocols';
 import {
   completeCalibrationRun,
   getCalibrationRun,
@@ -73,7 +73,7 @@ export function CalibrationRunner({
     };
   }, [runId]);
 
-  const protocol = run ? getPilotProtocol(run.protocolId) : null;
+  const protocol = run ? resolveProtocol(run) : null;
   const card = run ? registry.getCardById(run.cardId) : null;
   const manifest = run ? registry.getCardManifest(run.cardId) : null;
 

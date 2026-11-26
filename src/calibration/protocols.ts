@@ -39,3 +39,47 @@ export const PILOT_PROTOCOLS: CalibrationProtocol[] = [
 export function getPilotProtocol(protocolId: string): CalibrationProtocol | undefined {
   return PILOT_PROTOCOLS.find((protocol) => protocol.id === protocolId);
 }
+
+/** Build a one-off QA protocol for an arbitrary card. */
+export function buildCustomProtocol(
+  cardId: string,
+  levels: number[],
+  trialsPerLevel: number,
+  seed = Date.now() % 1_000_000,
+): CalibrationProtocol {
+  const sorted = [...new Set(levels)].sort((a, b) => a - b);
+  return {
+    id: `qa-${cardId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    cardId,
+    label: `QA · ${cardId} · ${sorted[0] ?? '-'}–${sorted[sorted.length - 1] ?? '-'}`,
+    levels: sorted,
+    trialsPerLevel,
+    seed,
+  };
+}
+
+/**
+ * Resolve a run back to a protocol. Presets win; arbitrary QA runs are
+ * reconstructed from the stored sequence so old runs stay readable.
+ */
+export function resolveProtocol(run: {
+  protocolId: string;
+  cardId: string;
+  sequence: number[];
+  seed: number;
+}): CalibrationProtocol | undefined {
+  const preset = getPilotProtocol(run.protocolId);
+  if (preset) return preset;
+  const levels = [...new Set(run.sequence)].sort((a, b) => a - b);
+  if (levels.length === 0) return undefined;
+  const counts = new Map<number, number>();
+  for (const level of run.sequence) counts.set(level, (counts.get(level) ?? 0) + 1);
+  return {
+    id: run.protocolId,
+    cardId: run.cardId,
+    label: `QA · ${run.cardId} · ${levels[0]}–${levels[levels.length - 1]}`,
+    levels,
+    trialsPerLevel: Math.max(...counts.values()),
+    seed: run.seed,
+  };
+}

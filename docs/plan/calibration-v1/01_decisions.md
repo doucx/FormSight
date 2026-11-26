@@ -333,3 +333,23 @@
 - 理由：family/维度映射未通过；readiness 是唯一有数据支持的用途。
 - 影响：G5 从“全局基线”改为“readiness 检查”。
 - 重审触发：`event:readiness_model_change`
+
+---
+
+## D-036 — 校准降级为 QA 工具
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：Calibration 只用于卡片难度轴诊断/修卡验证，不作为训练功能，不产出面向用户的 per-card Level，不做 B1–B4 产品化。
+- 理由：JND 不进入训练循环；训练收益主要来自修卡；产品级 per-card 校准成本高、价值低。
+- 影响：Calibration Runner 保留为 dev 工具；路线图改为 P0/P1/P2。
+- 重审触发：`event:calibration_productization_request`
+
+## D-037 — QA 工具形态
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：Calibration 页面提供“任意卡 + 自定义 levels + 每级题数”的 run 创建；summary 自动输出 health（T80、CI、单调性、floor/ceiling、invalid）。
+- 理由：P1 审计需要覆盖所有卡，而不是固定 3 个协议。
+- 影响：新增 health.ts、动态 protocol、Recent runs；不写训练统计。
+- 重审触发：`event:qa_tool_scope_change`
