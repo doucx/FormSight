@@ -293,3 +293,14 @@
 - 理由：v3 star_single 1–16 全 ≥.833；star_double 尾部 29–35 非单调。
 - 影响：pilot v4 两个 star run 共 55 题。
 - 重审触发：`event:star_v4_complete`
+
+---
+
+## D-032 — G1 不通过，停止 pilot 循环
+
+- 日期：2026-11-26
+- 状态：accepted
+- 决定：四轮 pilot 后，family transfer 仅 ratio 通过；color/spatial/angle 失败或不稳定；不再做 pilot v5，转降级方案 A/B。
+- 理由：同族两卡阈值差 7–8 级；20–30 题/卡压不住 run-to-run 方差；继续 pilot 只会重复确认。
+- 影响：原 S05–S17 全量校准草案作废；S04 拍板降级方案后再重排。
+- 重审触发：`event:fallback_choice`

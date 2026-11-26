@@ -7,35 +7,43 @@
 | 项 | 值 |
 |---|---|
 | 日期 | 2026-11-26 |
-| Gate | **G1 未通过（pilot v4 待做）** |
-| 上次会话 | S03f（pilot v4 协议） |
-| 下一步 | **S02e**：跑 pilot v4（3 个 run，~91 题） |
-| Blocker | 无；需要约 91 题 |
+| Gate | **G1 不通过（family transfer 仅 ratio 成立）** |
+| 上次会话 | S03g（pilot v4 + pooled 判定） |
+| 下一步 | **S04**：选降级方案 A/B，改写路线图；不再做 pilot v5 |
+| Blocker | 需要你拍板方案 A（全局+ratio+按需单卡）或 B（纯 per-card） |
 
-## S03a 结论
+## S03g 结论
 
-导出：`formsight_calibration_all_2026-11-25_22-24.json`，5 runs / 120 trials / completed。
+v4 导出 3 runs / 91 trials：`star_single` .27（16–35 地板）、`color_val` .92（天花板）、`star_double_r` .72（~25.5）。
 
-| run | acc | 结论 |
-|---|---:|---|
-| color_val | 0.85 | 唯一近似跨 0.8（~8；7–9） |
-| star_single | 0.87 | 非单调；Level 被 R 混淆 |
-| star_double_r | 0.57 | 全部 <0.8；窗口太高；R 混淆 |
-| angle_parallel_2afc | 0.95 | 天花板；窗口太低 |
-| persp_prop_division | 0.75 | 每级 3/4，平坦；窗口太窄 |
+pooled v1–v4（有效 run）：
 
-- G1 未通过：5/8 run，0 个族有强 family transfer 证据。
-- 详见 `07_validation_report.md` §3b/§7/§8。
-- 不要进入 S04 全量校准。
+| 卡 | T80 |
+|---|---:|
+| color_hue | ~13.6 |
+| color_val | ~5.1 |
+| star_single | ~16.1 |
+| star_double_r | ~23.6 |
+| angle_parallel_2afc | ~23.0 |
+| angle_comparison_2afc | ~16.1 / v3 ~26.8（不稳定） |
+| persp_prop_division | ~21.1 |
+| persp_prop_migration | ~19.2 |
+
+family transfer：
+
+- color Δ~8.5；spatial Δ~7.5；angle 不稳定；**仅 ratio Δ~1.9 通过**。
+- G1 不通过；不再做 pilot v5。
+- 原因：同族两张卡不是同一能力；20–30 题/卡压不住 run-to-run 方差。
 
 ## 下一步（只做这一件）
 
-S02e：
+S04：拍板降级方案。
 
-1. 打开 `#/calibrate`，刷新后应看到 3 个 run：star_single（30）、star_double_r（25）、color_val（36）。
-2. 先做 star_single，再 star_double_r，中间休息后做 color_val。
-3. 每个 run 一次坐下完成；中位 RT <300ms 会被标 invalid。
-4. 全部完成后 Export all，放 `viska/local/calibration/`，告诉 S03g 文件名。
+- **A（推荐）**：1 全局 + ratio 族 + 按需单卡；color/spatial/angle 需要时测 20–40 题。
+- **B**：纯 per-card；全局基准只做 readiness/drift。
+- C：可靠性研究（2 卡 ×2 次，+120 题）——不推荐，不会改变 7–8 级差。
+
+选定后：更新 `01`、`03`、`04`，再决定 G2/G4 的新形态；当前 S05–S17 草案作废。
 
 ## 读取顺序
 
@@ -46,11 +54,10 @@ S02e：
 
 ## 不要做
 
-- 不进入全量校准（S04）直到 G1 通过。
+- 不做 pilot v5；G1 已用四轮数据判失败。
+- 不进入原全量校准 S05–S17。
 - 不迁移旧数据；不清 IDB；不提交原始 JSON。
 - 不加新 card 类型。
-- 不用 block 做测量。
-- 不修改已记录的 D-001..D-023；要改就追加 D-xxx。
 - 不在 tracked 文件写绝对路径、Token、个人日程。
 
 ## Artifact 版本
@@ -58,16 +65,14 @@ S02e：
 | 名称 | 版本 | 说明 |
 |---|---|---|
 | 历史快照 | 2026-11-24 | `sha256:ab2fb088…6554f9` |
-| pilot 先验 | 2026-11-24 | `pilot-priors.json`，`sha256:6c5bb30…64cd` |
-| pilot v1 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_22-24.json`，`sha256:ce053c71…f99e` |
-| pilot v2 导出 | 2026-11-25 | `formsight_calibration_all_2026-11-25_23-00.json`，`sha256:e08ade3a…d3586` |
-| pilot v3 导出 | 2026-11-26 | `formsight_calibration_all_2026-11-26_11-03.json`，`sha256:d1ea3a3b…a33c` |
-| 校准导出格式 | `formsight-calibration-runs` v1 | 每 run 自动生成 |
+| pilot v1 导出 | 2026-11-25 | `sha256:ce053c71…f99e` |
+| pilot v2 导出 | 2026-11-25 | `sha256:e08ade3a…d3586` |
+| pilot v3 导出 | 2026-11-26 | `sha256:d1ea3a3b…a33c` |
+| pilot v4 导出 | 2026-11-26 | `sha256:67a5281b…694c9` |
 | 代码基线 | `develop` @ `619131d` | pilot v4 |
-| 校准 artifact | 未生成 | G2 产出 `calib-v1` |
 
 ## 本次会话的验证
 
 - 只读分析 + 文档更新；未改代码。
-- `11_experiment_log` 已由导出回填。
-- 原始数据未进入 git；本地副本在 `viska/local/calibration/`。
+- `pnpm verify` 49 文件 / 471 用例全绿。
+- 原始数据本地副本在 `viska/local/calibration/`。

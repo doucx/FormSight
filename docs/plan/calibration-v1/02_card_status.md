@@ -19,8 +19,8 @@
 
 | 卡 | 族 | 标签 | n / details | ≤15 | cross80 | 备注 |
 |---|---|---|---:|---:|---:|---|
-| color_hue | color | C / abs | 2308 / 2308 | 236 | 14 | v3 .80，T~14.2，干净 |
-| color_val | color | C / abs | 1799 / 1799 | 998 | 7 | v3 .63；L7=1/6 异常；v4 1–7 |
+| color_hue | color | C / abs | 2308 / 2308 | 236 | 14 | pooled T~13.6；low-confidence |
+| color_val | color | C / abs | 1799 / 1799 | 998 | 7 | pooled T~5.1；low-confidence |
 | color_sat | color | C / abs | 1578 / 1578 | 213 | 11 | 连续 ΔE |
 | abs_td_hull_2afc | form | F / con | 942 / 942 | 390 | 8 | 2AFC |
 | neg_vertex_fitting | spatial | F+S / abs+fg | 781 / 781 | 781 | 5 | L5 n=10，CI 宽 |
@@ -31,23 +31,23 @@
 | rel_decontextual_2afc | color | C / rel+ill | 883 / 883 | 133 | 17 | 2AFC |
 | abs_notan_threshold | rhythm | R / ext+fg | 821 / 821 | 121 | 27 | 图底 |
 | fractal_edge_roughness | rhythm | R / ext+abs+ill | 360 / 360 | 120 | 8 | 分形粗糙度 |
-| persp_prop_migration | form | F+S / rel+wm+dt | 306 / 306 | 116 | 14 | v2 T~19；ratio 弱通过 |
+| persp_prop_migration | form | F+S / rel+wm+dt | 306 / 306 | 116 | 14 | pooled T~19.2；ratio 通过 |
 
 ## B. targeted（13；3 张 star 标 experimental）
 
 | 卡 | 族 | 标签 | n / details | ≤15 | cross80 | 补测 |
 |---|---|---|---:|---:|---:|---|
-| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | v3 .94，1–16 天花板；v4 16–35；experimental |
-| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | v3 T~21；v4 19–27；experimental |
+| star_single | spatial | S / abs | 2663 / 1107 | 1 | 17 | pooled T~16.1；v3/v4 边界噪声；experimental |
+| star_double_r | spatial | S+F / abs+rel+dt | 2108 / 888 | 0 | 25 | pooled T~23.6；experimental |
 | star_double_h | spatial | S+F / abs+rel | 463 / 37 | 0 | 24 | 生成器已修；v2 未排；experimental |
 | neg_area_comparison_2afc | ratio | F / rel+fg | 1362 / 1362 | 54 | 23 | 25 题，L20–25 |
 | abs_gesture_axis | rhythm | R / ext | 1144 / 1144 | 85 | 17 | 25 题，L14–20 |
 | abs_td_gesture_2afc | rhythm | R / con | 978 / 978 | 67 | 14 | 25 题，L10–16 |
 | abs_td_notan_2afc | rhythm | R / con+fg | 902 / 902 | 44 | 26 | 30 题，L22–30 |
-| angle_parallel_2afc | angle | F+S / rel | 531 / 531 | 64 | 11 | v2 T~23；angle 族弱通过 |
-| angle_comparison_2afc | angle | F+S / rel | 498 / 498 | 60 | 14 | v3 .87，T~26.8，干净 |
+| angle_parallel_2afc | angle | F+S / rel | 531 / 531 | 64 | 11 | pooled T~23.0；low-confidence |
+| angle_comparison_2afc | angle | F+S / rel | 498 / 498 | 60 | 14 | 不稳定：pooled ~16 / v3 ~26.8；fail |
 | persp_vp_convergence | form | S / rel | 327 / 327 | 40 | 23 | 30 题，L20–26 |
-| persp_prop_division | ratio | F / abs | 289 / 289 | 70 | 17 | v2 T~23，噪声大；ratio 弱通过 |
+| persp_prop_division | ratio | F / abs | 289 / 289 | 70 | 17 | pooled T~21.1；ratio 通过 |
 | persp_gestalt_continuation | form | S / rel+ill | 286 / 286 | 40 | 26 | 30 题，L22–30 |
 | abs_td_palette_4afc | color | C / con | 240 / 240 | 73 | 14 | 25 题，L10–18 |
 
@@ -62,6 +62,13 @@
 | color_lightness | color | C / abs+ill | 220 / 220 | L1 = 0.73 | 明确 out-of-range；改生成器 |
 | angle_estimation | angle | F+S / abs | 102 / 102 | L5 = 0.69 | 明确 out-of-range；改生成器 |
 | spatial_fractal | form | S / ext | 282 / 0 | L1 = 0.64 | 无 details；改生成器 + 补 details |
+
+## S03g 最终判定（2026-11-26，pilot v4 + pooled）
+
+- pooled 阈值：color_hue ~13.6、color_val ~5.1、star_single ~16.1、star_double ~23.6、angle_parallel ~23.0、angle_comparison ~16.1/26.8（不稳定）、persp_division ~21.1、persp_migration ~19.2。
+- family transfer：仅 ratio 通过（Δ~1.9）；color Δ~8.5、spatial Δ~7.5、angle 不稳定 → fail。
+- **G1 不通过**；不再做 pilot v5，转降级方案（见 `07` §8）。
+- 同族卡不是同一能力；20–30 题/卡压不住 run-to-run 方差。
 
 ## S03e fresh3 结果（2026-11-26，pilot v3）
 

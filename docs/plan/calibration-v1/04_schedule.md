@@ -17,12 +17,15 @@
 | S02c | 人 | pilot v2：8 个 run，~184 题 | `13` 新导出 | — | done |
 | S03c | AI | pilot v2 分析 | `07` §fresh2；G1 仍未通过 | — | done |
 | S03d | AI | pilot v3 协议 + 无效 run 规则 | `protocols.ts`；`06` | — | done |
-| S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | 2 h |
+| S02d | 人 | pilot v3：5 张，~156 题 | `13` 新导出 | — | done |
 | S03e | AI | pilot v3 分析 | `07` §fresh3；G1 仍未通过 | — | done |
 | S03f | AI | pilot v4 协议（3 张，~91 题） | `protocols.ts` | — | done |
-| S02e | 人 | pilot v4：star_single / star_double_r / color_val | `13` 新导出 | — | 1.5 h |
-| S03g | AI | pilot v4 分析 + G1 判定 | `07` 更新 | **G1** | 120 min |
-| S04 | AI | 全量先验拟合；标记 A/B/C/D；输出 `calib-v0.9` | `13` 更新；v0.9 | — | 120 min |
+| S02e | 人 | pilot v4：star_single / star_double_r / color_val | `13` 新导出 | — | done |
+| S03g | AI | pilot v4 分析 + G1 判定 | `07` §fresh4/§7；G1 不通过 | **G1** | done |
+| S04 | 决策 | 选降级方案 A/B（全局+ratio+按需单卡 / 纯 per-card） | `01` 新决策；`03` 改写 | — | 30 min |
+
+> G1 未通过：以下 S05–S17 是原全量校准草案，已作废；方案 A/B 确定后重排，不要按此执行。
+
 | S05 | 人 | 全量补测第 1 批（约 100 题） | `11` S05 | — | 2–3 h |
 | S06 | 人 | 全量补测第 2 批（约 100 题） | `11` S06 | — | 2–3 h |
 | S07 | 人 | 全量补测第 3 批（约 100–200 题） | `11` S07 | — | 2–4 h |
@@ -54,7 +57,7 @@ Blocker:
 
 ## 关键路径
 
-`S00 → S01 → S01c → S02 → S02b → S03a → S03b → S02c → S03c → S03d → S02d → S03e → S03f → S02e → S03g(G1) → S04 → S05–S07 → S08(G2) → S09(G3) → S10–S13(G4) → S14–S16(G5) → S17(G6)`
+`S00 → S01 → S01c → S02 → S02b → S03a → S03b → S02c → S03c → S03d → S02d → S03e → S03f → S02e → S03g(G1 fail) → S04(降级决策) → 后续按新方案`
 
 - G3 的重设计规格可与 S10–S13 并行；但生成器代码落地要等 G2 冻结。
 - 补测不要和生成器修改混在同一批。

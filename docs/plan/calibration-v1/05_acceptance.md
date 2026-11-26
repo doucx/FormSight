@@ -68,7 +68,8 @@
 - v1：5/8 run，4/5 无有效 80% 穿越，0 族强 family transfer；判未通过。
 - v2：8/8 卡，但仅 angle_parallel 干净、persp_migration 可用、persp_division 噪声大；1/4 族弱证据；判未通过。
 - v3：5 张 156 题；color_hue/angle_comparison 干净，star_single 天花板，color_val L7 异常，star_double ~21；2/4 族弱证据；判未通过。
-- v4：3 张约 91 题；star_single 16–35、star_double 19–27、color_val 1–7。
+- v4：3 张约 91 题；star_single 地板、color_val 天花板、star_double ~25.5；pooled 后仅 ratio 通过。
+- 结论：G1 不通过；按 `07` §8 选降级方案 A/B，不再做 pilot v5。
 - 8 张试点中 ≥6 张通过时间留出；
 - ≥3/4 族 LOCO 中位 ≤5 级；
 - 4 张重测中 ≥3 张通过；

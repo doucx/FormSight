@@ -4,7 +4,7 @@
 
 | # | 风险 | 概率 | 影响 | 缓解 | 触发/状态 |
 |---|---|---|---|---|---|
-| R-01 | family transfer 不成立 | 中 | 高 | G1 先测 LOCO；按降级树回退 | G1；open |
+| R-01 | family transfer 不成立 | 高 | 高 | G1 先测 LOCO；按降级树回退 | **observed**：仅 ratio 通过；G1 fail |
 | R-02 | 试点/全量校准过拟合 | 中 | 高 | 时间留出 + 新鲜重测 + 敏感性 | G1/G2；open |
 | R-03 | 补测疲劳导致数据质量下降 | 高 | 中 | 每次 ≤30 题；分多次；异常记录 | 持续；open |
 | R-04 | 现有 benchmark 起始 level 不在先验窗口 | 高 | 中 | 固定序列 + Calibration Runner，起始 level 由协议决定 | S01c；closed |
@@ -29,7 +29,8 @@
 | R-23 | 重复/无效 run | 高 | 中 | 中位 RT <300ms 丢弃；summary 标 invalid；只取有效最新 | S03d mitigated |
 | R-24 | star_single 难度轴偏移 | 高 | 高 | v3 显示 1–16 天花板；改测 16–35 | v3 resolved direction；D-031 |
 | R-25 | color_val 低 V 混淆 | 高 | 高 | L7 异常；v4 补数据；必要时约束 targetV/ΔE | v3 observed；D-030 |
-| R-26 | star_double 尾部非单调 | 中 | 中 | v4 19–27 确认；必要时增加每级题数 | v3 observed；D-031 |
+| R-26 | star_double 尾部非单调 | 中 | 中 | v4 19–27 确认；必要时增加每级题数 | v4 observed；D-031 |
+| R-27 | run-to-run 方差 >5 级 | 高 | 高 | 同卡重复测量；提高每级题数；或接受 per-card on-demand | v3/v4 observed（L16 6/6 vs 2/5；L7 1/6 vs 5/6） |
 
 ## 重点说明
 

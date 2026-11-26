@@ -41,7 +41,8 @@ G6 清理（清 IDB，保留 JSON 与 artifact）
 - 验收：8 张中 ≥6 张通过 holdout；≥3/4 族 LOCO 中位 ≤5 级；4 张重测 ≥3 张通过；控制卡被正确排除。
 - v1 结果：5/8 run；4/5 无有效 80% 穿越；star R 混淆；判 G1 未通过。
 - v2 结果：8/8 卡；1/4 族弱证据；仍判未通过。
-- v3 结果：2/4 族弱证据（angle/ratio）；color/spatial 失败；v4 聚焦 3 张、~91 题。
+- v3 结果：2/4 族弱证据（angle/ratio）；color/spatial 失败。
+- v4 结果：star_single 地板、color_val 天花板、star_double ~25.5；pooled 后仅 ratio 通过；**G1 不通过，转降级方案 A/B**。
 - 依赖：G0。
 - 失败退路：见下方“family transfer 降级树”。
 

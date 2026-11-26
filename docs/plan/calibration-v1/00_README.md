@@ -9,8 +9,8 @@
 | 项 | 值 |
 |---|---|
 | 计划状态 | active |
-| 当前 gate | **G1 未通过（pilot v4 待做）** |
-| 当前会话 | S02e（pilot v4，3 个 run / ~91 题） |
+| 当前 gate | **G1 不通过（family transfer 仅 ratio）** |
+| 当前会话 | S04（降级方案 A/B 决策） |
 | 数据快照 | 2026-11-24 导出，`sha256:ab2fb088…6554f9` |
 | 代码基线 | `develop` @ `619131d` |
 

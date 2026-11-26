@@ -15,6 +15,7 @@
 | pilot v1 导出 | `formsight_calibration_all_2026-11-25_22-24.json` | 2026-11-25 | `ce053c710fe5dfdfcfa44f53fd421adc9be785e0a4ad75c03606dc88f822f99e` | 5 runs / 120 trials |
 | pilot v2 导出 | `formsight_calibration_all_2026-11-25_23-00.json` | 2026-11-25 | `e08ade3af6fb546aaf8dc99bde755cee05836a5fbbd96bc0b9527380134d3586` | 11 runs / 8 protocols / 254 trials |
 | pilot v3 导出 | `formsight_calibration_all_2026-11-26_11-03.json` | 2026-11-26 | `d1ea3a3b3abb2e7ab03fabd782f0dfe9131cfd4fe4e625edbc207552fba9a33c` | 5 runs / 156 trials |
+| pilot v4 导出 | `formsight_calibration_all_2026-11-26_12-28.json` | 2026-11-26 | `67a5281b5195e8aa41f1717bdffbb2f41963ae50e096d688582caccbc3f694c9` | 3 runs / 91 trials |
 | 校准 artifact | 未生成 | G2 | — | `calib-v1` |
 | 全量验证报告 | 未生成 | G2 | — | 见 `07_validation_report.md` |
 
